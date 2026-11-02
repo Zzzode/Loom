@@ -1871,9 +1871,72 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
     return result;
 }
 
+// Declaration-shaped reserved words are owned before Class member/entity parsing.
+// A relationship operand bearing the same identifier keeps its ordinary grammar.
+int class_accessibility_kind(std::string_view line) {
+    int kind = 0;
+    std::size_t size = 0;
+    if (line.starts_with("accTitle")) {
+        kind = 1;
+        size = 8u;
+    } else if (line.starts_with("accDescr")) {
+        kind = 2;
+        size = 8u;
+    } else
+        return 0;
+    if (line.size() > size && line[size] != ':' && line[size] != ' ' && line[size] != '\t' &&
+        line[size] != '{')
+        return 0;
+    auto rest = trim_relation(line.substr(size));
+    if (rest.starts_with("\"") || rest.starts_with("--") || rest.starts_with("..") ||
+        rest.starts_with("<") || rest.starts_with("o--") || rest.starts_with("*--") ||
+        rest.starts_with("o..") || rest.starts_with("*.."))
+        return 0;
+    return kind;
+}
+
+bool class_accessibility_set(std::string_view source, std::string_view logical, int kind,
+                             RelationDiagram& diagram, bool& checked, Work& work) {
+    if (!work.spend(source.size() * 4u + logical.size() * 4u + 256u)) return false;
+    if (!checked) {
+        for (std::size_t i = 0; i < source.size(); ++i)
+            if (source[i] == '\r' && (i + 1u == source.size() || source[i + 1u] != '\n'))
+                return false;
+        checked = true;
+    }
+    const auto offset = static_cast<std::size_t>(logical.data() - source.data());
+    const auto before = source.rfind('\n', offset), after = source.find('\n', offset);
+    const auto begin = before == std::string_view::npos ? 0u : before + 1u;
+    const auto end = after == std::string_view::npos ? source.size() : after;
+    if (offset + logical.size() > end) return false;
+    auto physical = source.substr(begin, end - begin);
+    if (after != std::string_view::npos && physical.ends_with('\r')) physical.remove_suffix(1u);
+    // Restore the physical value: the logical walker trims tabs, while this
+    // scalar contract trims only ASCII space and rejects control characters.
+    const auto first = physical.find_first_not_of(" \t");
+    if (first == std::string_view::npos) return false;
+    physical.remove_prefix(first + 8u);
+    const auto colon = physical.find_first_not_of(" \t");
+    if (colon == std::string_view::npos || physical[colon] != ':') return false;
+    auto value = physical.substr(colon + 1u);
+    const auto left = value.find_first_not_of(' '), right = value.find_last_not_of(' ');
+    if (left == std::string_view::npos) return false;
+    value = value.substr(left, right - left + 1u);
+    auto& target =
+        kind == 1 ? diagram.class_accessibility_title : diagram.class_accessibility_description;
+    if (target || value.size() > 256u || value.find_first_of("<>&\\`") != std::string_view::npos ||
+        !unicode_text(value))
+        return false;
+    if (!work.spend(value.size() * 8u + 4u * sizeof(std::string) + 128u)) return false;
+    target = std::string(value);
+    return true;
+}
+
 std::optional<RelationDiagram> parse_relations(std::string_view source, Work& work,
                                                const ClassEnvelope* class_envelope = nullptr) {
     if (source.empty() || source.size() > kSourceLimit || !work.spend(source.size())) return {};
+    // Every parser branch pays for the two optional nonvisual Class fields.
+    if (!work.spend(8u * sizeof(std::optional<std::string>) + 128u)) return {};
     // All parser branches construct at most one Diagram; pay the new field
     // before either the unchanged plain-ER helper or Class/State construction.
     if (!work.spend(16u * sizeof(std::optional<bool>) + 8u * sizeof(std::vector<int>) +
@@ -1887,6 +1950,7 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
         return {};
     std::vector<PendingClassNote> class_note_targets;
     bool class_generic_source_checked = false;
+    bool class_accessibility_source_checked = false;
     // New parse-local borrowed declaration ledger has fixed lifetime work in all families.
     if (!work.spend(8u * sizeof(std::vector<std::string_view>) +
                     alignof(std::vector<std::string_view>) + 64u))
@@ -2067,6 +2131,17 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
     for (std::size_t n = 1; n < lines.size(); ++n) {
         auto line = lines[n];
         if (!work.spend(line.size() + 1)) return {};
+        if (diagram.family == RelationFamily::Class) {
+            if (!work.spend(32u)) return {};
+            const auto metadata = class_accessibility_kind(line);
+            if (metadata != 0) {
+                if (member >= 0 || !scopes.empty() ||
+                    !class_accessibility_set(original, line, metadata, diagram,
+                                             class_accessibility_source_checked, work))
+                    return {};
+                continue;
+            }
+        }
         if (member >= 0) {
             if (line == "}") {
                 member = -1;
@@ -2092,6 +2167,16 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
                 !class_inactive_definition(line, original, inactive_class_definitions,
                                            class_generic_source_checked, work))
                 return {};
+            continue;
+        }
+        if (diagram.family == RelationFamily::Class && line.size() > 5u &&
+            line.starts_with("style") && (line[5] == ' ' || line[5] == '\t')) {
+            if (owner() >= 0 || !class_direct_style(line, original, diagram, work)) return {};
+            continue;
+        }
+        if (diagram.family == RelationFamily::Class && line.size() > 8u &&
+            line.starts_with("cssClass") && (line[8] == ' ' || line[8] == '\t')) {
+            if (owner() >= 0 || !class_css_assignment(line, original, diagram, work)) return {};
             continue;
         }
         if (line.starts_with("direction ")) {
@@ -2416,9 +2501,22 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
             continue;
         }
         if (diagram.family == RelationFamily::Class && line.starts_with("class ")) {
+            const auto declaration = line;
             line = trim_relation(line.substr(6));
             const auto operand = class_operand(line, work, original, class_generic_source_checked);
             if (!operand) return {};
+            if (line.starts_with(":::")) {
+                if (!work.spend(declaration.size() * 2u + 64u)) return {};
+                const auto token = trim_relation(declaration.substr(6u));
+                if (token.size() != operand->id.size() + line.size() ||
+                    !token.starts_with(operand->id) || token.substr(operand->id.size()) != line)
+                    return {};
+                if (owner() >= 0 || operand->type ||
+                    !class_style_assignment(declaration, original, operand->id, line.substr(3u),
+                                            diagram, work))
+                    return {};
+                line = {};
+            }
             const int target =
                 diagram.class_entity(operand->id, owner(), work, true, operand->type);
             if (target < 0) return {};
@@ -2781,6 +2879,9 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
         }
         if (aggregate > kLabelLimit) return {};
     }
+    if (diagram.direct_styles &&
+        !resolve_class_direct_styles(diagram, work, inactive_class_definitions, original))
+        return {};
     return diagram;
 }
 
@@ -4740,6 +4841,57 @@ std::optional<LabelPlacement> label_place(Canvas& canvas, const RouteSearch& sea
 
 namespace {
 
+using PortIndex = std::uint16_t;
+
+struct Pair {
+    PortIndex a, b;
+    int distance;
+};
+
+static_assert(std::is_trivially_default_constructible_v<Pair> &&
+              std::is_trivially_destructible_v<Pair>);
+constexpr int kNoteScoreLimit = 3 * (kWidthLimit + kHeightLimit) + 16 + 128 + 128;
+
+// The caller has prepaid candidate construction; this function prepays its
+// own scans and exact-sized buffers before stable distribution.
+bool compact_note_order(std::span<const Pair> candidates, Work& work,
+                        std::unique_ptr<std::uint16_t[]>& ordered) {
+    const auto count = candidates.size();
+    if (count <= 1u) return true;
+    if (count > std::numeric_limits<std::uint16_t>::max()) return false;
+    if (!work.spend(count * (8u * sizeof(int) + 16u) + 4u * sizeof(int) + 4u * sizeof(std::size_t) +
+                    128u))
+        return false;
+    int minimum = candidates.front().distance, maximum = minimum;
+    for (const auto& pair : candidates) {
+        minimum = std::min(minimum, pair.distance);
+        maximum = std::max(maximum, pair.distance);
+    }
+    if (minimum < 0 || maximum > kNoteScoreLimit) return false;
+    const auto span = static_cast<std::size_t>(maximum - minimum) + 1u;
+    if (!work.spend(span * (6u * sizeof(std::uint16_t) + 16u) +
+                    count * (2u * sizeof(Pair) + 8u * sizeof(std::uint16_t) + 8u) +
+                    8u * sizeof(std::vector<Pair>) + 4u * sizeof(std::vector<std::size_t>) + 128u))
+        return false;
+    auto next = std::make_unique<std::uint16_t[]>(span);
+    for (const auto& pair : candidates)
+        ++next[static_cast<std::size_t>(pair.distance - minimum)];
+    std::size_t offset = 0;
+    for (std::size_t i = 0; i < span; ++i) {
+        auto& slot = next[i];
+        const auto frequency = slot;
+        if (offset > count) return false;
+        slot = static_cast<std::uint16_t>(offset);
+        offset += frequency;
+    }
+    if (offset != count) return false;
+    ordered = std::make_unique_for_overwrite<std::uint16_t[]>(count);
+    for (std::size_t i = 0; i < count; ++i)
+        ordered[next[static_cast<std::size_t>(candidates[i].distance - minimum)]++] =
+            static_cast<std::uint16_t>(i);
+    return true;
+}
+
 // ER-only semantic paint context. Geometry comes from the parsed scene and
 // successful route commits; no ownership is recovered from finished glyphs.
 struct ErPaint {
@@ -4983,18 +5135,13 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
     }
     // Every perimeter has at most 2*(bounded width+height) ports. Store only
     // the necessary index width; the score and complete candidate order stay.
-    using PortIndex = std::uint16_t;
     static_assert(2 * (kWidthLimit + kHeightLimit) < std::numeric_limits<PortIndex>::max());
     if (!canvas.work.spend(2u * sizeof(std::size_t) + 8u)) return false;
     if (from.size() > std::numeric_limits<PortIndex>::max() ||
         to.size() > std::numeric_limits<PortIndex>::max())
         return false;
-
-    struct Pair {
-        PortIndex a, b;
-        int distance;
-    };
-
+    if (!to.empty() && from.size() > std::numeric_limits<std::size_t>::max() / to.size())
+        return false;
     std::vector<Pair> pairs;
     if (er_paint) {
         const auto count = from.size() * to.size();
@@ -5002,14 +5149,24 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
             return false;
         pairs.reserve(count);
     }
+    std::unique_ptr<Pair[]> compact_pairs;
+    std::size_t compact_count = 0;
+    const auto max_pairs = from.size() * to.size();
+    const bool use_compact_pairs =
+        note_leader && max_pairs <= std::numeric_limits<std::uint16_t>::max();
     if (note_leader || retry_storage) {
-        const auto count = from.size() * to.size();
-        // Backing allocation plus each temporary and retained Pair. Existing
-        // per-pair generation visits remain charged below.
-        if (!canvas.work.spend(count * (4u * sizeof(Pair) + 16u) + 4u * sizeof(std::vector<Pair>) +
-                               128u))
+        const auto count = max_pairs;
+        // Prepay candidate storage and writes, including allocator metadata.
+        // Existing per-pair generation visits remain charged below.
+        const auto pair_work = (use_compact_pairs ? 3u : 4u) * sizeof(Pair) + 16u;
+        constexpr auto fixed_work = 4u * sizeof(std::vector<Pair>) + 128u;
+        if (count > (std::numeric_limits<std::size_t>::max() - fixed_work) / pair_work)
             return false;
-        pairs.reserve(count);
+        if (!canvas.work.spend(count * pair_work + fixed_work)) return false;
+        if (use_compact_pairs)
+            compact_pairs = std::make_unique_for_overwrite<Pair[]>(count);
+        else
+            pairs.reserve(count);
     }
     int er_role_width = 0;
     if (er_paint && !edge.label.empty()) {
@@ -5126,50 +5283,56 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
                 if (q.normal != outside) score += 64;
             }
             if (er_paint && !canvas.work.spend(sizeof(Pair) + 8u)) return false;
-            pairs.push_back({static_cast<PortIndex>(a), static_cast<PortIndex>(b), score});
+            if (use_compact_pairs) {
+                if (compact_count >= max_pairs) return false;
+                auto& pair = compact_pairs[compact_count++];
+                pair.a = static_cast<PortIndex>(a);
+                pair.b = static_cast<PortIndex>(b);
+                pair.distance = score;
+            } else
+                pairs.push_back({static_cast<PortIndex>(a), static_cast<PortIndex>(b), score});
         }
-    if (note_leader || retry_storage) {
-        if (pairs.size() > 1u) {
-            if (!canvas.work.spend(pairs.size() * (8u * sizeof(int) + 16u) + 4u * sizeof(int) +
-                                   4u * sizeof(std::size_t) + 128u))
-                return false;
-            int minimum = pairs.front().distance, maximum = minimum;
-            for (const auto& pair : pairs) {
-                minimum = std::min(minimum, pair.distance);
-                maximum = std::max(maximum, pair.distance);
-            }
-            // Each coordinate lies inside the bounded canvas. Manhattan and
-            // both centering terms total at most 3*(width+height); orientation
-            // adds at most 16, Class row bias 128 and backward bias 128.
-            constexpr int score_limit = 3 * (kWidthLimit + kHeightLimit) + 16 + 128 + 128;
-            if (minimum < 0 || maximum > score_limit) return false;
-            const auto span = static_cast<std::size_t>(maximum - minimum) + 1u,
-                       count = pairs.size();
-            // Pay count/offset storage and visits, prefix work, sorted backing
-            // allocation/value initialization, full Pair reads/writes and swap
-            // before creating either buffer. All candidates remain present.
-            if (!canvas.work.spend(span * (6u * sizeof(std::size_t) + 16u) +
-                                   count * (4u * sizeof(Pair) + 4u * sizeof(std::size_t) + 16u) +
-                                   8u * sizeof(std::vector<Pair>) +
-                                   4u * sizeof(std::vector<std::size_t>) + 128u))
-                return false;
-            std::vector<std::size_t> next(span, 0u);
-            for (const auto& pair : pairs)
-                ++next[static_cast<std::size_t>(pair.distance - minimum)];
-            std::size_t offset = 0;
-            for (auto& slot : next) {
-                const auto frequency = slot;
-                slot = offset;
-                offset += frequency;
-            }
-            std::vector<Pair> ordered(count);
-            // Enumerating the input in its original order keeps equal scores
-            // stable, exactly as the existing comparison sort does.
-            for (const auto& pair : pairs)
-                ordered[next[static_cast<std::size_t>(pair.distance - minimum)]++] = pair;
-            pairs.swap(ordered);
+    std::span<Pair> candidates = use_compact_pairs
+                                     ? std::span<Pair>(compact_pairs.get(), compact_count)
+                                     : std::span<Pair>(pairs);
+    std::unique_ptr<std::uint16_t[]> ordered_indices;
+    bool compact_order = false;
+    if (note_leader && use_compact_pairs) {
+        compact_order = candidates.size() > 1u;
+        if (!compact_note_order(candidates, canvas.work, ordered_indices)) return false;
+    } else if ((note_leader || retry_storage) && candidates.size() > 1u) {
+        // Large candidates keep the former wide, full-Pair stable ordering.
+        if (!canvas.work.spend(candidates.size() * (8u * sizeof(int) + 16u) + 4u * sizeof(int) +
+                               4u * sizeof(std::size_t) + 128u))
+            return false;
+        int minimum = candidates.front().distance, maximum = minimum;
+        for (const auto& pair : candidates) {
+            minimum = std::min(minimum, pair.distance);
+            maximum = std::max(maximum, pair.distance);
         }
-    } else {
+        if (minimum < 0 || maximum > kNoteScoreLimit) return false;
+        const auto span = static_cast<std::size_t>(maximum - minimum) + 1u,
+                   count = candidates.size();
+        if (!canvas.work.spend(span * (6u * sizeof(std::size_t) + 16u) +
+                               count * (4u * sizeof(Pair) + 4u * sizeof(std::size_t) + 16u) +
+                               8u * sizeof(std::vector<Pair>) +
+                               4u * sizeof(std::vector<std::size_t>) + 128u))
+            return false;
+        std::vector<std::size_t> next(span, 0u);
+        for (const auto& pair : pairs)
+            ++next[static_cast<std::size_t>(pair.distance - minimum)];
+        std::size_t offset = 0;
+        for (auto& slot : next) {
+            const auto frequency = slot;
+            slot = offset;
+            offset += frequency;
+        }
+        std::vector<Pair> ordered(count);
+        for (const auto& pair : pairs)
+            ordered[next[static_cast<std::size_t>(pair.distance - minimum)]++] = pair;
+        pairs.swap(ordered);
+        candidates = std::span<Pair>(pairs);
+    } else if (!note_leader && !retry_storage) {
         if (er_paint) {
             const auto levels = std::bit_width(pairs.size());
             if (!canvas.work.spend(pairs.size() *
@@ -5179,7 +5342,8 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
         }
         std::ranges::stable_sort(pairs, {}, &Pair::distance);
     }
-    for (const auto pair : pairs) {
+    for (std::size_t order = 0; order < candidates.size(); ++order) {
+        const auto pair = candidates[compact_order ? ordered_indices[order] : order];
         if (!canvas.work.spend()) return false;
         const auto p = from[pair.a], q = to[pair.b];
 
@@ -5486,6 +5650,48 @@ bool route_scope(Canvas& canvas, const RelationDiagram& diagram, const RelationL
         std::ranges::stable_sort(edges, [&](int a, int b) { return length(a) > length(b); });
     else
         std::ranges::stable_sort(edges, [&](int a, int b) { return length(a) < length(b); });
+    if (diagram.family == RelationFamily::Class && layout.class_endpoint_active && owner == -1 &&
+        !layout.compound_scope && !reciprocal && !diagram.class_namespaces &&
+        !diagram.class_notes && diagram.notes.empty()) {
+        // Route wider central labels first when cardinalities compete.
+        // Prepay the discovery pass before inspecting any input-dependent labels.
+        constexpr auto max = std::numeric_limits<std::size_t>::max();
+        if (edges.size() > (max - 32u) / 16u || !canvas.work.spend(edges.size() * 16u + 32u))
+            return false;
+        std::size_t bytes = 0, captions = 0;
+        for (const int index : edges) {
+            const auto& edge = diagram.edges[static_cast<std::size_t>(index)];
+            if (edge.endpoint_texts) {
+                ++captions;
+                if (edge.label.size() > std::numeric_limits<std::size_t>::max() - bytes)
+                    return false;
+                bytes += edge.label.size();
+            }
+        }
+        constexpr auto byte_work = 8u * sizeof(std::string_view) + 4u * sizeof(std::string) + 64u;
+        if (captions > 1u) {
+            // A flat, note-free Class diagram has one root scope. Verify that
+            // before charging and allocating the diagram-indexed width array.
+            if (edges.size() != diagram.edges.size()) return false;
+            std::size_t levels = 0;
+            for (auto n = edges.size(); n > 1u; n = (n + 1u) / 2u)
+                ++levels;
+            const auto edge_work = 1024u + levels * 64u;
+            if (edges.size() > (max - 384u) / edge_work ||
+                bytes > (max - 384u - edges.size() * edge_work) / byte_work ||
+                !canvas.work.spend(edges.size() * edge_work + bytes * byte_work + 384u))
+                return false;
+            std::vector<int> widths(diagram.edges.size(), 0);
+            for (const auto index : edges) {
+                const auto& edge = diagram.edges[static_cast<std::size_t>(index)];
+                if (edge.endpoint_texts)
+                    widths[static_cast<std::size_t>(index)] = label_width(edge.label);
+            }
+            std::ranges::stable_sort(edges, [&](int a, int b) {
+                return widths[static_cast<std::size_t>(a)] > widths[static_cast<std::size_t>(b)];
+            });
+        }
+    }
     for (const int edge : edges) {
         const auto index = static_cast<std::size_t>(edge);
         std::optional<CompoundScopeRoute> compound_route;
@@ -5525,8 +5731,24 @@ bool route_scope(Canvas& canvas, const RelationDiagram& diagram, const RelationL
 }
 }  // namespace
 
-std::optional<LayoutPayload> relations_layout(std::string_view source, Work& work,
-                                              bool class_envelope, bool requirement_input) {
+std::optional<testing::ClassAccessibilityMetadata>
+class_accessibility_metadata(std::string_view source, Work& work, bool class_envelope) {
+    if (!work.spend(8u * sizeof(testing::ClassAccessibilityMetadata) + 128u)) return {};
+    std::optional<RelationDiagram> diagram;
+    if (class_envelope) {
+        auto envelope = class_source_envelope(source, work);
+        if (!envelope) return {};
+        diagram = parse_relations(envelope->body, work, &*envelope);
+    } else
+        diagram = parse_relations(source, work);
+    if (!diagram || diagram->family != RelationFamily::Class) return {};
+    return testing::ClassAccessibilityMetadata{std::move(diagram->class_accessibility_title),
+                                               std::move(diagram->class_accessibility_description)};
+}
+
+std::optional<std::vector<std::string>>
+relations_layout(std::string_view source, Work& work, bool class_envelope, bool requirement_input,
+                 std::optional<StyledRows>* styles, std::vector<std::uint16_t>* packed_styles) {
     // New bool/pointer forwarding and the bounded three-reference local closure
     // are charged even on default ER/State/Class paths, without a Work reset.
     if (!work.spend(8u * sizeof(void*) + 8u * sizeof(bool))) return {};
@@ -5553,7 +5775,7 @@ std::optional<LayoutPayload> relations_layout(std::string_view source, Work& wor
     if (diagram->family == RelationFamily::Er && diagram->entities.empty()) {
         // Titled-empty composition has no reviewed complete-scene profile yet.
         if (diagram->diagram_title) return {};
-        return LayoutPayload{{""}, {}};
+        return std::vector<std::string>{""};
     }
     // New private active-hint/row-array pointer initialization and destruction.
     if (!work.spend(3u * sizeof(std::unique_ptr<std::array<int, 64>>) + sizeof(bool) +
@@ -5697,23 +5919,73 @@ std::optional<LayoutPayload> relations_layout(std::string_view source, Work& wor
         note_boxes.push_back(box);
     }
     if (!route_scope(canvas, *diagram, layout, -1, er_paint ? &*er_paint : nullptr)) return {};
-    if (er_paint) return er_paint->finish(*diagram);
+    if (er_paint) {
+        auto payload = er_paint->finish(*diagram);
+        if (!payload) return {};
+        if (packed_styles) *packed_styles = std::move(payload->styles);
+        return std::move(payload->rows);
+    }
+    if (diagram->direct_styles && !paint_class_direct_styles(canvas, *diagram, layout.boxes))
+        return {};
     auto result = canvas.lines();
     if (result.empty()) return {};
-    if (!diagram->diagram_title) return LayoutPayload{std::move(result), {}};
-    if (result.size() > static_cast<std::size_t>(kHeightLimit - 2) ||
-        !work.spend(result.size() + diagram->diagram_title->size() + 2))
-        return {};
-    if (diagram->family == RelationFamily::Class &&
-        !work.spend((result.size() + 2u) * 2u * sizeof(std::string) + result.size() * 2u +
-                    diagram->diagram_title->size() * 2u + 64u))
-        return {};
-    std::vector<std::string> titled;
-    titled.reserve(result.size() + 2);
-    titled.push_back(*diagram->diagram_title);
-    titled.emplace_back();
-    for (auto& line : result)
-        titled.push_back(std::move(line));
-    return LayoutPayload{std::move(titled), {}};
+    const auto drawing_rows = result.size();
+    std::size_t leading_rows = 0u;
+    if (diagram->diagram_title) {
+        if (result.size() > static_cast<std::size_t>(kHeightLimit - 2) ||
+            !work.spend(result.size() + diagram->diagram_title->size() + 2))
+            return {};
+        if (diagram->family == RelationFamily::Class &&
+            !work.spend((result.size() + 2u) * 2u * sizeof(std::string) + result.size() * 2u +
+                        diagram->diagram_title->size() * 2u + 64u))
+            return {};
+        std::vector<std::string> titled;
+        titled.reserve(result.size() + 2);
+        titled.push_back(*diagram->diagram_title);
+        titled.emplace_back();
+        for (auto& line : result)
+            titled.push_back(std::move(line));
+        result = std::move(titled);
+        leading_rows = 2u;
+    }
+    if (diagram->direct_styles) {
+        const auto& legend = diagram->direct_styles->legend;
+        if (result.size() + legend.size() > static_cast<std::size_t>(kHeightLimit) ||
+            !work.spend(legend.size() * (4u * sizeof(std::string) + 1024u) + 256u))
+            return {};
+        for (const auto& line : legend)
+            result.push_back(line);
+        auto owned = extract_styled_rows(canvas, result, leading_rows, drawing_rows, work);
+        if (!owned) return {};
+        if (styles) *styles = std::move(*owned);
+    }
+    return result;
 }
 }  // namespace loom::ui::mermaid::detail
+
+namespace loom::ui::mermaid::testing {
+std::optional<std::vector<std::size_t>> class_note_candidate_order(std::span<const int> scores,
+                                                                   Work& work) {
+    const auto count = scores.size();
+    if (count > std::numeric_limits<std::uint16_t>::max()) return {};
+    constexpr auto per = 4u * sizeof(detail::Pair) + 4u * sizeof(std::size_t) + 32u;
+    if (count > (std::numeric_limits<std::size_t>::max() - 256u) / per ||
+        !work.spend(count * per + 256u))
+        return {};
+    auto pairs = std::make_unique_for_overwrite<detail::Pair[]>(count);
+    for (std::size_t i = 0; i < count; ++i) {
+        if (scores[i] < 0 || scores[i] > detail::kNoteScoreLimit) return {};
+        pairs[i].a = 0;
+        pairs[i].b = 0;
+        pairs[i].distance = scores[i];
+    }
+    std::unique_ptr<std::uint16_t[]> ordered;
+    if (!detail::compact_note_order(std::span<const detail::Pair>(pairs.get(), count), work,
+                                    ordered))
+        return {};
+    std::vector<std::size_t> result(count);
+    for (std::size_t i = 0; i < count; ++i)
+        result[i] = count > 1u ? ordered[i] : i;
+    return result;
+}
+}  // namespace loom::ui::mermaid::testing

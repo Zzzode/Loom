@@ -1,0 +1,63 @@
+{
+  "schema": "mermaid_flow_p0_strands2_comparison/v1",
+  "before": {
+    "drawn": 642,
+    "fallback": 1501,
+    "error": 2
+  },
+  "after": {
+    "drawn": 644,
+    "fallback": 1501,
+    "error": 0
+  },
+  "changed_observations": [
+    {
+      "fixture": "flowchart/nightly-check/dagre/7213-should-render-dagre-edges-with-right-angles-not-curves.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "flowchart/visual-check/issue-4648-nested-subgraph-with-external-connection.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    }
+  ],
+  "other_observation_statuses_unchanged": 2736,
+  "matrix_sha256": "b4d39048be0674dd0c7fb9179aa1027c0dec756fb91b82a84efb6d767a262e9e",
+  "regression": {
+    "debug": {
+      "passed": 867,
+      "total": 867,
+      "seconds": 287.5
+    },
+    "release": {
+      "passed": 867,
+      "total": 867,
+      "seconds": 37.32
+    }
+  },
+  "post_review_exact_cardinality_branch_control": {
+    "debug": "1/1 passed after rebuilding",
+    "release": "1/1 passed after rebuilding",
+    "production_and_classifier_unchanged_since_full_regression": true
+  },
+  "scope": "All Mermaid-labeled CTest tests; not full-project CTest, browser equivalence or LLVM coverage."
+}

@@ -1,0 +1,2137 @@
+{
+  "schema": "flow_p0_10_source_models/proposal-v1",
+  "qualification": "Source-only proposal for all ten P0 originals. No runtime, parser/layout correctness, native geometry, browser/dagre/theme/curve/HTML equivalence, or coverage credit is inferred. Original authority history and foreign debts unchanged. Edge length proposals require review.",
+  "rows": [
+    {
+      "fixture": "flowchart/nightly-check/dagre/2050-dagre-handling-of-different-rendering-direction-in-subgraphs.mmd",
+      "flow_ordinal": 15,
+      "manifest_global_ordinal": 676,
+      "complete_manifest_record": {
+        "path": "flowchart/nightly-check/dagre/2050-dagre-handling-of-different-rendering-direction-in-subgraphs.mmd",
+        "sha256": "72366985bda8c7b42cf9018299c9c2946d22ba27aacff41d57aa6a7e615e8fa2",
+        "git_blob": "10fcf329897905b705b308aee377a73dad0e2f67",
+        "bytes": 481,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "source",
+          "reason": "group-edge-endpoint-outside-current-batch",
+          "witness": {
+            "offset": 160,
+            "text": "A --> TOP --> B"
+          },
+          "offset": 293,
+          "sha256": "9bb75029a7eba85b95a5ea7af093f768fcde33c0668d99d56577a04de0914c3d"
+        }
+      },
+      "source_utf8": "---\ndescription:\n  Checks that a subgraph can declare its own layout direction independent of the\n  parent flowchart's direction, and that dagre lays out the nested subgraph\n  accordingly.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart LR\n\n  subgraph TOP\n  direction TB\n  subgraph B1\n      direction RL\n      i1 -->f1\n  end\n  subgraph B2\n      direction BT\n      i2 -->f2\n  end\n  end\n  A --> TOP --> B\n  B1 --> B2\n",
+      "source_bytes": 481,
+      "source_sha256": "72366985bda8c7b42cf9018299c9c2946d22ba27aacff41d57aa6a7e615e8fa2",
+      "model": {
+        "base_model": {
+          "direction": "LR",
+          "nodes": [
+            [
+              "i1",
+              {
+                "id": "i1",
+                "label": "i1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "f1",
+              {
+                "id": "f1",
+                "label": "f1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "i2",
+              {
+                "id": "i2",
+                "label": "i2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "f2",
+              {
+                "id": "f2",
+                "label": "f2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "A",
+              {
+                "id": "A",
+                "label": "A",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "B",
+              {
+                "id": "B",
+                "label": "B",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "i1",
+              "target": "f1",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "i2",
+              "target": "f2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "TOP",
+              "label": "TOP",
+              "direction": "TB",
+              "nodeIds": [],
+              "children": [
+                {
+                  "id": "B1",
+                  "label": "B1",
+                  "direction": "RL",
+                  "nodeIds": [
+                    "i1",
+                    "f1"
+                  ],
+                  "children": []
+                },
+                {
+                  "id": "B2",
+                  "label": "B2",
+                  "direction": "BT",
+                  "nodeIds": [
+                    "i2",
+                    "f2"
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "vertex",
+              "id": "A"
+            },
+            "target": {
+              "kind": "group",
+              "id": "TOP"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 2
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "TOP"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "B"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 3
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "B1"
+            },
+            "target": {
+              "kind": "group",
+              "id": "B2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 4
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 2
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 6,
+          "groups": 3,
+          "ordinary_vertex_edges": 2,
+          "group_endpoint_edges": 3,
+          "source_edges": 5
+        }
+      },
+      "canonical_model_bytes": 1608,
+      "canonical_model_sha256": "ccc3b72afb5adcc10b162fd4f57d610f36da7a88f687db69ec269d418d6d90ff",
+      "source_obligations": {
+        "complete_source_configuration_and_foreign_assertions": "retained as original bytes and manifest; native adaptation/admission reviewed separately",
+        "duplicate_identical_edges": "retain every source occurrence; native multiplicity witness required before admission",
+        "edge_length_proposal": null,
+        "minimum_length_proposal_review": "not applicable to varied explicit lengths"
+      }
+    },
+    {
+      "fixture": "flowchart/nightly-check/dagre/4-dagre-length-of-edges.mmd",
+      "flow_ordinal": 19,
+      "manifest_global_ordinal": 680,
+      "complete_manifest_record": {
+        "path": "flowchart/nightly-check/dagre/4-dagre-length-of-edges.mmd",
+        "sha256": "1d4ebceac88cec1c55f8ec1e0af730e7f87ae1beecd70108ce3b51f453c3beb9",
+        "git_blob": "d060c2818107a7d6dad449023103a8ba08fe31a3",
+        "bytes": 456,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "source",
+          "reason": "extra-arrow-label",
+          "witness": {
+            "offset": 94,
+            "text": "C <-- Label 2 ---> E2"
+          },
+          "offset": 297,
+          "sha256": "c24e556ffa7e8ac70465449c7206cf098c6c083a94e722d33e567eee53e7a2c6"
+        }
+      },
+      "source_utf8": "---\ndescription:\n  Exercises many flowchart edge syntax variants together (differing dash/dot\n  counts, bidirectional arrows, thick and dotted lines, and both prefix- and\n  infix-style labels), checking that dagre lays out edges of varying rendered\n  length correctly.\nconfig:\n  layout: dagre\n---\nflowchart TD\n  L1 --- L2\n  L2 --- C\n  M1 ---> C\n  R1 .-> R2\n  R2 <.-> C\n  C -->|Label 1| E1\n  C <-- Label 2 ---> E2\n  C ----> E3\n  C <-...-> E4\n  C ======> E5\n",
+      "source_bytes": 456,
+      "source_sha256": "1d4ebceac88cec1c55f8ec1e0af730e7f87ae1beecd70108ce3b51f453c3beb9",
+      "model": {
+        "base_model": {
+          "direction": "TD",
+          "nodes": [
+            [
+              "L1",
+              {
+                "id": "L1",
+                "label": "L1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "L2",
+              {
+                "id": "L2",
+                "label": "L2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "C",
+              {
+                "id": "C",
+                "label": "C",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "M1",
+              {
+                "id": "M1",
+                "label": "M1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "R1",
+              {
+                "id": "R1",
+                "label": "R1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "R2",
+              {
+                "id": "R2",
+                "label": "R2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "E1",
+              {
+                "id": "E1",
+                "label": "E1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "E2",
+              {
+                "id": "E2",
+                "label": "E2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "E3",
+              {
+                "id": "E3",
+                "label": "E3",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "E4",
+              {
+                "id": "E4",
+                "label": "E4",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "E5",
+              {
+                "id": "E5",
+                "label": "E5",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "L1",
+              "target": "L2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "L2",
+              "target": "C",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "M1",
+              "target": "C",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "R1",
+              "target": "R2",
+              "label": "",
+              "style": "dotted",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "R2",
+              "target": "C",
+              "label": "",
+              "style": "dotted",
+              "hasArrowStart": true,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "C",
+              "target": "E1",
+              "label": "Label 1",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "C",
+              "target": "E2",
+              "label": "Label 2",
+              "style": "solid",
+              "hasArrowStart": true,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "C",
+              "target": "E3",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "C",
+              "target": "E4",
+              "label": "",
+              "style": "dotted",
+              "hasArrowStart": true,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "C",
+              "target": "E5",
+              "label": "",
+              "style": "thick",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": []
+        },
+        "tagged_group_endpoint_edges": [],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          },
+          {
+            "kind": "vertex",
+            "index": 2
+          },
+          {
+            "kind": "vertex",
+            "index": 3
+          },
+          {
+            "kind": "vertex",
+            "index": 4
+          },
+          {
+            "kind": "vertex",
+            "index": 5
+          },
+          {
+            "kind": "vertex",
+            "index": 6
+          },
+          {
+            "kind": "vertex",
+            "index": 7
+          },
+          {
+            "kind": "vertex",
+            "index": 8
+          },
+          {
+            "kind": "vertex",
+            "index": 9
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 11,
+          "groups": 0,
+          "ordinary_vertex_edges": 10,
+          "group_endpoint_edges": 0,
+          "source_edges": 10
+        }
+      },
+      "canonical_model_bytes": 2079,
+      "canonical_model_sha256": "73ee7d9dd53a33c9b44dec19c1d1bdafcccda36ebe063426ced831346e0803fd",
+      "source_obligations": {
+        "complete_source_configuration_and_foreign_assertions": "retained as original bytes and manifest; native adaptation/admission reviewed separately",
+        "duplicate_identical_edges": "retain every source occurrence; native multiplicity witness required before admission",
+        "edge_length_proposal": [
+          1,
+          1,
+          2,
+          1,
+          1,
+          1,
+          2,
+          3,
+          3,
+          5
+        ],
+        "minimum_length_proposal_review": "pending source-only independent review",
+        "proposed_node_ranks": {
+          "L1": 0,
+          "L2": 1,
+          "C": 2,
+          "M1": 0,
+          "R1": 0,
+          "R2": 1,
+          "E1": 3,
+          "E2": 4,
+          "E3": 5,
+          "E4": 5,
+          "E5": 7
+        }
+      }
+    },
+    {
+      "fixture": "flowchart/nightly-check/dagre/55-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "flow_ordinal": 26,
+      "manifest_global_ordinal": 687,
+      "complete_manifest_record": {
+        "path": "flowchart/nightly-check/dagre/55-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "sha256": "84e286bea79da3522f89f78d3acb252c34d89c963afb45e97b4aeff9ec0efb57",
+        "git_blob": "5ab3d775cf3b975a6194905ecce588539fa86f34",
+        "bytes": 587,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "source",
+          "reason": "group-edge-endpoint-outside-current-batch",
+          "witness": {
+            "offset": 186,
+            "text": "sub_one --> sub_two"
+          },
+          "offset": 368,
+          "sha256": "ed3dfcaf89dbd10db98a98d0722e3f878633929f8ca2e885a7408366fdd526f6"
+        }
+      },
+      "source_utf8": "---\ndescription:\n  Regression test for an edge drawn directly between two sibling subgraphs\n  nested inside a parent subgraph, alongside an edge from a node inside the\n  subgraph to a node declared only outside it, checking that dagre routes both\n  unambiguously.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart TD\n\n  subgraph one[One]\n  subgraph sub_one[Sub One]\n  _sub_one\n  end\n  subgraph sub_two[Sub Two]\n  _sub_two\n  end\n  _one\n  end\n\n  %% here, either the first or the second one\n  sub_one --> sub_two\n  _one --> b\n",
+      "source_bytes": 587,
+      "source_sha256": "84e286bea79da3522f89f78d3acb252c34d89c963afb45e97b4aeff9ec0efb57",
+      "model": {
+        "base_model": {
+          "direction": "TD",
+          "nodes": [
+            [
+              "_sub_one",
+              {
+                "id": "_sub_one",
+                "label": "_sub_one",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "_sub_two",
+              {
+                "id": "_sub_two",
+                "label": "_sub_two",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "_one",
+              {
+                "id": "_one",
+                "label": "_one",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "b",
+              {
+                "id": "b",
+                "label": "b",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "_one",
+              "target": "b",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "one",
+              "label": "One",
+              "direction": "",
+              "nodeIds": [
+                "_one"
+              ],
+              "children": [
+                {
+                  "id": "sub_one",
+                  "label": "Sub One",
+                  "direction": "",
+                  "nodeIds": [
+                    "_sub_one"
+                  ],
+                  "children": []
+                },
+                {
+                  "id": "sub_two",
+                  "label": "Sub Two",
+                  "direction": "",
+                  "nodeIds": [
+                    "_sub_two"
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "sub_one"
+            },
+            "target": {
+              "kind": "group",
+              "id": "sub_two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 0
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 0
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 4,
+          "groups": 3,
+          "ordinary_vertex_edges": 1,
+          "group_endpoint_edges": 1,
+          "source_edges": 2
+        }
+      },
+      "canonical_model_bytes": 1064,
+      "canonical_model_sha256": "8ede6930357b2493c0617f45348d92338642813e235517521777b4c8a89faa40",
+      "source_obligations": {
+        "complete_source_configuration_and_foreign_assertions": "retained as original bytes and manifest; native adaptation/admission reviewed separately",
+        "duplicate_identical_edges": "retain every source occurrence; native multiplicity witness required before admission",
+        "edge_length_proposal": null,
+        "minimum_length_proposal_review": "not applicable to varied explicit lengths"
+      }
+    },
+    {
+      "fixture": "flowchart/nightly-check/dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "flow_ordinal": 28,
+      "manifest_global_ordinal": 689,
+      "complete_manifest_record": {
+        "path": "flowchart/nightly-check/dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "sha256": "0da0f803ec8e2ccf162bd3ac7013a3d87778763f86788deb336faabbe258187c",
+        "git_blob": "821874248fbef622a9f2661a34eb19ceaa71dcef",
+        "bytes": 457,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "source",
+          "reason": "group-edge-endpoint-outside-current-batch",
+          "witness": {
+            "offset": 120,
+            "text": "one --> two"
+          },
+          "offset": 296,
+          "sha256": "fb40841b605787b3c31ab9c34840d405d05bfd250613b7b32258b2cbabb1324a"
+        }
+      },
+      "source_utf8": "---\ndescription:\n  Verifies dagre layout of three sibling subgraphs connected both via\n  subgraph-to-subgraph edges and via edges that cross directly into internal\n  nodes of other subgraphs.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart TB\n  c1-->a2\n  subgraph one\n  a1-->a2\n  end\n  subgraph two\n  b1-->b2\n  end\n  subgraph three\n  c1-->c2\n  end\n  one --> two\n  three --> two\n  two --> c2\n",
+      "source_bytes": 457,
+      "source_sha256": "0da0f803ec8e2ccf162bd3ac7013a3d87778763f86788deb336faabbe258187c",
+      "model": {
+        "base_model": {
+          "direction": "TB",
+          "nodes": [
+            [
+              "c1",
+              {
+                "id": "c1",
+                "label": "c1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "a2",
+              {
+                "id": "a2",
+                "label": "a2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "a1",
+              {
+                "id": "a1",
+                "label": "a1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "b1",
+              {
+                "id": "b1",
+                "label": "b1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "b2",
+              {
+                "id": "b2",
+                "label": "b2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "c2",
+              {
+                "id": "c2",
+                "label": "c2",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "c1",
+              "target": "a2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "a1",
+              "target": "a2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "b1",
+              "target": "b2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "c1",
+              "target": "c2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "one",
+              "label": "one",
+              "direction": "",
+              "nodeIds": [
+                "a1",
+                "a2"
+              ],
+              "children": []
+            },
+            {
+              "id": "two",
+              "label": "two",
+              "direction": "",
+              "nodeIds": [
+                "b1",
+                "b2"
+              ],
+              "children": []
+            },
+            {
+              "id": "three",
+              "label": "three",
+              "direction": "",
+              "nodeIds": [
+                "c1",
+                "c2"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "one"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 4
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "three"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 5
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "two"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "c2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 6
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          },
+          {
+            "kind": "vertex",
+            "index": 2
+          },
+          {
+            "kind": "vertex",
+            "index": 3
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 2
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 6,
+          "groups": 3,
+          "ordinary_vertex_edges": 4,
+          "group_endpoint_edges": 3,
+          "source_edges": 7
+        }
+      },
+      "canonical_model_bytes": 1884,
+      "canonical_model_sha256": "71e8730c3ea074cebe04ea81a8cd42de869cf3935845d18d35b2e2250133df3d",
+      "source_obligations": {
+        "complete_source_configuration_and_foreign_assertions": "retained as original bytes and manifest; native adaptation/admission reviewed separately",
+        "duplicate_identical_edges": "retain every source occurrence; native multiplicity witness required before admission",
+        "edge_length_proposal": null,
+        "minimum_length_proposal_review": "not applicable to varied explicit lengths"
+      }
+    },
+    {
+      "fixture": "flowchart/nightly-check/dagre/7213-should-render-dagre-edges-with-right-angles-not-curves.mmd",
+      "flow_ordinal": 54,
+      "manifest_global_ordinal": 715,
+      "complete_manifest_record": {
+        "path": "flowchart/nightly-check/dagre/7213-should-render-dagre-edges-with-right-angles-not-curves.mmd",
+        "sha256": "a4889b253941d911e7d1b3dae02117f72473a12d10d91bc7febf8288b8c92f53",
+        "git_blob": "0a88c3af87fb9d0e8c3a11d5edf83f46f95fd1cb",
+        "bytes": 565,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "source",
+          "reason": "unsupported-arrow:---",
+          "witness": {
+            "offset": 95,
+            "text": "---"
+          },
+          "offset": 336,
+          "sha256": "b4f0ef20045a89a58201f4281ef4240a8badba6cfdb7e8a7fdc825e2563aff4e"
+        }
+      },
+      "source_utf8": "---\ndescription:\n  Regression test (issue 7213) verifying that dagre-layout edges, including five\n  parallel duplicate edges between the same pair of nodes and edges fanning out\n  via the & shorthand across subgraph boundaries, are drawn with right-angled\n  (rectilinear) segments rather than smooth curves.\nconfig:\n  layout: dagre\n---\nflowchart LR\n  subgraph G1\n  N00\n  N11\n  N12\n  N13\n  end\n  subgraph G2\n  N21\n  N22\n  end\n  N00 --- N01 & N02 & N03 & N04 & N05\n  N00 --- N11 & N12 & N13 & N22\n  N11 --- N22\n  N11 --- N22\n  N11 --- N22\n  N11 --- N22\n  N11 --- N22\n",
+      "source_bytes": 565,
+      "source_sha256": "a4889b253941d911e7d1b3dae02117f72473a12d10d91bc7febf8288b8c92f53",
+      "model": {
+        "base_model": {
+          "direction": "LR",
+          "nodes": [
+            [
+              "N00",
+              {
+                "id": "N00",
+                "label": "N00",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "N11",
+              {
+                "id": "N11",
+                "label": "N11",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "N12",
+              {
+                "id": "N12",
+                "label": "N12",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "N13",
+              {
+                "id": "N13",
+                "label": "N13",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "N21",
+              {
+                "id": "N21",
+                "label": "N21",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "N22",
+              {
+                "id": "N22",
+                "label": "N22",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "N01",
+              {
+                "id": "N01",
+                "label": "N01",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "N02",
+              {
+                "id": "N02",
+                "label": "N02",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "N03",
+              {
+                "id": "N03",
+                "label": "N03",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "N04",
+              {
+                "id": "N04",
+                "label": "N04",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "N05",
+              {
+                "id": "N05",
+                "label": "N05",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "N00",
+              "target": "N01",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N00",
+              "target": "N02",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N00",
+              "target": "N03",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N00",
+              "target": "N04",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N00",
+              "target": "N05",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N00",
+              "target": "N11",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N00",
+              "target": "N12",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N00",
+              "target": "N13",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N00",
+              "target": "N22",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N11",
+              "target": "N22",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N11",
+              "target": "N22",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N11",
+              "target": "N22",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N11",
+              "target": "N22",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            },
+            {
+              "source": "N11",
+              "target": "N22",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "G1",
+              "label": "G1",
+              "direction": "",
+              "nodeIds": [
+                "N00",
+                "N11",
+                "N12",
+                "N13"
+              ],
+              "children": []
+            },
+            {
+              "id": "G2",
+              "label": "G2",
+              "direction": "",
+              "nodeIds": [
+                "N21",
+                "N22"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          },
+          {
+            "kind": "vertex",
+            "index": 2
+          },
+          {
+            "kind": "vertex",
+            "index": 3
+          },
+          {
+            "kind": "vertex",
+            "index": 4
+          },
+          {
+            "kind": "vertex",
+            "index": 5
+          },
+          {
+            "kind": "vertex",
+            "index": 6
+          },
+          {
+            "kind": "vertex",
+            "index": 7
+          },
+          {
+            "kind": "vertex",
+            "index": 8
+          },
+          {
+            "kind": "vertex",
+            "index": 9
+          },
+          {
+            "kind": "vertex",
+            "index": 10
+          },
+          {
+            "kind": "vertex",
+            "index": 11
+          },
+          {
+            "kind": "vertex",
+            "index": 12
+          },
+          {
+            "kind": "vertex",
+            "index": 13
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 11,
+          "groups": 2,
+          "ordinary_vertex_edges": 14,
+          "group_endpoint_edges": 0,
+          "source_edges": 14
+        }
+      },
+      "canonical_model_bytes": 2824,
+      "canonical_model_sha256": "2ccbff0e6e3091db21f7b87b89521cd49c2ae80e8b714e693799706fa38f1f80",
+      "source_obligations": {
+        "complete_source_configuration_and_foreign_assertions": "retained as original bytes and manifest; native adaptation/admission reviewed separately",
+        "duplicate_identical_edges": "retain every source occurrence; native multiplicity witness required before admission",
+        "edge_length_proposal": null,
+        "minimum_length_proposal_review": "not applicable to varied explicit lengths"
+      }
+    },
+    {
+      "fixture": "flowchart/visual-check/2050-handling-of-different-rendering-direction-in-subgraphs.mmd",
+      "flow_ordinal": 269,
+      "manifest_global_ordinal": 930,
+      "complete_manifest_record": {
+        "path": "flowchart/visual-check/2050-handling-of-different-rendering-direction-in-subgraphs.mmd",
+        "sha256": "2c3b7a57f3edaede358e102d9b8b9e5d84e981b914739ddd1d7184a38f7ec593",
+        "git_blob": "a6161d02cde0e3f5d05d8da03e27013059f5907f",
+        "bytes": 573,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "source",
+          "reason": "group-edge-endpoint-outside-current-batch",
+          "witness": {
+            "offset": 160,
+            "text": "A --> TOP --> B"
+          },
+          "offset": 385,
+          "sha256": "9bb75029a7eba85b95a5ea7af093f768fcde33c0668d99d56577a04de0914c3d"
+        }
+      },
+      "source_utf8": "---\ndescription:\n  Verifies that nested subgraphs can each declare their own `direction` (RL and\n  BT) independently of their parent subgraph's direction (TB) and the top-level\n  diagram's direction (LR), and that edges connecting into, out of, and between\n  the subgraphs still render correctly.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart LR\n\n  subgraph TOP\n  direction TB\n  subgraph B1\n      direction RL\n      i1 -->f1\n  end\n  subgraph B2\n      direction BT\n      i2 -->f2\n  end\n  end\n  A --> TOP --> B\n  B1 --> B2\n",
+      "source_bytes": 573,
+      "source_sha256": "2c3b7a57f3edaede358e102d9b8b9e5d84e981b914739ddd1d7184a38f7ec593",
+      "model": {
+        "base_model": {
+          "direction": "LR",
+          "nodes": [
+            [
+              "i1",
+              {
+                "id": "i1",
+                "label": "i1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "f1",
+              {
+                "id": "f1",
+                "label": "f1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "i2",
+              {
+                "id": "i2",
+                "label": "i2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "f2",
+              {
+                "id": "f2",
+                "label": "f2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "A",
+              {
+                "id": "A",
+                "label": "A",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "B",
+              {
+                "id": "B",
+                "label": "B",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "i1",
+              "target": "f1",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "i2",
+              "target": "f2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "TOP",
+              "label": "TOP",
+              "direction": "TB",
+              "nodeIds": [],
+              "children": [
+                {
+                  "id": "B1",
+                  "label": "B1",
+                  "direction": "RL",
+                  "nodeIds": [
+                    "i1",
+                    "f1"
+                  ],
+                  "children": []
+                },
+                {
+                  "id": "B2",
+                  "label": "B2",
+                  "direction": "BT",
+                  "nodeIds": [
+                    "i2",
+                    "f2"
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "vertex",
+              "id": "A"
+            },
+            "target": {
+              "kind": "group",
+              "id": "TOP"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 2
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "TOP"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "B"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 3
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "B1"
+            },
+            "target": {
+              "kind": "group",
+              "id": "B2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 4
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 2
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 6,
+          "groups": 3,
+          "ordinary_vertex_edges": 2,
+          "group_endpoint_edges": 3,
+          "source_edges": 5
+        }
+      },
+      "canonical_model_bytes": 1608,
+      "canonical_model_sha256": "ccc3b72afb5adcc10b162fd4f57d610f36da7a88f687db69ec269d418d6d90ff",
+      "source_obligations": {
+        "complete_source_configuration_and_foreign_assertions": "retained as original bytes and manifest; native adaptation/admission reviewed separately",
+        "duplicate_identical_edges": "retain every source occurrence; native multiplicity witness required before admission",
+        "edge_length_proposal": null,
+        "minimum_length_proposal_review": "not applicable to varied explicit lengths"
+      }
+    },
+    {
+      "fixture": "flowchart/visual-check/5064-should-render-when-subgraph-child-has-links-to-outside-node-and-subgraph.mmd",
+      "flow_ordinal": 303,
+      "manifest_global_ordinal": 964,
+      "complete_manifest_record": {
+        "path": "flowchart/visual-check/5064-should-render-when-subgraph-child-has-links-to-outside-node-and-subgraph.mmd",
+        "sha256": "a0ab1c8f8393cb9a771cd6f40f35ec5d0b9ace5c25a6272c3b42a335da38579b",
+        "git_blob": "d8850ca976f4e05bf7a5810cd9ecc4a3c06faa85",
+        "bytes": 296,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "source",
+          "reason": "group-edge-endpoint-outside-current-batch",
+          "witness": {
+            "offset": 54,
+            "text": "Sub --> In"
+          },
+          "offset": 231,
+          "sha256": "ec61c12f1c4fa395d3f6a4a9badd27e8dc98e5954c66758be6f7859db2647a47"
+        }
+      },
+      "source_utf8": "---\ndescription:\n  Checks that a node (In) inside a subgraph (Sub) can simultaneously receive an\n  edge from an outside node (Out --> In) and an edge from its own parent\n  subgraph container (Sub --> In) without layout errors.\n---\nflowchart TB\n  Out --> In\n  subgraph Sub\n  In\n  end\n  Sub --> In\n",
+      "source_bytes": 296,
+      "source_sha256": "a0ab1c8f8393cb9a771cd6f40f35ec5d0b9ace5c25a6272c3b42a335da38579b",
+      "model": {
+        "base_model": {
+          "direction": "TB",
+          "nodes": [
+            [
+              "Out",
+              {
+                "id": "Out",
+                "label": "Out",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "In",
+              {
+                "id": "In",
+                "label": "In",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "Out",
+              "target": "In",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "Sub",
+              "label": "Sub",
+              "direction": "",
+              "nodeIds": [
+                "In"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "Sub"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "In"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 1
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 2,
+          "groups": 1,
+          "ordinary_vertex_edges": 1,
+          "group_endpoint_edges": 1,
+          "source_edges": 2
+        }
+      },
+      "canonical_model_bytes": 741,
+      "canonical_model_sha256": "8dc68569a217d9b804ba5248dac52a68b854ae0b55894904dcfb2130460fa64a",
+      "source_obligations": {
+        "complete_source_configuration_and_foreign_assertions": "retained as original bytes and manifest; native adaptation/admission reviewed separately",
+        "duplicate_identical_edges": "retain every source occurrence; native multiplicity witness required before admission",
+        "edge_length_proposal": null,
+        "minimum_length_proposal_review": "not applicable to varied explicit lengths"
+      }
+    },
+    {
+      "fixture": "flowchart/visual-check/55-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "flow_ordinal": 306,
+      "manifest_global_ordinal": 967,
+      "complete_manifest_record": {
+        "path": "flowchart/visual-check/55-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "sha256": "dd7af0ae31d1bc5ed20388d3c5f32783a39e0f0b1fb7175f4676334be607174c",
+        "git_blob": "a031db5a91bcbf275c7d570162b282779cfb4894",
+        "bytes": 681,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "source",
+          "reason": "group-edge-endpoint-outside-current-batch",
+          "witness": {
+            "offset": 186,
+            "text": "sub_one --> sub_two"
+          },
+          "offset": 462,
+          "sha256": "ed3dfcaf89dbd10db98a98d0722e3f878633929f8ca2e885a7408366fdd526f6"
+        }
+      },
+      "source_utf8": "---\ndescription:\n  In a top-to-bottom flowchart, checks a direct edge between two sibling child\n  subgraphs nested inside the same parent (sub_one --> sub_two) alongside an\n  outgoing edge from a node declared directly in the parent subgraph to a node\n  outside all subgraphs (_one --> b), including a source comment noting the\n  declaration-order sensitivity of this case.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart TD\n\n  subgraph one[One]\n  subgraph sub_one[Sub One]\n  _sub_one\n  end\n  subgraph sub_two[Sub Two]\n  _sub_two\n  end\n  _one\n  end\n\n  %% here, either the first or the second one\n  sub_one --> sub_two\n  _one --> b\n",
+      "source_bytes": 681,
+      "source_sha256": "dd7af0ae31d1bc5ed20388d3c5f32783a39e0f0b1fb7175f4676334be607174c",
+      "model": {
+        "base_model": {
+          "direction": "TD",
+          "nodes": [
+            [
+              "_sub_one",
+              {
+                "id": "_sub_one",
+                "label": "_sub_one",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "_sub_two",
+              {
+                "id": "_sub_two",
+                "label": "_sub_two",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "_one",
+              {
+                "id": "_one",
+                "label": "_one",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "b",
+              {
+                "id": "b",
+                "label": "b",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "_one",
+              "target": "b",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "one",
+              "label": "One",
+              "direction": "",
+              "nodeIds": [
+                "_one"
+              ],
+              "children": [
+                {
+                  "id": "sub_one",
+                  "label": "Sub One",
+                  "direction": "",
+                  "nodeIds": [
+                    "_sub_one"
+                  ],
+                  "children": []
+                },
+                {
+                  "id": "sub_two",
+                  "label": "Sub Two",
+                  "direction": "",
+                  "nodeIds": [
+                    "_sub_two"
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "sub_one"
+            },
+            "target": {
+              "kind": "group",
+              "id": "sub_two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 0
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 0
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 4,
+          "groups": 3,
+          "ordinary_vertex_edges": 1,
+          "group_endpoint_edges": 1,
+          "source_edges": 2
+        }
+      },
+      "canonical_model_bytes": 1064,
+      "canonical_model_sha256": "8ede6930357b2493c0617f45348d92338642813e235517521777b4c8a89faa40",
+      "source_obligations": {
+        "complete_source_configuration_and_foreign_assertions": "retained as original bytes and manifest; native adaptation/admission reviewed separately",
+        "duplicate_identical_edges": "retain every source occurrence; native multiplicity witness required before admission",
+        "edge_length_proposal": null,
+        "minimum_length_proposal_review": "not applicable to varied explicit lengths"
+      }
+    },
+    {
+      "fixture": "flowchart/visual-check/57-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "flow_ordinal": 308,
+      "manifest_global_ordinal": 969,
+      "complete_manifest_record": {
+        "path": "flowchart/visual-check/57-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+        "sha256": "4aff65938cfea8a17a085cb20ae697b5a3e613c5505c622e6cecfed2ad026483",
+        "git_blob": "db625b1ed553606b0e1686c2961de30847985f3c",
+        "bytes": 557,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "source",
+          "reason": "group-edge-endpoint-outside-current-batch",
+          "witness": {
+            "offset": 120,
+            "text": "one --> two"
+          },
+          "offset": 396,
+          "sha256": "fb40841b605787b3c31ab9c34840d405d05bfd250613b7b32258b2cbabb1324a"
+        }
+      },
+      "source_utf8": "---\ndescription:\n  In a top-down flowchart with three sibling subgraphs (one, two, three), checks\n  a mix of edges between subgraph containers themselves (one --> two, three -->\n  two, two --> c2) and a cross-subgraph node-to-node edge (c1 --> a2) declared\n  in the source before either subgraph is defined.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart TB\n  c1-->a2\n  subgraph one\n  a1-->a2\n  end\n  subgraph two\n  b1-->b2\n  end\n  subgraph three\n  c1-->c2\n  end\n  one --> two\n  three --> two\n  two --> c2\n",
+      "source_bytes": 557,
+      "source_sha256": "4aff65938cfea8a17a085cb20ae697b5a3e613c5505c622e6cecfed2ad026483",
+      "model": {
+        "base_model": {
+          "direction": "TB",
+          "nodes": [
+            [
+              "c1",
+              {
+                "id": "c1",
+                "label": "c1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "a2",
+              {
+                "id": "a2",
+                "label": "a2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "a1",
+              {
+                "id": "a1",
+                "label": "a1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "b1",
+              {
+                "id": "b1",
+                "label": "b1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "b2",
+              {
+                "id": "b2",
+                "label": "b2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "c2",
+              {
+                "id": "c2",
+                "label": "c2",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "c1",
+              "target": "a2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "a1",
+              "target": "a2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "b1",
+              "target": "b2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "c1",
+              "target": "c2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "one",
+              "label": "one",
+              "direction": "",
+              "nodeIds": [
+                "a1",
+                "a2"
+              ],
+              "children": []
+            },
+            {
+              "id": "two",
+              "label": "two",
+              "direction": "",
+              "nodeIds": [
+                "b1",
+                "b2"
+              ],
+              "children": []
+            },
+            {
+              "id": "three",
+              "label": "three",
+              "direction": "",
+              "nodeIds": [
+                "c1",
+                "c2"
+              ],
+              "children": []
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [
+          {
+            "source": {
+              "kind": "group",
+              "id": "one"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 4
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "three"
+            },
+            "target": {
+              "kind": "group",
+              "id": "two"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 5
+          },
+          {
+            "source": {
+              "kind": "group",
+              "id": "two"
+            },
+            "target": {
+              "kind": "vertex",
+              "id": "c2"
+            },
+            "label": "",
+            "style": "solid",
+            "hasArrowStart": false,
+            "hasArrowEnd": true,
+            "source_order": 6
+          }
+        ],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          },
+          {
+            "kind": "vertex",
+            "index": 2
+          },
+          {
+            "kind": "vertex",
+            "index": 3
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 0
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 1
+          },
+          {
+            "kind": "group_endpoint",
+            "index": 2
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 6,
+          "groups": 3,
+          "ordinary_vertex_edges": 4,
+          "group_endpoint_edges": 3,
+          "source_edges": 7
+        }
+      },
+      "canonical_model_bytes": 1884,
+      "canonical_model_sha256": "71e8730c3ea074cebe04ea81a8cd42de869cf3935845d18d35b2e2250133df3d",
+      "source_obligations": {
+        "complete_source_configuration_and_foreign_assertions": "retained as original bytes and manifest; native adaptation/admission reviewed separately",
+        "duplicate_identical_edges": "retain every source occurrence; native multiplicity witness required before admission",
+        "edge_length_proposal": null,
+        "minimum_length_proposal_review": "not applicable to varied explicit lengths"
+      }
+    },
+    {
+      "fixture": "flowchart/visual-check/issue-4648-nested-subgraph-with-external-connection.mmd",
+      "flow_ordinal": 357,
+      "manifest_global_ordinal": 1018,
+      "complete_manifest_record": {
+        "path": "flowchart/visual-check/issue-4648-nested-subgraph-with-external-connection.mmd",
+        "sha256": "403c54cf5f29cc7de0886f4ac363fd8c3229bc3d0d4539023f1a9a15a9a560a8",
+        "git_blob": "2bfa9e0e828f284b9dea4e7eac7019e139b2fae6",
+        "bytes": 529,
+        "raw": {
+          "expected": "source",
+          "reason": "frontmatter",
+          "witness": {
+            "offset": 0,
+            "text": "---\n"
+          }
+        },
+        "diagnostic": {
+          "expected": "source",
+          "reason": "unsupported-arrow:---",
+          "witness": {
+            "offset": 151,
+            "text": "---"
+          },
+          "offset": 371,
+          "sha256": "45932d09d8cd7497c7c0670e1a503429127c6ef5f01517d3a4d587e598fad82c"
+        }
+      },
+      "source_utf8": "---\ndescription: >-\n  Regression test for issue #4648: verifies that an edge connecting a node\n  inside a doubly-nested subgraph (Inner, which uses its own LR direction,\n  nested within Wrapper) to a node outside all subgraphs renders correctly\n  without breaking the nested layout.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\nflowchart TD\n\n  subgraph Wrapper\n  direction LR\n  subgraph Inner\n  D1 --> D2\n  D2 --> D3\n  end\n  end\n\n  %% External connection to nested subgraph\n  D3 --- E1\n",
+      "source_bytes": 529,
+      "source_sha256": "403c54cf5f29cc7de0886f4ac363fd8c3229bc3d0d4539023f1a9a15a9a560a8",
+      "model": {
+        "base_model": {
+          "direction": "TD",
+          "nodes": [
+            [
+              "D1",
+              {
+                "id": "D1",
+                "label": "D1",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "D2",
+              {
+                "id": "D2",
+                "label": "D2",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "D3",
+              {
+                "id": "D3",
+                "label": "D3",
+                "shape": "rectangle"
+              }
+            ],
+            [
+              "E1",
+              {
+                "id": "E1",
+                "label": "E1",
+                "shape": "rectangle"
+              }
+            ]
+          ],
+          "edges": [
+            {
+              "source": "D1",
+              "target": "D2",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "D2",
+              "target": "D3",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": true
+            },
+            {
+              "source": "D3",
+              "target": "E1",
+              "label": "",
+              "style": "solid",
+              "hasArrowStart": false,
+              "hasArrowEnd": false
+            }
+          ],
+          "subgraphs": [
+            {
+              "id": "Wrapper",
+              "label": "Wrapper",
+              "direction": "LR",
+              "nodeIds": [],
+              "children": [
+                {
+                  "id": "Inner",
+                  "label": "Inner",
+                  "direction": "",
+                  "nodeIds": [
+                    "D1",
+                    "D2",
+                    "D3"
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "tagged_group_endpoint_edges": [],
+        "source_edge_order": [
+          {
+            "kind": "vertex",
+            "index": 0
+          },
+          {
+            "kind": "vertex",
+            "index": 1
+          },
+          {
+            "kind": "vertex",
+            "index": 2
+          }
+        ],
+        "source_semantic_counts": {
+          "nodes": 4,
+          "groups": 2,
+          "ordinary_vertex_edges": 3,
+          "group_endpoint_edges": 0,
+          "source_edges": 3
+        }
+      },
+      "canonical_model_bytes": 990,
+      "canonical_model_sha256": "6099cc34612fe0780b7466ffdcceac69b7a8b71b3382e514c38e278c7cbcd121",
+      "source_obligations": {
+        "complete_source_configuration_and_foreign_assertions": "retained as original bytes and manifest; native adaptation/admission reviewed separately",
+        "duplicate_identical_edges": "retain every source occurrence; native multiplicity witness required before admission",
+        "edge_length_proposal": null,
+        "minimum_length_proposal_review": "not applicable to varied explicit lengths"
+      }
+    }
+  ]
+}

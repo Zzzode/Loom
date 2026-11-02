@@ -1,0 +1,57 @@
+{
+  "schema": "requirement_markdown1_source_supplement/v1",
+  "qualification": "Source-only complete typed terminal Model. Preserve Markdown punctuation literally under the existing plain text terminal contract; no browser bold/italic styling, accessibility or foreign assertion equivalence claimed. Runtime admission separate.",
+  "manifest_global_ordinal": 1493,
+  "complete_manifest_record": {
+    "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd",
+    "sha256": "f6191d86b05c8b654c0ecb9de0fc7744d0e00b8f0a9fe681981e8f2d4f52d9c8",
+    "git_blob": "ce7c2d33da16c604797d61ec4c27f6783bed75e5",
+    "bytes": 446,
+    "raw": {
+      "expected": "source",
+      "reason": "frontmatter",
+      "witness": {
+        "offset": 0,
+        "text": "---\n"
+      }
+    }
+  },
+  "source": "---\ndescription: >-\n  Markdown bold/italic emphasis in a requirement's quoted name and text, and an\n  element's quoted name/type/docref.\n---\nrequirementDiagram\n    requirement \"__my bolded name__\" {\n        id: 1\n        text: \"**Bolded text** _italicized text_\"\n        risk: high\n        verifymethod: test\n    }\n    element \"*my italicized name*\" {\n      type: \"**Bolded type** _italicized type_\"\n      docref: \"*Italicized* __Bolded__\"\n    }\n",
+  "model": {
+    "ordinal": 105,
+    "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd",
+    "source_bytes": 446,
+    "source_sha256": "f6191d86b05c8b654c0ecb9de0fc7744d0e00b8f0a9fe681981e8f2d4f52d9c8",
+    "direction": "TB",
+    "nodes": [
+      {
+        "role": "requirement",
+        "logical_name": "__my bolded name__",
+        "stereotype": "Requirement",
+        "metadata": {
+          "id": "1",
+          "text": "**Bolded text** _italicized text_",
+          "risk": "High",
+          "verification": "Test",
+          "type": null,
+          "doc_ref": null
+        }
+      },
+      {
+        "role": "element",
+        "logical_name": "*my italicized name*",
+        "stereotype": "Element",
+        "metadata": {
+          "id": null,
+          "text": null,
+          "risk": null,
+          "verification": null,
+          "type": "**Bolded type** _italicized type_",
+          "doc_ref": "*Italicized* __Bolded__"
+        }
+      }
+    ],
+    "relations": []
+  },
+  "model_sha256": "fdc99d74dfdd9b341048171d6b05c900642319039a02dd04d5a46fc64298d198"
+}

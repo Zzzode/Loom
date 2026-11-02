@@ -1,0 +1,401 @@
+{
+  "schema": "class26_spike_matrix_comparison/v1",
+  "qualification": "Debug before-and-after comparison of reviewed Class routing change. Original plus diagnostic tracks, including fallback and error outcomes.",
+  "baseline_sha256": "07b08446ff905bb6907353cd65d31533dbf1ad25f3b20f7db521cd1517ac0cb4",
+  "spike_sha256": "a9ff29453aeeddf44bda8c8fb9d521ec43ba8a6bcd73522704b4087f9ac8c0d9",
+  "rows_compared": 2738,
+  "original_rows_compared": 2145,
+  "changed_rows": [
+    {
+      "fixture": "class-diagram/nightly-check/2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+      "track": "original",
+      "source_sha256": "6c1d14a70cc29966565d68e0e2a533b8a2ea2b236e1e7883e7eeb9694fe5e0ff",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality-2.mmd",
+      "track": "original",
+      "source_sha256": "8ed3421207aa0c78c15e51975389a66ad185a124c7605815e76a6df328a308f8",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+      "track": "original",
+      "source_sha256": "f120ad29e3710f3beface82f67ca1805588bf8f13003d5996bb741276bdf3fc4",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+      "track": "original",
+      "source_sha256": "fe45f7b4f65da2345986699334a2395aa005601ac587ed91ffb1d0045c6cd74a",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+      "track": "original",
+      "source_sha256": "2232ca046e809f0935da0e223f8ab8cf93e7935624f887909e779503eebead64",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+      "track": "original",
+      "source_sha256": "030638d281daabc2fd9a077b7f7457167d56f2509cb13659e9c67c0e785a638a",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+      "track": "original",
+      "source_sha256": "5b6027515e63daa089069b1ae7288cca936ead9825fa1b82737b46577b220a36",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/pr-check/2-should-render-a-simple-class-diagrams-with-cardinality-3.mmd",
+      "track": "original",
+      "source_sha256": "0c98dc9ebb29e7522d4973db243ee428ed6327ce51a735d72af9ce2d3a79f531",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-dark-theme.mmd",
+      "track": "original",
+      "source_sha256": "8f34809dc1536e474e6fe16bc15716a0c08f1b0a0aaee18a4481f2e0625af33e",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-theme.mmd",
+      "track": "original",
+      "source_sha256": "6e7a33a4a2082361a96a6ff2a6a6e2ba260032433754e168df79dc43a137421c",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-color-theme.mmd",
+      "track": "original",
+      "source_sha256": "bc8e1af5c59a3d9fee0e684e001b6455bae1e2bd7121e2e0f88238f54c57b109",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-color-theme.mmd",
+      "track": "original",
+      "source_sha256": "2dcf1bc94b582666e6b427d4788ba8d86476aed251dcf2b4703ff14c6a246e6e",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-theme.mmd",
+      "track": "original",
+      "source_sha256": "c4a3a7f745a6e654df855c62bae3bbeff357094a6fffb70b7aa1f818fd51ec42",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-theme.mmd",
+      "track": "original",
+      "source_sha256": "aac31a0a3a1c1422b601ef6c42c878c5d79413de9c432f388f2f288ef49e8598",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-dark-theme.mmd",
+      "track": "original",
+      "source_sha256": "251dfcd58fb6065d83fb2b0bfb0686d263bfbbe570b71a84ebc91a2290191174",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-theme.mmd",
+      "track": "original",
+      "source_sha256": "4129a6df12b3965fdaab2de5d200557fde420d2fe1ebd102f6a0a3a3265533f6",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-color-theme.mmd",
+      "track": "original",
+      "source_sha256": "78b2f240e8fd2b28d14dd8b24f32f4f970c09e4fbab8558c70e5adfecac0c08c",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-color-theme.mmd",
+      "track": "original",
+      "source_sha256": "8ded2e37d170c86d837a9f39d588de48f9ce2ebf87d7686bd492faa02e3a9478",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-theme.mmd",
+      "track": "original",
+      "source_sha256": "e57ca01696e0812584b8fc32e26b4660ae2188253abd4cab251da7b708a68d0b",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-theme.mmd",
+      "track": "original",
+      "source_sha256": "ecc062e47068a8b3442ddfae64a210532f9ca2824b2ac646acac57ecbf0f4e34",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-dark-theme.mmd",
+      "track": "original",
+      "source_sha256": "a59d6699cd65874ba46eaaf4e49a51fe51ab01efa3b0be0ae09c6771556bfc22",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-theme.mmd",
+      "track": "original",
+      "source_sha256": "4f4b17074de4b745b71441f0570e79dae2695e3c89220f9c35e804929b86d168",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-color-theme.mmd",
+      "track": "original",
+      "source_sha256": "94ef3fadec0aebb968d6e7fd2bf7d0b982780b8b4ffed58b1058c43b31b44e17",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-color-theme.mmd",
+      "track": "original",
+      "source_sha256": "43472a3dd8daf1cc81eb861fb33132094fa2899e8d9e245c3512bd825aaaa903",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-theme.mmd",
+      "track": "original",
+      "source_sha256": "806c14cd7bbb7b0949217099a1477a07c0dbd204605aee87f19d8a1cc7677cd6",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-theme.mmd",
+      "track": "original",
+      "source_sha256": "42e1534edff395dfc5f06308b4615a7462bd360997ea94380298dc34d2e593f5",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    }
+  ],
+  "regressions": 0
+}

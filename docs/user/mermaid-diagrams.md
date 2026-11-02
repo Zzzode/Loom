@@ -8,6 +8,8 @@ This is an explicitly limited terminal renderer, not the full Mermaid engine.
 Unsupported, malformed, incomplete, oversized or too-wide input stays as the
 original code block. The renderer accepts the whole diagram or keeps its source;
 it never deliberately drops an unsupported statement to draw a partial graph.
+Keeping the original code block preserves the input; it does not mean the
+diagram was rendered or that its Mermaid syntax is supported.
 
 ## Examples
 

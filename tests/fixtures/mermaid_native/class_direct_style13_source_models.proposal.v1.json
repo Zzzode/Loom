@@ -1,0 +1,969 @@
+{
+  "schema": "class_direct_style13_source_models.proposal/v1",
+  "status": "proposal_requires_independent_source_review_no_admission",
+  "authority": "independently_authored_complete_sources_not_renderer_output",
+  "count": 13,
+  "cases": [
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
+      "source_utf8_bytes": 345,
+      "source_sha256": "813c0221b108744414426864be848f651a84a38af30dfaf419f8f86a35c8a933",
+      "body_utf8_bytes": 84,
+      "body_sha256": "8cb2b787d6ceeaaacf0093e296881373409ba52a794bc2a2288664c38d202d7e",
+      "frontmatter_verbatim": "---\ndescription: >-\n  A single class styled with a direct inline `style` statement (fill,\n  stroke, stroke-width) rather than a classDef, under the dagre layout,\n  rendered with `htmlLabels: false`.\nconfig:\n  logLevel: 1\n  htmlLabels: false\n  layout: dagre\n---\n",
+      "frontmatter_utf8_bytes": 261,
+      "frontmatter_sha256": "41f3f6ba971bc0cd35739bea4e77700b4651aa0e8d8681f29af80ba561e276e6",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": false,
+          "layout": "dagre"
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": null,
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 820,
+      "Model_canonical_sha256": "efc165c75feae259e2c3586ff5e62d38b21deee9a0a7b9220121487a7dba167f",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-style-definition.mmd",
+      "source_utf8_bytes": 305,
+      "source_sha256": "099a2db1e5a8ce2bf106e15e35da1de0adb933828a10412116308b650a09beb5",
+      "body_utf8_bytes": 84,
+      "body_sha256": "8cb2b787d6ceeaaacf0093e296881373409ba52a794bc2a2288664c38d202d7e",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Same direct inline `style` statement diagram as the '-without-htmllabels'\n  sibling, but with `htmlLabels: true`, under the dagre layout.\nconfig:\n  logLevel: 1\n  htmlLabels: true\n  layout: dagre\n---\n",
+      "frontmatter_utf8_bytes": 221,
+      "frontmatter_sha256": "cf575043290d8ea6dd9cd4d1a11129fc471e06a129aca97ed24afd618c6b85cc",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": true,
+          "layout": "dagre"
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": null,
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 819,
+      "Model_canonical_sha256": "8ed3c64d0de186b64f90d1ff0dd2b82375de1160400b3d1bcf11de045e4aa747",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
+      "source_utf8_bytes": 523,
+      "source_sha256": "5532944156a8f4666445a8d1bd77e2a70cc7c1f86cb797a6ca2050b98d006046",
+      "body_utf8_bytes": 96,
+      "body_sha256": "625c91848819d3b3d60f8b8adae0c1decc0da304d5f5f6638bfc1aa84cc0553f",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Minimal dagre-layout, hand-drawn-look class diagram applying a direct\n  `style` statement (fill/stroke/stroke-width/color) to a single class,\n  with htmlLabels disabled to verify inline styling still renders with\n  SVG-only labels; the sibling without the \"-without-htmllabels\" suffix\n  repeats this with htmlLabels enabled.\nconfig:\n  logLevel: 1\n  htmlLabels: false\n  look: handDrawn\n  layout: dagre\n---\n",
+      "frontmatter_utf8_bytes": 427,
+      "frontmatter_sha256": "d8159f12c3fec8fd11323f245e78f37e6bfe505e8a7f8f2e993f73631c49c8f3",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": false,
+          "layout": "dagre",
+          "look": "handDrawn"
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px,color:white",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "white"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 889,
+      "Model_canonical_sha256": "bb9999b97f2e6db988453ad87e8cf85902792e2072c42a22524132e902f46b7b",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
+      "source_utf8_bytes": 441,
+      "source_sha256": "1fb58a2add14a748ed9369ec193bbeec8d82de2d4082d474479586c2c10ae7a3",
+      "body_utf8_bytes": 96,
+      "body_sha256": "625c91848819d3b3d60f8b8adae0c1decc0da304d5f5f6638bfc1aa84cc0553f",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Minimal dagre-layout, hand-drawn-look class diagram applying a direct\n  `style` statement (fill/stroke/stroke-width/color) to a single class,\n  with htmlLabels enabled; the \"-without-htmllabels\" sibling repeats this\n  with htmlLabels disabled.\nconfig:\n  logLevel: 1\n  htmlLabels: true\n  look: handDrawn\n  layout: dagre\n---\n",
+      "frontmatter_utf8_bytes": 345,
+      "frontmatter_sha256": "5f91757604fae29fdb032cb9a99c0ef18bebe1da6558d519f384acc51297b3a7",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": true,
+          "layout": "dagre",
+          "look": "handDrawn"
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px,color:white",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "white"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 888,
+      "Model_canonical_sha256": "45e419997217fcc7a57decc28616a609c0607e52c5e924142ff4b5e450df9c3a",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
+      "source_utf8_bytes": 318,
+      "source_sha256": "b32faa6dcb41c6e35dc48cd5348b4c575330a88a2efef66d420f2a518574f39a",
+      "body_utf8_bytes": 84,
+      "body_sha256": "8cb2b787d6ceeaaacf0093e296881373409ba52a794bc2a2288664c38d202d7e",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Hand-drawn class diagram applying a direct `style` statement (fill,\n  stroke, stroke-width) to a single class, rendered with htmlLabels\n  disabled.\nconfig:\n  logLevel: 1\n  htmlLabels: false\n  look: handDrawn\n---\n",
+      "frontmatter_utf8_bytes": 234,
+      "frontmatter_sha256": "53347fb47483a7afc3795db604db8bdb99dbc5a597fc7bf0f5756421cbae1dea",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": false,
+          "look": "handDrawn"
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": null,
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 822,
+      "Model_canonical_sha256": "c59581d0a6f7bb5cfef06c688b3443f92b458844e1726fc74390e1db0a8cb4fd",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-style-definition.mmd",
+      "source_utf8_bytes": 314,
+      "source_sha256": "1844eaacd2cf318d7f3d82c143e5826dcd291b8eb1a325c4cc633a7f743967df",
+      "body_utf8_bytes": 84,
+      "body_sha256": "8cb2b787d6ceeaaacf0093e296881373409ba52a794bc2a2288664c38d202d7e",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Hand-drawn look classDiagram with a single class styled via a `style` statement (fill,\n  stroke, stroke-width, no color) and htmlLabels enabled.\nconfig:\n  logLevel: 1\n  htmlLabels: true\n  look: handDrawn\n---\n",
+      "frontmatter_utf8_bytes": 230,
+      "frontmatter_sha256": "70c2c2bdca0a1608a4bf8648c7272f18dc3466bc0a67c3be45334ecc2b040ed2",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": true,
+          "look": "handDrawn"
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": null,
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 821,
+      "Model_canonical_sha256": "229fcb67762f3a35c02d368b53524fda59bc0fea953bd6692d0fc739da7fde7b",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
+      "source_utf8_bytes": 396,
+      "source_sha256": "a2d6e5ac23dd2254a8504d920100e0b886b0fafa4b3659f5ee93d9204426c3bb",
+      "body_utf8_bytes": 96,
+      "body_sha256": "625c91848819d3b3d60f8b8adae0c1decc0da304d5f5f6638bfc1aa84cc0553f",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Hand-drawn look classDiagram with a single class styled via a `style` statement (fill,\n  stroke, stroke-width, color) with htmlLabels disabled, verifying the handdrawn look\n  renders correctly without HTML labels.\nconfig:\n  logLevel: 1\n  htmlLabels: false\n  look: handDrawn\n---\n",
+      "frontmatter_utf8_bytes": 300,
+      "frontmatter_sha256": "4411283444e2f1ae5c6b073f0cdfd86a92067e441fea526faf35bb8540665409",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": false,
+          "look": "handDrawn"
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px,color:white",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "white"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 872,
+      "Model_canonical_sha256": "e03618578340748c3467706167d9eee210d96dbbd9cb361eda5bc5e2fdd97fd5",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
+      "source_utf8_bytes": 336,
+      "source_sha256": "1bafc4bf9f0b119c41abb86ecef62b42d4747225fbf468b09517baf872ff752f",
+      "body_utf8_bytes": 96,
+      "body_sha256": "625c91848819d3b3d60f8b8adae0c1decc0da304d5f5f6638bfc1aa84cc0553f",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Hand-drawn look classDiagram with a single class styled via a `style` statement including\n  fill, stroke, stroke-width and color, with htmlLabels enabled.\nconfig:\n  logLevel: 1\n  htmlLabels: true\n  look: handDrawn\n---\n",
+      "frontmatter_utf8_bytes": 240,
+      "frontmatter_sha256": "391cd1957e6f22e0f399b3f843021b46ca8475c1b9f4bb18621222512002c4cf",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": true,
+          "look": "handDrawn"
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px,color:white",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "white"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 871,
+      "Model_canonical_sha256": "3f187c1ea1facd69ed75c670421fde3bd70e3ee5f36871d570bfff527a03f701",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
+      "source_utf8_bytes": 326,
+      "source_sha256": "4ce323919c264ed96c6cf6fb264b05450a5218abf81e21dff6d90e18639f9d27",
+      "body_utf8_bytes": 96,
+      "body_sha256": "625c91848819d3b3d60f8b8adae0c1decc0da304d5f5f6638bfc1aa84cc0553f",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Hand-drawn look classDiagram with a single class styled via a `style` statement (fill,\n  stroke, stroke-width, color) with htmlLabels disabled.\nconfig:\n  logLevel: 1\n  htmlLabels: false\n  look: handDrawn\n---\n",
+      "frontmatter_utf8_bytes": 230,
+      "frontmatter_sha256": "db9d83e05572bad08f620f738fa796878e10765e3cad9b4fbffedb1b03a9c6c0",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": false,
+          "look": "handDrawn"
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px,color:white",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "white"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 872,
+      "Model_canonical_sha256": "e03618578340748c3467706167d9eee210d96dbbd9cb361eda5bc5e2fdd97fd5",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
+      "source_utf8_bytes": 336,
+      "source_sha256": "1bafc4bf9f0b119c41abb86ecef62b42d4747225fbf468b09517baf872ff752f",
+      "body_utf8_bytes": 96,
+      "body_sha256": "625c91848819d3b3d60f8b8adae0c1decc0da304d5f5f6638bfc1aa84cc0553f",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Hand-drawn look classDiagram with a single class styled via a `style` statement including\n  fill, stroke, stroke-width and color, with htmlLabels enabled.\nconfig:\n  logLevel: 1\n  htmlLabels: true\n  look: handDrawn\n---\n",
+      "frontmatter_utf8_bytes": 240,
+      "frontmatter_sha256": "391cd1957e6f22e0f399b3f843021b46ca8475c1b9f4bb18621222512002c4cf",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": true,
+          "look": "handDrawn"
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px,color:white",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "white"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 871,
+      "Model_canonical_sha256": "3f187c1ea1facd69ed75c670421fde3bd70e3ee5f36871d570bfff527a03f701",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition-2.mmd",
+      "source_utf8_bytes": 308,
+      "source_sha256": "9507c71c12cb8a1248ed1cb98c6de9ffa0fdf3b17c759cb59be678840adb586c",
+      "body_utf8_bytes": 84,
+      "body_sha256": "8cb2b787d6ceeaaacf0093e296881373409ba52a794bc2a2288664c38d202d7e",
+      "frontmatter_verbatim": "---\ndescription: >-\n  classDiagram with a single class styled via a `style` statement (fill, stroke, stroke-\n  width, no color) and htmlLabels enabled via a top-level config key.\nconfig:\n  logLevel: 1\n  htmlLabels: true\n---\n",
+      "frontmatter_utf8_bytes": 224,
+      "frontmatter_sha256": "71edc351aa4a4550db21a92d6719feb8e9c9b995eaf6fff538fbe784d62aa9c1",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": true
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": null,
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 802,
+      "Model_canonical_sha256": "6add7d30e5cd03c7148ddd09cffbfcf64d46be9dee6eb72ca75ed75b063bc7c4",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
+      "source_utf8_bytes": 311,
+      "source_sha256": "6cd94b8b6eb002faa1aa926d151c9c1b48d7879acc7121baa078e02331a5eda4",
+      "body_utf8_bytes": 84,
+      "body_sha256": "8cb2b787d6ceeaaacf0093e296881373409ba52a794bc2a2288664c38d202d7e",
+      "frontmatter_verbatim": "---\ndescription: >-\n  classDiagram with a single class styled via a `style` statement (fill, stroke, stroke-\n  width, no color) with htmlLabels disabled via a top-level config key.\nconfig:\n  logLevel: 1\n  htmlLabels: false\n---\n",
+      "frontmatter_utf8_bytes": 227,
+      "frontmatter_sha256": "6a4f9569cbae3060288de69a878a83e2c5344e433be5394b50fce5c00fe05807",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": false
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": null,
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 803,
+      "Model_canonical_sha256": "e6da442e06a410a4db81e7f72f8a9e479bc9cc96bc7363eff4c04070608b7dd6",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition.mmd",
+      "source_utf8_bytes": 366,
+      "source_sha256": "7f5b2a36dd27eaa5a5b024170b143f01b84e29bfbf62de43072d4471cd0db7c2",
+      "body_utf8_bytes": 87,
+      "body_sha256": "84bd2ebe99fbd235ebcd45a53dbae7b2d39386b4dcde58d55caf2c5749d4556a",
+      "frontmatter_verbatim": "---\ndescription: >-\n  classDiagram-v2 with a single class styled via a `style` statement (fill, stroke, stroke-\n  width, no color), with htmlLabels disabled via the flowchart config key rather than a top-\n  level key.\nconfig:\n  logLevel: 1\n  flowchart:\n    htmlLabels: false\n---\n",
+      "frontmatter_utf8_bytes": 279,
+      "frontmatter_sha256": "8ef9f189e5440812d4893e242d97d089656eda3b27f789d6eb517dba07006409",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram-v2",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "flowchart": {
+            "htmlLabels": false
+          }
+        },
+        "style_declarations": [
+          {
+            "target": "Class10",
+            "verbatim": "style Class10 fill:#f9f,stroke:#333,stroke-width:4px",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              }
+            ],
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": null,
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 820,
+      "Model_canonical_sha256": "6a645864559058af86164030bce8937cf059383c073f61bca972906496daf7a5",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 module;
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -234,9 +235,22 @@ private:
         }
         SSL_set_fd(ssl, fd);
         SSL_set_tlsext_host_name(ssl, host.c_str());
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-        SSL_set1_host(ssl, host.c_str());
-#endif
+        // Use verification parameters supported by both OpenSSL 1.1 and 4.0;
+        // IP literals must match IP SANs rather than DNS names.
+        unsigned char ip_buf[16] = {0};
+        const bool is_ip_literal = ::inet_pton(AF_INET, host.c_str(), ip_buf) == 1 ||
+                                   ::inet_pton(AF_INET6, host.c_str(), ip_buf) == 1;
+        X509_VERIFY_PARAM* param = SSL_get0_param(ssl);
+        const int verified_host = is_ip_literal
+                                      ? X509_VERIFY_PARAM_set1_ip_asc(param, host.c_str())
+                                      : X509_VERIFY_PARAM_set1_host(param, host.c_str(), 0);
+        if (verified_host != 1) {
+            auto message =
+                ssl_error_message("Failed to configure TLS server identity verification");
+            SSL_free(ssl);
+            SSL_CTX_free(ctx);
+            return std::unexpected(message);
+        }
 
         if (SSL_connect(ssl) != 1) {
             auto message = ssl_error_message("TLS handshake failed");

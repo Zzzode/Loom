@@ -3,143 +3,20 @@
   "description": "RFC 0031 E6c reviewed ledger of mandatory-completion capability gaps still open in the native terminal Mermaid renderer. Generated from serialized report mandatory_gaps arrays, independently audited row by row, then frozen by byte size and SHA-256 in tests/support/mermaid_gap_roster.hpp. Renderer output is not expectation evidence: every change here requires ledger review.",
   "review": {
     "status": "reviewed",
-    "date": "2026-10-27",
+    "date": "2026-11-02",
     "phase": "RFC 0031 E6c",
-    "note": "Regenerated from current gate reports: 315 aggregate rows, including 78 Official Matrix gaps. Flow400 ordinals40/41 have source-bound Native and Official five-frame geometry and mutation checks; body-diagnostic and other gate rows remain independent."
+    "note": "Every row audited against its converted reporter, report and pinned authority source: exact error-message mapping for official_matrix, frozen ids/outcomes for the ten id/name/ordinal-keyed gates, counts reconciled with strict EXPECT pins. On 2026-10-29 agent:/root/class_oracle_review independently audited removal of the 26 Class originals and corresponding six Notes rows against the Debug complete-source geometry, mutation, and matrix reports; other rows remain unchanged. Debug and Release reports and mandatory-gap verification passed. On 2026-10-29 agent:/root/class_oracle_review also independently verified the three overlapping Class481 and Endpoint29 complete-source positive gains; other gaps remain. DefaultConfig complete-source Model reviewed by agent:default_config_source_review; consumer and single-row removal reviewed by agent:default_config_consumer_review. Final dual-preset validation is recorded in the P0 checkpoint document. ER rich6 source projections reviewed by agent:er6_source_design_review; six complete-source scene, source binding, finite-domain and forged-proof tests validate the six added Models. Consumer and resource review is recorded in the ER checkpoint. Class accessibility4 source projection approved by agent:class4_source_model_review after bounded retention design approved by agent:class_accessibility_design_review. Executed tests and implementation review are recorded separately in mermaid-class4-review.md. RequirementMarkdown1 complete source projection approved by agent:requirement_markdown_source_review; consumer review and executed results in mermaid-requirement-markdown-review.md. Only its original ordinary-source-expected row is removed. Flow P0 grouped7 complete source Models independently approved in agent:flow10_source_review2; finite-domain and producer routing reviews are recorded with executed validation in mermaid-flow-p0-grouped7-review.md. Only the seven approved original flow_whole_null_unmet rows are removed; body diagnostic rows remain. P0Length1 reuses the independently approved LinkProfile3 visual294 Model/Profile under its distinct nighttime source and complete P0 Model pins. Its source-alias design is approved by agent:flow_p0_length_alias_design_review; execution and final review are recorded in mermaid-flow-p0-length-review.md. Only its original flow_whole_null_unmet row is removed. P0Strands2 exact source Models and separate deterministic physical strand design/implementation are independently reviewed. Actual source proofs retain14/3 edges and seven decisive negatives per original on charged128M scenes; resource/failure/forgery controls are recorded in mermaid-flow-p0-strands-review.md. Only these two original flow_whole_null_unmet rows are removed; body diagnostics and other gates remain unchanged.",
+    "class_style13": "Remove only13 source-reviewed Class285 whole-source pending rows after complete source/geometry/attributes, eight decisive negatives and independent reviews; original source coverage only, no browser/phase graduation.",
+    "class_defined6": "Remove only the six independently source-reviewed Class285 defined-style pending rows after complete five-frame source/geometry/legend/attributes proof and eight decisive negatives per original. Foreign browser/CSS and phase graduation remain debt; dual regression, exact comparison and real PTY/copy are required.",
+    "rebase_integration": "Independent source identity review by agent:/root/rebase_authority_review: preserve all local admitted identities and upstream independent proof suites; remove only foreign_owner_keeps_caption, repaired by the upstream caption router. The expected combined gap set is 248 rows, subject to dual-build semantic proof and roster verification."
   },
   "gates": {
     "official_matrix": [
-      {
-        "fixture": "class-diagram/visual-check/dark-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "generic_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/default-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "generic_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/forest-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "generic_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-dark-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-color-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-color-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "mapped_positive_still_source"
-        ]
-      },
-      {
-        "fixture": "class-diagram/visual-check/neutral-theme.mmd",
-        "track": "original",
-        "gaps": [
-          "generic_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "conf-and-directives/pr-check/no-config-use-default.mmd",
-        "track": "original",
-        "gaps": [
-          "ordinary_source_fallback_expected"
-        ]
-      },
-      {
-        "fixture": "er-diagram/nightly-check/should-render-relationship-labels-with-line-breaks.mmd",
-        "track": "original",
-        "gaps": [
-          "er206_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "er-diagram/visual-check/an-er-diagram-with-relationships-with-unicode-text-default.mmd",
-        "track": "original",
-        "gaps": [
-          "er206_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "er-diagram/visual-check/an-er-diagram-with-relationships-with-unicode-text-elk-layout.mmd",
-        "track": "original",
-        "gaps": [
-          "er206_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "er-diagram/visual-check/an-er-diagram-with-unicode-text-default.mmd",
-        "track": "original",
-        "gaps": [
-          "er206_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "er-diagram/visual-check/an-er-diagram-with-unicode-text-elk-layout.mmd",
-        "track": "original",
-        "gaps": [
-          "er206_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "er-diagram/visual-check/relationship-labels-with-line-breaks-elk-layout.mmd",
-        "track": "original",
-        "gaps": [
-          "er206_whole_null_unmet"
-        ]
-      },
       {
         "fixture": "flowchart/nightly-check/8292-elk-edge-label-jog.mmd",
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
-        ]
-      },
-      {
-        "fixture": "flowchart/nightly-check/dagre/2050-dagre-handling-of-different-rendering-direction-in-subgraphs.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
         ]
       },
       {
@@ -172,13 +49,6 @@
       },
       {
         "fixture": "flowchart/nightly-check/dagre/55-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "flowchart/nightly-check/dagre/55-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
@@ -186,23 +56,9 @@
       },
       {
         "fixture": "flowchart/nightly-check/dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "flowchart/nightly-check/dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
-        ]
-      },
-      {
-        "fixture": "flowchart/nightly-check/dagre/6088-2-should-handle-diamond-shape-intersections.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
         ]
       },
       {
@@ -210,13 +66,6 @@
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
-        ]
-      },
-      {
-        "fixture": "flowchart/nightly-check/dagre/7213-should-render-dagre-edges-with-right-angles-not-curves.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
         ]
       },
       {
@@ -231,13 +80,6 @@
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
-        ]
-      },
-      {
-        "fixture": "flowchart/nightly-check/dagre/sub-graphs.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
         ]
       },
       {
@@ -311,20 +153,6 @@
         ]
       },
       {
-        "fixture": "flowchart/nightly-check/shape-alias/02-all-event-rounded-should-render-same-shape.mmd",
-        "track": "body_diagnostic",
-        "gaps": [
-          "ordinary_source_fallback_expected"
-        ]
-      },
-      {
-        "fixture": "flowchart/nightly-check/shape-alias/06-all-diam-decision-diamond-should-render-same-shape.mmd",
-        "track": "body_diagnostic",
-        "gaps": [
-          "ordinary_source_fallback_expected"
-        ]
-      },
-      {
         "fixture": "flowchart/pr-check/1-shapes-layout-default.mmd",
         "track": "body_diagnostic",
         "gaps": [
@@ -350,13 +178,6 @@
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
-        ]
-      },
-      {
-        "fixture": "flowchart/visual-check/2050-handling-of-different-rendering-direction-in-subgraphs.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
         ]
       },
       {
@@ -410,13 +231,6 @@
       },
       {
         "fixture": "flowchart/visual-check/5064-should-render-when-subgraph-child-has-links-to-outside-node-and-subgraph.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "flowchart/visual-check/5064-should-render-when-subgraph-child-has-links-to-outside-node-and-subgraph.mmd",
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
@@ -431,23 +245,9 @@
       },
       {
         "fixture": "flowchart/visual-check/55-handle-nested-subgraphs-with-outgoing-links-2.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
-        ]
-      },
-      {
-        "fixture": "flowchart/visual-check/55-handle-nested-subgraphs-with-outgoing-links-2.mmd",
         "track": "body_diagnostic",
         "gaps": [
           "ordinary_source_fallback_expected"
-        ]
-      },
-      {
-        "fixture": "flowchart/visual-check/57-handle-nested-subgraphs-with-outgoing-links-2.mmd",
-        "track": "original",
-        "gaps": [
-          "flow_whole_null_unmet"
         ]
       },
       {
@@ -544,13 +344,6 @@
       {
         "fixture": "flowchart/visual-check/v2-18-should-render-nested-subgraphs-with-edge-from-cluster-containing-extractable-subgraph.mmd",
         "track": "body_diagnostic",
-        "gaps": [
-          "ordinary_source_fallback_expected"
-        ]
-      },
-      {
-        "fixture": "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd",
-        "track": "original",
         "gaps": [
           "ordinary_source_fallback_expected"
         ]
@@ -1060,10 +853,6 @@
         "outcome": "remaining_whole_source_or_native_protocol_pending"
       },
       {
-        "id": "merman/c50650cbac88ef419784",
-        "outcome": "complete_source_positive_unmet"
-      },
-      {
         "id": "merman/c5aa3d328205e4f40dea",
         "outcome": "remaining_whole_source_or_native_protocol_pending"
       },
@@ -1294,30 +1083,6 @@
         "outcome": "whole_source_semantic_profile_pending"
       },
       {
-        "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-style-definition.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
         "fixture": "class-diagram/nightly-check/handdrawn/hd-10-should-render-a-simple-class-diagram-with-clickable-callback.mmd",
         "outcome": "whole_source_semantic_profile_pending"
       },
@@ -1336,106 +1101,9 @@
       {
         "fixture": "class-diagram/nightly-check/handdrawn/hd-9-should-render-a-simple-class-diagram-with-clickable-link.mmd",
         "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-style-definition.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition-2.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/visual-check/dark-theme.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/visual-check/default-theme.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/visual-check/forest-theme.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-dark-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-color-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-color-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-theme.mmd",
-        "outcome": "mandatory_complete_positive_unmet"
-      },
-      {
-        "fixture": "class-diagram/visual-check/neutral-theme.mmd",
-        "outcome": "whole_source_semantic_profile_pending"
       }
     ],
-    "class_endpoint29": [
-      {
-        "id": "merman/c50650cbac88ef419784",
-        "outcome": "source_positive_unmet"
-      }
-    ],
+    "class_endpoint29": [],
     "state85": [
       {
         "id": "merman/b91ddcfa6c0a3e962274",
@@ -1506,32 +1174,7 @@
         "outcome": "mandatory_complete_contract_unmet"
       }
     ],
-    "class_notes18": [
-      {
-        "application_ordinal": 272,
-        "outcome": "original_application_wide_source_fallback"
-      },
-      {
-        "application_ordinal": 273,
-        "outcome": "original_application_wide_source_fallback"
-      },
-      {
-        "application_ordinal": 274,
-        "outcome": "original_application_wide_source_fallback"
-      },
-      {
-        "application_ordinal": 275,
-        "outcome": "original_application_wide_source_fallback"
-      },
-      {
-        "application_ordinal": 276,
-        "outcome": "original_application_wide_source_fallback"
-      },
-      {
-        "application_ordinal": 277,
-        "outcome": "original_application_wide_source_fallback"
-      }
-    ],
+    "class_notes18": [],
     "requirement11_p1p6": [
       {
         "id": "P1",

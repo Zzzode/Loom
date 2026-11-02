@@ -397,7 +397,9 @@ TEST(SseTransportTls, HttpsEndpointCompletesHandshakeAndStreamsEvents) {
     }
 }
 
-TEST(SseTransportTls, HttpsWithUntrustedCertificateIsRejected) {
+class SseTransportTlsRejection : public ::testing::TestWithParam<bool> {};
+
+TEST_P(SseTransportTlsRejection, RejectsInvalidServerIdentity) {
     const std::string cert = sse_fixture_path("sse_cert.pem");
     const std::string key = sse_fixture_path("sse_key.pem");
     ASSERT_TRUE(std::filesystem::exists(cert)) << cert;
@@ -421,10 +423,10 @@ TEST(SseTransportTls, HttpsWithUntrustedCertificateIsRejected) {
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-    // Point verification at the SYSTEM bundle only: the self-signed fixture
-    // is not in it, so verification must fail and no event may arrive.
-    CaBundleGuard ca_guard("/etc/ssl/certs/ca-certificates.crt");
-    unsetenv("SSL_CERT_FILE");
+    // Either reject an untrusted certificate for the matching IP, or trust
+    // the fixture and reject localhost, which is absent from its SANs.
+    const bool trusted_wrong_host = GetParam();
+    CaBundleGuard ca_guard(trusted_wrong_host ? cert : "/etc/ssl/certs/ca-certificates.crt");
 
     loom::cli::SSETransport transport(loom::cli::SSEReconnectPolicy{
         .initial_delay = std::chrono::milliseconds(10),
@@ -436,26 +438,39 @@ TEST(SseTransportTls, HttpsWithUntrustedCertificateIsRejected) {
     });
     std::vector<loom::cli::SSEEvent> received;
     std::vector<std::string> errors;
+    std::atomic<bool> error_received{false};
     transport.on_event([&](const loom::cli::SSEEvent& e) { received.push_back(e); });
-    transport.on_error([&](std::string_view e) { errors.push_back(std::string(e)); });
+    transport.on_error([&](std::string_view e) {
+        errors.push_back(std::string(e));
+        error_received.store(true, std::memory_order_release);
+    });
 
-    const std::string url = "https://127.0.0.1:" + std::to_string(port) + "/stream";
+    const std::string url = std::string("https://") +
+                            (trusted_wrong_host ? "localhost" : "127.0.0.1") + ":" +
+                            std::to_string(port) + "/stream";
     auto connected = transport.connect(url);
     ASSERT_TRUE(connected.has_value()) << connected.error();
 
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    while (errors.empty() && std::chrono::steady_clock::now() < deadline) {
+    while (!error_received.load(std::memory_order_acquire) &&
+           std::chrono::steady_clock::now() < deadline) {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
     transport.close();
     svr.stop();
     th.join();
 
-    EXPECT_TRUE(received.empty()) << "untrusted certificate must not yield data";
+    EXPECT_TRUE(received.empty()) << "invalid server identity must not yield data";
     ASSERT_FALSE(errors.empty());
     bool saw_tls_error = false;
     for (const auto& err : errors) {
-        if (err.find("TLS") != std::string::npos) saw_tls_error = true;
+        if (err.find("TLS handshake failed") != std::string::npos) saw_tls_error = true;
     }
     EXPECT_TRUE(saw_tls_error) << errors.front();
 }
+
+INSTANTIATE_TEST_SUITE_P(CertificateVerification, SseTransportTlsRejection, ::testing::Bool(),
+                         [](const ::testing::TestParamInfo<bool>& info) {
+                             return info.param ? "TrustedCertificateWrongHostname"
+                                               : "UntrustedCertificate";
+                         });

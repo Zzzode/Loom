@@ -33,6 +33,7 @@ using loom::ui::mermaid::testing::EnvelopeEvent;
 using loom::ui::mermaid::testing::EnvelopeInit;
 using loom::ui::mermaid::testing::EnvelopeScalar;
 using loom::ui::mermaid::testing::EnvelopeScalarForm;
+using loom::ui::mermaid::testing::FinalEmissionTrace;
 using loom::ui::mermaid::testing::FlowAsciiRows;
 using loom::ui::mermaid::testing::GitBranch;
 using loom::ui::mermaid::testing::GitCommit;
@@ -62,15 +63,74 @@ constexpr std::size_t kGroupDepthLimit = 16;
 bool unicode_text(std::string_view text);
 std::optional<std::string> validated_plain_label(std::string_view text);
 
+// D1a payloads own semantic roles and text, never theme colors or Elements.
+enum class SemanticColorRole : unsigned char {
+    Inherit,
+    Neutral,
+    Red,
+    Orange,
+    Yellow,
+    Green,
+    Cyan,
+    Blue,
+    Purple
+};
+
+struct SemanticCellStyle {
+    SemanticColorRole foreground = SemanticColorRole::Inherit, fill = SemanticColorRole::Inherit;
+    bool bold = false, underline = false;
+    bool operator==(const SemanticCellStyle&) const = default;
+};
+
+struct StyledRun {
+    std::string text;
+    SemanticCellStyle style;
+};
+
+struct StyledRows {
+    std::vector<std::vector<StyledRun>> rows;
+};
+
+struct NativeLayout {
+    std::vector<std::string> rows;
+    std::optional<StyledRows> styles;
+    std::size_t measured_layout_work = 0u;
+    std::vector<std::uint16_t> packed_styles{};
+};
+
+bool set_flow_style_preview_for_testing(bool enabled);
+bool flow_style_preview_active();
+std::optional<NativeLayout> layout_mermaid_content(std::string_view source, bool use_ascii,
+                                                   Work& work);
+std::optional<ftxui::Element> render_mermaid_with_budget(std::string_view source,
+                                                         ftxui::Element fallback, bool use_ascii,
+                                                         Work& work,
+                                                         FinalEmissionTrace* trace = nullptr);
+std::optional<ftxui::Element> finish_native_layout(std::optional<NativeLayout> layout,
+                                                   ftxui::Element fallback, Work& work,
+                                                   FinalEmissionTrace* trace = nullptr);
+std::optional<std::size_t> styled_payload_bytes(const NativeLayout& layout,
+                                                std::size_t source_bytes);
+bool prepay_styled_payload(NativeLayout& layout, std::size_t source_bytes, Work& work);
+
 std::optional<std::vector<std::string>> mindmap_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> sequence_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> charts_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source, Work& work,
                                                         bool use_ascii = false);
-struct LayoutPayload;
-std::optional<LayoutPayload> relations_layout(std::string_view source, Work& work,
-                                              bool class_envelope = false,
-                                              bool requirement_input = false);
+std::optional<std::vector<std::string>>
+relations_layout(std::string_view source, Work& work, bool class_envelope = false,
+                 bool requirement_input = false, std::optional<StyledRows>* styles = nullptr,
+                 std::vector<std::uint16_t>* packed_styles = nullptr);
+
+// RFC 0031 E6b: the layout-only seam behind both public render_mermaid
+// entry points. It runs the current family dispatch with a fresh Work budget
+// and returns immutable string ROWS — never an ftxui::Element. Nullopt (or
+// an empty vector) is the whole-source rejection outcome; width/theme flips
+// happen later inside a freshly constructed node. The per-instance
+// LayoutRowsCache calls this seam on a miss.
+std::optional<std::vector<std::string>> layout_mermaid_rows(std::string_view source,
+                                                            bool use_ascii);
 
 // RFC 0030 Block: one immutable private payload serves both public paths.
 // Legacy families keep an empty plane and their exact inherited-style finish.
@@ -80,12 +140,11 @@ struct LayoutPayload {
 };
 
 std::optional<LayoutPayload> block_layout(std::string_view source, Work& work);
-std::optional<LayoutPayload> layout_mermaid_payload(std::string_view source, bool use_ascii);
-std::optional<LayoutPayload> layout_mermaid_payload(std::string_view source, bool use_ascii,
-                                                    Work& work);
-bool valid_layout_payload(const LayoutPayload& payload);
+bool valid_packed_rows(const std::vector<std::string>& rows,
+                       const std::vector<std::uint16_t>& styles, Work& work);
 std::optional<ftxui::Element> finish_mermaid_payload(std::optional<LayoutPayload> payload,
-                                                     ftxui::Element fallback);
+                                                     ftxui::Element fallback, Work& work,
+                                                     FinalEmissionTrace* trace = nullptr);
 
 struct Point {
     int x = 0;
@@ -115,6 +174,7 @@ struct Canvas {
     int height;
     Work& work;
     std::vector<Cell> cells;
+    std::unique_ptr<std::vector<SemanticCellStyle>> styles;
     Canvas(int w, int h, Work& budget);
     bool inside(Point p) const;
     int index(Point p) const;
@@ -206,6 +266,38 @@ struct StateTextRecord {
     std::vector<std::string> body;
 };
 
+struct SourceStyleColor {
+    std::array<unsigned char, 3> rgb{};
+    SemanticColorRole role = SemanticColorRole::Neutral;
+    bool transparent = false;
+    bool operator==(const SourceStyleColor&) const = default;
+};
+
+struct ClassStyleProperties {
+    std::optional<SourceStyleColor> fill, stroke, color;
+    std::optional<double> width;
+    bool operator==(const ClassStyleProperties&) const = default;
+};
+
+struct ClassDirectStyle {
+    std::string target, verbatim, class_name;
+    std::size_t source_offset = 0u;
+    ClassStyleProperties properties;
+    int entity = -1;
+};
+
+struct ClassStyleAssignment {
+    std::string target, class_name, verbatim;
+    std::size_t source_offset = 0u;
+};
+
+struct ClassDirectStyles {
+    std::vector<ClassDirectStyle> declarations;
+    std::vector<ClassStyleAssignment> assignments;
+    std::vector<ClassStyleProperties> effective;
+    std::vector<std::string> legend;
+};
+
 struct RouteCandidate {
     int estimate = 0, cost = 0, index = 0;
 
@@ -243,12 +335,14 @@ struct RelationDiagram {
     std::vector<RelationNote> notes;
     std::unique_ptr<ErPresentation> er_presentation;
     std::optional<std::string> diagram_title;
+    std::optional<std::string> class_accessibility_title, class_accessibility_description;
     std::optional<bool> class_hide_empty_members_box;
     bool class_namespaces = false;
     bool class_notes = false;
     std::vector<StateScopeDirection> state_scope_directions;
     std::vector<int> class_typed_entities;
     std::vector<StateTextRecord> state_texts;
+    std::unique_ptr<ClassDirectStyles> direct_styles;
     std::optional<std::string_view> state_direction(int owner, Work& work) const;
     std::optional<std::size_t> state_text_index(int target, Work& work) const;
     bool state_fragment(int target, std::string&& text, Work& work);
@@ -373,6 +467,25 @@ struct RelationBox {
     int right() const;
     int bottom() const;
 };
+
+bool source_style_properties(std::string_view raw, ClassStyleProperties& properties, Work& work);
+std::string_view source_style_role_name(SemanticColorRole role);
+bool class_direct_style(std::string_view line, std::string_view source, RelationDiagram& diagram,
+                        Work& work);
+bool class_style_assignment(std::string_view statement, std::string_view source,
+                            std::string_view target, std::string_view name,
+                            RelationDiagram& diagram, Work& work);
+bool class_css_assignment(std::string_view line, std::string_view source, RelationDiagram& diagram,
+                          Work& work);
+bool resolve_class_direct_styles(RelationDiagram& diagram, Work& work,
+                                 std::span<const std::string_view> validated_definitions,
+                                 std::string_view source);
+bool paint_class_direct_styles(Canvas& canvas, const RelationDiagram& diagram,
+                               std::span<const RelationBox> boxes);
+std::optional<StyledRows> extract_styled_rows(const Canvas& canvas,
+                                              std::span<const std::string> lines,
+                                              std::size_t leading_rows, std::size_t drawing_rows,
+                                              Work& work);
 
 struct ReciprocalEdgePlan {
     int face = 0, from_row = 0, to_row = 0, inset = 0;
@@ -506,6 +619,8 @@ bool class_inactive_definition(std::string_view line, std::string_view original,
                                std::vector<std::string_view>& definitions, bool& source_checked,
                                Work& work);
 std::optional<ClassEnvelope> class_source_envelope(std::string_view source, Work& work);
+std::optional<testing::ClassAccessibilityMetadata>
+class_accessibility_metadata(std::string_view source, Work& work, bool class_envelope);
 const ClassEndpointText* class_caption(const Relationship& edge, bool source);
 bool reciprocal_plan(const RelationDiagram& diagram, const RelationLayout& layout, int owner,
                      Work& work, std::optional<ReciprocalPlan>& result);

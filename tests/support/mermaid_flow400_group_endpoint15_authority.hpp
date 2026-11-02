@@ -194,16 +194,21 @@ inline std::size_t group_endpoint15_group(const Model& model, std::string_view i
     return static_cast<std::size_t>(at - model.groups.begin());
 }
 
-inline GroupEndpoint15Model group_endpoint15_model(JsonVal value, OracleWork& work,
-                                                   std::size_t max_tagged_edges = 2u,
-                                                   std::size_t max_target_incoming = 1u) {
+inline GroupEndpoint15Model
+group_endpoint15_model(JsonVal value, OracleWork& work, std::size_t max_tagged_edges = 2u,
+                       std::size_t max_target_incoming = 1u,
+                       GroupEndpointDomain domain = GroupEndpointDomain::LegacyUnique) {
     // Prepay each bounded owned Model before parse/copy output, not the 64 KiB
     // source asset for every row.
-    work.product(kFlow400GroupEndpoint15ModelWireBytes, 24u);
+    const bool p0 = domain == GroupEndpointDomain::SourceReviewedP0;
+    work.product(p0 ? 1884u : kFlow400GroupEndpoint15ModelWireBytes, 24u);
+    if (p0)
+        flow400_require(group_endpoint15_canonical(value, work).size() <= 1884u,
+                        "GroupEndpoint P0 canonical Model resource bound");
     flow400_require(max_tagged_edges >= 1u && max_tagged_edges <= 3u && max_target_incoming >= 1u &&
-                        max_target_incoming <= 2u,
+                        (p0 || max_target_incoming <= 2u),
                     "GroupEndpoint15 decoder profile bound");
-    if (max_tagged_edges == 3u)
+    if (max_tagged_edges == 3u && !p0)
         group_endpoint15_keys(value,
                               {"base_model", "tagged_group_endpoint_edges", "source_edge_order",
                                "source_semantic_counts", "source_positions"},
@@ -290,7 +295,7 @@ inline GroupEndpoint15Model group_endpoint15_model(JsonVal value, OracleWork& wo
             targets.push_back({kind, std::string(id), 1u});
             return;
         }
-        flow400_require(++found->count <= max_target_incoming, error.data());
+        flow400_require(++found->count <= max_target_incoming || p0, error.data());
     };
     for (const auto& edge : result.base.edges) {
         const auto id = result.base.nodes.at(static_cast<std::size_t>(edge.to)).id;
@@ -311,7 +316,7 @@ inline GroupEndpoint15Model group_endpoint15_model(JsonVal value, OracleWork& wo
             flow400_number(counts.get("group_endpoint_edges")) == result.tagged.size() &&
             flow400_number(counts.get("source_edges")) == total,
         "GroupEndpoint15 semantic counts");
-    if (max_tagged_edges == 3u) {
+    if (max_tagged_edges == 3u && !p0) {
         const auto positions = value.get("source_positions");
         group_endpoint15_keys(
             positions,
@@ -361,6 +366,11 @@ inline GroupEndpoint15Model group_endpoint15_model(JsonVal value, OracleWork& wo
         });
     }
     return result;
+}
+
+inline GroupEndpoint15Model group_endpoint15_model(JsonVal value, OracleWork& work,
+                                                   GroupEndpointDomain domain) {
+    return group_endpoint15_model(value, work, 3u, 1u, domain);
 }
 
 inline GroupEndpoint15Model group_endpoint_extra7_model(JsonVal value, OracleWork& work) {

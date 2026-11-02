@@ -43,6 +43,7 @@ target_sources(loom_ui_visual PRIVATE
     ui/visual/mermaid_impl.cpp
     ui/visual/mermaid_envelope_impl.cpp
     ui/visual/mermaid_cells_impl.cpp
+    ui/visual/mermaid_style_impl.cpp
     ui/visual/mermaid_sequence_impl.cpp
     ui/visual/mermaid_charts_impl.cpp
     ui/visual/mermaid_gitgraph_impl.cpp

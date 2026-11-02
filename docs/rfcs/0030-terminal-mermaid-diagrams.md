@@ -3,7 +3,7 @@ rfc: 30
 title: Terminal Mermaid Diagrams
 status: implementable
 owners: "@Zzzode"
-reviewers: ["agent:/root/generation_review (Phase A design, PRR, implementation and graduation)", "agent:/root/settings_audit (Phase A parser admission)", "agent:/root/corpus_review (Phase B design, PRR, implementation and graduation; Phase C2 bounded design/PRR)", "agent:/root/corpus_oracle (Phase C1 inventory/runtime promotion and C2 implementation review)", "agent:/root/er_group_design_review (C2 ER subgraph design and PRR r1)", "agent:/root/requirement_design_review (C2 Source4 identity and mutation-plan review)", "agent:/root (C2 Pie owned admission and Source4 integration review)", "agent:/root/style_design_review (Phase D design draft, two revision rounds, approved)", "agent:/root/style_feasibility_review (Phase D implementation feasibility, two revision rounds, approved)", "agent:Turing (State brace and ninety-percent milestone)", "agent:Carver (State source/metadata amendment)", "agent:Parfit (Mindmap10 bounded source/design/PRR, three rounds)", "agent:Aristotle (Class endpoint retry code/scope)", "agent:Newton (Class20 original-source/frame preservation and E6c gap amendment)", "agent:Beauvoir (Mindmap10 implementation and dual-consumer admission boundary)", "agent:Galileo (Shapes4 source/design/PRR, private implementation, independent proof ownership and final dual admission)", "agent:Harvey (Block58 B1 complete-source, direct-theme census and partial B2 source-derived facts/provenance only)", "agent:Mill (Block58 owner-local architecture and proportionality only; B2 pending)", "agent:Harvey (Block58 full B2 design/PRR and dormant private payload static review)", "agent:Harvey (Block58 production implementation, B3 independent Native/Official proof ownership and strict dual-join code review)", "agent:Harvey (ER107 B1 source, B2 source/projection semantics, bounded test witness and complete B2 design/PRR)", "agent:Popper (test-facade privacy correction, strict Block marker refresh code, real refresh and postcheck)", "agent:/root/review_er_fix_design (ER107 bounded compaction and ranked-topology limited design/PRR trial)"]
+reviewers: ["agent:/root/generation_review (Phase A design, PRR, implementation and graduation)", "agent:/root/settings_audit (Phase A parser admission)", "agent:/root/corpus_review (Phase B design, PRR, implementation and graduation; Phase C2 bounded design/PRR)", "agent:/root/corpus_oracle (Phase C1 inventory/runtime promotion and C2 implementation review)", "agent:/root/er_group_design_review (C2 ER subgraph design and PRR r1)", "agent:/root/requirement_design_review (C2 Source4 identity and mutation-plan review)", "agent:/root (C2 Pie owned admission and Source4 integration review)", "agent:/root/style_design_review (Phase D design draft, two revision rounds, approved)", "agent:/root/style_feasibility_review (Phase D implementation feasibility, two revision rounds, approved)", "agent:Turing (State brace and ninety-percent milestone)", "agent:Carver (State source/metadata amendment)", "agent:Parfit (Mindmap10 bounded source/design/PRR, three rounds)", "agent:Aristotle (Class endpoint retry code/scope)", "agent:Newton (Class20 original-source/frame preservation and E6c gap amendment)", "agent:Beauvoir (Mindmap10 implementation and dual-consumer admission boundary)", "agent:Galileo (Shapes4 source/design/PRR, private implementation, independent proof ownership and final dual admission)", "agent:Harvey (Block58 B1 complete-source, direct-theme census and partial B2 source-derived facts/provenance only)", "agent:Mill (Block58 owner-local architecture and proportionality only; B2 pending)", "agent:Harvey (Block58 full B2 design/PRR and dormant private payload static review)", "agent:Harvey (Block58 production implementation, B3 independent Native/Official proof ownership and strict dual-join code review)", "agent:Harvey (ER107 B1 source, B2 source/projection semantics, bounded test witness and complete B2 design/PRR)", "agent:Popper (test-facade privacy correction, strict Block marker refresh code, real refresh and postcheck)", "agent:/root/review_er_fix_design (ER107 bounded compaction and ranked-topology limited design/PRR trial)", "agent:codex-exec/class-style13-source (D1a complete-source authority, approved)", "agent:codex-exec/class-direct-style-design (D1a design/PRR revision1, approved)"]
 created: 2026-10-19
 last-reviewed: 2026-10-28
 tracking: local RFC-0030 implementation history; user requested terminal Mermaid rendering
@@ -3646,3 +3646,172 @@ arrow masking proposal. No producer, public contract, cap or phase status
 changes. No installation, commit or push is made. Evidence:
 `flow-ascii-native-rows-test-first-independent-review-r3/REVIEW.md` and
 `flow-ascii-rows-first-red-dual-root-r3/RESULT.json`.
+
+### 2026-10-29: bounded Class caption and note routing
+
+For flat Class root scopes without namespace, compound, reciprocal-plan or
+notes ownership, a prepaid stable ordering prioritizes wider central labels on
+relations with endpoint captions when at least two such relations compete;
+non-caption relations keep their existing relative distance order. A scope-size
+check precedes the diagram-indexed width allocation. Note leaders retain all
+candidate ports and their stable score order; compact candidates use prepaid
+exact-sized Pair storage and a stable index distribution, while the wider
+candidate path keeps the former full-Pair ordering. The shared Work limit is
+unchanged; insufficient work remains whole-source failure.
+
+Independent design and implementation reviewer agent:/root/class_geometry_review
+approved this bounded approach and its source-neutral/CJK/tie controls. Resource
+reviewer agent:/root/note_budget_review approved allocation and accounting,
+including the common production/test compact-order helper. Debug and Release
+each passed 830/830 Mermaid tests; source-bound geometry/mutation reports, the
+reviewed gap ledger, and testing-seam privacy checks passed in both presets. This batch does not graduate Phase C or prove browser/API
+assertions. The associated RFC 0031 testing-facade additions are explicitly
+recorded there.
+
+### 2026-10-30: DefaultConfig complete-source terminal admission
+
+The P0 no-config-use-default original has a separately source-reviewed complete
+Flow Model: rounded, parallelogram and rectangular nodes, two directed edges,
+and one sibling-node group. The immutable full source SHA binds the metadata
+envelope and body together. The official consumer captures 240/40/240 and both
+ordinary-source controls before Model binding, then requires full geometry,
+restoration and four semantic/physical adversaries. A source-size limit and
+prepaid, shared bounded work cover front-end setup through validation. No
+renderer or upstream manifest is changed, and no browser/theme assertion is
+certified. Reviewer identities and verdicts are retained in
+`docs/dev/mermaid-default-config-review.md`; final regression evidence is tracked
+in the implementation backlog. This is a bounded Phase C batch, not graduation.
+
+### 2026-10-30: bounded Class nonvisual accessibility declarations
+
+Design/PRR reviewer `agent:class_accessibility_design_review` approved a closed
+terminal adaptation for standalone root-scope, case-sensitive `accTitle` and
+`accDescr` colon statements. Trim only outer ASCII space; retain 1–256 exact
+UTF-8 bytes in separate optional owned strings, distinct from visible titles.
+Reject invalid/control text, `<`, `>`, `&`, backslash and backtick; duplicates,
+empty/malformed/block/nested statements and physical-line violations return the
+whole source. Longer identifiers and ordinary Class operands must retain their
+own grammar. Prepay field state, scanning and allocation from the same Work.
+No glyph rows, ARIA/screen-reader API, browser or theme equivalence is claimed;
+metadata is retained internally and original source stays available for copy.
+A minimal reviewed test facade may inspect the values through the production
+parser. Before Class4 admission require source/manifest/metadata binding,
+complete 20-entity/19-edge geometry, useful mutations, all boundary/scope/UTF-8/
+budget controls, privacy checks and dual-preset regression. Historical null
+Models and foreign debts remain immutable. Source model review and design
+review are recorded separately; no drawing credit is inferred from this design.
+
+Class4 execution checkpoint: independent source/model and implementation reviews
+approve after dotted-diamond operand handling was repaired. Complete four
+20-entity/19-edge originals and boundary/proof controls pass. Release841/841;
+Debug841 outcomes complete after seven stale roster-count retries. Both official
+matrices agree on633/2145 drawings,1501 fallbacks,11 errors. Details and retained
+foreign debts: `docs/dev/mermaid-class4-review.md`. No phase graduation claimed.
+
+### 2026-10-30: Requirement literal-Markdown source admission
+
+Source reviewer `agent:requirement_markdown_source_review` and implementation
+reviewer `agent:requirement_markdown_implementation_review` approve the separate
+complete-source supplement for original105/global1493 under the existing
+literal-text terminal contract. The producer and production budgets are
+unchanged. Five captures, complete geometry,14 adversaries and strict
+same-ledger/proof controls pass. Both presets pass842/842; identical matrices
+record634/2145 drawings,1501 fallback,10 errors. Browser emphasis and other
+foreign assertions remain pending. See `docs/dev/mermaid-requirement-markdown-review.md`.
+No phase graduation is claimed.
+
+### 2026-10-30: bounded Flow P0 repeated-target test domain
+
+Design/PRR reviewer `agent:flow_repeated_target_design_review` conditionally
+approves a separate `SourceReviewedP0` authority/geometry domain. The original
+GroupEndpoint15 default keeps unique targets and at most two tagged links.
+The new source-bound grouped cohort permits up to three tagged links and1,884
+canonical Model bytes. It keeps typed endpoints, exact source order and
+multiplicity, containment, complete routes, distinct cells/heads/ports,
+conservation, following content and rank where defined. No producer or
+production budget changes are authorized by this test-domain design.
+
+The first complete disjoint assignment must also satisfy perimeter/orphan
+conservation at its leaf; otherwise search continues within the existing
+bounds. Any route/candidate truncation or selection/work exhaustion is a
+resource failure and earns no semantic-negative credit. Single-parent BFS has
+completeness limits; a failed candidate search does not diagnose the producer.
+Before any original admission require independent finite ordinary/ordinary,
+ordinary/tagged, group/group and parent/child controls, applicable orientations,
+head/port/route sharing, branch/crossing/orphan, typed endpoint/membership/order/
+rank and ambiguity forgeries, source/following controls, explicit legacy
+rejection and every resource limit. The source-only ten-case proposal retains
+all fields and foreign debts; the edge-length interpretation is qualified by
+the existing local terminal contract, pending separate native admission.
+
+The independently source-reviewed Flow P0 length alias design reuses the exact
+LinkProfile3 visual294 Model/Profile for nightly ordinal19/global680 only.
+The source bodies and base Models are equal; the complete nightly source and
+P0 Model retain distinct SHA/manifest identities and foreign Dagre debt.
+Approval requires source-specific five-frame geometry, the existing six
+mutations, resource/forgery controls and strict separate owned provenance
+before any coverage credit. No browser equivalence, cap increase or RFC phase
+graduation is authorized. Reviewer: agent:flow_p0_length_alias_design_review.
+
+Flow P0 grouped7 execution checkpoint: Debug/Release852/852; official641/2145,
+Flow61/400,1501 fallbacks,3 errors. Independent final oracle, producer and
+collector reviews approve; measured resource controls and exact seven-row
+comparison are recorded in `../dev/mermaid-flow-p0-grouped7-review.md`.
+This execution record changes no phase status or graduation criterion.
+
+Flow P0 length1 execution: Debug/Release854/854; official642/2145, Flow62/400,
+1501 fallbacks,2 errors. Source-alias design and implementation agent reviews
+approve; full evidence and exact one-row comparison are recorded in
+`../dev/mermaid-flow-p0-length-review.md`. No phase graduation is claimed.
+
+For the two remaining P0 grouped mixed/headless sources only, the independent
+headless and deterministic-strand design reviewers conditionally approve a
+separate private physical domain. Fully discovered unique contour identities,
+legal vertex ports, degree-two strands and straight orthogonal crossings
+permit complete deterministic traversal. Compare the physical endpoint/marker
+multiset with all source occurrences, not an image-derived edge order; five
+identical edges require five distinct strands. Preserve exact group ownership,
+common-frontier inherited direction and whole-grid conservation. Any cap,
+allocation, incomplete discovery or work exhaustion is structurally inconclusive
+and cannot supply negative credit. Source binding, hand-authored positive and
+decisive negative scenes, inclusive cap controls and five actual views must pass
+before admission. Existing domains and production caps stay unchanged.
+Reviewers: agent:flow_p0_headless_design_review and
+agent:flow_p0_strand_design_review. No phase graduation is authorized.
+
+Flow P0 strands2 execution: Debug/Release867/867 plus final exact-branch control,
+official644/2145 (30.02%),Flow64/400,1501 fallbacks,zero errors. All22 errors
+in the original P0 package are resolved. Independent source/oracle, production,
+integration and exact roster reviews approve; detailed evidence and exact
+two-original comparison are in `../dev/mermaid-flow-p0-strands-review.md`.
+No RFC phase graduation is claimed; continue P1/P2/P3.
+
+### D1a execution started (2026-10-30; no graduation)
+
+P0 completed its independent code/integration/roster reviews and dual-preset
+Mermaid regression. The bounded Class13 direct-style sub-batch now enters
+implementation under the independently approved revision1 design/PRR and
+immutable source authority. Scope, cache and Work ownership, exact source asset
+pins, grammar/legend subset, screen oracle and execution gates are recorded in
+`../dev/mermaid-class-direct-style-plan.md`. Proposed source Models and design
+approval confer no drawing credit. Phase D and D1 remain incomplete.
+
+Before producer edits, mechanical style-free glyph/Work pins were measured for
+Class empty/member/config scenes, ER and State. These are regression evidence,
+not independent source expectations or geometry admission.
+
+Class D1a direct-style13 execution (2026-10-30):657/2145 (30.63%),Class254/285,
+1488 fallbacks, zero errors. Debug/Release878/878 and serial style/resource/
+real-PTY14/14 each pass. Independent source/design/producer/oracle/integration,
+synthetic-control and exact-roster reviews approve the bounded sub-batch;
+complete evidence and thirteen-original comparison are in
+`../dev/mermaid-class-style13-review.md`. No phase graduation or browser
+equivalence is claimed. Continue defined-Class-style6 and remaining P1/P2/P3.
+
+Class D1b defined-style6 execution (2026-10-30):663/2145 (30.91%),Class260/285,
+1482 fallbacks, zero errors. Debug/Release889/889 and serial style/resource/
+real-PTY25/25 each pass. Independent source/design/producer/oracle/integration
+and exact-roster reviews approve the bounded sub-batch. Complete evidence and
+six-original comparison: `../dev/mermaid-class-defined-style6-review.md`.
+No phase graduation or browser/full-project coverage is claimed. Continue
+Flow style4 and remaining P1 before P2/P3.

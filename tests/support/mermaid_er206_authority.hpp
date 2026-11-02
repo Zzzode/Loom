@@ -1350,10 +1350,83 @@ inline constexpr std::array<Er206Pin, 206> kEr206Pins{{
      "d75fe16f96c4b6888f823e6b55022620b3a533d7edf1a5994d39f236eeeaaa8f", "",
      "1c75a09187d449e7976be70fe2c413dafca21f74bb683d193fd2c5e9a8c879a4"},
 }};
+inline constexpr std::string_view kErRich6Sha =
+    "4dcced42d36fb75db82bc13dac5966938efe69ecbf6cbc649cabb0f08aeaccec";
+inline constexpr std::array<std::size_t, 6> kErRich6Ordinals{{24u, 65u, 66u, 77u, 78u, 199u}};
+inline constexpr std::array<std::string_view, 6> kErRich6ModelSha{
+    {"b628e20b7e7fac5cbe7c9f1ce4e88d7e2b44609ecb19aa48069b12f1de61b31b",
+     "502f2fda5d2cba23874b3a45318a771c8cbd97eac4b209cd9802e5ff48b3e952",
+     "502f2fda5d2cba23874b3a45318a771c8cbd97eac4b209cd9802e5ff48b3e952",
+     "88d5c575eadaf0d92fec241da826dbefd355644e179d41b94c6e9f973c461402",
+     "88d5c575eadaf0d92fec241da826dbefd355644e179d41b94c6e9f973c461402",
+     "b628e20b7e7fac5cbe7c9f1ce4e88d7e2b44609ecb19aa48069b12f1de61b31b"}};
+inline constexpr std::array<std::size_t, 6> kErRich6ModelBytes{
+    {1896u, 818u, 818u, 1158u, 1158u, 1896u}};
+
+inline std::optional<std::size_t> er206_rich_index(std::size_t ordinal) {
+    const auto it = std::ranges::find(kErRich6Ordinals, ordinal);
+    if (it == kErRich6Ordinals.end()) return {};
+    return static_cast<std::size_t>(it - kErRich6Ordinals.begin());
+}
 
 struct Er206Documents {
-    json::JsonDoc authority, manifest;
+    json::JsonDoc authority, manifest, rich;
+    Work rich_work;
 };
+
+inline void er206_rich_validate(JsonVal root, Work& work) {
+    class481_keys(root, {"schema", "qualification", "base_authority_sha256", "rows"}, work);
+    class481_require(root.get_string("schema") == "er206_rich6_source_supplement/v1" &&
+                         root.get_string("base_authority_sha256") ==
+                             "76d54ecbc725e59645501f7079f9387b272172d584703f0ea72f143c83c469db",
+                     "ER rich6 schema/source authority");
+    const auto rows = root.get("rows");
+    class481_require(rows.is_arr() && rows.size() == 6u, "ER rich6 exactly six source rows");
+    for (std::size_t n = 0; n < 6u; ++n) {
+        const auto row = rows.at(n);
+        const auto& pin = kEr206Pins[kErRich6Ordinals[n]];
+        work.spend(16384u + pin.source_bytes * 16u);
+        class481_keys(row,
+                      {"ordinal", "manifest_global_ordinal", "fixture", "source_sha256",
+                       "source_bytes", "model", "model_canonical_json", "model_sha256",
+                       "model_bytes"},
+                      work);
+        class481_require(
+            row.get_int("ordinal") == static_cast<int64_t>(kErRich6Ordinals[n]) &&
+                row.get_int("manifest_global_ordinal") == static_cast<int64_t>(pin.global) &&
+                row.get_string("fixture") == pin.path &&
+                row.get_string("source_sha256") == pin.source_sha &&
+                row.get_int("source_bytes") == static_cast<int64_t>(pin.source_bytes) &&
+                pin.model_bytes == 0u,
+            "ER rich6 exact original tuple and historical null");
+        class481_require(row.get_int("model_bytes") ==
+                                 static_cast<int64_t>(kErRich6ModelBytes[n]) &&
+                             row.get_string("model_sha256") == kErRich6ModelSha[n],
+                         "ER rich6 pinned Model identity");
+        const auto wire = class481_text(row.get("model_canonical_json"), work, 1896u);
+        work.spend(wire.size() * 32u + 4096u);
+        class481_require(wire.size() == static_cast<std::size_t>(row.get_int("model_bytes")) &&
+                             digest(wire) == row.get_string("model_sha256") &&
+                             class481_canonical(row.get("model"), work) == wire,
+                         "ER rich6 complete canonical Model integrity");
+    }
+}
+
+inline JsonVal er206_active_meaning(const Er206Documents& docs, std::size_t ordinal) {
+    const auto index = er206_rich_index(ordinal);
+    return index ? docs.rich.root().get("rows").at(*index).get("model")
+                 : docs.authority.root().get("cases").at(ordinal).get("whole_model");
+}
+
+inline Er206Pin er206_active_pin(const Er206Documents& docs, std::size_t ordinal) {
+    auto pin = kEr206Pins.at(ordinal);
+    if (const auto index = er206_rich_index(ordinal)) {
+        const auto row = docs.rich.root().get("rows").at(*index);
+        pin.model_bytes = static_cast<std::size_t>(row.get_int("model_bytes"));
+        pin.model_sha = row.get("model_sha256").as_str();
+    }
+    return pin;
+}
 
 inline Er206Documents er206_document(Work& setup) {
     constexpr std::size_t asset_bytes = 622036u, manifest_bytes = 1272942u;
@@ -1404,7 +1477,20 @@ inline Er206Documents er206_document(Work& setup) {
     class481_require(m->root().get("fixtures").is_arr() &&
                          m->root().get("fixtures").size() == 2145u,
                      "ER206 unchanged official manifest");
-    return {std::move(*a), std::move(*m)};
+    constexpr std::size_t rich_bytes = 30838u;
+    // Asset setup has its own bounded lifetime, as other source supplements do.
+    // Per-source decode/geometry/mutations still use the existing scene ledger.
+    setup.spend(4u * sizeof(Work) + 4u * sizeof(json::JsonDoc) + 256u);
+    Work rich_setup;
+    rich_setup.spend(rich_bytes * 16u + 65536u);
+    const auto rp = root / "mermaid_native/er206_rich6_source_supplement.v1.json";
+    class481_require(std::filesystem::file_size(rp) == rich_bytes, "ER rich6 asset bytes");
+    const auto rb = read(rp);
+    class481_require(digest(rb) == kErRich6Sha, "ER rich6 asset SHA");
+    auto rich = json::parse(rb);
+    class481_require(rich.has_value(), "ER rich6 JSON");
+    er206_rich_validate(rich->root(), rich_setup);
+    return {std::move(*a), std::move(*m), std::move(*rich), rich_setup};
 }
 
 inline JsonVal er206_binding(JsonVal row, std::size_t index, const Er206Documents& docs,

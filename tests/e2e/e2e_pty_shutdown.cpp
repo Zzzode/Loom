@@ -336,9 +336,16 @@ private:
                     : index == 3 ? "```mermaid\n---\ndescription: >-\n  PTY state E2a "
                                    "smoke\n---\nstateDiagram-v2\n  [*] --> State1\n  State1 --> "
                                    "[*]\n```\n\nSTATE_DONE"
-                                 : "```mermaid\nflowchart TD\nA --> B\nsubgraph "
-                                   "UnsupportedGroup\nC\nend\nclick A "
-                                   "\"https://example.invalid\"\n```\n\nFALLBACK_DONE");
+                    : index == 4 ? "```mermaid\nclassDiagram\nclass Class10\nstyle Class10 "
+                                   "fill:#f9f,stroke:#333,stroke-width:4px,color:white\n```"
+                                   "\n\nCLASS_STYLE_DONE"
+                    : index == 5
+                        ? "```mermaid\nclassDiagram\nclass Class10:::pink\ncssClass \"Class10\" "
+                          "bold\nclassDef pink fill:#f9f\nclassDef bold "
+                          "stroke:#333,stroke-width:6px,color:#fff\n```\n\nCLASS_DEFINED_DONE"
+                        : "```mermaid\nflowchart TD\nA --> B\nsubgraph "
+                          "UnsupportedGroup\nC\nend\nclick A "
+                          "\"https://example.invalid\"\n```\n\nFALLBACK_DONE");
                 send_bytes(
                     "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
                     std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
@@ -1737,8 +1744,8 @@ struct TerminalCell {
     bool dim = false;
 };
 
-struct TerminalFrame {
-    std::array<std::array<TerminalCell, 120>, 40> cells{};
+template <std::size_t Columns> struct BasicTerminalFrame {
+    std::array<std::array<TerminalCell, Columns>, 40> cells{};
 
     std::string row(int y) const {
         std::string result;
@@ -1751,9 +1758,10 @@ struct TerminalFrame {
 
     std::pair<int, int> find(const std::string& label) const {
         for (int y = 0; y < 40; ++y) {
-            for (int x = 0; x < 120; ++x) {
+            for (int x = 0; x < static_cast<int>(Columns); ++x) {
                 std::string value;
-                for (int next = x; next < 120 && value.size() < label.size(); ++next)
+                for (int next = x; next < static_cast<int>(Columns) && value.size() < label.size();
+                     ++next)
                     value += cells[y][next].text;
                 if (value == label) return {x, y};
             }
@@ -1762,8 +1770,11 @@ struct TerminalFrame {
     }
 };
 
-TerminalFrame decode_frame(const std::string& bytes) {
-    TerminalFrame frame;
+using TerminalFrame = BasicTerminalFrame<120>;
+
+template <std::size_t Columns = 120>
+BasicTerminalFrame<Columns> decode_frame(const std::string& bytes) {
+    BasicTerminalFrame<Columns> frame;
     int x = 0, y = 0;
     std::string background, foreground;
     bool bold = false, dim = false;
@@ -1794,7 +1805,7 @@ TerminalFrame decode_frame(const std::string& bytes) {
                     y = std::min(39, y + amount);
                     break;
                 case 'C':
-                    x = std::min(119, x + amount);
+                    x = std::min((static_cast<int>(Columns) - 1), x + amount);
                     break;
                 case 'D':
                     x = std::max(0, x - amount);
@@ -1802,7 +1813,9 @@ TerminalFrame decode_frame(const std::string& bytes) {
                 case 'H':
                 case 'f':
                     y = std::clamp(amount - 1, 0, 39);
-                    x = values.size() > 1 ? std::clamp(values[1] - 1, 0, 119) : 0;
+                    x = values.size() > 1
+                            ? std::clamp(values[1] - 1, 0, (static_cast<int>(Columns) - 1))
+                            : 0;
                     break;
                 case 'm':
                     for (std::size_t n = 0; n < values.size(); ++n) {
@@ -1889,8 +1902,9 @@ TerminalFrame decode_frame(const std::string& bytes) {
                                   codepoint >= 0x1f300
                               ? 2
                               : 1;
-        if (x < 120) frame.cells[y][x] = {glyph, background, foreground, bold, dim};
-        if (width == 2 && x + 1 < 120)
+        if (x < static_cast<int>(Columns))
+            frame.cells[y][x] = {glyph, background, foreground, bold, dim};
+        if (width == 2 && x + 1 < static_cast<int>(Columns))
             frame.cells[y][x + 1] = {"", background, foreground, bold, dim};
         x += width;
         i += length;
@@ -3040,6 +3054,107 @@ void run_mermaid_case(const std::string& binary, const fs::path& root, const fs:
     require(terminal.wait(
                 [&] { return terminal.latest_frame_text().find("State1") == std::string::npos; }),
             "state fixture clear did not complete");
+    terminal.resize(240, 40);
+    terminal.input("Return the styled Class diagram\r");
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return terminal.idle_response_visible("CLASS_STYLE_DONE") &&
+               frame.find("classDiagram") == std::string::npos &&
+               frame.find("fill:Purple") != std::string::npos &&
+               frame.find("not projected on fill") != std::string::npos;
+    }),
+            "styled Class or its disclosed semantic legend did not render in the real terminal");
+    save_attention_frame(root, "mermaid-class-style", terminal.latest_frame());
+    const auto styled = decode_frame<240>(terminal.latest_frame());
+    const auto label = styled.find("Class10");
+    int style_left = label.first, style_right = label.first + 7;
+    while (style_left > 0 && styled.cells[label.second][style_left].text != "│")
+        --style_left;
+    while (style_right < 239 && styled.cells[label.second][style_right].text != "│")
+        ++style_right;
+    require(styled.cells[label.second][style_left].text == "│" &&
+                styled.cells[label.second][style_right].text == "│",
+            "styled Class selection lacks its real node borders");
+    require(styled.cells[label.second][style_left].bold,
+            "Class stroke-width projection lost real ANSI bold");
+    require(styled.cells[label.second][label.first].background !=
+                styled.cells[label.second][style_left].background,
+            "Class fill projection lost the real ANSI interior background");
+    std::string copied_style;
+    for (int x = style_left; x <= style_right; ++x)
+        copied_style += styled.cells[label.second][x].text;
+    terminal.input(mouse_report(0, {style_left, label.second}) +
+                   mouse_report(32, {style_right, label.second}) +
+                   mouse_report(0, {style_right, label.second}, true));
+    require(terminal.wait([&] { return read_file(root / "clipboard.txt") == copied_style; }),
+            "styled hbox runs did not copy exactly the visible Unicode cells");
+    std::ofstream(root / "mermaid-class-style-copied.txt") << read_file(root / "clipboard.txt");
+    terminal.input("/clear\r");
+    require(terminal.wait([&] {
+        return terminal.latest_frame_text().find("CLASS_STYLE_DONE") == std::string::npos;
+    }),
+            "styled Class fixture clear did not complete");
+    terminal.input("Return the defined Class style diagram\r");
+    require(terminal.wait([&] {
+        const auto frame = terminal.latest_frame_text();
+        return terminal.idle_response_visible("CLASS_DEFINED_DONE") &&
+               frame.find("classDiagram") == std::string::npos &&
+               frame.find("class:pink") != std::string::npos &&
+               frame.find("definition:bold (applied)") != std::string::npos;
+    }),
+            "defined Class style references or their provenance did not render");
+    save_attention_frame(root, "mermaid-class-defined-style-native", terminal.latest_frame());
+    const auto defined_frame = decode_frame<240>(terminal.latest_frame());
+    const std::array<std::string, 5> expected_defined_legend{
+        {"class Class10:::pink -> class:pink fill:Purple(surface tint)",
+         "cssClass \"Class10\" bold -> class:bold stroke:Neutral width:bold fg:Neutral(not "
+         "projected on fill)",
+         "classDef pink fill:#f9f -> definition:pink (applied)",
+         "classDef bold stroke:#333,stroke-width:6px,color:#fff -> definition:bold (applied)",
+         "key: hue roles use palette; width>=4=bold border; color on fill not projected; "
+         "monochrome/ANSI16 may share shades; source TAB=\\t"}};
+    const auto legend_origin = defined_frame.find(expected_defined_legend.front());
+    require(legend_origin.second + static_cast<int>(expected_defined_legend.size()) <= 40,
+            "defined Class legend was physically clipped");
+    for (std::size_t n = 0; n < expected_defined_legend.size(); ++n) {
+        const auto actual = defined_frame.row(legend_origin.second + static_cast<int>(n));
+        require(actual == std::string(static_cast<std::size_t>(legend_origin.first), ' ') +
+                              expected_defined_legend[n],
+                "real terminal changed or omitted a complete defined-style source/projection "
+                "legend row");
+    }
+    const auto defined_label = defined_frame.find("Class10");
+    int defined_left = defined_label.first, defined_right = defined_label.first + 7;
+    while (defined_left > 0 && defined_frame.cells[defined_label.second][defined_left].text != "│")
+        --defined_left;
+    while (defined_right < 239 &&
+           defined_frame.cells[defined_label.second][defined_right].text != "│")
+        ++defined_right;
+    require(defined_frame.cells[defined_label.second][defined_left].text == "│" &&
+                defined_frame.cells[defined_label.second][defined_right].text == "│",
+            "defined Class copy lacks real borders");
+    require(defined_frame.cells[defined_label.second][defined_left].bold,
+            "defined Class width lost real ANSI bold");
+    require(defined_frame.cells[defined_label.second][defined_label.first].background !=
+                defined_frame.cells[defined_label.second][defined_left].background,
+            "defined Class fill lost real ANSI background");
+    std::string copied_defined;
+    for (int x = defined_left; x <= defined_right; ++x)
+        copied_defined += defined_frame.cells[defined_label.second][x].text;
+    fs::remove(root / "clipboard.txt");
+    terminal.input(mouse_report(0, {defined_left, defined_label.second}) +
+                   mouse_report(32, {defined_right, defined_label.second}) +
+                   mouse_report(0, {defined_right, defined_label.second}, true));
+    require(terminal.wait([&] { return read_file(root / "clipboard.txt") == copied_defined; }),
+            "defined-style Unicode copy did not publish a fresh exact clipboard result");
+    std::ofstream(root / "mermaid-class-defined-style-copied.txt")
+        << read_file(root / "clipboard.txt");
+    save_attention_frame(root, "mermaid-class-defined-style-copied", terminal.latest_frame());
+    terminal.input("/clear\r");
+    require(terminal.wait([&] {
+        return terminal.latest_frame_text().find("CLASS_DEFINED_DONE") == std::string::npos;
+    }),
+            "defined Class fixture clear did not complete");
     terminal.input("Return an unsupported diagram\r");
     require(terminal.wait([&] {
         const auto frame = terminal.latest_frame_text();
@@ -3051,7 +3166,7 @@ void run_mermaid_case(const std::string& binary, const fs::path& root, const fs:
             "unsupported Mermaid syntax did not retain the complete source");
     save_attention_frame(root, "mermaid-unsupported-source", terminal.latest_frame());
     const auto bodies = server.request_bodies();
-    require(bodies.size() == 5, "Mermaid rendering caused extra business requests");
+    require(bodies.size() == 7, "Mermaid rendering caused extra business requests");
     for (std::size_t i = 0; i < bodies.size(); ++i) {
         const auto first = bodies[i].find("GLOBAL_PTY_INSTRUCTION_63");
         require(first != std::string::npos &&

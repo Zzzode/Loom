@@ -1,0 +1,55 @@
+{
+  "schema": "mermaid_flow7213_route_diagnostic/v1",
+  "scope": "Observed actual capture and code diagnosis only; not expected geometry, not admission proof",
+  "fixture": "flowchart/nightly-check/dagre/7213-should-render-dagre-edges-with-right-angles-not-curves.mmd",
+  "flow_ordinal": 54,
+  "source_sha256": "a4889b253941d911e7d1b3dae02117f72473a12d10d91bc7febf8288b8c92f53",
+  "source_declared_parallel_occurrences": 5,
+  "capture": "mermaid-official-flow400-whole-source.jsonl original ordinal54 wide240",
+  "coordinate_origin": "zero based",
+  "observed_nonterminal_route_junctions": [
+    {
+      "x": 27,
+      "y": 24,
+      "glyph": "┬"
+    },
+    {
+      "x": 28,
+      "y": 24,
+      "glyph": "┬"
+    },
+    {
+      "x": 47,
+      "y": 24,
+      "glyph": "┴"
+    },
+    {
+      "x": 48,
+      "y": 24,
+      "glyph": "┴"
+    }
+  ],
+  "diagnosis": "Relaxed Router enterable accepts every marked nonhead prior connector. draw_path leaves route allowed directions unrestricted and merges bits; subsequent paths can join or turn on prior stems. This loses separate physical strand evidence.",
+  "required_validation": "Independent complete physical strand multiset and distinct-port/arm conservation; source edge list count alone is insufficient",
+  "status": "Producer repair and two complete original source admissions pass independent review and dual-preset Mermaid regressions; see mermaid-flow-p0-strands-review.md",
+  "before_capture_file": "mermaid-flow7213-before-actual-capture.json",
+  "before_capture_file_sha256": "10f00a97f1138037ed11932655089e291591493fbe97d4c8a30d24c3eee96fcf",
+  "observed_excerpt": {
+    "left": 20,
+    "top": 22,
+    "rows": [
+      "──────────┼──┐ ",
+      "          │  │ ",
+      "      ┌┬┬─┼──┼─",
+      "      │││ │  │ ",
+      "      │││ │  │ ",
+      "      │││ │  │ ",
+      "      │││ │  │ ",
+      " ┌────┴┴┴┐│  │ ",
+      " │       ├┤  │ ",
+      " │  N11  ├┘  │ ",
+      "─┤       │   │ ",
+      " └───────┘   │ "
+    ]
+  }
+}

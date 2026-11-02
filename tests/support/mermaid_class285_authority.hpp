@@ -6,6 +6,7 @@
 #include "mermaid_relations_oracle.hpp"
 
 import loom.crypto.crypto;
+import loom.ui.visual.mermaid.testing;
 
 namespace loom::test::mermaid_relations {
 
@@ -312,8 +313,129 @@ inline std::array<std::size_t, 285> official_class285_notes_index(JsonVal root, 
     return index;
 }
 
+inline constexpr std::string_view kClassAccessibility4File =
+    "mermaid_native/class285_accessibility4_source_supplement.v1.json";
+inline constexpr std::size_t kClassAccessibility4Bytes = 56044u;
+inline constexpr std::string_view kClassAccessibility4Sha =
+    "c1ef5610eb44e7ae239c2f1b0472af5aba71f898f18f98deff4a36affbe6fcc1";
+inline constexpr std::string_view kClassAccessibility4ModelSha =
+    "6e09a7e5fd950b894a383d166a00461e34722f2886e4d4d2638ef7d50e9288c4";
+inline constexpr std::array<std::size_t, 4> kClassAccessibility4Ordinals{263u, 264u, 271u, 284u};
+
+struct ClassAccessibility4Pin {
+    std::size_t global;
+    std::string_view fixture, source_sha;
+};
+
+inline constexpr std::array<ClassAccessibility4Pin, 4> kClassAccessibility4Pins{{
+    {411u, "class-diagram/visual-check/dark-theme.mmd",
+     "df1262f42e99476d5e45c0ec6ecb934f14bc117908df948a4af48cc8a5372e51"},
+    {412u, "class-diagram/visual-check/default-theme.mmd",
+     "760b8a5bd13cd3f57ed310ac4a0f291522b61a02e4738c620b0bb0e98310d241"},
+    {419u, "class-diagram/visual-check/forest-theme.mmd",
+     "abac4c611f8dc5170a164b7662ff37e167297552f13bc5b14d83c151cd5e45d5"},
+    {432u, "class-diagram/visual-check/neutral-theme.mmd",
+     "daa2d2b04208bde399fdc53975c887a328311e98095dbdf169e51d51ee8cb60f"},
+}};
+
+inline std::optional<std::size_t> class_accessibility4_index(std::size_t ordinal) {
+    const auto found = std::ranges::find(kClassAccessibility4Ordinals, ordinal);
+    if (found == kClassAccessibility4Ordinals.end()) return {};
+    return static_cast<std::size_t>(found - kClassAccessibility4Ordinals.begin());
+}
+
+inline void class_accessibility4_asset(JsonVal root, JsonVal facts, Work& work) {
+    class481_keys(root, {"schema", "qualification", "rows"}, work);
+    class481_require(root.get_string("schema") == "class285_accessibility4_source_supplement/v1" &&
+                         root.get("qualification").is_str() && root.get("rows").is_arr() &&
+                         root.get("rows").size() == 4u,
+                     "Class accessibility4 source asset schema");
+    for (std::size_t i = 0; i < 4u; ++i) {
+        work.spend(8192u);
+        const auto row = root.get("rows").at(i),
+                   base = facts.get("cases").at(kClassAccessibility4Ordinals[i]);
+        class481_keys(row,
+                      {"ordinal", "manifest_global_ordinal", "fixture", "source_sha256",
+                       "source_bytes", "accessibility_title", "accessibility_description",
+                       "presentation", "model", "model_sha256"},
+                      work);
+        class481_require(row.get("ordinal").is_int() &&
+                             row.get_int("ordinal") ==
+                                 static_cast<std::int64_t>(kClassAccessibility4Ordinals[i]) &&
+                             row.get_int("manifest_global_ordinal") ==
+                                 base.get_int("manifest_global_ordinal") &&
+                             row.get_string("fixture") == base.get_string("fixture") &&
+                             row.get_string("source_sha256") == base.get_string("source_sha256") &&
+                             row.get_int("source_bytes") == base.get_int("source_utf8_bytes") &&
+                             base.get("whole_native_model_candidate").is_null(),
+                         "Class accessibility4 immutable source/null binding");
+        class481_require(row.get_string("accessibility_title") == "This is a title" &&
+                             row.get_string("accessibility_description") == "This is a description",
+                         "Class accessibility4 exact separate metadata");
+        class481_keys(row.get("presentation"), {"title", "hide_empty_members_box"}, work);
+        class481_require(row.get("presentation").get("title").is_null() &&
+                             row.get("presentation").get("hide_empty_members_box").is_null(),
+                         "Class accessibility4 no visible title or authored compact override");
+        class481_require(row.get_string("model_sha256") == kClassAccessibility4ModelSha &&
+                             digest(class481_canonical(row.get("model"), work)) ==
+                                 kClassAccessibility4ModelSha,
+                         "Class accessibility4 complete reviewed Model");
+    }
+}
+
+inline json::JsonDoc class_accessibility4_document(JsonVal facts) {
+    Work asset_work;
+    asset_work.spend(kClassAccessibility4Bytes * 8u + 8192u);
+    const auto path = std::filesystem::path(LOOM_TESTS_DIR) / "fixtures" / kClassAccessibility4File;
+    class481_require(std::filesystem::file_size(path) == kClassAccessibility4Bytes,
+                     "Class accessibility4 stat");
+    const auto raw = read(path);
+    class481_require(digest(raw) == kClassAccessibility4Sha, "Class accessibility4 asset hash");
+    auto doc = json::parse(raw);
+    class481_require(doc.has_value(), "Class accessibility4 JSON");
+    class_accessibility4_asset(doc->root(), facts, asset_work);
+    return std::move(*doc);
+}
+
+inline JsonVal class_accessibility4_model(JsonVal row, JsonVal base, std::size_t ordinal,
+                                          Work& work) {
+    const auto index = class_accessibility4_index(ordinal);
+    class481_require(
+        index.has_value() && row.get_int("ordinal") == static_cast<std::int64_t>(ordinal) &&
+            base.get_int("application_ordinal") == static_cast<std::int64_t>(ordinal) &&
+            row.get_int("manifest_global_ordinal") == base.get_int("manifest_global_ordinal") &&
+            row.get_string("fixture") == base.get_string("fixture") &&
+            row.get_string("source_sha256") == base.get_string("source_sha256") &&
+            row.get_int("source_bytes") == base.get_int("source_utf8_bytes") &&
+            base.get("whole_native_model_candidate").is_null(),
+        "Class accessibility4 exact selected source");
+    class481_require(row.get_string("accessibility_title") == "This is a title" &&
+                         row.get_string("accessibility_description") == "This is a description",
+                     "Class accessibility4 exact separate metadata");
+    class481_require(row.get_string("model_sha256") == kClassAccessibility4ModelSha &&
+                         digest(class481_canonical(row.get("model"), work)) ==
+                             kClassAccessibility4ModelSha,
+                     "Class accessibility4 complete reviewed Model");
+    class481_keys(row.get("presentation"), {"title", "hide_empty_members_box"}, work);
+    class481_require(row.get("presentation").get("title").is_null() &&
+                         row.get("presentation").get("hide_empty_members_box").is_null(),
+                     "Class accessibility4 no visible title or authored compact override");
+    namespace seam = loom::ui::mermaid::testing;
+    // This prepaid bounded production parse is independent of scene geometry;
+    // its complete maximum allowance is paid by the same owning test ledger.
+    work.spend(seam::kWorkLimit + 4096u);
+    seam::Work parser;
+    const auto metadata =
+        seam::class_accessibility_metadata(class481_text(base.get("source"), work), parser, true);
+    class481_require(metadata && metadata->title && metadata->description &&
+                         *metadata->title == row.get_string("accessibility_title") &&
+                         *metadata->description == row.get_string("accessibility_description"),
+                     "Class accessibility4 production retention differs");
+    return row.get("model");
+}
+
 struct OfficialClass285Documents {
-    json::JsonDoc facts, approval, dagre, classifier, unused, notes;
+    json::JsonDoc facts, approval, dagre, classifier, unused, notes, accessibility;
     std::array<std::size_t, 285> dagre_index, classifier_index, unused_index, notes_index;
     std::size_t setup_left;
 };
@@ -517,12 +639,14 @@ inline OfficialClass285Documents official_class285_documents() {
                               unused_index[n] == kOfficialClass285UnusedAbsent),
                          "OfficialClass285 Notes disjoint all old authorities");
     }
+    auto accessibility = class_accessibility4_document(facts->root());
     return {std::move(*facts),
             std::move(*approval),
             std::move(*dagre),
             std::move(*classifier),
             std::move(*unused),
             std::move(notes),
+            std::move(accessibility),
             index,
             classifier_index,
             unused_index,
@@ -1025,7 +1149,8 @@ inline void official_class285_notes_consume(std::array<bool, 285>& seen, std::si
 struct OfficialClass285Bound {
     JsonVal meaning;
     ClassPresentation presentation;
-    bool dagre = false, classifier = false, unused_definitions = false, notes = false;
+    bool dagre = false, classifier = false, unused_definitions = false, notes = false,
+         accessibility = false;
 };
 
 inline OfficialClass285Bound official_class285_bind(JsonVal row, std::size_t n,
@@ -1132,6 +1257,21 @@ inline OfficialClass285Bound official_class285_bind(JsonVal row, std::size_t n,
                                            pin.get_int("canonical_candidate_case_bytes")) &&
                          digest(encoded) == pin.get_string("canonical_candidate_case_sha256"),
                      "OfficialClass285 exact independently reviewed whole row");
+    if (const auto accessibility = class_accessibility4_index(n)) {
+        class481_require(docs.notes_index[n] == kOfficialClass285NotesAbsent &&
+                             docs.unused_index[n] == kOfficialClass285UnusedAbsent &&
+                             docs.classifier_index[n] == kOfficialClass285ClassifierAbsent &&
+                             docs.dagre_index[n] == kOfficialClass285DagreAbsent,
+                         "Class accessibility4 disjoint historical supplements");
+        return {class_accessibility4_model(docs.accessibility.root().get("rows").at(*accessibility),
+                                           row, n, work),
+                presentation,
+                false,
+                false,
+                false,
+                false,
+                true};
+    }
     work.spend(2u * sizeof(std::size_t) + 16u);
     const auto notes_index = docs.notes_index[n];
     if (notes_index != kOfficialClass285NotesAbsent) {

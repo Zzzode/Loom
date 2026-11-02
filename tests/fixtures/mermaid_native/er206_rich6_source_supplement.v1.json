@@ -1,0 +1,767 @@
+{
+  "schema": "er206_rich6_source_supplement/v1",
+  "qualification": "Reviewed literal terminal projection: preserve Markdown punctuation and Unicode, project exactly admitted BR spellings to LF. Original source/null authority is unchanged; runtime/foreign admission separate.",
+  "base_authority_sha256": "76d54ecbc725e59645501f7079f9387b272172d584703f0ea72f143c83c469db",
+  "rows": [
+    {
+      "ordinal": 24,
+      "manifest_global_ordinal": 473,
+      "fixture": "er-diagram/nightly-check/should-render-relationship-labels-with-line-breaks.mmd",
+      "source_sha256": "758fcc6f05b06b12f50fc598524d6cd8a9dfa701c25a252bf5b64e53c092ff68",
+      "source_bytes": 820,
+      "model": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "p",
+            "label": "Person",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Person"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string firstName"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "firstName",
+                  "keys": [],
+                  "comment": ""
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string lastName"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "lastName",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          },
+          {
+            "id": "a",
+            "label": "Customer Account",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Customer Account"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string email"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "email",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          },
+          {
+            "id": "b",
+            "label": "Customer Account Secondary",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Customer Account Secondary"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string email"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "email",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          },
+          {
+            "id": "c",
+            "label": "Customer Account Tertiary",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Customer Account Tertiary"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string email"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "email",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          },
+          {
+            "id": "d",
+            "label": "Customer Account Nth",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Customer Account Nth"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string email"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "email",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [
+          {
+            "source": "p",
+            "target": "a",
+            "label": "has\none",
+            "start": "card:one",
+            "end": "card:zero-one",
+            "stroke": "solid",
+            "order": 0
+          },
+          {
+            "source": "p",
+            "target": "b",
+            "label": "has\none\ntwo",
+            "start": "card:one",
+            "end": "card:zero-one",
+            "stroke": "solid",
+            "order": 1
+          },
+          {
+            "source": "p",
+            "target": "c",
+            "label": "has\none\ntwo\nthree",
+            "start": "card:one",
+            "end": "card:zero-one",
+            "stroke": "solid",
+            "order": 2
+          },
+          {
+            "source": "p",
+            "target": "d",
+            "label": "has\none\ntwo\nthree\n...\nNth",
+            "start": "card:one",
+            "end": "card:zero-one",
+            "stroke": "solid",
+            "order": 3
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "model_canonical_json": "{\"direction\":\"TB\",\"entities\":[{\"headers\":[[\"Person\"]],\"id\":\"p\",\"label\":\"Person\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string firstName\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"firstName\",\"type\":\"string\"}},{\"alternatives\":[\"string lastName\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"lastName\",\"type\":\"string\"}}],\"shape\":\"box\"},{\"headers\":[[\"Customer Account\"]],\"id\":\"a\",\"label\":\"Customer Account\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string email\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"email\",\"type\":\"string\"}}],\"shape\":\"box\"},{\"headers\":[[\"Customer Account Secondary\"]],\"id\":\"b\",\"label\":\"Customer Account Secondary\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string email\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"email\",\"type\":\"string\"}}],\"shape\":\"box\"},{\"headers\":[[\"Customer Account Tertiary\"]],\"id\":\"c\",\"label\":\"Customer Account Tertiary\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string email\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"email\",\"type\":\"string\"}}],\"shape\":\"box\"},{\"headers\":[[\"Customer Account Nth\"]],\"id\":\"d\",\"label\":\"Customer Account Nth\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string email\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"email\",\"type\":\"string\"}}],\"shape\":\"box\"}],\"family\":\"er\",\"groups\":[],\"notes\":[],\"relations\":[{\"end\":\"card:zero-one\",\"label\":\"has\\none\",\"order\":0,\"source\":\"p\",\"start\":\"card:one\",\"stroke\":\"solid\",\"target\":\"a\"},{\"end\":\"card:zero-one\",\"label\":\"has\\none\\ntwo\",\"order\":1,\"source\":\"p\",\"start\":\"card:one\",\"stroke\":\"solid\",\"target\":\"b\"},{\"end\":\"card:zero-one\",\"label\":\"has\\none\\ntwo\\nthree\",\"order\":2,\"source\":\"p\",\"start\":\"card:one\",\"stroke\":\"solid\",\"target\":\"c\"},{\"end\":\"card:zero-one\",\"label\":\"has\\none\\ntwo\\nthree\\n...\\nNth\",\"order\":3,\"source\":\"p\",\"start\":\"card:one\",\"stroke\":\"solid\",\"target\":\"d\"}]}",
+      "model_sha256": "b628e20b7e7fac5cbe7c9f1ce4e88d7e2b44609ecb19aa48069b12f1de61b31b",
+      "model_bytes": 1896
+    },
+    {
+      "ordinal": 65,
+      "manifest_global_ordinal": 514,
+      "fixture": "er-diagram/visual-check/an-er-diagram-with-relationships-with-unicode-text-default.mmd",
+      "source_sha256": "53b18888c8a3d53eabe5b0111089ee7fbb6f33bcfd35f29240b7d7a959c78edb",
+      "source_bytes": 333,
+      "model": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "person",
+            "label": "😀",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "😀"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string *first*Name"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "*first*Name",
+                  "keys": [],
+                  "comment": ""
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string _**last**Name_"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "_**last**Name_",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          },
+          {
+            "id": "a",
+            "label": "*Customer Account*",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "*Customer Account*"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "**string** ema*i*l"
+                ],
+                "source_fields": {
+                  "type": "**string**",
+                  "name": "ema*i*l",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [
+          {
+            "source": "person",
+            "target": "a",
+            "label": "__hẽ😀__",
+            "start": "card:one",
+            "end": "card:zero-one",
+            "stroke": "solid",
+            "order": 0
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "model_canonical_json": "{\"direction\":\"TB\",\"entities\":[{\"headers\":[[\"😀\"]],\"id\":\"person\",\"label\":\"😀\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string *first*Name\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"*first*Name\",\"type\":\"string\"}},{\"alternatives\":[\"string _**last**Name_\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"_**last**Name_\",\"type\":\"string\"}}],\"shape\":\"box\"},{\"headers\":[[\"*Customer Account*\"]],\"id\":\"a\",\"label\":\"*Customer Account*\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"**string** ema*i*l\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"ema*i*l\",\"type\":\"**string**\"}}],\"shape\":\"box\"}],\"family\":\"er\",\"groups\":[],\"notes\":[],\"relations\":[{\"end\":\"card:zero-one\",\"label\":\"__hẽ😀__\",\"order\":0,\"source\":\"person\",\"start\":\"card:one\",\"stroke\":\"solid\",\"target\":\"a\"}]}",
+      "model_sha256": "502f2fda5d2cba23874b3a45318a771c8cbd97eac4b209cd9802e5ff48b3e952",
+      "model_bytes": 818
+    },
+    {
+      "ordinal": 66,
+      "manifest_global_ordinal": 515,
+      "fixture": "er-diagram/visual-check/an-er-diagram-with-relationships-with-unicode-text-elk-layout.mmd",
+      "source_sha256": "ac192d4768bbcb5ec0661671f2917fd2c0a836a3b52bf27c258f4494626f930e",
+      "source_bytes": 376,
+      "model": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "person",
+            "label": "😀",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "😀"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string *first*Name"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "*first*Name",
+                  "keys": [],
+                  "comment": ""
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string _**last**Name_"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "_**last**Name_",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          },
+          {
+            "id": "a",
+            "label": "*Customer Account*",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "*Customer Account*"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "**string** ema*i*l"
+                ],
+                "source_fields": {
+                  "type": "**string**",
+                  "name": "ema*i*l",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [
+          {
+            "source": "person",
+            "target": "a",
+            "label": "__hẽ😀__",
+            "start": "card:one",
+            "end": "card:zero-one",
+            "stroke": "solid",
+            "order": 0
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "model_canonical_json": "{\"direction\":\"TB\",\"entities\":[{\"headers\":[[\"😀\"]],\"id\":\"person\",\"label\":\"😀\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string *first*Name\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"*first*Name\",\"type\":\"string\"}},{\"alternatives\":[\"string _**last**Name_\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"_**last**Name_\",\"type\":\"string\"}}],\"shape\":\"box\"},{\"headers\":[[\"*Customer Account*\"]],\"id\":\"a\",\"label\":\"*Customer Account*\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"**string** ema*i*l\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"ema*i*l\",\"type\":\"**string**\"}}],\"shape\":\"box\"}],\"family\":\"er\",\"groups\":[],\"notes\":[],\"relations\":[{\"end\":\"card:zero-one\",\"label\":\"__hẽ😀__\",\"order\":0,\"source\":\"person\",\"start\":\"card:one\",\"stroke\":\"solid\",\"target\":\"a\"}]}",
+      "model_sha256": "502f2fda5d2cba23874b3a45318a771c8cbd97eac4b209cd9802e5ff48b3e952",
+      "model_bytes": 818
+    },
+    {
+      "ordinal": 77,
+      "manifest_global_ordinal": 526,
+      "fixture": "er-diagram/visual-check/an-er-diagram-with-unicode-text-default.mmd",
+      "source_sha256": "aad98b8e0147d7e8afec60d3216109d294fe5e98a9c8321036ac442018e60776",
+      "source_bytes": 446,
+      "model": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "_**testẽζ➕Ø😀㌕ぼ**_",
+            "label": "_**testẽζ➕Ø😀㌕ぼ**_",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "_**testẽζ➕Ø😀㌕ぼ**_"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "*__List~List~int~~sdfds__* **driversLicense** PK \"***The l😀icense #***\""
+                ],
+                "source_fields": {
+                  "type": "*__List~List~int~~sdfds__*",
+                  "name": "**driversLicense**",
+                  "keys": [
+                    "PK"
+                  ],
+                  "comment": "***The l😀icense #***"
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "*string(99)~T~~~~~~* firstName \"Only __99__ \ncharacters are a\nllowed dsfsdfsdfsdfs\""
+                ],
+                "source_fields": {
+                  "type": "*string(99)~T~~~~~~*",
+                  "name": "firstName",
+                  "keys": [],
+                  "comment": "Only __99__ \ncharacters are a\nllowed dsfsdfsdfsdfs"
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string last*Name*"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "last*Name*",
+                  "keys": [],
+                  "comment": ""
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string __phone__ UK"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "__phone__",
+                  "keys": [
+                    "UK"
+                  ],
+                  "comment": ""
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int _age_"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "_age_",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "model_canonical_json": "{\"direction\":\"TB\",\"entities\":[{\"headers\":[[\"_**testẽζ➕Ø😀㌕ぼ**_\"]],\"id\":\"_**testẽζ➕Ø😀㌕ぼ**_\",\"label\":\"_**testẽζ➕Ø😀㌕ぼ**_\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"*__List~List~int~~sdfds__* **driversLicense** PK \\\"***The l😀icense #***\\\"\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"***The l😀icense #***\",\"keys\":[\"PK\"],\"name\":\"**driversLicense**\",\"type\":\"*__List~List~int~~sdfds__*\"}},{\"alternatives\":[\"*string(99)~T~~~~~~* firstName \\\"Only __99__ \\ncharacters are a\\nllowed dsfsdfsdfsdfs\\\"\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"Only __99__ \\ncharacters are a\\nllowed dsfsdfsdfsdfs\",\"keys\":[],\"name\":\"firstName\",\"type\":\"*string(99)~T~~~~~~*\"}},{\"alternatives\":[\"string last*Name*\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"last*Name*\",\"type\":\"string\"}},{\"alternatives\":[\"string __phone__ UK\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[\"UK\"],\"name\":\"__phone__\",\"type\":\"string\"}},{\"alternatives\":[\"int _age_\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"_age_\",\"type\":\"int\"}}],\"shape\":\"box\"}],\"family\":\"er\",\"groups\":[],\"notes\":[],\"relations\":[]}",
+      "model_sha256": "88d5c575eadaf0d92fec241da826dbefd355644e179d41b94c6e9f973c461402",
+      "model_bytes": 1158
+    },
+    {
+      "ordinal": 78,
+      "manifest_global_ordinal": 527,
+      "fixture": "er-diagram/visual-check/an-er-diagram-with-unicode-text-elk-layout.mmd",
+      "source_sha256": "e4dcb1b544c27a56888cbfafa1618bbc61615e111e0e8e734cf3f6382161832b",
+      "source_bytes": 489,
+      "model": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "_**testẽζ➕Ø😀㌕ぼ**_",
+            "label": "_**testẽζ➕Ø😀㌕ぼ**_",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "_**testẽζ➕Ø😀㌕ぼ**_"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "*__List~List~int~~sdfds__* **driversLicense** PK \"***The l😀icense #***\""
+                ],
+                "source_fields": {
+                  "type": "*__List~List~int~~sdfds__*",
+                  "name": "**driversLicense**",
+                  "keys": [
+                    "PK"
+                  ],
+                  "comment": "***The l😀icense #***"
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "*string(99)~T~~~~~~* firstName \"Only __99__ \ncharacters are a\nllowed dsfsdfsdfsdfs\""
+                ],
+                "source_fields": {
+                  "type": "*string(99)~T~~~~~~*",
+                  "name": "firstName",
+                  "keys": [],
+                  "comment": "Only __99__ \ncharacters are a\nllowed dsfsdfsdfsdfs"
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string last*Name*"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "last*Name*",
+                  "keys": [],
+                  "comment": ""
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string __phone__ UK"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "__phone__",
+                  "keys": [
+                    "UK"
+                  ],
+                  "comment": ""
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "int _age_"
+                ],
+                "source_fields": {
+                  "type": "int",
+                  "name": "_age_",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [],
+        "groups": [],
+        "notes": []
+      },
+      "model_canonical_json": "{\"direction\":\"TB\",\"entities\":[{\"headers\":[[\"_**testẽζ➕Ø😀㌕ぼ**_\"]],\"id\":\"_**testẽζ➕Ø😀㌕ぼ**_\",\"label\":\"_**testẽζ➕Ø😀㌕ぼ**_\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"*__List~List~int~~sdfds__* **driversLicense** PK \\\"***The l😀icense #***\\\"\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"***The l😀icense #***\",\"keys\":[\"PK\"],\"name\":\"**driversLicense**\",\"type\":\"*__List~List~int~~sdfds__*\"}},{\"alternatives\":[\"*string(99)~T~~~~~~* firstName \\\"Only __99__ \\ncharacters are a\\nllowed dsfsdfsdfsdfs\\\"\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"Only __99__ \\ncharacters are a\\nllowed dsfsdfsdfsdfs\",\"keys\":[],\"name\":\"firstName\",\"type\":\"*string(99)~T~~~~~~*\"}},{\"alternatives\":[\"string last*Name*\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"last*Name*\",\"type\":\"string\"}},{\"alternatives\":[\"string __phone__ UK\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[\"UK\"],\"name\":\"__phone__\",\"type\":\"string\"}},{\"alternatives\":[\"int _age_\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"_age_\",\"type\":\"int\"}}],\"shape\":\"box\"}],\"family\":\"er\",\"groups\":[],\"notes\":[],\"relations\":[]}",
+      "model_sha256": "88d5c575eadaf0d92fec241da826dbefd355644e179d41b94c6e9f973c461402",
+      "model_bytes": 1158
+    },
+    {
+      "ordinal": 199,
+      "manifest_global_ordinal": 648,
+      "fixture": "er-diagram/visual-check/relationship-labels-with-line-breaks-elk-layout.mmd",
+      "source_sha256": "bb9e08f1bb11a8d3e5fa2bf0c22ee26202aea2afaacd87d34b8c178a07c6f132",
+      "source_bytes": 634,
+      "model": {
+        "family": "er",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "p",
+            "label": "Person",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Person"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string firstName"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "firstName",
+                  "keys": [],
+                  "comment": ""
+                }
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string lastName"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "lastName",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          },
+          {
+            "id": "a",
+            "label": "Customer Account",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Customer Account"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string email"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "email",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          },
+          {
+            "id": "b",
+            "label": "Customer Account Secondary",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Customer Account Secondary"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string email"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "email",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          },
+          {
+            "id": "c",
+            "label": "Customer Account Tertiary",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Customer Account Tertiary"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string email"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "email",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          },
+          {
+            "id": "d",
+            "label": "Customer Account Nth",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Customer Account Nth"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "string email"
+                ],
+                "source_fields": {
+                  "type": "string",
+                  "name": "email",
+                  "keys": [],
+                  "comment": ""
+                }
+              }
+            ]
+          }
+        ],
+        "relations": [
+          {
+            "source": "p",
+            "target": "a",
+            "label": "has\none",
+            "start": "card:one",
+            "end": "card:zero-one",
+            "stroke": "solid",
+            "order": 0
+          },
+          {
+            "source": "p",
+            "target": "b",
+            "label": "has\none\ntwo",
+            "start": "card:one",
+            "end": "card:zero-one",
+            "stroke": "solid",
+            "order": 1
+          },
+          {
+            "source": "p",
+            "target": "c",
+            "label": "has\none\ntwo\nthree",
+            "start": "card:one",
+            "end": "card:zero-one",
+            "stroke": "solid",
+            "order": 2
+          },
+          {
+            "source": "p",
+            "target": "d",
+            "label": "has\none\ntwo\nthree\n...\nNth",
+            "start": "card:one",
+            "end": "card:zero-one",
+            "stroke": "solid",
+            "order": 3
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "model_canonical_json": "{\"direction\":\"TB\",\"entities\":[{\"headers\":[[\"Person\"]],\"id\":\"p\",\"label\":\"Person\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string firstName\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"firstName\",\"type\":\"string\"}},{\"alternatives\":[\"string lastName\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"lastName\",\"type\":\"string\"}}],\"shape\":\"box\"},{\"headers\":[[\"Customer Account\"]],\"id\":\"a\",\"label\":\"Customer Account\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string email\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"email\",\"type\":\"string\"}}],\"shape\":\"box\"},{\"headers\":[[\"Customer Account Secondary\"]],\"id\":\"b\",\"label\":\"Customer Account Secondary\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string email\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"email\",\"type\":\"string\"}}],\"shape\":\"box\"},{\"headers\":[[\"Customer Account Tertiary\"]],\"id\":\"c\",\"label\":\"Customer Account Tertiary\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string email\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"email\",\"type\":\"string\"}}],\"shape\":\"box\"},{\"headers\":[[\"Customer Account Nth\"]],\"id\":\"d\",\"label\":\"Customer Account Nth\",\"owner\":\"\",\"rows\":[{\"alternatives\":[\"string email\"],\"role\":\"attribute\",\"source_fields\":{\"comment\":\"\",\"keys\":[],\"name\":\"email\",\"type\":\"string\"}}],\"shape\":\"box\"}],\"family\":\"er\",\"groups\":[],\"notes\":[],\"relations\":[{\"end\":\"card:zero-one\",\"label\":\"has\\none\",\"order\":0,\"source\":\"p\",\"start\":\"card:one\",\"stroke\":\"solid\",\"target\":\"a\"},{\"end\":\"card:zero-one\",\"label\":\"has\\none\\ntwo\",\"order\":1,\"source\":\"p\",\"start\":\"card:one\",\"stroke\":\"solid\",\"target\":\"b\"},{\"end\":\"card:zero-one\",\"label\":\"has\\none\\ntwo\\nthree\",\"order\":2,\"source\":\"p\",\"start\":\"card:one\",\"stroke\":\"solid\",\"target\":\"c\"},{\"end\":\"card:zero-one\",\"label\":\"has\\none\\ntwo\\nthree\\n...\\nNth\",\"order\":3,\"source\":\"p\",\"start\":\"card:one\",\"stroke\":\"solid\",\"target\":\"d\"}]}",
+      "model_sha256": "b628e20b7e7fac5cbe7c9f1ce4e88d7e2b44609ecb19aa48069b12f1de61b31b",
+      "model_bytes": 1896
+    }
+  ]
+}

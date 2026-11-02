@@ -1,0 +1,128 @@
+{
+  "schema": "mermaid_flow_p0_grouped7_comparison/v1",
+  "before": {
+    "drawn": 634,
+    "fallback": 1501,
+    "error": 10
+  },
+  "after": {
+    "drawn": 641,
+    "fallback": 1501,
+    "error": 3
+  },
+  "changed_observations": [
+    {
+      "fixture": "flowchart/nightly-check/dagre/2050-dagre-handling-of-different-rendering-direction-in-subgraphs.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "flowchart/nightly-check/dagre/55-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "flowchart/nightly-check/dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "error",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "flowchart/visual-check/2050-handling-of-different-rendering-direction-in-subgraphs.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "flowchart/visual-check/5064-should-render-when-subgraph-child-has-links-to-outside-node-and-subgraph.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "error",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "flowchart/visual-check/55-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "flowchart/visual-check/57-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "error",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    }
+  ],
+  "other_observations_unchanged": 2731,
+  "matrix_sha256": "299488cd3010a9476c063d48d7546efc640cbb7bf999de2fcd8af0c1d57f8129",
+  "regression": {
+    "debug": {
+      "passed": 852,
+      "total": 852,
+      "seconds": 283.65
+    },
+    "release": {
+      "passed": 852,
+      "total": 852,
+      "seconds": 37.43
+    }
+  },
+  "scope": "All Mermaid-labeled CTest tests, not full-project CTest, browser equivalence or LLVM coverage."
+}

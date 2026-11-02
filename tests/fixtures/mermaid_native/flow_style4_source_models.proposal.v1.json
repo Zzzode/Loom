@@ -1,0 +1,1096 @@
+{
+  "schema": "flow_style4_source_models.proposal/v1",
+  "status": "proposal_requires_independent_source_review_no_admission",
+  "authority": "independently_authored_complete_sources_and_separate_complete_body_diagnostics_not_renderer_output",
+  "count": 4,
+  "cases": [
+    {
+      "fixture": "flowchart/nightly-check/dagre/65-dagre-text-color-from-classes.mmd",
+      "source_utf8_bytes": 440,
+      "source_sha256": "c2997bcd6ff431525895864dbf41109d008b8fd423ebb58ce0c2cd2a282762a1",
+      "frontmatter_verbatim": "---\ndescription:\n  Verifies that a classDef's color property correctly sets node label text color\n  for the specific nodes assigned that class, while other nodes in the same\n  chain keep default styling.\nconfig:\n  layout: dagre\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\n",
+      "frontmatter_utf8_bytes": 308,
+      "frontmatter_sha256": "73d463ac5afcb08bb1363315a1e4416a9f4239e6ba56ec6223b2253a1da8f0a1",
+      "body_utf8_bytes": 132,
+      "body_sha256": "1d42be3a7ee0d6fff605178bfb7462eb3bbeaeb83a1ffeef847cd1d534c6c668",
+      "Model": {
+        "family": "flow",
+        "header": "flowchart",
+        "direction": "LR",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "nodes": [
+          {
+            "id": "Lorem",
+            "label": "Lorem",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Ipsum",
+            "label": "Ipsum",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Dolor",
+            "label": "Dolor",
+            "shape": "rectangle",
+            "owner": null
+          }
+        ],
+        "edges": [
+          {
+            "from": "Lorem",
+            "to": "Ipsum",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          },
+          {
+            "from": "Ipsum",
+            "to": "Dolor",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          }
+        ],
+        "groups": [],
+        "frontmatter_config": {
+          "htmlLabels": true,
+          "flowchart": {
+            "htmlLabels": true
+          },
+          "securityLevel": "loose",
+          "layout": "dagre"
+        },
+        "style_definitions": [
+          {
+            "name": "dark",
+            "verbatim": "classDef dark fill:#000,stroke:#000,stroke-width:4px,color:#fff",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#000"
+              },
+              {
+                "name": "stroke",
+                "value": "#000"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "targets": [
+              "Lorem",
+              "Dolor"
+            ],
+            "class_name": "dark",
+            "verbatim": "class Lorem,Dolor dark",
+            "assignment_order": 0
+          }
+        ],
+        "direct_styles": [],
+        "effective_styles": [
+          {
+            "target": "Lorem",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          },
+          {
+            "target": "Dolor",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 1663,
+      "Model_canonical_sha256": "517bb0b2aca29ba33d35485920ac327da5733695cae93318ad270f532f6ed17e",
+      "Body_Model": {
+        "family": "flow",
+        "header": "flowchart",
+        "direction": "LR",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "nodes": [
+          {
+            "id": "Lorem",
+            "label": "Lorem",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Ipsum",
+            "label": "Ipsum",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Dolor",
+            "label": "Dolor",
+            "shape": "rectangle",
+            "owner": null
+          }
+        ],
+        "edges": [
+          {
+            "from": "Lorem",
+            "to": "Ipsum",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          },
+          {
+            "from": "Ipsum",
+            "to": "Dolor",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          }
+        ],
+        "groups": [],
+        "frontmatter_config": {},
+        "style_definitions": [
+          {
+            "name": "dark",
+            "verbatim": "classDef dark fill:#000,stroke:#000,stroke-width:4px,color:#fff",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#000"
+              },
+              {
+                "name": "stroke",
+                "value": "#000"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "targets": [
+              "Lorem",
+              "Dolor"
+            ],
+            "class_name": "dark",
+            "verbatim": "class Lorem,Dolor dark",
+            "assignment_order": 0
+          }
+        ],
+        "direct_styles": [],
+        "effective_styles": [
+          {
+            "target": "Lorem",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          },
+          {
+            "target": "Dolor",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Body_Model_canonical_utf8_bytes": 1573,
+      "Body_Model_canonical_sha256": "2992866cba63a6cc8ec9653d0196552b18d9a84cb460cf8ae2f50a687edae82d",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "flowchart/nightly-check/handdrawn/text-color-from-classes.mmd",
+      "source_utf8_bytes": 435,
+      "source_sha256": "55e3d5fa087ae1584c2ad696372a9c02d56a4b1fb74d72a7f1167bf6b669c7d8",
+      "frontmatter_verbatim": "---\ndescription:\n  Verifies that a classDef controlling text color applies correctly to selected\n  nodes in a chain while nodes without the class keep default styling, under the\n  hand-drawn look.\nconfig:\n  look: handDrawn\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\n",
+      "frontmatter_utf8_bytes": 303,
+      "frontmatter_sha256": "73b2de40aff422fa3a3a6f83684e64638e30cf7bd512427a2edf2da7de926fb0",
+      "body_utf8_bytes": 132,
+      "body_sha256": "1d42be3a7ee0d6fff605178bfb7462eb3bbeaeb83a1ffeef847cd1d534c6c668",
+      "Model": {
+        "family": "flow",
+        "header": "flowchart",
+        "direction": "LR",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "nodes": [
+          {
+            "id": "Lorem",
+            "label": "Lorem",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Ipsum",
+            "label": "Ipsum",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Dolor",
+            "label": "Dolor",
+            "shape": "rectangle",
+            "owner": null
+          }
+        ],
+        "edges": [
+          {
+            "from": "Lorem",
+            "to": "Ipsum",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          },
+          {
+            "from": "Ipsum",
+            "to": "Dolor",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          }
+        ],
+        "groups": [],
+        "frontmatter_config": {
+          "htmlLabels": true,
+          "flowchart": {
+            "htmlLabels": true
+          },
+          "securityLevel": "loose",
+          "look": "handDrawn"
+        },
+        "style_definitions": [
+          {
+            "name": "dark",
+            "verbatim": "classDef dark fill:#000,stroke:#000,stroke-width:4px,color:#fff",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#000"
+              },
+              {
+                "name": "stroke",
+                "value": "#000"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "targets": [
+              "Lorem",
+              "Dolor"
+            ],
+            "class_name": "dark",
+            "verbatim": "class Lorem,Dolor dark",
+            "assignment_order": 0
+          }
+        ],
+        "direct_styles": [],
+        "effective_styles": [
+          {
+            "target": "Lorem",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          },
+          {
+            "target": "Dolor",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 1665,
+      "Model_canonical_sha256": "79840c42a75b42d230127b6e7cbb07617396718853da6ea07df11adedfbc55d6",
+      "Body_Model": {
+        "family": "flow",
+        "header": "flowchart",
+        "direction": "LR",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "nodes": [
+          {
+            "id": "Lorem",
+            "label": "Lorem",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Ipsum",
+            "label": "Ipsum",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Dolor",
+            "label": "Dolor",
+            "shape": "rectangle",
+            "owner": null
+          }
+        ],
+        "edges": [
+          {
+            "from": "Lorem",
+            "to": "Ipsum",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          },
+          {
+            "from": "Ipsum",
+            "to": "Dolor",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          }
+        ],
+        "groups": [],
+        "frontmatter_config": {},
+        "style_definitions": [
+          {
+            "name": "dark",
+            "verbatim": "classDef dark fill:#000,stroke:#000,stroke-width:4px,color:#fff",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#000"
+              },
+              {
+                "name": "stroke",
+                "value": "#000"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "targets": [
+              "Lorem",
+              "Dolor"
+            ],
+            "class_name": "dark",
+            "verbatim": "class Lorem,Dolor dark",
+            "assignment_order": 0
+          }
+        ],
+        "direct_styles": [],
+        "effective_styles": [
+          {
+            "target": "Lorem",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          },
+          {
+            "target": "Dolor",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Body_Model_canonical_utf8_bytes": 1573,
+      "Body_Model_canonical_sha256": "2992866cba63a6cc8ec9653d0196552b18d9a84cb460cf8ae2f50a687edae82d",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "flowchart/pr-check/4-classdef-style.mmd",
+      "source_utf8_bytes": 424,
+      "source_sha256": "1c946035a650b161f4f2025cdd1398dd3b3e313a8712c2db1f87867e0f5f097b",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Both styling paths in one small diagram: a classDef applied via `class` (node\n  B) and a direct inline `style` statement (node C), so a regression in either\n  the class-based or direct-style path shows up here.\n---\n",
+      "frontmatter_utf8_bytes": 237,
+      "frontmatter_sha256": "a8cb2dd4a4f122333f25296a2fdea5cc6152017907e196bdd5a4e7288b17cca0",
+      "body_utf8_bytes": 187,
+      "body_sha256": "89aacce4adf6069ebba25162e24dbe9e050777140e4f9b8f4a22e29684789542",
+      "Model": {
+        "family": "flow",
+        "header": "flowchart",
+        "direction": "TD",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "nodes": [
+          {
+            "id": "A",
+            "label": "Start",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "B",
+            "label": "Process",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "C",
+            "label": "End",
+            "shape": "rectangle",
+            "owner": null
+          }
+        ],
+        "edges": [
+          {
+            "from": "A",
+            "to": "B",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          },
+          {
+            "from": "B",
+            "to": "C",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          }
+        ],
+        "groups": [],
+        "frontmatter_config": {},
+        "style_definitions": [
+          {
+            "name": "highlight",
+            "verbatim": "classDef highlight fill:#f96,stroke:#333,stroke-width:2px;",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f96"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "2px"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "targets": [
+              "B"
+            ],
+            "class_name": "highlight",
+            "verbatim": "class B highlight;",
+            "assignment_order": 0
+          }
+        ],
+        "direct_styles": [
+          {
+            "target": "C",
+            "verbatim": "style C fill:#9f9,stroke:#333,stroke-width:2px;",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#9f9"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "2px"
+              }
+            ]
+          }
+        ],
+        "effective_styles": [
+          {
+            "target": "B",
+            "fill": "#f96",
+            "stroke": "#333",
+            "stroke-width": "2px",
+            "color": null,
+            "projected": {
+              "fill": "Orange",
+              "stroke": "Neutral",
+              "border_bold": false,
+              "label_foreground": "palette.text",
+              "source_color": null,
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          },
+          {
+            "target": "C",
+            "fill": "#9f9",
+            "stroke": "#333",
+            "stroke-width": "2px",
+            "color": null,
+            "projected": {
+              "fill": "Green",
+              "stroke": "Neutral",
+              "border_bold": false,
+              "label_foreground": "palette.text",
+              "source_color": null,
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 1671,
+      "Model_canonical_sha256": "bb7ca82d840453073f775a7cfc835446654c89120f487e68d46876b0b3072e42",
+      "Body_Model": {
+        "family": "flow",
+        "header": "flowchart",
+        "direction": "TD",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "nodes": [
+          {
+            "id": "A",
+            "label": "Start",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "B",
+            "label": "Process",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "C",
+            "label": "End",
+            "shape": "rectangle",
+            "owner": null
+          }
+        ],
+        "edges": [
+          {
+            "from": "A",
+            "to": "B",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          },
+          {
+            "from": "B",
+            "to": "C",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          }
+        ],
+        "groups": [],
+        "frontmatter_config": {},
+        "style_definitions": [
+          {
+            "name": "highlight",
+            "verbatim": "classDef highlight fill:#f96,stroke:#333,stroke-width:2px;",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f96"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "2px"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "targets": [
+              "B"
+            ],
+            "class_name": "highlight",
+            "verbatim": "class B highlight;",
+            "assignment_order": 0
+          }
+        ],
+        "direct_styles": [
+          {
+            "target": "C",
+            "verbatim": "style C fill:#9f9,stroke:#333,stroke-width:2px;",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#9f9"
+              },
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "2px"
+              }
+            ]
+          }
+        ],
+        "effective_styles": [
+          {
+            "target": "B",
+            "fill": "#f96",
+            "stroke": "#333",
+            "stroke-width": "2px",
+            "color": null,
+            "projected": {
+              "fill": "Orange",
+              "stroke": "Neutral",
+              "border_bold": false,
+              "label_foreground": "palette.text",
+              "source_color": null,
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          },
+          {
+            "target": "C",
+            "fill": "#9f9",
+            "stroke": "#333",
+            "stroke-width": "2px",
+            "color": null,
+            "projected": {
+              "fill": "Green",
+              "stroke": "Neutral",
+              "border_bold": false,
+              "label_foreground": "palette.text",
+              "source_color": null,
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Body_Model_canonical_utf8_bytes": 1671,
+      "Body_Model_canonical_sha256": "bb7ca82d840453073f775a7cfc835446654c89120f487e68d46876b0b3072e42",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "flowchart/visual-check/65-1-text-color-from-classes.mmd",
+      "source_utf8_bytes": 455,
+      "source_sha256": "51ac937335dd4d17d2fa20c8f12dfd295e6890aef74f6ac913cdc451db3c35de",
+      "frontmatter_verbatim": "---\ndescription:\n  Verifies that a classDef defining a white text color (color:#fff) alongside\n  fill/stroke applies correctly when selectively assigned via `class` to two of\n  three nodes in a chain, leaving the middle node unstyled.\nconfig:\n  htmlLabels: true\n  flowchart:\n    htmlLabels: true\n  securityLevel: loose\n---\n",
+      "frontmatter_utf8_bytes": 323,
+      "frontmatter_sha256": "138390f00aed8c5c271995f513cb6edba21122d0374f22da1f003913e04f74d7",
+      "body_utf8_bytes": 132,
+      "body_sha256": "1d42be3a7ee0d6fff605178bfb7462eb3bbeaeb83a1ffeef847cd1d534c6c668",
+      "Model": {
+        "family": "flow",
+        "header": "flowchart",
+        "direction": "LR",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "nodes": [
+          {
+            "id": "Lorem",
+            "label": "Lorem",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Ipsum",
+            "label": "Ipsum",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Dolor",
+            "label": "Dolor",
+            "shape": "rectangle",
+            "owner": null
+          }
+        ],
+        "edges": [
+          {
+            "from": "Lorem",
+            "to": "Ipsum",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          },
+          {
+            "from": "Ipsum",
+            "to": "Dolor",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          }
+        ],
+        "groups": [],
+        "frontmatter_config": {
+          "htmlLabels": true,
+          "flowchart": {
+            "htmlLabels": true
+          },
+          "securityLevel": "loose"
+        },
+        "style_definitions": [
+          {
+            "name": "dark",
+            "verbatim": "classDef dark fill:#000,stroke:#000,stroke-width:4px,color:#fff",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#000"
+              },
+              {
+                "name": "stroke",
+                "value": "#000"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "targets": [
+              "Lorem",
+              "Dolor"
+            ],
+            "class_name": "dark",
+            "verbatim": "class Lorem,Dolor dark",
+            "assignment_order": 0
+          }
+        ],
+        "direct_styles": [],
+        "effective_styles": [
+          {
+            "target": "Lorem",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          },
+          {
+            "target": "Dolor",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 1646,
+      "Model_canonical_sha256": "adf13c05a33a6d5e53829aa2feed8aae138113722db1dfe410efdf5bb71fc963",
+      "Body_Model": {
+        "family": "flow",
+        "header": "flowchart",
+        "direction": "LR",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "nodes": [
+          {
+            "id": "Lorem",
+            "label": "Lorem",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Ipsum",
+            "label": "Ipsum",
+            "shape": "rectangle",
+            "owner": null
+          },
+          {
+            "id": "Dolor",
+            "label": "Dolor",
+            "shape": "rectangle",
+            "owner": null
+          }
+        ],
+        "edges": [
+          {
+            "from": "Lorem",
+            "to": "Ipsum",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          },
+          {
+            "from": "Ipsum",
+            "to": "Dolor",
+            "label": "",
+            "style": "solid",
+            "start": false,
+            "end": true,
+            "min_length": 1
+          }
+        ],
+        "groups": [],
+        "frontmatter_config": {},
+        "style_definitions": [
+          {
+            "name": "dark",
+            "verbatim": "classDef dark fill:#000,stroke:#000,stroke-width:4px,color:#fff",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#000"
+              },
+              {
+                "name": "stroke",
+                "value": "#000"
+              },
+              {
+                "name": "stroke-width",
+                "value": "4px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "targets": [
+              "Lorem",
+              "Dolor"
+            ],
+            "class_name": "dark",
+            "verbatim": "class Lorem,Dolor dark",
+            "assignment_order": 0
+          }
+        ],
+        "direct_styles": [],
+        "effective_styles": [
+          {
+            "target": "Lorem",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          },
+          {
+            "target": "Dolor",
+            "fill": "#000",
+            "stroke": "#000",
+            "stroke-width": "4px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Neutral",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Body_Model_canonical_utf8_bytes": 1573,
+      "Body_Model_canonical_sha256": "2992866cba63a6cc8ec9653d0196552b18d9a84cb460cf8ae2f50a687edae82d",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    }
+  ]
+}

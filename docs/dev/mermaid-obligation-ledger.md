@@ -1,5 +1,25 @@
 # Complete Mermaid obligation ledger
 
+## Local accepted checkpoint before rebase (2026-10-30)
+
+Official rendering is **663/2145 (30.91%)** at240 columns:1482 fallbacks and
+zero errors. Class260/285 (91.23%), Flow64/400, ER68/206. Fallback/error fail;
+body diagnostics are excluded. Debug/Release889/889 and serial style/resource/
+real-PTY25/25 each pass. [Executed evidence](mermaid-class-defined-style6-review.md)
+and [exact six-original comparison](mermaid-class-defined-style6-matrix-comparison.json).
+
+The current frozen roster has249 rows (official48, Class28525),44497 bytes, SHA
+`9074853c00e5fabb72dc6b7451fabdc1c13618bdefd390832bc33682d3521d19`.
+P0's original22 errors are resolved; remaining P1 499, P2 447, P3 536. Next is
+[Flow style4](mermaid-flow-style4-plan.md); source/design proposals earn no
+credit until complete independent admission and validation.
+
+Historical records below retain their dated results and task assignments.
+Their older "current", "next" or "remaining" values are not active totals.
+The current gate table is explicitly dated; the full active case assignment is
+in [the implementation backlog](mermaid-implementation-backlog.md).
+
+## Historical ER resource-only checkpoint
 ## Verified local regression checkpoint (2026-10-28)
 
 Fresh Debug and Release full builds and CTest pass: each registers 4,107 tests,
@@ -135,6 +155,7 @@ Mindmap is **14/33 (42.42%)**. The complete corpus now has **630 admitted drawin
 target still requires **1,301** further admissions; no full conformance is claimed.
 
 ## Latest executed checkpoint and remaining scope
+## Historical E6c conversion and current gate ledger
 
 ### Current user milestone: above 90% official drawing coverage
 
@@ -327,30 +348,31 @@ counts are now explicit strict `EXPECT_EQ` pins, and each report serializes a
 canonical `mandatory_gaps` array diffed both directions against the reviewed
 ledger.
 
+### Current frozen roster and gate counts (2026-10-30)
+
 Roster: `tools/mermaid/e6c-mandatory-gap-roster.json`, schema
-`e6c_mandatory_gap_roster/v1`, **53898 bytes**, SHA-256
-`b812af2cc7b3db13dcd3bf51d3921f476b0b8446b7bc0fff1c6ff750b696bad5`, pins in
-`tests/support/mermaid_gap_roster.hpp`; verified across debug and release by
-`python3 -I tools/mermaid/verify_e6c_gap_roster.py
---build-dirs build/debug/tests/ui,build/release/tests/ui` (serialized gap sets
-are byte-stable across presets; 313 roster rows total).
+`e6c_mandatory_gap_roster/v1`, **44497 bytes**, SHA-256
+`9074853c00e5fabb72dc6b7451fabdc1c13618bdefd390832bc33682d3521d19`;
+249 rows total. Both baseline build directories pass the out-of-tree verifier.
 
 Per-gate frozen counts and roster rows:
 
 | Gate (new ctest name) | Roster key | Frozen counts | Rows |
 |---|---|---|---:|
-| `MermaidCapabilityReport.OfficialMatrix` | `official_matrix` | ER errors 6/pending 144/admitted 62; Flow errors 10/decoded 54/pending 346 (T1-B: one pending-config original now draws unreviewed art); Class errors 10/decoded 237/pending 48/admitted 231; drawn_at_240 688/2145 after Mindmap10, Shapes4 and Block58 dual joins | 76 |
-| `MermaidCapabilityReport.Flow400CompleteSources` | — (counts-only) | errors 10 at matrix; visited 400, decoded/positive/mutated 54, pending 346, zero non-gap errors | 0 |
+| `MermaidCapabilityReport.OfficialMatrix` | `official_matrix` | ER errors 0/pending 138/admitted 68; Flow errors 0/decoded 64/pending 336; Class errors 0/decoded 260/pending 25/admitted 260; drawn_at_240 663/2145 | 48 |
+| `MermaidCapabilityReport.Flow400CompleteSources` | — (counts-only) | errors 0 at matrix; visited 400, decoded/positive/mutated 64, pending 336, zero non-gap errors | 0 |
 | `MermaidCapabilityReport.MermanXY102` | `merman_xy102` | 102 inputs, 85 candidate/17 fallback, partition 3/17/82/0, geometry 77, empty 5, profile pending 20, zero errors | 20 |
-| `MermaidCapabilityReport.Class481` | `class481` | matched/mutated 343, pending 137, 1 positive fallback (`merman/c50650cbac88ef419784`) | 138 |
-| `MermaidCapabilityReport.Class285` | `class285` | decoded 237, matched/mutated 231, pending 48 | 54 |
-| `MermaidCapabilityReport.ClassEndpoint29` | `class_endpoint29` | matched/mutated 28, the same one fallback id | 1 |
+| `MermaidCapabilityReport.Class481` | `class481` | matched/mutated 344, pending 137 | 137 |
+| `MermaidCapabilityReport.Class285` | `class285` | decoded 260, matched/mutated 260, pending 25 | 25 |
+| `MermaidCapabilityReport.ClassEndpoint29` | `class_endpoint29` | matched/mutated 29; no endpoint29 gap rows | 0 |
 | `MermaidCapabilityReport.State85` | `state85` | matched/mutated 71, geometry_errors 1, positive_pending 7, original_policy 1 (`termaid/17f03f94ca1a30b6bf67`), choice_policy 1 (`merman/2419c8d227ab4bcb368d`) | 14 |
 | `MermaidCapabilityReport.ClassCaptionStarvation8` | `class_caption_starvation8` | matched/mutated 7, fallback 1 (`unequal_multiline_and_marker`) | 1 |
 | `MermaidCapabilityReport.StateReverseEscape` | `state_reverse_escape` | matched/mutated 8, fallback 1 (`original_b91_whole_immutable`) | 1 |
-| `MermaidCapabilityReport.ClassNotes18` | `class_notes18` | original 18/decoded 22, strong 16; fallbacks at application ordinals 272-277 | 6 |
+| `MermaidCapabilityReport.ClassNotes18` | `class_notes18` | original 18/decoded 22, strong 22; no Notes18 gap rows | 0 |
 | `MermaidCapabilityReport.Requirement11P1P6` | `requirement11_p1p6` | complete 8, geometry 1 (P1), fallbacks 1 (P3 expected control), P5 negatives 10 | 1 |
 | `MermaidCapabilityReport.Requirement11Overflow` | `requirement11_overflow` | complete 1, fallbacks 1, errors 1 (LR case index 0) | 1 |
+
+### Historical E2a/T1-A execution results (2026-10-24)
 
 `drawn_at_240` rose from the E1-era 540 to 582 when E2a admitted the reviewed
 config-free gitGraph/state cohort (+42), then to 596 when T1-A retired 14
@@ -369,7 +391,7 @@ same change**; expectation changes still go only through this ledger, never
 through renderer output. T1-A required no roster rewrite: official_matrix
 exempts E2a cohort rows, so its gap rows and the SHA pin stayed byte-identical.
 
-### Capability-expansion task list after RFC 0031 (next coverage work)
+### Historical capability-expansion task list after RFC 0031 (2026-10-24)
 
 This is the forward-looking companion to the executed RFC 0031 checkpoints
 above. RFC 0031 removed structural/architectural debt (one envelope, five
@@ -6713,3 +6735,93 @@ No shared production module, exported API, settings, external renderer, cap,
 original vendor source/policy, commit, push, installation or Home file changed.
 The native Class285 test and source-mapping fixtures are the only new test owner.
 Complete upstream100%, fullctest and final real-terminal screenshots remain open.
+
+## ER6 completed batch (2026-10-30)
+
+Six source-pinned ER originals now pass complete geometry and mutations.
+Debug/Release each pass 836/836 Mermaid tests, with identical matrices.
+Official coverage is 629/2,145 (29.32%), fallback 1,501, error 15.
+Remaining disjoint priorities: P0 15, P1 518, P2 447, P3 536.
+See [source and implementation reviews](mermaid-er6-review.md) and
+[exact matrix comparison](mermaid-er6-matrix-comparison.json).
+Next P0: Class4 accessibility declarations, then Flow10 and Requirement1.
+
+## Class4 completed batch (2026-10-30)
+
+Accessibility declarations no longer create phantom Class entities. All four
+complete source graphs and their metadata bindings pass. Release841/841;
+Debug841 complete outcomes after seven stale-roster retries. Coverage633/2145
+(29.51%), fallback1501, errors11. Remaining P0 11, P1 518, P2 447, P3 536.
+[Source/design/code review and verification](mermaid-class4-review.md) and
+[exact chained observation comparison](mermaid-class4-matrix-comparison.json).
+Next P0: Requirement1 and Flow10; continue P1/P2/P3 after the remaining errors.
+
+## RequirementMarkdown1 completed batch (2026-10-30)
+
+The complete source, every literal field,14 meaningful adversaries and strict
+resource/proof controls pass. Debug/Release842/842. Official coverage634/2145
+(29.56%),fallback1501,errors10. Requirement12/172 (6.98%),fallback160,error0.
+Remaining P0 10 (all Flow),P1 518,P2 447,P3 536. Continue through the remaining
+priorities. [Executed reviews](mermaid-requirement-markdown-review.md) and
+[one-case observation delta](mermaid-requirement-markdown-matrix-comparison.json).
+
+### Flow P0 grouped7 checkpoint (2026-10-30)
+
+The separate repeated-target domain admits six complete originals; source5064
+also fixes group-port re-entry, temporary occupancy restoration and permanent
+port sealing in both router modes. Seven source-owned Models pass complete
+geometry, restoration and six mutations each. Debug/Release852/852. Coverage
+641/2145 (29.88%),fallback1501,errors3; Flow61/400 (15.25%),fallback336,errors3.
+Strict source/proof/ownership and actual resource controls pass, and both
+matrices are identical with exactly seven improved original observations.
+See [review and execution](mermaid-flow-p0-grouped7-review.md) and
+[comparison](mermaid-flow-p0-grouped7-matrix-comparison.json).
+Remaining: P0 3, P1 518, P2 447, P3 536. Continue through P0 and the remaining
+priorities without requiring per-case user confirmation.
+
+### Flow P0 length1 checkpoint (2026-10-30)
+
+The nighttime edge-length original binds its independent complete source and
+P0 Model to the unchanged reviewed visual294 LinkProfile3 geometry/mutations.
+Debug/Release854/854. Coverage642/2145 (29.93%),fallback1501,errors2;
+Flow62/400 (15.50%),fallback336,errors2. Both final matrices are identical;
+exactly one original improves, with no changed statuses elsewhere. See
+[executed evidence](mermaid-flow-p0-length-review.md) and
+[comparison](mermaid-flow-p0-length-matrix-comparison.json).
+Remaining P0 2,P1 518,P2 447,P3 536. Continue with grouped headless/mixed
+physical strands and exact duplicate-edge multiplicity, then the lower priorities.
+
+## Flow P0 strands2 completed batch (2026-10-30)
+
+Debug867/867 (287.50s), Release867/867 (37.32s), plus
+final exact-branch control1/1 in both. Coverage644/2145 (30.02%),fallback1501,
+errors0; Flow64/400 (16.00%),fallback336,errors0. Exactly two original
+observations improve;2736 other observation statuses remain unchanged.
+[Executed evidence](mermaid-flow-p0-strands-review.md) and
+[comparison](mermaid-flow-p0-strands-matrix-comparison.json).
+P0 is complete; remaining P1 518,P2 447,P3 536. Continue with the independently
+reviewed Class13 direct-style source/design proposal, then the lower priorities.
+
+## Class direct-style13 completed batch (2026-10-30)
+
+Coverage657/2145 (30.63%), fallback1488, errors0; Class254/285 (89.12%),
+pending31. Debug878/878 (287.71s), Release878/878
+(37.79s), serial style/resource/real-PTY14/14 each.
+Exactly13 original statuses improve;2725 other observations remain unchanged.
+[Executed evidence](mermaid-class-style13-review.md) and
+[exact comparison](mermaid-class-style13-matrix-comparison.json).
+P0 is complete; remaining P1 505, P2 447, P3 536. Continue
+[defined-Class-style6](mermaid-class-defined-style6-plan.md), then remaining
+existing-family work before P2/P3. No phase graduation is claimed.
+
+## Class defined-style6 completed batch (2026-10-30)
+
+Coverage663/2145 (30.91%), fallback1482, errors0; Class260/285 (91.23%),
+pending25. Debug889/889 (315.76s), Release889/889
+(38.94s), serial style/resource/real-PTY25/25 each.
+Exactly six originals improve;2732 other observed statuses stay unchanged.
+[Executed evidence](mermaid-class-defined-style6-review.md) and
+[exact comparison](mermaid-class-defined-style6-matrix-comparison.json).
+P0 complete; remaining P1 499, P2 447, P3 536. Continue
+[Flow style4](mermaid-flow-style4-plan.md), then remaining P1 before P2/P3.
+Proposals/design alone earn no credit; no phase graduation.

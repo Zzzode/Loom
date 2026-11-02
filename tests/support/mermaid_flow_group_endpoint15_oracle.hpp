@@ -5,18 +5,18 @@
 #include "mermaid_flow400_group_endpoint15_authority.hpp"
 
 namespace loom::test::mermaid_flow {
+inline bool group_endpoint15_nonresource(const std::vector<std::string>& errors) {
+    return !errors.empty() && std::ranges::none_of(errors, [](const std::string& error) {
+        return flow400_resource(error);
+    });
+}
+
 inline std::vector<std::string> group_endpoint15_geometry(const Grid& grid,
                                                           const GroupEndpoint15Model& model,
                                                           OracleWork& work,
                                                           std::string_view token) {
     const auto profile = group_endpoint15_profile(model, work);
     return flow_group_endpoint_geometry(grid, model.base, profile, work, token);
-}
-
-inline bool group_endpoint15_nonresource(const std::vector<std::string>& errors) {
-    return !errors.empty() && std::ranges::none_of(errors, [](const std::string& error) {
-        return flow400_resource(error);
-    });
 }
 
 inline void group_endpoint15_copy_grid(const Grid& grid, OracleWork& work) {
@@ -26,15 +26,8 @@ inline void group_endpoint15_copy_grid(const Grid& grid, OracleWork& work) {
 inline void group_endpoint15_require_rejected(const Grid& grid, const GroupEndpoint15Model& model,
                                               OracleWork& work, std::string_view why,
                                               std::string_view token) {
-    bool rejected = false, resource = false;
-    try {
-        const auto errors = group_endpoint15_geometry(grid, model, work, token);
-        rejected = group_endpoint15_nonresource(errors);
-    } catch (const std::exception& error) {
-        resource = work.remaining == 0u || flow400_resource(error.what());
-        rejected = !resource;
-    }
-    if (!rejected || resource) throw std::runtime_error(std::string(why));
+    flow400_require_decisive_negative(
+        work, why, [&]() { return group_endpoint15_geometry(grid, model, work, token); });
 }
 
 inline void group_endpoint15_copy_and_reject(const Grid& grid, const GroupEndpoint15Model& model,

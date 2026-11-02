@@ -43,6 +43,8 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`dev/context-compaction.md`](dev/context-compaction.md) | Shared main/child context budgeting, checkpoint recovery, and native/live verification. |
 | [`dev/markdown-conformance.md`](dev/markdown-conformance.md) | CommonMark 0.31.2 + GFM conformance suite: architecture, fixtures, HTML serializer, floor system, JSON output + dashboard. Baseline: 1350/1354 (99.7%). |
 | [`dev/mermaid-conformance.md`](dev/mermaid-conformance.md) | Pinned Mermaid 12.2.0 official corpus, independent terminal oracle and per-width drawing/fallback/error reports. |
+| [`dev/mermaid-gap-analysis.md`](dev/mermaid-gap-analysis.md) | Breakdown of official-corpus fallbacks, matrix errors and known terminal-renderer capability gaps. |
+| [`dev/mermaid-coverage-plan.md`](dev/mermaid-coverage-plan.md) | Proposed roadmap for increasing faithful Mermaid drawing coverage and tracking remaining gaps. |
 | [`dev/mermaid-terminal-tests.md`](dev/mermaid-terminal-tests.md) | Complementary upstream terminal test inputs, immutable provenance, native execution baseline and semantic-port gates. |
 | [`dev/error-handling-conventions.md`](dev/error-handling-conventions.md) | `std::expected` / `Result<T>` error-handling conventions for the C++ tree. |
 | [`dev/ui-glossary.md`](dev/ui-glossary.md) | Canonical UI vocabulary: framework terms (Element/Component/Box/Screen) vs project terms (Block/Row/Panel/Pane/Store/…), deprecated terms. |
@@ -100,3 +102,14 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).
+
+Mermaid coverage execution: [prioritized implementation backlog](dev/mermaid-implementation-backlog.md),
+[all unsuccessful original cases](dev/mermaid-unsuccessful-cases.md), and
+[source-verified JSON inventory](dev/mermaid-failure-inventory.json).
+Executed P0 batches: [grouped7](dev/mermaid-flow-p0-grouped7-review.md) and
+[length1](dev/mermaid-flow-p0-length-review.md), and
+[strands2](dev/mermaid-flow-p0-strands-review.md). P0 is complete;
+[Class13 direct styles](dev/mermaid-class-style13-review.md) and
+[defined-Class-style6](dev/mermaid-class-defined-style6-review.md) now draw
+663/2145, with Debug/Release889/889 and serial style/resource/real-PTY25/25 each.
+Continue [Flow style4](dev/mermaid-flow-style4-plan.md).

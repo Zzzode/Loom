@@ -3253,7 +3253,14 @@ static_assert(kEr206OldLocalBound + kEr206ExtractedLocalBound <= 16384u);
 // New mutators reuse the existing ER helper's independent8M scope. Its initial
 // 4*131072 charge owns all finite clone/regeneration/lambda bytes below; prove
 // the real sizeof upper bound before calling it, never assume string ABI.
-inline void er206_negative_bound(const Model& model, std::size_t encoded, Work& enumeration) {
+enum class Er206MutationDomain { Legacy1849, Rich1896 };
+
+template <Er206MutationDomain Domain>
+inline void er206_negative_bound_domain(const Model& model, std::size_t encoded,
+                                        Work& enumeration) {
+    constexpr auto limit = Domain == Er206MutationDomain::Legacy1849 ? 1849u : 1896u;
+    constexpr auto extra = Domain == Er206MutationDomain::Legacy1849 ? 0u : 47u * 64u;
+    if constexpr (extra != 0u) enumeration.spend(extra);
     enumeration.spend(4096u);
     std::size_t attributes = 0;
     for (const auto& e : model.entities) {
@@ -3266,9 +3273,13 @@ inline void er206_negative_bound(const Model& model, std::size_t encoded, Work& 
                          T * sizeof(ErTableAttribute) + R * sizeof(Relation) + G * sizeof(Group) +
                          (8u * E + 4u * T + 2u * R + 2u * G + 16u) * sizeof(std::string) +
                          (4u * E + 3u * T + 2u * G + 16u) * sizeof(std::vector<std::string>);
-    class481_require(encoded <= 1849u && E <= 8u && T <= 6u && R <= 8u && G <= 2u &&
-                         16u * objects + (encoded + 256u) * 64u + 16384u <= 4u * 131072u,
+    class481_require(encoded <= limit && E <= 8u && T <= 6u && R <= 8u && G <= 2u &&
+                         16u * objects + (encoded + 256u) * 64u + 16384u <= 4u * 131072u + extra,
                      "ER206 coherent mutation prepaid storage limit exceeded");
+}
+
+inline void er206_negative_bound(const Model& model, std::size_t encoded, Work& enumeration) {
+    er206_negative_bound_domain<Er206MutationDomain::Legacy1849>(model, encoded, enumeration);
 }
 
 // Both paths use this exact Grid copy/paint/whole-validation body.
@@ -3292,15 +3303,17 @@ inline void er206_orphan_rejection_core(const Grid& good, const Model& model, Wo
     class481_require(!extra.empty(), "ER206 physical orphan accepted");
 }
 
-template <bool SameLedger>
+template <bool SameLedger, Er206MutationDomain Domain = Er206MutationDomain::Legacy1849>
 inline Class481Mutations er206_mutations_core(const Grid& good, const Model& model,
                                               std::size_t encoded, Work& enumeration,
                                               std::string_view token) {
+    static_assert(SameLedger || Domain == Er206MutationDomain::Legacy1849);
     enumeration.spend(65536u + sizeof(Class481Mutations) * 4u);
-    er206_negative_bound(model, encoded, enumeration);
+    er206_negative_bound_domain<Domain>(model, encoded, enumeration);
     Class481Mutations out;
     auto reject = [&](std::string_view kind, auto mutate) {
         enumeration.spend(kind.size() * 4u + 4u * sizeof(std::string) + 512u);
+        if constexpr (Domain == Er206MutationDomain::Rich1896) enumeration.spend(47u * 64u);
         if constexpr (SameLedger)
             er_rich13_rejects_paid(good, model, mutate, enumeration, token);
         else
@@ -3427,6 +3440,57 @@ inline Class481Mutations er206_mutations_core(const Grid& good, const Model& mod
             ++out.skipped["identical_duplicate_not_independent_ink"];
         }
     }
+    if constexpr (Domain == Er206MutationDomain::Rich1896) {
+        for (std::size_t e = 0; e < model.entities.size(); ++e) {
+            if (!model.entities[e].typed_er) continue;
+            const auto& attributes = model.entities[e].typed_er->attributes;
+            if (attributes.size() >= 2u)
+                reject("attribute_order", [&](Model& wrong) {
+                    std::swap(wrong.entities[e].typed_er->attributes[0],
+                              wrong.entities[e].typed_er->attributes[1]);
+                });
+            for (std::size_t a = 0; a < attributes.size(); ++a) {
+                const auto& text = attributes[a].comment;
+                enumeration.spend(text.size() * 16u + 1024u);
+                const auto at = text.find('\n');
+                if (at == std::string::npos) continue;
+                reject("comment_br_merge", [&](Model& wrong) {
+                    wrong.entities[e].typed_er->attributes[a].comment.erase(at, 1u);
+                });
+                reject("comment_line_erasure", [&](Model& wrong) {
+                    wrong.entities[e].typed_er->attributes[a].comment.erase(0u, at + 1u);
+                });
+                if (at > 1u && static_cast<unsigned char>(text.front()) < 128u)
+                    reject("comment_br_shift", [&](Model& wrong) {
+                        auto& v = wrong.entities[e].typed_er->attributes[a].comment;
+                        v.erase(at, 1u);
+                        v.insert(1u, 1u, '\n');
+                    });
+            }
+        }
+        for (std::size_t r = 0; r < model.relations.size(); ++r) {
+            const auto& text = model.relations[r].label;
+            enumeration.spend(text.size() * 16u + 1024u);
+            const auto at = text.find('\n');
+            if (at == std::string::npos) continue;
+            reject("relation_br_merge",
+                   [&](Model& wrong) { wrong.relations[r].label.erase(at, 1u); });
+            reject("relation_line_erasure",
+                   [&](Model& wrong) { wrong.relations[r].label.erase(0u, at + 1u); });
+            const auto end = text.find('\n', at + 1u);
+            reject("relation_line_order", [&](Model& wrong) {
+                wrong.relations[r].label =
+                    text.substr(at + 1u, end == std::string::npos ? end : end - at - 1u) + "\n" +
+                    text.substr(0u, at) + (end == std::string::npos ? "" : text.substr(end));
+            });
+            if (at > 1u && static_cast<unsigned char>(text.front()) < 128u)
+                reject("relation_br_shift", [&](Model& wrong) {
+                    auto& v = wrong.relations[r].label;
+                    v.erase(at, 1u);
+                    v.insert(1u, 1u, '\n');
+                });
+        }
+    }
     for (std::size_t g = 0; g < model.groups.size(); ++g) {
         reject("group_caption", [&](Model& wrong) { wrong.groups[g].label = "__ER206_WRONG__"; });
         if (!model.groups[g].parent.empty())
@@ -3466,6 +3530,21 @@ inline Class481Mutations er206_mutations(const Grid& good, const Model& model, s
         er_present_require(value >= 0x21 && value <= 0x7e,
                            "ER206 paid token printable non-SPACE ASCII");
     return er206_mutations_core<true>(good, model, encoded, enumeration, token);
+}
+
+// Closed all-six domain; old overloads and their 1849 guard remain unchanged.
+inline Class481Mutations er206_mutations_rich(const Grid& good, const Model& model,
+                                              std::size_t encoded, Work& enumeration,
+                                              std::string_view token) {
+    enumeration.spend(16u * sizeof(std::string_view) + 16u * sizeof(std::size_t) +
+                      8u * sizeof(bool) + 256u);
+    er_present_require(!token.empty() && token.size() <= 240u, "ER206 paid token bounds");
+    enumeration.spend(token.size() * 4u);
+    for (const unsigned char value : token)
+        er_present_require(value >= 0x21 && value <= 0x7e,
+                           "ER206 paid token printable non-SPACE ASCII");
+    return er206_mutations_core<true, Er206MutationDomain::Rich1896>(good, model, encoded,
+                                                                     enumeration, token);
 }
 
 }  // namespace loom::test::mermaid_relations

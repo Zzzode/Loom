@@ -597,6 +597,7 @@ std::optional<RelationDiagram> project_requirement(const RequirementDiagram& par
                     parsed.edges.size() * (sizeof(Relationship) + 128u) + 256u))
         return {};
     if (!work.spend(parsed.direction.size() * 4u + sizeof(std::string) + 32u)) return {};
+    if (!work.spend(8u * sizeof(std::optional<std::string>) + 128u)) return {};
     RelationDiagram result;
     result.family = RelationFamily::Requirement;
     result.direction = parsed.direction;

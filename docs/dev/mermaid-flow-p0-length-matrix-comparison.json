@@ -1,0 +1,44 @@
+{
+  "schema": "mermaid_flow_p0_length1_comparison/v1",
+  "before": {
+    "drawn": 641,
+    "fallback": 1501,
+    "error": 3
+  },
+  "after": {
+    "drawn": 642,
+    "fallback": 1501,
+    "error": 2
+  },
+  "changed_observations": [
+    {
+      "fixture": "flowchart/nightly-check/dagre/4-dagre-length-of-edges.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "error",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    }
+  ],
+  "other_observations_unchanged": 2737,
+  "matrix_sha256": "fc7631ddd73164e314d2382d7ae73fbaddae261391f837d19a1dadc883e2b00b",
+  "regression": {
+    "debug": {
+      "passed": 854,
+      "total": 854,
+      "seconds": 288.7
+    },
+    "release": {
+      "passed": 854,
+      "total": 854,
+      "seconds": 37.54
+    }
+  },
+  "scope": "All Mermaid-labeled CTest tests; not full-project CTest, browser equivalence or LLVM coverage."
+}

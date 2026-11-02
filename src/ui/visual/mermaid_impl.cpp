@@ -9,11 +9,14 @@ module loom.ui.visual.mermaid;
 import std;
 import :detail;
 import loom.ui.foundation.theme_provider;
+import loom.ui.foundation.design_tokens;
 
 namespace loom::ui::mermaid {
 namespace {
 
 using namespace detail;
+// Unadmitted Flow work is available only through the reviewed test facade.
+thread_local bool flow_style_preview = false;
 
 std::string_view trim(std::string_view value) {
     while (!value.empty() && (value.front() == ' ' || value.front() == '\t'))
@@ -497,6 +500,22 @@ struct Group {
     std::size_t order = 0;
     bool implicit_id = false;
 };
+enum class FlowStyleKind { Definition, Assignment, Direct };
+
+struct FlowStyleRecord {
+    FlowStyleKind kind = FlowStyleKind::Definition;
+    std::string name, physical;
+    std::vector<std::string> targets;
+    ClassStyleProperties properties;
+    bool used = false;
+};
+
+struct FlowStyles {
+    std::vector<FlowStyleRecord> records;
+    std::vector<ClassStyleProperties> effective;
+    std::vector<std::string> legend;
+    std::size_t definitions = 0u, assignments = 0u, direct = 0u, applications = 0u;
+};
 
 struct Diagram {
     Direction direction = Direction::Down;
@@ -532,6 +551,235 @@ struct Diagram {
 };
 
 bool flow_envelope_parse_prepay(std::string_view body, Work& work);
+
+bool flow_style_identifier(std::string_view value) {
+    if (value.empty() || value.size() > 64u || !id_start(value.front())) return false;
+    return std::ranges::all_of(value, [](char c) { return id_char(c); });
+}
+
+// Constant root-keyword dispatch is covered by the existing coarse parse prepay.
+bool flow_style_keyword(std::string_view statement) {
+    for (const auto word :
+         {std::string_view("classDef"), std::string_view("class"), std::string_view("style")})
+        if (statement.size() > word.size() && statement.starts_with(word) &&
+            (statement[word.size()] == ' ' || statement[word.size()] == '\t'))
+            return true;
+    return false;
+}
+
+bool flow_style_collect(std::string_view statement, std::string_view physical,
+                        std::unique_ptr<FlowStyles>& pending, Work& work) {
+    if (statement.size() > 1024u || physical.size() > 1024u ||
+        !work.spend(physical.size() * 32u + 4u * sizeof(FlowStyleRecord) +
+                    4u * sizeof(std::string) + 256u))
+        return false;
+    for (const auto c : physical)
+        if ((static_cast<unsigned char>(c) < 0x20u && c != '\t') ||
+            static_cast<unsigned char>(c) == 0x7fu)
+            return false;
+    auto logical = trim(physical);
+    if (logical.ends_with(';')) logical = trim(logical.substr(0u, logical.size() - 1u));
+    if (logical != statement) return false;
+    if (!pending) {
+        if (!work.spend(4u * sizeof(FlowStyles) + 4u * 4u * sizeof(FlowStyleRecord) + 256u))
+            return false;
+        pending = std::make_unique<FlowStyles>();
+        pending->records.reserve(4u);
+    }
+    FlowStyleRecord record;
+    record.physical = physical;
+    auto rest = statement;
+    if (rest.starts_with("classDef")) {
+        if (pending->definitions >= 64u) return false;
+        record.kind = FlowStyleKind::Definition;
+        rest = trim(rest.substr(8u));
+        const auto split = rest.find_first_of(" \t");
+        if (split == std::string_view::npos || !flow_style_identifier(rest.substr(0u, split)))
+            return false;
+        record.name = rest.substr(0u, split);
+        if (record.name == "default") return false;
+        for (const auto& previous : pending->records) {
+            if (!work.spend(previous.name.size() + record.name.size() + 32u)) return false;
+            if (previous.kind == FlowStyleKind::Definition && previous.name == record.name)
+                return false;
+        }
+        if (!source_style_properties(trim(rest.substr(split)), record.properties, work))
+            return false;
+        ++pending->definitions;
+    } else {
+        const bool direct = rest.starts_with("style");
+        record.kind = direct ? FlowStyleKind::Direct : FlowStyleKind::Assignment;
+        if ((direct && pending->direct >= 64u) || (!direct && pending->assignments >= 64u))
+            return false;
+        rest = trim(rest.substr(5u));
+        const auto split = rest.find_first_of(" \t");
+        if (split == std::string_view::npos) return false;
+        auto list = rest.substr(0u, split);
+        auto tail = trim(rest.substr(split));
+        const auto target_count =
+            static_cast<std::size_t>(std::count(list.begin(), list.end(), ',')) + 1u;
+        if (target_count > 64u ||
+            !work.spend(target_count * 4u * sizeof(std::string) + list.size() * 8u + 1024u))
+            return false;
+        record.targets.reserve(target_count);
+        while (!list.empty()) {
+            const auto comma = list.find(',');
+            const auto target = list.substr(0u, comma);
+            if (!flow_style_identifier(target) || record.targets.size() >= 64u ||
+                (direct && comma != std::string_view::npos))
+                return false;
+            for (const auto& previous : record.targets) {
+                if (!work.spend(previous.size() + target.size() + 32u) || previous == target)
+                    return false;
+            }
+            record.targets.emplace_back(target);
+            if (comma == std::string_view::npos) break;
+            list.remove_prefix(comma + 1u);
+            if (list.empty()) return false;
+        }
+        if (record.targets.empty() || record.targets.size() > 128u - pending->applications)
+            return false;
+        if (direct) {
+            if (!source_style_properties(tail, record.properties, work)) return false;
+            ++pending->direct;
+        } else {
+            if (!flow_style_identifier(tail)) return false;
+            record.name = tail;
+            ++pending->assignments;
+        }
+        pending->applications += record.targets.size();
+    }
+    if (pending->records.size() == pending->records.capacity()) {
+        const auto capacity = std::min<std::size_t>(192u, pending->records.capacity() * 2u);
+        if (capacity <= pending->records.size() ||
+            !work.spend(capacity * 4u * sizeof(FlowStyleRecord) +
+                        pending->records.size() * sizeof(FlowStyleRecord) + 256u))
+            return false;
+        pending->records.reserve(capacity);
+    }
+    pending->records.push_back(std::move(record));
+    return true;
+}
+
+bool resolve_flow_styles(FlowStyles& styles, const Diagram& diagram, Work& work) {
+    if (!work.spend(diagram.vertices.size() * 4u * sizeof(ClassStyleProperties) + 256u))
+        return false;
+    styles.effective.resize(diagram.vertices.size());
+    const auto find = [&](std::string_view id) -> std::optional<std::size_t> {
+        for (std::size_t n = 0; n < diagram.vertices.size(); ++n) {
+            if (!work.spend(id.size() + diagram.vertices[n].id.size() + 32u)) return {};
+            if (diagram.vertices[n].id == id) {
+                if (diagram.vertices[n].group >= 0 || diagram.vertices[n].shape != Shape::Rectangle)
+                    return {};
+                return n;
+            }
+        }
+        return {};
+    };
+    for (const auto kind : {FlowStyleKind::Assignment, FlowStyleKind::Direct})
+        for (auto& record : styles.records) {
+            if (!work.spend(32u)) return false;
+            if (record.kind != kind) continue;
+            if (kind == FlowStyleKind::Assignment) {
+                std::optional<std::size_t> definition;
+                for (std::size_t n = 0; n < styles.records.size(); ++n) {
+                    const auto& candidate = styles.records[n];
+                    if (!work.spend(candidate.name.size() + record.name.size() + 32u)) return false;
+                    if (candidate.kind == FlowStyleKind::Definition &&
+                        candidate.name == record.name) {
+                        definition = n;
+                        break;
+                    }
+                }
+                if (!definition) return false;
+                styles.records[*definition].used = true;
+                record.properties = styles.records[*definition].properties;
+            }
+            for (const auto& id : record.targets) {
+                const auto selected = find(id);
+                if (!selected) return false;
+                auto& effective = styles.effective[*selected];
+                const auto& properties = record.properties;
+                if (properties.fill) effective.fill = properties.fill;
+                if (properties.stroke) effective.stroke = properties.stroke;
+                if (properties.color) effective.color = properties.color;
+                if (properties.width) effective.width = properties.width;
+            }
+        }
+    if (styles.applications == 0u) {
+        styles.effective.clear();
+        return true;
+    }
+    constexpr std::string_view projection_key =
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; assignment "
+        "order; direct last; normalized consecutive repeats keep first spelling; source TAB=\\t";
+    if (!work.spend(8u * 4u * sizeof(std::string) + projection_key.size() * 8u +
+                    4u * sizeof(std::vector<std::string>) + 256u))
+        return false;
+    styles.legend.reserve(8u);
+    for (std::size_t n = 0; n < styles.records.size(); ++n) {
+        const auto& record = styles.records[n];
+        if (!work.spend(64u)) return false;
+        if (record.kind == FlowStyleKind::Definition && !record.used) continue;
+        std::size_t count = 1u;
+        if (record.kind != FlowStyleKind::Definition) {
+            while (n + count < styles.records.size()) {
+                const auto& next = styles.records[n + count];
+                if (!work.spend((record.name.size() + record.physical.size()) * 4u + 512u))
+                    return false;
+                if (next.kind != record.kind || next.name != record.name ||
+                    next.targets != record.targets || next.properties != record.properties)
+                    break;
+                ++count;
+            }
+        }
+        if (styles.legend.size() >= 7u || !work.spend(record.physical.size() * 12u + 4096u))
+            return false;
+        std::string text;
+        text.reserve(record.physical.size() * 2u + 256u);
+        for (const auto c : record.physical) {
+            if (c == '\t')
+                text += "\\t";
+            else
+                text += c;
+        }
+        text += " ->";
+        const auto append = [&](std::string_view key, std::string_view value) {
+            text += ' ';
+            text += key;
+            text += ':';
+            text += value;
+        };
+        if (record.kind == FlowStyleKind::Definition) {
+            append("definition", record.name);
+            text += " (applied)";
+        } else {
+            if (record.kind == FlowStyleKind::Assignment) append("class", record.name);
+            const auto& properties = record.properties;
+            if (properties.fill)
+                append("fill", properties.fill->transparent
+                                   ? std::string_view("none")
+                                   : source_style_role_name(properties.fill->role));
+            if (properties.stroke)
+                append("stroke", source_style_role_name(properties.stroke->role));
+            if (properties.width) append("width", *properties.width >= 4.0 ? "bold" : "normal");
+            if (properties.color) {
+                append("fg", source_style_role_name(properties.color->role));
+                text += "(fill targets use palette.text)";
+            }
+            if (count > 1u) {
+                text += " occurrences:";
+                text += std::to_string(count);
+            }
+        }
+        if (ftxui::string_width(text) > kWidthLimit) return false;
+        styles.legend.push_back(std::move(text));
+        n += count - 1u;
+    }
+    styles.legend.emplace_back(projection_key);
+    return true;
+}
+
 bool flow_parse_prepay(std::string_view body, Work& work, bool full_profile,
                        bool upgrade_to_full = false);
 
@@ -984,7 +1232,10 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
     return !uses_group_endpoint || emitted_link;
 }
 
-std::optional<Diagram> parse(std::string_view source, Work& work, bool already_prepaid = false) {
+std::optional<Diagram> parse(std::string_view source, Work& work, bool already_prepaid = false,
+                             std::unique_ptr<FlowStyles>* style_result = nullptr) {
+    if (style_result) style_result->reset();
+    std::unique_ptr<FlowStyles> pending_styles;
     if (source.empty() || source.size() > kSourceLimit) return {};
     // RFC 0031 E5: the bare whole-body profile is charged as soon as a valid
     // graph/flowchart header is recognized (the configured/envelope path has
@@ -1005,6 +1256,8 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
     while (!source.empty()) {
         const auto end = source.find('\n');
         auto line = source.substr(0, end);
+        auto physical = line;
+        if (physical.ends_with('\r')) physical.remove_suffix(1u);
         source = end == std::string_view::npos ? std::string_view{} : source.substr(end + 1);
         if (line.ends_with('\r')) line.remove_suffix(1);
         line = trim(line);
@@ -1069,8 +1322,12 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
                     prepaid = true;
                 }
             } else {
-                if (!flow_statement(statement, diagram, work, original, already_prepaid, saw_reopen,
-                                    cross_owner_membership_request))
+                if (flow_style_preview && flow_style_keyword(statement)) {
+                    if (!style_result || !diagram.group_stack.empty() ||
+                        !flow_style_collect(statement, physical, pending_styles, work))
+                        return {};
+                } else if (!flow_statement(statement, diagram, work, original, already_prepaid,
+                                           saw_reopen, cross_owner_membership_request))
                     return {};
                 have_statement = true;
             }
@@ -1090,6 +1347,10 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
         for (const auto& group : diagram.groups) {
             if (group.direction.has_value()) return {};
         }
+    }
+    if (pending_styles) {
+        if (!resolve_flow_styles(*pending_styles, diagram, work)) return {};
+        if (pending_styles->applications != 0u) *style_result = std::move(pending_styles);
     }
     return diagram;
 }
@@ -1296,6 +1557,7 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
         NestedHtml = 16u,
         Security = 32u,
         Log = 64u,
+        Look = 1024u,
         MaxWidth = 128u,
         TitleTopMargin = 256u,
         DiagramPadding = 512u
@@ -1395,6 +1657,9 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
             if (event.path == "layout") {
                 const auto scalar = trim(event.value);
                 if (!mark(Layout) || (scalar != "dagre" && scalar != "\"dagre\"")) return {};
+            } else if (event.path == "look") {
+                if (!flow_style_preview || !mark(Look) || trim(event.value) != "handDrawn")
+                    return {};
             } else if (event.path == "fontFamily") {
                 const auto scalar = trim(event.value);
                 if (!mark(Font) || (scalar != "courier" && scalar != "\"courier\"")) return {};
@@ -1468,7 +1733,8 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
     const bool both_false =
         fields == (RootHtml | Flowchart | NestedHtml) && !root_html_value && !nested_html_value;
     const unsigned strict_bits = RootHtml | Flowchart | NestedHtml | Security;
-    const bool strict = (fields == strict_bits || fields == (strict_bits | Layout)) &&
+    const bool strict = (fields == strict_bits || fields == (strict_bits | Layout) ||
+                         fields == (strict_bits | Look)) &&
                         root_html_value && nested_html_value;
     if (legacy_dagre || dagre_diagram_title || terminal_max_width ||
         terminal_zero_diagram_padding || title_top_margin_zero_without_layout ||
@@ -2095,8 +2361,28 @@ std::optional<std::vector<int>> ranks(const Diagram& graph, Work& work) {
     return result;
 }
 
-std::optional<std::vector<Box>> place_sized_nodes(const Diagram& graph, std::vector<Box> boxes,
-                                                  bool compact_major_gap, Work& work) {
+// Opposite directed links are distinct relations, not parallel occurrences.
+// Reversed headless links have the same physical endpoint identity.
+bool repeated_strand_endpoints(const Edge& a, const Edge& b) {
+    const auto same = [](const Endpoint& x, const Endpoint& y) {
+        return x.kind == y.kind && x.index == y.index;
+    };
+    return (same(a.from, b.from) && same(a.to, b.to)) ||
+           (!a.arrow_start && !a.arrow_end && !b.arrow_start && !b.arrow_end &&
+            same(a.from, b.to) && same(a.to, b.from));
+}
+
+// Ranking projections discard caption strings; authored pair checks create
+// these bounded band hints before projection can collapse endpoint identities.
+struct CaptionBandHint {
+    std::size_t from, to;
+    int width;
+};
+
+std::optional<std::vector<Box>>
+place_sized_nodes(const Diagram& graph, std::vector<Box> boxes, bool compact_major_gap, Work& work,
+                  const std::vector<CaptionBandHint>* authored_hints = nullptr,
+                  bool parallel_endpoints = false) {
     if (boxes.empty()) return boxes;
     const auto rank = ranks(graph, work);
     if (!rank || rank->empty()) return {};
@@ -2124,8 +2410,54 @@ std::optional<std::vector<Box>> place_sized_nodes(const Diagram& graph, std::vec
     // The closed Classic11 LR chain needs a compact major-axis gap inside the
     // existing 240-cell canvas; old-shape placement retains its eight-cell gap.
     const int major_gap = compact_major_gap ? 2 : 8;
+    std::optional<std::vector<int>> caption_gaps;
+    // Only a labeled repeated endpoint pair widens its own intervening band.
+    // Unrelated labels and other ranks keep their existing spacing.
+    const auto widen = [&](std::size_t from_index, std::size_t to_index, int width) {
+        if (from_index >= rank->size() || to_index >= rank->size()) return false;
+        const int from = (*rank)[from_index], to = (*rank)[to_index];
+        if (from == to) return true;
+        if (!caption_gaps) {
+            if (!work.spend(layers.size() * (sizeof(int) + 4u) + sizeof(std::vector<int>) + 64u))
+                return false;
+            caption_gaps.emplace(layers.size(), major_gap);
+        }
+        const auto band = static_cast<std::size_t>(std::min(from, to));
+        (*caption_gaps)[band] = std::max((*caption_gaps)[band], width + 8);
+        return true;
+    };
+    if (horizontal && !compact_major_gap && parallel_endpoints) {
+        if (authored_hints) {
+            for (const auto hint : *authored_hints) {
+                if (!work.spend(64u) || !widen(hint.from, hint.to, hint.width)) return {};
+            }
+        } else if (graph.edges.size() > 1u) {
+            for (std::size_t a = 0u; a < graph.edges.size(); ++a) {
+                const auto& edge = graph.edges[a];
+                if (!work.spend()) return {};
+                if (!edge.text) continue;
+                bool parallel = false;
+                for (std::size_t b = 0u; b < graph.edges.size(); ++b) {
+                    if (a == b) continue;
+                    if (!work.spend(32u)) return {};
+                    const auto& other = graph.edges[b];
+                    if (repeated_strand_endpoints(edge, other)) {
+                        parallel = true;
+                        break;
+                    }
+                }
+                if (!parallel) continue;
+                if (edge.from.kind != EndpointKind::Vertex || edge.to.kind != EndpointKind::Vertex)
+                    return {};
+                if (!work.spend(edge.text->size() * 8u + 64u) ||
+                    !widen(edge.from.index, edge.to.index, label_width(*edge.text)))
+                    return {};
+            }
+        }
+    }
     int major = 4;
-    for (const auto& layer : layers) {
+    for (std::size_t band = 0u; band < layers.size(); ++band) {
+        const auto& layer = layers[band];
         int extent = -6;
         int major_size = 0;
         for (const auto n : layer) {
@@ -2138,7 +2470,7 @@ std::optional<std::vector<Box>> place_sized_nodes(const Diagram& graph, std::vec
             boxes[n].y = horizontal ? cross : major;
             cross += (horizontal ? boxes[n].height : boxes[n].width) + 6;
         }
-        major += major_size + major_gap;
+        major += major_size + (caption_gaps ? (*caption_gaps)[band] : major_gap);
     }
     int width = 0, height = 0;
     for (const auto& box : boxes) {
@@ -2153,7 +2485,8 @@ std::optional<std::vector<Box>> place_sized_nodes(const Diagram& graph, std::vec
     return boxes;
 }
 
-std::optional<std::vector<Box>> place_nodes(const Diagram& graph, Work& work) {
+std::optional<std::vector<Box>> place_nodes(const Diagram& graph, Work& work,
+                                            bool parallel_endpoints) {
     std::vector<Box> boxes;
     bool compact_major_gap = false;
     for (const auto& node : graph.vertices) {
@@ -2162,7 +2495,8 @@ std::optional<std::vector<Box>> place_nodes(const Diagram& graph, Work& work) {
         compact_major_gap = compact_major_gap || classic_shape(node.shape);
         boxes.push_back(*size);
     }
-    return place_sized_nodes(graph, std::move(boxes), compact_major_gap, work);
+    return place_sized_nodes(graph, std::move(boxes), compact_major_gap, work, nullptr,
+                             parallel_endpoints);
 }
 
 struct Region {
@@ -2172,8 +2506,8 @@ struct Region {
 
 // Compound regions are placed bottom-up. A parent ranks complete child frames,
 // never individual descendants which could interleave with a sibling region.
-std::optional<Region> place_region(const Diagram& graph, int owner, Direction inherited,
-                                   Work& work) {
+std::optional<Region> place_region(const Diagram& graph, int owner, Direction inherited, Work& work,
+                                   bool parallel_endpoints) {
     const auto direction =
         owner < 0 ? inherited
                   : graph.groups[static_cast<std::size_t>(owner)].direction.value_or(inherited);
@@ -2208,7 +2542,7 @@ std::optional<Region> place_region(const Diagram& graph, int owner, Direction in
     }
     for (std::size_t g = 0; g < graph.groups.size(); ++g) {
         if (graph.groups[g].parent != owner) continue;
-        auto child = place_region(graph, static_cast<int>(g), direction, work);
+        auto child = place_region(graph, static_cast<int>(g), direction, work, parallel_endpoints);
         if (!child) return {};
         const Box size{0, 0, child->width, child->height};
         items.push_back({g, graph.groups[g].order, true, size, std::move(child)});
@@ -2269,6 +2603,8 @@ std::optional<Region> place_region(const Diagram& graph, int owner, Direction in
     quotient.direction = direction;
     quotient.vertices.resize(items.size());
     quotient.edges.reserve(graph.edges.size());
+    std::vector<CaptionBandHint> authored_hints;
+    const bool horizontal = direction == Direction::Left || direction == Direction::Right;
     for (const auto& edge : graph.edges) {
         const auto from = item_for(edge.from), to = item_for(edge.to);
         if (from && to && from != to) {
@@ -2283,13 +2619,35 @@ std::optional<Region> place_region(const Diagram& graph, int owner, Direction in
                                       edge.arrow_start,
                                       edge.arrow_end,
                                       edge.minimum_length});
+            if (horizontal && !compact_major_gap && parallel_endpoints && edge.text) {
+                bool parallel = false;
+                for (const auto& other : graph.edges) {
+                    if (&other == &edge) continue;
+                    if (!work.spend(32u)) return {};
+                    if (repeated_strand_endpoints(edge, other)) {
+                        parallel = true;
+                        break;
+                    }
+                }
+                if (parallel) {
+                    if (authored_hints.empty()) {
+                        if (!work.spend(graph.edges.size() * (sizeof(CaptionBandHint) + 8u) +
+                                        sizeof(std::vector<CaptionBandHint>) + 64u))
+                            return {};
+                        authored_hints.reserve(graph.edges.size());
+                    }
+                    if (!work.spend(edge.text->size() * 8u + 64u)) return {};
+                    authored_hints.push_back({*from, *to, label_width(*edge.text)});
+                }
+            }
         }
     }
     std::vector<Box> sizes;
     sizes.reserve(items.size());
     for (const auto& item : items)
         sizes.push_back(item.size);
-    auto placed = place_sized_nodes(quotient, std::move(sizes), compact_major_gap, work);
+    auto placed = place_sized_nodes(quotient, std::move(sizes), compact_major_gap, work,
+                                    &authored_hints, parallel_endpoints);
     if (!placed) return {};
     Region result;
     for (const auto& box : *placed) {
@@ -2616,7 +2974,7 @@ public:
 bool draw_path(Canvas& canvas, const std::vector<Point>& path, Point before, Point after,
                bool arrow_start, bool arrow_end, Stroke stroke = Stroke::Solid,
                std::optional<Point> prefixed_head = {}, std::optional<Point> suffixed_head = {},
-               std::vector<unsigned char>* routed = nullptr) {
+               std::vector<unsigned char>* routed = nullptr, bool orthogonal_only = false) {
     if (path.empty() || (arrow_start && arrow_end &&
                          path.size() + prefixed_head.has_value() + suffixed_head.has_value() == 1u))
         return false;
@@ -2628,6 +2986,7 @@ bool draw_path(Canvas& canvas, const std::vector<Point>& path, Point before, Poi
         return path[index - prefix];
     };
     for (std::size_t n = 0; n < total; ++n) {
+        if (orthogonal_only && routed && !canvas.work.spend(16u)) return false;
         const auto current = point_at(n);
         const auto prior = n ? point_at(n - 1u) : before;
         const auto next = n + 1u < total ? point_at(n + 1u) : after;
@@ -2649,6 +3008,17 @@ bool draw_path(Canvas& canvas, const std::vector<Point>& path, Point before, Poi
         if (routed != nullptr && !head) {
             (*routed)[static_cast<std::size_t>(canvas.index(current))] = 1u;
             canvas.at(current).bits = bits;
+            if (orthogonal_only) {
+                const bool horizontal = bits == (kLeft | kRight), vertical = bits == (kUp | kDown);
+                (*routed)[static_cast<std::size_t>(canvas.index(current))] =
+                    (horizontal || vertical) ? 1u : 0u;
+                canvas.at(current).allowed = horizontal ? (kUp | kDown)
+                                             : vertical ? (kLeft | kRight)
+                                                        : 0u;
+            }
+        } else if (routed && orthogonal_only) {
+            (*routed)[static_cast<std::size_t>(canvas.index(current))] = 0u;
+            canvas.at(current).allowed = 0u;
         }
     }
     return true;
@@ -2664,13 +3034,16 @@ bool source_port(Canvas& canvas, const Port& port) {
 struct ScopedBlockedCell {
     Canvas& canvas;
     Point point;
-    bool active = false;
+    bool active = false, previous = false;
 
     ScopedBlockedCell(Canvas& canvas_, Point point_, bool reserve)
         : canvas(canvas_)
         , point(point_)
         , active(reserve) {
-        if (active) canvas.at(point).blocked = true;
+        if (active) {
+            previous = canvas.at(point).blocked;
+            canvas.at(point).blocked = true;
+        }
     }
 
     ScopedBlockedCell(const ScopedBlockedCell&) = delete;
@@ -2680,15 +3053,118 @@ struct ScopedBlockedCell {
 
     void release() {
         if (!active) return;
-        canvas.at(point).blocked = false;
+        canvas.at(point).blocked = previous;
         active = false;
     }
 };
 
+// Group endpoints may border old relaxed-pass crossings. A hard temporary
+// reservation must suppress both ordinary occupancy and crossing eligibility.
+struct ScopedGroupBorder {
+    ScopedBlockedCell cell;
+    std::vector<unsigned char>* routed = nullptr;
+    unsigned char previous = 0;
+    bool active = false;
+
+    ScopedGroupBorder(Canvas& canvas, Point point, bool reserve,
+                      std::vector<unsigned char>* crossing)
+        : cell(canvas, point, reserve)
+        , routed(crossing)
+        , active(reserve) {
+        if (active && routed) {
+            const auto index = static_cast<std::size_t>(canvas.index(point));
+            previous = (*routed)[index];
+            (*routed)[index] = 0u;
+        }
+    }
+
+    ScopedGroupBorder(const ScopedGroupBorder&) = delete;
+    ScopedGroupBorder& operator=(const ScopedGroupBorder&) = delete;
+
+    ~ScopedGroupBorder() { release(); }
+
+    void release() {
+        if (!active) return;
+        if (routed) (*routed)[static_cast<std::size_t>(cell.canvas.index(cell.point))] = previous;
+        cell.release();
+        active = false;
+    }
+};
+
+// A first label half is a hard temporary reservation, even over old routes.
+// Storage and restoration are paid before changing any cell; reverse restore
+// also handles a repeated cell safely without weakening its original state.
+struct ScopedPathReservation {
+    struct Saved {
+        bool blocked;
+        unsigned char crossable;
+    };
+
+    Canvas& canvas;
+    const std::vector<Point>& path;
+    std::vector<unsigned char>* routed;
+    std::vector<Saved> saved;
+    bool ready = false, active = false;
+
+    ScopedPathReservation(Canvas& target, const std::vector<Point>& points,
+                          std::vector<unsigned char>* crossing)
+        : canvas(target)
+        , path(points)
+        , routed(crossing) {
+        // A strict Router enters only free cells and cannot cross blocked art.
+        // With no crossing bitmap every prior state is therefore false; retain
+        // its existing two-write tariff and avoid storing redundant states.
+        if (!routed) {
+            if (!canvas.work.spend(path.size() * 2u)) return;
+            for (const auto point : path)
+                canvas.at(point).blocked = true;
+            ready = true;
+            active = true;
+            return;
+        }
+        // Pay saved bytes plus the four state writes (reserve and restore).
+        if (!canvas.work.spend(path.size() * (sizeof(Saved) + 4u) + 4u * sizeof(void*) + 128u))
+            return;
+        saved.reserve(path.size());
+        for (const auto point : path) {
+            const auto index = static_cast<std::size_t>(canvas.index(point));
+            saved.push_back({canvas.at(point).blocked, (*routed)[index]});
+            canvas.at(point).blocked = true;
+            (*routed)[index] = 0u;
+        }
+        ready = true;
+        active = true;
+    }
+
+    ScopedPathReservation(const ScopedPathReservation&) = delete;
+    ScopedPathReservation& operator=(const ScopedPathReservation&) = delete;
+
+    void release() {
+        if (!active) return;
+        for (std::size_t i = path.size(); i > 0u; --i) {
+            const auto point = path[i - 1u];
+            canvas.at(point).blocked = routed ? saved[i - 1u].blocked : false;
+            if (routed)
+                (*routed)[static_cast<std::size_t>(canvas.index(point))] = saved[i - 1u].crossable;
+        }
+        active = false;
+    }
+
+    ~ScopedPathReservation() { release(); }
+};
+
+void seal_group_port(Canvas& canvas, Point border, std::vector<unsigned char>* routed) {
+    canvas.at(border).blocked = true;
+    if (routed) (*routed)[static_cast<std::size_t>(canvas.index(border))] = 0u;
+}
+
 bool connect(Canvas& canvas, Router& router, const Port& from, const Port& to,
              const std::optional<std::string>& label_text, bool arrow_start, bool arrow_end,
              Stroke stroke = Stroke::Solid, FlowTextCollector* collector = nullptr,
-             std::vector<unsigned char>* routed = nullptr) {
+             std::vector<unsigned char>* routed = nullptr, bool protect_from = false,
+             bool protect_to = false, bool orthogonal_only = false) {
+    if ((protect_from || protect_to) && !canvas.work.spend(8u * sizeof(ScopedGroupBorder) + 128u))
+        return false;
     const auto start = arrow_start ? from.outside + from.normal : from.outside;
     const auto goal = to.outside + to.normal;
     if (from.border == to.border || !canvas.free(from.outside) || !canvas.free(start) ||
@@ -2701,6 +3177,11 @@ bool connect(Canvas& canvas, Router& router, const Port& from, const Port& to,
     // A point source must leave its frame by the straight outward shaft. Keep
     // its arrow cell unavailable to the search, release it before paint, and
     // logically prepend it to the first painted path without a new vector.
+    // A group border is permeable to other crossings, but an endpoint's own
+    // port cannot also be an interior route cell. Release before committing
+    // paint so the permanent port remains sealed on success.
+    ScopedGroupBorder source_border{canvas, from.border, protect_from, routed};
+    ScopedGroupBorder target_border{canvas, to.border, protect_to, routed};
     ScopedBlockedCell target_hold{canvas, to.outside, true};
     ScopedBlockedCell source_head{canvas, from.outside, arrow_start};
     const auto prefix = arrow_start ? std::optional<Point>{from.outside} : std::nullopt;
@@ -2709,12 +3190,17 @@ bool connect(Canvas& canvas, Router& router, const Port& from, const Port& to,
         auto path = router.path(start, goal);
         target_hold.release();
         source_head.release();
+        source_border.release();
+        target_border.release();
         if (!path) return false;
         if (!draw_path(canvas, *path, from.border, to.border, arrow_start, arrow_end, stroke,
-                       prefix, suffix, routed))
+                       prefix, suffix, routed, orthogonal_only))
             return false;
         if (!arrow_start && !source_port(canvas, from)) return false;
-        return arrow_end || source_port(canvas, to);
+        if (!arrow_end && !source_port(canvas, to)) return false;
+        if (protect_from) seal_group_port(canvas, from.border, routed);
+        if (protect_to) seal_group_port(canvas, to.border, routed);
+        return true;
     }
     const auto length = label_width(*label_text);
     const auto row_count =
@@ -2750,26 +3236,29 @@ bool connect(Canvas& canvas, Router& router, const Port& from, const Port& to,
                         canvas.at({position.x + x, position.y + y}).blocked = blocked;
             };
             reserve(true);
-            auto first = router.path(start, left);
-            if (first && !canvas.work.spend(first->size() * 2u)) {
-                reserve(false);
-                return false;
+            const bool reverse_label = orthogonal_only && start.x > goal.x;
+            const auto entry = reverse_label ? right : left, exit = reverse_label ? left : right;
+            auto first = router.path(start, entry);
+            std::optional<std::vector<Point>> second;
+            if (first) {
+                ScopedPathReservation held(canvas, *first, routed);
+                if (!held.ready) {
+                    reserve(false);
+                    return false;
+                }
+                second = router.path(exit, goal);
             }
-            if (first)
-                for (const auto cell : *first)
-                    canvas.at(cell).blocked = true;
-            auto second = first ? router.path(right, goal) : std::nullopt;
-            if (first)
-                for (const auto cell : *first)
-                    canvas.at(cell).blocked = false;
             reserve(false);
             if (!first || !second) continue;
             target_hold.release();
             source_head.release();
-            if (!draw_path(canvas, *first, from.border, {left.x + 1, left.y}, arrow_start, false,
-                           stroke, prefix, {}, routed) ||
-                !draw_path(canvas, *second, {right.x - 1, right.y}, to.border, false, arrow_end,
-                           stroke, {}, suffix, routed))
+            source_border.release();
+            target_border.release();
+            if (!draw_path(canvas, *first, from.border,
+                           {entry.x + (reverse_label ? -1 : 1), entry.y}, arrow_start, false,
+                           stroke, prefix, {}, routed, orthogonal_only) ||
+                !draw_path(canvas, *second, {exit.x + (reverse_label ? 1 : -1), exit.y}, to.border,
+                           false, arrow_end, stroke, {}, suffix, routed, orthogonal_only))
                 return false;
             reserve(true);
             if (!paint_multiline(canvas, collector, position, *label_text, length)) {
@@ -2780,20 +3269,102 @@ bool connect(Canvas& canvas, Router& router, const Port& from, const Port& to,
                 return false;
             }
             if (!arrow_start && !source_port(canvas, from)) return false;
-            return arrow_end || source_port(canvas, to);
+            if (!arrow_end && !source_port(canvas, to)) return false;
+            if (protect_from) seal_group_port(canvas, from.border, routed);
+            if (protect_to) seal_group_port(canvas, to.border, routed);
+            return true;
         }
     }
     return false;
 }
 
-std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& work,
-                                                    FlowTextCollector* collector = nullptr) {
+bool paint_flow_styles(Canvas& canvas, const Diagram& graph, const FlowStyles& styles,
+                       const std::vector<Box>& boxes, Work& work) {
+    if (styles.effective.size() != graph.vertices.size() || boxes.size() != graph.vertices.size())
+        return false;
+    const auto count = canvas.cells.size();
+    if (!work.spend(count * (sizeof(SemanticCellStyle) + 8u) +
+                    4u * sizeof(std::vector<SemanticCellStyle>) + 256u))
+        return false;
+    canvas.styles = std::make_unique<std::vector<SemanticCellStyle>>(count);
+    for (std::size_t n = 0; n < boxes.size(); ++n) {
+        const auto& properties = styles.effective[n];
+        if (!properties.fill && !properties.stroke && !properties.color && !properties.width)
+            continue;
+        if (graph.vertices[n].shape != Shape::Rectangle || graph.vertices[n].group >= 0)
+            return false;
+        const auto& box = boxes[n];
+        const bool filled = properties.fill && !properties.fill->transparent;
+        for (int y = box.y; y < box.y + box.height; ++y)
+            for (int x = box.x; x < box.x + box.width; ++x) {
+                if (!work.spend(16u)) return false;
+                const Point at{x, y};
+                if (!canvas.inside(at)) return false;
+                const bool border = x == box.x || y == box.y || x == box.x + box.width - 1 ||
+                                    y == box.y + box.height - 1;
+                const bool stroke = border || canvas.at(at).bits != 0u;
+                SemanticCellStyle value;
+                if (!border && filled) value.fill = properties.fill->role;
+                if (stroke) {
+                    if (properties.stroke) value.foreground = properties.stroke->role;
+                    value.bold = properties.width && *properties.width >= 4.0;
+                } else if (filled)
+                    value.foreground = SemanticColorRole::Neutral;
+                else if (properties.color)
+                    value.foreground = properties.color->role;
+                (*canvas.styles)[static_cast<std::size_t>(canvas.index(at))] = value;
+            }
+    }
+    return true;
+}
+
+std::optional<std::vector<std::string>>
+flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nullptr,
+            const FlowStyles* source_styles = nullptr,
+            std::optional<StyledRows>* styled_output = nullptr) {
+    if (source_styles && (!styled_output || collector)) return {};
+    // Classify once for placement and both routing passes. Packed scalar keys
+    // avoid a quadratic scan on the legacy dense-graph budget boundary.
+    if (!work.spend(graph.edges.size() * 2u * (sizeof(std::uint64_t) + 4u) + 128u)) return {};
+    std::vector<std::uint64_t> pair_keys;
+    pair_keys.reserve(graph.edges.size() * 2u);
+    const auto endpoint_key = [](const Endpoint& endpoint) {
+        return static_cast<std::uint64_t>(endpoint.index) +
+               (endpoint.kind == EndpointKind::Group ? 32768u : 0u);
+    };
+    for (const auto& edge : graph.edges) {
+        if (!work.spend(8u)) return {};
+        const auto from = endpoint_key(edge.from), to = endpoint_key(edge.to);
+        if (from >= 65536u || to >= 65536u) return {};
+        pair_keys.push_back((from << 16u) | to);
+        if (!edge.arrow_start && !edge.arrow_end)
+            pair_keys.push_back((1ull << 32u) | (std::min(from, to) << 16u) | std::max(from, to));
+    }
+
+    struct PairWorkExhausted {};
+
+    try {
+        std::sort(pair_keys.begin(), pair_keys.end(), [&](auto a, auto b) {
+            if (!work.spend()) throw PairWorkExhausted{};
+            return a < b;
+        });
+    } catch (const PairWorkExhausted&) {
+        return {};
+    }
+    bool independent_strands = false;
+    for (std::size_t n = 1u; n < pair_keys.size(); ++n) {
+        if (!work.spend()) return {};
+        if (pair_keys[n] == pair_keys[n - 1u]) {
+            independent_strands = true;
+            break;
+        }
+    }
     std::optional<Region> region;
     std::optional<std::vector<Box>> placed;
     if (graph.groups.empty())
-        placed = place_nodes(graph, work);
+        placed = place_nodes(graph, work, independent_strands);
     else {
-        region = place_region(graph, -1, graph.direction, work);
+        region = place_region(graph, -1, graph.direction, work, independent_strands);
         if (!region) return {};
         if (!work.spend(graph.vertices.size() * (sizeof(Box) + 16u))) return {};
         placed.emplace(graph.vertices.size(), Box{0, 0, 0, 0});
@@ -2936,6 +3507,27 @@ std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& 
                 ports(from, source_box.shape, {to.x + to.width / 2, to.y + to.height / 2});
             auto targets =
                 ports(to, target_box.shape, {from.x + from.width / 2, from.y + from.height / 2});
+            if (!strict &&
+                (edge.from.kind == EndpointKind::Group || edge.to.kind == EndpointKind::Group)) {
+                // An existing route crossing cannot simultaneously own a new
+                // endpoint port. Ordinary node borders are already sealed.
+                if (!canvas.work.spend(sources.size() + targets.size() + 64u)) return false;
+                const auto crossed = [&](const Port& port) {
+                    return routed[static_cast<std::size_t>(canvas.index(port.border))] != 0u ||
+                           canvas.at(port.border).bits == (kUp | kRight | kDown | kLeft);
+                };
+                const bool source_crossed =
+                    edge.from.kind == EndpointKind::Group && std::ranges::any_of(sources, crossed);
+                const bool target_crossed =
+                    edge.to.kind == EndpointKind::Group && std::ranges::any_of(targets, crossed);
+                if (source_crossed || target_crossed) {
+                    if (!canvas.work.spend((sources.size() + targets.size()) *
+                                           (2u * sizeof(Port) + 16u)))
+                        return false;
+                    if (source_crossed) std::erase_if(sources, crossed);
+                    if (target_crossed) std::erase_if(targets, crossed);
+                }
+            }
             bool group_source_targets_descendant = false;
             if (edge.from.kind == EndpointKind::Group && edge.to.kind == EndpointKind::Vertex) {
                 if (edge.from.index >= graph.groups.size() ||
@@ -2978,13 +3570,33 @@ std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& 
                 if (!connection) return false;
                 const auto& source = sources[connection->source];
                 const auto& target = targets[connection->target];
-                if (!draw_path(canvas, connection->path, source.border, target.border, false, true,
-                               edge.stroke, {}, {}, strict ? nullptr : &routed) ||
-                    !source_port(canvas, source))
-                    return false;
-                used_ports.insert(canvas.index(source.border));
-                used_ports.insert(canvas.index(target.border));
-                return true;
+                const bool group_endpoint =
+                    edge.from.kind == EndpointKind::Group || edge.to.kind == EndpointKind::Group;
+                bool repeats_port = false;
+                if (group_endpoint) {
+                    if (!canvas.work.spend(connection->path.size() * 2u + 32u)) return false;
+                    repeats_port = std::ranges::any_of(connection->path, [&](Point point) {
+                        return point == source.border || point == target.border;
+                    });
+                }
+                if (!repeats_port) {
+                    if (!draw_path(canvas, connection->path, source.border, target.border, false,
+                                   true, edge.stroke, {}, {}, strict ? nullptr : &routed,
+                                   independent_strands) ||
+                        !source_port(canvas, source))
+                        return false;
+                    if (edge.from.kind == EndpointKind::Group)
+                        seal_group_port(canvas, source.border, strict ? nullptr : &routed);
+                    if (edge.to.kind == EndpointKind::Group)
+                        seal_group_port(canvas, target.border, strict ? nullptr : &routed);
+                    used_ports.insert(canvas.index(source.border));
+                    used_ports.insert(canvas.index(target.border));
+                    return true;
+                }
+                // Multi-source state is shared by cell, so an origin-specific port
+                // exclusion cannot safely be added to that search. Retry its bad
+                // group candidate through the existing single-pair search instead.
+                if (!group_endpoint) return false;
             }
             for (const auto& source : sources) {
                 if (used_ports.contains(canvas.index(source.border))) continue;
@@ -2993,7 +3605,8 @@ std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& 
                     if (used_ports.contains(canvas.index(target.border))) continue;
                     if (!connect(canvas, router, source, target, edge.text, edge.arrow_start,
                                  edge.arrow_end, edge.stroke, pass_collector,
-                                 strict ? nullptr : &routed))
+                                 strict ? nullptr : &routed, edge.from.kind == EndpointKind::Group,
+                                 edge.to.kind == EndpointKind::Group, independent_strands))
                         continue;
                     used_ports.insert(canvas.index(source.border));
                     used_ports.insert(canvas.index(target.border));
@@ -3043,9 +3656,28 @@ std::optional<std::vector<std::string>> flow_layout(const Diagram& graph, Work& 
             }
         }
 
+        if (source_styles && !paint_flow_styles(canvas, graph, *source_styles, *placed, work))
+            return {};
         auto lines = pass_collector ? pass_collector->finish(canvas)
                                     : std::optional<std::vector<std::string>>{canvas.lines()};
         if (!lines || lines->empty()) return {};
+        if (source_styles) {
+            const auto drawing_rows = lines->size();
+            if (drawing_rows + source_styles->legend.size() >
+                    static_cast<std::size_t>(kHeightLimit) ||
+                !work.spend((drawing_rows + source_styles->legend.size()) * 4u *
+                                sizeof(std::string) +
+                            4u * sizeof(std::vector<std::string>) + 256u))
+                return {};
+            lines->reserve(drawing_rows + source_styles->legend.size());
+            for (const auto& record : source_styles->legend) {
+                if (!work.spend(record.size() * 8u + 256u)) return {};
+                lines->push_back(record);
+            }
+            auto styled = extract_styled_rows(canvas, *lines, 0u, drawing_rows, work);
+            if (!styled) return {};
+            *styled_output = std::move(*styled);
+        }
         return lines;
     };
 
@@ -3242,6 +3874,200 @@ std::optional<ftxui::Element> finish_legacy_rows(std::vector<std::string> lines,
 
 }  // namespace
 
+namespace {
+ftxui::Color style_role_color(SemanticColorRole role, bool background,
+                              const loom::ui::design::tokens::Palette& palette) {
+    switch (role) {
+    case SemanticColorRole::Red:
+        return background ? palette.danger_tint_bg : palette.danger;
+    case SemanticColorRole::Orange:
+    case SemanticColorRole::Yellow:
+        return background ? palette.warning_tint_bg : palette.warning;
+    case SemanticColorRole::Green:
+        return background ? palette.success_tint_bg : palette.success;
+    case SemanticColorRole::Cyan:
+    case SemanticColorRole::Blue:
+        return background ? palette.info_tint_bg : palette.info;
+    case SemanticColorRole::Purple:
+        return background ? palette.surface_tint_4 : palette.accent_purple;
+    default:
+        return background ? palette.surface_tint_2 : palette.text;
+    }
+}
+}  // namespace
+
+bool detail::set_flow_style_preview_for_testing(bool enabled) {
+    const bool previous = flow_style_preview;
+    flow_style_preview = enabled;
+    return previous;
+}
+
+bool detail::flow_style_preview_active() {
+    return flow_style_preview;
+}
+
+std::optional<ftxui::Element> detail::finish_native_layout(std::optional<NativeLayout> layout,
+                                                           ftxui::Element fallback, Work& work,
+                                                           FinalEmissionTrace* trace) {
+    if (!layout) return {};
+    if (!layout->packed_styles.empty()) {
+        if (layout->styles) return {};
+        return finish_mermaid_payload(
+            LayoutPayload{std::move(layout->rows), std::move(layout->packed_styles)},
+            std::move(fallback), work, trace);
+    }
+    if (!layout->styles) return finish_legacy_rows(std::move(layout->rows), std::move(fallback));
+    if (trace) {
+        trace->styled_entered = true;
+        trace->entry_remaining = work.remaining;
+    }
+    const auto emission_spend = [&](std::size_t amount) {
+        if (trace) {
+            trace->last_debit = amount;
+            ++trace->preflight_debits;
+        }
+        const bool paid = work.spend(amount);
+        if (trace) {
+            if (paid) {
+                trace->emission_debit += amount;
+                ++trace->successful_debits;
+            } else
+                trace->failed_debit = amount;
+        }
+        return paid;
+    };
+    const auto& styled = layout->styles->rows;
+    if (styled.size() != layout->rows.size() || styled.empty() ||
+        styled.size() > static_cast<std::size_t>(kHeightLimit) ||
+        !emission_spend(styled.size() * (8u * sizeof(ftxui::Element) + 64u) + 512u))
+        return {};
+    for (const auto& row : styled) {
+        if (row.size() > static_cast<std::size_t>(kWidthLimit) + 1u ||
+            !emission_spend(row.size() * 32u + 128u))
+            return {};
+        for (const auto& run : row)
+            if (!emission_spend(run.text.size() * 8u + 8u * sizeof(StyledRun) +
+                                8u * sizeof(ftxui::Element) + 256u))
+                return {};
+    }
+    if (trace) trace->preflight_complete = true;
+    const auto theme = loom::ui::design::theme::current_theme();
+    const auto& palette = *theme.palette;
+    int diagram_width = 0;
+    ftxui::Elements rows;
+    if (trace) trace->allocation_started = true;
+    rows.reserve(styled.size());
+    for (auto& row : layout->styles->rows) {
+        ftxui::Elements elements;
+        elements.reserve(row.size());
+        int width = 0;
+        for (auto& run : row) {
+            width += ftxui::string_width(run.text);
+            auto element = ftxui::text(std::move(run.text));
+            if (run.style.foreground != SemanticColorRole::Inherit)
+                element =
+                    element | ftxui::color(style_role_color(run.style.foreground, false, palette));
+            if (run.style.fill != SemanticColorRole::Inherit)
+                element = element | ftxui::bgcolor(style_role_color(run.style.fill, true, palette));
+            if (run.style.bold) element = element | ftxui::bold;
+            if (run.style.underline) element = element | ftxui::underlined;
+            elements.push_back(std::move(element));
+        }
+        if (width > kWidthLimit) return {};
+        diagram_width = std::max(diagram_width, width);
+        rows.push_back(ftxui::hbox(std::move(elements)) |
+                       ftxui::size(ftxui::WIDTH, ftxui::EQUAL, width));
+    }
+    auto result = std::make_shared<MermaidNode>(ftxui::vbox(std::move(rows)), std::move(fallback),
+                                                diagram_width);
+    if (trace) trace->returned_native = true;
+    return result;
+}
+
+std::optional<std::array<bool, 5>> testing::flow_group_border_probe(bool blocked, bool crossable,
+                                                                    testing::Work& work) {
+    // Fixed storage, queue/path growth and scalar metadata are bounded before
+    // construction. Real router steps continue spending the same caller Work.
+    if (!work.spend(16384u)) return {};
+    Canvas canvas(7, 3, work);
+    std::vector<unsigned char> routed(21u, 0u);
+    for (auto& cell : canvas.cells)
+        cell.blocked = true;
+    for (int x = 1; x <= 5; ++x)
+        canvas.at({x, 1}).blocked = false;
+    const Point middle{3, 1};
+    canvas.at(middle).blocked = blocked;
+    routed[static_cast<std::size_t>(canvas.index(middle))] = crossable ? 1u : 0u;
+    Router strict(canvas);
+    const bool strict_before = strict.path({1, 1}, {5, 1}).has_value();
+    if (!work.remaining) return {};
+    Router relaxed(canvas, &routed);
+    const bool before = relaxed.path({1, 1}, {5, 1}).has_value();
+    if (!work.remaining) return {};
+    bool reserved = false;
+    {
+        ScopedGroupBorder guard(canvas, middle, true, &routed);
+        reserved = relaxed.path({1, 1}, {5, 1}).has_value();
+        if (!work.remaining) return {};
+    }
+    const bool after = relaxed.path({1, 1}, {5, 1}).has_value();
+    if (!work.remaining) return {};
+    bool restored =
+        canvas.at(middle).blocked == blocked &&
+        routed[static_cast<std::size_t>(canvas.index(middle))] == (crossable ? 1u : 0u) &&
+        after == before;
+    if (!work.spend(1024u)) return {};
+    const std::vector<Point> path{middle};
+    bool path_exhausted = false;
+    {
+        ScopedPathReservation guard(canvas, path, &routed);
+        if (!guard.ready) return {};
+        reserved = reserved || relaxed.path({1, 1}, {5, 1}).has_value();
+        path_exhausted = !work.remaining;
+    }
+    // The initial fixed reserve pays this check even after search exhaustion.
+    if (canvas.at(middle).blocked != blocked ||
+        routed[static_cast<std::size_t>(canvas.index(middle))] != (crossable ? 1u : 0u))
+        throw std::logic_error("Flow path reservation restoration");
+    if (path_exhausted) return {};
+    if (!work.spend(128u)) return {};
+
+    struct ProbeUnwind {};
+
+    try {
+        ScopedPathReservation guard(canvas, path, &routed);
+        if (!guard.ready) return {};
+        throw ProbeUnwind{};
+    } catch (const ProbeUnwind&) {
+    }
+    if (canvas.at(middle).blocked != blocked ||
+        routed[static_cast<std::size_t>(canvas.index(middle))] != (crossable ? 1u : 0u))
+        throw std::logic_error("Flow path reservation unwind restoration");
+    const bool path_after = relaxed.path({1, 1}, {5, 1}).has_value();
+    if (!work.remaining) return {};
+    restored = restored && canvas.at(middle).blocked == blocked &&
+               routed[static_cast<std::size_t>(canvas.index(middle))] == (crossable ? 1u : 0u) &&
+               path_after == before;
+    if (!blocked) {
+        {
+            ScopedPathReservation guard(canvas, path, nullptr);
+            if (!guard.ready) return {};
+            reserved = reserved || strict.path({1, 1}, {5, 1}).has_value();
+            if (!work.remaining) return {};
+        }
+        const bool strict_after = strict.path({1, 1}, {5, 1}).has_value();
+        if (!work.remaining) return {};
+        restored =
+            restored && !canvas.at(middle).blocked &&
+            routed[static_cast<std::size_t>(canvas.index(middle))] == (crossable ? 1u : 0u) &&
+            strict_after == strict_before;
+    }
+    seal_group_port(canvas, middle, &routed);
+    const bool sealed = relaxed.path({1, 1}, {5, 1}).has_value();
+    if (!work.remaining) return {};
+    return std::array<bool, 5>{strict_before, before, reserved, restored, sealed};
+}
+
 std::optional<detail::FlowAsciiRows> detail::flow_ascii_rows(std::string_view source,
                                                              detail::Work& work) {
     return ascii_flow_rows(source, work);
@@ -3393,95 +4219,22 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     return decision;
 }
 
-// RFC 0031 E6b: layout-only seam. This is the exact pre-E6b dispatch body
-// of the two-argument render_mermaid, plus the explicit-ASCII routing of
-// the three-argument entry point; it owns a fresh Work budget per call and
-// returns immutable rows/optional roles (nullopt = whole-source rejection).
-namespace {
-std::optional<detail::LayoutPayload> layout_payload_unchecked(std::string_view source,
-                                                              bool use_ascii, detail::Work& work) {
-    using namespace detail;
-    if (source.empty() || source.size() > kSourceLimit) return {};
-    if (use_ascii) {
-        // An explicit bare Flow header is owned by the closed ASCII Flow
-        // profile. Rejected Flow never falls through to GitGraph as a
-        // label-like foreign input.
-        if (ascii_flow_header(source)) {
-            auto rows = detail::flow_ascii_rows(source, work);
-            return rows ? std::optional<LayoutPayload>(LayoutPayload{std::move(rows->ascii), {}})
-                        : std::nullopt;
-        }
-        auto rows = detail::gitgraph_layout(source, work, true);
-        if (!rows) return {};
-        return LayoutPayload{std::move(*rows), {}};
+bool detail::valid_packed_rows(const std::vector<std::string>& rows,
+                               const std::vector<std::uint16_t>& styles, Work& work) {
+    if (rows.size() > kHeightLimit || !work.spend(rows.size() * 32u + 128u)) return false;
+    std::size_t bytes_to_scan = 0;
+    for (const auto& row : rows) {
+        if (row.size() > kSourceLimit) return false;
+        bytes_to_scan += row.size();
     }
-    std::optional<std::vector<std::string>> lines;
-    if (const auto diagram = parse(source, work)) {
-        lines = flow_layout(*diagram, work);
-    } else {
-        // RFC 0031 E4: ordered family probes replace the mutable flag cluster.
-        // Classification is one textual scan; execution spends exactly the
-        // charges the legacy flags did. nullopt means the legacy route bailed
-        // on Work exhaustion before selecting an owner (whole-source result).
-        const auto decision = detail::classify_mermaid(source, work);
-        if (!decision) return {};
-        switch (decision->family) {
-        case detail::MermaidProbeFamily::Flow: {
-            const auto envelope = flow_envelope_body(source, work);
-            if (!envelope || !flow_envelope_parse_prepay(envelope->body, work)) return {};
-            const auto diagram = parse(envelope->body, work, true);
-            if (!diagram) return {};
-            lines = flow_layout(*diagram, work);
-            if (lines && envelope->title && !prepend_flow_title(*lines, *envelope->title, work))
-                return {};
-            break;
-        }
-        case detail::MermaidProbeFamily::Sequence:
-            lines = detail::sequence_layout(source, work);
-            break;
-        case detail::MermaidProbeFamily::GitGraph:
-            lines = detail::gitgraph_layout(source, work);
-            break;
-        case detail::MermaidProbeFamily::Class:
-        case detail::MermaidProbeFamily::Er:
-        case detail::MermaidProbeFamily::State:
-        case detail::MermaidProbeFamily::Requirement:
-            return detail::relations_layout(source, work, decision->class_envelope,
-                                            decision->requirement_input);
-        case detail::MermaidProbeFamily::Block:
-            return detail::block_layout(source, work);
-        case detail::MermaidProbeFamily::Mindmap:
-            lines = detail::mindmap_layout(source, work);
-            break;
-        case detail::MermaidProbeFamily::Charts:
-            lines = detail::charts_layout(source, work);
-            break;
-        }
-    }
-    if (!lines) return {};
-    return LayoutPayload{std::move(*lines), {}};
-}
-
-}  // namespace
-
-std::optional<detail::LayoutPayload> detail::layout_mermaid_payload(std::string_view source,
-                                                                    bool use_ascii) {
-    Work work;
-    return layout_mermaid_payload(source, use_ascii, work);
-}
-
-std::optional<detail::LayoutPayload> detail::layout_mermaid_payload(std::string_view source,
-                                                                    bool use_ascii, Work& work) {
-    auto payload = layout_payload_unchecked(source, use_ascii, work);
-    if (payload && !valid_layout_payload(*payload)) return {};
-    return payload;
-}
-
-bool detail::valid_layout_payload(const LayoutPayload& payload) {
-    if (payload.styles.empty()) return true;
-    if (payload.rows.empty() || payload.rows.size() > kHeightLimit) return false;
+    if (rows.size() > kHeightLimit ||
+        styles.size() > static_cast<std::size_t>(kWidthLimit * kHeightLimit) ||
+        !work.spend(bytes_to_scan * 4u + styles.size() * 2u))
+        return false;
+    if (styles.empty()) return true;
+    if (rows.empty() || rows.size() > kHeightLimit) return false;
     std::size_t slot = 0, bytes = 0;
-    for (const auto& line : payload.rows) {
+    for (const auto& line : rows) {
         if (line.size() > kSourceLimit || !unicode_text(line)) return false;
         bytes += line.size();
         const int width = ftxui::string_width(line);
@@ -3500,25 +4253,66 @@ bool detail::valid_layout_payload(const LayoutPayload& payload) {
                 if (!base) return false;
                 continue;
             }
-            if ((cells != 1 && cells != 2) || slot > payload.styles.size() ||
-                static_cast<std::size_t>(cells) > payload.styles.size() - slot)
+            if ((cells != 1 && cells != 2) || slot > styles.size() ||
+                static_cast<std::size_t>(cells) > styles.size() - slot)
                 return false;
-            const auto style = payload.styles[slot];
+            const auto style = styles[slot];
             if ((style & 0xf800u) != 0 || (style & 31u) > 6 || ((style >> 5) & 31u) > 6 ||
-                (cells == 2 && payload.styles[slot + 1] != style))
+                (cells == 2 && styles[slot + 1] != style))
                 return false;
             slot += static_cast<std::size_t>(cells);
             base = true;
         }
     }
-    return slot == payload.styles.size() && slot <= bytes;
+    return slot == styles.size() && slot <= bytes;
 }
 
 std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<LayoutPayload> payload,
-                                                             ftxui::Element fallback) {
+                                                             ftxui::Element fallback, Work& work,
+                                                             FinalEmissionTrace* trace) {
     if (!fallback || !payload || payload->rows.empty()) return {};
     if (payload->styles.empty())
         return finish_legacy_rows(std::move(payload->rows), std::move(fallback));
+    if (trace) {
+        trace->styled_entered = true;
+        trace->entry_remaining = work.remaining;
+    }
+    const auto pay = [&](std::size_t amount) {
+        if (trace) {
+            trace->last_debit = amount;
+            ++trace->preflight_debits;
+        }
+        const bool paid = work.spend(amount);
+        if (trace) {
+            if (paid) {
+                trace->emission_debit += amount;
+                ++trace->successful_debits;
+            } else
+                trace->failed_debit = amount;
+        }
+        return paid;
+    };
+    if (!pay(payload->rows.size() * (8u * sizeof(ftxui::Element) + 64u) + 512u)) return {};
+    std::size_t preflight_slot = 0;
+    for (const auto& line : payload->rows) {
+        if (!pay(line.size() * 8u + 128u)) return {};
+        std::size_t runs = 0, cells = 0;
+        std::uint16_t previous = 0;
+        for (std::size_t byte = 0; byte < line.size();) {
+            const auto lead = static_cast<unsigned char>(line[byte]);
+            const std::size_t length = lead < 0x80 ? 1 : lead < 0xe0 ? 2 : lead < 0xf0 ? 3 : 4;
+            const auto occupied = ftxui::string_width(line.substr(byte, length));
+            byte += length;
+            if (occupied == 0) continue;
+            const auto code = payload->styles[preflight_slot + cells];
+            if (cells == 0 || code != previous) ++runs;
+            previous = code;
+            cells += static_cast<std::size_t>(occupied);
+        }
+        preflight_slot += cells;
+        if (!pay(runs * (8u * sizeof(StyledRun) + 8u * sizeof(ftxui::Element) + 288u))) return {};
+    }
+    if (trace) trace->preflight_complete = true;
     // This private finish only receives admitted payloads from the single
     // layout kernel or immutable exact-key cache. Do not revalidate/relayout.
     // Resolve semantic roles exactly once per fresh Element; immutable cache
@@ -3534,6 +4328,7 @@ std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<Layou
     int width = 0;
     std::size_t slot = 0;
     ftxui::Elements rows;
+    if (trace) trace->allocation_started = true;
     rows.reserve(payload->rows.size());
     for (const auto& line : payload->rows) {
         width = std::max(width, ftxui::string_width(line));
@@ -3579,24 +4374,129 @@ std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<Layou
         // An empty annotation separator still owns one physical row.
         rows.push_back(runs.empty() ? ftxui::text("") : ftxui::hbox(std::move(runs)));
     }
-    return std::make_shared<MermaidNode>(ftxui::vbox(std::move(rows)), std::move(fallback), width);
+    auto result =
+        std::make_shared<MermaidNode>(ftxui::vbox(std::move(rows)), std::move(fallback), width);
+    if (trace) trace->returned_native = true;
+    return result;
+}
+
+// RFC 0031 E6b: layout-only seam. This is the exact pre-E6b dispatch body
+// of the two-argument render_mermaid, plus the explicit-ASCII routing of
+// the three-argument entry point; it owns a fresh Work budget per call and
+// returns immutable rows (nullopt = whole-source rejection).
+std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_view source,
+                                                                   bool use_ascii, Work& work) {
+    const auto starting_work = work.remaining;
+    std::vector<std::uint16_t> packed_styles;
+    if (source.empty() || source.size() > kSourceLimit) return {};
+    if (use_ascii) {
+        // An explicit bare Flow header is owned by the closed ASCII Flow
+        // profile. Rejected Flow never falls through to GitGraph as a
+        // label-like foreign input.
+        if (ascii_flow_header(source)) {
+            auto rows = detail::flow_ascii_rows(source, work);
+            if (!rows) return {};
+            return NativeLayout{std::move(rows->ascii), {}, 0u};
+        }
+        auto rows = detail::gitgraph_layout(source, work, true);
+        if (!rows) return {};
+        return NativeLayout{std::move(*rows), {}, 0u};
+    }
+    std::optional<std::vector<std::string>> lines;
+    std::optional<StyledRows> styles;
+    std::unique_ptr<FlowStyles> flow_styles;
+    if (const auto diagram = parse(source, work, false, &flow_styles)) {
+        lines = flow_layout(*diagram, work, nullptr, flow_styles.get(), &styles);
+    } else {
+        // RFC 0031 E4: ordered family probes replace the mutable flag cluster.
+        // Classification is one textual scan; execution spends exactly the
+        // charges the legacy flags did. nullopt means the legacy route bailed
+        // on Work exhaustion before selecting an owner (whole-source result).
+        const auto decision = detail::classify_mermaid(source, work);
+        if (!decision) return {};
+        switch (decision->family) {
+        case detail::MermaidProbeFamily::Flow: {
+            const auto envelope = flow_envelope_body(source, work);
+            if (!envelope || !flow_envelope_parse_prepay(envelope->body, work)) return {};
+            const auto diagram = parse(envelope->body, work, true, &flow_styles);
+            if (!diagram) return {};
+            lines = flow_layout(*diagram, work, nullptr, flow_styles.get(), &styles);
+            if (lines && envelope->title && !prepend_flow_title(*lines, *envelope->title, work))
+                return {};
+            break;
+        }
+        case detail::MermaidProbeFamily::Sequence:
+            lines = detail::sequence_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::GitGraph:
+            lines = detail::gitgraph_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::Class:
+        case detail::MermaidProbeFamily::Er:
+        case detail::MermaidProbeFamily::State:
+        case detail::MermaidProbeFamily::Requirement:
+            lines = detail::relations_layout(source, work, decision->class_envelope,
+                                             decision->requirement_input, &styles, &packed_styles);
+            break;
+        case detail::MermaidProbeFamily::Block: {
+            auto payload = detail::block_layout(source, work);
+            if (!payload) return {};
+            lines = std::move(payload->rows);
+            packed_styles = std::move(payload->styles);
+            break;
+        }
+        case detail::MermaidProbeFamily::Mindmap:
+            lines = detail::mindmap_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::Charts:
+            lines = detail::charts_layout(source, work);
+            break;
+        }
+    }
+    if (!lines) return {};
+    NativeLayout result{std::move(*lines), std::move(styles), 0u, std::move(packed_styles)};
+    if (!result.packed_styles.empty() &&
+        (result.styles || !valid_packed_rows(result.rows, result.packed_styles, work)))
+        return {};
+    if (!prepay_styled_payload(result, source.size(), work)) return {};
+    if (result.styles || !result.packed_styles.empty())
+        result.measured_layout_work = starting_work - work.remaining;
+    return result;
+}
+
+std::optional<std::vector<std::string>> detail::layout_mermaid_rows(std::string_view source,
+                                                                    bool use_ascii) {
+    Work work;
+    auto layout = detail::layout_mermaid_content(source, use_ascii, work);
+    if (!layout) return {};
+    return std::move(layout->rows);
+}
+
+std::optional<ftxui::Element> detail::render_mermaid_with_budget(std::string_view source,
+                                                                 ftxui::Element fallback,
+                                                                 bool use_ascii, Work& work,
+                                                                 FinalEmissionTrace* trace) {
+    if (trace) *trace = {};
+    if (!fallback) return {};
+    try {
+        return finish_native_layout(layout_mermaid_content(source, use_ascii, work),
+                                    std::move(fallback), work, trace);
+    } catch (const std::bad_alloc&) {
+        return {};
+    } catch (const std::length_error&) {
+        return {};
+    }
 }
 
 std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Element fallback) {
-    if (!fallback) return {};
-    // RFC 0031 E6b: layout seam + fresh-node finish.
-    return detail::finish_mermaid_payload(detail::layout_mermaid_payload(source, false),
-                                          std::move(fallback));
+    Work work;
+    return detail::render_mermaid_with_budget(source, std::move(fallback), false, work);
 }
 
-// The existing two-argument entrypoint owns the default dispatch. Explicit
-// ASCII currently admits the source-faithful GitGraph profile only.
 std::optional<ftxui::Element> render_mermaid(std::string_view source, ftxui::Element fallback,
                                              bool use_ascii) {
-    if (!fallback) return {};
-    if (!use_ascii) return render_mermaid(source, std::move(fallback));
-    return detail::finish_mermaid_payload(detail::layout_mermaid_payload(source, true),
-                                          std::move(fallback));
+    Work work;
+    return detail::render_mermaid_with_budget(source, std::move(fallback), use_ascii, work);
 }
 
 }  // namespace loom::ui::mermaid

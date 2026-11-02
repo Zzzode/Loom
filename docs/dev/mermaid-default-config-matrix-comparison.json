@@ -1,0 +1,23 @@
+{
+  "matrix_before_sha256": "a9ff29453aeeddf44bda8c8fb9d521ec43ba8a6bcd73522704b4087f9ac8c0d9",
+  "matrix_after_sha256": "370e2db075a6e84060e059605069919dee2228a1198c330b8ee30323c28bb5dd",
+  "rows_compared": 2738,
+  "originals_compared": 2145,
+  "changes": [
+    {
+      "fixture": "conf-and-directives/pr-check/no-config-use-default.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "error",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    }
+  ],
+  "previous_drawings_regressed": 0
+}

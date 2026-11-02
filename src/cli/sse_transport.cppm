@@ -414,11 +414,14 @@ private:
         unsigned char ip_buf[16] = {0};
         const bool is_ip_literal = ::inet_pton(AF_INET, url_parts_.host.c_str(), ip_buf) == 1 ||
                                    ::inet_pton(AF_INET6, url_parts_.host.c_str(), ip_buf) == 1;
-        if (is_ip_literal) {
-            X509_VERIFY_PARAM* param = SSL_get0_param(tls_->ssl);
-            X509_VERIFY_PARAM_set1_ip_asc(param, url_parts_.host.c_str());
-        } else {
-            SSL_set1_host(tls_->ssl, url_parts_.host.c_str());
+        X509_VERIFY_PARAM* param = SSL_get0_param(tls_->ssl);
+        const int verified_host =
+            is_ip_literal ? X509_VERIFY_PARAM_set1_ip_asc(param, url_parts_.host.c_str())
+                          : X509_VERIFY_PARAM_set1_host(param, url_parts_.host.c_str(), 0);
+        if (verified_host != 1) {
+            emit_error("TLS: failed to configure server identity verification");
+            tls_.reset();
+            return false;
         }
 
         if (SSL_connect(tls_->ssl) != 1) {

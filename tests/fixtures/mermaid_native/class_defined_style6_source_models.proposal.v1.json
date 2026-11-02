@@ -1,0 +1,672 @@
+{
+  "schema": "class_defined_style6_source_models.proposal/v1",
+  "status": "proposal_requires_independent_source_review_no_admission",
+  "authority": "independently_authored_complete_sources_not_renderer_output",
+  "count": 6,
+  "cases": [
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
+      "source_utf8_bytes": 447,
+      "source_sha256": "38b3e89e6bd63076bc9768d4438013d8d6d131f97fed297c30ab4b2d4218873d",
+      "body_utf8_bytes": 144,
+      "body_sha256": "c78769bd57d7c865066c69f2476b5210de1aed9ddbd99203de5ab99c561c3a36",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Both styling paths applied to `classDef`-defined styles on the same\n  class: inline `:::pink` shorthand and a separate `cssClass \"Class10\"\n  bold` statement, under the dagre layout, rendered with `htmlLabels:\n  false`.\nconfig:\n  logLevel: 1\n  htmlLabels: false\n  layout: dagre\n---\n",
+      "frontmatter_utf8_bytes": 303,
+      "frontmatter_sha256": "bbb3891600dc06e86285b4dba9485066973f9c48ce88952201e5dd77d669525d",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": false,
+          "layout": "dagre"
+        },
+        "style_definitions": [
+          {
+            "name": "pink",
+            "verbatim": "classDef pink fill:#f9f",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              }
+            ]
+          },
+          {
+            "name": "bold",
+            "verbatim": "classDef bold stroke:#333,stroke-width:6px,color:#fff",
+            "properties": [
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "6px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "kind": "inline_class_declaration",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "pink",
+            "verbatim": "class Class10:::pink",
+            "assignment_order": 0
+          },
+          {
+            "kind": "cssClass",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "bold",
+            "verbatim": "cssClass \"Class10\" bold",
+            "assignment_order": 1
+          }
+        ],
+        "effective_styles": [
+          {
+            "target": "Class10",
+            "fill": "#f9f",
+            "stroke": "#333",
+            "stroke-width": "6px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 1305,
+      "Model_canonical_sha256": "387695b72c1e7bd038667bbb59c9fe780830437cf22a8f9659bd5b31c60f1622",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
+      "source_utf8_bytes": 409,
+      "source_sha256": "638c72491c62933bb57ee110a8b9379e2a887d811ed0e962ffa0c6d990a238c2",
+      "body_utf8_bytes": 144,
+      "body_sha256": "c78769bd57d7c865066c69f2476b5210de1aed9ddbd99203de5ab99c561c3a36",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Same combined `:::pink` inline shorthand and `cssClass \"Class10\" bold`\n  styling diagram as the '-without-htmllabels' sibling, but with\n  `htmlLabels: true`, under the dagre layout.\nconfig:\n  logLevel: 1\n  htmlLabels: true\n  layout: dagre\n---\n",
+      "frontmatter_utf8_bytes": 265,
+      "frontmatter_sha256": "31f44752409ca1886236dbb39d06769eca3b3423dcf562e22dab9d2c374fe485",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": true,
+          "layout": "dagre"
+        },
+        "style_definitions": [
+          {
+            "name": "pink",
+            "verbatim": "classDef pink fill:#f9f",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              }
+            ]
+          },
+          {
+            "name": "bold",
+            "verbatim": "classDef bold stroke:#333,stroke-width:6px,color:#fff",
+            "properties": [
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "6px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "kind": "inline_class_declaration",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "pink",
+            "verbatim": "class Class10:::pink",
+            "assignment_order": 0
+          },
+          {
+            "kind": "cssClass",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "bold",
+            "verbatim": "cssClass \"Class10\" bold",
+            "assignment_order": 1
+          }
+        ],
+        "effective_styles": [
+          {
+            "target": "Class10",
+            "fill": "#f9f",
+            "stroke": "#333",
+            "stroke-width": "6px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 1304,
+      "Model_canonical_sha256": "3aafb9b89522dd1a44658592c99de5a447281901edf741de9c0ae193d2289dac",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
+      "source_utf8_bytes": 548,
+      "source_sha256": "441b3c121009bb37942556fe9afc6c9629b5fa88f8d5fe062dbd5c4439966523",
+      "body_utf8_bytes": 144,
+      "body_sha256": "c78769bd57d7c865066c69f2476b5210de1aed9ddbd99203de5ab99c561c3a36",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Hand-drawn class diagram applying two classDef styles to the same class\n  simultaneously — one via the inline `:::pink` shorthand and one via a\n  `cssClass \"Class10\" bold` statement — rendered with htmlLabels disabled;\n  the sibling without the \"-without-htmllabels\" suffix repeats this with\n  htmlLabels enabled.\nconfig:\n  logLevel: 1\n  htmlLabels: false\n  look: handDrawn\n---\n",
+      "frontmatter_utf8_bytes": 404,
+      "frontmatter_sha256": "3202bb64c6c53a714906c1d3d8d1e8b7d51f6b296905c1916958436bdd64f81d",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": false,
+          "look": "handDrawn"
+        },
+        "style_definitions": [
+          {
+            "name": "pink",
+            "verbatim": "classDef pink fill:#f9f",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              }
+            ]
+          },
+          {
+            "name": "bold",
+            "verbatim": "classDef bold stroke:#333,stroke-width:6px,color:#fff",
+            "properties": [
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "6px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "kind": "inline_class_declaration",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "pink",
+            "verbatim": "class Class10:::pink",
+            "assignment_order": 0
+          },
+          {
+            "kind": "cssClass",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "bold",
+            "verbatim": "cssClass \"Class10\" bold",
+            "assignment_order": 1
+          }
+        ],
+        "effective_styles": [
+          {
+            "target": "Class10",
+            "fill": "#f9f",
+            "stroke": "#333",
+            "stroke-width": "6px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 1307,
+      "Model_canonical_sha256": "68bc2ad784cab7632ac1510e2809ac966dad0a0ba799a8c8be510ae6865a71f1",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
+      "source_utf8_bytes": 526,
+      "source_sha256": "6667a821245c241716e7574ff9fb6863aa565632014ad6c7c295616178bbb28e",
+      "body_utf8_bytes": 144,
+      "body_sha256": "c78769bd57d7c865066c69f2476b5210de1aed9ddbd99203de5ab99c561c3a36",
+      "frontmatter_verbatim": "---\ndescription: >-\n  Hand-drawn class diagram applying two classDef styles to the same class\n  simultaneously — one via the inline `:::pink` shorthand and one via a\n  `cssClass \"Class10\" bold` statement — rendered with htmlLabels enabled;\n  the \"-without-htmllabels\" sibling repeats this with htmlLabels disabled.\nconfig:\n  logLevel: 1\n  htmlLabels: true\n  look: handDrawn\n---\n",
+      "frontmatter_utf8_bytes": 382,
+      "frontmatter_sha256": "daac578a12c511b446f56d09980a999d770029c40390e9d7fb0c0b5a3fbaaa07",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": true,
+          "look": "handDrawn"
+        },
+        "style_definitions": [
+          {
+            "name": "pink",
+            "verbatim": "classDef pink fill:#f9f",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              }
+            ]
+          },
+          {
+            "name": "bold",
+            "verbatim": "classDef bold stroke:#333,stroke-width:6px,color:#fff",
+            "properties": [
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "6px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "kind": "inline_class_declaration",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "pink",
+            "verbatim": "class Class10:::pink",
+            "assignment_order": 0
+          },
+          {
+            "kind": "cssClass",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "bold",
+            "verbatim": "cssClass \"Class10\" bold",
+            "assignment_order": 1
+          }
+        ],
+        "effective_styles": [
+          {
+            "target": "Class10",
+            "fill": "#f9f",
+            "stroke": "#333",
+            "stroke-width": "6px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 1306,
+      "Model_canonical_sha256": "bf31c39c4a19b35d1a16da2b6d240251d4d16f72806d4f0b2e84629cf907c7f4",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
+      "source_utf8_bytes": 448,
+      "source_sha256": "d83931282212080a11ebb4a31addb8abeab2453998592fd34dbdc849fcd64b0d",
+      "body_utf8_bytes": 144,
+      "body_sha256": "c78769bd57d7c865066c69f2476b5210de1aed9ddbd99203de5ab99c561c3a36",
+      "frontmatter_verbatim": "---\ndescription: >-\n  classDiagram with htmlLabels disabled, applying two classDef styles to the same class -\n  pink via the `:::` shorthand and bold via a separate `cssClass` statement - verifying both\n  styling paths combine correctly without HTML labels.\nconfig:\n  logLevel: 1\n  htmlLabels: false\n---\n",
+      "frontmatter_utf8_bytes": 304,
+      "frontmatter_sha256": "0bcd7abf38c79889065df523485f55b4272263966a2b7ab6ef73bf456b6e0bac",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": false
+        },
+        "style_definitions": [
+          {
+            "name": "pink",
+            "verbatim": "classDef pink fill:#f9f",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              }
+            ]
+          },
+          {
+            "name": "bold",
+            "verbatim": "classDef bold stroke:#333,stroke-width:6px,color:#fff",
+            "properties": [
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "6px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "kind": "inline_class_declaration",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "pink",
+            "verbatim": "class Class10:::pink",
+            "assignment_order": 0
+          },
+          {
+            "kind": "cssClass",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "bold",
+            "verbatim": "cssClass \"Class10\" bold",
+            "assignment_order": 1
+          }
+        ],
+        "effective_styles": [
+          {
+            "target": "Class10",
+            "fill": "#f9f",
+            "stroke": "#333",
+            "stroke-width": "6px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 1288,
+      "Model_canonical_sha256": "a4e5d3fa5e614dfeb94a7f981a6b144eeab34986b8cf11a29afabd5c32afc841",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    },
+    {
+      "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
+      "source_utf8_bytes": 426,
+      "source_sha256": "5b52ab02817baa019b7b883ca4637ca8db73709e273935aad37ad870c16cb365",
+      "body_utf8_bytes": 144,
+      "body_sha256": "c78769bd57d7c865066c69f2476b5210de1aed9ddbd99203de5ab99c561c3a36",
+      "frontmatter_verbatim": "---\ndescription: >-\n  classDiagram applying two classDef styles to the same class - pink via the `:::` shorthand\n  and bold via a separate `cssClass` statement - with htmlLabels enabled, verifying both\n  styling paths combine correctly.\nconfig:\n  logLevel: 1\n  htmlLabels: true\n---\n",
+      "frontmatter_utf8_bytes": 282,
+      "frontmatter_sha256": "bd488d60111a3b73ed6e82d6f8bb8789d1a13a60e9fcabd1f78da1fa9092b0b3",
+      "Model": {
+        "family": "class",
+        "header": "classDiagram",
+        "direction": "TB",
+        "title": null,
+        "accessibility_title": null,
+        "accessibility_description": null,
+        "hide_empty_members_box": false,
+        "entities": [
+          {
+            "id": "Class10",
+            "label": "Class10",
+            "annotation": "",
+            "owner": -1,
+            "shape": "Box",
+            "declared": true,
+            "members": []
+          }
+        ],
+        "relationships": [],
+        "namespaces": [],
+        "notes": [],
+        "frontmatter_config": {
+          "logLevel": 1,
+          "htmlLabels": true
+        },
+        "style_definitions": [
+          {
+            "name": "pink",
+            "verbatim": "classDef pink fill:#f9f",
+            "properties": [
+              {
+                "name": "fill",
+                "value": "#f9f"
+              }
+            ]
+          },
+          {
+            "name": "bold",
+            "verbatim": "classDef bold stroke:#333,stroke-width:6px,color:#fff",
+            "properties": [
+              {
+                "name": "stroke",
+                "value": "#333"
+              },
+              {
+                "name": "stroke-width",
+                "value": "6px"
+              },
+              {
+                "name": "color",
+                "value": "#fff"
+              }
+            ]
+          }
+        ],
+        "style_assignments": [
+          {
+            "kind": "inline_class_declaration",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "pink",
+            "verbatim": "class Class10:::pink",
+            "assignment_order": 0
+          },
+          {
+            "kind": "cssClass",
+            "targets": [
+              "Class10"
+            ],
+            "class_name": "bold",
+            "verbatim": "cssClass \"Class10\" bold",
+            "assignment_order": 1
+          }
+        ],
+        "effective_styles": [
+          {
+            "target": "Class10",
+            "fill": "#f9f",
+            "stroke": "#333",
+            "stroke-width": "6px",
+            "color": "#fff",
+            "projected": {
+              "fill": "Purple",
+              "stroke": "Neutral",
+              "border_bold": true,
+              "label_foreground": "palette.text",
+              "source_color": "Neutral",
+              "source_color_projected": false,
+              "font_bold": false,
+              "font_underline": false
+            }
+          }
+        ]
+      },
+      "Model_canonical_utf8_bytes": 1287,
+      "Model_canonical_sha256": "6c6fd45439a5b47e5c9d4a371525c8b778bd28627182926b8c442b4a201f8277",
+      "foreign_assertions_implemented": 0,
+      "native_admission": false
+    }
+  ]
+}

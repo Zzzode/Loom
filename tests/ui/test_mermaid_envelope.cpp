@@ -290,6 +290,121 @@ TEST(MermaidEnvelope, WorkBudgetSharedAcrossPhases) {
     EXPECT_GT(threshold, 4096u);
 }
 
+// The layout seam consumes its caller's Work and does not include dispatcher
+// overhead; the source-bound public geometry reports test the full path.
+TEST(MermaidEnvelope, ClassRelationLayoutsRespectOneWorkBudget) {
+    const std::array<std::string_view, 2> sources{{
+        R"CLASS26(classDiagram
+  Class01 "1" <|--|> "*" AveryLongClass : Cool
+  <<interface>> Class01
+  Class03 "1" *-- "*" Class04
+  Class05 "1" o-- "many" Class06
+  Class07 "1" .. "*" Class08
+  Class09 "1" --> "*" C2 : Where am i?
+  Class09 "*" --* "*" C3
+  Class09 "1" --|> "1" Class07
+  Class07  : equals()
+  Class07  : Object[] elementData
+  Class01  : size()
+  Class01  : int chimp
+  Class01  : int gorilla
+  Class08 "1" <--> "*" C2: Cool label
+  class Class10 {
+  <<service>>
+  int id
+  test()
+  }
+)CLASS26",
+        R"CLASS26(classDiagram
+  note "I love this diagram!\nDo you love it?"
+  Class01 <|-- AveryLongClass : Cool
+  <<interface>> Class01
+  Class03 "1" *-- "*" Class04
+  Class05 "1" o-- "many" Class06
+  Class07 "1" .. "*" Class08
+  Class09 "1" --> "*" C2 : Where am i?
+  Class09 "*" --* "*" C3
+  Class09 "1" --|> "1" Class07
+  Class12 <|.. Class08
+  Class11 ..>Class12
+  Class07 : equals()
+  Class07 : Object[] elementData
+  Class01 : size()
+  Class01 : int chimp
+  Class01 : int gorilla
+  Class01 : -int privateChimp
+  Class01 : +int publicGorilla
+  Class01 : #int protectedMarmoset
+  Class08 <--> C2: Cool label
+  class Class10 {
+    <<service>>
+    int id
+    test()
+  }
+  note for Class10 "Cool class\nI said it's very cool class!"
+)CLASS26"}};
+    for (const auto source : sources) {
+        const auto rows_at = [&](std::size_t budget) {
+            Work work;
+            work.remaining = budget;
+            auto rows = loom::ui::mermaid::testing::class_relations_rows(source, work, false);
+            return std::pair{std::move(rows), work.remaining};
+        };
+        const auto full = rows_at(loom::ui::mermaid::testing::kWorkLimit);
+        ASSERT_TRUE(full.first.has_value()) << "source=" << source << " remaining=" << full.second;
+        ASSERT_FALSE(full.first->empty());
+        EXPECT_FALSE(rows_at(0).first.has_value());
+        std::size_t low = 0, high = loom::ui::mermaid::testing::kWorkLimit;
+        while (low + 1 < high) {
+            const auto middle = low + (high - low) / 2;
+            if (rows_at(middle).first)
+                high = middle;
+            else
+                low = middle;
+        }
+        ASSERT_GT(high, 0u);
+        EXPECT_FALSE(rows_at(high - 1).first.has_value());
+        const auto at = rows_at(high);
+        ASSERT_TRUE(at.first.has_value());
+        EXPECT_EQ(*at.first, *full.first);
+        EXPECT_EQ(rows_at(high).first, at.first);
+        EXPECT_LT(at.second, high);
+        Work shared;
+        shared.remaining = high;
+        ASSERT_TRUE(loom::ui::mermaid::testing::class_relations_rows(source, shared, false));
+        EXPECT_LT(shared.remaining, high);
+        EXPECT_FALSE(loom::ui::mermaid::testing::class_relations_rows(source, shared, false));
+    }
+}
+
+TEST(MermaidEnvelope, ClassNoteCandidateOrderPreservesStableInputIndices) {
+    const std::vector<std::vector<int>> inputs{
+        {}, {3}, {7, 7, 7}, {4, 1, 4, 0, 1, 4, 0}, {4064, 0, 4064, 0}};
+    for (const auto& scores : inputs) {
+        std::vector<std::size_t> expected(scores.size());
+        std::iota(expected.begin(), expected.end(), 0u);
+        std::stable_sort(expected.begin(), expected.end(),
+                         [&](auto a, auto b) { return scores[a] < scores[b]; });
+        Work work;
+        const auto actual = loom::ui::mermaid::testing::class_note_candidate_order(scores, work);
+        ASSERT_TRUE(actual.has_value());
+        EXPECT_EQ(*actual, expected);
+        Work zero;
+        zero.remaining = 0;
+        EXPECT_FALSE(loom::ui::mermaid::testing::class_note_candidate_order(scores, zero));
+    }
+    for (const auto count : {65535u, 65536u}) {
+        std::vector<int> scores(count, 0);
+        Work work;
+        EXPECT_FALSE(loom::ui::mermaid::testing::class_note_candidate_order(scores, work));
+    }
+    for (const auto score : {-1, 4065}) {
+        Work work;
+        EXPECT_FALSE(
+            loom::ui::mermaid::testing::class_note_candidate_order(std::array{score}, work));
+    }
+}
+
 }  // namespace
 
 TEST(MermaidEnvelope, EmptyDescriptionHeaderCollectsBlock) {

@@ -15,9 +15,12 @@ import loom.ui.visual.markdown;
 import loom.serdes.json;
 import loom.crypto.crypto;
 
+#include "mermaid_default_config_authority.hpp"
 #include "mermaid_flow400_linkprofile3_authority.hpp"
 #include "mermaid_flow_group_endpoint15_oracle.hpp"
+#include "mermaid_flow_p0_length_authority.hpp"
 #include "mermaid_flow_shape_alias_authority.hpp"
+#include "mermaid_flow_strand_mutations.hpp"
 #include "mermaid_flow_title_authority.hpp"
 
 namespace {
@@ -1355,6 +1358,83 @@ TEST(MermaidFlowResources, PreflightsCartesianEdgesAndNodeCounts) {
     check_source_policy(nodes(65));
 }
 
+TEST(MermaidFlowP0, DefaultConfigurationCompleteSceneHasIndependentGeometry) {
+    const auto source = flow400_read(
+        std::filesystem::path(LOOM_TESTS_DIR) /
+        "fixtures/mermaid_official/cases/conf-and-directives/pr-check/no-config-use-default.mmd");
+    ASSERT_EQ(digest(source), "6f56685a482928f690a4920225dd1e89047586c3d277664cd68e4e84b4b9bb83");
+    const auto model = default_config_model(source);
+    auto element = loom::ui::render_markdown(fenced(source, "mermaid"));
+    auto ordinary = loom::ui::render_markdown(fenced(source, "text"));
+    element->ComputeRequirement();
+    const int height = std::max(64, element->requirement().min_y + 8);
+    const auto wide = capture(element, 240, height), plain = capture(ordinary, 240, height);
+    ASSERT_FALSE(wide == plain);
+    const auto errors = validate(wide, model);
+    ASSERT_TRUE(errors.empty()) << errors_text(errors);
+    auto wrong = model;
+    wrong.nodes[1].label = "Wrong";
+    EXPECT_FALSE(validate(wide, wrong).empty());
+    wrong = model;
+    wrong.nodes[1].shape = Shape::Rectangle;
+    EXPECT_FALSE(validate(wide, wrong).empty());
+    wrong = model;
+    wrong.edges.pop_back();
+    EXPECT_FALSE(validate(wide, wrong).empty());
+    wrong = model;
+    wrong.edges[0].to = 2;
+    EXPECT_FALSE(validate(wide, wrong).empty());
+    wrong = model;
+    wrong.groups[0].nodes = {0, 1};
+    EXPECT_FALSE(validate(wide, wrong).empty());
+    const auto narrow = capture(element, 40, height);
+    if (!(narrow == capture(ordinary, 40, height)))
+        EXPECT_TRUE(validate(narrow, model).empty()) << errors_text(validate(narrow, model));
+    EXPECT_TRUE(capture(element, 240, height) == wide);
+    for (const auto* grid : {&wide, &narrow}) {
+        bool following = false;
+        for (int y = 0; y < grid->height; ++y)
+            if (grid->row(y).find(kSentinel) != std::string::npos) following = true;
+        EXPECT_TRUE(following);
+    }
+}
+
+// Source facts only: this does not admit the rendered pictures or upstream assertions.
+TEST(MermaidFlowSourceFacts, SiblingSubgraph57KeepsCompleteSourcesAndSharedTargets) {
+    const auto root =
+        std::filesystem::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases/flowchart";
+    const auto visual =
+        flow400_read(root / "visual-check/57-handle-nested-subgraphs-with-outgoing-links-2.mmd");
+    const auto dagre = flow400_read(
+        root / "nightly-check/dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd");
+    EXPECT_EQ(digest(visual), "4aff65938cfea8a17a085cb20ae697b5a3e613c5505c622e6cecfed2ad026483");
+    EXPECT_EQ(digest(dagre), "0da0f803ec8e2ccf162bd3ac7013a3d87778763f86788deb336faabbe258187c");
+    constexpr std::string_view body = R"FLOW57(flowchart TB
+  c1-->a2
+  subgraph one
+  a1-->a2
+  end
+  subgraph two
+  b1-->b2
+  end
+  subgraph three
+  c1-->c2
+  end
+  one --> two
+  three --> two
+  two --> c2
+)FLOW57";
+    const auto visual_start = visual.find("flowchart TB\n"),
+               dagre_start = dagre.find("flowchart TB\n");
+    ASSERT_NE(visual_start, std::string::npos);
+    ASSERT_NE(dagre_start, std::string::npos);
+    EXPECT_EQ(std::string_view(visual).substr(visual_start), body);
+    EXPECT_EQ(std::string_view(dagre).substr(dagre_start), body);
+    EXPECT_EQ(digest(body), "fb40841b605787b3c31ab9c34840d405d05bfd250613b7b32258b2cbabb1324a");
+    EXPECT_EQ(visual.substr(0, visual_start).find("layout: dagre"), std::string::npos);
+    EXPECT_NE(dagre.substr(0, dagre_start).find("layout: dagre"), std::string::npos);
+}
+
 TEST(MermaidFlowResources, RejectsMalformedForwardAndAggregateGroupEndpointGrammarWhole) {
     const std::array<std::string_view, 7> sources{
         {"flowchart TD\nsubgraph G\nA --> B\n", "flowchart TD\nend\nA --> B\n",
@@ -2625,6 +2705,8 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
     auto classic = flow400_classic_documents();
     auto linkprofile3 = flow400_linkprofile3_documents();
     auto group_endpoint15 = group_endpoint15_documents();
+    auto p0 = flow_p0_documents(docs);
+    std::size_t selected_p0 = 0u, selected_p0_length = 0u, selected_p0_strands = 0u;
     std::size_t selected_sources = 0u, selected_typed_source4 = 0u, selected_classic = 0u,
                 selected_linkprofile3 = 0u, selected_group_endpoint15 = 0u, selected_title = 0u,
                 selected_title_margin = 0u, selected_issue4648 = 0u, selected_shape_alias = 0u;
@@ -2680,10 +2762,14 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
         row.set("manifest_global_ordinal", static_cast<int64_t>(global));
         row.set("source_git_blob", flow400_text(fixture.get("git_blob")));
         row.set("source_bytes", static_cast<int64_t>(flow400_number(fixture.get("bytes"))));
+        bool strand_inconclusive = false, strand_resource = false;
         bool source_wide = false, source_narrow = false, restored_same = false;
         std::size_t rejects = 0;
         const char* phase = "source";
         try {
+            if (flow_p0_strand_index(ordinal))
+                row.set("complete_discovery_debited",
+                        static_cast<int64_t>(flow_p0_strand_discovery_charge(docs, p0, work)));
             const auto bytes = flow400_number(fixture.get("bytes"));
             work.product(bytes, 32u);
             work.product(path.size(), 8u);
@@ -2753,11 +2839,11 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
             const auto classic_case = flow400_classic_select(
                 selected, classic.supplement.root(), fixture, ordinal, global, source, work);
             const bool classic_selected = classic_case.is_obj();
-            const auto link_case = classic_selected
-                                       ? JsonVal{}
-                                       : flow400_linkprofile3_select(
-                                             selected, classic_case, linkprofile3.supplement.root(),
-                                             fixture, ordinal, global, source, work);
+            auto link_case = classic_selected
+                                 ? JsonVal{}
+                                 : flow400_linkprofile3_select(
+                                       selected, classic_case, linkprofile3.supplement.root(),
+                                       fixture, ordinal, global, source, work);
             const bool link_selected = link_case.is_obj();
             std::optional<BoundGroupEndpoint15> group_selection;
             if (group_endpoint15_candidate_ordinal(ordinal)) {
@@ -2767,6 +2853,33 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
                 flow400_require(group_selection.has_value(),
                                 "Flow400 GroupEndpoint15 selected tuple missing");
             }
+            const auto p0_case =
+                flow_p0_group_select(p0, cases.at(ordinal), fixture, ordinal, global, source, work);
+            const bool p0_selected = p0_case.is_obj();
+            if (p0_selected)
+                flow400_require(!group_selection && !link_selected && !classic_selected &&
+                                    selected.kind == Flow400TypedSource4Kind::Base,
+                                "Flow P0 disjoint historical authorities");
+            const auto p0_length_case = flow_p0_length_select(p0, cases.at(ordinal), fixture,
+                                                              ordinal, global, source, work);
+            const bool p0_length_selected =
+                p0_length_case.is_obj() && ordinal != kFlowP0Pins[kFlowP0LengthIndex].ordinal;
+            if (p0_length_selected) {
+                flow400_require(!p0_selected && !group_selection && !link_selected &&
+                                    !classic_selected &&
+                                    selected.kind == Flow400TypedSource4Kind::Base,
+                                "Flow P0 length disjoint historical authorities");
+                link_case = flow_p0_length_reviewed(linkprofile3.supplement.root(), work);
+            }
+            const auto strand_case = flow_p0_strand_select(p0, cases.at(ordinal), fixture, ordinal,
+                                                           global, source, work);
+            const bool strand_selected =
+                strand_case.is_obj() && ordinal != kFlow400Issue4648Ordinal;
+            if (strand_selected)
+                flow400_require(!p0_selected && !p0_length_selected && !group_selection &&
+                                    !link_selected && !classic_selected &&
+                                    selected.kind == Flow400TypedSource4Kind::Base,
+                                "Flow strand disjoint historical authorities");
             const bool group_selected = group_selection.has_value();
             const auto authority = group_selected     ? group_selection->authority
                                    : link_selected    ? link_case.get("base_authority")
@@ -2774,7 +2887,23 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
                                                       : selected.authority;
             if (selected.kind == Flow400TypedSource4Kind::Config21) ++selected_sources;
             if (selected.kind == Flow400TypedSource4Kind::TypedSource4) ++selected_typed_source4;
-            if (title_selected) {
+            if (strand_selected) {
+                ++selected_p0_strands;
+                row.set("source_authority", kFlowP0StrandAuthority);
+                row.set("source_supplement_sha256", kFlowP0AssetSha);
+            } else if (p0_length_selected) {
+                ++selected_p0_length;
+                row.set("source_authority", kFlowP0LengthAuthority);
+                row.set("source_supplement_sha256", kFlowP0AssetSha);
+                row.set("linkprofile3_reused_asset_sha256", kFlow400LinkProfile3AssetSha);
+                row.set("linkprofile3_reused_case_id", "link_profile_294");
+                row.set("linkprofile3_reused_source_sha256", kFlowP0LengthSourceSha);
+                row.set("complete_p0_Model_sha256", kFlowP0Pins[kFlowP0LengthIndex].model_sha);
+            } else if (p0_selected) {
+                ++selected_p0;
+                row.set("source_authority", "immutable_base8_plus_P0Grouped7");
+                row.set("source_supplement_sha256", kFlowP0AssetSha);
+            } else if (title_selected) {
                 row.set("source_authority", "immutable_base8_plus_DiagramTitle1");
                 row.set("title_model_sha256", std::string(kFlowTitleModelSha));
             } else if (title_margin_selected) {
@@ -2826,7 +2955,17 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
             std::optional<Model> model;
             std::optional<LinkProfile> profile;
             std::optional<GroupEndpoint15Model> group_model;
-            if (title_selected)
+            if (strand_selected)
+                model.emplace(flow_p0_strand_model(strand_case, work));
+            else if (p0_length_selected) {
+                auto alias =
+                    flow_p0_length_model(p0_length_case, linkprofile3.supplement.root(), work);
+                model.emplace(std::move(alias.model));
+                profile.emplace(std::move(alias.profile));
+            } else if (p0_selected) {
+                group_model.emplace(flow_p0_group_model(p0_case, work));
+                model.emplace(group_model->base);
+            } else if (title_selected)
                 model = std::move(title_model);
             else if (title_margin_selected)
                 model.emplace(flow_title_margin_model(work));
@@ -2855,7 +2994,10 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
             } else {
                 ++decoded;
                 row.set("model_sha256",
-                        title_selected          ? std::string(kFlowTitleModelSha)
+                        strand_selected ? flow400_text(strand_case.get("canonical_model_sha256"))
+                        : p0_length_selected ? kFlowP0Pins[kFlowP0LengthIndex].model_sha
+                        : p0_selected        ? flow400_text(p0_case.get("canonical_model_sha256"))
+                        : title_selected     ? std::string(kFlowTitleModelSha)
                         : title_margin_selected ? std::string(kFlowTitleMarginModelSha)
                         : shape_alias_selected
                             ? std::string(flow_shape_alias_case(ordinal)->model_sha)
@@ -2872,11 +3014,25 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
                     observation.positive_unmet = true;
                     throw std::runtime_error("Flow400 mandatory positive returned whole source");
                 }
+                const auto strand_check = [&](const Grid& grid) {
+                    const auto result = strands::geometry(grid, *model, work);
+                    if (result.outcome == strands::Outcome::Match)
+                        return std::vector<std::string>{};
+                    strand_inconclusive = result.outcome == strands::Outcome::Inconclusive;
+                    strand_resource = result.resource;
+                    return std::vector<std::string>{
+                        "Flow strand physical outcome=" +
+                        std::to_string(static_cast<int>(result.outcome)) +
+                        " reason=" + std::to_string(static_cast<int>(result.reason))};
+                };
                 const auto wide_errors =
-                    title_selected   ? flow_title_geometry(*observation.frames[0], *model, work)
-                    : group_selected ? group_endpoint15_geometry(*observation.frames[0],
-                                                                 *group_model, work, kSentinel)
-                    : link_selected
+                    title_selected    ? flow_title_geometry(*observation.frames[0], *model, work)
+                    : strand_selected ? strand_check(*observation.frames[0])
+                    : p0_selected     ? flow_p0_group_geometry(*observation.frames[0], *group_model,
+                                                               work, kSentinel)
+                    : group_selected  ? group_endpoint15_geometry(*observation.frames[0],
+                                                                  *group_model, work, kSentinel)
+                    : (link_selected || p0_length_selected)
                         ? flow_linkprofile3_geometry(*observation.frames[0], *model, *profile, work)
                         : flow400_geometry(*observation.frames[0], *model, work);
                 if (!wide_errors.empty())
@@ -2884,12 +3040,16 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
                         std::string(std::string_view(wide_errors.front()).substr(0, 256u)));
                 if (!source_narrow) {
                     const auto narrow_errors =
-                        title_selected   ? flow_title_geometry(*observation.frames[1], *model, work)
+                        title_selected ? flow_title_geometry(*observation.frames[1], *model, work)
+                        : strand_selected ? strand_check(*observation.frames[1])
+                        : p0_selected ? flow_p0_group_geometry(*observation.frames[1], *group_model,
+                                                               work, kSentinel)
                         : group_selected ? group_endpoint15_geometry(*observation.frames[1],
                                                                      *group_model, work, kSentinel)
-                        : link_selected ? flow_linkprofile3_geometry(*observation.frames[1], *model,
-                                                                     *profile, work)
-                                        : flow400_geometry(*observation.frames[1], *model, work);
+                        : (link_selected || p0_length_selected)
+                            ? flow_linkprofile3_geometry(*observation.frames[1], *model, *profile,
+                                                         work)
+                            : flow400_geometry(*observation.frames[1], *model, work);
                     if (!narrow_errors.empty())
                         throw std::runtime_error(
                             std::string(std::string_view(narrow_errors.front()).substr(0, 256u)));
@@ -2898,19 +3058,36 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
                 ++positive;
                 observation.remaining[3] = work.remaining;
                 phase = "mutations";
-                rejects =
-                    title_selected   ? flow_title_mutations(*observation.frames[0], *model, work)
-                    : group_selected ? group_endpoint15_mutations(*observation.frames[0],
-                                                                  *group_model, work, kSentinel)
-                    : link_selected ? flow400_linkprofile3_mutations(*observation.frames[0], *model,
-                                                                     *profile, link_case, work)
-                    : classic_selected ? flow400_classic_mutations(*observation.frames[0], *model,
-                                                                   classic_case, work)
-                    : selected.kind == Flow400TypedSource4Kind::TypedSource4
-                        ? flow400_typed_source4_mutations(*observation.frames[0], *model,
-                                                          selected.typed_case, work)
-                        : flow400_mutations(*observation.frames[0], *model, work);
-                if (group_selected)
+                if (strand_selected) {
+                    const auto proof = strands::mutations(*observation.frames[0], *model, work);
+                    rejects = proof.rejected;
+                    strand_resource = proof.resource;
+                    strand_inconclusive = proof.inconclusive;
+                    flow400_require(proof.complete && !proof.inconclusive && !proof.resource &&
+                                        rejects == strands::kRequiredMutations,
+                                    "Flow strand decisive mutation proof incomplete");
+                } else
+                    rejects =
+                        title_selected ? flow_title_mutations(*observation.frames[0], *model, work)
+                        : p0_selected  ? flow_p0_group_mutations(*observation.frames[0],
+                                                                 *group_model, work, kSentinel)
+                        : group_selected ? group_endpoint15_mutations(*observation.frames[0],
+                                                                      *group_model, work, kSentinel)
+                        : (link_selected || p0_length_selected)
+                            ? flow400_linkprofile3_mutations(*observation.frames[0], *model,
+                                                             *profile, link_case, work)
+                        : classic_selected ? flow400_classic_mutations(*observation.frames[0],
+                                                                       *model, classic_case, work)
+                        : selected.kind == Flow400TypedSource4Kind::TypedSource4
+                            ? flow400_typed_source4_mutations(*observation.frames[0], *model,
+                                                              selected.typed_case, work)
+                            : flow400_mutations(*observation.frames[0], *model, work);
+                if (strand_selected)
+                    flow400_require(rejects == strands::kRequiredMutations,
+                                    "Flow strand exact seven decisive negatives");
+                else if (p0_selected)
+                    flow400_require(rejects == 6u, "Flow P0 exact useful mutation execution");
+                else if (group_selected)
                     flow400_require(
                         rejects == group_endpoint15_expected_mutations(group_selection->record),
                         "Flow400 GroupEndpoint15 exact mutation execution");
@@ -2919,7 +3096,7 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
                                     "Flow400 diagram title exact mutation execution");
                 else if (shape_alias_selected)
                     flow400_require(rejects == 2u, "Flow400 shape-alias exact mutation execution");
-                else if (link_selected)
+                else if (link_selected || p0_length_selected)
                     flow400_require(rejects == flow400_linkprofile3_expected(link_case),
                                     "Flow400 LinkProfile3 exact mutation execution");
                 else if (classic_selected)
@@ -2940,7 +3117,8 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
             for (; n < 256u && error.what()[n]; ++n)
                 observation.error[n] = error.what()[n];
             const auto message = std::string_view(observation.error.data(), n);
-            observation.resource = work.remaining == 0u || flow400_resource(message);
+            observation.resource =
+                strand_resource || flow400_resource_exception(error, work.remaining);
             if (observation.positive_unmet)
                 ++unmet;
             else if (observation.resource || message.starts_with("Flow400 protocol"))
@@ -2954,6 +3132,7 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
         }
         // Row/scalar/error reserve and each captured full frame's publication
         // were paid before a semantic phase could exhaust this scene ledger.
+        row.set("strand_inconclusive", strand_inconclusive);
         row.set("positive_unmet", observation.positive_unmet);
         row.set("phase", phase);
         row.set("error", std::string_view(observation.error.data()));
@@ -2984,6 +3163,10 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
     root.set("positive_source_unmet", static_cast<int64_t>(unmet));
     root.set("geometry_failures", static_cast<int64_t>(geometry_failures));
     root.set("mutation_failures", static_cast<int64_t>(mutation_failures));
+    root.set("selected_p0_strand_sources", static_cast<int64_t>(selected_p0_strands));
+    root.set("selected_p0_length_sources", static_cast<int64_t>(selected_p0_length));
+    root.set("selected_p0_grouped_sources", static_cast<int64_t>(selected_p0));
+    root.set("p0_grouped_source_supplement_sha256", kFlowP0AssetSha);
     root.set("selected_config21_sources", static_cast<int64_t>(selected_sources));
     root.set("selected_typed_source4_sources", static_cast<int64_t>(selected_typed_source4));
     root.set("selected_classic_sources", static_cast<int64_t>(selected_classic));
@@ -3013,6 +3196,9 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
     std::ofstream output(target, std::ios::binary);
     ASSERT_TRUE(output && (output << report.to_string() << '\n')) << "Cannot publish " << target;
 #endif
+    EXPECT_EQ(selected_p0_strands, 1u);
+    EXPECT_EQ(selected_p0_length, 0u);
+    EXPECT_EQ(selected_p0, 7u);
     EXPECT_EQ(selected_sources, 21u);
     EXPECT_EQ(selected_typed_source4, 4u);
     EXPECT_EQ(selected_classic, 6u);
@@ -3023,10 +3209,10 @@ TEST(MermaidCapabilityReport, Flow400CompleteSources) {
     EXPECT_EQ(selected_issue4648, 1u);
     EXPECT_EQ(selected_shape_alias, 16u);
     EXPECT_EQ(visited, 400u);
-    EXPECT_EQ(decoded, 77u);
-    EXPECT_EQ(pending, 323u);
-    EXPECT_EQ(positive, 77u);
-    EXPECT_EQ(mutated, 77u);
+    EXPECT_EQ(decoded, 85u);
+    EXPECT_EQ(pending, 315u);
+    EXPECT_EQ(positive, 85u);
+    EXPECT_EQ(mutated, 85u);
     EXPECT_EQ(errors, 0u);
     EXPECT_EQ(unmet, 0u);
     EXPECT_EQ(geometry_failures, 0u);
@@ -7548,6 +7734,48 @@ TEST(MermaidFlowRouter, RelaxedRetryIsBoundedAndKeepsWholeSourceWhenUncloseable)
     // single retry cannot be funded, so the complete source is retained
     // exactly as before T1-B. No canvas growth, no partial art.
     check_source_policy(t1b_complete_graph(8));
+}
+
+TEST(MermaidFlowP0Length, SourceAliasRetainsIndependentIdentityProfileAndResourceGuards) {
+    const auto primary = flow400_documents();
+    const auto p0 = flow_p0_documents(primary);
+    const auto reviewed = flow400_linkprofile3_documents();
+    const auto& pin = kFlowP0Pins[kFlowP0LengthIndex];
+    const auto source = flow400_read(std::filesystem::path(LOOM_TESTS_DIR) /
+                                     "fixtures/mermaid_official/cases" / pin.fixture);
+    const auto fixture = primary.manifest.root().get("fixtures").at(pin.global),
+               base = primary.compact.root().get("cases").at(pin.ordinal);
+    OracleWork work{kFlow400SceneLimit};
+    const auto selected =
+        flow_p0_length_select(p0, base, fixture, pin.ordinal, pin.global, source, work);
+    ASSERT_TRUE(selected.is_obj());
+    const auto decoded = flow_p0_length_model(selected, reviewed.supplement.root(), work);
+    EXPECT_EQ(decoded.exact_rejections, 6u);
+    EXPECT_EQ(decoded.model.nodes.size(), 11u);
+    EXPECT_EQ(decoded.model.edges.size(), 10u);
+    EXPECT_EQ(decoded.model.groups.size(), 0u);
+    OracleWork zero{0u};
+    EXPECT_THROW(
+        static_cast<void>(flow_p0_length_model(selected, reviewed.supplement.root(), zero)),
+        std::runtime_error);
+    OracleWork altered_source{kFlow400SceneLimit};
+    EXPECT_THROW(static_cast<void>(flow_p0_length_select(p0, base, fixture, pin.ordinal, pin.global,
+                                                         source + " ", altered_source)),
+                 std::runtime_error);
+    OracleWork wrong_global{kFlow400SceneLimit};
+    EXPECT_THROW(static_cast<void>(flow_p0_length_select(p0, base, fixture, pin.ordinal,
+                                                         pin.global + 1u, source, wrong_global)),
+                 std::runtime_error);
+    json::JsonMutDoc changed;
+    auto record = changed.raw_json(group_endpoint15_canonical(selected, work));
+    changed.set_root(record);
+    record.get("model").get("source_edge_order").at(0u).set("index", 1);
+    const auto bad_doc = json::parse(changed.to_string());
+    ASSERT_TRUE(bad_doc.has_value());
+    OracleWork wrong_order{kFlow400SceneLimit};
+    EXPECT_THROW(static_cast<void>(flow_p0_length_model(bad_doc->root(), reviewed.supplement.root(),
+                                                        wrong_order)),
+                 std::runtime_error);
 }
 
 }  // namespace

@@ -1,0 +1,115 @@
+{
+  "schema": "mermaid_er6_comparison/v1",
+  "originals": 2145,
+  "before": {
+    "drawn": 623,
+    "fallback": 1501,
+    "error": 21
+  },
+  "after": {
+    "drawn": 629,
+    "fallback": 1501,
+    "error": 15
+  },
+  "changed_observations": [
+    {
+      "fixture": "er-diagram/nightly-check/should-render-relationship-labels-with-line-breaks.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "er-diagram/visual-check/an-er-diagram-with-relationships-with-unicode-text-default.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "error",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "er-diagram/visual-check/an-er-diagram-with-relationships-with-unicode-text-elk-layout.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "error",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "er-diagram/visual-check/an-er-diagram-with-unicode-text-default.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "er-diagram/visual-check/an-er-diagram-with-unicode-text-elk-layout.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "er-diagram/visual-check/relationship-labels-with-line-breaks-elk-layout.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    }
+  ],
+  "other_observations_unchanged": 2732,
+  "matrix_sha256": "a562212e038a036729c9566feff74d967fa910224f9eec241d7f499edcf34507",
+  "regression": {
+    "debug": {
+      "passed": 836,
+      "total": 836,
+      "seconds": 322.36
+    },
+    "release": {
+      "passed": 836,
+      "total": 836,
+      "seconds": 37.37
+    }
+  },
+  "scope": "Mermaid-labeled tests; not whole-project ctest or LLVM code coverage"
+}

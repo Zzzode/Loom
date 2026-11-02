@@ -1,0 +1,108 @@
+{
+  "schema": "flow10-matrix-error-diagnosis/v1",
+  "scope": "Release public five-frame capture at 240/40/240 columns; observations do not certify geometry, semantics, upstream behavior, or root cause of any rendering defect.",
+  "matrix_sha256": "a9ff29453aeeddf44bda8c8fb9d521ec43ba8a6bcd73522704b4087f9ac8c0d9",
+  "frames_sha256": "4688bb4150e155b95a8893b7ace66b765dd6ad4743b245a646eaa5795fcdc2f2",
+  "cases": [
+    {
+      "fixture": "flowchart/nightly-check/dagre/2050-dagre-handling-of-different-rendering-direction-in-subgraphs.mmd",
+      "source_sha256": "72366985bda8c7b42cf9018299c9c2946d22ba27aacff41d57aa6a7e615e8fa2",
+      "flow_ordinal": 15,
+      "wide_matches_ordinary_source": false,
+      "narrow_matches_ordinary_source": true,
+      "restored_matches_wide": true,
+      "whole_model_decoded": false,
+      "matrix_error": "Whole-null Flow has unreviewed art or failed ordinary/restore protocol"
+    },
+    {
+      "fixture": "flowchart/nightly-check/dagre/4-dagre-length-of-edges.mmd",
+      "source_sha256": "1d4ebceac88cec1c55f8ec1e0af730e7f87ae1beecd70108ce3b51f453c3beb9",
+      "flow_ordinal": 19,
+      "wide_matches_ordinary_source": false,
+      "narrow_matches_ordinary_source": false,
+      "restored_matches_wide": true,
+      "whole_model_decoded": false,
+      "matrix_error": "Whole-null Flow has unreviewed art or failed ordinary/restore protocol"
+    },
+    {
+      "fixture": "flowchart/nightly-check/dagre/55-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "source_sha256": "84e286bea79da3522f89f78d3acb252c34d89c963afb45e97b4aeff9ec0efb57",
+      "flow_ordinal": 26,
+      "wide_matches_ordinary_source": false,
+      "narrow_matches_ordinary_source": true,
+      "restored_matches_wide": true,
+      "whole_model_decoded": false,
+      "matrix_error": "Whole-null Flow has unreviewed art or failed ordinary/restore protocol"
+    },
+    {
+      "fixture": "flowchart/nightly-check/dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "source_sha256": "0da0f803ec8e2ccf162bd3ac7013a3d87778763f86788deb336faabbe258187c",
+      "flow_ordinal": 28,
+      "wide_matches_ordinary_source": false,
+      "narrow_matches_ordinary_source": false,
+      "restored_matches_wide": true,
+      "whole_model_decoded": false,
+      "matrix_error": "Whole-null Flow has unreviewed art or failed ordinary/restore protocol"
+    },
+    {
+      "fixture": "flowchart/nightly-check/dagre/7213-should-render-dagre-edges-with-right-angles-not-curves.mmd",
+      "source_sha256": "a4889b253941d911e7d1b3dae02117f72473a12d10d91bc7febf8288b8c92f53",
+      "flow_ordinal": 54,
+      "wide_matches_ordinary_source": false,
+      "narrow_matches_ordinary_source": true,
+      "restored_matches_wide": true,
+      "whole_model_decoded": false,
+      "matrix_error": "Whole-null Flow has unreviewed art or failed ordinary/restore protocol"
+    },
+    {
+      "fixture": "flowchart/visual-check/2050-handling-of-different-rendering-direction-in-subgraphs.mmd",
+      "source_sha256": "2c3b7a57f3edaede358e102d9b8b9e5d84e981b914739ddd1d7184a38f7ec593",
+      "flow_ordinal": 269,
+      "wide_matches_ordinary_source": false,
+      "narrow_matches_ordinary_source": true,
+      "restored_matches_wide": true,
+      "whole_model_decoded": false,
+      "matrix_error": "Whole-null Flow has unreviewed art or failed ordinary/restore protocol"
+    },
+    {
+      "fixture": "flowchart/visual-check/5064-should-render-when-subgraph-child-has-links-to-outside-node-and-subgraph.mmd",
+      "source_sha256": "a0ab1c8f8393cb9a771cd6f40f35ec5d0b9ace5c25a6272c3b42a335da38579b",
+      "flow_ordinal": 303,
+      "wide_matches_ordinary_source": false,
+      "narrow_matches_ordinary_source": false,
+      "restored_matches_wide": true,
+      "whole_model_decoded": false,
+      "matrix_error": "Whole-null Flow has unreviewed art or failed ordinary/restore protocol"
+    },
+    {
+      "fixture": "flowchart/visual-check/55-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "source_sha256": "dd7af0ae31d1bc5ed20388d3c5f32783a39e0f0b1fb7175f4676334be607174c",
+      "flow_ordinal": 306,
+      "wide_matches_ordinary_source": false,
+      "narrow_matches_ordinary_source": true,
+      "restored_matches_wide": true,
+      "whole_model_decoded": false,
+      "matrix_error": "Whole-null Flow has unreviewed art or failed ordinary/restore protocol"
+    },
+    {
+      "fixture": "flowchart/visual-check/57-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "source_sha256": "4aff65938cfea8a17a085cb20ae697b5a3e613c5505c622e6cecfed2ad026483",
+      "flow_ordinal": 308,
+      "wide_matches_ordinary_source": false,
+      "narrow_matches_ordinary_source": false,
+      "restored_matches_wide": true,
+      "whole_model_decoded": false,
+      "matrix_error": "Whole-null Flow has unreviewed art or failed ordinary/restore protocol"
+    },
+    {
+      "fixture": "flowchart/visual-check/issue-4648-nested-subgraph-with-external-connection.mmd",
+      "source_sha256": "403c54cf5f29cc7de0886f4ac363fd8c3229bc3d0d4539023f1a9a15a9a560a8",
+      "flow_ordinal": 357,
+      "wide_matches_ordinary_source": false,
+      "narrow_matches_ordinary_source": true,
+      "restored_matches_wide": true,
+      "whole_model_decoded": false,
+      "matrix_error": "Whole-null Flow has unreviewed art or failed ordinary/restore protocol"
+    }
+  ]
+}

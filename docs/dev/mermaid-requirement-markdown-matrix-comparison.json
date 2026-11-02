@@ -1,0 +1,44 @@
+{
+  "schema": "mermaid_requirement_markdown1_comparison/v1",
+  "before": {
+    "drawn": 633,
+    "fallback": 1501,
+    "error": 11
+  },
+  "after": {
+    "drawn": 634,
+    "fallback": 1501,
+    "error": 10
+  },
+  "changed_observations": [
+    {
+      "fixture": "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "source_fallback",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    }
+  ],
+  "other_observations_unchanged": 2737,
+  "matrix_sha256": "52ebaeb243b1b60f308578662eb26e59681fe174ac1a1494723f447fe4bb1cec",
+  "regression": {
+    "debug": {
+      "passed": 842,
+      "total": 842,
+      "seconds": 286.74
+    },
+    "release": {
+      "passed": 842,
+      "total": 842,
+      "seconds": 37.94
+    }
+  },
+  "scope": "All Mermaid-labeled CTest tests plus final summary regeneration; not full project CTest, browser equivalence or LLVM coverage."
+}

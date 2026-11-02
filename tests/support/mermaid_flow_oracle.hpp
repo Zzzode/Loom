@@ -296,6 +296,12 @@ struct ShapeFrame : Rect {
     }
 };
 
+// Typed cap signal lets new private consumers classify exhaustion structurally.
+// Existing consumers keep the same runtime_error messages and behavior.
+struct FlowContourLimit final : std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
 inline std::vector<Rect> closed_rectangles(const Grid& grid, OracleWork& work) {
     std::vector<Rect> frames;
     auto has = [&](int x, int y, int bits) { return (glyph(grid.at({x, y})).bits & bits) == bits; };
@@ -323,7 +329,7 @@ inline std::vector<Rect> closed_rectangles(const Grid& grid, OracleWork& work) {
                             }
                             if (valid) {
                                 if (frames.size() >= 128)
-                                    throw std::runtime_error("Too many candidate closed frames");
+                                    throw FlowContourLimit("Too many candidate closed frames");
                                 frames.push_back({left, top, right, bottom});
                             }
                         }
@@ -394,8 +400,7 @@ inline std::vector<ShapeFrame> closed_frames(const Grid& grid, OracleWork& work)
     work.product(grid.cells.size(), 12u);
     std::vector<ShapeFrame> result;
     auto append = [&](ShapeFrame frame) {
-        if (result.size() >= 128u)
-            throw std::runtime_error("Too many typed Flow contour candidates");
+        if (result.size() >= 128u) throw FlowContourLimit("Too many typed Flow contour candidates");
         if (std::ranges::none_of(result, [&](const ShapeFrame& other) {
                 return other.left == frame.left && other.top == frame.top &&
                        other.right == frame.right && other.bottom == frame.bottom &&
@@ -796,6 +801,18 @@ struct LabelRegion {
 // Optional test-private group endpoint profile. The default Flow Model remains
 // node-only; a profile borrows string_views from a caller-owned decoded Model
 // or live Json document and therefore is rebuilt after every semantic copy.
+inline bool flow400_resource(std::string_view message);
+
+enum class GroupEndpointDomain : std::uint8_t { LegacyUnique, SourceReviewedP0 };
+
+// Lowered per-call limits are only a private resource-boundary control. The
+// source-owned P0 consumer always uses these unchanged maximum defaults.
+struct GroupEndpointP0Limits {
+    std::size_t route_cells = 2048u, per_edge_candidates = 16u, total_candidates = 512u,
+                selection_steps = 65536u;
+    void (*assignment_failure_probe)() =
+        nullptr;  // Private negative-control injection; never production input.
+};
 enum class GroupEndpointKind : std::uint8_t { Vertex, Group };
 
 struct GroupEndpointRef {
@@ -840,11 +857,10 @@ struct GroupEndpointGeometryWitness {
     int following_row = -1;
 };
 
-inline std::vector<std::string>
-check_group_endpoint_assignment(const Grid&, const Model&, const GroupEndpointProfile&,
-                                const std::vector<ShapeFrame>&, const std::vector<int>&,
-                                const std::vector<LabelRegion>&, OracleWork&, const int*,
-                                GroupEndpointGeometryWitness* = nullptr);
+inline std::vector<std::string> check_group_endpoint_assignment(
+    const Grid&, const Model&, const GroupEndpointProfile&, const std::vector<ShapeFrame>&,
+    const std::vector<int>&, const std::vector<LabelRegion>&, OracleWork&, const int*,
+    GroupEndpointDomain, const GroupEndpointP0Limits*, GroupEndpointGeometryWitness* = nullptr);
 
 // The marker matcher is intentionally entered only for a non-null closed
 // LinkProfile.  The legacy target-arrow trace below remains its own branch.
@@ -1267,6 +1283,8 @@ check_assignment(const Grid& grid, const Model& model, const std::vector<ShapeFr
                  const std::vector<int>& assignment, OracleWork& work,
                  const int* following_row = nullptr, const LinkProfile* link_profile = nullptr,
                  const GroupEndpointProfile* group_endpoint_profile = nullptr,
+                 GroupEndpointDomain group_domain = GroupEndpointDomain::LegacyUnique,
+                 const GroupEndpointP0Limits* p0_limits = nullptr,
                  GroupEndpointGeometryWitness* group_witness = nullptr) {
     std::vector<std::string> errors;
     const auto node_count = model.nodes.size();
@@ -1341,7 +1359,7 @@ check_assignment(const Grid& grid, const Model& model, const std::vector<ShapeFr
     if (group_endpoint_profile)
         return check_group_endpoint_assignment(grid, model, *group_endpoint_profile, frames,
                                                assignment, labels, work, following_row,
-                                               group_witness);
+                                               group_domain, p0_limits, group_witness);
     if (link_profile)
         return check_linkprofile3_assignment(grid, model, *link_profile, frames, assignment, labels,
                                              work, following_row);
@@ -1797,6 +1815,8 @@ validate_impl(const Grid& grid, const Model& model, OracleWork& work,
               std::vector<std::string>* assignment_diagnostics, const int* following_row = nullptr,
               const LinkProfile* link_profile = nullptr,
               const GroupEndpointProfile* group_endpoint_profile = nullptr,
+              GroupEndpointDomain group_domain = GroupEndpointDomain::LegacyUnique,
+              const GroupEndpointP0Limits* p0_limits = nullptr,
               GroupEndpointGeometryWitness* group_witness = nullptr) {
     if (grid.width <= 0 || grid.width > 240 || grid.height <= 0 || grid.height > 1040 ||
         grid.cells.size() != static_cast<std::size_t>(grid.width * grid.height) ||
@@ -1856,7 +1876,7 @@ validate_impl(const Grid& grid, const Model& model, OracleWork& work,
         auto classic = classic_closed_frames(grid, work, &model);
         work.spend(4u * sizeof(ShapeFrame) + 256u);
         if (frames.size() + classic.size() > 128u)
-            throw std::runtime_error("Too many typed Flow contour candidates");
+            throw FlowContourLimit("Too many typed Flow contour candidates");
         frames.insert(frames.end(), classic.begin(), classic.end());
         std::ranges::sort(
             frames, [](const ShapeFrame& a, const ShapeFrame& b) { return a.area() < b.area(); });
@@ -1887,14 +1907,17 @@ validate_impl(const Grid& grid, const Model& model, OracleWork& work,
     std::vector<bool> used(frames.size());
     std::vector<std::string> last{"No one-to-one identity/topology assignment"};
     std::size_t attempts = 0;
+    bool resource_failure = false;
     auto search = [&](auto&& self, std::size_t at) -> bool {
         if (++attempts > 10000) {
+            resource_failure = true;
             last = {"Bounded identity matching exhausted"};
             return false;
         }
         if (at == candidates.size()) {
-            auto errors = check_assignment(grid, model, frames, assignment, work, following_row,
-                                           link_profile, group_endpoint_profile, group_witness);
+            auto errors =
+                check_assignment(grid, model, frames, assignment, work, following_row, link_profile,
+                                 group_endpoint_profile, group_domain, p0_limits, group_witness);
             if (assignment_diagnostics && assignment_diagnostics->size() < 32) {
                 std::string detail;
                 for (std::size_t n = 0; n < assignment.size(); ++n) {
@@ -1914,6 +1937,14 @@ validate_impl(const Grid& grid, const Model& model, OracleWork& work,
                 last.clear();
                 return true;
             }
+            // Any inconclusive assignment dominates earlier semantic failures.
+            // A different identity matching cannot launder a resource limit.
+            if (std::ranges::any_of(errors,
+                                    [](const auto& error) { return flow400_resource(error); })) {
+                resource_failure = true;
+                last = std::move(errors);
+                return false;
+            }
             if (last.front() == "No one-to-one identity/topology assignment" ||
                 errors.size() < last.size())
                 last = std::move(errors);
@@ -1925,6 +1956,7 @@ validate_impl(const Grid& grid, const Model& model, OracleWork& work,
                 used[static_cast<std::size_t>(candidate)] = true;
                 if (self(self, at + 1)) return true;
                 used[static_cast<std::size_t>(candidate)] = false;
+                if (resource_failure) return false;
             }
         return false;
     };
@@ -2036,12 +2068,21 @@ inline std::vector<std::string> flow_group_endpoint_geometry(const Grid& grid, c
     return validate_impl(grid, model, work, nullptr, &following, nullptr, &profile);
 }
 
+inline std::vector<std::string> flow_group_endpoint_p0_geometry(
+    const Grid& grid, const Model& model, const GroupEndpointProfile& profile, OracleWork& work,
+    std::string_view token = kSentinel, const GroupEndpointP0Limits& limits = {}) {
+    const int following = flow400_following(grid, work, token);
+    return validate_impl(grid, model, work, nullptr, &following, nullptr, &profile,
+                         GroupEndpointDomain::SourceReviewedP0, &limits);
+}
+
 inline std::vector<std::string> flow_group_endpoint_geometry_with_witness(
     const Grid& grid, const Model& model, const GroupEndpointProfile& profile, OracleWork& work,
     std::string_view token, GroupEndpointGeometryWitness& witness) {
     witness = {};
     const int following = flow400_following(grid, work, token);
-    return validate_impl(grid, model, work, nullptr, &following, nullptr, &profile, &witness);
+    return validate_impl(grid, model, work, nullptr, &following, nullptr, &profile,
+                         GroupEndpointDomain::LegacyUnique, nullptr, &witness);
 }
 
 inline bool flow400_resource(std::string_view message) {
@@ -2050,7 +2091,55 @@ inline bool flow400_resource(std::string_view message) {
            message.find("bounds exceeded") != std::string_view::npos ||
            message.find("Too many candidate") != std::string_view::npos ||
            message.find("matching exhausted") != std::string_view::npos ||
+           message.find("GroupEndpoint profile cardinality bound") != std::string_view::npos ||
+           message.find("LinkProfile3 endpoint candidate bound") != std::string_view::npos ||
+           message.find("LinkProfile3 route candidate bound") != std::string_view::npos ||
+           message.find("GroupEndpoint route candidate bound") != std::string_view::npos ||
+           message.find("GroupEndpoint exclusive route ownership exhausted") !=
+               std::string_view::npos ||
            message.find("bad_alloc") != std::string_view::npos;
+}
+
+struct FlowOracleResourceFailure final : std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
+struct FlowOracleInconclusiveFailure final : std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
+struct FlowOracleAcceptedAdversary final : std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
+inline bool flow400_resource_exception(const std::exception& error, std::size_t remaining) {
+    if (dynamic_cast<const FlowOracleAcceptedAdversary*>(&error)) return false;
+    if (dynamic_cast<const FlowOracleResourceFailure*>(&error) ||
+        dynamic_cast<const FlowContourLimit*>(&error) ||
+        dynamic_cast<const std::bad_alloc*>(&error))
+        return true;
+    if (remaining == 0u) return true;
+    const auto* text = error.what();
+    return text && flow400_resource(std::string_view(text));
+}
+
+inline void flow400_require_decisive_negative(OracleWork& work, std::string_view why,
+                                              auto&& validate) {
+    bool rejected = false, resource = false;
+    try {
+        work.spend(1024u + why.size() * 4u);
+        const auto errors = validate();
+        rejected = !errors.empty();
+        resource =
+            std::ranges::any_of(errors, [](const auto& error) { return flow400_resource(error); });
+    } catch (const std::exception& error) {
+        resource = flow400_resource_exception(error, work.remaining);
+        if (!resource)
+            throw FlowOracleInconclusiveFailure(
+                "Unexpected oracle exception cannot reject a mutant");
+    }
+    if (resource) throw FlowOracleResourceFailure("Flow oracle resource-limited mutation check");
+    if (!rejected) throw FlowOracleAcceptedAdversary("Accepted adversary: " + std::string(why));
 }
 
 inline void flow400_copy_model(const Model& model, OracleWork& work) {
@@ -2153,6 +2242,29 @@ inline std::size_t flow400_mutations(const Grid& good, const Model& model, Oracl
 // extension so its private route checker can reuse the ordinary frame assignment,
 // direct-label discovery, group containment, and final following-row protocol.
 namespace loom::test::mermaid_flow {
+inline constexpr std::size_t group_endpoint_unique_fee(std::size_t cells) {
+    return 4u * sizeof(std::size_t) + 4u * sizeof(std::uint32_t) + 128u + cells * 8u;
+}
+
+inline bool group_endpoint_route_unique(std::span<const int> cells,
+                                        std::vector<std::uint32_t>& seen, std::uint32_t& epoch,
+                                        OracleWork& work) {
+    if (cells.size() > 2048u)
+        throw std::runtime_error("GroupEndpoint route uniqueness resource bound");
+    work.spend(group_endpoint_unique_fee(cells.size()));
+    if (epoch == std::numeric_limits<std::uint32_t>::max())
+        throw std::runtime_error("GroupEndpoint uniqueness epoch resource bound");
+    ++epoch;
+    for (const auto cell : cells) {
+        if (cell < 0 || static_cast<std::size_t>(cell) >= seen.size())
+            throw std::runtime_error("GroupEndpoint route index differs");
+        const auto index = static_cast<std::size_t>(cell);
+        if (seen[index] == epoch) return false;
+        seen[index] = epoch;
+    }
+    return true;
+}
+
 inline int group_endpoint_direction(Point from, Point to) {
     if (from.x == to.x && from.y != to.y) return to.y < from.y ? 0 : 2;
     if (from.y == to.y && from.x != to.x) return to.x < from.x ? 3 : 1;
@@ -2163,8 +2275,24 @@ inline std::vector<std::string> check_group_endpoint_assignment(
     const Grid& grid, const Model& model, const GroupEndpointProfile& profile,
     const std::vector<ShapeFrame>& frames, const std::vector<int>& assignment,
     const std::vector<LabelRegion>& labels, OracleWork& work, const int* following_row,
+    GroupEndpointDomain domain, const GroupEndpointP0Limits* requested_limits,
     GroupEndpointGeometryWitness* witness) {
     try {
+        // The new call-local domain/limit/closure metadata is bounded and paid
+        // before any candidate/search state. No production object is involved.
+        work.spend(8u * sizeof(void*) + 4u * sizeof(GroupEndpointP0Limits) + 256u);
+        const bool p0 = domain == GroupEndpointDomain::SourceReviewedP0;
+        const GroupEndpointP0Limits maximum{};
+        const auto limits = p0 && requested_limits ? *requested_limits : maximum;
+        if (limits.assignment_failure_probe) {
+            work.spend(32u);
+            limits.assignment_failure_probe();
+        }
+        if (limits.route_cells > maximum.route_cells ||
+            limits.per_edge_candidates > maximum.per_edge_candidates ||
+            limits.total_candidates > maximum.total_candidates ||
+            limits.selection_steps > maximum.selection_steps)
+            return {"GroupEndpoint P0 resource limit configuration bound"};
         const auto node_count = model.nodes.size(), group_count = model.groups.size(),
                    entity_count = node_count + group_count;
         if (node_count > 64u || entity_count > 128u ||
@@ -2262,7 +2390,7 @@ inline std::vector<std::string> check_group_endpoint_assignment(
             if (!edge.label.empty() || edge.style != "solid" || edge.start || !edge.end)
                 return {"GroupEndpoint closed edge semantics differs"};
             const auto target = entity_index(edge.target);
-            if (++targets[target] > profile.max_target_incoming)
+            if (++targets[target] > profile.max_target_incoming && !p0)
                 return {"GroupEndpoint closed target multiplicity differs"};
         }
 
@@ -2294,8 +2422,9 @@ inline std::vector<std::string> check_group_endpoint_assignment(
             int source_outward = 0;
         };
 
-        constexpr std::size_t kCandidatesPerEdge = 16u, kCandidateTotal = 512u,
-                              kSelectionSteps = 65536u, kRouteCells = 2048u;
+        const auto kCandidatesPerEdge = limits.per_edge_candidates,
+                   kCandidateTotal = limits.total_candidates,
+                   kSelectionSteps = limits.selection_steps, kRouteCells = limits.route_cells;
         work.product(total,
                      2u * sizeof(std::vector<Route>) + 2u * sizeof(int) + sizeof(Point) + 32u);
         work.product(total * kCandidatesPerEdge, sizeof(Route) + 32u);
@@ -2308,6 +2437,10 @@ inline std::vector<std::string> check_group_endpoint_assignment(
                 if (glyph(grid.at({x, y})).arrow >= 0) heads.push_back({x, y});
             }
         if (heads.size() != total) return {"GroupEndpoint endpoint marker multiplicity differs"};
+        work.product(grid.cells.size(), 3u * sizeof(std::uint32_t) + 16u);
+        work.spend(4u * sizeof(std::vector<std::uint32_t>) + 128u);
+        std::vector<std::uint32_t> route_seen(grid.cells.size(), 0u);
+        std::uint32_t route_epoch = 0u;
         std::vector<int> parents(grid.cells.size(), -2), queue;
         queue.reserve(grid.cells.size());
         std::vector<std::vector<Route>> candidates(total);
@@ -2369,8 +2502,14 @@ inline std::vector<std::string> check_group_endpoint_assignment(
                             work.spend();
                             ++path_size;
                         }
-                        if (path_size + 3u > kRouteCells || result.size() == kCandidatesPerEdge)
+                        if (path_size + 3u > kRouteCells || result.size() == kCandidatesPerEdge) {
+                            if (p0)
+                                throw std::runtime_error(
+                                    path_size + 3u > kRouteCells
+                                        ? "GroupEndpoint P0 route length resource bound"
+                                        : "GroupEndpoint P0 per-edge candidate resource bound");
                             continue;
+                        }
                         work.product(path_size + 3u, 3u * sizeof(int) + 32u);
                         Route route;
                         route.cells.reserve(path_size + 3u);
@@ -2384,11 +2523,9 @@ inline std::vector<std::string> check_group_endpoint_assignment(
                             route.cells.push_back(at);
                         route.cells.push_back(route.head);
                         route.cells.push_back(route.target);
-                        bool unique = true;
-                        for (std::size_t a = 0u; a < route.cells.size(); ++a)
-                            for (std::size_t b = 0u; b < a; ++b)
-                                if (route.cells[a] == route.cells[b]) unique = false;
-                        if (!unique) continue;
+                        if (!group_endpoint_route_unique(route.cells, route_seen, route_epoch,
+                                                         work))
+                            continue;
                         route.arms.assign(route.cells.size(), 0);
                         for (std::size_t step = 0u; step + 1u < route.cells.size(); ++step) {
                             const int direction_to_next = group_endpoint_direction(
@@ -2448,7 +2585,8 @@ inline std::vector<std::string> check_group_endpoint_assignment(
                 const auto found = route_from(source, target, head, candidates[at],
                                               group_source_targets_own_child);
                 if (candidate_total + found > kCandidateTotal)
-                    return {"GroupEndpoint route candidate bound"};
+                    return {p0 ? "GroupEndpoint P0 total candidate resource bound"
+                               : "GroupEndpoint route candidate bound"};
                 candidate_total += found;
             }
             if (candidates[at].empty())
@@ -2460,12 +2598,80 @@ inline std::vector<std::string> check_group_endpoint_assignment(
         work.product(total, sizeof(int) + 16u);
         std::vector<bool> occupied(grid.cells.size()), claimed(grid.cells.size());
         std::vector<int> route_arms(grid.cells.size()), chosen(total, -1);
+        work.product(grid.cells.size(), sizeof(bool) + 16u);
+        work.spend(4u * sizeof(std::vector<bool>) + 2048u);
+        std::vector<bool> fixed_claimed;
+        if (p0) {
+            fixed_claimed.assign(grid.cells.size(), false);
+            const auto claim_direct = [&](std::string_view text, const ShapeFrame& frame) {
+                const auto matches = label_blocks(grid, text, frame, work);
+                const auto direct = std::ranges::find_if(matches, [&](const Label& block) {
+                    for (const auto& other : entities) {
+                        if (classic_decorative_frame(other, frame) || !other.inside(frame))
+                            continue;
+                        for (const auto start : block.starts)
+                            if (other.interior(start)) return false;
+                    }
+                    return true;
+                });
+                if (direct == matches.end())
+                    throw std::runtime_error("GroupEndpoint entity lacks direct label block");
+                claim_label(grid, text, *direct, fixed_claimed);
+            };
+            for (std::size_t n = 0; n < node_count; ++n)
+                claim_direct(model.nodes[n].label, entities[n]);
+            for (std::size_t g = 0; g < group_count; ++g)
+                claim_direct(model.groups[g].label, entities[node_count + g]);
+            for (const auto& frame : entities)
+                for (int y = frame.top; y <= frame.bottom; ++y)
+                    for (int x = frame.left; x <= frame.right; ++x) {
+                        work.spend();
+                        if (frame.boundary({x, y}))
+                            fixed_claimed[static_cast<std::size_t>(grid.index({x, y}))] = true;
+                    }
+        }
+        const auto conserved_leaf = [&]() {
+            work.product(grid.cells.size(), 2u * sizeof(int) + 2u * sizeof(bool) + 32u);
+            std::ranges::fill(route_arms, 0);
+            for (std::size_t i = 0; i < claimed.size(); ++i)
+                claimed[i] = fixed_claimed[i];
+            for (std::size_t e = 0; e < total; ++e) {
+                const auto& route = candidates[e][static_cast<std::size_t>(chosen[e])];
+                work.product(route.cells.size(), 16u);
+                for (std::size_t at = 0; at < route.cells.size(); ++at) {
+                    const auto cell = static_cast<std::size_t>(route.cells[at]);
+                    claimed[cell] = true;
+                    route_arms[cell] |= route.arms[at];
+                }
+            }
+            for (const auto& frame : entities)
+                for (int y = frame.top; y <= frame.bottom; ++y)
+                    for (int x = frame.left; x <= frame.right; ++x) {
+                        work.spend();
+                        const Point point{x, y};
+                        if (frame.boundary(point) &&
+                            (glyph(grid.at(point)).bits & ~frame.perimeter_bits(point) &
+                             ~route_arms[static_cast<std::size_t>(grid.index(point))]))
+                            return false;
+                    }
+            for (int y = 0; y < grid.height; ++y) {
+                if (following_row && y == *following_row) continue;
+                for (int x = 0; x < grid.width; ++x) {
+                    work.spend();
+                    const auto at = static_cast<std::size_t>(grid.index({x, y}));
+                    if (!claimed[at] && grid.at({x, y}) != " " && !grid.at({x, y}).empty())
+                        return false;
+                }
+            }
+            return true;
+        };
         std::size_t selection_steps = 0u;
         const auto choose = [&](auto&& self, std::size_t edge) -> bool {
             if (++selection_steps > kSelectionSteps)
-                throw std::runtime_error("GroupEndpoint exclusive route ownership exhausted");
+                throw std::runtime_error(p0 ? "GroupEndpoint P0 selection resource bound"
+                                            : "GroupEndpoint exclusive route ownership exhausted");
             work.spend();
-            if (edge == total) return true;
+            if (edge == total) return !p0 || conserved_leaf();
             for (std::size_t at = 0u; at < candidates[edge].size(); ++at) {
                 const auto& route = candidates[edge][at];
                 bool free = true;
@@ -2695,7 +2901,9 @@ inline std::vector<std::string> check_group_endpoint_assignment(
         }
         return {};
     } catch (const std::exception& error) {
-        return {error.what()};
+        if (flow400_resource_exception(error, work.remaining))
+            return {"GroupEndpoint resource failure"};
+        throw FlowOracleInconclusiveFailure("Unexpected GroupEndpoint assignment exception");
     }
 }
 }  // namespace loom::test::mermaid_flow

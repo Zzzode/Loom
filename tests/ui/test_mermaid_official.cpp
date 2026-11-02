@@ -19,10 +19,15 @@ import loom.ui.foundation.design_tokens;
 import loom.ui.foundation.theme_provider;
 import loom.serdes.json;
 import loom.crypto.crypto;
+import loom.ui.foundation.theme_provider;
+import loom.ui.foundation.design_tokens;
 
 #include "mermaid_block58_official.hpp"
 #include "mermaid_chart_cell_oracle.hpp"
 #include "mermaid_class285_authority.hpp"
+#include "mermaid_class_defined6_proof.hpp"
+#include "mermaid_class_style13_proof.hpp"
+#include "mermaid_default_config_authority.hpp"
 #include "mermaid_er107_official.hpp"
 #include "mermaid_er206_authority.hpp"
 #include "mermaid_flow400_authority.hpp"
@@ -30,7 +35,9 @@ import loom.crypto.crypto;
 #include "mermaid_flow400_linkprofile3_authority.hpp"
 #include "mermaid_flow_extra7_controls.hpp"
 #include "mermaid_flow_group_endpoint15_oracle.hpp"
+#include "mermaid_flow_p0_length_authority.hpp"
 #include "mermaid_flow_shape_alias_authority.hpp"
+#include "mermaid_flow_strand_mutations.hpp"
 #include "mermaid_flow_title_authority.hpp"
 #include "mermaid_gap_roster.hpp"
 #include "mermaid_mindmap10_authority.hpp"
@@ -2808,6 +2815,8 @@ std::string classify(const Frame& actual, const Frame& ordinary, bool expect_dra
         errors.emplace_back("Expected exact ordinary-code source fallback");
     return errors.size() == initial_errors ? (expect_drawn ? "drawn" : "source_fallback") : "error";
 }
+namespace class_style13 = loom::test::mermaid_class_style13;
+namespace class_defined6 = loom::test::mermaid_class_defined6;
 
 struct Observation {
     std::string path, track, type, source_sha256, expected, reason;
@@ -2820,6 +2829,13 @@ struct Observation {
     std::string role_case_id, role_model_sha, role_body_sha;
     std::size_t role_case_index = 0;
     std::string raw_source_authority, raw_active_schema, raw_source_constraints;
+    // Trusted builder provenance; never reconstructed from publication metadata.
+    bool flow_p0_original = false;
+    bool class_style13_original = false;
+    unsigned char class_style13_failure_flags = 0u;
+    bool class_defined6_original = false;
+    unsigned char class_defined6_failure_flags = 0u;
+    std::size_t strand_discovery_paid = 0u;
 };
 
 namespace official_er107 = loom::test::mermaid_er107::official;
@@ -4957,21 +4973,35 @@ struct StageCProgress {
     int height = 0;
     bool captured = false, bound = false, decoded = false, pending = false, admitted = false;
     bool restored_equal = false, narrow_ordinary = false, wide_source = false, dagre = false,
-         classifier = false, unused_definitions = false, notes = false, exception = false,
-         resource = false;
+         classifier = false, unused_definitions = false, notes = false, accessibility = false,
+         exception = false, resource = false;
     std::array<std::optional<std::size_t>, 8> remaining{};
 };
 
 struct StageCCounts {
     std::size_t visited = 0, observed = 0, bound = 0, decoded = 0, pending = 0, admitted = 0,
-                dagre = 0, classifier = 0, unused_definitions = 0, notes = 0, errors = 0,
-                resources = 0;
+                dagre = 0, classifier = 0, unused_definitions = 0, notes = 0, accessibility = 0,
+                styles = 0, defined_styles = 0, errors = 0, resources = 0;
 };
 
 Observation run_class285_case(JsonVal, std::size_t,
                               const relations_oracle::OfficialClass285Documents&,
                               const relations_oracle::OfficialClass285Originals&,
                               relations_oracle::Work&, std::size_t, std::size_t);
+Observation run_class_style13_case(JsonVal, std::size_t, std::size_t,
+                                   const relations_oracle::OfficialClass285Documents&,
+                                   const relations_oracle::OfficialClass285Originals&,
+                                   relations_oracle::Work&, std::size_t, std::size_t,
+                                   std::optional<std::size_t> cutoff = {},
+                                   std::string_view publication_owner = "official");
+bool class_style13_owned(const Observation&);
+Observation run_class_defined6_case(JsonVal, std::size_t, std::size_t,
+                                    const relations_oracle::OfficialClass285Documents&,
+                                    const relations_oracle::OfficialClass285Originals&,
+                                    relations_oracle::Work&, std::size_t, std::size_t,
+                                    std::optional<std::size_t> cutoff = {},
+                                    std::string_view publication_owner = "official");
+bool class_defined6_owned(const Observation&);
 StageCCounts stage_c_counts(const std::vector<Observation>&);
 
 // ER originals use one explicit-token same-ledger whole-scene contract.
@@ -5058,7 +5088,7 @@ void official_er_accumulate_owned(JsonVal, const Observation&, OfficialErCounts&
 OfficialErCounts official_er_counts(const std::vector<Observation>&,
                                     const relations_oracle::Er206Documents*);
 
-// Separate whole-source Flow proof; Observation/Frame/Class layout is unchanged.
+// Separate whole-source Flow proof with builder-owned P0 provenance.
 constexpr std::string_view kOfficialFlow400Contract = "FlowNativeWholeScene/v1";
 constexpr std::size_t kOfficialFlowReportReserve = 65536u;
 using OfficialFlowFrames = std::array<std::optional<flow_oracle::Grid>, 5>;
@@ -5070,6 +5100,9 @@ struct OfficialFlowProgress {
     int height = 0;
     const char* phase = "acquire";
     std::array<std::size_t, 7> remaining{};
+    bool strand_inconclusive = false, strand_narrow_source = false;
+    std::array<bool, 3> strand_observed{};
+    std::array<flow_oracle::strands::Result, 3> strand_results{};
 };
 
 struct OfficialFlowCounts {
@@ -5077,12 +5110,22 @@ struct OfficialFlowCounts {
                 mutated = 0, errors = 0, resources = 0;
 };
 
-Observation run_official_flow400_case(JsonVal, std::size_t, std::size_t, std::string_view,
-                                      const flow_oracle::Flow400Documents&,
-                                      flow_oracle::OracleWork&, std::ostream&, std::size_t,
-                                      std::size_t, JsonVal = JsonVal{}, JsonVal = JsonVal{},
-                                      JsonVal = JsonVal{}, JsonVal = JsonVal{},
-                                      JsonVal = JsonVal{});
+bool official_flow_p0_owned(const Observation& row) {
+    return row.flow_p0_original ||
+           (row.track == "original" &&
+            std::ranges::any_of(flow_oracle::kFlowP0Pins,
+                                [&](const auto& pin) { return row.path == pin.fixture; }));
+}
+
+enum class OfficialFlowOwnerPolicy { CombinedPrimary, DedicatedP0 };
+
+Observation
+run_official_flow400_case(JsonVal, std::size_t, std::size_t, std::string_view,
+                          const flow_oracle::Flow400Documents&, flow_oracle::OracleWork&,
+                          std::ostream&, std::size_t, std::size_t, JsonVal = JsonVal{},
+                          JsonVal = JsonVal{}, JsonVal = JsonVal{}, JsonVal = JsonVal{},
+                          JsonVal = JsonVal{}, const flow_oracle::FlowP0Documents* = nullptr,
+                          OfficialFlowOwnerPolicy = OfficialFlowOwnerPolicy::CombinedPrimary);
 OfficialFlowCounts official_flow_counts(const std::vector<Observation>&, JsonVal = JsonVal{},
                                         JsonVal = JsonVal{}, JsonVal = JsonVal{},
                                         JsonVal = JsonVal{});
@@ -5430,12 +5473,347 @@ std::optional<bool> e2a_cohort_row(std::string_view path) {
     return found->second;
 }
 
+constexpr std::string_view kRequirementMarkdownPath =
+    "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd";
+constexpr std::string_view kRequirementMarkdownSourceSha =
+    "f6191d86b05c8b654c0ecb9de0fc7744d0e00b8f0a9fe681981e8f2d4f52d9c8";
+constexpr std::string_view kRequirementMarkdownAssetSha =
+    "71092df30ae39171e334c1190f082e50e34aafd2aaeb47a8ffb9f740a8865572";
+constexpr std::string_view kRequirementMarkdownModelSha =
+    "fdc99d74dfdd9b341048171d6b05c900642319039a02dd04d5a46fc64298d198";
+constexpr std::string_view kRequirementMarkdownContract = "RequirementMarkdown1NativeWholeScene/v1";
+
+json::JsonDoc requirement_markdown_asset(std::string_view source, relations_oracle::Work& work) {
+    using namespace relations_oracle;
+    require(source.size() == 446u, "RequirementMarkdown exact complete source bytes");
+    work.spend(source.size() * 128u + 65536u);
+    require(digest(source) == kRequirementMarkdownSourceSha,
+            "RequirementMarkdown exact complete source SHA");
+    const auto path = fs::path(LOOM_TESTS_DIR) /
+                      "fixtures/mermaid_native/requirement_markdown1_source_supplement.v1.json";
+    require(fs::file_size(path) == 2409u, "RequirementMarkdown pinned asset stat");
+    work.spend(2409u * 16u + 65536u);
+    const auto raw = read_file(path);
+    require(digest(raw) == kRequirementMarkdownAssetSha, "RequirementMarkdown pinned asset SHA");
+    auto asset = json::parse(raw);
+    require(asset.has_value(), "RequirementMarkdown asset JSON");
+    const auto root = asset->root();
+    class481_keys(root,
+                  {"schema", "qualification", "manifest_global_ordinal", "complete_manifest_record",
+                   "source", "model", "model_sha256"},
+                  work);
+    require(root.get_string("schema") == "requirement_markdown1_source_supplement/v1" &&
+                root.get_int("manifest_global_ordinal") == 1493 &&
+                root.get_string("source") == source,
+            "RequirementMarkdown complete original binding");
+    const auto manifest_path = kRoot / "manifest.json";
+    const auto manifest_size = fs::file_size(manifest_path);
+    require(manifest_size <= 2000000u, "RequirementMarkdown manifest bound");
+    work.spend(static_cast<std::size_t>(manifest_size) * 16u + 65536u);
+    const auto bytes = read_file(manifest_path);
+    require(digest(bytes) == kManifestSha256, "RequirementMarkdown immutable manifest SHA");
+    const auto manifest = json::parse(bytes);
+    require(manifest.has_value(), "RequirementMarkdown manifest JSON");
+    require(er_present_same_json(root.get("complete_manifest_record"),
+                                 manifest->root().get("fixtures").at(1493u), work),
+            "RequirementMarkdown full manifest dictionary");
+    const auto model = root.get("model");
+    require(model.get_int("ordinal") == 105 &&
+                model.get_string("path") == kRequirementMarkdownPath &&
+                model.get_int("source_bytes") == 446 &&
+                model.get_string("source_sha256") == kRequirementMarkdownSourceSha &&
+                root.get_string("model_sha256") == kRequirementMarkdownModelSha &&
+                digest(class481_canonical(model, work)) == kRequirementMarkdownModelSha,
+            "RequirementMarkdown complete source-owned Model");
+    return std::move(*asset);
+}
+
+bool requirement_markdown_owned(const Observation& row) {
+    return (row.track == "original" && row.path == kRequirementMarkdownPath) ||
+           row.raw_active_schema == kRequirementMarkdownContract;
+}
+
+bool requirement_markdown_admitted(const Observation& row) {
+    require(row.raw_active_schema == kRequirementMarkdownContract &&
+                row.raw_source_authority == "source_approved_literal_markdown1" &&
+                row.track == "original" && row.type == "requirement" &&
+                row.path == kRequirementMarkdownPath,
+            "RequirementMarkdown owned report tuple");
+    require(row.raw_source_constraints.size() <= 4096u, "RequirementMarkdown bounded report");
+    const auto parsed = json::parse(row.raw_source_constraints);
+    require(parsed.has_value(), "RequirementMarkdown report JSON");
+    const auto info = parsed->root();
+    constexpr std::array<std::string_view, 12> keys{"comparison_entry_spent",
+                                                    "five_captures",
+                                                    "bound",
+                                                    "geometry",
+                                                    "restored",
+                                                    "resource",
+                                                    "exception",
+                                                    "admitted",
+                                                    "narrow_source",
+                                                    "mutations",
+                                                    "asset_sha256",
+                                                    "model_sha256"};
+    require(info.is_obj() && info.size() == keys.size() &&
+                std::ranges::all_of(keys, [&](auto key) { return info.has(key); }),
+            "RequirementMarkdown exact report keys");
+    auto yes = [&](std::string_view key) {
+        require(info.get(key).is_bool(), "RequirementMarkdown proof bool type");
+        return info.get(key).as_bool();
+    };
+    const bool captured = yes("five_captures"), bound = yes("bound"), geometry = yes("geometry"),
+               restored = yes("restored"), resource = yes("resource"), exception = yes("exception"),
+               admitted = yes("admitted"), narrow = yes("narrow_source");
+    require(info.get("mutations").is_int() && info.get_int("mutations") >= 0 &&
+                info.get_int("mutations") <= 14 && info.get("asset_sha256").is_str() &&
+                info.get_string("asset_sha256") == kRequirementMarkdownAssetSha &&
+                info.get("model_sha256").is_str() &&
+                info.get_string("model_sha256") == kRequirementMarkdownModelSha,
+            "RequirementMarkdown exact typed source proof");
+    require(info.get("comparison_entry_spent").is_int() &&
+                info.get_int("comparison_entry_spent") >= 0 &&
+                info.get_int("comparison_entry_spent") <= 128000000 &&
+                (!info.get_int("comparison_entry_spent") || bound),
+            "RequirementMarkdown comparison phase type/state");
+    require((!bound || captured) && (!restored || bound) && (!geometry || (bound && restored)) &&
+                (!resource || exception) && (!narrow || captured) &&
+                (info.get_int("mutations") == 0 || geometry),
+            "RequirementMarkdown inconsistent progress proof");
+    if (bound)
+        require(row.source_sha256 == kRequirementMarkdownSourceSha &&
+                    row.role_model_sha == kRequirementMarkdownModelSha,
+                "RequirementMarkdown bound report identity");
+    if (admitted)
+        require(info.get_int("comparison_entry_spent") > 0 && captured && bound && geometry &&
+                    restored && !resource && !exception && info.get_int("mutations") == 14 &&
+                    row.errors.empty() && row.status[0] == "drawn" && row.status[2] == "drawn" &&
+                    row.status[1] == (narrow ? "source_fallback" : "drawn"),
+                "RequirementMarkdown incomplete or conflicting admission proof");
+    else
+        require(
+            exception && !row.errors.empty() &&
+                std::ranges::all_of(row.status, [](const auto& value) { return value == "error"; }),
+            "RequirementMarkdown inconsistent failed report");
+    return admitted;
+}
+
+std::pair<std::size_t, std::size_t>
+requirement_markdown_counts(const std::vector<Observation>& rows) {
+    std::pair<std::size_t, std::size_t> counts{};
+    for (const auto& row : rows)
+        if (requirement_markdown_owned(row)) {
+            require(++counts.first == 1u, "RequirementMarkdown duplicate source report");
+            counts.second += requirement_markdown_admitted(row);
+        }
+    return counts;
+}
+
+void requirement_markdown_publication_prepay(const r11::Frames& frames,
+                                             relations_oracle::Work& work) {
+    // Pay final JSON serialization/copy/write before publishing any variable
+    // frame data. A failed prepayment leaves only the fixed paid metadata tree.
+    std::size_t encoded = 65536u;
+    for (const auto* grid :
+         {&frames.source240, &frames.source40, &frames.wide, &frames.narrow, &frames.restored}) {
+        work.spend(grid->cells.size() + 64u);
+        encoded += static_cast<std::size_t>(grid->height) * 32u + 128u;
+        for (const auto& cell : grid->cells) {
+            require(cell.size() <= 65792u, "RequirementMarkdown source-bounded glyph bytes");
+            work.spend(cell.size() * 8u + 1u);
+            encoded += cell.size() * 6u;
+        }
+    }
+    work.spend(encoded * 4u + 65536u);
+}
+
+void requirement_markdown_comparison_prepay(const relations_oracle::Grid& left,
+                                            const relations_oracle::Grid& right,
+                                            relations_oracle::Work& work) {
+    work.spend(2u * sizeof(relations_oracle::Grid) + 256u);
+    require(left.cells.size() <= 240u * 1040u && right.cells.size() <= 240u * 1040u,
+            "RequirementMarkdown comparison Grid bounds");
+    work.spend(left.cells.size() + right.cells.size() + 64u);
+    for (const auto* grid : {&left, &right})
+        for (const auto& cell : grid->cells) {
+            require(cell.size() <= 65792u, "RequirementMarkdown comparison glyph bound");
+            work.spend(cell.size() * 2u + 8u);
+        }
+}
+
+bool requirement_markdown_same(const relations_oracle::Grid& left,
+                               const relations_oracle::Grid& right, relations_oracle::Work& work) {
+    requirement_markdown_comparison_prepay(left, right, work);
+    return left == right;
+}
+
+void requirement_markdown_lifecycle_prepay(const r11::Frames& frames,
+                                           relations_oracle::Work& work) {
+    // Pay every conditional Grid comparison in the unchanged legacy helper.
+    requirement_markdown_comparison_prepay(frames.wide, frames.restored, work);
+    requirement_markdown_comparison_prepay(frames.wide, frames.source240, work);
+    requirement_markdown_comparison_prepay(frames.narrow, frames.source40, work);
+    requirement_markdown_comparison_prepay(frames.restored, frames.source240, work);
+}
+
+Observation run_requirement_markdown(std::string_view source, std::size_t budget = 128000000u) {
+    using namespace relations_oracle;
+    require(budget <= 128000000u, "RequirementMarkdown verification limit");
+    Work work{budget};
+    work.spend(1048576u);
+    Observation row;
+    row.path = kRequirementMarkdownPath;
+    row.track = "original";
+    row.type = "requirement";
+    row.raw_active_schema = kRequirementMarkdownContract;
+    row.raw_source_authority = "source_approved_literal_markdown1";
+    row.reason = "Complete source-owned literal text Requirement geometry; browser emphasis "
+                 "remains unproved";
+    row.expected = "drawn";
+    row.expected_states = {"drawn", "drawn_or_exact_source", "drawn"};
+    row.decision_reasons.fill(row.reason);
+    bool captured = false, bound = false, geometry = false, restored = false, resource = false,
+         exception = false, admitted = false, narrow_source = false;
+    int mutations = 0;
+    std::size_t comparison_entry_spent = 0u;
+    json::JsonMutDoc report;
+    auto root = report.object(), record = root.make_obj();
+    try {
+        require(source.size() <= 65536u, "RequirementMarkdown source size bound");
+        work.spend(source.size() * 128u + 65536u);
+        // Publish all five actual public frames before binding or decoding.
+        const auto frames = r11::observe(source, work);
+        captured = true;
+        requirement_markdown_publication_prepay(frames, work);
+        r11::publish(frames, root, record, work);
+        auto asset = requirement_markdown_asset(source, work);
+        bound = true;
+        row.source_sha256 = digest(source);
+        row.role_model_sha = kRequirementMarkdownModelSha;
+        const auto scene = r11::decode_scene(asset.root().get("model"), work);
+        comparison_entry_spent = budget - work.left;
+        requirement_markdown_lifecycle_prepay(frames, work);
+        r11::lifecycle(frames, work);
+        restored = true;
+        require(!requirement_markdown_same(frames.wide, frames.source240, work),
+                "RequirementMarkdown complete positive remains source");
+        require(r11::geometry(frames.wide, scene, work).empty() &&
+                    r11::geometry(frames.restored, scene, work).empty(),
+                "RequirementMarkdown complete wide/restored geometry");
+        const bool source_narrow = requirement_markdown_same(frames.narrow, frames.source40, work);
+        narrow_source = source_narrow;
+        if (!source_narrow)
+            require(r11::geometry(frames.narrow, scene, work).empty(),
+                    "RequirementMarkdown complete narrow geometry");
+        geometry = true;
+        auto reject = [&](auto mutate, std::string_view name) {
+            r11::require_model_rejected(frames.wide, scene, mutate, work, name);
+            ++mutations;
+        };
+        for (std::size_t i = 0; i < 2u; ++i) {
+            reject([&](r11::Scene& bad) { bad.nodes[i].ref.name = "Wrong"; },
+                   "RequirementMarkdown name adversary");
+            work.spend(2409u * 4u + 8192u);
+            r11::require_semantic_rejected(
+                scene, [&](r11::Scene& bad) { bad.nodes[i].stereotype = "Wrong"; }, work,
+                "RequirementMarkdown stereotype adversary");
+            ++mutations;
+            reject(
+                [&](r11::Scene& bad) {
+                    bad.nodes.erase(bad.nodes.begin() + static_cast<std::ptrdiff_t>(i));
+                },
+                "RequirementMarkdown entity erasure");
+        }
+        reject([](r11::Scene& bad) { bad.nodes[0].metadata.id = "2"; }, "RequirementMarkdown id");
+        reject([](r11::Scene& bad) { bad.nodes[0].metadata.text = "Bolded text italicized text"; },
+               "RequirementMarkdown literal text punctuation");
+        reject([](r11::Scene& bad) { bad.nodes[0].metadata.risk = r11::Risk::Low; },
+               "RequirementMarkdown risk");
+        reject(
+            [](r11::Scene& bad) {
+                bad.nodes[0].metadata.verification = r11::Verification::Analysis;
+            },
+            "RequirementMarkdown verification");
+        reject([](r11::Scene& bad) { bad.nodes[1].metadata.type = "Bolded type italicized type"; },
+               "RequirementMarkdown literal type punctuation");
+        reject([](r11::Scene& bad) { bad.nodes[1].metadata.doc_ref = "Italicized Bolded"; },
+               "RequirementMarkdown literal docref punctuation");
+        r11::require_rejected(
+            frames.wide, scene, [](Grid& bad, const r11::Geometry&) { bad.put({239, 0}, "X"); },
+            work, "RequirementMarkdown orphan ink");
+        ++mutations;
+        work.spend(8u * sizeof(r11::Frames) + 8192u);
+        for (const auto* grid :
+             {&frames.source240, &frames.source40, &frames.wide, &frames.narrow, &frames.restored})
+            class285_orphan_copy_prepay(*grid, work);
+        r11::require_lifecycle_rejected(
+            frames,
+            [&](r11::Frames& bad) {
+                bad.restored.put({239, 0}, "X");
+                requirement_markdown_lifecycle_prepay(bad, work);
+            },
+            work, "RequirementMarkdown restoration");
+        ++mutations;
+        require(mutations == 14, "RequirementMarkdown exact source-derived adversary count");
+        row.status = {"drawn", source_narrow ? "source_fallback" : "drawn", "drawn"};
+        admitted = true;
+    } catch (const std::exception& error) {
+        exception = true;
+        resource = class481_resource(error.what());
+        row.errors.emplace_back(std::string_view(error.what()).substr(0, 256u));
+    }
+    auto info = report.object();
+    info.set("comparison_entry_spent", static_cast<std::int64_t>(comparison_entry_spent));
+    info.set("five_captures", captured);
+    info.set("bound", bound);
+    info.set("geometry", geometry);
+    info.set("restored", restored);
+    info.set("resource", resource);
+    info.set("exception", exception);
+    info.set("admitted", admitted);
+    info.set("narrow_source", narrow_source);
+    info.set("mutations", mutations);
+    info.set("asset_sha256", kRequirementMarkdownAssetSha);
+    info.set("model_sha256", kRequirementMarkdownModelSha);
+    record.add("proof", info);
+    root.add("case", record);
+    report.set_root(info);
+    row.raw_source_constraints = report.to_string();
+    report.set_root(root);
+#ifdef LOOM_MERMAID_REPORT_DIR
+    if (budget == 128000000u && source.size() == 446u &&
+        digest(source) == kRequirementMarkdownSourceSha) {
+        std::ofstream output(fs::path(LOOM_MERMAID_REPORT_DIR) /
+                             "mermaid-requirement-markdown1-whole-source.json");
+        require(output.good(), "RequirementMarkdown report open");
+        output << report.to_pretty_string() << '\n';
+    }
+#endif
+    static_cast<void>(requirement_markdown_admitted(row));
+    return row;
+}
+
 Observation run_case(std::string path, std::string track, std::string_view source, JsonVal expected,
                      const fs::path& snapshot_root = kRoot / "snapshots") {
+    if (track == "original" && path == kRequirementMarkdownPath)
+        return run_requirement_markdown(source);
     Observation row;
     row.path = std::move(path);
     row.track = std::move(track);
     row.type = (*fs::path(row.path).begin()).string();
+    std::optional<flow_oracle::OracleWork> default_work;
+    if (row.track == "original" && row.path == flow_oracle::kDefaultConfigPath) {
+        try {
+            require(source.size() <= 65536u, "DefaultConfig source size bound");
+            default_work.emplace(128000000u);
+            // Prepay source scans/hashes and both bounded Markdown setup paths.
+            default_work->product(source.size(), 128u);
+            default_work->spend(4000000u);
+        } catch (const std::exception& error) {
+            row.errors.push_back(error.what());
+            return row;
+        }
+    }
     row.source_sha256 = digest(source);
     row.expected = expected.get_string("expected");
     row.expected_states = {row.expected, row.expected == "source" ? "source" : "unresolved",
@@ -5449,6 +5827,41 @@ Observation run_case(std::string path, std::string track, std::string_view sourc
         const auto lines = static_cast<int>(std::count(source.begin(), source.end(), '\n')) + 1;
         const int height =
             std::min(1040, std::max({20, lines + 12, element->requirement().min_y + 8}));
+        if (row.track == "original" && row.path == flow_oracle::kDefaultConfigPath) {
+            auto& work = *default_work;
+            // Acquire all five actual frames before binding the reviewed source Model.
+            const auto wide = flow_oracle::capture(element, 240, height, &work);
+            const auto narrow = flow_oracle::capture(element, 40, height, &work);
+            const auto restored = flow_oracle::capture(element, 240, height, &work);
+            const auto plain = flow_oracle::capture(ordinary, 240, height, &work);
+            const auto plain_narrow = flow_oracle::capture(ordinary, 40, height, &work);
+            work.spend(8192u);
+            work.product(source.size(), 8u);
+            const auto model = flow_oracle::default_config_model(source);
+            require(!flow_oracle::flow400_same(wide, plain, work),
+                    "DefaultConfig unexpected wide source");
+            require(flow_oracle::flow400_geometry(wide, model, work, kSentinel).empty(),
+                    "DefaultConfig wide geometry");
+            require(flow_oracle::flow400_geometry(restored, model, work, kSentinel).empty(),
+                    "DefaultConfig restored geometry");
+            require(flow_oracle::flow400_same(wide, restored, work),
+                    "DefaultConfig restore mismatch");
+            const bool source_narrow = flow_oracle::flow400_same(narrow, plain_narrow, work);
+            if (source_narrow)
+                static_cast<void>(flow_oracle::flow400_following(narrow, work, kSentinel));
+            else
+                require(flow_oracle::flow400_geometry(narrow, model, work, kSentinel).empty(),
+                        "DefaultConfig narrow geometry");
+            require(flow_oracle::flow400_mutations(wide, model, work, kSentinel) == 4u,
+                    "DefaultConfig semantic/physical mutations");
+            row.expected = "drawn";
+            row.reason = "Source-reviewed DefaultConfig complete terminal geometry and mutations; "
+                         "foreign assertions unproved";
+            row.status = {"drawn", source_narrow ? "source_fallback" : "drawn", "drawn"};
+            row.expected_states = {"drawn", source_narrow ? "source" : "drawn", "drawn"};
+            row.decision_reasons.fill(row.reason);
+            return row;
+        }
         std::string snapshot;
         int snapshot_width = 0;
         const bool drawing = row.expected == "drawn";
@@ -5674,8 +6087,68 @@ void serialize_matrix_gap_rows(json::JsonMutVal root, const std::vector<MatrixGa
     root.add("mandatory_gaps", gaps);
 }
 
+struct ClassStyle13ExpectedSlot {
+    std::size_t position = 0u, selected = 0u;
+};
+
+void class_style13_report_identity(const std::vector<Observation>& rows,
+                                   const std::vector<ClassStyle13ExpectedSlot>& slots) {
+    require(slots.size() <= 13u, "Class13 finite expected report slots");
+    std::array<bool, 13> seen{};
+    if (rows.size() == 2738u)
+        require(slots.size() == 13u, "Class13 complete manifest-derived report slots");
+    for (const auto& slot : slots) {
+        require(slot.selected < 13u && !seen[slot.selected] && slot.position < rows.size(),
+                "Class13 unique expected report identity");
+        seen[slot.selected] = true;
+        const auto& pin = class_style13::kPins[slot.selected];
+        const auto& row = rows[slot.position];
+        require(row.class_style13_original && row.path == pin.fixture && row.track == "original" &&
+                    row.type == "class-diagram" && row.role_case_index == pin.ordinal &&
+                    row.raw_active_schema == class_style13::kContract &&
+                    row.raw_source_authority == class_style13::kAuthority,
+                "Class13 report lost independent expected original identity");
+    }
+    for (std::size_t n = 0; n < rows.size(); ++n)
+        if (class_style13_owned(rows[n]))
+            require(
+                std::ranges::any_of(slots, [&](const auto& slot) { return slot.position == n; }),
+                "Class13 report has an unexpected owned row");
+}
+
+struct ClassDefined6ExpectedSlot {
+    std::size_t position = 0u, selected = 0u;
+};
+
+void class_defined6_report_identity(const std::vector<Observation>& rows,
+                                    const std::vector<ClassDefined6ExpectedSlot>& slots) {
+    require(slots.size() <= 6u, "ClassDefined6 finite expected report slots");
+    std::array<bool, 6> seen{};
+    if (rows.size() == 2738u)
+        require(slots.size() == 6u, "ClassDefined6 complete manifest-derived report slots");
+    for (const auto& slot : slots) {
+        require(slot.selected < 6u && !seen[slot.selected] && slot.position < rows.size(),
+                "ClassDefined6 unique expected report identity");
+        seen[slot.selected] = true;
+        const auto& pin = class_defined6::kPins[slot.selected];
+        const auto& row = rows[slot.position];
+        require(row.class_defined6_original && row.path == pin.fixture && row.track == "original" &&
+                    row.type == "class-diagram" && row.role_case_index == pin.ordinal &&
+                    row.raw_active_schema == class_defined6::kContract &&
+                    row.raw_source_authority == class_defined6::kAuthority,
+                "ClassDefined6 report lost independent expected original identity");
+    }
+    for (std::size_t n = 0; n < rows.size(); ++n)
+        if (class_defined6_owned(rows[n]))
+            require(
+                std::ranges::any_of(slots, [&](const auto& slot) { return slot.position == n; }),
+                "ClassDefined6 report has an unexpected owned row");
+}
+
 void emit_report(const std::vector<Observation>& rows,
                  const std::vector<std::string>& integrity_errors,
+                 const std::vector<ClassStyle13ExpectedSlot>& expected_style_slots,
+                 const std::vector<ClassDefined6ExpectedSlot>& expected_defined_slots,
                  bool projection_validated = false, bool role_consumption_validated = false,
                  bool raw_consumption_validated = false, bool body22_consumption_validated = false,
                  const relations_oracle::Er206Documents* er_documents = nullptr,
@@ -5688,6 +6161,8 @@ void emit_report(const std::vector<Observation>& rows,
                  const json::JsonDoc* mindmap_facts = nullptr,
                  const json::JsonDoc* shapes4_facts = nullptr,
                  bool er107_aggregate_validated = false) {
+    class_style13_report_identity(rows, expected_style_slots);
+    class_defined6_report_identity(rows, expected_defined_slots);
     fs::path path = fs::path(LOOM_MERMAID_REPORT_DIR) / "mermaid-official-matrix.json";
     if (const auto* override_path = std::getenv("LOOM_MERMAID_MATRIX_PATH")) path = override_path;
     json::JsonMutDoc document;
@@ -5810,6 +6285,19 @@ void emit_report(const std::vector<Observation>& rows,
         for (const auto& error : row.errors)
             errors.append(root.make_str(error));
         entry.add("errors", errors);
+        if (requirement_markdown_owned(row)) {
+            const bool admitted = requirement_markdown_admitted(row);
+            const auto metadata = json::parse(row.raw_source_constraints);
+            auto provenance = root.make_obj();
+            provenance.set("contract", kRequirementMarkdownContract);
+            provenance.set("source_sha256", kRequirementMarkdownSourceSha);
+            provenance.set("source_asset_sha256", kRequirementMarkdownAssetSha);
+            provenance.set("Model_sha256", kRequirementMarkdownModelSha);
+            provenance.set("admitted", admitted);
+            provenance.set("browser_emphasis_and_foreign_assertions_certified", false);
+            provenance.add("actual", document.copy_val(metadata->root()));
+            entry.add("Requirement_markdown1_native_whole_source", provenance);
+        }
         if (row.raw_active_schema == kOfficialEr206Contract ||
             row.raw_active_schema == kOfficialEr107Contract) {
             std::optional<Observation> retained;
@@ -5826,6 +6314,10 @@ void emit_report(const std::vector<Observation>& rows,
             provenance.set("source_case_ordinal", static_cast<int64_t>(er_row.role_case_index));
             provenance.set("source_authority", kOfficialEr206Authority);
             provenance.set("source_authority_sha256", kOfficialEr206AuthoritySha);
+            provenance.set("Model_supplement_sha256",
+                           relations_oracle::er206_rich_index(row.role_case_index)
+                               ? relations_oracle::kErRich6Sha
+                               : std::string_view{""});
             provenance.set("source_review_sha256",
                            "6843f46ee38a55d3d75358f421770df59dc762a373a97753c3bf68b526ecc12a");
             provenance.set("manifest_sha256", kManifestSha256);
@@ -5851,7 +6343,9 @@ void emit_report(const std::vector<Observation>& rows,
             provenance.add("actual", document.copy_val(metadata->root()));
             entry.add("ER_native_whole_source", provenance);
         }
-        if (row.raw_active_schema == kOfficialFlow400Contract) {
+        if (row.raw_active_schema == kOfficialFlow400Contract || official_flow_p0_owned(row)) {
+            require(row.raw_active_schema == kOfficialFlow400Contract,
+                    "Official Flow P0 owned source lost contract");
             const auto metadata = json::parse(row.raw_source_constraints),
                        baseline = json::parse(row.projection_baseline);
             require(metadata.has_value() && baseline.has_value(),
@@ -5928,6 +6422,60 @@ void emit_report(const std::vector<Observation>& rows,
             provenance.add("actual", document.copy_val(metadata->root()));
             entry.add("Flow_group_endpoint15_body", provenance);
         }
+        if (class_style13_owned(row)) {
+            require(row.raw_active_schema == class_style13::kContract,
+                    "Class13 owned source lost schema");
+            const auto metadata = json::parse(row.raw_source_constraints);
+            require(metadata.has_value(), "Class13 owned proof JSON");
+            auto provenance = root.make_obj();
+            provenance.set("contract", class_style13::kContract);
+            provenance.set("source_authority", class_style13::kAuthority);
+            provenance.set("source_case_ordinal", static_cast<std::int64_t>(row.role_case_index));
+            provenance.set("source_asset_sha256", class_style13::kAssetSha);
+            provenance.set("foreign_assertions_certified", 0);
+            provenance.set("glyph_golden_required", false);
+            const auto selected = class_style13::index(row.path);
+            require(selected.has_value(), "Class13 provenance source index");
+            provenance.set("actual_five_frames_file",
+                           class_style13::capture_file("official", *selected));
+            provenance.set("original_foreign_debts",
+                           "retained; existing default terminal empty-Class geometry; "
+                           "source/semantic hue projection is not browser CSS");
+            if (!row.projection_baseline.empty()) {
+                const auto baseline = json::parse(row.projection_baseline);
+                require(baseline.has_value(), "Class13 original manifest policy JSON");
+                provenance.add("original_manifest_policy", document.copy_val(baseline->root()));
+            }
+            provenance.add("actual", document.copy_val(metadata->root()));
+            entry.add("Class_direct_style13_whole_source", provenance);
+        }
+        if (class_defined6_owned(row)) {
+            require(row.raw_active_schema == class_defined6::kContract,
+                    "ClassDefined6 owned source lost schema");
+            const auto metadata = json::parse(row.raw_source_constraints);
+            require(metadata.has_value(), "ClassDefined6 owned proof JSON");
+            auto provenance = root.make_obj();
+            provenance.set("contract", class_defined6::kContract);
+            provenance.set("source_authority", class_defined6::kAuthority);
+            provenance.set("source_case_ordinal", static_cast<std::int64_t>(row.role_case_index));
+            provenance.set("source_asset_sha256", class_defined6::kAssetSha);
+            provenance.set("foreign_assertions_certified", 0);
+            provenance.set("glyph_golden_required", false);
+            const auto selected = class_defined6::index(row.path);
+            require(selected.has_value(), "ClassDefined6 provenance source index");
+            provenance.set("actual_five_frames_file",
+                           class_defined6::capture_file("official", *selected));
+            provenance.set("original_foreign_debts",
+                           "retained; existing default terminal empty-Class geometry; "
+                           "source/semantic hue projection is not browser CSS");
+            if (!row.projection_baseline.empty()) {
+                const auto baseline = json::parse(row.projection_baseline);
+                require(baseline.has_value(), "ClassDefined6 original manifest policy JSON");
+                provenance.add("original_manifest_policy", document.copy_val(baseline->root()));
+            }
+            provenance.add("actual", document.copy_val(metadata->root()));
+            entry.add("Class_defined_style6_whole_source", provenance);
+        }
         if (row.raw_active_schema == kFlowShapeAliasBodyContract) {
             const auto metadata = json::parse(row.raw_source_constraints),
                        baseline = json::parse(row.projection_baseline);
@@ -5969,6 +6517,7 @@ void emit_report(const std::vector<Observation>& rows,
             provenance.set("dagre38_sha256", relations_oracle::kOfficialClass285DagreSha);
             provenance.set("classifier26_sha256", relations_oracle::kOfficialClass285ClassifierSha);
             provenance.set("unused_classDef3_sha256", relations_oracle::kOfficialClass285UnusedSha);
+            provenance.set("accessibility4_sha256", relations_oracle::kClassAccessibility4Sha);
             provenance.set("Notes18_fixture_sha256", relations_oracle::kClassNotes18Sha);
             provenance.set("Notes18_source_review_sha256",
                            "5203db85e0b1c421079e5dd41b1fd8f430df2f3908faf9da877a1ff1ba0ba040");
@@ -6208,12 +6757,16 @@ void emit_report(const std::vector<Observation>& rows,
     const auto ers = official_er_counts(rows, er_documents);
     const auto requirements = requirement11_counts(rows, requirement11_documents);
     const auto pies = official_pie7_counts(rows, pie7_documents);
+    const auto [markdown_visited, markdown_admitted] = requirement_markdown_counts(rows);
+    static_cast<void>(markdown_visited);
     for (const auto& row : rows)
         if (row.track == "original") {
             ++originals;
             // Class formal coverage requires the complete whole-source contract;
             // per-state aggregates above still preserve an independently good wide.
-            if (row.raw_active_schema == kStageCContract ||
+            if (class_style13_owned(row) || class_defined6_owned(row) ||
+                official_flow_p0_owned(row) || requirement_markdown_owned(row) ||
+                row.raw_active_schema == kStageCContract ||
                 row.raw_active_schema == kOfficialFlow400Contract ||
                 row.raw_active_schema == kOfficialEr206Contract ||
                 row.raw_active_schema == kOfficialRequirement11Contract ||
@@ -6230,6 +6783,7 @@ void emit_report(const std::vector<Observation>& rows,
     originals_drawn += static_cast<int>(ers.admitted);
     originals_drawn += static_cast<int>(requirements.admitted);
     originals_drawn += static_cast<int>(pies.admitted);
+    originals_drawn += static_cast<int>(markdown_admitted);
     std::size_t mindmap_selected = 0, mindmap_admitted = 0;
     for (const auto& row : rows)
         if (row.raw_active_schema == kMindmap10Contract) {
@@ -6325,7 +6879,13 @@ void emit_report(const std::vector<Observation>& rows,
     class_summary.set("whole_sources_admitted", static_cast<std::int64_t>(classes.admitted));
     class_summary.set("resource_errors", static_cast<std::int64_t>(classes.resources));
     class_summary.set("target_whole_sources_admitted", static_cast<std::int64_t>(285));
-    class_summary.set("mandatory_remaining", static_cast<std::int64_t>(48));
+    class_summary.set("mandatory_remaining", static_cast<std::int64_t>(285u - classes.admitted));
+    class_summary.set("ClassDirectStyle13_consumed", static_cast<std::int64_t>(classes.styles));
+    class_summary.set("ClassDirectStyle13_contract", class_style13::kContract);
+    class_summary.set("ClassDefinedStyle6_consumed",
+                      static_cast<std::int64_t>(classes.defined_styles));
+    class_summary.set("ClassDefinedStyle6_contract", class_defined6::kContract);
+    class_summary.set("accessibility4_consumed", static_cast<std::int64_t>(classes.accessibility));
     class_summary.set("dagre38_consumed", static_cast<std::int64_t>(classes.dagre));
     class_summary.set("classifier26_consumed", static_cast<std::int64_t>(classes.classifier));
     class_summary.set("unused_classDef3_consumed",
@@ -6345,7 +6905,7 @@ void emit_report(const std::vector<Observation>& rows,
     flow_summary.set("whole_null_pending", static_cast<int64_t>(flows.pending));
     flow_summary.set("whole_sources_admitted", static_cast<int64_t>(flows.admitted));
     flow_summary.set("target_whole_sources_admitted", static_cast<int64_t>(400));
-    flow_summary.set("mandatory_remaining", static_cast<int64_t>(flows.pending));
+    flow_summary.set("mandatory_remaining", static_cast<int64_t>(400u - flows.admitted));
     flow_summary.set("meaningfully_mutated", static_cast<int64_t>(flows.mutated));
     flow_summary.set("resource_errors", static_cast<int64_t>(flows.resources));
     if (classic_documents)
@@ -6378,10 +6938,11 @@ void emit_report(const std::vector<Observation>& rows,
                                     "immutable_Flow400_8Models_plus_FlowShapeAlias16";
                      })));
     flow_summary.set(
-        "scope", "Original400 Flow whole-scene contract; immutable Base8, Config21, TypedSource4, "
-                 "Classic, LinkProfile3, GroupEndpoint15, DiagramTitle1, TitleTopMargin1, and "
-                 "FlowShapeAlias16 source-owned Models are counted only from this consumer's owned "
-                 "original rows; body diagnostics and foreign assertions remain separate");
+        "scope",
+        "Original400 Flow whole-scene contract; immutable Base8, Config21, TypedSource4, "
+        "Classic, LinkProfile3, GroupEndpoint15, P0Grouped7, P0Strand54, DiagramTitle1, "
+        "TitleTopMargin1 and FlowShapeAlias16 source-owned Models are counted once per "
+        "original identity; duplicate dedicated proof cohorts and body diagnostics add no credit");
     root.add("Flow_native_whole_source", flow_summary);
     auto er_summary = root.make_obj();
     er_summary.set("contract", kOfficialEr206Contract);
@@ -6393,7 +6954,7 @@ void emit_report(const std::vector<Observation>& rows,
     er_summary.set("whole_null_pending", static_cast<int64_t>(ers.pending));
     er_summary.set("whole_sources_admitted", static_cast<int64_t>(ers.admitted));
     er_summary.set("target_whole_sources_admitted", static_cast<int64_t>(206));
-    er_summary.set("mandatory_remaining", static_cast<int64_t>(144));
+    er_summary.set("mandatory_remaining", static_cast<int64_t>(138));
     er_summary.set("meaningfully_mutated", static_cast<int64_t>(ers.mutated));
     er_summary.set("failed_rows", static_cast<int64_t>(ers.errors));
     er_summary.set("mandatory_positive_source_fallbacks", static_cast<int64_t>(ers.unmet));
@@ -6401,10 +6962,9 @@ void emit_report(const std::vector<Observation>& rows,
     er_summary.set("valid_empty_admissions", 0);
     er_summary.set("original_foreign_assertions_certified", 0);
     er_summary.set("glyph_golden_required", false);
-    er_summary.set(
-        "scope",
-        "Complete206 original ER sources;62 mandatory whole Models/144 pending. Null art is not "
-        "Source/drawing/empty admission; browser/API/SVG assertions remain pending.");
+    er_summary.set("scope", "Complete206 original ER sources; immutable base62/144 plus "
+                            "source-approved rich6, active68 admitted/138 pending. Null art is not "
+                            "drawing/empty admission; browser/API/SVG assertions remain pending.");
     root.add("ER_native_whole_source", er_summary);
     auto requirement_summary = root.make_obj();
     requirement_summary.set("contract", kOfficialRequirement11Contract);
@@ -6416,7 +6976,12 @@ void emit_report(const std::vector<Observation>& rows,
     requirement_summary.set("complete_Models_decoded", static_cast<int64_t>(requirements.decoded));
     requirement_summary.set("whole_sources_admitted", static_cast<int64_t>(requirements.admitted));
     requirement_summary.set("target_whole_sources_admitted", static_cast<int64_t>(172));
-    requirement_summary.set("mandatory_remaining", static_cast<int64_t>(161));
+    requirement_summary.set("mandatory_remaining",
+                            static_cast<int64_t>(172u - requirements.admitted - markdown_admitted));
+    requirement_summary.set("additional_markdown1_admitted",
+                            static_cast<int64_t>(markdown_admitted));
+    requirement_summary.set("all_native_admitted",
+                            static_cast<int64_t>(requirements.admitted + markdown_admitted));
     requirement_summary.set("meaningfully_mutated", static_cast<int64_t>(requirements.mutated));
     requirement_summary.set("failed_rows", static_cast<int64_t>(requirements.errors));
     requirement_summary.set("resource_errors", static_cast<int64_t>(requirements.resources));
@@ -6424,8 +6989,8 @@ void emit_report(const std::vector<Observation>& rows,
     requirement_summary.set("glyph_golden_required", false);
     requirement_summary.set(
         "scope",
-        "Complete11 Requirement originals only; source fallback, native reports, producer seams, "
-        "browser/API/SVG assertions and remaining161 originals do not admit coverage.");
+        "Immutable Requirement11 cohort; source-bound literal-Markdown1 is verified separately. "
+        "Browser/API/SVG assertions remain pending;160 original profiles remain unadmitted.");
     root.add("Requirement11_native_whole_source", requirement_summary);
     auto pie7_summary = root.make_obj();
     pie7_summary.set("contract", kOfficialPie7Contract);
@@ -7183,6 +7748,10 @@ TEST(MermaidOfficial, PinnedInventoryIntegrity) {
 
 TEST(MermaidCapabilityReport, OfficialMatrix) {
     std::vector<Observation> observations;
+    std::vector<ClassStyle13ExpectedSlot> expected_style_slots;
+    expected_style_slots.reserve(13u);
+    std::vector<ClassDefined6ExpectedSlot> expected_defined_slots;
+    expected_defined_slots.reserve(6u);
     std::vector<std::string> integrity_errors;
     bool projection_validated = false, role_consumption_validated = false,
          raw_consumption_validated = false, body22_consumption_validated = false;
@@ -7191,6 +7760,7 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
     std::optional<flow_oracle::Flow400ClassicDocuments> official_flow_classic_documents;
     std::optional<flow_oracle::Flow400LinkProfile3Documents> official_flow_linkprofile3_documents;
     std::optional<flow_oracle::GroupEndpoint15Documents> official_flow_group_endpoint15_documents;
+    std::optional<flow_oracle::FlowP0Documents> official_flow_p0_documents;
     relations_oracle::Work official_er_setup;
     official_er_setup.spend(4u * sizeof(std::optional<relations_oracle::Er206Documents>) +
                             8u * sizeof(std::size_t) + 1024u);
@@ -7275,6 +7845,7 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         official_flow_classic_documents.emplace(flow_oracle::flow400_classic_documents());
         official_flow_linkprofile3_documents.emplace(flow_oracle::flow400_linkprofile3_documents());
         official_flow_group_endpoint15_documents.emplace(flow_oracle::group_endpoint15_documents());
+        official_flow_p0_documents.emplace(flow_oracle::flow_p0_documents(official_flow_documents));
         official_flow_documents.compact_work.spend(4096u + 4u * sizeof(std::array<bool, 400>) +
                                                    8u * sizeof(std::size_t));
         std::array<bool, 400> official_flow_consumed{};
@@ -7513,10 +8084,25 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 continue;
             }
             if (class_path.is_str() && class_path.as_str().starts_with("class-diagram/")) {
-                relations_oracle::Work class_work{kStageCVerificationBudget};
-                observations.push_back(
-                    run_class285_case(fixture, i, class_documents, class_originals, class_work,
-                                      observations.size(), observations.capacity()));
+                const auto styles = class_style13::index(class_path.as_str()),
+                           defined = class_defined6::index(class_path.as_str());
+                require(!(styles && defined), "Disjoint Class style source authorities");
+                relations_oracle::Work class_work{(styles || defined) ? class_style13::kSceneLimit
+                                                                      : kStageCVerificationBudget};
+                if (styles) {
+                    expected_style_slots.push_back({observations.size(), *styles});
+                    observations.push_back(run_class_style13_case(
+                        fixture, i, *styles, class_documents, class_originals, class_work,
+                        observations.size(), observations.capacity()));
+                } else if (defined) {
+                    expected_defined_slots.push_back({observations.size(), *defined});
+                    observations.push_back(run_class_defined6_case(
+                        fixture, i, *defined, class_documents, class_originals, class_work,
+                        observations.size(), observations.capacity()));
+                } else
+                    observations.push_back(
+                        run_class285_case(fixture, i, class_documents, class_originals, class_work,
+                                          observations.size(), observations.capacity()));
                 continue;
             }
             if (class_path.is_str())
@@ -7593,7 +8179,8 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     official_flow_typed_source4_documents->supplement.root(),
                     official_flow_classic_documents->supplement.root(),
                     official_flow_linkprofile3_documents->supplement.root(),
-                    official_flow_group_endpoint15_documents->asset.root()));
+                    official_flow_group_endpoint15_documents->asset.root(),
+                    &*official_flow_p0_documents));
             } else {
                 const auto original =
                     body22_select(policies, role_batch.policy.root(), raw_batch.policy.root(),
@@ -7676,12 +8263,12 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         EXPECT_EQ(ers.observed, 206u);
         EXPECT_EQ(ers.published, 206u);
         EXPECT_EQ(ers.bound, 206u);
-        EXPECT_EQ(ers.decoded, 62u);
-        EXPECT_EQ(ers.pending, 144u);
-        EXPECT_EQ(ers.errors, 6u);
+        EXPECT_EQ(ers.decoded, 68u);
+        EXPECT_EQ(ers.pending, 138u);
+        EXPECT_EQ(ers.errors, 0u);
         EXPECT_EQ(ers.resources, 0u);
-        EXPECT_EQ(ers.admitted, 62u);
-        EXPECT_EQ(ers.mutated, 62u);
+        EXPECT_EQ(ers.admitted, 68u);
+        EXPECT_EQ(ers.mutated, 68u);
         require(static_cast<bool>(official_requirement11_diagnostics) &&
                     std::ranges::all_of(official_requirement11_consumed,
                                         [](bool used) { return used; }),
@@ -7815,12 +8402,12 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         EXPECT_EQ(shape_alias_selected, 16);
         // Shape aliases include the independently checked filled Fork/Join
         // contour. Body diagnostics add no original-file drawing credit.
-        EXPECT_EQ(flows.decoded, 77u);
-        EXPECT_EQ(flows.pending, 323u);
-        EXPECT_EQ(flows.errors, 10u);
+        EXPECT_EQ(flows.decoded, 85u);
+        EXPECT_EQ(flows.pending, 315u);
+        EXPECT_EQ(flows.errors, 0u);
         EXPECT_EQ(flows.resources, 0u);
-        EXPECT_EQ(flows.admitted, 77u);
-        EXPECT_EQ(flows.mutated, 77u);
+        EXPECT_EQ(flows.admitted, 85u);
+        EXPECT_EQ(flows.mutated, 85u);
         for (const auto count : applications)
             projection_consumed(count);
         role_batch_consumed(role_counts, role_batch.facts.root());
@@ -7880,25 +8467,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         EXPECT_EQ(classes.visited, 285u);
         EXPECT_EQ(classes.observed, 285u);
         EXPECT_EQ(classes.bound, 285u);
-        EXPECT_EQ(classes.decoded, 237u);
+        EXPECT_EQ(classes.decoded, 260u);
+        EXPECT_EQ(classes.defined_styles, 6u);
+        EXPECT_EQ(classes.styles, 13u);
         EXPECT_EQ(classes.dagre, 38u);
         EXPECT_EQ(classes.classifier, 26u);
         EXPECT_EQ(classes.unused_definitions, 3u);
         EXPECT_EQ(classes.notes, 18u);
-        EXPECT_EQ(classes.pending, 48u);
-        EXPECT_EQ(classes.errors, 10u);
+        EXPECT_EQ(classes.pending, 25u);
+        EXPECT_EQ(classes.errors, 0u);
         EXPECT_EQ(classes.resources, 0u);
-        // Twenty complete cardinality originals now close through one bounded
-        // caption-first retry. Six decoded Note profiles remain whole source;
-        // the other 48 source Models stay pending and earn no drawing credit.
-        EXPECT_EQ(classes.admitted, 231u);
+        // Every decoded complete Model is independently validated at wide width.
+        EXPECT_EQ(classes.admitted, 260u);
+        EXPECT_EQ(classes.accessibility, 4u);
     } catch (const std::exception& error) {
         integrity_errors.push_back(error.what());
     }
     EXPECT_NO_THROW(emit_report(
-        observations, integrity_errors, projection_validated, role_consumption_validated,
-        raw_consumption_validated, body22_consumption_validated,
-        official_er_documents ? &*official_er_documents : nullptr,
+        observations, integrity_errors, expected_style_slots, expected_defined_slots,
+        projection_validated, role_consumption_validated, raw_consumption_validated,
+        body22_consumption_validated, official_er_documents ? &*official_er_documents : nullptr,
         official_requirement11_documents ? &*official_requirement11_documents : nullptr,
         official_pie7_documents ? &*official_pie7_documents : nullptr,
         official_flow_typed_source4_documents ? &*official_flow_typed_source4_documents : nullptr,
@@ -7928,7 +8516,7 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         const auto gap_diff = gap_roster::diff_gate(*roster, "official_matrix",
                                                     published->root().get("mandatory_gaps"));
         EXPECT_TRUE(gap_diff.ok()) << gap_diff.render("official_matrix");
-        EXPECT_EQ(observed_gap_rows.size(), std::size_t(78));
+        EXPECT_EQ(observed_gap_rows.size(), std::size_t(48));
     }
 }
 
@@ -8607,7 +9195,14 @@ TEST(MermaidOfficial, RoleBodyBatchBindsEveryCompleteCaseAndEveryOriginalApplica
     EXPECT_TRUE(same_model_distinct_bodies);
 }
 
-TEST(MermaidOfficial, RoleBodyBatchParsedMutationsReachTheirSpecificTupleAndSchemaGuards) {
+class MermaidOfficialRoleBatchMutation : public ::testing::TestWithParam<int> {};
+
+TEST_P(MermaidOfficialRoleBatchMutation, ParsedMutationsReachTheirSpecificTupleAndSchemaGuards) {
+    // Run the original complete mutation set in bounded independent cohorts.
+    // Keep the five ten-source configuration groups exhaustive when the
+    // pinned inventory changes; no case may silently fall outside the suite.
+    static_assert(kRoleBatchCases - kRoleBatchPriorCases == 49);
+    const int group = GetParam();
     const auto policy_bytes = read_file(kNativeRoot / kRoleBatchBinding.policy_file),
                fact_bytes = read_file(kNativeRoot / kRoleBatchBinding.fact_file);
     const auto manifest = json::parse(read_file(kRoot / "manifest.json"));
@@ -8661,128 +9256,140 @@ TEST(MermaidOfficial, RoleBodyBatchParsedMutationsReachTheirSpecificTupleAndSche
                               std::string_view message) {
         rejects(projection_mutate(policy_bytes, change), fact_bytes, message);
     };
-    policy_rejects([](auto root) { root.set("unknown", true); }, "unknown field");
-    policy_rejects([](auto root) { static_cast<void>(root.remove("schema")); }, "missing field");
-    policy_rejects([](auto root) { root.set("schema", true); }, "integer/type mismatch");
-    policy_rejects([](auto root) { root.set("kind", "unknown"); }, "policy kind mismatch");
-    policy_rejects([](auto root) { root.set("baseline_manifest_sha256", "wrong"); },
-                   "baseline manifest mismatch");
-    policy_rejects([](auto root) { root.get("source_facts").set("path", "../escape.json"); },
-                   "source-fact path mismatch");
-    policy_rejects([](auto root) { root.get("source_facts").set("schema", false); },
-                   "integer/type mismatch");
-    policy_rejects([](auto root) { root.get("source_facts").set("model_schema", "foreign"); },
-                   "source-fact reference mismatch");
-    policy_rejects([&](auto root) { entry(root).set("path", "../escape.mmd"); },
-                   "unsafe fixture path");
-    policy_rejects([&](auto root) { entry(root).set("path", "sequence/missing.mmd"); },
-                   "path/case binding missing");
-    policy_rejects([&](auto root) { entry(root).set("track", "original"); }, "unknown track");
-    policy_rejects([&](auto root) { entry(root).set("case_index", false); },
-                   "case index/type mismatch");
-    policy_rejects(
-        [&](auto root) { entry(root).set("case_index", static_cast<int>(kRoleBatchCases)); },
-        "case index/type mismatch");
-    policy_rejects([&](auto root) { entry(root).set("case_id", "other"); },
-                   "case identity mismatch");
-    policy_rejects([&](auto root) { entry(root).set("raw_sha256", "wrong"); },
-                   "raw binding mismatch");
-    policy_rejects([&](auto root) { entry(root).set("body_offset_utf8_bytes", false); },
-                   "body offset/type mismatch");
-    policy_rejects([&](auto root) { entry(root).set("body_offset_utf8_bytes", 0); },
-                   "body offset/type mismatch");
-    policy_rejects([&](auto root) { entry(root).set("body_sha256", "wrong"); },
-                   "exact body binding mismatch");
-    policy_rejects([&](auto root) { entry(root).set("full_model_sha256", "wrong"); },
-                   "full Model binding mismatch");
-    policy_rejects([&](auto root) { entry(root).set("baseline_expectation_sha256", "wrong"); },
-                   "baseline expectation mismatch");
-    policy_rejects([&](auto root) { entry(root).get("effective").set("expected", "source"); },
-                   "effective outcome mismatch");
-    policy_rejects([&](auto root) { entry(root).set("reason", "All browser predicates passed"); },
-                   "foreign pending scope mismatch");
-    policy_rejects(
-        [&](auto root) { entry(root).get("effective").get("checks").set("arrows", false); },
-        "Model/check summary mismatch");
-    policy_rejects(
-        [&](auto root) {
-            entry(root).get("effective").get("checks").add("labels", root.make_arr());
-        },
-        "Model/check summary mismatch");
-    policy_rejects(
-        [&](auto root) { entry(root).get("effective").set("snapshot", "../escape.txt"); },
-        "unsafe/unknown snapshot name");
-    policy_rejects([&](auto root) { entry(root).set("snapshot_sha256", "wrong"); },
-                   "snapshot SHA mismatch");
-    // The count-neutral appended reason is not permission to relabel old rows.
-    policy_rejects(
-        [](auto root) {
-            root.get("promotions")
-                .at(kRoleBatchLegacyPromotions)
-                .set("reason", kRoleBatchLegacyScope);
-        },
-        "foreign pending scope mismatch");
-    policy_rejects(
-        [](auto root) { root.get("promotions").at(0).set("reason", kRoleBatchAppendedScope); },
-        "foreign pending scope mismatch");
-    policy_rejects(
-        [](auto root) {
-            root.get("promotions")
-                .at(kRoleBatchLegacyPromotions)
-                .get("effective")
-                .set("reason", kRoleBatchLegacyScope);
-        },
-        "foreign pending scope mismatch");
-    EXPECT_EQ(role_batch_case_scope(kRoleBatchLegacyCases - 1), kRoleBatchLegacyScope);
-    EXPECT_EQ(role_batch_case_scope(kRoleBatchLegacyCases), kRoleBatchAppendedScope);
-    EXPECT_THROW(role_batch_case_scope(kRoleBatchCases), std::runtime_error);
-    policy_rejects(
-        [](auto root) {
-            root.get("promotions").at(kRoleBatchLegacyPromotions).set("case_index", 37);
-        },
-        "case identity mismatch");
-    policy_rejects(
-        [](auto root) {
-            root.get("promotions").at(kRoleBatchLegacyPromotions).set("body_offset_utf8_bytes", 0);
-        },
-        "body offset/type mismatch");
-    policy_rejects(
-        [](auto root) {
-            root.get("promotions").at(kRoleBatchLegacyPromotions).set("raw_sha256", "wrong");
-        },
-        "raw binding mismatch");
-    policy_rejects(
-        [](auto root) {
-            root.get("promotions").at(kRoleBatchLegacyPromotions).set("body_sha256", "wrong");
-        },
-        "exact body binding mismatch");
-    policy_rejects(
-        [](auto root) {
-            root.get("promotions").at(kRoleBatchLegacyPromotions).set("full_model_sha256", "wrong");
-        },
-        "full Model binding mismatch");
-    policy_rejects(
-        [](auto root) {
-            root.get("promotions").at(kRoleBatchLegacyPromotions).set("snapshot_sha256", "wrong");
-        },
-        "snapshot SHA mismatch");
-    auto inventory = [&](std::size_t count, bool duplicate) {
-        json::JsonMutDoc edited;
-        auto root = edited.copy_val(parsed_policy->root()), entries = root.make_arr();
-        for (std::size_t n = 0; n < count; ++n)
-            entries.append(
-                edited.copy_val(parsed_policy->root()
-                                    .get("promotions")
-                                    .at(duplicate && n == 1 ? 0 : n % kRoleBatchPromotions)));
-        root.add("promotions", entries);
-        edited.set_root(root);
-        return edited.to_string();
-    };
-    rejects(inventory(kRoleBatchPromotions + 1, false), fact_bytes, "promotion inventory mismatch");
-    rejects(inventory(kRoleBatchPromotions - 1, false), fact_bytes, "promotion inventory mismatch");
-    rejects(inventory(kRoleBatchPromotions, true), fact_bytes, "duplicate promotion");
-    rejects(policy_bytes, fact_bytes, "raw binding mismatch", true, false);
-    rejects(policy_bytes, fact_bytes, "snapshot SHA mismatch", false, true);
+    if (group == 0) {
+        policy_rejects([](auto root) { root.set("unknown", true); }, "unknown field");
+        policy_rejects([](auto root) { static_cast<void>(root.remove("schema")); },
+                       "missing field");
+        policy_rejects([](auto root) { root.set("schema", true); }, "integer/type mismatch");
+        policy_rejects([](auto root) { root.set("kind", "unknown"); }, "policy kind mismatch");
+        policy_rejects([](auto root) { root.set("baseline_manifest_sha256", "wrong"); },
+                       "baseline manifest mismatch");
+        policy_rejects([](auto root) { root.get("source_facts").set("path", "../escape.json"); },
+                       "source-fact path mismatch");
+        policy_rejects([](auto root) { root.get("source_facts").set("schema", false); },
+                       "integer/type mismatch");
+        policy_rejects([](auto root) { root.get("source_facts").set("model_schema", "foreign"); },
+                       "source-fact reference mismatch");
+        policy_rejects([&](auto root) { entry(root).set("path", "../escape.mmd"); },
+                       "unsafe fixture path");
+        policy_rejects([&](auto root) { entry(root).set("path", "sequence/missing.mmd"); },
+                       "path/case binding missing");
+        policy_rejects([&](auto root) { entry(root).set("track", "original"); }, "unknown track");
+        policy_rejects([&](auto root) { entry(root).set("case_index", false); },
+                       "case index/type mismatch");
+        policy_rejects(
+            [&](auto root) { entry(root).set("case_index", static_cast<int>(kRoleBatchCases)); },
+            "case index/type mismatch");
+        policy_rejects([&](auto root) { entry(root).set("case_id", "other"); },
+                       "case identity mismatch");
+        policy_rejects([&](auto root) { entry(root).set("raw_sha256", "wrong"); },
+                       "raw binding mismatch");
+        policy_rejects([&](auto root) { entry(root).set("body_offset_utf8_bytes", false); },
+                       "body offset/type mismatch");
+        policy_rejects([&](auto root) { entry(root).set("body_offset_utf8_bytes", 0); },
+                       "body offset/type mismatch");
+        policy_rejects([&](auto root) { entry(root).set("body_sha256", "wrong"); },
+                       "exact body binding mismatch");
+        policy_rejects([&](auto root) { entry(root).set("full_model_sha256", "wrong"); },
+                       "full Model binding mismatch");
+        policy_rejects([&](auto root) { entry(root).set("baseline_expectation_sha256", "wrong"); },
+                       "baseline expectation mismatch");
+        policy_rejects([&](auto root) { entry(root).get("effective").set("expected", "source"); },
+                       "effective outcome mismatch");
+        policy_rejects(
+            [&](auto root) { entry(root).set("reason", "All browser predicates passed"); },
+            "foreign pending scope mismatch");
+        policy_rejects(
+            [&](auto root) { entry(root).get("effective").get("checks").set("arrows", false); },
+            "Model/check summary mismatch");
+        policy_rejects(
+            [&](auto root) {
+                entry(root).get("effective").get("checks").add("labels", root.make_arr());
+            },
+            "Model/check summary mismatch");
+        policy_rejects(
+            [&](auto root) { entry(root).get("effective").set("snapshot", "../escape.txt"); },
+            "unsafe/unknown snapshot name");
+        policy_rejects([&](auto root) { entry(root).set("snapshot_sha256", "wrong"); },
+                       "snapshot SHA mismatch");
+        // The count-neutral appended reason is not permission to relabel old rows.
+        policy_rejects(
+            [](auto root) {
+                root.get("promotions")
+                    .at(kRoleBatchLegacyPromotions)
+                    .set("reason", kRoleBatchLegacyScope);
+            },
+            "foreign pending scope mismatch");
+        policy_rejects(
+            [](auto root) { root.get("promotions").at(0).set("reason", kRoleBatchAppendedScope); },
+            "foreign pending scope mismatch");
+        policy_rejects(
+            [](auto root) {
+                root.get("promotions")
+                    .at(kRoleBatchLegacyPromotions)
+                    .get("effective")
+                    .set("reason", kRoleBatchLegacyScope);
+            },
+            "foreign pending scope mismatch");
+        EXPECT_EQ(role_batch_case_scope(kRoleBatchLegacyCases - 1), kRoleBatchLegacyScope);
+        EXPECT_EQ(role_batch_case_scope(kRoleBatchLegacyCases), kRoleBatchAppendedScope);
+        EXPECT_THROW(role_batch_case_scope(kRoleBatchCases), std::runtime_error);
+        policy_rejects(
+            [](auto root) {
+                root.get("promotions").at(kRoleBatchLegacyPromotions).set("case_index", 37);
+            },
+            "case identity mismatch");
+        policy_rejects(
+            [](auto root) {
+                root.get("promotions")
+                    .at(kRoleBatchLegacyPromotions)
+                    .set("body_offset_utf8_bytes", 0);
+            },
+            "body offset/type mismatch");
+        policy_rejects(
+            [](auto root) {
+                root.get("promotions").at(kRoleBatchLegacyPromotions).set("raw_sha256", "wrong");
+            },
+            "raw binding mismatch");
+        policy_rejects(
+            [](auto root) {
+                root.get("promotions").at(kRoleBatchLegacyPromotions).set("body_sha256", "wrong");
+            },
+            "exact body binding mismatch");
+        policy_rejects(
+            [](auto root) {
+                root.get("promotions")
+                    .at(kRoleBatchLegacyPromotions)
+                    .set("full_model_sha256", "wrong");
+            },
+            "full Model binding mismatch");
+        policy_rejects(
+            [](auto root) {
+                root.get("promotions")
+                    .at(kRoleBatchLegacyPromotions)
+                    .set("snapshot_sha256", "wrong");
+            },
+            "snapshot SHA mismatch");
+        auto inventory = [&](std::size_t count, bool duplicate) {
+            json::JsonMutDoc edited;
+            auto root = edited.copy_val(parsed_policy->root()), entries = root.make_arr();
+            for (std::size_t n = 0; n < count; ++n)
+                entries.append(
+                    edited.copy_val(parsed_policy->root()
+                                        .get("promotions")
+                                        .at(duplicate && n == 1 ? 0 : n % kRoleBatchPromotions)));
+            root.add("promotions", entries);
+            edited.set_root(root);
+            return edited.to_string();
+        };
+        rejects(inventory(kRoleBatchPromotions + 1, false), fact_bytes,
+                "promotion inventory mismatch");
+        rejects(inventory(kRoleBatchPromotions - 1, false), fact_bytes,
+                "promotion inventory mismatch");
+        rejects(inventory(kRoleBatchPromotions, true), fact_bytes, "duplicate promotion");
+        rejects(policy_bytes, fact_bytes, "raw binding mismatch", true, false);
+        rejects(policy_bytes, fact_bytes, "snapshot SHA mismatch", false, true);
+    }
     auto model_rejects = [&](const std::function<void(json::JsonMutVal)>& change,
                              std::string_view message, std::size_t case_index = 0,
                              bool refresh_checks = false) {
@@ -8827,93 +9434,107 @@ TEST(MermaidOfficial, RoleBodyBatchParsedMutationsReachTheirSpecificTupleAndSche
         });
         rejects(policy, changed, message);
     };
-    auto original_model_facts = json::parse(fact_bytes);
-    ASSERT_TRUE(original_model_facts);
-    std::optional<std::size_t> fragment_case;
-    for (std::size_t n = 0; n < kRoleBatchCases && !fragment_case; ++n)
-        if (original_model_facts->root().get("cases").at(n).get("model").get("fragments").size() >
-            0)
-            fragment_case = n;
-    ASSERT_TRUE(fragment_case);
-    model_rejects([](auto model) { model.get("fragments").at(0).set("kind", "Unknown"); },
-                  "unknown fragment kind", *fragment_case);
-    model_rejects([](auto model) { model.get("actors").at(0).set("role", "Unknown"); },
-                  "unknown Role");
-    model_rejects([](auto model) { model.get("messages").at(0).set("arrow", "Unknown"); },
-                  "unknown Arrow");
-    model_rejects([](auto model) { model.get("messages").at(0).set("number", 0); },
-                  "DisplayText hidden-number mismatch");
-    model_rejects([](auto model) { model.get("messages").at(0).set("number", "1"); },
-                  "DisplayText hidden-number mismatch");
-    model_rejects([](auto model) { model.get("order").at(0).set("kind", "Unknown"); },
-                  "unknown ordered kind");
-    model_rejects([](auto model) { model.get("messages").at(0).set("central_to", 0); },
-                  "message flag/type mismatch");
-    model_rejects([](auto model) { model.get("actors").at(0).set("role", "Control"); },
-                  "Model/check summary mismatch");
-    for (std::size_t n = kRoleBatchLegacyCases; n < kRoleBatchRoleCases; ++n)
+    if (group == 0) {
+        auto original_model_facts = json::parse(fact_bytes);
+        ASSERT_TRUE(original_model_facts);
+        std::optional<std::size_t> fragment_case;
+        for (std::size_t n = 0; n < kRoleBatchCases && !fragment_case; ++n)
+            if (original_model_facts->root()
+                    .get("cases")
+                    .at(n)
+                    .get("model")
+                    .get("fragments")
+                    .size() > 0)
+                fragment_case = n;
+        ASSERT_TRUE(fragment_case);
         model_rejects([](auto model) { model.get("fragments").at(0).set("kind", "Unknown"); },
-                      "unknown fragment kind", n);
-    EXPECT_EQ(role_batch_case_scope(kRoleBatchRoleCases), kRoleBatchHalfScope);
-    for (std::size_t n = kRoleBatchRoleCases; n < kRoleBatchPriorCases; ++n) {
-        SCOPED_TRACE(n);
-        const auto promotion = kRoleBatchRolePromotions + n - kRoleBatchRoleCases;
-        model_rejects([](auto model) { model.get("messages").at(0).set("arrow", "HalfUnknown"); },
-                      "unknown Arrow", n);
-        model_rejects(
-            [](auto model) {
-                const auto old = model.get("messages").at(0).get("arrow").as_str();
-                const auto changed = old.ends_with("Reverse")
-                                         ? std::string(old.substr(0, old.size() - 7))
-                                         : std::string(old) + "Reverse";
-                model.get("messages").at(0).set("arrow", changed);
-            },
-            "half source Message/order witness mismatch", n);
-        model_rejects([](auto model) { model.get("order").at(0).set("index", 1); },
-                      "half source Message/order witness mismatch", n);
-        policy_rejects(
-            [&](auto root) { root.get("promotions").at(promotion).set("case_index", 0); },
-            "case identity mismatch");
-        policy_rejects(
-            [&](auto root) { root.get("promotions").at(promotion).set("raw_sha256", "wrong"); },
-            "raw binding mismatch");
-        policy_rejects(
-            [&](auto root) { root.get("promotions").at(promotion).set("body_sha256", "wrong"); },
-            "exact body binding mismatch");
-        policy_rejects(
-            [&](auto root) {
-                root.get("promotions").at(promotion).set("snapshot_sha256", "wrong");
-            },
-            "snapshot SHA mismatch");
-        policy_rejects(
-            [&](auto root) {
-                root.get("promotions")
-                    .at(promotion)
-                    .get("effective")
-                    .get("checks")
-                    .set("arrows", 1);
-            },
-            "Model/check summary mismatch");
-        policy_rejects(
-            [&](auto root) {
-                root.get("promotions").at(promotion).set("reason", kRoleBatchAppendedScope);
-            },
-            "foreign pending scope mismatch");
-        const auto wrong_id = projection_mutate(fact_bytes, [&](auto root) {
-            root.get("cases").at(n).set(
-                "id",
-                std::string("official-role-body/") +
-                    std::string(root.get("cases").at(n).get("body_sha256").as_str().substr(0, 16)));
-        });
-        rejects(policy_bytes, wrong_id, "source case identity mismatch");
+                      "unknown fragment kind", *fragment_case);
+        model_rejects([](auto model) { model.get("actors").at(0).set("role", "Unknown"); },
+                      "unknown Role");
+        model_rejects([](auto model) { model.get("messages").at(0).set("arrow", "Unknown"); },
+                      "unknown Arrow");
+        model_rejects([](auto model) { model.get("messages").at(0).set("number", 0); },
+                      "DisplayText hidden-number mismatch");
+        model_rejects([](auto model) { model.get("messages").at(0).set("number", "1"); },
+                      "DisplayText hidden-number mismatch");
+        model_rejects([](auto model) { model.get("order").at(0).set("kind", "Unknown"); },
+                      "unknown ordered kind");
+        model_rejects([](auto model) { model.get("messages").at(0).set("central_to", 0); },
+                      "message flag/type mismatch");
+        model_rejects([](auto model) { model.get("actors").at(0).set("role", "Control"); },
+                      "Model/check summary mismatch");
+        for (std::size_t n = kRoleBatchLegacyCases; n < kRoleBatchRoleCases; ++n)
+            model_rejects([](auto model) { model.get("fragments").at(0).set("kind", "Unknown"); },
+                          "unknown fragment kind", n);
+        EXPECT_EQ(role_batch_case_scope(kRoleBatchRoleCases), kRoleBatchHalfScope);
     }
-    EXPECT_EQ(role_batch_case_scope(kRoleBatchPriorCases - 1), kRoleBatchHalfScope);
-    EXPECT_EQ(role_batch_case_scope(kRoleBatchPriorCases), kRoleBatchConfigScope);
-    EXPECT_THROW(role_batch_model(config_authority.root().get("cases").at(0), kRoleBatchCases),
-                 std::runtime_error);
+    if (group == 1)
+        for (std::size_t n = kRoleBatchRoleCases; n < kRoleBatchPriorCases; ++n) {
+            SCOPED_TRACE(n);
+            const auto promotion = kRoleBatchRolePromotions + n - kRoleBatchRoleCases;
+            model_rejects(
+                [](auto model) { model.get("messages").at(0).set("arrow", "HalfUnknown"); },
+                "unknown Arrow", n);
+            model_rejects(
+                [](auto model) {
+                    const auto old = model.get("messages").at(0).get("arrow").as_str();
+                    const auto changed = old.ends_with("Reverse")
+                                             ? std::string(old.substr(0, old.size() - 7))
+                                             : std::string(old) + "Reverse";
+                    model.get("messages").at(0).set("arrow", changed);
+                },
+                "half source Message/order witness mismatch", n);
+            model_rejects([](auto model) { model.get("order").at(0).set("index", 1); },
+                          "half source Message/order witness mismatch", n);
+            policy_rejects(
+                [&](auto root) { root.get("promotions").at(promotion).set("case_index", 0); },
+                "case identity mismatch");
+            policy_rejects(
+                [&](auto root) { root.get("promotions").at(promotion).set("raw_sha256", "wrong"); },
+                "raw binding mismatch");
+            policy_rejects(
+                [&](auto root) {
+                    root.get("promotions").at(promotion).set("body_sha256", "wrong");
+                },
+                "exact body binding mismatch");
+            policy_rejects(
+                [&](auto root) {
+                    root.get("promotions").at(promotion).set("snapshot_sha256", "wrong");
+                },
+                "snapshot SHA mismatch");
+            policy_rejects(
+                [&](auto root) {
+                    root.get("promotions")
+                        .at(promotion)
+                        .get("effective")
+                        .get("checks")
+                        .set("arrows", 1);
+                },
+                "Model/check summary mismatch");
+            policy_rejects(
+                [&](auto root) {
+                    root.get("promotions").at(promotion).set("reason", kRoleBatchAppendedScope);
+                },
+                "foreign pending scope mismatch");
+            const auto wrong_id = projection_mutate(fact_bytes, [&](auto root) {
+                root.get("cases").at(n).set(
+                    "id",
+                    std::string("official-role-body/") +
+                        std::string(
+                            root.get("cases").at(n).get("body_sha256").as_str().substr(0, 16)));
+            });
+            rejects(policy_bytes, wrong_id, "source case identity mismatch");
+        }
+    if (group == 0) {
+        EXPECT_EQ(role_batch_case_scope(kRoleBatchPriorCases - 1), kRoleBatchHalfScope);
+        EXPECT_EQ(role_batch_case_scope(kRoleBatchPriorCases), kRoleBatchConfigScope);
+        EXPECT_THROW(role_batch_model(config_authority.root().get("cases").at(0), kRoleBatchCases),
+                     std::runtime_error);
+    }
     // Every new source uses its direct fields, with one promotion and an actual
     // independently pinned source authority. Refresh coupled hashes below.
     for (std::size_t n = kRoleBatchPriorCases; n < kRoleBatchCases; ++n) {
+        if (group != 2 + static_cast<int>((n - kRoleBatchPriorCases) / 10)) continue;
         SCOPED_TRACE(n);
         const auto promotion = kRoleBatchPriorPromotions + n - kRoleBatchPriorCases;
         policy_rejects(
@@ -8972,23 +9593,28 @@ TEST(MermaidOfficial, RoleBodyBatchParsedMutationsReachTheirSpecificTupleAndSche
                           "unknown Arrow", n);
         }
     }
-    auto duplicate_keys = policy_bytes;
-    duplicate_keys.insert(duplicate_keys.find('{') + 1, "\"schema\":1,");
-    rejects(duplicate_keys, fact_bytes, "duplicate object key");
-    // Add an unreferenced raw-source occurrence without duplicating any actual
-    // promoted path; the final frequency guard, not a duplicate-path check, fires.
-    const auto original_facts = json::parse(fact_bytes);
-    ASSERT_TRUE(original_facts);
-    json::JsonMutDoc wrong_frequency;
-    auto changed_root = wrong_frequency.copy_val(original_facts->root());
-    auto extra = wrong_frequency.copy_val(
-        original_facts->root().get("cases").at(0).get("original_bindings").at(0));
-    extra.set("path", "sequence/not-promoted.mmd");
-    changed_root.get("cases").at(0).get("original_bindings").append(extra);
-    wrong_frequency.set_root(changed_root);
-    rejects(policy_bytes, wrong_frequency.to_string(),
-            "case occurrence mismatch/unreferenced case");
+    if (group == 0) {
+        auto duplicate_keys = policy_bytes;
+        duplicate_keys.insert(duplicate_keys.find('{') + 1, "\"schema\":1,");
+        rejects(duplicate_keys, fact_bytes, "duplicate object key");
+        // Add an unreferenced raw-source occurrence without duplicating any actual
+        // promoted path; the final frequency guard, not a duplicate-path check, fires.
+        const auto original_facts = json::parse(fact_bytes);
+        ASSERT_TRUE(original_facts);
+        json::JsonMutDoc wrong_frequency;
+        auto changed_root = wrong_frequency.copy_val(original_facts->root());
+        auto extra = wrong_frequency.copy_val(
+            original_facts->root().get("cases").at(0).get("original_bindings").at(0));
+        extra.set("path", "sequence/not-promoted.mmd");
+        changed_root.get("cases").at(0).get("original_bindings").append(extra);
+        wrong_frequency.set_root(changed_root);
+        rejects(policy_bytes, wrong_frequency.to_string(),
+                "case occurrence mismatch/unreferenced case");
+    }
 }
+
+INSTANTIATE_TEST_SUITE_P(IndependentCohorts, MermaidOfficialRoleBatchMutation,
+                         ::testing::Values(0, 1, 2, 3, 4, 5, 6));
 
 TEST(MermaidOfficial, RoleBodyBatchSelectorAndConsumedOnceKeepBothDescriptorCoordinates) {
     const auto policy = json::parse(read_file(kNativeRoot / kRoleBatchBinding.policy_file));
@@ -10321,6 +10947,186 @@ void stage_c_geometry(const StageBFrames& frames, const relations_oracle::Model&
                         row.status[2] == "drawn";
 }
 
+bool class_style13_owned(const Observation& row) {
+    return row.class_style13_original || row.raw_active_schema == class_style13::kContract ||
+           row.raw_source_authority == class_style13::kAuthority ||
+           (row.track == "original" && class_style13::index(row.path).has_value());
+}
+
+Observation run_class_style13_case(JsonVal fixture, std::size_t global, std::size_t selected,
+                                   const relations_oracle::OfficialClass285Documents& docs,
+                                   const relations_oracle::OfficialClass285Originals& originals,
+                                   relations_oracle::Work& work, std::size_t observation_size,
+                                   std::size_t observation_capacity,
+                                   std::optional<std::size_t> cutoff,
+                                   std::string_view publication_owner) {
+    using namespace relations_oracle;
+    require(selected < class_style13::kPins.size(), "Class13 builder source index");
+    const auto& pin = class_style13::kPins[selected];
+    work.spend(class_style13::kReportReserve + 8u * sizeof(Observation) + 32768u);
+    require(observation_size <= 2738u && observation_capacity <= 8192u,
+            "Class13 observation vector bound");
+    const auto slots = observation_size == observation_capacity
+                           ? std::max(observation_capacity * 2u, observation_size + 1u)
+                           : 0u;
+    stage_b_product(work, slots + (slots ? observation_size : 0u) + 1u,
+                    2u * sizeof(Observation) + 16u);
+    Observation row;
+    row.class_style13_original = true;
+    row.path = pin.fixture;
+    row.track = "original";
+    row.type = "class-diagram";
+    row.role_case_index = pin.ordinal;
+    row.raw_active_schema = class_style13::kContract;
+    row.raw_source_authority = class_style13::kAuthority;
+    row.errors.reserve(4u);
+    row.expected = "drawn";
+    row.expected_states = {"drawn", "source_fallback", "drawn"};
+    row.reason = "Whole Class13 source geometry and semantic cell attributes; foreign assertions "
+                 "remain debt";
+    row.decision_reasons.fill(
+        "Source-bound complete Class geometry, legend and all cell attributes");
+    row.decision_reasons[1] =
+        "Ordinary source glyph/background/flags/links; caller-language token foreground";
+    if (fixture.has("raw")) row.projection_baseline = fixture.get("raw").to_string();
+    auto result = class_style13::run(
+        selected, pin.ordinal, global, fixture, work, kSentinel,
+        [&](const auto& frames, Work& paid) {
+            class_style13::publish_file(publication_owner, selected, frames, paid);
+        },
+        cutoff);
+    if (result.progress.published) {
+        try {
+            const auto historical = official_class285_bind(
+                docs.facts.root().get("cases").at(pin.ordinal), pin.ordinal, docs, originals, work);
+            require(historical.meaning.is_null() && !historical.dagre && !historical.classifier &&
+                        !historical.unused_definitions && !historical.notes &&
+                        !historical.accessibility,
+                    "Class13 disjoint immutable whole-null history");
+        } catch (const std::exception& error) {
+            class_style13::invalidate(result, error, work);
+        }
+    }
+    if (result.progress.remaining[7] >= 0)
+        result.progress.remaining[7] = static_cast<std::int64_t>(work.left);
+    row.source_sha256 = result.actual_source_sha;
+    row.role_model_sha = result.decoded_model_sha;
+    if (!result.error.empty()) row.errors.push_back(result.error);
+    row.raw_source_constraints = class_style13::proof(selected, pin.ordinal, global, result);
+    const auto parsed = json::parse(row.raw_source_constraints);
+    require(parsed.has_value(), "Class13 builder strict proof JSON");
+    const class_style13::ProofBinding binding{
+        row.path,
+        row.track,
+        row.type,
+        row.source_sha256,
+        row.role_model_sha,
+        row.raw_source_authority,
+        row.raw_active_schema,
+        row.role_case_index,
+        global,
+        {result.status[0], result.status[1], result.status[2]},
+        row.class_style13_original,
+        !row.errors.empty(),
+        class_style13::failure_flags(result.progress)};
+    static_cast<void>(class_style13::count(parsed->root(), binding));
+    row.class_style13_failure_flags =
+        static_cast<unsigned char>(class_style13::failure_flags(result.progress));
+    row.status = std::move(result.status);
+    return row;
+}
+
+bool class_defined6_owned(const Observation& row) {
+    return row.class_defined6_original || row.raw_active_schema == class_defined6::kContract ||
+           row.raw_source_authority == class_defined6::kAuthority ||
+           (row.track == "original" && class_defined6::index(row.path).has_value());
+}
+
+Observation run_class_defined6_case(JsonVal fixture, std::size_t global, std::size_t selected,
+                                    const relations_oracle::OfficialClass285Documents& docs,
+                                    const relations_oracle::OfficialClass285Originals& originals,
+                                    relations_oracle::Work& work, std::size_t observation_size,
+                                    std::size_t observation_capacity,
+                                    std::optional<std::size_t> cutoff,
+                                    std::string_view publication_owner) {
+    using namespace relations_oracle;
+    require(selected < class_defined6::kPins.size(), "ClassDefined6 builder source index");
+    const auto& pin = class_defined6::kPins[selected];
+    work.spend(class_defined6::kReportReserve + 8u * sizeof(Observation) + 32768u);
+    require(observation_size <= 2738u && observation_capacity <= 8192u,
+            "ClassDefined6 observation vector bound");
+    const auto slots = observation_size == observation_capacity
+                           ? std::max(observation_capacity * 2u, observation_size + 1u)
+                           : 0u;
+    stage_b_product(work, slots + (slots ? observation_size : 0u) + 1u,
+                    2u * sizeof(Observation) + 16u);
+    Observation row;
+    row.class_defined6_original = true;
+    row.path = pin.fixture;
+    row.track = "original";
+    row.type = "class-diagram";
+    row.role_case_index = pin.ordinal;
+    row.raw_active_schema = class_defined6::kContract;
+    row.raw_source_authority = class_defined6::kAuthority;
+    row.errors.reserve(4u);
+    row.expected = "drawn";
+    row.expected_states = {"drawn", "source_fallback", "drawn"};
+    row.reason = "Whole ClassDefined6 source geometry and semantic cell attributes; foreign "
+                 "assertions remain debt";
+    row.decision_reasons.fill(
+        "Source-bound complete Class geometry, legend and all cell attributes");
+    row.decision_reasons[1] =
+        "Ordinary source glyph/background/flags/links; caller-language token foreground";
+    if (fixture.has("raw")) row.projection_baseline = fixture.get("raw").to_string();
+    auto result = class_defined6::run(
+        selected, pin.ordinal, global, fixture, work, kSentinel,
+        [&](const auto& frames, Work& paid) {
+            class_defined6::publish_file(publication_owner, selected, frames, paid);
+        },
+        cutoff);
+    if (result.progress.published) {
+        try {
+            const auto historical = official_class285_bind(
+                docs.facts.root().get("cases").at(pin.ordinal), pin.ordinal, docs, originals, work);
+            require(historical.meaning.is_null() && !historical.dagre && !historical.classifier &&
+                        !historical.unused_definitions && !historical.notes &&
+                        !historical.accessibility,
+                    "ClassDefined6 disjoint immutable whole-null history");
+        } catch (const std::exception& error) {
+            class_defined6::invalidate(result, error, work);
+        }
+    }
+    if (result.progress.remaining[7] >= 0)
+        result.progress.remaining[7] = static_cast<std::int64_t>(work.left);
+    if (result.progress.remaining[7] >= 0)
+        result.progress.remaining[7] = static_cast<std::int64_t>(work.left);
+    row.source_sha256 = result.actual_source_sha;
+    row.role_model_sha = result.decoded_model_sha;
+    if (!result.error.empty()) row.errors.push_back(result.error);
+    row.raw_source_constraints = class_defined6::proof(selected, pin.ordinal, global, result);
+    const auto parsed = json::parse(row.raw_source_constraints);
+    require(parsed.has_value(), "ClassDefined6 builder strict proof JSON");
+    const class_defined6::ProofBinding binding{
+        row.path,
+        row.track,
+        row.type,
+        row.source_sha256,
+        row.role_model_sha,
+        row.raw_source_authority,
+        row.raw_active_schema,
+        row.role_case_index,
+        global,
+        {result.status[0], result.status[1], result.status[2]},
+        row.class_defined6_original,
+        !row.errors.empty(),
+        class_defined6::failure_flags(result.progress)};
+    static_cast<void>(class_defined6::count(parsed->root(), binding));
+    row.class_defined6_failure_flags =
+        static_cast<unsigned char>(class_defined6::failure_flags(result.progress));
+    row.status = std::move(result.status);
+    return row;
+}
+
 Observation run_class285_case(JsonVal fixture, std::size_t global,
                               const relations_oracle::OfficialClass285Documents& docs,
                               const relations_oracle::OfficialClass285Originals& originals,
@@ -10396,8 +11202,10 @@ Observation run_class285_case(JsonVal fixture, std::size_t global,
         progress.classifier = selected.classifier;
         progress.unused_definitions = selected.unused_definitions;
         progress.notes = selected.notes;
+        progress.accessibility = selected.accessibility;
         progress.remaining[2] = work.left;
-        row.raw_source_authority = selected.notes ? "source_approved_Notes18"
+        row.raw_source_authority = selected.accessibility ? "source_approved_accessibility4"
+                                   : selected.notes       ? "source_approved_Notes18"
                                    : selected.unused_definitions
                                        ? "source_approved_unused_classDef3"
                                    : selected.classifier ? "source_approved_classifier26"
@@ -10473,9 +11281,17 @@ Observation run_class285_case(JsonVal fixture, std::size_t global,
     info.set("restored_cells_equal", progress.restored_equal);
     info.set("narrow_ordinary_protocol", progress.narrow_ordinary);
     info.set("dagre38", progress.dagre);
+    info.set("accessibility_supplement_sha256",
+             progress.accessibility ? kClassAccessibility4Sha : std::string_view{""});
+    info.set("accessibility_title",
+             progress.accessibility ? std::string_view{"This is a title"} : std::string_view{""});
+    info.set("accessibility_description", progress.accessibility
+                                              ? std::string_view{"This is a description"}
+                                              : std::string_view{""});
     info.set("classifier26", progress.classifier);
     info.set("unused_classDef3", progress.unused_definitions);
     info.set("Notes18", progress.notes);
+    info.set("accessibility4", progress.accessibility);
     info.set("exception", progress.exception);
     info.set("verification_resource_exhausted", progress.resource);
     info.set("initial_verification_budget", static_cast<std::int64_t>(kStageCVerificationBudget));
@@ -10501,6 +11317,77 @@ StageCCounts stage_c_counts(const std::vector<Observation>& rows) {
     StageCCounts counts;
     std::array<bool, 285> seen{};
     for (const auto& row : rows) {
+        if (class_style13_owned(row)) {
+            require(row.role_case_index < 285u && !seen[row.role_case_index],
+                    "Class13 duplicate or unknown consumed original");
+            seen[row.role_case_index] = true;
+            require(row.raw_source_constraints.size() <= class_style13::kProofLimit,
+                    "Class13 bounded owned report");
+            const auto parsed = json::parse(row.raw_source_constraints);
+            require(parsed.has_value(), "Class13 owned report JSON");
+            const auto selected = class_style13::index(row.path);
+            require(selected.has_value(), "Class13 consumed source pin");
+            const auto& pin = class_style13::kPins[*selected];
+            const class_style13::ProofBinding binding{row.path,
+                                                      row.track,
+                                                      row.type,
+                                                      row.source_sha256,
+                                                      row.role_model_sha,
+                                                      row.raw_source_authority,
+                                                      row.raw_active_schema,
+                                                      row.role_case_index,
+                                                      pin.global,
+                                                      {row.status[0], row.status[1], row.status[2]},
+                                                      row.class_style13_original,
+                                                      !row.errors.empty(),
+                                                      row.class_style13_failure_flags};
+            const auto proof = class_style13::count(parsed->root(), binding);
+            ++counts.visited;
+            counts.observed += proof.observed;
+            counts.bound += proof.bound;
+            counts.decoded += proof.decoded;
+            counts.admitted += proof.admitted;
+            counts.styles += proof.decoded;
+            counts.errors += !row.errors.empty();
+            counts.resources += proof.resource;
+            continue;
+        }
+        if (class_defined6_owned(row)) {
+            require(row.role_case_index < 285u && !seen[row.role_case_index],
+                    "ClassDefined6 duplicate or unknown consumed original");
+            seen[row.role_case_index] = true;
+            require(row.raw_source_constraints.size() <= class_defined6::kProofLimit,
+                    "ClassDefined6 bounded owned report");
+            const auto parsed = json::parse(row.raw_source_constraints);
+            require(parsed.has_value(), "ClassDefined6 owned report JSON");
+            const auto selected = class_defined6::index(row.path);
+            require(selected.has_value(), "ClassDefined6 consumed source pin");
+            const auto& pin = class_defined6::kPins[*selected];
+            const class_defined6::ProofBinding binding{
+                row.path,
+                row.track,
+                row.type,
+                row.source_sha256,
+                row.role_model_sha,
+                row.raw_source_authority,
+                row.raw_active_schema,
+                row.role_case_index,
+                pin.global,
+                {row.status[0], row.status[1], row.status[2]},
+                row.class_defined6_original,
+                !row.errors.empty(),
+                row.class_defined6_failure_flags};
+            const auto proof = class_defined6::count(parsed->root(), binding);
+            ++counts.visited;
+            counts.observed += proof.observed;
+            counts.bound += proof.bound;
+            counts.decoded += proof.decoded;
+            counts.admitted += proof.admitted;
+            counts.defined_styles += proof.decoded;
+            counts.errors += !row.errors.empty();
+            counts.resources += proof.resource;
+            continue;
+        }
         if (row.raw_active_schema != kStageCContract) continue;
         require(row.role_case_index < 285u && !seen[row.role_case_index],
                 "StageC duplicate or unknown consumed original");
@@ -10518,9 +11405,27 @@ StageCCounts stage_c_counts(const std::vector<Observation>& rows) {
         counts.observed += yes("five_captures_complete");
         counts.bound += yes("source_bound");
         counts.decoded += yes("whole_Model_decoded");
+        const bool accessibility = yes("accessibility4");
+        if (yes("whole_Model_decoded") &&
+            relations_oracle::class_accessibility4_index(row.role_case_index))
+            require(accessibility, "Class accessibility4 decoded report lacks metadata proof");
+        if (accessibility) {
+            const auto index = relations_oracle::class_accessibility4_index(row.role_case_index);
+            require(index.has_value(), "Class accessibility4 unknown report ordinal");
+            const auto& pin = relations_oracle::kClassAccessibility4Pins[*index];
+            require(row.path == pin.fixture && row.source_sha256 == pin.source_sha &&
+                        row.role_model_sha == relations_oracle::kClassAccessibility4ModelSha &&
+                        row.raw_source_authority == "source_approved_accessibility4" &&
+                        info.get_string("accessibility_supplement_sha256") ==
+                            relations_oracle::kClassAccessibility4Sha &&
+                        info.get_string("accessibility_title") == "This is a title" &&
+                        info.get_string("accessibility_description") == "This is a description",
+                    "Class accessibility4 inconsistent report binding");
+        }
         const bool admitted = yes("whole_source_admitted");
         if (admitted)
-            require(yes("five_captures_complete") && yes("source_bound") &&
+            require(!yes("verification_resource_exhausted") && !yes("exception") &&
+                        yes("five_captures_complete") && yes("source_bound") &&
                         yes("whole_Model_decoded") && !yes("whole_null_pending") &&
                         yes("restored_cells_equal") && row.errors.empty() &&
                         row.status[0] == "drawn" && row.status[2] == "drawn" &&
@@ -10532,6 +11437,7 @@ StageCCounts stage_c_counts(const std::vector<Observation>& rows) {
         counts.classifier += yes("classifier26");
         counts.unused_definitions += yes("unused_classDef3");
         counts.notes += yes("Notes18");
+        counts.accessibility += yes("accessibility4");
         counts.errors += !row.errors.empty();
         counts.resources += yes("verification_resource_exhausted");
     }
@@ -10624,6 +11530,8 @@ TEST(MermaidOfficialStageC, DirectWholeSceneContractKeepsBusinessFooterAndProtoc
         info.set("classifier26", false);
         info.set("unused_classDef3", false);
         info.set("Notes18", false);
+        info.set("accessibility4", false);
+        info.set("exception", false);
         info.set("verification_resource_exhausted", false);
         metadata.set_root(info);
         malformed.raw_source_constraints = metadata.to_string();
@@ -10983,7 +11891,8 @@ void official_flow_classic_keys(JsonVal value) {
 std::string official_flow_group_endpoint15_info(const OfficialFlowProgress& p,
                                                 std::size_t remaining, std::size_t expected,
                                                 std::size_t rejected,
-                                                std::size_t manifest_global_ordinal) {
+                                                std::size_t manifest_global_ordinal,
+                                                bool p0 = false) {
     json::JsonMutDoc doc;
     auto info = doc.object();
     info.set("five_captures_complete", p.captured);
@@ -10996,7 +11905,8 @@ std::string official_flow_group_endpoint15_info(const OfficialFlowProgress& p,
     info.set("semantic_mutations_complete", p.mutated);
     info.set("verification_resource_exhausted", p.resource);
     info.set("captured_frames", static_cast<int64_t>(p.captures));
-    info.set("source_supplement_sha256", flow_oracle::kFlow400GroupEndpoint15AssetSha);
+    info.set("source_supplement_sha256",
+             p0 ? flow_oracle::kFlowP0AssetSha : flow_oracle::kFlow400GroupEndpoint15AssetSha);
     info.set("manifest_global_ordinal", static_cast<int64_t>(manifest_global_ordinal));
     info.set("group_endpoint15_mutations_expected", static_cast<int64_t>(expected));
     info.set("group_endpoint15_mutations_rejected", static_cast<int64_t>(rejected));
@@ -11039,6 +11949,257 @@ void official_flow_group_endpoint15_keys(JsonVal value) {
     });
     require(std::ranges::all_of(seen, [](bool present) { return present; }),
             "OfficialFlow400 GroupEndpoint15 metadata missing key");
+}
+
+std::string official_flow_p0_length_info(const OfficialFlowProgress& p, std::size_t remaining,
+                                         std::size_t expected, std::size_t rejected,
+                                         std::size_t global) {
+    json::JsonMutDoc doc;
+    auto info = doc.raw_json(
+        official_flow_group_endpoint15_info(p, remaining, expected, rejected, global, true));
+    doc.set_root(info);
+    info.set("linkprofile3_reused_asset_sha256", flow_oracle::kFlow400LinkProfile3AssetSha);
+    info.set("linkprofile3_reused_case_id", "link_profile_294");
+    info.set("linkprofile3_reused_source_sha256", flow_oracle::kFlowP0LengthSourceSha);
+    auto text = doc.to_string();
+    require(text.size() <= 2048u, "Official Flow P0 length metadata bound");
+    return text;
+}
+
+void official_flow_p0_length_keys(JsonVal value) {
+    constexpr std::array<std::string_view, 21> keys{{"five_captures_complete",
+                                                     "source_bound",
+                                                     "whole_Model_decoded",
+                                                     "whole_null_pending",
+                                                     "whole_source_admitted",
+                                                     "restored_cells_equal",
+                                                     "narrow_ordinary",
+                                                     "semantic_mutations_complete",
+                                                     "verification_resource_exhausted",
+                                                     "captured_frames",
+                                                     "phase",
+                                                     "remaining",
+                                                     "height",
+                                                     "phase_remaining",
+                                                     "source_supplement_sha256",
+                                                     "manifest_global_ordinal",
+                                                     "group_endpoint15_mutations_expected",
+                                                     "group_endpoint15_mutations_rejected",
+                                                     "linkprofile3_reused_asset_sha256",
+                                                     "linkprofile3_reused_case_id",
+                                                     "linkprofile3_reused_source_sha256"}};
+    require(value.is_obj() && value.size() == keys.size(),
+            "Official Flow P0 length proof key count");
+    std::array<bool, keys.size()> seen{};
+    value.iter_obj([&](JsonVal key, JsonVal) {
+        const auto name = flow_oracle::flow400_text(key);
+        const auto at = std::ranges::find(keys, name);
+        require(at != keys.end(), "Official Flow P0 length unknown proof key");
+        const auto index = static_cast<std::size_t>(at - keys.begin());
+        require(!seen[index], "Official Flow P0 length duplicate proof key");
+        seen[index] = true;
+    });
+    require(std::ranges::all_of(seen, [](bool flag) { return flag; }),
+            "Official Flow P0 length missing proof key");
+}
+
+std::size_t official_flow_p0_length_identity(JsonVal supplement, const Observation& row,
+                                             JsonVal info) {
+    using namespace flow_oracle;
+    require(flow_p0_length_candidate(row.role_case_index) &&
+                row.raw_source_authority == kFlowP0LengthAuthority,
+            "Official Flow P0 length source/domain tuple");
+    require(info.get_string("linkprofile3_reused_asset_sha256") == kFlow400LinkProfile3AssetSha &&
+                info.get_string("linkprofile3_reused_case_id") == "link_profile_294" &&
+                info.get_string("linkprofile3_reused_source_sha256") == kFlowP0LengthSourceSha,
+            "Official Flow P0 length reuse proof identity");
+    const auto cases = supplement.get("cases");
+    require(cases.is_arr() && cases.size() == 3u,
+            "Official Flow P0 length reviewed authority unavailable");
+    const auto selected = cases.at(1u), base = selected.get("base_authority");
+    require(selected.get_string("case_id") == "link_profile_294" &&
+                base.get_int("ordinal") == 294 && base.get_int("manifest_global_ordinal") == 955 &&
+                selected.get_string("source_sha256") == kFlowP0LengthSourceSha &&
+                selected.get_string("link_model_sha256") == kFlowP0LengthBaseSha &&
+                selected.get_string("link_profile_sha256") == kFlowP0LengthProfileSha,
+            "Official Flow P0 length reviewed authority exact tuple");
+    const auto raw_source = flow400_text(selected.get("source")),
+               raw_model = flow400_text(selected.get("link_model_json")),
+               raw_profile = flow400_text(selected.get("link_profile_json"));
+    require(raw_source.size() <= 8192u && raw_model.size() <= 8192u && raw_profile.size() <= 8192u,
+            "Official Flow P0 length prepaid reused bytes bound");
+    require(digest(raw_source) == kFlowP0LengthSourceSha &&
+                digest(raw_model) == kFlowP0LengthBaseSha &&
+                digest(raw_profile) == kFlowP0LengthProfileSha,
+            "Official Flow P0 length reused authority bytes");
+    return flow400_linkprofile3_expected(selected);
+}
+
+std::string official_flow_strand_info(const OfficialFlowProgress& p, const Observation& row,
+                                      std::size_t remaining, std::size_t expected,
+                                      std::size_t rejected, std::size_t global) {
+    json::JsonMutDoc doc;
+    auto info = doc.raw_json(
+        official_flow_group_endpoint15_info(p, remaining, expected, rejected, global, true));
+    doc.set_root(info);
+    static_cast<void>(info.remove("group_endpoint15_mutations_expected"));
+    static_cast<void>(info.remove("group_endpoint15_mutations_rejected"));
+    info.set("strand_mutations_expected", static_cast<int64_t>(expected));
+    info.set("strand_mutations_rejected", static_cast<int64_t>(rejected));
+    info.set("geometry_inconclusive", p.strand_inconclusive);
+    info.set("discovery_debited", static_cast<int64_t>(row.strand_discovery_paid));
+    auto outcomes = info.make_arr(), counts = info.make_arr(), reasons = info.make_arr();
+    for (std::size_t at = 0u; at < 3u; ++at) {
+        std::string_view outcome = "not_observed";
+        std::size_t count = 0u;
+        int reason = 0;
+        if (at == 1u && p.strand_narrow_source)
+            outcome = "ordinary_source";
+        else if (p.strand_observed[at]) {
+            const auto& result = p.strand_results[at];
+            outcome = result.outcome == flow_oracle::strands::Outcome::Match      ? "match"
+                      : result.outcome == flow_oracle::strands::Outcome::Mismatch ? "mismatch"
+                                                                                  : "inconclusive";
+            count = result.physical_edges;
+            reason = static_cast<int>(result.reason);
+        }
+        outcomes.append(outcomes.make_str(outcome));
+        counts.append(counts.make_num(static_cast<int64_t>(count)));
+        reasons.append(reasons.make_num(reason));
+    }
+    info.add("physical_outcomes", outcomes);
+    info.add("physical_edge_counts", counts);
+    info.add("physical_reasons", reasons);
+    auto text = doc.to_string();
+    require(text.size() <= 2048u, "Official Flow strand prepaid proof size");
+    return text;
+}
+
+void official_flow_strand_keys(JsonVal value) {
+    constexpr std::array<std::string_view, 23> keys{{"five_captures_complete",
+                                                     "source_bound",
+                                                     "whole_Model_decoded",
+                                                     "whole_null_pending",
+                                                     "whole_source_admitted",
+                                                     "restored_cells_equal",
+                                                     "narrow_ordinary",
+                                                     "semantic_mutations_complete",
+                                                     "verification_resource_exhausted",
+                                                     "captured_frames",
+                                                     "phase",
+                                                     "remaining",
+                                                     "height",
+                                                     "phase_remaining",
+                                                     "source_supplement_sha256",
+                                                     "manifest_global_ordinal",
+                                                     "strand_mutations_expected",
+                                                     "strand_mutations_rejected",
+                                                     "geometry_inconclusive",
+                                                     "discovery_debited",
+                                                     "physical_outcomes",
+                                                     "physical_edge_counts",
+                                                     "physical_reasons"}};
+    require(value.is_obj() && value.size() == keys.size(),
+            "Official Flow strand exact proof key count");
+    std::array<bool, keys.size()> seen{};
+    value.iter_obj([&](JsonVal key, JsonVal) {
+        const auto name = flow_oracle::flow400_text(key);
+        const auto at = std::ranges::find(keys, name);
+        require(at != keys.end(), "Official Flow strand unknown proof key");
+        const auto index = static_cast<std::size_t>(at - keys.begin());
+        require(!seen[index], "Official Flow strand duplicate proof key");
+        seen[index] = true;
+    });
+    require(std::ranges::all_of(seen, [](bool flag) { return flag; }),
+            "Official Flow strand missing proof key");
+}
+
+std::size_t official_flow_strand_identity(const Observation& row, JsonVal info) {
+    const auto index = flow_oracle::flow_p0_strand_index(row.role_case_index);
+    require(index.has_value(), "Official Flow strand original source ordinal");
+    const auto& pin = flow_oracle::kFlowP0Pins[*index];
+    require(row.raw_source_authority == flow_oracle::kFlowP0StrandAuthority &&
+                row.track == "original" && row.type == "flowchart" && row.path == pin.fixture &&
+                row.source_sha256 == pin.source_sha && row.role_model_sha == pin.model_sha &&
+                info.get("manifest_global_ordinal").is_int() &&
+                info.get_int("manifest_global_ordinal") == static_cast<int64_t>(pin.global),
+            "Official Flow strand complete source/Model identity");
+    const auto debit = flow_oracle::flow400_number(info.get("discovery_debited"));
+    require(row.strand_discovery_paid > 0u && row.strand_discovery_paid <= 24000000u &&
+                debit == row.strand_discovery_paid,
+            "Official Flow strand trusted discovery debit");
+    return flow_oracle::strands::kRequiredMutations;
+}
+
+void official_flow_strand_physical_proof(const Observation& row, JsonVal info, bool captured,
+                                         bool bound, bool decoded, bool pending, bool admitted,
+                                         bool ordinary, bool mutated, bool resource) {
+    const auto index = flow_oracle::flow_p0_strand_index(row.role_case_index);
+    require(index.has_value(), "Official Flow strand physical source");
+    const auto expected_edges = *index == 4u ? 14u : 3u;
+    require(!pending && (!bound || captured) && (!decoded || bound) && (!mutated || decoded),
+            "Official Flow strand progress hierarchy");
+    require(info.get("geometry_inconclusive").is_bool(), "Official Flow strand inconclusive type");
+    const bool inconclusive = info.get("geometry_inconclusive").as_bool();
+    require(!resource || inconclusive, "Official Flow strand resource must be inconclusive");
+    const auto outcomes = info.get("physical_outcomes"), counts = info.get("physical_edge_counts"),
+               reasons = info.get("physical_reasons");
+    require(outcomes.is_arr() && outcomes.size() == 3u && counts.is_arr() && counts.size() == 3u &&
+                reasons.is_arr() && reasons.size() == 3u,
+            "Official Flow strand physical proof shapes");
+    for (std::size_t at = 0u; at < 3u; ++at) {
+        const auto outcome = outcomes.at(at);
+        require(outcome.is_str(), "Official Flow strand outcome type");
+        const auto text = outcome.as_str();
+        const auto count = flow_oracle::flow400_number(counts.at(at)),
+                   reason = flow_oracle::flow400_number(reasons.at(at));
+        require(count <= 14u &&
+                    reason <= static_cast<std::size_t>(flow_oracle::strands::Reason::Internal),
+                "Official Flow strand physical count/reason bounds");
+        require(text == "match" || text == "mismatch" || text == "inconclusive" ||
+                    text == "ordinary_source" || text == "not_observed",
+                "Official Flow strand unknown physical outcome");
+        if (text == "match")
+            require(decoded && count == expected_edges && reason == 0u,
+                    "Official Flow strand complete physical multiplicity");
+        else
+            require(count == 0u, "Official Flow strand unproven edge count");
+        if (text == "mismatch" || text == "inconclusive")
+            require(decoded && reason > 0u, "Official Flow strand decisive/inconclusive reason");
+        else
+            require(reason == 0u, "Official Flow strand unused physical reason");
+        if (text == "inconclusive")
+            require(inconclusive, "Official Flow strand lost inconclusive failure");
+        if (text == "ordinary_source")
+            require(at == 1u && ordinary && row.status[1] == "source_fallback",
+                    "Official Flow strand ordinary narrow policy");
+        if (admitted)
+            require((at == 1u && ordinary) ? text == "ordinary_source" : text == "match",
+                    "Official Flow strand admission requires each drawn width");
+    }
+    if (admitted || mutated)
+        require(admitted && mutated && !inconclusive && !resource,
+                "Official Flow strand inconclusive cannot earn admission or mutation credit");
+    else
+        require(!row.errors.empty() || resource || inconclusive,
+                "Official Flow strand failed row diagnostics");
+    require(captured == (flow_oracle::flow400_number(info.get("captured_frames")) == 5u),
+            "Official Flow strand actual capture completion");
+}
+
+std::size_t official_flow_p0_identity(const Observation& row, JsonVal info) {
+    const auto index = flow_oracle::flow_p0_admitted_index(row.role_case_index);
+    require(index.has_value(), "Official Flow P0 source ordinal");
+    const auto& pin = flow_oracle::kFlowP0Pins[*index];
+    require(pin.grouped ==
+                (row.raw_source_authority == "immutable_Flow400_8Models_plus_P0Grouped7"),
+            "Official Flow P0 geometry domain identity");
+    require(row.track == "original" && row.type == "flowchart" && row.path == pin.fixture &&
+                row.source_sha256 == pin.source_sha && row.role_model_sha == pin.model_sha &&
+                info.get("manifest_global_ordinal").is_int() &&
+                info.get_int("manifest_global_ordinal") == static_cast<std::int64_t>(pin.global),
+            "Official Flow P0 exact complete source/model identity");
+    return 6u;
 }
 
 std::size_t official_flow_group_endpoint15_identity(JsonVal group_endpoint15,
@@ -11516,6 +12677,7 @@ official_flow_geometry(const OfficialFlowFrames& frames, const flow_oracle::Mode
                        const flow_oracle::LinkProfile* linkprofile3_profile = nullptr,
                        JsonVal group_endpoint15_case = JsonVal{},
                        const flow_oracle::GroupEndpoint15Model* group_endpoint15_model = nullptr,
+                       bool p0 = false, bool strand_selected = false,
                        std::string_view diagram_title = {}) {
     using flow_oracle::flow400_require;
     p.phase = "compare";
@@ -11525,11 +12687,28 @@ official_flow_geometry(const OfficialFlowFrames& frames, const flow_oracle::Mode
     p.remaining[3] = work.remaining;
     auto drawn = [&](std::size_t index, const char* phase) {
         p.phase = phase;
+        if (strand_selected) {
+            const auto result =
+                flow_oracle::strands::geometry(*frames[index], model, work, kSentinel);
+            p.strand_observed[index] = true;
+            p.strand_results[index] = result;
+            p.resource = p.resource || result.resource;
+            if (result.outcome == flow_oracle::strands::Outcome::Inconclusive)
+                p.strand_inconclusive = true;
+            if (result.outcome != flow_oracle::strands::Outcome::Match) {
+                official_flow_error(row, "Flow strand physical mismatch/inconclusive");
+                return false;
+            }
+            return true;
+        }
         const auto errors =
-            !diagram_title.empty()   ? flow_oracle::flow_title_geometry(*frames[index], model, work,
-                                                                        diagram_title, kSentinel)
-            : group_endpoint15_model ? flow_oracle::group_endpoint15_geometry(
-                                           *frames[index], *group_endpoint15_model, work, kSentinel)
+            !diagram_title.empty() ? flow_oracle::flow_title_geometry(*frames[index], model, work,
+                                                                      diagram_title, kSentinel)
+            : group_endpoint15_model
+                ? (p0 ? flow_oracle::flow_p0_group_geometry(*frames[index], *group_endpoint15_model,
+                                                            work, kSentinel)
+                      : flow_oracle::group_endpoint15_geometry(
+                            *frames[index], *group_endpoint15_model, work, kSentinel))
             : linkprofile3_profile
                 ? flow_oracle::flow_linkprofile3_geometry(*frames[index], model,
                                                           *linkprofile3_profile, work, kSentinel)
@@ -11556,6 +12735,7 @@ official_flow_geometry(const OfficialFlowFrames& frames, const flow_oracle::Mode
         row.status[1] = "source_fallback";
     } else if (drawn(1u, "narrow"))
         row.status[1] = "drawn";
+    if (strand_selected && row.status[1] == "source_fallback") p.strand_narrow_source = true;
     p.remaining[4] = work.remaining;
     if (!wide_source && drawn(2u, "restored") && p.restored) row.status[2] = "drawn";
     if (!p.restored)
@@ -11565,7 +12745,25 @@ official_flow_geometry(const OfficialFlowFrames& frames, const flow_oracle::Mode
     if (row.errors.empty() && row.status[0] == "drawn" && row.status[2] == "drawn" &&
         (row.status[1] == "drawn" || row.status[1] == "source_fallback")) {
         p.phase = "mutations";
-        if (group_endpoint15_case.is_obj()) {
+        if (strand_selected) {
+            const auto proof = flow_oracle::strands::mutations(*frames[0], model, work, kSentinel);
+            typed_rejections = proof.rejected;
+            p.resource = p.resource || proof.resource;
+            p.strand_inconclusive = p.strand_inconclusive || proof.inconclusive;
+            if (!proof.complete || proof.inconclusive || proof.resource ||
+                proof.rejected != flow_oracle::strands::kRequiredMutations) {
+                official_flow_error(row, "Flow strand decisive mutations incomplete");
+                for (auto& status : row.status)
+                    if (status == "drawn") status = "error";
+                p.remaining[6] = work.remaining;
+                return typed_rejections;
+            }
+        } else if (p0 && group_endpoint15_model) {
+            flow400_require(group_endpoint15_model != nullptr,
+                            "Official Flow P0 decoded profile missing");
+            typed_rejections = flow_oracle::flow_p0_group_mutations(
+                *frames[0], *group_endpoint15_model, work, kSentinel);
+        } else if (group_endpoint15_case.is_obj()) {
             flow400_require(group_endpoint15_model != nullptr,
                             "OfficialFlow400 GroupEndpoint15 decoded profile missing");
             typed_rejections = official_flow_group_endpoint15_mutations(
@@ -11599,20 +12797,21 @@ official_flow_geometry(const OfficialFlowFrames& frames, const flow_oracle::Mode
     return typed_rejections;
 }
 
-Observation run_official_flow400_case(JsonVal fixture, std::size_t global, std::size_t ordinal,
-                                      std::string_view source,
-                                      const flow_oracle::Flow400Documents& docs,
-                                      flow_oracle::OracleWork& work, std::ostream& diagnostics,
-                                      std::size_t observation_size,
-                                      std::size_t observation_capacity, JsonVal config21,
-                                      JsonVal typed_source4, JsonVal classic, JsonVal linkprofile3,
-                                      JsonVal group_endpoint15) {
+Observation run_official_flow400_case(
+    JsonVal fixture, std::size_t global, std::size_t ordinal, std::string_view source,
+    const flow_oracle::Flow400Documents& docs, flow_oracle::OracleWork& work,
+    std::ostream& diagnostics, std::size_t observation_size, std::size_t observation_capacity,
+    JsonVal config21, JsonVal typed_source4, JsonVal classic, JsonVal linkprofile3,
+    JsonVal group_endpoint15, const flow_oracle::FlowP0Documents* p0_documents,
+    OfficialFlowOwnerPolicy owner_policy) {
     // Source/fence/path acquisition and fixed error/report reserves precede the
     // caller's actual read. This function uses that same scene ledger throughout.
     Observation row;
     row.errors.reserve(6u);
     OfficialFlowProgress p;
     OfficialFlowFrames frames;
+    const bool dedicated_p0 = owner_policy == OfficialFlowOwnerPolicy::DedicatedP0;
+    row.flow_p0_original = flow_oracle::flow_p0_admitted_index(ordinal).has_value();
     row.raw_active_schema = kOfficialFlow400Contract;
     row.track = "original";
     row.type = "flowchart";
@@ -11625,14 +12824,24 @@ Observation run_official_flow400_case(JsonVal fixture, std::size_t global, std::
         "Predeclared40-column complete geometry OR exact ordinary full source";
     row.role_case_index = ordinal;
     row.raw_source_authority = "immutable_Flow400_whole_8Models_392null";
+    if (row.flow_p0_original) {
+        // Bounded expected identities use the caller's paid error/report reserve.
+        // These are provenance only: source_bound and decoded remain false.
+        const auto& pin = flow_oracle::kFlowP0Pins[*flow_oracle::flow_p0_admitted_index(ordinal)];
+        row.path = pin.fixture;
+        row.source_sha256 = pin.source_sha;
+        row.role_model_sha = pin.model_sha;
+    }
     const bool diagram_title_selected = ordinal == flow_oracle::kFlowTitleOrdinal;
     const bool title_margin_selected = ordinal == flow_oracle::kFlowTitleMarginOrdinal;
     const bool shape_alias_selected = flow_oracle::flow_shape_alias_case(ordinal) != nullptr;
-    const bool issue4648_selected = ordinal == flow_oracle::kFlow400Issue4648Ordinal;
+    const bool issue4648_selected =
+        !dedicated_p0 && ordinal == flow_oracle::kFlow400Issue4648Ordinal;
     JsonVal typed_source4_case, classic_case, linkprofile3_case, group_endpoint15_case;
     std::size_t typed_expected = 0u, typed_rejected = 0u;
     bool typed_source4_selected = false, classic_selected = false, linkprofile3_selected = false,
-         group_endpoint15_selected = false;
+         group_endpoint15_selected = false, p0_selected = false, p0_length_selected = false,
+         strand_selected = false;
     // Foreign manifest provenance is not Model binding. The caller's fixed
     // reserve pays it before captures can exhaust this source's scene ledger.
     row.projection_baseline = projection_canonical(fixture.get("raw"));
@@ -11641,6 +12850,11 @@ Observation run_official_flow400_case(JsonVal fixture, std::size_t global, std::
     auto data = diagnostic.object();
     try {
         work.spend(8192u + 8u * sizeof(std::size_t));
+        if (p0_documents && flow_oracle::flow_p0_strand_index(ordinal))
+            row.strand_discovery_paid =
+                flow_oracle::flow_p0_strand_discovery_charge(docs, *p0_documents, work);
+        if (flow_oracle::flow_p0_length_candidate(ordinal))
+            work.spend(1048576u);  // Repeated bounded reuse/proof validation and publication.
         require(observation_size <= 2738u && observation_capacity <= 8192u,
                 "OfficialFlow400 observation vector bound");
         static_assert(std::is_nothrow_move_constructible_v<Observation>);
@@ -11729,7 +12943,7 @@ Observation run_official_flow400_case(JsonVal fixture, std::size_t global, std::
             if (classic.is_obj())
                 classic_case = flow_oracle::flow400_classic_select(
                     *typed_selection, classic, fixture, ordinal, global, source, work);
-            if (linkprofile3.is_obj() && !classic_case.is_obj())
+            if (linkprofile3.is_obj() && !classic_case.is_obj() && !dedicated_p0)
                 linkprofile3_case = flow_oracle::flow400_linkprofile3_select(
                     *typed_selection, classic_case, linkprofile3, fixture, ordinal, global, source,
                     work);
@@ -11815,7 +13029,50 @@ Observation run_official_flow400_case(JsonVal fixture, std::size_t global, std::
                 flow_oracle::flow400_text(group_endpoint15_case.get("canonical_model_sha256"));
             data.set("source_supplement_sha256", flow_oracle::kFlow400GroupEndpoint15AssetSha);
         }
+        if (p0_documents && flow_oracle::flow_p0_group_index(ordinal)) {
+            require(!typed_source4_selected && !classic_selected && !linkprofile3_selected &&
+                        !group_endpoint15_selected,
+                    "Official Flow P0 disjoint old source authorities");
+            group_endpoint15_case = flow_oracle::flow_p0_group_select(
+                *p0_documents, base, fixture, ordinal, global, source, work);
+            require(group_endpoint15_case.is_obj(), "Official Flow P0 exact source selection");
+            p0_selected = true;
+            typed_expected = 6u;
+            row.raw_source_authority = "immutable_Flow400_8Models_plus_P0Grouped7";
+            const auto index = *flow_oracle::flow_p0_group_index(ordinal);
+            row.role_model_sha = flow_oracle::kFlowP0Pins[index].model_sha;
+            data.set("source_supplement_sha256", flow_oracle::kFlowP0AssetSha);
+        }
+        if (p0_documents && flow_oracle::flow_p0_length_candidate(ordinal) && dedicated_p0) {
+            require(!p0_selected && !typed_source4_selected && !classic_selected &&
+                        !linkprofile3_selected && !group_endpoint15_selected,
+                    "Official Flow P0 length disjoint old authorities");
+            group_endpoint15_case = flow_oracle::flow_p0_length_select(
+                *p0_documents, base, fixture, ordinal, global, source, work);
+            require(group_endpoint15_case.is_obj(), "Official Flow P0 length actual full source");
+            linkprofile3_case = flow_oracle::flow_p0_length_reviewed(linkprofile3, work);
+            typed_expected = flow_oracle::flow400_linkprofile3_expected(linkprofile3_case);
+            p0_length_selected = true;
+            row.raw_source_authority = flow_oracle::kFlowP0LengthAuthority;
+            row.role_model_sha =
+                flow_oracle::kFlowP0Pins[flow_oracle::kFlowP0LengthIndex].model_sha;
+            data.set("source_supplement_sha256", flow_oracle::kFlowP0AssetSha);
+        }
+        if (p0_documents && flow_oracle::flow_p0_strand_index(ordinal) && !issue4648_selected) {
+            require(!p0_selected && !p0_length_selected && !typed_source4_selected &&
+                        !classic_selected && !linkprofile3_selected && !group_endpoint15_selected,
+                    "Official Flow strand disjoint historical authorities");
+            group_endpoint15_case = flow_oracle::flow_p0_strand_select(
+                *p0_documents, base, fixture, ordinal, global, source, work);
+            require(group_endpoint15_case.is_obj(), "Official Flow strand exact whole source");
+            strand_selected = true;
+            typed_expected = flow_oracle::strands::kRequiredMutations;
+            row.raw_source_authority = flow_oracle::kFlowP0StrandAuthority;
+            data.set("source_supplement_sha256", flow_oracle::kFlowP0AssetSha);
+        }
         p.bound = true;
+        if (p0_selected || p0_length_selected || strand_selected)
+            data.set("p0_before_source_hash_charge", static_cast<int64_t>(work.remaining));
         work.product(source.size(), 4u);
         work.spend(1024u);
         row.source_sha256 = digest(source);
@@ -11829,7 +13086,18 @@ Observation run_official_flow400_case(JsonVal fixture, std::size_t global, std::
         std::optional<flow_oracle::Model> model;
         std::optional<flow_oracle::LinkProfile> linkprofile3_profile;
         std::optional<flow_oracle::GroupEndpoint15Model> group_endpoint15_model;
-        if (diagram_title_selected)
+        if (strand_selected)
+            model.emplace(flow_oracle::flow_p0_strand_model(group_endpoint15_case, work));
+        else if (p0_length_selected) {
+            auto alias =
+                flow_oracle::flow_p0_length_model(group_endpoint15_case, linkprofile3, work);
+            model.emplace(std::move(alias.model));
+            linkprofile3_profile.emplace(std::move(alias.profile));
+        } else if (p0_selected) {
+            group_endpoint15_model.emplace(
+                flow_oracle::flow_p0_group_model(group_endpoint15_case, work));
+            model.emplace(group_endpoint15_model->base);
+        } else if (diagram_title_selected)
             model.emplace(flow_oracle::flow_title_model(work));
         else if (title_margin_selected)
             model.emplace(flow_oracle::flow_title_margin_model(work));
@@ -11874,14 +13142,17 @@ Observation run_official_flow400_case(JsonVal fixture, std::size_t global, std::
             p.decoded = true;
             work.spend(1024u);
             if (!typed_source4_selected && !classic_selected && !linkprofile3_selected &&
-                !group_endpoint15_selected && !diagram_title_selected && !title_margin_selected &&
+                !group_endpoint15_selected && !p0_selected && !p0_length_selected &&
+                !strand_selected && !diagram_title_selected && !title_margin_selected &&
                 !shape_alias_selected && !issue4648_selected)
                 row.role_model_sha = flow_oracle::flow400_text(authority.get("model_sha256"));
             data.set("whole_Model_sha256", row.role_model_sha);
             typed_rejected = official_flow_geometry(
                 frames, *model, work, row, p, typed_source4_case, classic_case, linkprofile3_case,
-                linkprofile3_profile ? &*linkprofile3_profile : nullptr, group_endpoint15_case,
-                group_endpoint15_model ? &*group_endpoint15_model : nullptr,
+                linkprofile3_profile ? &*linkprofile3_profile : nullptr,
+                (p0_length_selected || strand_selected) ? JsonVal{} : group_endpoint15_case,
+                group_endpoint15_model ? &*group_endpoint15_model : nullptr, p0_selected,
+                strand_selected,
                 diagram_title_selected ? flow_oracle::kFlowTitleText : std::string_view{});
             if (shape_alias_selected && typed_rejected != 2u) {
                 official_flow_error(
@@ -11908,6 +13179,12 @@ Observation run_official_flow400_case(JsonVal fixture, std::size_t global, std::
                          static_cast<int64_t>(typed_rejected));
             }
         }
+        if (row.flow_p0_original && (!row.errors.empty() || p.resource || p.strand_inconclusive)) {
+            p.admitted = false;
+            p.mutated = false;
+            for (auto& status : row.status)
+                if (status == "drawn") status = "error";
+        }
         p.phase = "complete";
     } catch (const std::exception& error) {
         const char* text = error.what();
@@ -11916,13 +13193,24 @@ Observation run_official_flow400_case(JsonVal fixture, std::size_t global, std::
             while (n < 128u && text[n])
                 ++n;
         const std::string_view bounded(text ? text : "", n);
-        p.resource = p.resource || work.remaining == 0u || flow_oracle::flow400_resource(bounded);
+        p.resource = p.resource || flow_oracle::flow400_resource_exception(error, work.remaining);
         official_flow_error(row, bounded);
         p.admitted = false;
+        if (strand_selected) p.strand_inconclusive = true;
+        if (row.flow_p0_original) {
+            p.mutated = false;
+            for (auto& status : row.status)
+                if (status == "drawn") status = "error";
+        }
     }
     row.raw_source_constraints =
-        group_endpoint15_selected ? official_flow_group_endpoint15_info(
-                                        p, work.remaining, typed_expected, typed_rejected, global)
+        strand_selected      ? official_flow_strand_info(p, row, work.remaining, typed_expected,
+                                                         typed_rejected, global)
+        : p0_length_selected ? official_flow_p0_length_info(p, work.remaining, typed_expected,
+                                                            typed_rejected, global)
+        : (group_endpoint15_selected || p0_selected)
+            ? official_flow_group_endpoint15_info(p, work.remaining, typed_expected, typed_rejected,
+                                                  global, p0_selected)
         : linkprofile3_selected
             ? official_flow_linkprofile3_info(p, work.remaining, typed_expected, typed_rejected)
         : classic_selected
@@ -11951,8 +13239,13 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         row.raw_source_authority == "immutable_Flow400_8Models_plus_Classic";
     const bool link_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_LinkProfile3";
+    const bool strand_selected = row.raw_source_authority == flow_oracle::kFlowP0StrandAuthority;
+    const bool p0_length_selected = row.raw_source_authority == flow_oracle::kFlowP0LengthAuthority;
+    const bool p0_selected =
+        row.raw_source_authority == "immutable_Flow400_8Models_plus_P0Grouped7" ||
+        p0_length_selected;
     const bool group_selected =
-        row.raw_source_authority == "immutable_Flow400_8Models_plus_GroupEndpoint15";
+        row.raw_source_authority == "immutable_Flow400_8Models_plus_GroupEndpoint15" || p0_selected;
     const bool title_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_DiagramTitle1";
     const bool title_margin_selected =
@@ -11961,7 +13254,11 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FlowShapeAlias16";
     const bool issue4648_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_Issue4648";
-    if (group_selected)
+    if (strand_selected)
+        official_flow_strand_keys(info);
+    else if (p0_length_selected)
+        official_flow_p0_length_keys(info);
+    else if (group_selected)
         official_flow_group_endpoint15_keys(info);
     else if (link_selected)
         official_flow_linkprofile3_keys(info);
@@ -12002,6 +13299,33 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
     const bool admitted = yes("whole_source_admitted"), restored = yes("restored_cells_equal"),
                ordinary = yes("narrow_ordinary"), mutated = yes("semantic_mutations_complete"),
                resource = yes("verification_resource_exhausted");
+    if (official_flow_p0_owned(row)) {
+        const auto index = flow_oracle::flow_p0_admitted_index(row.role_case_index);
+        require(index.has_value() && flow_oracle::kFlowP0Pins[*index].fixture == row.path,
+                "Official Flow P0 owned path/ordinal mismatch");
+        if (decoded || admitted || mutated) {
+            const auto& pin = flow_oracle::kFlowP0Pins[*index];
+            const bool delegated =
+                row.source_sha256 == pin.source_sha &&
+                ((pin.ordinal ==
+                      flow_oracle::kFlowP0Pins[flow_oracle::kFlowP0LengthIndex].ordinal &&
+                  link_selected) ||
+                 (pin.ordinal == flow_oracle::kFlow400Issue4648Ordinal && issue4648_selected));
+            require(p0_selected || strand_selected || delegated,
+                    "Official Flow P0 decoded source lost authority");
+        }
+        if (!admitted)
+            require(std::ranges::none_of(row.status,
+                                         [](const auto& status) { return status == "drawn"; }),
+                    "Official Flow P0 failed source cannot retain drawn credit");
+        if (admitted)
+            require(row.status[1] == (ordinary ? "source_fallback" : "drawn"),
+                    "Official Flow P0 narrow policy/proof mismatch");
+    }
+
+    if (strand_selected)
+        official_flow_strand_physical_proof(row, info, captured, bound, decoded, pending, admitted,
+                                            ordinary, mutated, resource);
     const auto capture_count = flow_oracle::flow400_number(info.get("captured_frames"));
     require(capture_count <= 5u && (!captured || capture_count == 5u),
             "OfficialFlow400 actual five-frame proof");
@@ -12015,7 +13339,7 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
             "OfficialFlow400 height bound");
     const auto costs = info.get("phase_remaining");
     require(costs.is_arr() && costs.size() == 7u, "OfficialFlow400 phase ledger shape");
-    if (typed || classic_selected || link_selected || group_selected) {
+    if (typed || classic_selected || link_selected || group_selected || strand_selected) {
         const auto observed = official_flow_typed_source4_phase_checkpoints(phase.as_str());
         std::size_t prior = flow_oracle::kFlow400SceneLimit, last = flow_oracle::kFlow400SceneLimit;
         for (std::size_t index = 0u; index < costs.size(); ++index) {
@@ -12070,11 +13394,12 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         same_run_body = row.path == pin.path && row.source_sha256 == pin.source_sha &&
                         row.role_model_sha == pin.model_sha && row.role_body_sha == pin.source_sha;
     }
-    require(
-        selected || typed || classic_selected || link_selected || group_selected ||
-            title_selected || title_margin_selected || shape_alias_selected || issue4648_selected ||
-            row.raw_source_authority == "immutable_Flow400_whole_8Models_392null" || same_run_body,
-        "OfficialFlow400 unknown source authority");
+    require(selected || typed || classic_selected || link_selected || group_selected ||
+                title_selected || title_margin_selected || shape_alias_selected ||
+                issue4648_selected || strand_selected ||
+                row.raw_source_authority == "immutable_Flow400_whole_8Models_392null" ||
+                same_run_body,
+            "OfficialFlow400 unknown source authority");
     if (shape_alias_selected) {
         const auto* candidate = flow_oracle::flow_shape_alias_case(row.role_case_index);
         require(candidate && row.path == candidate->fixture &&
@@ -12120,31 +13445,39 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                     row.role_model_sha == flow_oracle::kFlowTitleMarginModelSha,
                 "OfficialFlow400 titleTopMargin source/model authority");
     const auto supplement = info.get("source_supplement_sha256");
-    if (typed || classic_selected || link_selected || group_selected) {
+    if (typed || classic_selected || link_selected || group_selected || strand_selected) {
         const auto expected =
-            group_selected  ? official_flow_group_endpoint15_identity(group_endpoint15, row, info)
-            : link_selected ? official_flow_linkprofile3_identity(linkprofile3, row)
-            : typed         ? official_flow_typed_source4_identity(typed_source4, row)
-                            : official_flow_classic_identity(classic, row);
-        const auto asset = group_selected  ? flow_oracle::kFlow400GroupEndpoint15AssetSha
-                           : link_selected ? flow_oracle::kFlow400LinkProfile3AssetSha
-                           : typed         ? flow_oracle::kFlow400TypedSource4AssetSha
-                                           : flow_oracle::kFlow400ClassicAssetSha;
+            strand_selected ? official_flow_strand_identity(row, info)
+            : p0_selected
+                ? (p0_length_selected ? (static_cast<void>(official_flow_p0_identity(row, info)),
+                                         official_flow_p0_length_identity(linkprofile3, row, info))
+                                      : official_flow_p0_identity(row, info))
+            : group_selected ? official_flow_group_endpoint15_identity(group_endpoint15, row, info)
+            : link_selected  ? official_flow_linkprofile3_identity(linkprofile3, row)
+            : typed          ? official_flow_typed_source4_identity(typed_source4, row)
+                             : official_flow_classic_identity(classic, row);
+        const auto asset = (p0_selected || strand_selected) ? flow_oracle::kFlowP0AssetSha
+                           : group_selected ? flow_oracle::kFlow400GroupEndpoint15AssetSha
+                           : link_selected  ? flow_oracle::kFlow400LinkProfile3AssetSha
+                           : typed          ? flow_oracle::kFlow400TypedSource4AssetSha
+                                            : flow_oracle::kFlow400ClassicAssetSha;
         require(supplement.is_str() && supplement.as_str() == asset,
                 group_selected  ? "OfficialFlow400 inconsistent GroupEndpoint15 authority metadata"
                 : link_selected ? "OfficialFlow400 inconsistent LinkProfile3 authority metadata"
                 : typed         ? "OfficialFlow400 inconsistent TypedSource4 authority metadata"
                                 : "OfficialFlow400 inconsistent selected authority metadata");
         const auto planned = flow_oracle::flow400_number(
-            info.get(group_selected  ? "group_endpoint15_mutations_expected"
-                     : link_selected ? "linkprofile3_mutations_expected"
-                     : typed         ? "typed_mutations_expected"
-                                     : "classic_mutations_expected"));
+            info.get(strand_selected  ? "strand_mutations_expected"
+                     : group_selected ? "group_endpoint15_mutations_expected"
+                     : link_selected  ? "linkprofile3_mutations_expected"
+                     : typed          ? "typed_mutations_expected"
+                                      : "classic_mutations_expected"));
         const auto rejected = flow_oracle::flow400_number(
-            info.get(group_selected  ? "group_endpoint15_mutations_rejected"
-                     : link_selected ? "linkprofile3_mutations_rejected"
-                     : typed         ? "typed_mutations_rejected"
-                                     : "classic_mutations_rejected"));
+            info.get(strand_selected  ? "strand_mutations_rejected"
+                     : group_selected ? "group_endpoint15_mutations_rejected"
+                     : link_selected  ? "linkprofile3_mutations_rejected"
+                     : typed          ? "typed_mutations_rejected"
+                                      : "classic_mutations_rejected"));
         require(planned == expected && rejected <= expected,
                 group_selected  ? "OfficialFlow400 GroupEndpoint15 mutation bound metadata"
                 : link_selected ? "OfficialFlow400 LinkProfile3 mutation bound metadata"
@@ -12186,7 +13519,10 @@ OfficialFlowCounts official_flow_counts(const std::vector<Observation>& rows, Js
     OfficialFlowCounts counts;
     std::array<bool, 400> seen{};
     for (const auto& row : rows) {
-        if (row.raw_active_schema != kOfficialFlow400Contract) continue;
+        if (row.raw_active_schema != kOfficialFlow400Contract && !official_flow_p0_owned(row))
+            continue;
+        require(row.raw_active_schema == kOfficialFlow400Contract,
+                "Official Flow P0 owned source lost contract");
         require(row.track == "original" && row.type == "flowchart" && row.role_case_index < 400u &&
                     !seen[row.role_case_index],
                 "OfficialFlow400 duplicate/unknown/or wrongtrack consumption");
@@ -13289,7 +14625,8 @@ void official_er_error(Observation& row, std::string_view error) {
 
 // Only immutable, already approved ER206 whole_Model JSON enters this local
 // applicability calculation. It neither decodes a second Model nor reads art.
-relations_oracle::Class481Mutations official_er_expected_mutations(JsonVal meaning) {
+relations_oracle::Class481Mutations official_er_expected_mutations(JsonVal meaning,
+                                                                   bool rich = false) {
     using namespace relations_oracle;
     const auto entities = meaning.get("entities"), relations = meaning.get("relations"),
                groups = meaning.get("groups");
@@ -13381,6 +14718,31 @@ relations_oracle::Class481Mutations official_er_expected_mutations(JsonVal meani
         else
             skip("root_group_has_no_parent_to_erase");
     });
+    if (rich) {
+        entities.iter([&](JsonVal entity) {
+            const auto rows = entity.get("rows");
+            if (rows.size() >= 2u) add("attribute_order");
+            rows.iter([&](JsonVal row) {
+                const auto text = row.get("source_fields").get("comment").as_str();
+                const auto at = text.find('\n');
+                if (at == std::string_view::npos) return;
+                add("comment_br_merge");
+                add("comment_line_erasure");
+                if (at > 1u && static_cast<unsigned char>(text.front()) < 128u)
+                    add("comment_br_shift");
+            });
+        });
+        relations.iter([&](JsonVal row) {
+            const auto text = row.get("label").as_str();
+            const auto at = text.find('\n');
+            if (at == std::string_view::npos) return;
+            add("relation_br_merge");
+            add("relation_line_erasure");
+            add("relation_line_order");
+            if (at > 1u && static_cast<unsigned char>(text.front()) < 128u)
+                add("relation_br_shift");
+        });
+    }
     add("orphan_ink");
     return plan;
 }
@@ -13433,6 +14795,9 @@ std::string official_er_info(const OfficialErProgress& p, const Observation& row
     info.set("source_sha256", row.source_sha256);
     info.set("whole_Model_sha256", row.role_model_sha);
     info.set("source_authority_sha256", kOfficialEr206AuthoritySha);
+    info.set("Model_supplement_sha256", relations_oracle::er206_rich_index(row.role_case_index)
+                                            ? relations_oracle::kErRich6Sha
+                                            : std::string_view{""});
     info.set("foreign_assertions_certified", 0);
     info.set("captures", static_cast<int64_t>(p.captures));
     info.set("published_frames", static_cast<int64_t>(p.published));
@@ -13563,7 +14928,7 @@ bool official_er_same(const relations_oracle::Grid& a, const relations_oracle::G
 
 void official_er_geometry(const OfficialErFrames& frames, const relations_oracle::Model& model,
                           JsonVal meaning, std::size_t encoded, relations_oracle::Work& work,
-                          Observation& row, OfficialErProgress& p) {
+                          Observation& row, OfficialErProgress& p, bool rich = false) {
     using namespace relations_oracle;
     work.spend(8u * sizeof(OfficialErProgress) + 4u * sizeof(std::optional<int>) + 512u);
     for (std::size_t n = 5u; n < p.remaining.size(); ++n)
@@ -13637,8 +15002,10 @@ void official_er_geometry(const OfficialErFrames& frames, const relations_oracle
     if (p.wide_good && (p.narrow_good || p.narrow_ordinary) && p.restored_good && p.restored &&
         row.errors.empty()) {
         p.phase = OfficialErPhase::Mutations;
-        const auto expected = official_er_expected_mutations(meaning);
-        const auto changes = er206_mutations(*frames[0], model, encoded, work, kSentinel);
+        const auto expected = official_er_expected_mutations(meaning, rich);
+        const auto changes = rich
+                                 ? er206_mutations_rich(*frames[0], model, encoded, work, kSentinel)
+                                 : er206_mutations(*frames[0], model, encoded, work, kSentinel);
         work.spend((changes.executed.size() + changes.skipped.size()) * 1024u + 8192u);
         official_er_complete_mutations(changes, expected);
         p.typed_rejections = official_er_typed_count(changes);
@@ -13664,7 +15031,8 @@ Observation run_official_er206_case(JsonVal fixture, std::size_t global, std::si
     work.spend(kOfficialEr206ReportReserve + 8u * sizeof(Observation) +
                8u * sizeof(OfficialErProgress) + 8u * sizeof(OfficialErFrames) + 16384u +
                6u * 4096u);
-    if (ordinal < kEr206Pins.size() && kEr206Pins[ordinal].model_bytes > 0u)
+    if (ordinal < kEr206Pins.size() &&
+        (kEr206Pins[ordinal].model_bytes > 0u || er206_rich_index(ordinal).has_value()))
         work.spend(4u * kOfficialErMutationPlanCharge);
     Observation row;
     row.errors.reserve(6u);
@@ -13686,7 +15054,7 @@ Observation run_official_er206_case(JsonVal fixture, std::size_t global, std::si
         work.spend(8192u + 16u * sizeof(std::size_t));
         require(ordinal < kEr206Pins.size() && size <= 2738u && capacity <= 8192u,
                 "OfficialER206 source/vector bounds");
-        const auto& pin = kEr206Pins[ordinal];
+        const auto pin = er206_active_pin(docs, ordinal);
         static_assert(std::is_nothrow_move_constructible_v<Observation>);
         const auto slots = size == capacity ? std::max(capacity * 2u, size + 1u) : 0u;
         stage_b_product(work, slots + (slots ? size : 0u) + 1u, 2u * sizeof(Observation) + 16u);
@@ -13730,8 +15098,13 @@ Observation run_official_er206_case(JsonVal fixture, std::size_t global, std::si
         const auto source = docs.authority.root().get("cases").at(ordinal);
         require(source.get("source").is_str() && source.get("source").as_str() == input,
                 "OfficialER206 observed source equals complete authority");
-        const auto meaning = er206_binding(source, ordinal, docs, work);
+        auto meaning = er206_binding(source, ordinal, docs, work);
         er206_consume(ordinal, consumed, work);
+        if (er206_rich_index(ordinal)) {
+            require(meaning.is_null(), "ER rich6 must preserve historical null");
+            work.spend(16384u + 1896u * 128u);
+            meaning = er206_active_meaning(docs, ordinal);
+        }
         require(input.find(kSentinel) == std::string::npos,
                 "OfficialER206 frozen original token collision requires review");
         row.role_model_sha = pin.model_sha;
@@ -13784,7 +15157,8 @@ Observation run_official_er206_case(JsonVal fixture, std::size_t global, std::si
             const auto model = er206_decode(meaning, pin, work);
             p.decoded = true;
             p.remaining[4] = work.left;
-            official_er_geometry(frames, model, meaning, pin.model_bytes, work, row, p);
+            official_er_geometry(frames, model, meaning, pin.model_bytes, work, row, p,
+                                 er206_rich_index(ordinal).has_value());
         }
         p.phase = OfficialErPhase::Complete;
     } catch (const std::exception& error) {
@@ -13816,11 +15190,12 @@ Observation run_official_er206_case(JsonVal fixture, std::size_t global, std::si
 
 void official_er_accumulate_owned(JsonVal info, const Observation& row, OfficialErCounts& out,
                                   const relations_oracle::Er206Documents& docs) {
-    constexpr std::array<std::string_view, 29> keys{{"source_case_ordinal",
+    constexpr std::array<std::string_view, 30> keys{{"source_case_ordinal",
                                                      "original_global_ordinal",
                                                      "source_sha256",
                                                      "whole_Model_sha256",
                                                      "source_authority_sha256",
+                                                     "Model_supplement_sha256",
                                                      "foreign_assertions_certified",
                                                      "captures",
                                                      "published_frames",
@@ -13861,7 +15236,7 @@ void official_er_accumulate_owned(JsonVal info, const Observation& row, Official
     };
     require(row.role_case_index < relations_oracle::kEr206Pins.size(),
             "OfficialER206 owned ordinal domain");
-    const auto& pin = relations_oracle::kEr206Pins[row.role_case_index];
+    const auto pin = relations_oracle::er206_active_pin(docs, row.role_case_index);
     require(row.track == "original" && row.type == "er-diagram" && row.path == pin.path &&
                 row.raw_source_authority == kOfficialEr206Authority &&
                 number("source_case_ordinal", 205u) == row.role_case_index &&
@@ -13871,6 +15246,12 @@ void official_er_accumulate_owned(JsonVal info, const Observation& row, Official
                 info.get("source_authority_sha256").as_str() == kOfficialEr206AuthoritySha &&
                 number("foreign_assertions_certified", 0u) == 0u,
             "OfficialER206 owned authority and foreign scope");
+    require(info.get("Model_supplement_sha256").is_str() &&
+                info.get("Model_supplement_sha256").as_str() ==
+                    (relations_oracle::er206_rich_index(row.role_case_index)
+                         ? relations_oracle::kErRich6Sha
+                         : std::string_view{""}),
+            "ER rich6 owned Model supplement identity");
     const bool bound = yes("source_bound"), decoded = yes("whole_Model_decoded"),
                pending = yes("whole_null_pending"), admitted = yes("whole_source_admitted"),
                restored = yes("restored_cells_equal"), ordinary = yes("narrow_ordinary_protocol"),
@@ -13917,12 +15298,14 @@ void official_er_accumulate_owned(JsonVal info, const Observation& row, Official
     const auto proof = info.get("complete_mutation_counts_sha256");
     require(proof.is_str() && proof.as_str().size() <= 64u,
             "OfficialER206 owned mutation digest type");
+    require(!mutated || (!resource && !exception),
+            "OfficialER206 mutation proof conflicts with failure flags");
     if (mutated) {
         require(bound && decoded && !pending, "OfficialER206 owned mutation source lifecycle");
-        const auto meaning =
-            docs.authority.root().get("cases").at(row.role_case_index).get("whole_model");
+        const auto meaning = relations_oracle::er206_active_meaning(docs, row.role_case_index);
         require(!meaning.is_null(), "OfficialER206 owned mutation source must be complete");
-        const auto expected = official_er_expected_mutations(meaning);
+        const auto expected = official_er_expected_mutations(
+            meaning, relations_oracle::er206_rich_index(row.role_case_index).has_value());
         require(typed == official_er_typed_count(expected) &&
                     orphan == static_cast<std::size_t>(expected.executed.at("orphan_ink")) &&
                     proof.as_str() == official_er_mutation_digest(expected),
@@ -14113,7 +15496,7 @@ TEST(MermaidOfficialEr206, WholeProofRequiresEveryStateAndCannotBeForgedByWideOn
            [](json::JsonMutVal v, Observation&) { v.set("restored_cells_equal", false); });
     reject("OfficialER206 per-state proof cannot bypass whole admission",
            [](json::JsonMutVal v, Observation&) { v.set("semantic_mutations_complete", false); });
-    reject("OfficialER206 per-state proof cannot bypass whole admission",
+    reject("OfficialER206 mutation proof conflicts with failure flags",
            [](json::JsonMutVal v, Observation&) { v.set("resource_exhausted", true); });
     reject("OfficialER206 owned meaningful mutation proof",
            [](json::JsonMutVal v, Observation&) { v.set("typed_rejections", 0); });
@@ -15195,6 +16578,872 @@ TEST(MermaidOfficialPie7, SourceBoundOwnedAdmissionRejectsForgedMetadata) {
 }
 }  // namespace
 
+TEST(MermaidOfficialP0, DefaultConfigurationUsesFullSourceAdmission) {
+    const auto source = read_file(kRoot / "cases" / std::string(flow_oracle::kDefaultConfigPath));
+    auto parsed = json::parse(R"({"expected":"source","reason":"frontmatter"})");
+    ASSERT_TRUE(parsed);
+    const auto row =
+        run_case(std::string(flow_oracle::kDefaultConfigPath), "original", source, parsed->root());
+    EXPECT_TRUE(row.errors.empty());
+    EXPECT_EQ(row.status[0], "drawn");
+    EXPECT_EQ(row.status[2], "drawn");
+    auto altered = source + "classDef missing fill:red\n";
+    const auto rejected =
+        run_case(std::string(flow_oracle::kDefaultConfigPath), "original", altered, parsed->root());
+    EXPECT_FALSE(rejected.errors.empty());
+    EXPECT_NE(rejected.status[0], "drawn");
+    const auto oversized = run_case(std::string(flow_oracle::kDefaultConfigPath), "original",
+                                    std::string(65537u, 'x'), parsed->root());
+    EXPECT_FALSE(oversized.errors.empty());
+    EXPECT_NE(oversized.status[0], "drawn");
+    EXPECT_TRUE(oversized.source_sha256.empty());
+}
+
+TEST(MermaidOfficialEr206, RichSixWholeScenesAndForgedBindings) {
+    using namespace relations_oracle;
+    Work setup;
+    const auto docs = er206_document(setup);
+    std::array<bool, 206> consumed{};
+    for (const auto ordinal : kErRich6Ordinals) {
+        const auto pin = er206_active_pin(docs, ordinal);
+        SCOPED_TRACE(pin.path);
+        Work work{kEr206SceneLimit};
+        std::ostringstream evidence;
+        const auto fixture = docs.manifest.root().get("fixtures").at(pin.global);
+        const auto row = run_official_er206_case(fixture, pin.global, ordinal, docs, consumed, work,
+                                                 evidence, 0u, 0u);
+        ASSERT_TRUE(row.errors.empty()) << (row.errors.empty() ? "" : row.errors.front());
+        ASSERT_EQ(row.status[0], "drawn");
+        ASSERT_EQ(row.status[2], "drawn");
+        const auto counts = official_er_counts(std::vector<Observation>{row}, &docs);
+        ASSERT_EQ(counts.admitted, 1u);
+        ASSERT_EQ(counts.mutated, 1u);
+        const auto reject = [&](auto mutate, std::string_view expected) {
+            auto bad = row;
+            json::JsonMutDoc changed;
+            auto value = changed.raw_json(row.raw_source_constraints);
+            changed.set_root(value);
+            mutate(value, bad);
+            bad.raw_source_constraints = changed.to_string();
+            try {
+                static_cast<void>(official_er_counts(std::vector<Observation>{bad}, &docs));
+                FAIL() << "Forged ER rich6 proof admitted";
+            } catch (const std::exception& error) {
+                EXPECT_EQ(std::string_view(error.what()), expected);
+                EXPECT_FALSE(class481_resource(error.what()));
+            }
+        };
+        reject([](auto v, auto&) { v.set("Model_supplement_sha256", std::string(64u, '0')); },
+               "ER rich6 owned Model supplement identity");
+        reject([](auto v, auto&) { static_cast<void>(v.remove("Model_supplement_sha256")); },
+               "OfficialER206 owned exact fields");
+        reject(
+            [](auto v, auto& r) {
+                r.role_model_sha = std::string(64u, '0');
+                v.set("whole_Model_sha256", r.role_model_sha);
+            },
+            "OfficialER206 owned approved source/Model identity");
+        reject([](auto v, auto&) { v.set("resource_exhausted", true); },
+               "OfficialER206 mutation proof conflicts with failure flags");
+        reject(
+            [](auto v, auto&) {
+                v.set("resource_exhausted", true);
+                v.set("whole_source_admitted", false);
+            },
+            "OfficialER206 mutation proof conflicts with failure flags");
+        reject(
+            [](auto v, auto&) {
+                v.set("exception", true);
+                v.set("whole_source_admitted", false);
+            },
+            "OfficialER206 mutation proof conflicts with failure flags");
+    }
+}
+
+TEST(MermaidOfficialEr206, RichSixDomainsAndSourceAssetsFailClosed) {
+    using namespace relations_oracle;
+    Work setup;
+    const auto docs = er206_document(setup);
+    const auto reject = [&](auto mutate, std::string_view expected) {
+        json::JsonMutDoc changed;
+        auto value = changed.raw_json(docs.rich.root().to_string());
+        changed.set_root(value);
+        mutate(value);
+        auto parsed = json::parse(changed.to_string());
+        ASSERT_TRUE(parsed);
+        Work work;
+        try {
+            er206_rich_validate(parsed->root(), work);
+            FAIL() << "Forged rich6 source accepted";
+        } catch (const std::exception& error) {
+            EXPECT_EQ(std::string_view(error.what()), expected);
+            EXPECT_FALSE(class481_resource(error.what()));
+        }
+    };
+    reject([](auto v) { v.set("schema", "wrong"); }, "ER rich6 schema/source authority");
+    reject([](auto v) { v.get("rows").at(0).set("ordinal", 65); },
+           "ER rich6 exact original tuple and historical null");
+    reject([](auto v) { v.get("rows").at(0).set("model_sha256", std::string(64u, '0')); },
+           "ER rich6 pinned Model identity");
+    reject(
+        [](auto v) {
+            v.get("rows").at(0).get("model").get("relations").at(0).set("label", "wrong");
+        },
+        "ER rich6 complete canonical Model integrity");
+    Work work{kEr206SceneLimit};
+    const auto pin = er206_active_pin(docs, 24u);
+    const auto model = er206_decode(er206_active_meaning(docs, 24u), pin, work);
+    EXPECT_NO_THROW(er206_negative_bound(model, 1849u, work));
+    EXPECT_THROW(er206_negative_bound(model, 1850u, work), std::runtime_error);
+    EXPECT_NO_THROW(er206_negative_bound_domain<Er206MutationDomain::Rich1896>(model, 1896u, work));
+    EXPECT_THROW(er206_negative_bound_domain<Er206MutationDomain::Rich1896>(model, 1897u, work),
+                 std::runtime_error);
+    Work zero;
+    zero.left = 0;
+    EXPECT_THROW(er206_negative_bound_domain<Er206MutationDomain::Rich1896>(model, 1896u, zero),
+                 std::runtime_error);
+}
+
+namespace {
+TEST(MermaidOfficialClassAccessibility, FourWholeSourcesAndForgedMetadataFailClosed) {
+    using namespace relations_oracle;
+    const auto docs = official_class285_documents();
+    const auto originals = official_class285_originals();
+    for (const auto ordinal : kClassAccessibility4Ordinals) {
+        Work work{kStageCVerificationBudget};
+        const auto global = originals.ordinals[ordinal];
+        auto row = run_class285_case(originals.manifest.root().get("fixtures").at(global), global,
+                                     docs, originals, work, 0u, 0u);
+        ASSERT_TRUE(row.errors.empty()) << row.path;
+        ASSERT_EQ(row.status[0], "drawn");
+        ASSERT_EQ(row.status[2], "drawn");
+        std::vector<Observation> rows{row};
+        const auto counts = stage_c_counts(rows);
+        EXPECT_EQ(counts.admitted, 1u);
+        EXPECT_EQ(counts.accessibility, 1u);
+        auto reject = [&](auto change) {
+            auto bad = row;
+            json::JsonMutDoc owner;
+            auto info = owner.raw_json(row.raw_source_constraints);
+            owner.set_root(info);
+            change(info, bad);
+            bad.raw_source_constraints = owner.to_string();
+            bool rejected = false;
+            try {
+                static_cast<void>(stage_c_counts(std::vector<Observation>{bad}));
+            } catch (const std::runtime_error&) {
+                rejected = true;
+            }
+            EXPECT_TRUE(rejected);
+        };
+        reject([](auto info, auto&) { info.set("accessibility_title", "Changed"); });
+        reject([](auto info, auto&) { info.set("accessibility_description", ""); });
+        reject([](auto info, auto&) { info.set("accessibility4", false); });
+        reject([](auto info, auto&) { static_cast<void>(info.remove("accessibility_title")); });
+        reject([](auto info, auto&) {
+            info.set("accessibility_supplement_sha256", std::string(64, '0'));
+        });
+        reject([](auto, auto& bad) { bad.role_model_sha = std::string(64, '0'); });
+        reject([](auto info, auto&) { info.set("verification_resource_exhausted", true); });
+        reject([](auto info, auto&) { info.set("exception", true); });
+    }
+}
+}  // namespace
+
+namespace {
+TEST(MermaidOfficialP0, RequirementMarkdownPreservesCompleteLiteralSourceMeaning) {
+    const auto source = read_file(kRoot / "cases" / std::string(kRequirementMarkdownPath));
+    const auto expected = json::parse(R"({"expected":"source","reason":"legacy"})");
+    ASSERT_TRUE(expected);
+    const auto row =
+        run_case(std::string(kRequirementMarkdownPath), "original", source, expected->root());
+    ASSERT_TRUE(row.errors.empty())
+        << row.path << " " << (row.errors.empty() ? "" : row.errors.front());
+    EXPECT_TRUE(requirement_markdown_admitted(row));
+    EXPECT_EQ(row.status[0], "drawn");
+    EXPECT_EQ(row.status[2], "drawn");
+    auto reject = [&](auto change) {
+        auto bad = row;
+        json::JsonMutDoc doc;
+        auto info = doc.raw_json(row.raw_source_constraints);
+        doc.set_root(info);
+        change(info, bad);
+        bad.raw_source_constraints = doc.to_string();
+        EXPECT_THROW(static_cast<void>(requirement_markdown_admitted(bad)), std::runtime_error);
+    };
+    reject([](auto info, auto&) { info.set("resource", true); });
+    reject([](auto info, auto&) { info.set("exception", true); });
+    reject([](auto info, auto&) { info.set("mutations", 13); });
+    reject([](auto info, auto&) { info.set("bound", false); });
+    reject([](auto info, auto&) { static_cast<void>(info.remove("five_captures")); });
+    reject([](auto info, auto&) { info.set("asset_sha256", std::string(64, '0')); });
+    reject([](auto, auto& bad) { bad.role_model_sha = std::string(64, '0'); });
+    reject(
+        [](auto info, auto&) { info.set("narrow_source", !info.get("narrow_source").as_bool()); });
+    reject([](auto info, auto&) { info.set("resource", "false"); });
+    reject([](auto info, auto&) { info.set("admitted", false); });
+    reject([](auto, auto& bad) { bad.raw_source_authority = "Changed"; });
+    for (const auto& schema : {std::string{}, std::string{"Other"}}) {
+        auto bad = row;
+        bad.raw_active_schema = schema;
+        EXPECT_THROW(static_cast<void>(requirement_markdown_counts(std::vector<Observation>{bad})),
+                     std::runtime_error);
+    }
+    EXPECT_THROW(static_cast<void>(requirement_markdown_counts(std::vector<Observation>{row, row})),
+                 std::runtime_error);
+    const auto positive_info = json::parse(row.raw_source_constraints);
+    ASSERT_TRUE(positive_info);
+    const auto before_comparison =
+        static_cast<std::size_t>(positive_info->root().get_int("comparison_entry_spent"));
+    ASSERT_GT(before_comparison, 0u);
+    const auto comparison_exhausted = run_requirement_markdown(
+        source, before_comparison + 2u * sizeof(relations_oracle::Grid) + 255u);
+    EXPECT_FALSE(requirement_markdown_admitted(comparison_exhausted));
+    const auto exhausted_info = json::parse(comparison_exhausted.raw_source_constraints);
+    ASSERT_TRUE(exhausted_info);
+    EXPECT_TRUE(exhausted_info->root().get("resource").as_bool());
+    EXPECT_TRUE(exhausted_info->root().get("bound").as_bool());
+    EXPECT_GT(exhausted_info->root().get_int("comparison_entry_spent"), 0);
+    EXPECT_FALSE(exhausted_info->root().get("restored").as_bool());
+    const auto depleted = run_requirement_markdown(source, 2000000u);
+    EXPECT_FALSE(depleted.errors.empty());
+    EXPECT_FALSE(requirement_markdown_admitted(depleted));
+    const auto failed_json = json::parse(depleted.raw_source_constraints);
+    ASSERT_TRUE(failed_json);
+    EXPECT_TRUE(failed_json->root().get("resource").as_bool());
+    {
+        auto bad = depleted;
+        json::JsonMutDoc doc;
+        auto info = doc.raw_json(bad.raw_source_constraints);
+        doc.set_root(info);
+        static_cast<void>(info.remove("bound"));
+        info.set("invented", false);
+        bad.raw_source_constraints = doc.to_string();
+        EXPECT_THROW(static_cast<void>(requirement_markdown_admitted(bad)), std::runtime_error);
+    }
+    const auto changed = run_case(std::string(kRequirementMarkdownPath), "original",
+                                  source + "class Changed\n", expected->root());
+    EXPECT_FALSE(changed.errors.empty());
+    EXPECT_FALSE(requirement_markdown_admitted(changed));
+    const auto large = run_case(std::string(kRequirementMarkdownPath), "original",
+                                std::string(65537, 'x'), expected->root());
+    EXPECT_FALSE(large.errors.empty());
+    EXPECT_FALSE(requirement_markdown_admitted(large));
+    relations_oracle::Work zero{0u};
+    EXPECT_THROW(static_cast<void>(requirement_markdown_asset(source, zero)), std::runtime_error);
+}
+}  // namespace
+
+namespace {
+TEST(MermaidOfficialFlowP0, SevenCompleteSourcesAndForgedOwnedProofsFailClosed) {
+    const auto primary = flow_oracle::flow400_documents();
+    const auto p0 = flow_oracle::flow_p0_documents(primary);
+    for (const auto& pin : flow_oracle::kFlowP0Pins) {
+        if (!pin.grouped) continue;
+        SCOPED_TRACE(pin.fixture);
+        flow_oracle::OracleWork work{flow_oracle::kFlow400SceneLimit};
+        work.spend(pin.bytes * 192u + 4000000u);
+        const auto source = read_file(kRoot / "cases" / pin.fixture);
+        std::ostringstream evidence;
+        const auto row = run_official_flow400_case(
+            primary.manifest.root().get("fixtures").at(pin.global), pin.global, pin.ordinal, source,
+            primary, work, evidence, 0u, 0u, JsonVal{}, JsonVal{}, JsonVal{}, JsonVal{}, JsonVal{},
+            &p0);
+        ASSERT_TRUE(row.errors.empty()) << (row.errors.empty() ? "" : row.errors.front());
+        ASSERT_EQ(row.status[0], "drawn");
+        ASSERT_EQ(row.status[2], "drawn");
+        const auto counts = official_flow_counts(std::vector<Observation>{row});
+        EXPECT_EQ(counts.admitted, 1u);
+        EXPECT_EQ(counts.mutated, 1u);
+        const auto proof = json::parse(evidence.str());
+        ASSERT_TRUE(proof.has_value());
+        const auto before_hash =
+            flow_oracle::flow400_number(proof->root().get("p0_before_source_hash_charge"));
+        const auto spent_before_hash =
+            flow_oracle::kFlow400SceneLimit - (pin.bytes * 192u + 4000000u) - before_hash;
+        for (const auto available :
+             std::array<std::size_t, 3>{0u, 8191u, spent_before_hash + pin.bytes * 4u - 1u}) {
+            flow_oracle::OracleWork limited{available + 65536u};
+            limited.spend(65536u);
+            std::ostringstream failed_evidence;
+            const auto failed = run_official_flow400_case(
+                primary.manifest.root().get("fixtures").at(pin.global), pin.global, pin.ordinal,
+                source, primary, limited, failed_evidence, 0u, 0u, JsonVal{}, JsonVal{}, JsonVal{},
+                JsonVal{}, JsonVal{}, &p0, OfficialFlowOwnerPolicy::DedicatedP0);
+            const auto failed_counts = official_flow_counts(std::vector<Observation>{failed});
+            EXPECT_EQ(failed_counts.admitted, 0u);
+            EXPECT_EQ(failed_counts.mutated, 0u);
+            EXPECT_EQ(failed_counts.errors, 1u);
+            EXPECT_EQ(failed_counts.resources, 1u);
+            if (available > 8191u) {
+                EXPECT_EQ(failed.raw_source_authority, "immutable_Flow400_8Models_plus_P0Grouped7");
+                const auto failed_info = json::parse(failed.raw_source_constraints);
+                ASSERT_TRUE(failed_info.has_value());
+                EXPECT_TRUE(failed_info->root().get("source_bound").as_bool());
+                EXPECT_FALSE(failed_info->root().get("whole_Model_decoded").as_bool());
+            }
+        }
+        const auto reject = [&](auto change) {
+            auto bad = row;
+            json::JsonMutDoc owner;
+            auto info = owner.raw_json(row.raw_source_constraints);
+            owner.set_root(info);
+            change(info, bad);
+            bad.raw_source_constraints = owner.to_string();
+            EXPECT_THROW(static_cast<void>(official_flow_counts(std::vector<Observation>{bad})),
+                         std::runtime_error);
+        };
+        reject([](auto info, auto&) { info.set("verification_resource_exhausted", true); });
+        reject([](auto info, auto&) {
+            info.set("verification_resource_exhausted", true);
+            info.set("whole_source_admitted", false);
+        });
+        reject([](auto info, auto&) { info.set("group_endpoint15_mutations_rejected", 5); });
+        reject(
+            [](auto info, auto&) { info.set("source_supplement_sha256", std::string(64, '0')); });
+        reject([](auto info, auto&) { info.set("manifest_global_ordinal", 0); });
+        reject([](auto, auto& bad) { bad.role_model_sha = std::string(64, '0'); });
+        reject([](auto, auto& bad) { bad.raw_active_schema.clear(); });
+        reject([](auto, auto& bad) {
+            bad.raw_active_schema.clear();
+            bad.path = "flowchart/forged-unowned.mmd";
+        });
+        reject([](auto, auto& bad) {
+            bad.raw_active_schema.clear();
+            bad.path = "flowchart/forged-unowned.mmd";
+            bad.raw_source_authority.clear();
+            bad.source_sha256.clear();
+            bad.role_model_sha.clear();
+            bad.role_case_index = 0u;
+        });
+        reject([](auto, auto& bad) {
+            bad.raw_source_authority = "immutable_Flow400_whole_8Models_392null";
+        });
+        reject([](auto info, auto& bad) {
+            bad.raw_source_authority = "immutable_Flow400_whole_8Models_392null";
+            static_cast<void>(info.remove("manifest_global_ordinal"));
+            static_cast<void>(info.remove("group_endpoint15_mutations_expected"));
+            static_cast<void>(info.remove("group_endpoint15_mutations_rejected"));
+            static_cast<void>(info.remove("source_supplement_sha256"));
+            info.add("source_supplement_sha256", info.make_null());
+        });
+        reject([](auto, auto& bad) { bad.role_case_index = 0u; });
+        reject([](auto info, auto&) {
+            info.set("narrow_ordinary", !info.get("narrow_ordinary").as_bool());
+        });
+        EXPECT_THROW(static_cast<void>(official_flow_counts(std::vector<Observation>{row, row})),
+                     std::runtime_error);
+    }
+}
+
+TEST(MermaidOfficialFlowP0Length,
+     CompleteNightlySourceRequiresReusedProfileOwnedProofAndResourceFailure) {
+    const auto primary = flow_oracle::flow400_documents();
+    const auto p0 = flow_oracle::flow_p0_documents(primary);
+    const auto reviewed = flow_oracle::flow400_linkprofile3_documents();
+    const auto& pin = flow_oracle::kFlowP0Pins[flow_oracle::kFlowP0LengthIndex];
+    const auto source = read_file(kRoot / "cases" / pin.fixture);
+    flow_oracle::OracleWork work{flow_oracle::kFlow400SceneLimit};
+    const auto reserve = pin.bytes * 192u + 4000000u;
+    work.spend(reserve);
+    std::ostringstream evidence;
+    const auto row = run_official_flow400_case(
+        primary.manifest.root().get("fixtures").at(pin.global), pin.global, pin.ordinal, source,
+        primary, work, evidence, 0u, 0u, JsonVal{}, JsonVal{}, JsonVal{},
+        reviewed.supplement.root(), JsonVal{}, &p0, OfficialFlowOwnerPolicy::DedicatedP0);
+    ASSERT_TRUE(row.errors.empty()) << (row.errors.empty() ? "" : row.errors.front());
+    ASSERT_EQ(row.status[0], "drawn");
+    ASSERT_EQ(row.status[2], "drawn");
+    const auto count = [&](const Observation& value) {
+        return official_flow_counts(std::vector<Observation>{value}, JsonVal{}, JsonVal{},
+                                    reviewed.supplement.root());
+    };
+    const auto counts = count(row);
+    EXPECT_EQ(counts.admitted, 1u);
+    EXPECT_EQ(counts.mutated, 1u);
+    EXPECT_EQ(counts.errors, 0u);
+    EXPECT_EQ(counts.resources, 0u);
+    const auto reject = [&](auto change) {
+        auto bad = row;
+        json::JsonMutDoc owner;
+        auto info = owner.raw_json(row.raw_source_constraints);
+        owner.set_root(info);
+        change(info, bad);
+        bad.raw_source_constraints = owner.to_string();
+        EXPECT_THROW(static_cast<void>(count(bad)), std::runtime_error);
+    };
+    reject([](auto info, auto&) {
+        info.set("linkprofile3_reused_asset_sha256", std::string(64u, '0'));
+    });
+    reject([](auto info, auto&) { info.set("linkprofile3_reused_case_id", "link_profile_291"); });
+    reject([](auto info, auto&) {
+        info.set("linkprofile3_reused_source_sha256",
+                 flow_oracle::kFlowP0Pins[flow_oracle::kFlowP0LengthIndex].source_sha);
+    });
+    reject([](auto info, auto&) { info.set("group_endpoint15_mutations_expected", 0); });
+    reject([](auto info, auto&) { info.set("group_endpoint15_mutations_rejected", 5); });
+    reject([](auto info, auto&) {
+        info.set("source_supplement_sha256", flow_oracle::kFlow400LinkProfile3AssetSha);
+    });
+    reject([](auto info, auto&) { info.set("manifest_global_ordinal", 955); });
+    reject([](auto, auto& bad) { bad.role_model_sha = flow_oracle::kFlowP0LengthBaseSha; });
+    reject([](auto, auto& bad) { bad.source_sha256 = flow_oracle::kFlowP0LengthSourceSha; });
+    reject([](auto, auto& bad) { bad.role_case_index = 294u; });
+    reject([](auto, auto& bad) {
+        bad.raw_active_schema.clear();
+        bad.path = "flowchart/forged-length-source.mmd";
+        bad.raw_source_authority.clear();
+    });
+    reject([](auto info, auto&) { static_cast<void>(info.remove("linkprofile3_reused_case_id")); });
+    reject([](auto info, auto&) { info.set("unknown_reuse_proof", true); });
+    reject([](auto info, auto&) {
+        info.set("narrow_ordinary", !info.get("narrow_ordinary").as_bool());
+    });
+    reject([](auto info, auto&) {
+        info.set("verification_resource_exhausted", true);
+        info.set("whole_source_admitted", false);
+    });
+    reject([](auto info, auto& bad) {
+        bad.raw_source_authority = "immutable_Flow400_8Models_plus_P0Grouped7";
+        static_cast<void>(info.remove("linkprofile3_reused_asset_sha256"));
+        static_cast<void>(info.remove("linkprofile3_reused_case_id"));
+        static_cast<void>(info.remove("linkprofile3_reused_source_sha256"));
+    });
+    EXPECT_THROW(
+        static_cast<void>(official_flow_counts(std::vector<Observation>{row, row}, JsonVal{},
+                                               JsonVal{}, reviewed.supplement.root())),
+        std::runtime_error);
+    EXPECT_THROW(static_cast<void>(official_flow_counts(std::vector<Observation>{row})),
+                 std::runtime_error);
+    auto duplicate = row;
+    duplicate.raw_source_constraints.pop_back();
+    duplicate.raw_source_constraints += ",\"linkprofile3_reused_case_id\":\"link_profile_294\"}";
+    EXPECT_THROW(static_cast<void>(count(duplicate)), std::runtime_error);
+    flow_oracle::OracleWork proof_work{flow_oracle::kFlow400SceneLimit};
+    json::JsonMutDoc altered;
+    auto altered_root = altered.raw_json(
+        flow_oracle::group_endpoint15_canonical(reviewed.supplement.root(), proof_work));
+    altered.set_root(altered_root);
+    altered_root.get("cases").at(1u).set("link_profile_json", "{}");
+    const auto altered_document = json::parse(altered.to_string());
+    ASSERT_TRUE(altered_document.has_value());
+    EXPECT_THROW(static_cast<void>(official_flow_counts(std::vector<Observation>{row}, JsonVal{},
+                                                        JsonVal{}, altered_document->root())),
+                 std::runtime_error);
+    const auto published = json::parse(evidence.str());
+    ASSERT_TRUE(published.has_value());
+    const auto remaining =
+        flow_oracle::flow400_number(published->root().get("p0_before_source_hash_charge"));
+    const auto spent = flow_oracle::kFlow400SceneLimit - reserve - remaining;
+    for (const auto available :
+         std::array<std::size_t, 3>{0u, 8191u, spent + pin.bytes * 4u - 1u}) {
+        flow_oracle::OracleWork limited{available + 65536u};
+        limited.spend(65536u);
+        std::ostringstream failed_evidence;
+        const auto failed = run_official_flow400_case(
+            primary.manifest.root().get("fixtures").at(pin.global), pin.global, pin.ordinal, source,
+            primary, limited, failed_evidence, 0u, 0u, JsonVal{}, JsonVal{}, JsonVal{},
+            reviewed.supplement.root(), JsonVal{}, &p0, OfficialFlowOwnerPolicy::DedicatedP0);
+        const auto failed_counts = count(failed);
+        EXPECT_EQ(failed_counts.admitted, 0u);
+        EXPECT_EQ(failed_counts.mutated, 0u);
+        EXPECT_EQ(failed_counts.errors, 1u);
+        EXPECT_EQ(failed_counts.resources, 1u);
+        if (available > 8191u) {
+            EXPECT_EQ(failed.raw_source_authority, flow_oracle::kFlowP0LengthAuthority);
+            const auto info = json::parse(failed.raw_source_constraints);
+            ASSERT_TRUE(info.has_value());
+            EXPECT_TRUE(info->root().get("source_bound").as_bool());
+            EXPECT_FALSE(info->root().get("whole_Model_decoded").as_bool());
+        }
+    }
+}
+
+TEST(MermaidOfficialFlowStrands, TwoWholeSourcesRequireTypedPhysicalProofAndDecisiveNegatives) {
+    const auto primary = flow_oracle::flow400_documents();
+    const auto documents = flow_oracle::flow_p0_documents(primary);
+    for (const auto index : std::array<std::size_t, 2>{4u, 9u}) {
+        const auto& pin = flow_oracle::kFlowP0Pins[index];
+        SCOPED_TRACE(pin.fixture);
+        const auto source = read_file(kRoot / "cases" / pin.fixture);
+        const auto reserve = pin.bytes * 192u + 4000000u;
+        flow_oracle::OracleWork work{flow_oracle::kFlow400SceneLimit};
+        work.spend(reserve);
+        std::ostringstream evidence;
+        const auto run = [&](flow_oracle::OracleWork& paid, std::ostream& output) {
+            return run_official_flow400_case(
+                primary.manifest.root().get("fixtures").at(pin.global), pin.global, pin.ordinal,
+                source, primary, paid, output, 0u, 0u, JsonVal{}, JsonVal{}, JsonVal{}, JsonVal{},
+                JsonVal{}, &documents, OfficialFlowOwnerPolicy::DedicatedP0);
+        };
+        const auto row = run(work, evidence);
+        ASSERT_TRUE(row.errors.empty()) << (row.errors.empty() ? "" : row.errors.front());
+        ASSERT_EQ(row.status[0], "drawn");
+        ASSERT_EQ(row.status[2], "drawn");
+        const auto counts = official_flow_counts(std::vector<Observation>{row});
+        EXPECT_EQ(counts.admitted, 1u);
+        EXPECT_EQ(counts.mutated, 1u);
+        EXPECT_EQ(counts.errors, 0u);
+        EXPECT_EQ(counts.resources, 0u);
+        const auto info = json::parse(row.raw_source_constraints);
+        ASSERT_TRUE(info.has_value());
+        EXPECT_EQ(info->root().get_int("strand_mutations_rejected"), 7);
+        EXPECT_EQ(info->root().get("physical_edge_counts").at(0u).as_int(), index == 4u ? 14 : 3);
+        EXPECT_GT(row.strand_discovery_paid, 0u);
+        const auto reject = [&](auto change) {
+            auto bad = row;
+            json::JsonMutDoc owner;
+            auto proof = owner.raw_json(row.raw_source_constraints);
+            owner.set_root(proof);
+            change(proof, bad);
+            bad.raw_source_constraints = owner.to_string();
+            EXPECT_THROW(static_cast<void>(official_flow_counts(std::vector<Observation>{bad})),
+                         std::runtime_error);
+        };
+        reject([](auto proof, auto&) {
+            auto old = proof.get("physical_edge_counts");
+            auto replacement = proof.make_arr();
+            for (std::size_t at = 0u; at < 3u; ++at)
+                replacement.append(replacement.make_num(at == 0u ? 1 : old.at(at).as_int()));
+            proof.add("physical_edge_counts", replacement);
+        });
+        reject([](auto proof, auto&) {
+            auto old = proof.get("physical_outcomes");
+            auto replacement = proof.make_arr();
+            for (std::size_t at = 0u; at < 3u; ++at)
+                replacement.append(replacement.make_str(at == 0u ? std::string_view{"not_observed"}
+                                                                 : old.at(at).as_str()));
+            proof.add("physical_outcomes", replacement);
+        });
+        reject([](auto proof, auto&) {
+            auto old = proof.get("physical_outcomes");
+            auto replacement = proof.make_arr();
+            for (std::size_t at = 0u; at < 3u; ++at)
+                replacement.append(replacement.make_str(at == 2u ? std::string_view{"match_lite"}
+                                                                 : old.at(at).as_str()));
+            proof.add("physical_outcomes", replacement);
+        });
+        reject([](auto proof, auto&) {
+            auto old = proof.get("physical_reasons");
+            auto replacement = proof.make_arr();
+            for (std::size_t at = 0u; at < 3u; ++at)
+                replacement.append(replacement.make_num(at == 0u ? 1 : old.at(at).as_int()));
+            proof.add("physical_reasons", replacement);
+        });
+        reject([](auto proof, auto&) { proof.set("geometry_inconclusive", true); });
+        reject([](auto proof, auto&) {
+            proof.set("verification_resource_exhausted", true);
+            proof.set("whole_source_admitted", false);
+        });
+        reject([](auto proof, auto& bad) {
+            proof.set("verification_resource_exhausted", true);
+            proof.set("geometry_inconclusive", true);
+            proof.set("whole_source_admitted", false);
+            proof.set("semantic_mutations_complete", false);
+            proof.set("strand_mutations_rejected", 0);
+            bad.errors.push_back("controlled failed source retains drawn status");
+        });
+        reject([](auto proof, auto&) { proof.set("strand_mutations_rejected", 6); });
+        reject([](auto proof, auto&) { proof.set("strand_mutations_expected", 6); });
+        reject([](auto proof, auto&) { proof.set("discovery_debited", 1); });
+        reject([](auto proof, auto&) {
+            proof.set("source_supplement_sha256", std::string(64u, '0'));
+        });
+        reject([](auto proof, auto&) { proof.set("manifest_global_ordinal", 0); });
+        reject([](auto proof, auto&) { proof.set("source_bound", false); });
+        reject([](auto proof, auto&) { proof.set("whole_null_pending", true); });
+        reject([](auto proof, auto&) {
+            proof.set("narrow_ordinary", !proof.get("narrow_ordinary").as_bool());
+        });
+        reject([](auto, auto& bad) { bad.role_model_sha = std::string(64u, '0'); });
+        reject([](auto, auto& bad) { bad.source_sha256 = std::string(64u, '0'); });
+        reject([](auto, auto& bad) { bad.role_case_index = 0u; });
+        reject([](auto, auto& bad) {
+            bad.raw_active_schema.clear();
+            bad.path = "flowchart/forged-strand-source.mmd";
+            bad.raw_source_authority.clear();
+        });
+        reject([](auto proof, auto&) { static_cast<void>(proof.remove("physical_reasons")); });
+        reject([](auto proof, auto&) { proof.set("unused_proof", false); });
+        reject([](auto proof, auto& bad) {
+            bad.raw_source_authority = "immutable_Flow400_8Models_plus_P0Grouped7";
+            static_cast<void>(proof.remove("geometry_inconclusive"));
+            static_cast<void>(proof.remove("discovery_debited"));
+            static_cast<void>(proof.remove("physical_outcomes"));
+            static_cast<void>(proof.remove("physical_edge_counts"));
+            static_cast<void>(proof.remove("physical_reasons"));
+            static_cast<void>(proof.remove("strand_mutations_expected"));
+            static_cast<void>(proof.remove("strand_mutations_rejected"));
+            proof.set("group_endpoint15_mutations_expected", 6);
+            proof.set("group_endpoint15_mutations_rejected", 6);
+        });
+        EXPECT_THROW(static_cast<void>(official_flow_counts(std::vector<Observation>{row, row})),
+                     std::runtime_error);
+        auto duplicate = row;
+        duplicate.raw_source_constraints.pop_back();
+        duplicate.raw_source_constraints += ",\"strand_mutations_expected\":7}";
+        EXPECT_THROW(static_cast<void>(official_flow_counts(std::vector<Observation>{duplicate})),
+                     std::runtime_error);
+        const auto actual = json::parse(evidence.str());
+        ASSERT_TRUE(actual.has_value());
+        const auto before_hash =
+            flow_oracle::flow400_number(actual->root().get("p0_before_source_hash_charge"));
+        const auto spent_before_hash = flow_oracle::kFlow400SceneLimit - reserve - before_hash;
+        const auto completed_cost = flow_oracle::kFlow400SceneLimit - reserve - work.remaining;
+        const auto before_restored =
+            flow_oracle::kFlow400SceneLimit - reserve -
+            flow_oracle::flow400_number(info->root().get("phase_remaining").at(4u));
+        for (const auto available :
+             std::array<std::size_t, 5>{0u, 8191u, spent_before_hash + pin.bytes * 4u - 1u,
+                                        before_restored + 1u, completed_cost - 1u}) {
+            flow_oracle::OracleWork limited{available + 65536u};
+            limited.spend(65536u);
+            std::ostringstream failed_evidence;
+            const auto failed = run(limited, failed_evidence);
+            const auto failed_counts = official_flow_counts(std::vector<Observation>{failed});
+            EXPECT_EQ(failed_counts.admitted, 0u);
+            EXPECT_EQ(failed_counts.mutated, 0u);
+            EXPECT_EQ(failed_counts.errors, 1u);
+            EXPECT_EQ(failed_counts.resources, 1u);
+            EXPECT_NE(failed.status[0], "drawn");
+            EXPECT_NE(failed.status[2], "drawn");
+            if (available > 8191u) {
+                EXPECT_EQ(failed.raw_source_authority, flow_oracle::kFlowP0StrandAuthority);
+                const auto failed_info = json::parse(failed.raw_source_constraints);
+                ASSERT_TRUE(failed_info.has_value());
+                if (available == completed_cost - 1u) {
+                    EXPECT_TRUE(failed_info->root().get("whole_Model_decoded").as_bool());
+                    EXPECT_FALSE(failed_info->root().get("semantic_mutations_complete").as_bool());
+                    EXPECT_TRUE(failed_info->root().get("geometry_inconclusive").as_bool());
+                }
+            }
+        }
+    }
+}
+
+}  // namespace
+
+namespace {
+TEST(MermaidOfficialClassStyle13, OwnedRowsRejectMetadataLossForgedProofsAndLateResourceCredit) {
+    using namespace relations_oracle;
+    const auto docs = official_class285_documents();
+    const auto originals = official_class285_originals();
+    const auto& pin = class_style13::kPins.front();
+    const auto fixture = originals.manifest.root().get("fixtures").at(pin.global);
+    Work work{class_style13::kSceneLimit};
+    auto row = run_class_style13_case(fixture, pin.global, 0u, docs, originals, work, 0u, 0u, {},
+                                      "official-control");
+    ASSERT_TRUE(row.errors.empty()) << (row.errors.empty() ? "" : row.errors.front());
+    ASSERT_TRUE(row.class_style13_original);
+    ASSERT_EQ(row.status[0], "drawn");
+    auto counts = stage_c_counts(std::vector<Observation>{row});
+    EXPECT_EQ(counts.visited, 1u);
+    EXPECT_EQ(counts.styles, 1u);
+    EXPECT_EQ(counts.admitted, 1u);
+    EXPECT_EQ(counts.resources, 0u);
+    const auto reject = [&](auto change) {
+        work.spend(65536u);
+        auto bad = row;
+        change(bad);
+        EXPECT_THROW(stage_c_counts(std::vector<Observation>{bad}), std::runtime_error);
+    };
+    reject([](Observation& bad) { bad.raw_source_authority.clear(); });
+    reject([](Observation& bad) { bad.raw_active_schema.clear(); });
+    reject([](Observation& bad) { bad.class_style13_original = false; });
+    reject([](Observation& bad) {
+        bad.path = "class-diagram/unowned.mmd";
+        bad.raw_active_schema = "legacy";
+    });
+    reject([](Observation& bad) { bad.status[0] = "source_fallback"; });
+    reject([](Observation& bad) { bad.role_model_sha = std::string(64u, '0'); });
+    reject([](Observation& bad) { bad.errors.emplace_back("unexpected source error"); });
+    EXPECT_THROW(stage_c_counts(std::vector<Observation>{row, row}), std::runtime_error);
+    const auto reject_proof = [&](auto change) {
+        reject([&](Observation& bad) {
+            json::JsonMutDoc owner;
+            auto value = owner.raw_json(bad.raw_source_constraints);
+            owner.set_root(value);
+            change(value);
+            bad.raw_source_constraints = owner.to_string();
+        });
+    };
+    reject_proof([](auto value) { value.set("negative_credited", 7); });
+    reject_proof([](auto value) { value.set("wide_outcome", 2); });
+    reject_proof([](auto value) { value.set("resource", true); });
+    reject_proof([](auto value) { value.set("published", false); });
+    reject_proof([&](auto value) {
+        value.set("global_ordinal", static_cast<std::int64_t>(pin.global + 1u));
+    });
+    reject_proof([](auto value) { value.set("unknown", 0); });
+    const std::vector<ClassStyle13ExpectedSlot> expected_slots{{0u, 0u}};
+    const auto report_path = (std::filesystem::path(LOOM_MERMAID_REPORT_DIR) /
+                              "mermaid-class-style13-report-boundary-control.json")
+                                 .string();
+    const auto* previous_path = std::getenv("LOOM_MERMAID_MATRIX_PATH");
+    const std::optional<std::string> previous =
+        previous_path ? std::optional<std::string>{previous_path} : std::nullopt;
+    ::setenv("LOOM_MERMAID_MATRIX_PATH", report_path.c_str(), 1);
+    EXPECT_NO_THROW(emit_report(std::vector<Observation>{row}, {}, expected_slots, {}));
+    auto combined_loss = row;
+    combined_loss.class_style13_original = false;
+    combined_loss.path = "class-diagram/unowned.mmd";
+    combined_loss.raw_active_schema.clear();
+    combined_loss.raw_source_authority.clear();
+    EXPECT_THROW(emit_report(std::vector<Observation>{combined_loss}, {}, expected_slots, {}),
+                 std::runtime_error);
+    if (previous)
+        ::setenv("LOOM_MERMAID_MATRIX_PATH", previous->c_str(), 1);
+    else
+        ::unsetenv("LOOM_MERMAID_MATRIX_PATH");
+    const auto baseline = json::parse(row.raw_source_constraints);
+    ASSERT_TRUE(baseline);
+    const auto balances = baseline->root().get("remaining");
+    const std::array<std::size_t, 5> cuts{
+        {0u, 8191u,
+         static_cast<std::size_t>(balances.at(0).as_int() - balances.at(2).as_int()) - 1u,
+         static_cast<std::size_t>(balances.at(0).as_int() - balances.at(4).as_int()),
+         static_cast<std::size_t>(balances.at(0).as_int() - balances.at(7).as_int()) - 1u}};
+    for (const auto cut : cuts) {
+        SCOPED_TRACE(cut);
+        Work limited{class_style13::kSceneLimit};
+        const auto failed = run_class_style13_case(fixture, pin.global, 0u, docs, originals,
+                                                   limited, 0u, 0u, cut, "official-control");
+        ASSERT_FALSE(failed.errors.empty());
+        for (const auto& status : failed.status)
+            EXPECT_EQ(status, "error");
+        const auto tally = stage_c_counts(std::vector<Observation>{failed});
+        EXPECT_EQ(tally.visited, 1u);
+        EXPECT_EQ(tally.admitted, 0u);
+        EXPECT_EQ(tally.resources, 1u);
+        EXPECT_EQ(tally.errors, 1u);
+        auto lost_resource = failed;
+        json::JsonMutDoc altered;
+        auto changed = altered.raw_json(lost_resource.raw_source_constraints);
+        altered.set_root(changed);
+        changed.set("resource", false);
+        lost_resource.raw_source_constraints = altered.to_string();
+        EXPECT_THROW(stage_c_counts(std::vector<Observation>{lost_resource}), std::runtime_error);
+        const auto proof = json::parse(failed.raw_source_constraints);
+        ASSERT_TRUE(proof);
+        EXPECT_EQ(proof->root().get_int("negative_credited"), 0);
+        auto contradictory = failed;
+        contradictory.status[0] = "drawn";
+        EXPECT_THROW(stage_c_counts(std::vector<Observation>{contradictory}), std::runtime_error);
+    }
+}
+}  // namespace
+
+namespace {
+TEST(MermaidOfficialClassDefined6, OwnedRowsRejectMetadataLossForgedProofsAndLateResourceCredit) {
+    using namespace relations_oracle;
+    const auto docs = official_class285_documents();
+    const auto originals = official_class285_originals();
+    const auto& pin = class_defined6::kPins.front();
+    const auto fixture = originals.manifest.root().get("fixtures").at(pin.global);
+    Work work{class_defined6::kSceneLimit};
+    auto row = run_class_defined6_case(fixture, pin.global, 0u, docs, originals, work, 0u, 0u, {},
+                                       "official-control");
+    ASSERT_TRUE(row.errors.empty()) << (row.errors.empty() ? "" : row.errors.front());
+    ASSERT_TRUE(row.class_defined6_original);
+    ASSERT_EQ(row.status[0], "drawn");
+    auto counts = stage_c_counts(std::vector<Observation>{row});
+    EXPECT_EQ(counts.visited, 1u);
+    EXPECT_EQ(counts.defined_styles, 1u);
+    EXPECT_EQ(counts.styles, 0u);
+    EXPECT_EQ(counts.admitted, 1u);
+    EXPECT_EQ(counts.resources, 0u);
+    const auto reject = [&](auto change) {
+        work.spend(65536u);
+        auto bad = row;
+        change(bad);
+        EXPECT_THROW(stage_c_counts(std::vector<Observation>{bad}), std::runtime_error);
+    };
+    reject([](Observation& bad) { bad.raw_source_authority.clear(); });
+    reject([](Observation& bad) { bad.raw_active_schema.clear(); });
+    reject([](Observation& bad) { bad.class_defined6_original = false; });
+    reject([](Observation& bad) {
+        bad.path = "class-diagram/unowned.mmd";
+        bad.raw_active_schema = "legacy";
+    });
+    reject([](Observation& bad) { bad.status[0] = "source_fallback"; });
+    reject([](Observation& bad) { bad.role_model_sha = std::string(64u, '0'); });
+    reject([](Observation& bad) { bad.errors.emplace_back("unexpected source error"); });
+    EXPECT_THROW(stage_c_counts(std::vector<Observation>{row, row}), std::runtime_error);
+    const auto reject_proof = [&](auto change) {
+        reject([&](Observation& bad) {
+            json::JsonMutDoc owner;
+            auto value = owner.raw_json(bad.raw_source_constraints);
+            owner.set_root(value);
+            change(value);
+            bad.raw_source_constraints = owner.to_string();
+        });
+    };
+    reject_proof([](auto value) { value.set("negative_credited", 7); });
+    reject_proof([](auto value) { value.set("wide_outcome", 2); });
+    reject_proof([](auto value) { value.set("resource", true); });
+    reject_proof([](auto value) { value.set("published", false); });
+    reject_proof([&](auto value) {
+        value.set("global_ordinal", static_cast<std::int64_t>(pin.global + 1u));
+    });
+    reject_proof([](auto value) { value.set("unknown", 0); });
+    const std::vector<ClassDefined6ExpectedSlot> expected_slots{{0u, 0u}};
+    const auto report_path = (std::filesystem::path(LOOM_MERMAID_REPORT_DIR) /
+                              "mermaid-class-defined6-report-boundary-control.json")
+                                 .string();
+    const auto* previous_path = std::getenv("LOOM_MERMAID_MATRIX_PATH");
+    const std::optional<std::string> previous =
+        previous_path ? std::optional<std::string>{previous_path} : std::nullopt;
+    ::setenv("LOOM_MERMAID_MATRIX_PATH", report_path.c_str(), 1);
+    EXPECT_NO_THROW(emit_report(std::vector<Observation>{row}, {}, {}, expected_slots));
+    auto combined_loss = row;
+    combined_loss.class_defined6_original = false;
+    combined_loss.path = "class-diagram/unowned.mmd";
+    combined_loss.raw_active_schema.clear();
+    combined_loss.raw_source_authority.clear();
+    EXPECT_THROW(emit_report(std::vector<Observation>{combined_loss}, {}, {}, expected_slots),
+                 std::runtime_error);
+    if (previous)
+        ::setenv("LOOM_MERMAID_MATRIX_PATH", previous->c_str(), 1);
+    else
+        ::unsetenv("LOOM_MERMAID_MATRIX_PATH");
+    const auto baseline = json::parse(row.raw_source_constraints);
+    ASSERT_TRUE(baseline);
+    const auto balances = baseline->root().get("remaining");
+    const std::array<std::size_t, 5> cuts{
+        {0u, 8191u,
+         static_cast<std::size_t>(balances.at(0).as_int() - balances.at(2).as_int()) - 1u,
+         static_cast<std::size_t>(balances.at(0).as_int() - balances.at(4).as_int()),
+         static_cast<std::size_t>(balances.at(0).as_int() - balances.at(7).as_int()) - 1u}};
+    for (const auto cut : cuts) {
+        SCOPED_TRACE(cut);
+        Work limited{class_defined6::kSceneLimit};
+        const auto failed = run_class_defined6_case(fixture, pin.global, 0u, docs, originals,
+                                                    limited, 0u, 0u, cut, "official-control");
+        ASSERT_FALSE(failed.errors.empty());
+        for (const auto& status : failed.status)
+            EXPECT_EQ(status, "error");
+        const auto tally = stage_c_counts(std::vector<Observation>{failed});
+        EXPECT_EQ(tally.visited, 1u);
+        EXPECT_EQ(tally.admitted, 0u);
+        EXPECT_EQ(tally.resources, 1u);
+        EXPECT_EQ(tally.errors, 1u);
+        auto lost_resource = failed;
+        json::JsonMutDoc altered;
+        auto changed = altered.raw_json(lost_resource.raw_source_constraints);
+        altered.set_root(changed);
+        changed.set("resource", false);
+        lost_resource.raw_source_constraints = altered.to_string();
+        EXPECT_THROW(stage_c_counts(std::vector<Observation>{lost_resource}), std::runtime_error);
+        const auto proof = json::parse(failed.raw_source_constraints);
+        ASSERT_TRUE(proof);
+        EXPECT_EQ(proof->root().get_int("negative_credited"), 0);
+        auto contradictory = failed;
+        contradictory.status[0] = "drawn";
+        EXPECT_THROW(stage_c_counts(std::vector<Observation>{contradictory}), std::runtime_error);
+    }
+}
+}  // namespace
+
 namespace {
 TEST(MermaidOfficialFlow400, Extra7RawSourceAdmission) {
     auto documents = flow_oracle::group_endpoint_extra7_documents();
@@ -15321,13 +17570,15 @@ TEST(MermaidOfficialFlowchartShapes, CompleteOfficialShapeConfigSourcesOwnFiveFr
     };
 
     const std::array cases{
-        Case{"flowchart/visual-check/should-render-a-diamond-shaped-node-using-shape-config.mmd",
+        Case{"flowchart/visual-check/"
+             "should-render-a-diamond-shaped-node-using-shape-config.mmd",
              "10a38ba8df398ccaf36e51e7f84dccc2a71af21c005e177d30d2c304ea209890",
              {"BT",
               {{"n2", "Untitled Node", Shape::Rectangle}, {"n1", "Diamond", Shape::Decision}},
               {{0, 1, "", "solid", false, true}},
               {}}},
-        Case{"flowchart/visual-check/should-render-a-rounded-rectangle-and-a-normal-rectangle.mmd",
+        Case{"flowchart/visual-check/"
+             "should-render-a-rounded-rectangle-and-a-normal-rectangle.mmd",
              "1384844adca4511a7a6f7917ebd6a9563d7dc877e5a4208f7acfc5e32abafacb",
              {"BT",
               {{"n2", "Untitled Node", Shape::Rectangle},

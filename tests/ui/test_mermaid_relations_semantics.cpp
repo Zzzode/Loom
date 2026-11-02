@@ -15,8 +15,12 @@ import loom.ui.visual.markdown;
 import loom.ui.visual.mermaid.testing;
 import loom.serdes.json;
 import loom.crypto.crypto;
+import loom.ui.foundation.theme_provider;
+import loom.ui.foundation.design_tokens;
 
 #include "mermaid_class285_authority.hpp"
+#include "mermaid_class_defined6_proof.hpp"
+#include "mermaid_class_style13_proof.hpp"
 #include "mermaid_er206_authority.hpp"
 #include "mermaid_gap_roster.hpp"
 
@@ -1225,6 +1229,86 @@ void check_relation_resource(std::string_view source, bool drawing, const Model*
         for (int y = 0; y < grid->height; ++y)
             if (grid->row(y).find("AFTER_RELATIONS_SEMANTICS") != std::string::npos) found = true;
         EXPECT_TRUE(found);
+    }
+}
+
+TEST(MermaidRelationsResources, CompetingClassCaptionsKeepTheirOwnRelations) {
+    for (const auto& [first, second, unrelated] :
+         std::array<std::array<std::string, 3>, 5>{{{{"first", "other", "unrelated much longer"}},
+                                                    {{"AB", "CD", "unrelated much longer"}},
+                                                    {{"CD", "AB", "unrelated much longer"}},
+                                                    {{"中", "CD", "unrelated much longer"}},
+                                                    {{"AB", "CD", "short"}}}}) {
+        const std::string source = "classDiagram\nA \"a\" --> \"b\" B : " + first +
+                                   "\nC \"c\" --> \"d\" D : " + second +
+                                   "\nE --> F : " + unrelated + "\n";
+        Model model;
+        model.family = "class";
+        for (const auto name : {"A", "B", "C", "D", "E", "F"})
+            model.entities.push_back(box_entity(name, name));
+        model.relations = {{"A", "B", first, "none", "arrow", "solid", 0, "a", "b"},
+                           {"C", "D", second, "none", "arrow", "solid", 1, "c", "d"},
+                           {"E", "F", unrelated, "none", "arrow", "solid", 2}};
+        check_relation_resource(source, true, &model);
+    }
+    const auto frame = [](std::string_view first, std::string_view second) {
+        const std::string source = "classDiagram\nA \"a\" --> \"b\" B : " + std::string(first) +
+                                   "\nC \"c\" --> \"d\" D : " + std::string(second) +
+                                   "\nE --> F : unrelated much longer\n";
+        auto element = loom::ui::render_markdown(fenced(source, "mermaid"));
+        return capture(element, 240, 64);
+    };
+    const auto first = frame("AB", "CD"), swapped = frame("CD", "AB");
+    int normalized = 0;
+    const auto normalize = [&](std::string row) {
+        for (const auto text : {"AB", "CD"}) {
+            std::size_t offset = 0;
+            while ((offset = row.find(text, offset)) != std::string::npos) {
+                row.replace(offset, 2, "##");
+                offset += 2;
+                ++normalized;
+            }
+        }
+        return row;
+    };
+    for (int y = 0; y < 64; ++y)
+        EXPECT_EQ(normalize(first.row(y)), normalize(swapped.row(y)));
+    EXPECT_EQ(normalized, 4);
+}
+
+TEST(MermaidErP0, CompleteMultilineRelationshipSourcesKeepAllFields) {
+    Model model;
+    model.family = "er";
+    const auto add = [&](std::string id, std::string label,
+                         std::vector<ErTableAttribute> attributes) {
+        auto entity = box_entity(std::move(id), label);
+        entity.typed_er = ErTableSpec{{label}, std::move(attributes)};
+        model.entities.push_back(std::move(entity));
+    };
+    add("p", "Person", {{"string", "firstName", {}, ""}, {"string", "lastName", {}, ""}});
+    add("a", "Customer Account", {{"string", "email", {}, ""}});
+    add("b", "Customer Account Secondary", {{"string", "email", {}, ""}});
+    add("c", "Customer Account Tertiary", {{"string", "email", {}, ""}});
+    add("d", "Customer Account Nth", {{"string", "email", {}, ""}});
+    model.relations = {
+        {"p", "a", "has\none", "card:one", "card:zero-one", "solid", 0},
+        {"p", "b", "has\none\ntwo", "card:one", "card:zero-one", "solid", 1},
+        {"p", "c", "has\none\ntwo\nthree", "card:one", "card:zero-one", "solid", 2},
+        {"p", "d", "has\none\ntwo\nthree\n...\nNth", "card:one", "card:zero-one", "solid", 3}};
+    const std::array<std::pair<std::string_view, std::string_view>, 2> cases{
+        {{"er-diagram/nightly-check/should-render-relationship-labels-with-line-breaks.mmd",
+          "758fcc6f05b06b12f50fc598524d6cd8a9dfa701c25a252bf5b64e53c092ff68"},
+         {"er-diagram/visual-check/relationship-labels-with-line-breaks-elk-layout.mmd",
+          "bb9e08f1bb11a8d3e5fa2bf0c22ee26202aea2afaacd87d34b8c178a07c6f132"}}};
+    for (const auto& [path, sha] : cases) {
+        SCOPED_TRACE(path);
+        std::ifstream input(std::filesystem::path(LOOM_TESTS_DIR) /
+                                "fixtures/mermaid_official/cases" / std::string(path),
+                            std::ios::binary);
+        ASSERT_TRUE(input);
+        const std::string source{std::istreambuf_iterator<char>(input), {}};
+        ASSERT_EQ(loom::utils::crypto::sha256(source), sha);
+        check_relation_resource(source, true, &model);
     }
 }
 
@@ -9472,9 +9556,9 @@ TEST(MermaidCapabilityReport, Class481) {
     EXPECT_EQ(observation_errors, 0);
     EXPECT_EQ(pending, 137)
         << "Current partition must retain every remaining original null obligation";
-    EXPECT_EQ(matched, 343);
-    EXPECT_EQ(mutated, 343);
-    EXPECT_EQ(static_cast<int>(mandatory_gaps.size()), 138);
+    EXPECT_EQ(matched, 344);
+    EXPECT_EQ(mutated, 344);
+    EXPECT_EQ(static_cast<int>(mandatory_gaps.size()), 137);
     if (auto roster = gap_roster::load_verified_roster()) {
         auto published = json::parse(report.to_string());
         ASSERT_TRUE(published.has_value());
@@ -11618,9 +11702,9 @@ TEST(MermaidCapabilityReport, ClassEndpoint29) {
     EXPECT_EQ(oracle_errors, 0);
     EXPECT_EQ(geometry_errors, 0);
     EXPECT_EQ(observation_errors, 0);
-    EXPECT_EQ(matched, 28);
-    EXPECT_EQ(mutated, 28);
-    EXPECT_EQ(static_cast<int>(mandatory_gaps.size()), 1);
+    EXPECT_EQ(matched, 29);
+    EXPECT_EQ(mutated, 29);
+    EXPECT_EQ(static_cast<int>(mandatory_gaps.size()), 0);
     if (auto roster = gap_roster::load_verified_roster()) {
         auto published = json::parse(report.to_string());
         ASSERT_TRUE(published.has_value());
@@ -20962,8 +21046,8 @@ TEST(MermaidOfficialClass285, CompleteOriginalBindingsAndParsedControlsStayStric
     EXPECT_EQ(bound, 285);
     EXPECT_EQ(base_models, 152);
     EXPECT_EQ(base_pending, 133);
-    EXPECT_EQ(models, 237);
-    EXPECT_EQ(pending, 48);
+    EXPECT_EQ(models, 241);
+    EXPECT_EQ(pending, 44);
     EXPECT_EQ(dagre_models, 38);
     EXPECT_EQ(classifier_models, 26);
     EXPECT_EQ(unused_models, 3);
@@ -21267,6 +21351,8 @@ Class481Mutations official_class285_classifier_mutations(const Grid& grid, const
 }
 
 TEST(MermaidCapabilityReport, Class285) {
+    namespace styles = loom::test::mermaid_class_style13;
+    namespace defined = loom::test::mermaid_class_defined6;
     const auto docs = official_class285_documents();
     const auto originals = official_class285_originals();
     json::JsonMutDoc report;
@@ -21281,12 +21367,16 @@ TEST(MermaidCapabilityReport, Class285) {
     int visited = 0, observed = 0, decoded = 0, pending = 0, matched = 0, mutated = 0,
         fallbacks = 0, oracle_errors = 0, geometry_errors = 0, observation_errors = 0,
         base_models = 0, base_pending = 0, dagre_models = 0, classifier_models = 0,
-        unused_models = 0, notes_models = 0;
+        unused_models = 0, notes_models = 0, style_models = 0, defined_models = 0;
+    std::array<bool, 13> style_consumed{};
+    std::array<bool, 6> defined_consumed{};
     std::array<bool, 285> consumed{}, classifier_consumed{}, unused_consumed{},
         notes_consumed{};  // Prepaid by this call's document owner.
     for (std::size_t n = 0; n < 285u; ++n) {
         ++visited;
-        Work work;
+        const auto style_selected = styles::ordinal_index(n),
+                   defined_selected = defined::ordinal_index(n);
+        Work work{(style_selected || defined_selected) ? styles::kSceneLimit : 8000000u};
         work.spend(n + 1u + 32768u);
         const auto row = docs.facts.root().get("cases").at(n);
         SCOPED_TRACE(row.get_string("fixture"));
@@ -21297,147 +21387,295 @@ TEST(MermaidCapabilityReport, Class285) {
         std::vector<std::string> errors, observations;
         bool captured = false, good = false, done = false, ready = false;
         try {
-            const auto input = class481_text(row.get("source"), work);
-            phase = "all_five_public_captures_before_binding_or_Model_decode";
-            auto frames = class35_observe(input, work);
-            captured = true;
-            ++observed;
-            phase = "all_public_captures_complete_before_packed_row_publication";
-            observations = official285_observations(frames, root, item, work);
-            if (!class481_sentinel(frames.ordinary, work) || !class481_sentinel(frames.small, work))
-                observations.emplace_back("OfficialClass285 ordinary physical following sentinel");
-            const bool fallback = frames.wide == frames.ordinary;
-            fallbacks += fallback;
-            phase = "whole_original_file_and_reviewed_mapping_binding";
-            const auto selected = official_class285_bind(row, n, docs, originals, work);
-            work.spend(8u);
-            row.get("whole_native_model_candidate").is_null() ? ++base_pending : ++base_models;
-            if (selected.dagre) {
-                class481_require(!consumed[n] && !selected.meaning.is_null(),
-                                 "OfficialClass285 dagre unique whole source consumption");
-                consumed[n] = true;
-                ++dagre_models;
-            }
-            if (selected.classifier) {
-                class481_require(!classifier_consumed[n] && !selected.dagre &&
-                                     !selected.meaning.is_null(),
-                                 "OfficialClass285 classifier unique whole source consumption");
-                classifier_consumed[n] = true;
-                ++classifier_models;
-            }
-            if (selected.unused_definitions) {
-                official_class285_unused_consume(unused_consumed, n, docs, work);
-                ++unused_models;
-            }
-            if (selected.notes) {
-                official_class285_notes_consume(notes_consumed, n, docs, work);
-                ++notes_models;
-            }
-            item.set("active_source_Model_authority",
-                     selected.notes                ? "source_approved_Notes18"
-                     : selected.unused_definitions ? "source_approved_unused_classDef3"
-                     : selected.classifier         ? "source_approved_classifier26"
-                     : selected.dagre              ? "source_approved_dagre38"
-                                                   : "original152_or_remaining_whole_null");
-            if (selected.meaning.is_null()) {
-                ++pending;
-                outcome = "whole_source_semantic_profile_pending";
-                item.set("unresolved_terminal_obligations_json",
-                         class481_canonical(row.get("unresolved_terminal_obligations"), work));
-            } else {
-                phase = "complete_strict_Model_decode";
-                const auto model = class481_model(selected.meaning, work, true);
-                ready = true;
-                ++decoded;
-                const auto allowance = work.left;
-                item.set("postdecode_geometry_allowance", static_cast<std::int64_t>(allowance));
-                phase = "complete_wide_and_drawn_narrow_geometry";
-                if (fallback) {
-                    errors.emplace_back(
-                        "OfficialClass285 complete mapped source remains a drawing requirement");
-                    outcome = "mandatory_complete_positive_unmet";
-                } else {
-                    work.spend(sizeof(ClassCardWitness) + 128u);
-                    ClassCardWitness card;
-                    const auto wide = validate_impl(frames.wide, model, work, false,
-                                                    &selected.presentation, false, &card);
-                    class481_no_resource(wide);
-                    errors.insert(errors.end(), wide.begin(), wide.end());
-                    if (frames.narrow != frames.small) {
-                        const auto small = validate_impl(frames.narrow, model, work, false,
-                                                         &selected.presentation);
-                        class481_no_resource(small);
-                        errors.insert(errors.end(), small.begin(), small.end());
+            if (style_selected) {
+                phase = "Class13_capture_publication_then_complete_source_screen_proof";
+                auto run =
+                    styles::run(*style_selected, n, originals.ordinals[n],
+                                originals.manifest.root().get("fixtures").at(originals.ordinals[n]),
+                                work, styles::relations::kRelationsFollowingToken,
+                                [&](const auto& frames, Work& paid) {
+                                    styles::publish_file("native", *style_selected, frames, paid);
+                                });
+                if (run.progress.published) {
+                    try {
+                        const auto historical =
+                            official_class285_bind(row, n, docs, originals, work);
+                        class481_require(historical.meaning.is_null() && !historical.dagre &&
+                                             !historical.classifier &&
+                                             !historical.unused_definitions && !historical.notes &&
+                                             !historical.accessibility,
+                                         "Class13 disjoint immutable whole-null history");
+                    } catch (const std::exception& error) {
+                        styles::invalidate(run, error, work);
                     }
-                    good = errors.empty() && observations.empty();
-                    if (!errors.empty()) ++geometry_errors;
-                    if (good) {
-                        phase = "complete_Model_endpoint_and_presentation_adversaries";
-                        const auto changes = endpoint29_mutations(frames.wide, model, work, true);
-                        work.spend((changes.executed.size() + changes.skipped.size()) * 512u +
-                                   8192u);
-                        class35_counts(root, item, changes);
-                        errors.insert(errors.end(), changes.errors.begin(), changes.errors.end());
-                        if (selected.classifier) {
-                            work.spend(docs.classifier_index[n] + 1u);
-                            const auto mapping = docs.classifier.root()
-                                                     .get("cases")
-                                                     .at(docs.classifier_index[n])
-                                                     .get("classifier_member_mappings");
-                            const auto classifiers = official_class285_classifier_mutations(
-                                frames.wide, model, selected.presentation, mapping, work);
-                            work.spend((classifiers.executed.size() + classifiers.skipped.size()) *
+                }
+                if (run.progress.remaining[7] >= 0)
+                    run.progress.remaining[7] = static_cast<std::int64_t>(work.left);
+                class481_require(row.get("whole_native_model_candidate").is_null(),
+                                 "Class13 preserves original whole-null history");
+                ++base_pending;
+                const auto encoded = styles::proof(*style_selected, n, originals.ordinals[n], run);
+                const auto proof = json::parse(encoded);
+                class481_require(proof.has_value(), "Class13 native proof JSON");
+                const styles::ProofBinding binding{styles::kPins[*style_selected].fixture,
+                                                   "original",
+                                                   "class-diagram",
+                                                   run.actual_source_sha,
+                                                   run.decoded_model_sha,
+                                                   styles::kAuthority,
+                                                   styles::kContract,
+                                                   n,
+                                                   originals.ordinals[n],
+                                                   {run.status[0], run.status[1], run.status[2]},
+                                                   true,
+                                                   !run.error.empty(),
+                                                   styles::failure_flags(run.progress)};
+                const auto counted = styles::count(proof->root(), binding);
+                class481_require(!style_consumed[*style_selected],
+                                 "Class13 unique native source consumption");
+                style_consumed[*style_selected] = true;
+                captured = counted.observed;
+                ready = counted.decoded;
+                good = done = counted.admitted;
+                observed += captured;
+                decoded += ready;
+                style_models += ready;
+                matched += good;
+                mutated += done;
+                if (run.progress.exception) {
+                    ++oracle_errors;
+                    errors.push_back(run.error);
+                }
+                if (!run.progress.admitted)
+                    mandatory_gaps.push_back({std::string(styles::kPins[*style_selected].fixture),
+                                              "Class13_complete_screen_unmet"});
+                outcome = good ? "whole_source_style13_admitted" : "Class13_complete_screen_unmet";
+                item.set("active_source_Model_authority", styles::kAuthority);
+                item.set("style13_asset_sha256", styles::kAssetSha);
+                item.set("actual_five_frames_file",
+                         styles::capture_file("native", *style_selected));
+                item.add("Class_style13_proof", report.copy_val(proof->root()));
+            } else if (defined_selected) {
+                phase = "ClassDefined6_capture_publication_then_complete_source_screen_proof";
+                auto run = defined::run(
+                    *defined_selected, n, originals.ordinals[n],
+                    originals.manifest.root().get("fixtures").at(originals.ordinals[n]), work,
+                    defined::relations::kRelationsFollowingToken,
+                    [&](const auto& frames, Work& paid) {
+                        defined::publish_file("native", *defined_selected, frames, paid);
+                    });
+                if (run.progress.published) {
+                    try {
+                        const auto historical =
+                            official_class285_bind(row, n, docs, originals, work);
+                        class481_require(historical.meaning.is_null() && !historical.dagre &&
+                                             !historical.classifier &&
+                                             !historical.unused_definitions && !historical.notes &&
+                                             !historical.accessibility,
+                                         "ClassDefined6 disjoint immutable whole-null history");
+                    } catch (const std::exception& error) {
+                        defined::invalidate(run, error, work);
+                    }
+                }
+                if (run.progress.remaining[7] >= 0)
+                    run.progress.remaining[7] = static_cast<std::int64_t>(work.left);
+                class481_require(row.get("whole_native_model_candidate").is_null(),
+                                 "ClassDefined6 preserves original whole-null history");
+                ++base_pending;
+                const auto encoded =
+                    defined::proof(*defined_selected, n, originals.ordinals[n], run);
+                const auto proof = json::parse(encoded);
+                class481_require(proof.has_value(), "ClassDefined6 native proof JSON");
+                const defined::ProofBinding binding{defined::kPins[*defined_selected].fixture,
+                                                    "original",
+                                                    "class-diagram",
+                                                    run.actual_source_sha,
+                                                    run.decoded_model_sha,
+                                                    defined::kAuthority,
+                                                    defined::kContract,
+                                                    n,
+                                                    originals.ordinals[n],
+                                                    {run.status[0], run.status[1], run.status[2]},
+                                                    true,
+                                                    !run.error.empty(),
+                                                    defined::failure_flags(run.progress)};
+                const auto counted = defined::count(proof->root(), binding);
+                class481_require(!defined_consumed[*defined_selected],
+                                 "ClassDefined6 unique native source consumption");
+                defined_consumed[*defined_selected] = true;
+                captured = counted.observed;
+                ready = counted.decoded;
+                good = done = counted.admitted;
+                observed += captured;
+                decoded += ready;
+                defined_models += ready;
+                matched += good;
+                mutated += done;
+                if (run.progress.exception) {
+                    ++oracle_errors;
+                    errors.push_back(run.error);
+                }
+                if (!run.progress.admitted)
+                    mandatory_gaps.push_back(
+                        {std::string(defined::kPins[*defined_selected].fixture),
+                         "ClassDefined6_complete_screen_unmet"});
+                outcome =
+                    good ? "whole_source_defined6_admitted" : "ClassDefined6_complete_screen_unmet";
+                item.set("active_source_Model_authority", defined::kAuthority);
+                item.set("defined6_asset_sha256", defined::kAssetSha);
+                item.set("actual_five_frames_file",
+                         defined::capture_file("native", *defined_selected));
+                item.add("Class_defined6_proof", report.copy_val(proof->root()));
+            } else {
+                const auto input = class481_text(row.get("source"), work);
+                phase = "all_five_public_captures_before_binding_or_Model_decode";
+                auto frames = class35_observe(input, work);
+                captured = true;
+                ++observed;
+                phase = "all_public_captures_complete_before_packed_row_publication";
+                observations = official285_observations(frames, root, item, work);
+                if (!class481_sentinel(frames.ordinary, work) ||
+                    !class481_sentinel(frames.small, work))
+                    observations.emplace_back(
+                        "OfficialClass285 ordinary physical following sentinel");
+                const bool fallback = frames.wide == frames.ordinary;
+                fallbacks += fallback;
+                phase = "whole_original_file_and_reviewed_mapping_binding";
+                const auto selected = official_class285_bind(row, n, docs, originals, work);
+                work.spend(8u);
+                row.get("whole_native_model_candidate").is_null() ? ++base_pending : ++base_models;
+                if (selected.dagre) {
+                    class481_require(!consumed[n] && !selected.meaning.is_null(),
+                                     "OfficialClass285 dagre unique whole source consumption");
+                    consumed[n] = true;
+                    ++dagre_models;
+                }
+                if (selected.classifier) {
+                    class481_require(!classifier_consumed[n] && !selected.dagre &&
+                                         !selected.meaning.is_null(),
+                                     "OfficialClass285 classifier unique whole source consumption");
+                    classifier_consumed[n] = true;
+                    ++classifier_models;
+                }
+                if (selected.unused_definitions) {
+                    official_class285_unused_consume(unused_consumed, n, docs, work);
+                    ++unused_models;
+                }
+                if (selected.notes) {
+                    official_class285_notes_consume(notes_consumed, n, docs, work);
+                    ++notes_models;
+                }
+                item.set("active_source_Model_authority",
+                         selected.accessibility        ? "source_approved_accessibility4"
+                         : selected.notes              ? "source_approved_Notes18"
+                         : selected.unused_definitions ? "source_approved_unused_classDef3"
+                         : selected.classifier         ? "source_approved_classifier26"
+                         : selected.dagre              ? "source_approved_dagre38"
+                                                       : "original152_or_remaining_whole_null");
+                if (selected.meaning.is_null()) {
+                    ++pending;
+                    outcome = "whole_source_semantic_profile_pending";
+                    item.set("unresolved_terminal_obligations_json",
+                             class481_canonical(row.get("unresolved_terminal_obligations"), work));
+                } else {
+                    phase = "complete_strict_Model_decode";
+                    const auto model = class481_model(selected.meaning, work, true);
+                    ready = true;
+                    ++decoded;
+                    const auto allowance = work.left;
+                    item.set("postdecode_geometry_allowance", static_cast<std::int64_t>(allowance));
+                    phase = "complete_wide_and_drawn_narrow_geometry";
+                    if (fallback) {
+                        errors.emplace_back("OfficialClass285 complete mapped source remains a "
+                                            "drawing requirement");
+                        outcome = "mandatory_complete_positive_unmet";
+                    } else {
+                        work.spend(sizeof(ClassCardWitness) + 128u);
+                        ClassCardWitness card;
+                        const auto wide = validate_impl(frames.wide, model, work, false,
+                                                        &selected.presentation, false, &card);
+                        class481_no_resource(wide);
+                        errors.insert(errors.end(), wide.begin(), wide.end());
+                        if (frames.narrow != frames.small) {
+                            const auto small = validate_impl(frames.narrow, model, work, false,
+                                                             &selected.presentation);
+                            class481_no_resource(small);
+                            errors.insert(errors.end(), small.begin(), small.end());
+                        }
+                        good = errors.empty() && observations.empty();
+                        if (!errors.empty()) ++geometry_errors;
+                        if (good) {
+                            phase = "complete_Model_endpoint_and_presentation_adversaries";
+                            const auto changes =
+                                endpoint29_mutations(frames.wide, model, work, true);
+                            work.spend((changes.executed.size() + changes.skipped.size()) * 512u +
+                                       8192u);
+                            class35_counts(root, item, changes);
+                            errors.insert(errors.end(), changes.errors.begin(),
+                                          changes.errors.end());
+                            if (selected.classifier) {
+                                work.spend(docs.classifier_index[n] + 1u);
+                                const auto mapping = docs.classifier.root()
+                                                         .get("cases")
+                                                         .at(docs.classifier_index[n])
+                                                         .get("classifier_member_mappings");
+                                const auto classifiers = official_class285_classifier_mutations(
+                                    frames.wide, model, selected.presentation, mapping, work);
+                                work.spend(
+                                    (classifiers.executed.size() + classifiers.skipped.size()) *
+                                        512u +
+                                    8192u);
+                                auto extra_counts = root.make_obj();
+                                for (const auto& [key, count] : classifiers.executed)
+                                    extra_counts.set(key, count);
+                                item.add("classifier_mutations_executed", extra_counts);
+                                auto skipped = root.make_obj();
+                                for (const auto& [key, count] : classifiers.skipped)
+                                    skipped.set(key, count);
+                                item.add("classifier_mutations_skipped", skipped);
+                                errors.insert(errors.end(), classifiers.errors.begin(),
+                                              classifiers.errors.end());
+                            }
+                            if (selected.notes) {
+                                const auto note_changes = class_notes18_mutations(
+                                    frames.wide, model, selected.presentation, work);
+                                work.spend(
+                                    (note_changes.executed.size() + note_changes.skipped.size()) *
+                                        512u +
+                                    8192u);
+                                auto note_counts = root.make_obj();
+                                for (const auto& [key, count] : note_changes.executed)
+                                    note_counts.set(key, count);
+                                item.add("Note_mutations_executed", note_counts);
+                                auto note_skipped = root.make_obj();
+                                for (const auto& [key, count] : note_changes.skipped)
+                                    note_skipped.set(key, count);
+                                item.add("Note_mutations_skipped", note_skipped);
+                                errors.insert(errors.end(), note_changes.errors.begin(),
+                                              note_changes.errors.end());
+                            }
+                            const auto properties = envelope22_stage3_presentation_mutations(
+                                frames.wide, model, selected.presentation, allowance, work, &card);
+                            work.spend((properties.executed.size() + properties.skipped.size()) *
                                            512u +
                                        8192u);
-                            auto extra_counts = root.make_obj();
-                            for (const auto& [key, count] : classifiers.executed)
-                                extra_counts.set(key, count);
-                            item.add("classifier_mutations_executed", extra_counts);
-                            auto skipped = root.make_obj();
-                            for (const auto& [key, count] : classifiers.skipped)
-                                skipped.set(key, count);
-                            item.add("classifier_mutations_skipped", skipped);
-                            errors.insert(errors.end(), classifiers.errors.begin(),
-                                          classifiers.errors.end());
-                        }
-                        if (selected.notes) {
-                            const auto note_changes = class_notes18_mutations(
-                                frames.wide, model, selected.presentation, work);
-                            work.spend(
-                                (note_changes.executed.size() + note_changes.skipped.size()) *
-                                    512u +
-                                8192u);
-                            auto note_counts = root.make_obj();
-                            for (const auto& [key, count] : note_changes.executed)
-                                note_counts.set(key, count);
-                            item.add("Note_mutations_executed", note_counts);
-                            auto note_skipped = root.make_obj();
-                            for (const auto& [key, count] : note_changes.skipped)
-                                note_skipped.set(key, count);
-                            item.add("Note_mutations_skipped", note_skipped);
-                            errors.insert(errors.end(), note_changes.errors.begin(),
-                                          note_changes.errors.end());
-                        }
-                        const auto properties = envelope22_stage3_presentation_mutations(
-                            frames.wide, model, selected.presentation, allowance, work, &card);
-                        work.spend((properties.executed.size() + properties.skipped.size()) * 512u +
-                                   8192u);
-                        auto counts = root.make_obj();
-                        for (const auto& [key, count] : properties.executed)
-                            counts.set(key, count);
-                        item.add("presentation_mutations_executed", counts);
-                        errors.insert(errors.end(), properties.errors.begin(),
-                                      properties.errors.end());
-                        done = errors.empty();
-                        if (done) {
-                            ++matched;
-                            ++mutated;
-                            outcome = "complete_native_geometry_and_mutations_pending_original_"
-                                      "predicates";
+                            auto counts = root.make_obj();
+                            for (const auto& [key, count] : properties.executed)
+                                counts.set(key, count);
+                            item.add("presentation_mutations_executed", counts);
+                            errors.insert(errors.end(), properties.errors.begin(),
+                                          properties.errors.end());
+                            done = errors.empty();
+                            if (done) {
+                                ++matched;
+                                ++mutated;
+                                outcome = "complete_native_geometry_and_mutations_pending_original_"
+                                          "predicates";
+                            } else
+                                outcome = "meaningful_mutation_error";
                         } else
-                            outcome = "meaningful_mutation_error";
-                    } else
-                        outcome = "complete_geometry_or_observation_error";
+                            outcome = "complete_geometry_or_observation_error";
+                    }
                 }
             }
         } catch (const std::exception& error) {
@@ -21504,6 +21742,10 @@ TEST(MermaidCapabilityReport, Class285) {
     root.set("geometry_errors", geometry_errors);
     root.set("observation_errors", observation_errors);
     root.set("whole_source_admitted", 0);
+    root.set("ClassDefinedStyle6_models", defined_models);
+    root.set("ClassDefinedStyle6_asset_sha256", defined::kAssetSha);
+    root.set("ClassDirectStyle13_models", style_models);
+    root.set("ClassDirectStyle13_asset_sha256", styles::kAssetSha);
     root.set("original_foreign_assertions_certified", 0);
     auto class285_gaps = root.make_arr();
     for (const auto& gap : mandatory_gaps) {
@@ -21524,14 +21766,17 @@ TEST(MermaidCapabilityReport, Class285) {
     EXPECT_EQ(classifier_models, 26);
     EXPECT_EQ(unused_models, 3);
     EXPECT_EQ(notes_models, 18);
-    EXPECT_EQ(decoded, 237);
-    EXPECT_EQ(pending, 48);
+    EXPECT_EQ(decoded, 260);
+    EXPECT_EQ(pending, 25);
+    EXPECT_EQ(defined_models, 6);
+    EXPECT_TRUE(std::ranges::all_of(defined_consumed, [](bool v) { return v; }));
+    EXPECT_EQ(style_models, 13);
     EXPECT_EQ(oracle_errors, 0);
     EXPECT_EQ(geometry_errors, 0);
     EXPECT_EQ(observation_errors, 0);
-    EXPECT_EQ(matched, 231);
-    EXPECT_EQ(mutated, 231);
-    EXPECT_EQ(static_cast<int>(mandatory_gaps.size()), 54);
+    EXPECT_EQ(matched, 260);
+    EXPECT_EQ(mutated, 260);
+    EXPECT_EQ(static_cast<int>(mandatory_gaps.size()), 25);
     if (auto roster = gap_roster::load_verified_roster()) {
         auto published = json::parse(report.to_string());
         ASSERT_TRUE(published.has_value());
@@ -21710,7 +21955,7 @@ void class285_harness_original(std::size_t n) {
     ASSERT_TRUE(class481_sentinel(frames.ordinary, work));
     ASSERT_TRUE(class481_sentinel(frames.small, work));
     const auto selected = official_class285_bind(row, n, docs, originals, work);
-    const bool pending = n == 263u || n == 264u || n == 271u || n == 284u;
+    const bool pending = false;
     ASSERT_EQ(selected.meaning.is_null(), pending);
     item.set("application_ordinal", static_cast<std::int64_t>(n));
     item.set("source_sha256", row.get_string("source_sha256"));
@@ -24616,6 +24861,78 @@ bool class_unused_defs_source_ink(const Grid& grid, Work& work) {
     return false;
 }
 
+// D1a supersedes exactly one synthetic boundary; its immutable historical
+// asset remains untouched. This independent control owns the complete A graph,
+// Blue fill projection, exact two-row legend and every physical attribute.
+bool class_active_style_control(const loom::test::mermaid_class_style13::Screen& screen, Work& work,
+                                bool assigned = false) {
+    namespace styles = loom::test::mermaid_class_style13;
+    const auto& grid = screen.glyphs;
+    class481_require(grid.width == 240 && grid.height == 40 && grid.cells.size() == 9600u &&
+                         screen.attributes.size() == 9600u,
+                     "Active style control finite screen domain");
+    work.spend(grid.cells.size() * 256u + 65536u);
+    for (const auto& cell : grid.cells)
+        class481_require(cell.size() <= 64u, "Active style control cell byte bound");
+    const auto boxes = outlines(grid, work);
+    if (boxes.size() != 1u || boxes.front().shape != "box") return false;
+    const auto box = boxes.front();
+    for (int y = box.t; y <= box.b; ++y)
+        for (int x = box.l; x <= box.r; ++x) {
+            if (x != box.l && x != box.r && y != box.t && y != box.b) continue;
+            const auto wanted = y == box.t   ? (x == box.l   ? "┌"
+                                                : x == box.r ? "┐"
+                                                             : "─")
+                                : y == box.b ? (x == box.l   ? "└"
+                                                : x == box.r ? "┘"
+                                                             : "─")
+                                             : "│";
+            if (grid.at({x, y}) != wanted) return false;
+        }
+    constexpr std::string_view key =
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; "
+        "monochrome/ANSI16 may share shades; source TAB=\\t";
+    const std::array<std::string_view, 3> legend =
+        assigned
+            ? std::array<std::string_view,
+                         3>{{"class A:::dormant -> class:dormant fill:Blue(shared info)",
+                             "classDef dormant fill:#abc -> definition:dormant (applied)", key}}
+            : std::array<std::string_view, 3>{
+                  {"style A fill:#abc -> fill:Blue(shared info)", key, {}}};
+    const auto legend_rows = assigned ? 3u : 2u;
+    if (box.b + static_cast<int>(legend_rows) >= grid.height || box.l < 0) return false;
+    for (std::size_t n = 0; n < legend_rows; ++n) {
+        if (legend[n].size() > static_cast<std::size_t>(grid.width - box.l)) return false;
+        for (int x = 0; x < grid.width; ++x) {
+            const int i = x - box.l;
+            const auto wanted = i >= 0 && static_cast<std::size_t>(i) < legend[n].size()
+                                    ? std::string(1u, legend[n][static_cast<std::size_t>(i)])
+                                    : " ";
+            if (grid.at({x, box.b + 1 + static_cast<int>(n)}) != wanted) return false;
+        }
+    }
+    auto plain = grid;
+    for (int y = box.b + 1; y <= box.b + static_cast<int>(legend_rows); ++y)
+        for (int x = 0; x < grid.width; ++x)
+            plain.put({x, y}, " ");
+    const Model model{"class", "TB", {{"A", "A", "box", "", {{"A"}}, {}}}, {}, {}, {}};
+    const auto errors = validate_impl(plain, model, work);
+    class481_no_resource(errors);
+    if (!errors.empty()) return false;
+    const auto& palette = *loom::ui::design::theme::current_theme().palette;
+    for (int y = 0; y < grid.height; ++y)
+        for (int x = 0; x < grid.width; ++x) {
+            styles::Attributes expected;
+            if (x > box.l && x < box.r && y > box.t && y < box.b) {
+                expected.foreground = palette.text;
+                expected.background = palette.info_tint_bg;
+            }
+            if (screen.attributes[static_cast<std::size_t>(grid.index({x, y}))] != expected)
+                return false;
+        }
+    return true;
+}
+
 void class_unused_defs_sources(bool positive) {
     Work setup;
     const auto document = class_unused_defs_document(setup);
@@ -24625,7 +24942,7 @@ void class_unused_defs_sources(bool positive) {
     int observed = 0, decoded = 0, strong = 0, mutated = 0, closed = 0, fallbacks = 0,
         geometry_errors = 0, oracle_errors = 0, observation_errors = 0;
     for (std::size_t n = positive ? 0u : 11u; n < (positive ? 11u : 30u); ++n) {
-        Work work;
+        Work work{(n == 19u || n == 15u) ? 128u * 1024u * 1024u : 8000000u};
         const auto row = document.root().get("cases").at(n);
         const auto& pin = kClassUnusedDefsPins[n];
         work.spend(pin.name.size() * 4u + 131072u);
@@ -24646,6 +24963,14 @@ void class_unused_defs_sources(bool positive) {
             work.spend(source.size() * 4u + 256u);
             item.set("complete_source", source);
             item.set("source_sha256", std::string(pin.source));
+            namespace styles = loom::test::mermaid_class_style13;
+            std::optional<styles::Screen> active_wide, active_restored;
+            if (n == 19u || n == 15u) {
+                // Both physical captures precede binding and literal Model use.
+                const auto node = loom::ui::render_markdown(fenced(source, "mermaid"));
+                active_wide = styles::capture(node, 240, 40, work);
+                active_restored = styles::capture(node, 240, 40, work);
+            }
             phase = "complete_source_Model_disposition_binding";
             class_unused_defs_binding(row, n, work);
             if (positive) {
@@ -24688,6 +25013,67 @@ void class_unused_defs_sources(bool positive) {
                         mutated += done;
                     }
                 }
+            } else if (n == 19u || n == 15u) {
+                phase = "reviewed_synthetic_Class_style_control";
+                const bool assigned = n == 15u;
+                class481_require(
+                    assigned
+                        ? (source ==
+                               "classDiagram\nclass A:::dormant\nclassDef dormant fill:#abc\n" &&
+                           pin.name == "applied_declaration_suffix")
+                        : (source == "classDiagram\nclass A\nstyle A fill:#abc\n" &&
+                           pin.name == "active_inline_style"),
+                    "Exact historical applied-style source control");
+                ++decoded;
+                item.set("reviewed_control_domain", assigned ? "ClassAssignedStyleControlA/v1"
+                                                             : "ClassDirectStyleControlA/v1");
+                good = active_wide && active_restored &&
+                       class_active_style_control(*active_wide, work, assigned) &&
+                       class_active_style_control(*active_restored, work, assigned) &&
+                       active_wide->glyphs == frames.wide &&
+                       active_restored->glyphs == frames.restored &&
+                       frames.narrow == frames.small && observations.empty();
+                if (good) {
+                    ++strong;
+                    const auto boxes = outlines(active_wide->glyphs, work);
+                    class481_require(boxes.size() == 1u, "D1a good control outline");
+                    const auto box = boxes.front();
+                    std::size_t rejected = 0u;
+                    for (unsigned k = 0; k < 8u; ++k) {
+                        work.spend(active_wide->glyphs.cells.size() * 256u + 65536u);
+                        auto changed = *active_wide;
+                        const auto label = Point{box.l + 1, box.t + 1};
+                        if (k == 0u) changed.glyphs.put(label, "B");
+                        if (k == 1u) changed.glyphs.put({box.l, box.t}, " ");
+                        if (k == 2u)
+                            changed
+                                .attributes[static_cast<std::size_t>(changed.glyphs.index(label))]
+                                .background = ftxui::Color::Default;
+                        if (k == 3u)
+                            changed
+                                .attributes[static_cast<std::size_t>(changed.glyphs.index(label))]
+                                .foreground = ftxui::Color::Default;
+                        if (k == 4u)
+                            changed
+                                .attributes[static_cast<std::size_t>(changed.glyphs.index(label))]
+                                .flags = 1u;
+                        if (k == 5u)
+                            changed.attributes.back().background =
+                                loom::ui::design::theme::current_theme().palette->info_tint_bg;
+                        if (k == 6u) changed.glyphs.put({box.l, box.b + 1}, "X");
+                        if (k == 7u) changed.glyphs.put({239, 39}, "X");
+                        class481_require(changed.glyphs != active_wide->glyphs ||
+                                             changed.attributes != active_wide->attributes,
+                                         "D1a decisive physical control");
+                        if (!class_active_style_control(changed, work, assigned)) ++rejected;
+                    }
+                    done = rejected == 8u;
+                    mutated += done;
+                    item.set("decisive_style_controls", static_cast<std::int64_t>(rejected));
+                }
+                if (!good || !done)
+                    errors.emplace_back("D1a synthetic control requires complete graph, exact "
+                                        "legend, all attributes and eight decisive negatives");
             } else {
                 phase = "unreviewed_complete_source_boundary";
                 good = frames.wide == frames.ordinary && frames.narrow == frames.small &&
@@ -24707,17 +25093,20 @@ void class_unused_defs_sources(bool positive) {
         item.set("phase", phase);
         item.set("good_before_mutants", good);
         item.set("mutations_completed", done);
-        item.set("native_contract_met", good && (!positive || done));
+        item.set("native_contract_met", good && (!(positive || n == 19u || n == 15u) || done));
         item.set("work_remaining", static_cast<std::int64_t>(work.left));
         class35_errors(root, item, errors, observations);
         records.append(item);
     }
     root.set("qualification",
-             "Complete11 source-authored positives including all3 original unused-definition "
-             "applications and19 finite whole-source boundaries. Full graph geometry and "
-             "meaningful graph adversaries remain mandatory; unused declaration edits are protocol "
-             "facts, not geometry credit. No original285 mapping/policy/foreign assertion "
-             "admission, cap/reset/checker or producer change.");
+             "Complete11 legacy positives including all3 original unused-definition "
+             "applications,17 finite whole-source boundaries and two independently checked "
+             "synthetic style positives. The immutable historical asset is unchanged; only its "
+             "exact active_inline_style and applied_declaration_suffix controls use the separate "
+             "complete graph/legend/attribute domain with eight decisive negatives; this earns no "
+             "original coverage. Full graph geometry and meaningful graph adversaries remain "
+             "mandatory; unused declaration edits are protocol facts, not geometry credit. No "
+             "original285 mapping or foreign assertion admission; producer caps remain unchanged.");
     root.set("fixture_sha256", std::string(kClassUnusedDefsSha));
     root.set("public_observations", observed);
     root.set("complete_Models_decoded", decoded);
@@ -24734,10 +25123,10 @@ void class_unused_defs_sources(bool positive) {
                            : "mermaid-class-unused-definitions-boundaries.json",
                   report);
     EXPECT_EQ(observed, positive ? 11 : 19);
-    EXPECT_EQ(decoded, positive ? 11 : 0);
-    EXPECT_EQ(strong, positive ? 11 : 0);
-    EXPECT_EQ(mutated, positive ? 11 : 0);
-    EXPECT_EQ(closed, positive ? 0 : 19);
+    EXPECT_EQ(decoded, positive ? 11 : 2);
+    EXPECT_EQ(strong, positive ? 11 : 2);
+    EXPECT_EQ(mutated, positive ? 11 : 2);
+    EXPECT_EQ(closed, positive ? 0 : 17);
     EXPECT_EQ(fallbacks, 0);
     EXPECT_EQ(geometry_errors, 0);
     EXPECT_EQ(oracle_errors, 0);
@@ -25430,12 +25819,12 @@ TEST(MermaidCapabilityReport, ClassNotes18) {
     EXPECT_EQ(original_decoded, 18);
     EXPECT_EQ(observed, 22);
     EXPECT_EQ(decoded, 22);
-    EXPECT_EQ(strong, 16);
+    EXPECT_EQ(strong, 22);
     EXPECT_EQ(geometry_errors, 0);
     EXPECT_EQ(mutation_errors, 0);
     EXPECT_EQ(errors_count, 0);
     EXPECT_EQ(observation_errors, 0);
-    EXPECT_EQ(static_cast<int>(mandatory_gaps.size()), 6);
+    EXPECT_EQ(static_cast<int>(mandatory_gaps.size()), 0);
     if (auto roster = gap_roster::load_verified_roster()) {
         auto published = json::parse(report.to_string());
         ASSERT_TRUE(published.has_value());
@@ -32864,4 +33253,165 @@ TEST(MermaidStateEnvelope, CompositeDividerStaysSource) {
 
 }  // namespace
 
+}  // namespace
+
+namespace {
+TEST(MermaidClassAccessibility, ScalarsAreRetainedSeparatelyWithoutGlyphs) {
+    namespace seam = loom::ui::mermaid::testing;
+    const std::string prefix = "classDiagram\n", graph = "A --> B\n";
+    const std::string declarations = "accTitle:   标题 😀  \naccDescr:  exact  inner spaces  \n";
+    seam::Work work;
+    const auto parsed =
+        seam::class_accessibility_metadata(prefix + declarations + graph, work, false);
+    ASSERT_TRUE(parsed);
+    EXPECT_EQ(parsed->title, "标题 😀");
+    EXPECT_EQ(parsed->description, "exact  inner spaces");
+    for (const auto& [decl, title, description] :
+         std::array<std::array<std::string, 3>, 3>{{{{"accTitle: Changed\n", "Changed", ""}},
+                                                    {{"accDescr: Other\n", "", "Other"}},
+                                                    {{"", "", ""}}}}) {
+        seam::Work ledger;
+        const auto value = seam::class_accessibility_metadata(prefix + decl + graph, ledger, false);
+        ASSERT_TRUE(value);
+        EXPECT_EQ(value->title,
+                  title.empty() ? std::optional<std::string>{} : std::optional<std::string>{title});
+        EXPECT_EQ(value->description, description.empty()
+                                          ? std::optional<std::string>{}
+                                          : std::optional<std::string>{description});
+    }
+    auto original = loom::ui::render_markdown(fenced(prefix + graph, "mermaid"));
+    auto annotated = loom::ui::render_markdown(fenced(prefix + declarations + graph, "mermaid"));
+    EXPECT_TRUE(capture(original, 240, 100) == capture(annotated, 240, 100));
+    seam::Work crlf;
+    ASSERT_TRUE(seam::class_accessibility_metadata("classDiagram\r\naccTitle: yes\r\nA --> B\r\n",
+                                                   crlf, false));
+    seam::Work limit;
+    ASSERT_TRUE(seam::class_accessibility_metadata(
+        prefix + "accTitle: " + std::string(256, 'x') + "\n" + graph, limit, false));
+    for (const auto& source :
+         {prefix + "accTitleSuffix --> accDescrMore\n", prefix + "accTitle --> accDescr\n",
+          prefix + "class accTitle\nclass accDescr\n"}) {
+        seam::Work ledger;
+        const auto value = seam::class_accessibility_metadata(source, ledger, false);
+        ASSERT_TRUE(value);
+        EXPECT_FALSE(value->title);
+        EXPECT_FALSE(value->description);
+        check_relation_resource(source, true);
+    }
+    for (const auto keyword : {"accTitle", "accDescr"})
+        for (const auto marker : {"o..", "*.."}) {
+            const auto source = prefix + keyword + " " + marker + " B\n";
+            seam::Work ledger;
+            const auto value = seam::class_accessibility_metadata(source, ledger, false);
+            ASSERT_TRUE(value);
+            EXPECT_FALSE(value->title);
+            EXPECT_FALSE(value->description);
+            check_relation_resource(source, true);
+        }
+    seam::Work zero;
+    zero.remaining = 0;
+    EXPECT_FALSE(seam::class_accessibility_metadata(prefix + declarations + graph, zero, false));
+    seam::Work tiny;
+    tiny.remaining = 32;
+    EXPECT_FALSE(seam::class_accessibility_metadata(prefix + declarations + graph, tiny, false));
+}
+
+TEST(MermaidClassAccessibility, InvalidDeclarationsPreserveCompleteSource) {
+    namespace seam = loom::ui::mermaid::testing;
+    std::vector<std::string> bad = {"accTitle:",
+                                    "accDescr:  ",
+                                    "accTitle: a\naccTitle: b",
+                                    "accDescr: a\naccDescr: b",
+                                    "accDescr {\nblock\n}",
+                                    "accTitle malformed",
+                                    "class A {\naccTitle: nested\n}",
+                                    "namespace N {\naccDescr: nested\nclass A\n}",
+                                    "accTitle: <bad>",
+                                    "accDescr: a&b",
+                                    "accTitle: a\\b",
+                                    "accDescr: `bad`",
+                                    "accTitle: trailing\t",
+                                    "accTitle: invalid\rfragment",
+                                    "accTitle: " + std::string(257, 'x'),
+                                    "accTitle: " + std::string("\xc0\xaf", 2),
+                                    "accDescr: a" + std::string(1, '\x01')};
+    for (const auto& declaration : bad) {
+        SCOPED_TRACE(declaration);
+        const auto source = "classDiagram\n" + declaration + "\nA --> B\n";
+        seam::Work work;
+        EXPECT_FALSE(seam::class_accessibility_metadata(source, work, false));
+        check_relation_resource(source, false);
+    }
+}
+
+TEST(MermaidClassAccessibility, FourOriginalGraphsExcludePhantomMetadataEntities) {
+    const auto raw =
+        read(std::filesystem::path(LOOM_TESTS_DIR) /
+             "fixtures/mermaid_native/class285_accessibility4_source_supplement.v1.json");
+    const auto parsed = json::parse(raw);
+    ASSERT_TRUE(parsed);
+    int visited = 0;
+    for (std::size_t n = 0; n < parsed->root().get("rows").size(); ++n) {
+        const auto row = parsed->root().get("rows").at(n);
+        ++visited;
+        Work work;
+        const auto source =
+            read(std::filesystem::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases" /
+                 std::string(row.get_string("fixture")));
+        EXPECT_EQ(digest(source), row.get_string("source_sha256"));
+        const auto model = class481_model(row.get("model"), work, true);
+        EXPECT_EQ(model.entities.size(), 20u);
+        EXPECT_EQ(model.relations.size(), 19u);
+        namespace seam = loom::ui::mermaid::testing;
+        seam::Work ledger;
+        const auto metadata = seam::class_accessibility_metadata(source, ledger, true);
+        ASSERT_TRUE(metadata);
+        EXPECT_EQ(metadata->title, "This is a title");
+        EXPECT_EQ(metadata->description, "This is a description");
+        check_relation_resource(source, true, &model);
+    }
+    EXPECT_EQ(visited, 4);
+}
+}  // namespace
+
+namespace {
+TEST(MermaidClassAccessibility, SourceSupplementAndMetadataBindingRejectForgeries) {
+    using namespace loom::test::mermaid_relations;
+    const auto docs = official_class285_documents();
+    const auto source = docs.facts.root().get("cases").at(263u);
+    auto reject = [&](auto change) {
+        Work work;
+        const auto raw = docs.accessibility.root().to_string();
+        work.spend(raw.size() * 8u + 8192u);
+        json::JsonMutDoc owner;
+        auto root = owner.raw_json(raw);
+        owner.set_root(root);
+        change(root);
+        const auto changed = json::parse(owner.to_string());
+        ASSERT_TRUE(changed);
+        bool rejected = false;
+        try {
+            class_accessibility4_asset(changed->root(), docs.facts.root(), work);
+        } catch (const std::runtime_error& error) {
+            EXPECT_FALSE(class481_resource(error.what())) << error.what();
+            rejected = true;
+        }
+        EXPECT_TRUE(rejected);
+    };
+    reject([](auto root) { root.set("schema", "changed"); });
+    reject([](auto root) { root.get("rows").at(0).set("ordinal", 264); });
+    reject([](auto root) { root.get("rows").at(0).set("source_sha256", std::string(64, '0')); });
+    reject([](auto root) { root.get("rows").at(0).set("accessibility_title", ""); });
+    reject([](auto root) { root.get("rows").at(0).set("accessibility_description", "Changed"); });
+    reject([](auto root) {
+        root.get("rows").at(0).get("model").get("entities").at(0).set("label", "Changed");
+    });
+    reject([](auto root) {
+        root.get("rows").at(0).get("presentation").set("title", "Invented visible title");
+    });
+    Work depleted{0u};
+    EXPECT_THROW(class_accessibility4_model(docs.accessibility.root().get("rows").at(0), source,
+                                            263u, depleted),
+                 std::runtime_error);
+}
 }  // namespace

@@ -26,6 +26,12 @@ export namespace loom::ui::mermaid {
 /// The cache is owned per instance (one StreamingMarkdown, one message
 /// list); it is never process-global and is unrelated to the 256-entry
 /// process-global markdown token LRU.
+namespace testing {
+struct Work;
+struct FinalEmissionTrace;
+struct CacheBudgetAccess;
+}  // namespace testing
+
 class LayoutRowsCache {
 public:
     /// @param max_entries  bounded entry count (LRU eviction)
@@ -66,6 +72,10 @@ public:
     [[nodiscard]] std::size_t misses() const noexcept;
 
 private:
+    friend struct testing::CacheBudgetAccess;
+    std::optional<ftxui::Element> render_with_work(std::string_view source, bool use_ascii,
+                                                   ftxui::Element fallback, testing::Work& work,
+                                                   testing::FinalEmissionTrace* trace);
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };
@@ -91,6 +101,31 @@ struct Work {
 // Structural metadata envelope shared by every family. The reader extracts
 // frontmatter structure and init directives; family-specific value validation
 // stays in each family.
+// Test-only opt-in for the unadmitted Flow style prototype.
+bool set_flow_style_preview_for_testing(bool enabled);
+
+// Passive observation of the actual styled final-Element budget boundary.
+struct FinalEmissionTrace {
+    bool styled_entered = false, preflight_complete = false, allocation_started = false,
+         returned_native = false;
+    std::size_t entry_remaining = 0u, emission_debit = 0u, preflight_debits = 0u,
+                successful_debits = 0u;
+    std::size_t last_debit = 0u, failed_debit = 0u;
+};
+
+// Testing-only budget injection into the exact public render pipeline.
+std::optional<ftxui::Element> render_mermaid_with_work(std::string_view source,
+                                                       ftxui::Element fallback, bool use_ascii,
+                                                       Work& work,
+                                                       FinalEmissionTrace* trace = nullptr);
+
+// Budget injection forwards to the exact production cache lookup and finish.
+struct CacheBudgetAccess {
+    static std::optional<ftxui::Element> render(LayoutRowsCache& cache, std::string_view source,
+                                                bool use_ascii, ftxui::Element fallback, Work& work,
+                                                FinalEmissionTrace* trace = nullptr);
+};
+
 enum class EnvelopeScalarForm : unsigned char { Plain, Quoted, Literal, Folded };
 
 struct EnvelopeScalar {
@@ -175,6 +210,25 @@ struct FlowAsciiRows {
 };
 
 std::optional<FlowAsciiRows> flow_ascii_rows(std::string_view source, Work& work);
+
+// Reviewed test seam for Class relation-layout resource boundaries.
+std::optional<std::vector<std::string>> class_relations_rows(std::string_view source, Work& work,
+                                                             bool class_envelope);
+std::optional<std::vector<std::size_t>> class_note_candidate_order(std::span<const int> scores,
+                                                                   Work& work);
+
+// Internal nonvisual Class metadata inspected through the production parser.
+struct ClassAccessibilityMetadata {
+    std::optional<std::string> title, description;
+};
+
+std::optional<ClassAccessibilityMetadata>
+class_accessibility_metadata(std::string_view source, Work& work, bool class_envelope);
+
+// Fixed-corridor probe of actual strict/relaxed routing and hard group-port
+// reservation. Results: strict before, relaxed before, reserved, restored, sealed.
+std::optional<std::array<bool, 5>> flow_group_border_probe(bool blocked, bool crossable,
+                                                           Work& work);
 
 // RFC 0031 E4: ordered family probe classification, factored out of the
 // dispatcher. The scan is purely textual (it must not gate on parse_envelope,

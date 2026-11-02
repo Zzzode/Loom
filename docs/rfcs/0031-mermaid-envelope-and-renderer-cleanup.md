@@ -697,3 +697,92 @@ Rollback boundaries:
 | 2026-10-24 | E6c | 12 mandatory gates converted to permanently non-failing capability reports; strict green subset named via ctest LABELS (macOS) | Local, uncommitted | Test/tool/docs only; no production renderer code under src/ui/ changed (plus LABELS in tests/ui/CMakeLists.txt and one LABELS line in tests/e2e/CMakeLists.txt). The 12 red gates were renamed to MermaidCapabilityReport.{OfficialMatrix,Flow400CompleteSources,MermanXY102,Class481,Class285,ClassEndpoint29,State85,ClassCaptionStarvation8,StateReverseEscape,ClassNotes18,Requirement11P1P6,Requirement11Overflow} (12 renames, zero add/delete of those gates); enumeration, provenance, resource/integrity checks and JSON/MD report emission are unchanged. Aspiration assertions removed; frozen observed counts became explicit EXPECT_EQ pins (ER errors 6/pending 144/admitted 62; Flow errors 9/decoded 54/pending 346; Class errors 30/decoded 237/pending 48/matched 211; Class481 matched 341/pending 137; Endpoint29 matched 26; State85 matched 71/geometry_errors 1/positive_pending 7/original_policy 1/choice_policy 1; Caption 6/2; Reverse 8/1; Notes18 strong 16; XY102 102/85/17, geometry 77, empty 5, profile pending 20, partition 3,17,82,0, zero error counts; P1 complete 8/geometry 1; Overflow complete 1/fallbacks 1/errors 1); all other zero-error/resource pins kept hard. Each report serializes a canonical mandatory_gaps array (matrix family summaries gained target_whole_sources_admitted/mandatory_remaining; Flow report gained complete_source_target/mandatory_pending_remains and is counts-only with no roster because pending membership is Model-authority determined). New textual support header tests/support/mermaid_gap_roster.hpp (import std/loom.serdes.json/loom.crypto.crypto; included only by the three ordinary-importer TUs, never the flow attached module TU) loads tools/mermaid/e6c-mandatory-gap-roster.json (schema e6c_mandatory_gap_roster/v1, 61620 bytes, sha256 29611b1dae04a3c5b30d14fa904ece3be6ab37d924ae6621079e7633afcd6f1d), verifies size/SHA/schema/gate keys, canonicalizes rows and diffs both directions; the six-message matrix error mapper returns 'unknown' on anything outside the closed set and unknown stays ADD_FAILURE. Roster bootstrapped once from debug report mandatory_gaps arrays (356 rows across 11 keys: official_matrix 94, merman_xy102 20, class481 140, class285 74, class_endpoint29 3, state85 14, class_caption_starvation8 2, state_reverse_escape 1, class_notes18 6, requirement11_p1p6 1, requirement11_overflow 1), then independently audited row by row by re-deriving every row from report ground truth (raw errors/outcomes) and checking the spec-named ids (class481/endpoint 5974d9ab/a254b69/c50650c; state 2419c8d2/17f03f94; caption, reverse b91, notes ordinals 272-277, P1, overflow case 0) and distribution (94 = 47 flowchart body_diagnostic + 30 class original + 9 flowchart original + 6 ER + 1 conf + 1 requirement); marked reviewed in-file. class35_errors gained bool terminal_failures=true; only the six reporter call sites pass false; every green caller keeps default behavior. Requirement catch blocks roster only the geometry/verification outcomes named in the spec and keep ADD_FAILURE for resource/protocol/semantic/mutation/lifecycle and unexpected throws. New MermaidCapabilityRoster.{Integrity,UnknownMatrixErrorCategoryIsRejected} guard the ledger. tools/mermaid/verify_e6c_gap_roster.py (python3 -I) diffs serialized gaps both ways and pins size/SHA, with maintenance-only --write; it reports OK for debug and release and fails on tampering in both directions. All 11 tests/ui Mermaid gtest blocks and E2E_Pty_Mermaid carry LABELS mermaid (the E1 spec named nine blocks; test_mermaid_probe from E4 and test_mermaid_e2a_cohort from E2a were added later and included so -L mermaid is the complete gate): 810 registered on both presets (807 post-E2a plus the two new roster tests and the renamed gate), 798-test strict subset. Verification: debug ctest -L mermaid -j8 = 809/810 and strict subset 798/798; release 809/810 with the four full reporter binaries green (34/61/128/218); the single failure both presets is the pre-existing real-PTY timing flake E2E_Pty_Mermaid ('state fixture clear did not complete' under load avg 6-10; passes alone on an unloaded debug machine; the E6c e2e diff is one LABELS line, so it is not causal). Reports are byte-stable across presets (verifier OK both). Matrix drawn_at_240 is 582, not the E1-era 540: the +42 is exactly the E2a reviewed gitGraph/state cohort; no other frozen count moved. Docs: mermaid-conformance.md, mermaid-obligation-ledger.md, mermaid-terminal-tests.md. Linux dual-preset remains the outstanding RFC graduation gate from E1. |
 | 2026-10-24 | E6d | libFuzzer Mermaid harness and repaired fuzz gate (macOS) | Local, uncommitted | Replaced the two broken per-target `-fsanitize=fuzzer` COMPILE options with link-only options plus a global `fuzz` preset (`-fsanitize=fuzzer-no-link,address,undefined`); this fixed the pre-existing clang-23 `-Wreduced-bmi-output-overrided` ENABLE_FUZZING failure. Added fuzz_mermaid_parse (module impl unit via `import :detail` + testing seam; envelope, sequence/charts/gitgraph/relations layouts, and both render_mermaid entry points rendered into fixed 240/40 headless screens; fresh Work per call; 65536-byte gate), tests/fuzz/corpus/mermaid (14 edge seeds), tests/fuzz/run_mermaid_fuzz.sh (smoke + 600 s, Darwin-safe detect_leaks=0). Smoke 500 runs/1621 seeds clean; 600 s: 217451 executions, 60771 features, peak RSS 637 MiB, zero crashes/timeouts/artifacts. Normal debug/release presets unaffected. Linux fuzz run remains the execution gate. |
 | 2026-10-24 | E6b | Per-instance Mermaid layout-rows cache implemented on the GO branch (macOS) | Local, uncommitted | GO was decided from the durable measurement record `docs/dev/mermaid-e6b-cache-decision.md` (STREAMING R=0.997 / mermaid ≈90% of update time; SCROLL R=0.991 / ≈89% of per-row render time; far above the 0.5/10% thresholds). Implementation honors every recorded correctness constraint. (1) Seam: new detail-only `std::optional<std::vector<std::string>> layout_mermaid_rows(string_view source, bool use_ascii)` in `mermaid_detail.cppm`, defined in `mermaid_impl.cpp` as the exact pre-E6b two-/three-argument dispatch body with a fresh `Work` per call; both public `render_mermaid` overloads keep their signatures and are now seam lookup + the unchanged `finish_mermaid`, which constructs a FRESH `MermaidNode` per call. (2) Cache: exported `loom::ui::mermaid::LayoutRowsCache` (new `mermaid_cache_impl.cpp`, impl unit of the existing module; body lives in the visual/mermaid unit per layering) stores IMMUTABLE `vector<string>` rows, never `ftxui::Element`; deep copy rebuilds the hash index so value owners stay copyable. (3) Key: FNV-1a-64 over the EXACT code_content bytes (CRLF included, no trim/normalize) plus the ascii bit folded as a trailing byte; hash-index hits are confirmed by exact source+ascii comparison so a collision can never cross-serve; no width/theme component. A present-but-EMPTY vector is the rejection sentinel (distinct from absence) and re-runs finish to reproduce whole-source fallback; a Work-budget miss and its repeat therefore see the identical surface. LRU bounded by entry count AND row-byte cap; an entry larger than the byte cap is served but not retained. (4) Two DISTINCT per-instance owners, never process-global and untouched relative to the 256-entry token LRU: `StreamingMarkdown` holds a 16-entry / 1 MiB cache directly; `MessagesListInput` holds a 32-entry / 512 KiB cache threaded to committed rows via the additive nullable `MarkdownOptions::mermaid_rows_cache` (default null, so every other call site is unchanged) -> faithful renderer -> `render_code_block` (the single mermaid call site), which calls `LayoutRowsCache::render` only when attached and otherwise the plain public `render_mermaid`. (5) Invalidation: `StreamingMarkdown::reset()` clears its cache (covers all four existing reset call sites in app_handle_submit.cpp / app_agent_menu.cpp); `reset_virtual_renderer_state()` clears the list cache, covering /clear, the callback-clear button, and /resume session replacement. The native-agent conversation overlay shares the store but reuse there is content-addressed, so byte-identical source can only ever yield its deterministic rows. (6) Width/dim: 240 and 40 renders hit the same rows and differ only inside the fresh node; a width toggle never invalidates rows; dim is applied by the caller exactly as before. Before/after measured on this host (debug, temporary harness removed before commit): per-call full layout of a drawn 4-node LR chain ≈302 µs vs cached-hit row copy ≈0.47 µs (~640x on the memoized component); end-to-end fenced render pair (including the unavoidable fresh-node finish and the text fallback both paths pay) 3.58–3.78x; this converts the measured ~90% mermaid share of repeated frames into a one-per-distinct-source cost, consistent with the R≈0.99 repeat rates. Conservation claim: caching identical inputs changes NO rendered cell, fallback disposition, Work-exhaustion outcome, or ordering — every pinned corpus (official/terminal/flow/relations/charts/sequence/gitgraph/e2a) is byte/pixel identical because the cached value is exactly the seam's pre-E6b output and finish runs identically on every render. Tests: 9 new focused `MermaidRowsCache.*` tests in the existing test_mermaid_terminal TU (hit reuse, ascii-bit partition, CRLF key partition, cached-negative fallback, LRU entry eviction, byte cap, clear/counters, 240/40 shared-rows fresh-node geometry, markdown-call-site cell conservation) and one StreamingMarkdown frames/reset test in test_markdown_render.cpp; no new binary, no fixture/support/wire/session-format change. `ctest -L mermaid`: 819 registrations (810 pre-E6b + 9) on both presets, 818 pass; the single failure is the pre-existing real-PTY timing flake E2E_Pty_Mermaid (`state fixture clear did not complete`) — proven pre-existing at a clean HEAD on this host (debug 3/5 fails under load, release 3/3 isolated; it passes when the machine is unloaded) and unrelated to caching; strict regression subset 806/806. MarkdownMermaid 26/26, MarkdownRenderSnapshot 11/11, test_ui_messages 129/129, markdown render/styles/conformance green. StreamingReplay (21) and StreamingMigration (8) golden failures are pre-existing host environment footer/spinner mismatches reproduced identically at a clean HEAD (documented spinner-verb/<tmpdir> nondeterminism; zero Mermaid references). graph_check.py --target-ui9 PASS (12 singleton areas, 0 upward edges/dead imports with keep-import markers), store lint and inline_def_check OK. Debug and release builds clean under -Wall -Wextra -Wpedantic -Werror. No public render_mermaid signature, wire/session format, token cache, test or fixture changed. |
+### Class relation-layout resource test seam (2026-10-29)
+
+The `testing` facade gains a thin `class_relations_rows` forwarder taking the
+source, caller-owned `Work`, and the existing envelope flag. It returns only
+rows or whole-layout failure; no parser, layout, canvas, or candidate internal
+is exported. It does not reset Work or retry. This does expand the testing
+namespace reachable through the primary interface, and is subject to the E6a
+privacy checks. It does not exercise the public dispatcher's earlier source,
+classification, and envelope charges; the public full-source five-frame and
+mutation gates remain separate. Resource reviewer agent:/root/note_budget_review
+accepted this restricted test seam. The stated privacy checks passed in both
+presets; this is not phase graduation.
+
+The same trial also exposes `class_note_candidate_order` through the reviewed
+`testing` namespace. It accepts only scores and a caller-owned `Work`, bounds
+and prepays its test-owned storage, and delegates to the same private compact
+stable-order helper and helper prepayment used by the producer. It exposes no
+candidate, canvas, or layout type. Tests compare all returned original indices
+to an independent stable-sort reference for empty, single, tied, interleaved,
+and score-boundary inputs; budget rejection is tested separately. Resource and
+implementation reviewer agent:/root/note_budget_review conditionally approved
+the helper and both seams. Dual-preset Mermaid execution and E6a privacy
+checks passed.
+
+### 2026-10-30: bounded Class nonvisual metadata test seam
+
+The Class accessibility design review (`agent:class_accessibility_design_review`)
+approved a minimal testing facade: `ClassAccessibilityMetadata` contains two
+optional owned strings and `class_accessibility_metadata(source, Work&,
+class_envelope)` invokes the real production parser. It exposes no private
+RelationDiagram, graph, route or glyph state. The caller owns the bounded Work;
+production metadata and visible diagram titles remain distinct. Tests inspect
+exact retention, absence, independent setters, malformed/control text, scope,
+physical lines and resource rejection. Source-model bindings additionally pay
+the full bounded production-parse allowance from their owning verification
+ledger before invoking this facade. No production limit is increased.
+
+### 2026-10-30: hard group-border reservation probe
+
+Design/PRR reviewer `agent:flow_port_probe_design_review` approves the bounded
+`testing::flow_group_border_probe(blocked, crossable, Work&)` seam returning
+optional four booleans: real strict-before path, relaxed-before path,
+relaxed-reserved path, and exact state/path restoration. A fixed corridor uses
+the production Router and ScopedGroupBorder; no private geometry, graph,
+route or coordinates escape. Pay setup before allocation and all searches on
+the same caller Work. Exhaustion returns nullopt, including mid-search; test
+all four initial states, zero/insufficient budgets and scope-exit restoration.
+Public four-direction parent/child and complete-source regressions remain
+separate requirements. This approval does not grant native drawing credit.
+
+The same reviewer approves a fifth probe boolean for the actual relaxed path
+after invoking the shared production permanent seal helper. Keep the fourth
+restoration proof unchanged; the fifth must be false in all initial states.
+Both fast and pair painting must seal group ports and clear crossing eligibility.
+This amendment grants no private geometry access or additional budget.
+
+Flow P0 grouped7 execution checkpoint: Debug/Release852/852; official641/2145,
+Flow61/400,1501 fallbacks,3 errors. Independent final oracle, producer and
+collector reviews approve; measured resource controls and exact seven-row
+comparison are recorded in `../dev/mermaid-flow-p0-grouped7-review.md`.
+This execution record changes no phase status or graduation criterion.
+
+Flow P0 length1 execution: Debug/Release854/854; official642/2145, Flow62/400,
+1501 fallbacks,2 errors. Source-alias design and implementation agent reviews
+approve; full evidence and exact one-row comparison are recorded in
+`../dev/mermaid-flow-p0-length-review.md`. No phase graduation is claimed.
+
+Flow P0 strands2 execution: Debug/Release867/867 plus final exact-branch control,
+official644/2145 (30.02%),Flow64/400,1501 fallbacks,zero errors. All22 errors
+in the original P0 package are resolved. Independent source/oracle, production,
+integration and exact roster reviews approve; detailed evidence and exact
+two-original comparison are in `../dev/mermaid-flow-p0-strands-review.md`.
+No RFC phase graduation is claimed; continue P1/P2/P3.
+
+Class D1a direct-style13 execution (2026-10-30):657/2145 (30.63%),Class254/285,
+1488 fallbacks, zero errors. Debug/Release878/878 and serial style/resource/
+real-PTY14/14 each pass. Independent source/design/producer/oracle/integration,
+synthetic-control and exact-roster reviews approve the bounded sub-batch;
+complete evidence and thirteen-original comparison are in
+`../dev/mermaid-class-style13-review.md`. No phase graduation or browser
+equivalence is claimed. Continue defined-Class-style6 and remaining P1/P2/P3.
+
+Class D1b defined-style6 execution (2026-10-30):663/2145 (30.91%),Class260/285,
+1482 fallbacks, zero errors. Debug/Release889/889 and serial style/resource/
+real-PTY25/25 each pass. Independent source/design/producer/oracle/integration
+and exact-roster reviews approve the bounded sub-batch. Complete evidence and
+six-original comparison: `../dev/mermaid-class-defined-style6-review.md`.
+No phase graduation or browser/full-project coverage is claimed. Continue
+Flow style4 and remaining P1 before P2/P3.

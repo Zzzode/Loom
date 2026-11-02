@@ -5,10 +5,13 @@
 #include <filesystem>
 import std;
 import loom.ui.visual.markdown;
+import loom.ui.visual.mermaid.testing;
 import loom.serdes.json;
 #include "mermaid_flow400_group_endpoint_extra7_authority.hpp"
 #include "mermaid_flow_extra7_controls.hpp"
 #include "mermaid_flow_group_endpoint15_oracle.hpp"
+#include "mermaid_flow_p0_authority.hpp"
+#include "mermaid_flow_strand_mutations.hpp"
 
 namespace {
 namespace json = loom::utils::json;
@@ -1181,6 +1184,1487 @@ TEST(MermaidFlowGroupEndpointExtra7, CompetingGroupSourcesUseDistinctPorts) {
     const auto errors = group_endpoint15_geometry(grid, model, work, kSentinel);
     EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors.front());
     EXPECT_NE(work.remaining, 0u);
+}
+
+}  // namespace
+
+namespace {
+// Independent geometric papers: boxes and routes are declared separately from
+// their semantic Models. No renderer, captured pixels or geometry output authors
+// either side. Rotations re-place horizontal labels in the rotated rectangles.
+struct FlowP0Paper {
+    Grid grid;
+    Model model;
+    GroupEndpointProfile profile;
+};
+
+FlowP0Paper flow_p0_paper(int kind, int turn, OracleWork& setup) {
+    setup.spend(80u * 72u * (2u * sizeof(std::string) + 16u) + 4u * 64u * 64u * sizeof(int) +
+                16384u);
+    FlowP0Paper out{Grid{80, 72, std::vector<std::string>(80u * 72u, " ")}, {}, {}};
+    std::array<int, 64u * 64u> bits{}, arrows{};
+    arrows.fill(-1);
+    const auto index = [](Point p) { return static_cast<std::size_t>(p.y * 64 + p.x); };
+    const auto add = [&](Point p, int mask) { bits[index(p)] |= mask; };
+
+    struct Box {
+        int l, t, r, b;
+        std::string_view label;
+    };
+
+    const std::vector<Box> boxes =
+        kind == 3
+            ? std::vector<Box>{{0, 0, 16, 16, "S"},
+                               {30, 0, 50, 18, "T"},
+                               {4, 2, 12, 4, "A"},
+                               {4, 12, 12, 14, "A"},
+                               {35, 8, 44, 12, "C"}}
+            : std::vector<Box>{{0, 0, 16, 6, "S1"}, {0, 10, 16, 16, "S2"}, {30, 0, 50, 18, "T"},
+                               {4, 2, 12, 4, "A"},  {4, 12, 12, 14, "B"},  {35, 8, 44, 12, "C"}};
+    for (const auto& b : boxes) {
+        for (int x = b.l + 1; x < b.r; ++x) {
+            add({x, b.t}, L | R);
+            add({x, b.b}, L | R);
+        }
+        for (int y = b.t + 1; y < b.b; ++y) {
+            add({b.l, y}, U | D);
+            add({b.r, y}, U | D);
+        }
+        add({b.l, b.t}, R | D);
+        add({b.r, b.t}, L | D);
+        add({b.l, b.b}, U | R);
+        add({b.r, b.b}, U | L);
+    }
+    const auto line = [&](std::initializer_list<Point> waypoints, bool head = true) {
+        auto from = *waypoints.begin();
+        for (auto next = waypoints.begin() + 1; next != waypoints.end(); ++next) {
+            const int direction = group_endpoint_direction(from, *next);
+            const auto delta = kSteps[static_cast<std::size_t>(direction)];
+            while (from != *next) {
+                const Point to{from.x + delta.x, from.y + delta.y};
+                add(from, kBits[static_cast<std::size_t>(direction)]);
+                add(to, kBits[static_cast<std::size_t>((direction + 2) % 4)]);
+                from = to;
+            }
+        }
+        if (head) arrows[index(from)] = 1;
+    };
+    if (kind == 4) {
+        line({{12, 3}, {20, 3}, {20, 10}}, false);
+        line({{12, 13}, {20, 13}, {20, 10}}, false);
+        line({{20, 10}, {31, 10}}, false);
+        line({{31, 10}, {31, 9}, {34, 9}});
+        line({{31, 10}, {31, 11}, {34, 11}});
+    } else if (kind == 5) {
+        line({{12, 3}, {20, 3}}, false);
+        line({{20, 3}, {31, 3}, {31, 9}, {34, 9}});
+        line({{20, 3}, {20, 11}, {34, 11}});
+    } else if (kind == 6) {
+        line({{12, 3}, {31, 3}, {31, 9}, {34, 9}});
+        line({{12, 13}, {32, 13}, {32, 9}, {34, 9}});
+    } else if (kind == 3) {
+        line({{12, 13}, {32, 13}, {32, 11}, {34, 11}});
+    } else if (kind == 0) {
+        line({{12, 3}, {31, 3}, {31, 9}, {34, 9}});
+        line({{12, 13}, {32, 13}, {32, 11}, {34, 11}});
+    } else if (kind == 1) {
+        line({{16, 3}, {29, 3}});
+        line({{16, 13}, {29, 13}});
+    } else {
+        line({{12, 3}, {31, 3}, {31, 9}, {34, 9}});
+        line({{30, 13}, {28, 13}, {28, 11}, {34, 11}});
+    }
+    const auto rotate = [&](Point p) {
+        for (int n = 0; n < turn; ++n)
+            p = {63 - p.y, p.x};
+        return p;
+    };
+    const auto ink = [](int mask) -> std::string_view {
+        switch (mask) {
+        case U | D:
+            return "│";
+        case L | R:
+            return "─";
+        case R | D:
+            return "┌";
+        case L | D:
+            return "┐";
+        case U | R:
+            return "└";
+        case U | L:
+            return "┘";
+        case U | D | R:
+            return "├";
+        case U | D | L:
+            return "┤";
+        case L | R | D:
+            return "┬";
+        case L | R | U:
+            return "┴";
+        case U | D | L | R:
+            return "┼";
+        default:
+            throw std::runtime_error("Flow P0 independent paper arm");
+        }
+    };
+    constexpr std::array<std::string_view, 4> heads{"▲", "▶", "▼", "◀"};
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x) {
+            const Point point{x, y};
+            const auto at = index(point);
+            if (!bits[at]) continue;
+            const auto target = rotate(point);
+            if (arrows[at] >= 0)
+                out.grid.put(target,
+                             std::string(heads[static_cast<std::size_t>((arrows[at] + turn) % 4)]));
+            else {
+                int mask = 0;
+                for (int n = 0; n < 4; ++n)
+                    if (bits[at] & kBits[static_cast<std::size_t>(n)])
+                        mask |= kBits[static_cast<std::size_t>((n + turn) % 4)];
+                out.grid.put(target, std::string(ink(mask)));
+            }
+        }
+    for (const auto& b : boxes) {
+        const auto a = rotate({b.l, b.t}), z = rotate({b.r, b.b});
+        const int l = std::min(a.x, z.x), t = std::min(a.y, z.y);
+        for (std::size_t n = 0; n < b.label.size(); ++n)
+            out.grid.put({l + 1 + static_cast<int>(n), t + 1}, std::string(1, b.label[n]));
+    }
+    for (std::size_t n = 0; n < kSentinel.size(); ++n)
+        out.grid.put({static_cast<int>(n), 70}, std::string(1, kSentinel[n]));
+    constexpr std::array<std::string_view, 4> directions{"LR", "TB", "RL", "BT"};
+    out.model.direction = directions[static_cast<std::size_t>(turn)];
+    out.model.nodes = {
+        {"A", "A", Shape::Rectangle}, {"B", "B", Shape::Rectangle}, {"C", "C", Shape::Rectangle}};
+    out.model.groups = {
+        {"S1", "S1", "", -1, {0}}, {"S2", "S2", "", -1, {1}}, {"T", "T", "", -1, {2}}};
+    if (kind == 3) {
+        out.model.nodes[1].label = "A";
+        out.model.groups = {{"S", "S", "", -1, {0, 1}}, {"T", "T", "", -1, {2}}};
+        out.model.edges = {{0, 2, "", "solid", false, true}};
+        out.profile.source_order = {{GroupEndpointOrderKind::Ordinary, 0}};
+    } else if (kind == 0 || kind >= 4) {
+        out.model.edges = {{0, 2, "", "solid", false, true}, {1, 2, "", "solid", false, true}};
+        out.profile.source_order = {{GroupEndpointOrderKind::Ordinary, 0},
+                                    {GroupEndpointOrderKind::Ordinary, 1}};
+    } else if (kind == 1) {
+        out.profile.tagged = {{{GroupEndpointKind::Group, 0},
+                               {GroupEndpointKind::Group, 2},
+                               "",
+                               "solid",
+                               false,
+                               true},
+                              {{GroupEndpointKind::Group, 1},
+                               {GroupEndpointKind::Group, 2},
+                               "",
+                               "solid",
+                               false,
+                               true}};
+        out.profile.source_order = {{GroupEndpointOrderKind::Tagged, 0},
+                                    {GroupEndpointOrderKind::Tagged, 1}};
+    } else {
+        out.model.edges = {{0, 2, "", "solid", false, true}};
+        out.profile.tagged = {{{GroupEndpointKind::Group, 2},
+                               {GroupEndpointKind::Vertex, 2},
+                               "",
+                               "solid",
+                               false,
+                               true}};
+        out.profile.source_order = {{GroupEndpointOrderKind::Ordinary, 0},
+                                    {GroupEndpointOrderKind::Tagged, 0}};
+    }
+    return out;
+}
+
+TEST(MermaidFlowP0, IndependentRepeatedTargetPapersKeepDistinctRoutesInFourDirections) {
+    for (int kind = 0; kind < 3; ++kind)
+        for (int turn = 0; turn < 4; ++turn) {
+            SCOPED_TRACE(std::to_string(kind) + "/" + std::to_string(turn));
+            OracleWork work{kFlow400SceneLimit};
+            auto paper = flow_p0_paper(kind, turn, work);
+            const auto errors =
+                flow_group_endpoint_p0_geometry(paper.grid, paper.model, paper.profile, work);
+            ASSERT_TRUE(errors.empty()) << (errors.empty() ? "" : errors.front());
+            OracleWork legacy{kFlow400SceneLimit};
+            const auto old =
+                flow_group_endpoint_geometry(paper.grid, paper.model, paper.profile, legacy);
+            EXPECT_FALSE(old.empty());
+            EXPECT_FALSE(std::ranges::any_of(
+                old, [](const auto& error) { return flow400_resource(error); }));
+        }
+}
+
+TEST(MermaidFlowP0, RepeatedTargetPapersRejectOwnershipInkAndResourceForgeries) {
+    OracleWork setup{kFlow400SceneLimit};
+    const auto paper = flow_p0_paper(0, 0, setup);
+    OracleWork baseline{kFlow400SceneLimit};
+    ASSERT_TRUE(
+        flow_group_endpoint_p0_geometry(paper.grid, paper.model, paper.profile, baseline).empty());
+    const auto reject = [&](auto mutate) {
+        OracleWork work{kFlow400SceneLimit};
+        flow400_copy_grid(paper.grid, work);
+        flow400_copy_model(paper.model, work);
+        work.product(paper.profile.source_order.size(), 4u * sizeof(GroupEndpointOrder) + 64u);
+        work.spend(4096u);
+        auto wrong = paper;
+        mutate(wrong);
+        bool rejected = false, resource = false;
+        try {
+            const auto errors =
+                flow_group_endpoint_p0_geometry(wrong.grid, wrong.model, wrong.profile, work);
+            rejected = !errors.empty();
+            resource = std::ranges::any_of(
+                errors, [](const auto& error) { return flow400_resource(error); });
+        } catch (const std::exception& error) {
+            rejected = true;
+            resource = flow400_resource(error.what()) || work.remaining == 0u;
+        }
+        EXPECT_TRUE(rejected);
+        EXPECT_FALSE(resource);
+    };
+    reject([](FlowP0Paper& bad) { bad.grid.put({34, 9}, "─"); });
+    reject([](FlowP0Paper& bad) { bad.grid.put({60, 60}, "▶"); });
+    reject([](FlowP0Paper& bad) { bad.grid.put({20, 3}, "┬"); });
+    reject([](FlowP0Paper& bad) { bad.grid.put({20, 3}, "┼"); });
+    reject([](FlowP0Paper& bad) { bad.grid.put({60, 60}, "─"); });
+    reject([](FlowP0Paper& bad) { bad.model.edges[1].from = 0; });  // No head/port reuse.
+    reject([](FlowP0Paper& bad) { bad.model.edges[0].to = 1; });
+    reject([](FlowP0Paper& bad) { bad.model.groups[2].nodes.clear(); });
+    reject([](FlowP0Paper& bad) { bad.profile.source_order[1] = bad.profile.source_order[0]; });
+    reject([](FlowP0Paper& bad) { bad.model.direction = "RL"; });
+    reject([](FlowP0Paper& bad) { bad.grid.put({0, 70}, "X"); });
+    for (const int kind : {1, 2}) {
+        OracleWork preparation{kFlow400SceneLimit};
+        const auto other = flow_p0_paper(kind, 0, preparation);
+        ASSERT_TRUE(
+            flow_group_endpoint_p0_geometry(other.grid, other.model, other.profile, preparation)
+                .empty());
+        for (const int control : {0, 1}) {
+            OracleWork work{kFlow400SceneLimit};
+            flow400_copy_grid(other.grid, work);
+            flow400_copy_model(other.model, work);
+            work.spend(8192u);
+            auto bad = other;
+            if (control == 0)
+                bad.profile.tagged[0].target.kind =
+                    bad.profile.tagged[0].target.kind == GroupEndpointKind::Vertex
+                        ? GroupEndpointKind::Group
+                        : GroupEndpointKind::Vertex;
+            else if (kind == 1)
+                bad.profile.tagged[0].source = bad.profile.tagged[1].source;
+            else
+                bad.profile.tagged[0].source = {GroupEndpointKind::Vertex, 0u};
+            const auto errors =
+                flow_group_endpoint_p0_geometry(bad.grid, bad.model, bad.profile, work);
+            EXPECT_FALSE(errors.empty());
+            EXPECT_FALSE(std::ranges::any_of(
+                errors, [](const auto& error) { return flow400_resource(error); }));
+        }
+    }
+    for (int mode = 0; mode < 4; ++mode) {
+        GroupEndpointP0Limits limits;
+        switch (mode) {
+        case 0:
+            limits.route_cells = 0;
+            break;
+        case 1:
+            limits.per_edge_candidates = 0;
+            break;
+        case 2:
+            limits.total_candidates = 0;
+            break;
+        default:
+            limits.selection_steps = 0;
+            break;
+        }
+        OracleWork work{kFlow400SceneLimit};
+        const auto errors = flow_group_endpoint_p0_geometry(paper.grid, paper.model, paper.profile,
+                                                            work, kSentinel, limits);
+        EXPECT_FALSE(errors.empty());
+        EXPECT_TRUE(std::ranges::any_of(errors, [](const auto& error) {
+            return flow400_resource(error);
+        })) << (errors.empty() ? "" : errors.front());
+    }
+    for (int mode = 0; mode < 4; ++mode) {
+        GroupEndpointP0Limits limits;
+        switch (mode) {
+        case 0:
+            limits.route_cells = 30u;
+            break;
+        case 1:
+            limits.per_edge_candidates = 1u;
+            break;
+        case 2:
+            limits.total_candidates = 2u;
+            break;
+        default:
+            limits.selection_steps = 3u;
+            break;
+        }
+        OracleWork exact{kFlow400SceneLimit};
+        const auto accepted = flow_group_endpoint_p0_geometry(
+            paper.grid, paper.model, paper.profile, exact, kSentinel, limits);
+        EXPECT_TRUE(accepted.empty()) << (accepted.empty() ? "" : accepted.front());
+        switch (mode) {
+        case 0:
+            --limits.route_cells;
+            break;
+        case 1:
+            --limits.per_edge_candidates;
+            break;
+        case 2:
+            --limits.total_candidates;
+            break;
+        default:
+            --limits.selection_steps;
+            break;
+        }
+        OracleWork shortfall{kFlow400SceneLimit};
+        const auto rejected = flow_group_endpoint_p0_geometry(
+            paper.grid, paper.model, paper.profile, shortfall, kSentinel, limits);
+        EXPECT_TRUE(std::ranges::any_of(rejected, [](const auto& error) {
+            return flow400_resource(error);
+        })) << (rejected.empty() ? "" : rejected.front());
+    }
+    {
+        GroupEndpointP0Limits raised;
+        raised.route_cells = 2049u;
+        OracleWork work{kFlow400SceneLimit};
+        const auto errors = flow_group_endpoint_p0_geometry(paper.grid, paper.model, paper.profile,
+                                                            work, kSentinel, raised);
+        EXPECT_TRUE(
+            std::ranges::any_of(errors, [](const auto& error) { return flow400_resource(error); }));
+    }
+    OracleWork zero{0u};
+    EXPECT_THROW(static_cast<void>(
+                     flow_group_endpoint_p0_geometry(paper.grid, paper.model, paper.profile, zero)),
+                 std::runtime_error);
+    EXPECT_TRUE(flow400_resource("GroupEndpoint route candidate bound"));
+    EXPECT_TRUE(flow400_resource("GroupEndpoint exclusive route ownership exhausted"));
+}
+}  // namespace
+
+namespace {
+void flow_p0_source_paper_case(const Flow400Documents& primary, const FlowP0Documents& proposal,
+                               std::size_t i) {
+    const auto& pin = kFlowP0Pins[i];
+    SCOPED_TRACE(pin.fixture);
+    OracleWork work{kFlow400SceneLimit};
+    work.spend(pin.bytes * 192u + 4000000u);
+    const auto path =
+        std::filesystem::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases" / pin.fixture;
+    ASSERT_EQ(std::filesystem::file_size(path), pin.bytes);
+    const auto source = flow400_read(path);
+    auto mermaid = loom::ui::render_markdown(group_endpoint15_fenced(source, "mermaid"));
+    auto ordinary = loom::ui::render_markdown(group_endpoint15_fenced(source, "text"));
+    auto node = ftxui::vbox({mermaid, ftxui::text(std::string(kSentinel))});
+    auto plain = ftxui::vbox({ordinary, ftxui::text(std::string(kSentinel))});
+    node->ComputeRequirement();
+    plain->ComputeRequirement();
+    const int height =
+        std::max({32, node->requirement().min_y + 8, plain->requirement().min_y + 8});
+    ASSERT_LE(height, 1040);
+    std::array<std::optional<Grid>, 5> frames;
+    constexpr std::array<int, 5> widths{240, 40, 240, 240, 40};
+    for (std::size_t n = 0; n < 5u; ++n)
+        frames[n] = capture(n < 3u ? node : plain, widths[n], height, &work);
+    // Reserve final evidence serialization from actual bounded glyph bytes
+    // before any frame is published or semantic Model decoded.
+    for (const auto& grid : frames) {
+        work.product(grid->cells.size(), 16u);
+        for (const auto& cell : grid->cells)
+            work.product(cell.size(), 64u);
+        work.spend(static_cast<std::size_t>(grid->height) * 128u + 4096u);
+    }
+    json::JsonMutDoc evidence;
+    auto item = evidence.object();
+    constexpr std::array<std::string_view, 5> names{"wide_240", "narrow_40", "restored_240",
+                                                    "source_240", "source_40"};
+    for (std::size_t n = 0; n < 5u; ++n)
+        group_endpoint15_publish_frame(item, names[n], *frames[n], work);
+    item.set("phase", "actual_captures_before_binding");
+    evidence.set_root(item);
+#ifdef LOOM_MERMAID_REPORT_DIR
+    {
+        const auto output =
+            std::filesystem::path(LOOM_MERMAID_REPORT_DIR) /
+            ("mermaid-flow-p0-" + std::to_string(pin.ordinal) + "-whole-source.json");
+        std::ofstream file(output);
+        ASSERT_TRUE(file.good());
+        file << evidence.to_pretty_string() << '\n';
+    }
+#endif
+    const auto fixture = primary.manifest.root().get("fixtures").at(pin.global),
+               base = primary.compact.root().get("cases").at(pin.ordinal);
+    const auto record =
+        flow_p0_group_select(proposal, base, fixture, pin.ordinal, pin.global, source, work);
+    ASSERT_TRUE(record.valid());
+    const auto model = flow_p0_group_model(record, work);
+    ASSERT_FALSE(flow400_same(*frames[0], *frames[3], work));
+    ASSERT_TRUE(flow400_same(*frames[0], *frames[2], work));
+    const auto wide = flow_p0_group_geometry(*frames[0], model, work);
+    ASSERT_TRUE(wide.empty()) << (wide.empty() ? "" : wide.front());
+    const auto restored = flow_p0_group_geometry(*frames[2], model, work);
+    ASSERT_TRUE(restored.empty()) << (restored.empty() ? "" : restored.front());
+    const bool narrow_source = flow400_same(*frames[1], *frames[4], work);
+    if (!narrow_source) {
+        const auto narrow = flow_p0_group_geometry(*frames[1], model, work);
+        ASSERT_TRUE(narrow.empty()) << (narrow.empty() ? "" : narrow.front());
+    }
+    for (const auto& frame : frames)
+        static_cast<void>(flow400_following(*frame, work));
+    ASSERT_EQ(flow_p0_group_mutations(*frames[0], model, work), 6u);
+    item.set("phase", "complete_source_geometry_and_mutations");
+    item.set("source_sha256", pin.source_sha);
+    item.set("Model_sha256", pin.model_sha);
+    item.set("source_asset_sha256", kFlowP0AssetSha);
+    item.set("source_bound", true);
+    item.set("five_captures_before_binding", true);
+    item.set("narrow_source", narrow_source);
+    item.set("mutations", 6);
+    item.set("formal_matrix_admission", false);
+    evidence.set_root(item);
+#ifdef LOOM_MERMAID_REPORT_DIR
+    const auto output = std::filesystem::path(LOOM_MERMAID_REPORT_DIR) /
+                        ("mermaid-flow-p0-" + std::to_string(pin.ordinal) + "-whole-source.json");
+    std::ofstream file(output);
+    ASSERT_TRUE(file.good());
+    file << evidence.to_pretty_string() << '\n';
+#endif
+}
+
+TEST(MermaidFlowP0, SevenGroupedOriginalsRequireCompleteSourceGeometryAndMutations) {
+    const auto primary = flow400_documents();
+    const auto proposal = flow_p0_documents(primary);
+    int visited = 0;
+    for (std::size_t i = 0; i < kFlowP0Pins.size(); ++i)
+        if (kFlowP0Pins[i].grouped) {
+            ++visited;
+            flow_p0_source_paper_case(primary, proposal, i);
+        }
+    EXPECT_EQ(visited, 7);
+}
+}  // namespace
+
+namespace {
+TEST(MermaidFlowP0, LaterIdentityResourceFailureCannotBecomeSemanticNegativeCredit) {
+    OracleWork setup{kFlow400SceneLimit};
+    const auto paper = flow_p0_paper(3, 0, setup);
+    OracleWork good{kFlow400SceneLimit};
+    std::vector<std::string> diagnostics;
+    const int following = flow400_following(paper.grid, good);
+    const auto baseline =
+        validate_impl(paper.grid, paper.model, good, &diagnostics, &following, nullptr,
+                      &paper.profile, GroupEndpointDomain::SourceReviewedP0);
+    ASSERT_TRUE(baseline.empty()) << (baseline.empty() ? "" : baseline.front());
+    ASSERT_GE(diagnostics.size(), 2u);
+    EXPECT_TRUE(diagnostics.front().find("GroupEndpoint complete route differs") !=
+                std::string::npos);
+    GroupEndpointP0Limits limits;
+    limits.per_edge_candidates = 0u;
+    OracleWork work{kFlow400SceneLimit};
+    std::vector<std::string> failed;
+    const auto errors =
+        validate_impl(paper.grid, paper.model, work, &failed, &following, nullptr, &paper.profile,
+                      GroupEndpointDomain::SourceReviewedP0, &limits);
+    ASSERT_GE(failed.size(), 2u);
+    EXPECT_TRUE(failed.front().find("GroupEndpoint complete route differs") != std::string::npos);
+    ASSERT_FALSE(errors.empty());
+    EXPECT_TRUE(std::ranges::any_of(errors, [](const auto& error) {
+        return flow400_resource(error);
+    })) << errors.front();
+}
+}  // namespace
+
+namespace {
+TEST(MermaidFlowP0, IndependentlyConstructedSharedPortsAndRouteStemsRemainFailures) {
+    OracleWork preparation{kFlow400SceneLimit};
+    const auto good = flow_p0_paper(0, 0, preparation);
+    ASSERT_TRUE(
+        flow_group_endpoint_p0_geometry(good.grid, good.model, good.profile, preparation).empty());
+    for (const int kind : {4, 5, 6}) {
+        SCOPED_TRACE(kind);
+        OracleWork work{kFlow400SceneLimit};
+        const auto shared = flow_p0_paper(kind, 0, work);
+        const auto errors =
+            flow_group_endpoint_p0_geometry(shared.grid, shared.model, shared.profile, work);
+        ASSERT_FALSE(errors.empty());
+        EXPECT_FALSE(std::ranges::any_of(errors, [](const auto& error) {
+            return flow400_resource(error);
+        })) << errors.front();
+    }
+}
+
+TEST(MermaidFlowP0, LegacyHandScenesStillFitTheirEightMillionComparisonBudget) {
+    const auto documents = group_endpoint15_documents();
+    const auto hands = group_endpoint15_hand_documents();
+    const auto records = documents.asset.root().get("records"), root = hands.asset.root();
+    int seen = 0;
+    root.get("good_scenes").iter([&](JsonVal scene) {
+        ++seen;
+        OracleWork work{8000000u};
+        const auto hand = group_endpoint15_hand_model(root, records, scene, work);
+        const auto grid = group_endpoint15_hand_grid(scene, work);
+        const auto errors = group_endpoint15_geometry(
+            grid, hand.model, work, flow400_text(scene.get("exact_following_token")));
+        EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors.front());
+        EXPECT_GT(work.remaining, 0u);
+    });
+    EXPECT_EQ(seen, 8);
+}
+
+TEST(MermaidFlowP0, ParentGroupEndpointsCannotReenterTheirOwnPortInFourDirections) {
+    for (const auto direction : {"TB", "BT", "LR", "RL"}) {
+        SCOPED_TRACE(direction);
+        OracleWork work{kFlow400SceneLimit};
+        work.spend(4000000u);
+        const auto source = "flowchart " + std::string(direction) +
+                            "\nOut --> In\nsubgraph Sub\nIn\nend\nSub --> In\n";
+        auto drawing = loom::ui::render_markdown(group_endpoint15_fenced(source, "mermaid"));
+        auto ordinary = loom::ui::render_markdown(group_endpoint15_fenced(source, "text"));
+        auto node = ftxui::vbox({drawing, ftxui::text(std::string(kSentinel))});
+        auto plain = ftxui::vbox({ordinary, ftxui::text(std::string(kSentinel))});
+        node->ComputeRequirement();
+        plain->ComputeRequirement();
+        const int height =
+            std::max({32, node->requirement().min_y + 8, plain->requirement().min_y + 8});
+        ASSERT_LE(height, 1040);
+        const auto wide = capture(node, 240, height, &work),
+                   narrow = capture(node, 40, height, &work),
+                   restored = capture(node, 240, height, &work),
+                   source240 = capture(plain, 240, height, &work),
+                   source40 = capture(plain, 40, height, &work);
+        GroupEndpoint15Model model;
+        model.base.direction = direction;
+        model.base.nodes = {{"Out", "Out", Shape::Rectangle}, {"In", "In", Shape::Rectangle}};
+        model.base.groups = {{"Sub", "Sub", "", -1, {1}}};
+        model.base.edges = {{0, 1, "", "solid", false, true}};
+        model.tagged = {{{GroupEndpointKind::Group, "Sub"},
+                         {GroupEndpointKind::Vertex, "In"},
+                         "",
+                         "solid",
+                         false,
+                         true,
+                         1u}};
+        model.source_order = {{GroupEndpointOrderKind::Ordinary, 0},
+                              {GroupEndpointOrderKind::Tagged, 0}};
+        ASSERT_FALSE(flow400_same(wide, source240, work));
+        ASSERT_TRUE(flow400_same(wide, restored, work));
+        const auto errors = flow_p0_group_geometry(wide, model, work);
+        ASSERT_TRUE(errors.empty()) << (errors.empty() ? "" : errors.front());
+        ASSERT_TRUE(flow_p0_group_geometry(restored, model, work).empty());
+        if (!flow400_same(narrow, source40, work))
+            ASSERT_TRUE(flow_p0_group_geometry(narrow, model, work).empty());
+        for (const auto* grid : {&wide, &narrow, &restored, &source240, &source40})
+            static_cast<void>(flow400_following(*grid, work));
+    }
+}
+}  // namespace
+
+namespace {
+TEST(MermaidFlowP0, HardReservationOverridesRelaxedCrossingAndRestoresBothStates) {
+    namespace seam = loom::ui::mermaid::testing;
+    for (const bool blocked : {false, true})
+        for (const bool crossed : {false, true}) {
+            seam::Work work;
+            const auto proof = seam::flow_group_border_probe(blocked, crossed, work);
+            ASSERT_TRUE(proof);
+            EXPECT_EQ((*proof)[0], !blocked);
+            EXPECT_EQ((*proof)[1], !blocked || crossed);
+            EXPECT_FALSE((*proof)[2]);
+            EXPECT_TRUE((*proof)[3]);
+            EXPECT_FALSE((*proof)[4]);
+        }
+    for (const std::size_t allowance : {0u, 16u, 16385u, 16400u}) {
+        seam::Work work;
+        work.remaining = allowance;
+        EXPECT_FALSE(seam::flow_group_border_probe(true, true, work));
+        EXPECT_EQ(work.remaining, 0u);
+    }
+}
+}  // namespace
+
+namespace {
+TEST(MermaidFlowP0, LinearRouteUniquenessPrepaysItsExactBudgetBeforeMutation) {
+    std::vector<int> path(2048u);
+    std::iota(path.begin(), path.end(), 0);
+    std::vector<std::uint32_t> seen(2048u, 0u);
+    std::uint32_t epoch = 0u;
+    const auto fee = group_endpoint_unique_fee(path.size());
+    OracleWork shortfall{fee - 1u};
+    EXPECT_THROW(static_cast<void>(group_endpoint_route_unique(path, seen, epoch, shortfall)),
+                 std::runtime_error);
+    EXPECT_EQ(shortfall.remaining, 0u);
+    EXPECT_EQ(epoch, 0u);
+    EXPECT_TRUE(std::ranges::all_of(seen, [](auto stamp) { return stamp == 0u; }));
+    OracleWork exact{fee};
+    EXPECT_TRUE(group_endpoint_route_unique(path, seen, epoch, exact));
+    EXPECT_EQ(exact.remaining, 0u);
+    EXPECT_EQ(epoch, 1u);
+    path.back() = 0;
+    OracleWork duplicate{fee};
+    EXPECT_FALSE(group_endpoint_route_unique(path, seen, epoch, duplicate));
+    EXPECT_EQ(duplicate.remaining, 0u);
+    OracleWork overflow{kFlow400SceneLimit};
+    epoch = std::numeric_limits<std::uint32_t>::max();
+    bool resource = false;
+    try {
+        static_cast<void>(group_endpoint_route_unique(path, seen, epoch, overflow));
+    } catch (const std::runtime_error& error) {
+        resource = flow400_resource(error.what());
+    }
+    EXPECT_TRUE(resource);
+}
+
+struct StrandPaper {
+    Grid grid;
+    Model model;
+};
+
+StrandPaper strand_parallel_paper(int turn, bool mixed = false, int edge_count = 5,
+                                  bool grouped = true) {
+    StrandPaper out{{72, 72, std::vector<std::string>(72u * 72u, " ")}, {}};
+    std::array<int, 4096> masks{};
+    std::array<int, 4096> arrows{};
+    arrows.fill(-1);
+    const auto index = [](Point p) { return static_cast<std::size_t>(p.y * 64 + p.x); };
+    const auto add = [&](Point p, int bits) { masks[index(p)] |= bits; };
+
+    struct Box {
+        int l, t, r, b;
+    };
+
+    const std::array<Box, 4> boxes{
+        {{0, 0, 14, 40}, {24, 0, 40, 40}, {3, 5, 11, 32}, {28, 5, 36, 32}}};
+    for (std::size_t number = 0u; number < boxes.size(); ++number) {
+        if (!grouped && number < 2u) continue;
+        const auto& b = boxes[number];
+        for (int x = b.l + 1; x < b.r; ++x) {
+            add({x, b.t}, L | R);
+            add({x, b.b}, L | R);
+        }
+        for (int y = b.t + 1; y < b.b; ++y) {
+            add({b.l, y}, U | D);
+            add({b.r, y}, U | D);
+        }
+        add({b.l, b.t}, R | D);
+        add({b.r, b.t}, L | D);
+        add({b.l, b.b}, U | R);
+        add({b.r, b.b}, U | L);
+    }
+    for (int row = 10; row < 10 + edge_count; ++row) {
+        const bool head = mixed && row < 12;
+        for (int x = 11; x <= (head ? 27 : 28); ++x) {
+            if (x > 11) add({x, row}, L);
+            if (x < (head ? 27 : 28)) add({x, row}, R);
+        }
+        if (head) arrows[index({27, row})] = 1;
+    }
+    const auto rotate = [&](Point point) {
+        for (int n = 0; n < turn; ++n)
+            point = {63 - point.y, point.x};
+        return point;
+    };
+    const auto ink = [](int mask) -> std::string_view {
+        switch (mask) {
+        case U | D:
+            return "│";
+        case L | R:
+            return "─";
+        case R | D:
+            return "┌";
+        case L | D:
+            return "┐";
+        case U | R:
+            return "└";
+        case U | L:
+            return "┘";
+        case U | D | R:
+            return "├";
+        case U | D | L:
+            return "┤";
+        case L | R | D:
+            return "┬";
+        case L | R | U:
+            return "┴";
+        case U | D | L | R:
+            return "┼";
+        default:
+            throw std::runtime_error("Independent strand paper mask");
+        }
+    };
+    constexpr std::array<std::string_view, 4> heads{"▲", "▶", "▼", "◀"};
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x) {
+            const auto at = index({x, y});
+            if (!masks[at]) continue;
+            const auto point = rotate({x, y});
+            int mask = 0;
+            for (int d = 0; d < 4; ++d)
+                if (masks[at] & kBits[static_cast<std::size_t>(d)])
+                    mask |= kBits[static_cast<std::size_t>((d + turn) % 4)];
+            out.grid.put(
+                point, std::string(arrows[at] < 0
+                                       ? ink(mask)
+                                       : heads[static_cast<std::size_t>((arrows[at] + turn) % 4)]));
+        }
+    const std::array<std::pair<Point, std::string_view>, 4> labels{
+        {{{2, 2}, "G"}, {{26, 2}, "H"}, {{5, 7}, "A"}, {{30, 7}, "B"}}};
+    for (std::size_t at = 0u; at < labels.size(); ++at)
+        if (grouped || at >= 2u)
+            out.grid.put(rotate(labels[at].first), std::string(labels[at].second));
+    for (std::size_t at = 0; at < kSentinel.size(); ++at)
+        out.grid.put({static_cast<int>(at), 70}, std::string(1, kSentinel[at]));
+    out.model.direction =
+        std::array<std::string_view, 4>{"LR", "TB", "RL", "BT"}[static_cast<std::size_t>(turn)];
+    out.model.nodes = {{"A", "A", Shape::Rectangle}, {"B", "B", Shape::Rectangle}};
+    if (grouped) out.model.groups = {{"G", "G", "", -1, {0}}, {"H", "H", "", -1, {1}}};
+    for (int edge = 0; edge < edge_count; ++edge)
+        out.model.edges.push_back({0, 1, "", "solid", false, mixed && edge < 2});
+    return out;
+}
+
+TEST(MermaidFlowStrands, IndependentFiveParallelAndMixedGroupRoutesInAllDirections) {
+    for (int turn = 0; turn < 4; ++turn)
+        for (bool mixed : {false, true}) {
+            SCOPED_TRACE(std::to_string(turn) + "/" + std::to_string(mixed));
+            const auto paper = strand_parallel_paper(turn, mixed);
+            OracleWork work{kFlow400SceneLimit};
+            const auto result = strands::geometry(paper.grid, paper.model, work);
+            EXPECT_EQ(result.outcome, strands::Outcome::Match) << static_cast<int>(result.reason);
+            EXPECT_EQ(result.physical_edges, 5u);
+            EXPECT_FALSE(result.resource);
+        }
+}
+
+TEST(MermaidFlowStrands, DecisivePhysicalNegativesAndStructuralResourceOutcomes) {
+    const auto paper = strand_parallel_paper(0);
+    OracleWork baseline{kFlow400SceneLimit};
+    ASSERT_EQ(strands::geometry(paper.grid, paper.model, baseline).outcome,
+              strands::Outcome::Match);
+    const auto negative = [&](auto change) {
+        auto bad = paper;
+        change(bad);
+        OracleWork work{kFlow400SceneLimit};
+        const auto result = strands::geometry(bad.grid, bad.model, work);
+        EXPECT_EQ(result.outcome, strands::Outcome::Mismatch) << static_cast<int>(result.reason);
+        EXPECT_FALSE(result.resource);
+    };
+    negative([](auto& bad) { bad.grid.put({0, 70}, "?"); });
+    negative([](auto& bad) { bad.grid.put({20, 10}, "§"); });
+    negative([](auto& bad) { bad.grid.put({20, 10}, "┬"); });
+    negative([](auto& bad) { bad.grid.put({20, 10}, " "); });
+    negative([](auto& bad) { bad.grid.put({20, 10}, "━"); });
+    negative([](auto& bad) { bad.model.edges.pop_back(); });
+    negative([](auto& bad) { bad.model.edges[0].end = true; });
+    negative([](auto& bad) { bad.model.nodes[0].label = "Missing"; });
+    negative([](auto& bad) { bad.model.groups[0].nodes.clear(); });
+    negative([](auto& bad) { bad.model.direction = "RL"; });
+    for (const auto limits :
+         std::array<strands::Limits, 4>{{{0u, 14u}, {2048u, 0u}, {2049u, 14u}, {2048u, 15u}}}) {
+        OracleWork work{kFlow400SceneLimit};
+        const auto result = strands::geometry(paper.grid, paper.model, work, kSentinel, limits);
+        EXPECT_EQ(result.outcome, strands::Outcome::Inconclusive);
+        EXPECT_TRUE(result.resource);
+    }
+    OracleWork short_path{kFlow400SceneLimit};
+    EXPECT_EQ(strands::geometry(paper.grid, paper.model, short_path, kSentinel, {17u, 5u}).outcome,
+              strands::Outcome::Inconclusive);
+    OracleWork exact_path{kFlow400SceneLimit};
+    EXPECT_EQ(strands::geometry(paper.grid, paper.model, exact_path, kSentinel, {18u, 5u}).outcome,
+              strands::Outcome::Match);
+    const auto exact_fee = kFlow400SceneLimit - baseline.remaining;
+    OracleWork exact_work{exact_fee};
+    EXPECT_EQ(strands::geometry(paper.grid, paper.model, exact_work).outcome,
+              strands::Outcome::Match);
+    EXPECT_EQ(exact_work.remaining, 0u);
+    OracleWork short_work{exact_fee - 1u};
+    const auto unpaid = strands::geometry(paper.grid, paper.model, short_work);
+    EXPECT_EQ(unpaid.outcome, strands::Outcome::Inconclusive);
+    EXPECT_TRUE(unpaid.resource);
+    auto bad_parent = paper.model;
+    bad_parent.groups[0].parent = 1;
+    bad_parent.groups[1].parent = 999;
+    OracleWork invalid_parent{kFlow400SceneLimit};
+    EXPECT_EQ(strands::geometry(paper.grid, bad_parent, invalid_parent).outcome,
+              strands::Outcome::Inconclusive);
+    negative([](auto& bad) {
+        for (std::size_t at = 0u; at < kSentinel.size(); ++at)
+            bad.grid.put({static_cast<int>(at), 69}, std::string(1, kSentinel[at]));
+    });
+    negative([](auto& bad) { bad.grid.put({50, 71}, "§"); });
+    OracleWork zero{0u};
+    const auto result = strands::geometry(paper.grid, paper.model, zero);
+    EXPECT_EQ(result.outcome, strands::Outcome::Inconclusive);
+    EXPECT_TRUE(result.resource);
+}
+
+TEST(MermaidFlowStrands, StraightOrthogonalCrossingHasTwoStrandsAndNeverTurns) {
+    Grid grid{64, 64, std::vector<std::string>(4096u, " ")};
+    std::array<int, 4096> masks{};
+    const auto at = [](Point p) { return static_cast<std::size_t>(p.y * 64 + p.x); };
+    const auto add = [&](Point p, int bits) { masks[at(p)] |= bits; };
+
+    struct Box {
+        int l, t, r, b;
+    };
+
+    const std::array<Box, 4> boxes{
+        {{2, 18, 10, 22}, {40, 18, 48, 22}, {14, 2, 22, 6}, {28, 34, 36, 38}}};
+    for (const auto& b : boxes) {
+        for (int x = b.l + 1; x < b.r; ++x) {
+            add({x, b.t}, L | R);
+            add({x, b.b}, L | R);
+        }
+        for (int y = b.t + 1; y < b.b; ++y) {
+            add({b.l, y}, U | D);
+            add({b.r, y}, U | D);
+        }
+        add({b.l, b.t}, R | D);
+        add({b.r, b.t}, L | D);
+        add({b.l, b.b}, U | R);
+        add({b.r, b.b}, U | L);
+    }
+    for (int x = 10; x <= 40; ++x) {
+        if (x > 10) add({x, 20}, L);
+        if (x < 40) add({x, 20}, R);
+    }
+    for (int y = 6; y <= 36; ++y) {
+        if (y > 6) add({18, y}, U);
+        if (y < 36) add({18, y}, D);
+    }
+    for (int x = 18; x <= 28; ++x) {
+        if (x > 18) add({x, 36}, L);
+        if (x < 28) add({x, 36}, R);
+    }
+    const auto ink = [](int mask) -> std::string_view {
+        switch (mask) {
+        case U | D:
+            return "│";
+        case L | R:
+            return "─";
+        case R | D:
+            return "┌";
+        case L | D:
+            return "┐";
+        case U | R:
+            return "└";
+        case U | L:
+            return "┘";
+        case U | D | R:
+            return "├";
+        case U | D | L:
+            return "┤";
+        case L | R | D:
+            return "┬";
+        case L | R | U:
+            return "┴";
+        case U | D | L | R:
+            return "┼";
+        default:
+            throw std::runtime_error("Independent crossing paper mask");
+        }
+    };
+    for (int y = 0; y < 64; ++y)
+        for (int x = 0; x < 64; ++x)
+            if (masks[at({x, y})]) grid.put({x, y}, std::string(ink(masks[at({x, y})])));
+    grid.put({4, 20}, "A");
+    grid.put({42, 20}, "B");
+    grid.put({16, 4}, "C");
+    grid.put({30, 36}, "D");
+    for (std::size_t n = 0; n < kSentinel.size(); ++n)
+        grid.put({static_cast<int>(n), 60}, std::string(1, kSentinel[n]));
+    Model model{"LR",
+                {{"A", "A", Shape::Rectangle},
+                 {"B", "B", Shape::Rectangle},
+                 {"C", "C", Shape::Rectangle},
+                 {"D", "D", Shape::Rectangle}},
+                {{0, 1, "", "solid", false, false}, {2, 3, "", "solid", false, false}},
+                {}};
+    OracleWork work{kFlow400SceneLimit};
+    const auto positive = strands::geometry(grid, model, work);
+    ASSERT_EQ(positive.outcome, strands::Outcome::Match) << static_cast<int>(positive.reason);
+    EXPECT_EQ(positive.physical_edges, 2u);
+    model.edges[0].to = 3;
+    model.edges[1].to = 1;
+    OracleWork wrong_turn{kFlow400SceneLimit};
+    const auto wrong = strands::geometry(grid, model, wrong_turn);
+    EXPECT_EQ(wrong.outcome, strands::Outcome::Mismatch);
+    EXPECT_EQ(wrong.reason, strands::Reason::Multiplicity);
+}
+
+TEST(MermaidFlowStrands, TwoActualCompleteSourcesRequireIndependentPhysicalStrands) {
+    const auto primary = flow400_documents();
+    const auto documents = flow_p0_documents(primary);
+    for (const auto index : std::array<std::size_t, 2>{4u, 9u}) {
+        const auto& pin = kFlowP0Pins[index];
+        SCOPED_TRACE(pin.fixture);
+        OracleWork work{kFlow400SceneLimit};
+        work.spend(4000000u + pin.bytes * 192u);
+        const auto setup_charge = flow_p0_strand_discovery_charge(primary, documents, work);
+        const auto source = flow400_read(std::filesystem::path(LOOM_TESTS_DIR) /
+                                         "fixtures/mermaid_official/cases" / pin.fixture);
+        auto mermaid = loom::ui::render_markdown(group_endpoint15_fenced(source, "mermaid"));
+        auto ordinary = loom::ui::render_markdown(group_endpoint15_fenced(source, "text"));
+        auto node = ftxui::vbox({mermaid, ftxui::text(std::string(kSentinel))});
+        auto plain = ftxui::vbox({ordinary, ftxui::text(std::string(kSentinel))});
+        node->ComputeRequirement();
+        plain->ComputeRequirement();
+        const int height = std::max({1, node->requirement().min_y, plain->requirement().min_y}) + 1;
+        ASSERT_LE(height, 1040);
+        std::array<std::optional<Grid>, 5> frames;
+        const std::array<int, 5> widths{240, 40, 240, 240, 40};
+        json::JsonMutDoc document;
+        auto actual = document.object();
+        actual.set("scope", "Prototype physical strand proof; no formal matrix admission");
+        actual.set("formal_matrix_admission", false);
+        actual.set("fixture", pin.fixture);
+        actual.set("complete_discovery_debited", static_cast<int64_t>(setup_charge));
+        for (std::size_t n = 0; n < frames.size(); ++n)
+            frames[n] = capture(n < 3u ? node : plain, widths[n], height, &work);
+        for (const auto& frame : frames) {
+            work.product(frame->cells.size(), 16u);
+            for (const auto& cell : frame->cells)
+                work.product(cell.size(), 64u);
+            work.spend(static_cast<std::size_t>(frame->height) * 128u + 4096u);
+        }
+        for (std::size_t n = 0; n < frames.size(); ++n)
+            group_endpoint15_publish_frame(
+                actual,
+                std::array<std::string_view, 5>{"wide", "narrow", "restored", "ordinary_wide",
+                                                "ordinary_narrow"}[n],
+                *frames[n], work);
+        actual.set("phase", "actual_captures_before_binding");
+        document.set_root(actual);
+#ifdef LOOM_MERMAID_REPORT_DIR
+        {
+            std::ofstream initial(
+                std::filesystem::path(LOOM_MERMAID_REPORT_DIR) /
+                ("mermaid-flow-strand-prototype-" + std::to_string(pin.ordinal) + ".json"));
+            initial << document.to_string();
+            flow400_require(static_cast<bool>(initial),
+                            "Flow strand prototype captures publication");
+        }
+#endif
+        const auto selected =
+            flow_p0_strand_select(documents, primary.compact.root().get("cases").at(pin.ordinal),
+                                  primary.manifest.root().get("fixtures").at(pin.global),
+                                  pin.ordinal, pin.global, source, work);
+        const auto model = flow_p0_strand_model(selected, work);
+        EXPECT_TRUE(flow400_same(*frames[0], *frames[2], work));
+        EXPECT_FALSE(flow400_same(*frames[0], *frames[3], work));
+        for (std::size_t n = 0u; n < 3u; ++n) {
+            if (n == 1u && flow400_same(*frames[n], *frames[4], work)) continue;
+            const auto result = strands::geometry(*frames[n], model, work);
+            actual.set(std::string("result_") + std::to_string(n),
+                       static_cast<int>(result.outcome));
+            actual.set(std::string("reason_") + std::to_string(n), static_cast<int>(result.reason));
+            EXPECT_EQ(result.outcome, strands::Outcome::Match)
+                << "width=" << widths[n] << " reason=" << static_cast<int>(result.reason);
+            EXPECT_FALSE(result.resource);
+        }
+        const auto negatives = strands::mutations(*frames[0], model, work);
+        actual.set("decisive_mutations_rejected", static_cast<int64_t>(negatives.rejected));
+        actual.set("mutations_complete", negatives.complete);
+        EXPECT_TRUE(negatives.complete) << negatives.rejected;
+        EXPECT_EQ(negatives.rejected, strands::kRequiredMutations);
+        EXPECT_FALSE(negatives.resource);
+        EXPECT_FALSE(negatives.inconclusive);
+        actual.set("phase", "prototype_geometry_complete");
+        actual.set("remaining", static_cast<int64_t>(work.remaining));
+        document.set_root(actual);
+#ifdef LOOM_MERMAID_REPORT_DIR
+        const auto encoded = document.to_string();
+        std::ofstream output(
+            std::filesystem::path(LOOM_MERMAID_REPORT_DIR) /
+            ("mermaid-flow-strand-prototype-" + std::to_string(pin.ordinal) + ".json"));
+        output << encoded;
+        ASSERT_TRUE(static_cast<bool>(output));
+#endif
+    }
+}
+
+TEST(MermaidFlowStrands, InclusiveMaximumPathStrandsAndGridBounds) {
+    const auto fourteen = strand_parallel_paper(0, false, 14, false);
+    OracleWork exact_strands{kFlow400SceneLimit};
+    const auto full = strands::geometry(fourteen.grid, fourteen.model, exact_strands);
+    ASSERT_EQ(full.outcome, strands::Outcome::Match) << static_cast<int>(full.reason);
+    EXPECT_EQ(full.physical_edges, 14u);
+    OracleWork strand_short{kFlow400SceneLimit};
+    const auto partial =
+        strands::geometry(fourteen.grid, fourteen.model, strand_short, kSentinel, {2048u, 13u});
+    EXPECT_EQ(partial.outcome, strands::Outcome::Inconclusive);
+    EXPECT_TRUE(partial.resource);
+    const auto contour_cap = strand_parallel_paper(0, false, 14);
+    OracleWork contour_work{kFlow400SceneLimit};
+    const auto contour_result =
+        strands::geometry(contour_cap.grid, contour_cap.model, contour_work);
+    EXPECT_EQ(contour_result.outcome, strands::Outcome::Inconclusive);
+    EXPECT_EQ(contour_result.reason, strands::Reason::Limit);
+    EXPECT_TRUE(contour_result.resource);
+    Grid long_path{240, 330, std::vector<std::string>(240u * 330u, " ")};
+    std::vector<int> bits(long_path.cells.size());
+    const auto add = [&](Point p, int mask) {
+        bits[static_cast<std::size_t>(long_path.index(p))] |= mask;
+    };
+    for (const auto box : std::array<Rect, 2>{{{2, 2, 10, 6}, {228, 311, 236, 315}}}) {
+        for (int x = box.left + 1; x < box.right; ++x) {
+            add({x, box.top}, L | R);
+            add({x, box.bottom}, L | R);
+        }
+        for (int y = box.top + 1; y < box.bottom; ++y) {
+            add({box.left, y}, U | D);
+            add({box.right, y}, U | D);
+        }
+        add({box.left, box.top}, R | D);
+        add({box.right, box.top}, L | D);
+        add({box.left, box.bottom}, U | R);
+        add({box.right, box.bottom}, U | L);
+    }
+    std::vector<Point> points{{10, 4}, {210, 4}};
+    int x = 210, y = 4;
+    for (int row = 0; row < 8; ++row) {
+        y += 34;
+        points.push_back({x, y});
+        x = x == 210 ? 20 : 210;
+        points.push_back({x, y});
+    }
+    points.push_back({210, 313});
+    points.push_back({228, 313});
+    std::size_t moves = 0u;
+    for (std::size_t n = 1; n < points.size(); ++n) {
+        auto from = points[n - 1u];
+        const auto to = points[n];
+        const int bit = from.x < to.x ? R : from.x > to.x ? L : from.y < to.y ? D : U;
+        while (from != to) {
+            const auto next = strands::step(from, bit);
+            add(from, bit);
+            add(next, strands::reverse(bit));
+            from = next;
+            ++moves;
+        }
+    }
+    ASSERT_EQ(moves + 1u, 2048u);
+    const auto ink = [](int mask) -> std::string_view {
+        switch (mask) {
+        case U | D:
+            return "│";
+        case L | R:
+            return "─";
+        case R | D:
+            return "┌";
+        case L | D:
+            return "┐";
+        case U | R:
+            return "└";
+        case U | L:
+            return "┘";
+        case U | D | R:
+            return "├";
+        case U | D | L:
+            return "┤";
+        default:
+            throw std::runtime_error("Independent2048-cell path mask");
+        }
+    };
+    for (std::size_t n = 0; n < bits.size(); ++n)
+        if (bits[n]) long_path.put(long_path.point(static_cast<int>(n)), std::string(ink(bits[n])));
+    long_path.put({4, 4}, "A");
+    long_path.put({230, 313}, "B");
+    for (std::size_t n = 0; n < kSentinel.size(); ++n)
+        long_path.put({static_cast<int>(n), 325}, std::string(1, kSentinel[n]));
+    Model model{"LR",
+                {{"A", "A", Shape::Rectangle}, {"B", "B", Shape::Rectangle}},
+                {{0, 1, "", "solid", false, false}},
+                {}};
+    OracleWork exact_path{kFlow400SceneLimit};
+    const auto path = strands::geometry(long_path, model, exact_path);
+    EXPECT_EQ(path.outcome, strands::Outcome::Match) << static_cast<int>(path.reason);
+    OracleWork short_path{kFlow400SceneLimit};
+    const auto cutoff = strands::geometry(long_path, model, short_path, kSentinel, {2047u, 14u});
+    EXPECT_EQ(cutoff.outcome, strands::Outcome::Inconclusive);
+    EXPECT_TRUE(cutoff.resource);
+    Grid maximum{240, 1040, std::vector<std::string>(240u * 1040u, " ")};
+    for (int row = 0; row < fourteen.grid.height; ++row)
+        for (int column = 0; column < fourteen.grid.width; ++column)
+            maximum.put({column, row}, std::string(fourteen.grid.at({column, row})));
+    OracleWork exact_grid{kFlow400SceneLimit};
+    EXPECT_EQ(strands::geometry(maximum, fourteen.model, exact_grid).outcome,
+              strands::Outcome::Match);
+    ++maximum.width;
+    OracleWork wide{kFlow400SceneLimit};
+    const auto too_wide = strands::geometry(maximum, fourteen.model, wide);
+    EXPECT_EQ(too_wide.outcome, strands::Outcome::Inconclusive);
+    EXPECT_TRUE(too_wide.resource);
+    maximum.width = 240;
+    maximum.height = 1041;
+    OracleWork tall{kFlow400SceneLimit};
+    EXPECT_EQ(strands::geometry(maximum, fourteen.model, tall).outcome,
+              strands::Outcome::Inconclusive);
+}
+
+TEST(MermaidFlowStrands, PublicLabeledDuplicatesAndOccupiedGroupCrossingsKeepTheirOwnedRoutes) {
+    constexpr std::array<std::string_view, 4> directions{"LR", "TB", "RL", "BT"};
+    for (const auto direction : directions)
+        for (bool grouped : {false, true}) {
+            SCOPED_TRACE(std::string(direction) + "/" + std::to_string(grouped));
+            const std::string source =
+                grouped ? "flowchart " + std::string(direction) +
+                              "\nsubgraph S\nA[Alpha]\nend\nsubgraph T\nB[Beta]\nend\nC[Gamma]\nA "
+                              "--> B\nA --> B\nS --> C\n"
+                        : "flowchart " + std::string(direction) +
+                              "\nA[Alpha] -->|first| B[Beta]\nA -->|second| B\n";
+            Model model;
+            model.direction = direction;
+            model.nodes = {{"A", "Alpha", Shape::Rectangle}, {"B", "Beta", Shape::Rectangle}};
+            GroupEndpointProfile profile;
+            if (grouped) {
+                model.nodes.push_back({"C", "Gamma", Shape::Rectangle});
+                model.groups = {{"S", "S", "", -1, {0}}, {"T", "T", "", -1, {1}}};
+                model.edges = {{0, 1, "", "solid", false, true}, {0, 1, "", "solid", false, true}};
+                profile.tagged = {{{GroupEndpointKind::Group, 0u},
+                                   {GroupEndpointKind::Vertex, 2u},
+                                   "",
+                                   "solid",
+                                   false,
+                                   true}};
+                profile.source_order = {{GroupEndpointOrderKind::Ordinary, 0u},
+                                        {GroupEndpointOrderKind::Ordinary, 1u},
+                                        {GroupEndpointOrderKind::Tagged, 0u}};
+            } else
+                model.edges = {{0, 1, "first", "solid", false, true},
+                               {0, 1, "second", "solid", false, true}};
+            auto native = loom::ui::render_markdown(group_endpoint15_fenced(source, "mermaid")),
+                 ordinary = loom::ui::render_markdown(group_endpoint15_fenced(source, "text"));
+            auto node = ftxui::vbox({native, ftxui::text(std::string(kSentinel))}),
+                 plain = ftxui::vbox({ordinary, ftxui::text(std::string(kSentinel))});
+            node->ComputeRequirement();
+            plain->ComputeRequirement();
+            const int height =
+                std::max({32, node->requirement().min_y + 8, plain->requirement().min_y + 8});
+            OracleWork work{kFlow400SceneLimit};
+            std::array<std::optional<Grid>, 5> frames;
+            constexpr std::array<int, 5> widths{240, 40, 240, 240, 40};
+            for (std::size_t n = 0; n < 5; ++n)
+                frames[n] = capture(n < 3u ? node : plain, widths[n], height, &work);
+            const bool wide_source = flow400_same(*frames[0], *frames[3], work);
+            EXPECT_FALSE(wide_source);
+            if (wide_source) continue;
+            EXPECT_TRUE(flow400_same(*frames[0], *frames[2], work));
+            for (std::size_t n = 0; n < 3u; ++n) {
+                if (n == 1u && flow400_same(*frames[n], *frames[4], work)) continue;
+                const auto errors =
+                    grouped ? flow_group_endpoint_p0_geometry(*frames[n], model, profile, work)
+                            : flow400_geometry(*frames[n], model, work);
+                EXPECT_TRUE(errors.empty()) << errors_text(errors);
+            }
+            if (grouped) {
+                const auto contours = closed_frames(*frames[0], work);
+                const auto candidates =
+                    frame_candidates(*frames[0], contours, "S", Shape::Rectangle, work);
+                ASSERT_EQ(candidates.size(), 1u);
+                const auto frame = contours[static_cast<std::size_t>(candidates[0])];
+                int crossings = 0, source_ports = 0;
+                for (int y = frame.top; y <= frame.bottom; ++y)
+                    for (int x = frame.left; x <= frame.right; ++x)
+                        if (frame.boundary({x, y})) {
+                            const int bits = glyph(frames[0]->at({x, y})).bits;
+                            crossings += bits == 15;
+                            source_ports += std::popcount(static_cast<unsigned>(bits)) == 3;
+                        }
+                EXPECT_GE(crossings, 2);
+                EXPECT_GE(source_ports, 1);
+            }
+        }
+}
+
+TEST(MermaidFlowStrands, UnrelatedNodeAndGroupCannotShareAWall) {
+    Grid grid{64, 32, std::vector<std::string>(2048u, " ")};
+    std::array<int, 2048> bits{};
+    const auto add = [&](Point p, int mask) {
+        bits[static_cast<std::size_t>(grid.index(p))] |= mask;
+    };
+    for (const auto box : std::array<Rect, 3>{{{10, 2, 30, 22}, {2, 8, 10, 12}, {14, 8, 22, 12}}}) {
+        for (int x = box.left + 1; x < box.right; ++x) {
+            add({x, box.top}, L | R);
+            add({x, box.bottom}, L | R);
+        }
+        for (int y = box.top + 1; y < box.bottom; ++y) {
+            add({box.left, y}, U | D);
+            add({box.right, y}, U | D);
+        }
+        add({box.left, box.top}, R | D);
+        add({box.right, box.top}, L | D);
+        add({box.left, box.bottom}, U | R);
+        add({box.right, box.bottom}, U | L);
+    }
+    const auto ink = [](int mask) -> std::string_view {
+        switch (mask) {
+        case U | D:
+            return "│";
+        case L | R:
+            return "─";
+        case R | D:
+            return "┌";
+        case L | D:
+            return "┐";
+        case U | R:
+            return "└";
+        case U | L:
+            return "┘";
+        case U | D | R:
+            return "├";
+        case U | D | L:
+            return "┤";
+        default:
+            throw std::runtime_error("Independent shared wall mask");
+        }
+    };
+    for (std::size_t n = 0; n < bits.size(); ++n)
+        if (bits[n]) grid.put(grid.point(static_cast<int>(n)), std::string(ink(bits[n])));
+    grid.put({12, 4}, "G");
+    grid.put({4, 10}, "A");
+    grid.put({16, 10}, "B");
+    for (std::size_t n = 0; n < kSentinel.size(); ++n)
+        grid.put({static_cast<int>(n), 28}, std::string(1, kSentinel[n]));
+    Model model{"LR",
+                {{"A", "A", Shape::Rectangle}, {"B", "B", Shape::Rectangle}},
+                {},
+                {{"G", "G", "", -1, {1}}}};
+    OracleWork work{kFlow400SceneLimit};
+    const auto actual = strands::geometry(grid, model, work);
+    EXPECT_EQ(actual.outcome, strands::Outcome::Mismatch);
+    EXPECT_TRUE(actual.reason == strands::Reason::Ownership ||
+                actual.reason == strands::Reason::Identity);
+    EXPECT_FALSE(actual.resource);
+}
+
+TEST(MermaidFlowStrands, SourceOccurrenceOrderIsRejectedAtBindingRatherThanInferredFromPixels) {
+    const auto primary = flow400_documents();
+    const auto documents = flow_p0_documents(primary);
+    for (const auto index : std::array<std::size_t, 2>{4u, 9u}) {
+        const auto& pin = kFlowP0Pins[index];
+        SCOPED_TRACE(pin.fixture);
+        OracleWork work{kFlow400SceneLimit};
+        const auto debit = flow_p0_strand_discovery_charge(primary, documents, work);
+        EXPECT_GT(debit, 0u);
+        const auto source = flow400_read(std::filesystem::path(LOOM_TESTS_DIR) /
+                                         "fixtures/mermaid_official/cases" / pin.fixture);
+        const auto fixture = primary.manifest.root().get("fixtures").at(pin.global),
+                   base = primary.compact.root().get("cases").at(pin.ordinal);
+        const auto selected =
+            flow_p0_strand_select(documents, base, fixture, pin.ordinal, pin.global, source, work);
+        const auto good = flow_p0_strand_model(selected, work);
+        EXPECT_EQ(good.edges.size(), index == 4u ? 14u : 3u);
+        const auto encoded = group_endpoint15_canonical(selected, work);
+        work.product(encoded.size(), 32u);
+        json::JsonMutDoc changed;
+        auto bad = changed.raw_json(encoded);
+        changed.set_root(bad);
+        auto order = bad.get("model").get("source_edge_order");
+        const auto last = order.size() - 1u;
+        order.at(last).set("index", static_cast<int64_t>(last - 1u));
+        order.at(last - 1u).set("index", static_cast<int64_t>(last));
+        const auto corrupted = json::parse(changed.to_string());
+        ASSERT_TRUE(corrupted.has_value());
+        bool rejected = false;
+        try {
+            static_cast<void>(flow_p0_strand_model(corrupted->root(), work));
+        } catch (const std::runtime_error& error) {
+            rejected = true;
+            EXPECT_NE(std::string_view(error.what()).find("immutable complete Model"),
+                      std::string_view::npos);
+        }
+        EXPECT_TRUE(rejected);
+        EXPECT_GT(work.remaining, 0u);
+        OracleWork zero{0u};
+        EXPECT_THROW(static_cast<void>(flow_p0_strand_model(selected, zero)), std::runtime_error);
+        OracleWork wrong_source{kFlow400SceneLimit};
+        EXPECT_THROW(
+            static_cast<void>(flow_p0_strand_select(documents, base, fixture, pin.ordinal,
+                                                    pin.global, source + " ", wrong_source)),
+            std::runtime_error);
+        EXPECT_GT(wrong_source.remaining, 0u);
+    }
+}
+
+TEST(MermaidFlowStrands, EveryProbeBudgetPrefixPreservesStateAndNeverReturnsPartialProof) {
+    for (bool blocked : {false, true})
+        for (bool crossable : {false, true}) {
+            loom::ui::mermaid::testing::Work full{1000000u};
+            const auto valid =
+                loom::ui::mermaid::testing::flow_group_border_probe(blocked, crossable, full);
+            ASSERT_TRUE(valid.has_value());
+            const auto spent = 1000000u - full.remaining;
+            for (std::size_t budget = 16384u; budget < spent; ++budget) {
+                loom::ui::mermaid::testing::Work limited{budget};
+                EXPECT_NO_THROW({
+                    const auto partial = loom::ui::mermaid::testing::flow_group_border_probe(
+                        blocked, crossable, limited);
+                    EXPECT_FALSE(partial.has_value());
+                });
+            }
+        }
+}
+
+TEST(MermaidFlowStrands, UnrelatedLongCaptionDoesNotWidenEveryBandOfAParallelChain) {
+    for (bool labeled_pair : {false, true}) {
+        SCOPED_TRACE(labeled_pair);
+        std::string source = "flowchart LR\n";
+        Model model;
+        model.direction = "LR";
+        for (int at = 0; at < 12; ++at) {
+            const std::string id(1, static_cast<char>('A' + at));
+            source += id + "[" + id + "]\n";
+            model.nodes.push_back({id, id, Shape::Rectangle});
+        }
+        source += "A --> B\nA -->" + std::string(labeled_pair ? "|second| " : " ") + "B\n";
+        model.edges = {{0, 1, "", "solid", false, true},
+                       {0, 1, labeled_pair ? "second" : "", "solid", false, true}};
+        for (int at = 1; at < 11; ++at) {
+            const std::string label = at == 10 ? "unrelated label" : "";
+            source += std::string(1, static_cast<char>('A' + at)) + " -->" +
+                      (label.empty() ? std::string(" ") : "|" + label + "| ") +
+                      std::string(1, static_cast<char>('B' + at)) + "\n";
+            model.edges.push_back({at, at + 1, label, "solid", false, true});
+        }
+        auto native = loom::ui::render_markdown(group_endpoint15_fenced(source, "mermaid")),
+             ordinary = loom::ui::render_markdown(group_endpoint15_fenced(source, "text"));
+        auto node = ftxui::vbox({native, ftxui::text(std::string(kSentinel))}),
+             plain = ftxui::vbox({ordinary, ftxui::text(std::string(kSentinel))});
+        node->ComputeRequirement();
+        plain->ComputeRequirement();
+        const int height =
+            std::max({32, node->requirement().min_y + 8, plain->requirement().min_y + 8});
+        OracleWork work{kFlow400SceneLimit};
+        const auto good = capture(node, 240, height, &work),
+                   fallback = capture(plain, 240, height, &work);
+        EXPECT_FALSE(flow400_same(good, fallback, work));
+        const auto errors = flow400_geometry(good, model, work);
+        EXPECT_TRUE(errors.empty()) << errors_text(errors);
+    }
+}
+
+TEST(MermaidFlowStrands, CompoundLabeledPairsPreserveAuthoredIdentityWhenRankingRegions) {
+    for (const auto direction : std::array<std::string_view, 4>{"LR", "RL", "TB", "BT"}) {
+        SCOPED_TRACE(direction);
+        const std::string source = "flowchart " + std::string(direction) +
+                                   "\nsubgraph S\nA[Alpha]\nend\nsubgraph T\nB[Beta]\nend\nA "
+                                   "-->|first| B\nA -->|second| B\n";
+        Model model{std::string(direction),
+                    {{"A", "Alpha", Shape::Rectangle}, {"B", "Beta", Shape::Rectangle}},
+                    {{0, 1, "first", "solid", false, true}, {0, 1, "second", "solid", false, true}},
+                    {{"S", "S", "", -1, {0}}, {"T", "T", "", -1, {1}}}};
+        auto native = loom::ui::render_markdown(group_endpoint15_fenced(source, "mermaid")),
+             ordinary = loom::ui::render_markdown(group_endpoint15_fenced(source, "text"));
+        auto node = ftxui::vbox({native, ftxui::text(std::string(kSentinel))}),
+             plain = ftxui::vbox({ordinary, ftxui::text(std::string(kSentinel))});
+        node->ComputeRequirement();
+        plain->ComputeRequirement();
+        const int height =
+            std::max({32, node->requirement().min_y + 8, plain->requirement().min_y + 8});
+        OracleWork work{kFlow400SceneLimit};
+        const auto grid = capture(node, 240, height, &work),
+                   fallback = capture(plain, 240, height, &work);
+        EXPECT_FALSE(flow400_same(grid, fallback, work));
+        const auto errors = flow400_geometry(grid, model, work);
+        EXPECT_TRUE(errors.empty()) << errors_text(errors);
+        if (direction == "LR" || direction == "RL") {
+            const auto frames = closed_frames(grid, work);
+            const auto a = frame_candidates(grid, frames, "S", Shape::Rectangle, work),
+                       b = frame_candidates(grid, frames, "T", Shape::Rectangle, work);
+            ASSERT_EQ(a.size(), 1u);
+            ASSERT_EQ(b.size(), 1u);
+            const auto& left = frames[static_cast<std::size_t>(direction == "LR" ? a[0] : b[0])];
+            const auto& right = frames[static_cast<std::size_t>(direction == "LR" ? b[0] : a[0])];
+            EXPECT_GE(right.left - left.right - 1, 14);
+        }
+    }
+}
+
+TEST(MermaidFlowP0, NegativeHelpersDistinguishAllocationAndAcceptedAdversaryFailures) {
+    struct OpaqueAllocation final : std::bad_alloc {
+        const char* what() const noexcept override { return "allocation denied"; }
+    };
+
+    OracleWork work{kFlow400SceneLimit};
+    EXPECT_THROW(flow400_require_decisive_negative(
+                     work, "opaque allocation",
+                     []() -> std::vector<std::string> { throw OpaqueAllocation{}; }),
+                 FlowOracleResourceFailure);
+    EXPECT_THROW(flow400_require_decisive_negative(work, "resource word in an accepted-case label",
+                                                   []() { return std::vector<std::string>{}; }),
+                 FlowOracleAcceptedAdversary);
+    EXPECT_THROW(
+        flow400_require_decisive_negative(
+            work, "candidate truncation",
+            []() { return std::vector<std::string>{"GroupEndpoint route candidate bound"}; }),
+        FlowOracleResourceFailure);
+    for (const auto message : {"LinkProfile3 endpoint candidate bound differs",
+                               "LinkProfile3 route candidate bound differs"}) {
+        EXPECT_THROW(
+            flow400_require_decisive_negative(work, "bounded legacy profile",
+                                              [&]() { return std::vector<std::string>{message}; }),
+            FlowOracleResourceFailure);
+    }
+    const FlowOracleAcceptedAdversary accepted{"resource word is not exhaustion"};
+    EXPECT_FALSE(flow400_resource_exception(accepted, work.remaining));
+    const OpaqueAllocation allocation;
+    EXPECT_TRUE(flow400_resource_exception(allocation, work.remaining));
+    OracleWork setup{kFlow400SceneLimit};
+    const auto paper = flow_p0_paper(0, 0, setup);
+    GroupEndpoint15Model model;
+    model.base = paper.model;
+    model.source_order = paper.profile.source_order;
+    EXPECT_THROW(flow400_require_decisive_negative(work, "unknown exception",
+                                                   []() -> std::vector<std::string> {
+                                                       throw std::runtime_error("internal failure");
+                                                   }),
+                 FlowOracleInconclusiveFailure);
+    GroupEndpointP0Limits injected;
+    injected.assignment_failure_probe = +[]() { throw OpaqueAllocation{}; };
+    EXPECT_THROW(flow400_require_decisive_negative(work, "inner opaque allocation",
+                                                   [&]() {
+                                                       return flow_group_endpoint_p0_geometry(
+                                                           paper.grid, paper.model, paper.profile,
+                                                           work, kSentinel, injected);
+                                                   }),
+                 FlowOracleResourceFailure);
+    injected.assignment_failure_probe = +[]() { throw std::runtime_error("internal failure"); };
+    EXPECT_THROW(flow400_require_decisive_negative(work, "inner unknown failure",
+                                                   [&]() {
+                                                       return flow_group_endpoint_p0_geometry(
+                                                           paper.grid, paper.model, paper.profile,
+                                                           work, kSentinel, injected);
+                                                   }),
+                 FlowOracleInconclusiveFailure);
+    const auto cap_paper = flow_p0_paper(1, 0, setup);
+    setup.spend(129u * (sizeof(GroupEndpointEdge) * 3u + 64u));
+    auto oversized_profile = cap_paper.profile;
+    ASSERT_FALSE(oversized_profile.tagged.empty());
+    oversized_profile.tagged.resize(129u, oversized_profile.tagged.front());
+    const auto bounded =
+        flow_group_endpoint_p0_geometry(cap_paper.grid, cap_paper.model, oversized_profile, work);
+    ASSERT_EQ(bounded.size(), 1u);
+    ASSERT_EQ(bounded.front(), "GroupEndpoint profile cardinality bound");
+    EXPECT_THROW(flow400_require_decisive_negative(work, "actual profile cardinality cap",
+                                                   [&]() {
+                                                       return flow_group_endpoint_p0_geometry(
+                                                           cap_paper.grid, cap_paper.model,
+                                                           oversized_profile, work);
+                                                   }),
+                 FlowOracleResourceFailure);
+    OracleWork positive{kFlow400SceneLimit};
+    EXPECT_THROW(flow_p0_group_rejected(paper.grid, model, positive, kSentinel),
+                 FlowOracleAcceptedAdversary);
+    OracleWork exhausted_p0{0u};
+    EXPECT_THROW(flow_p0_group_rejected(paper.grid, model, exhausted_p0, kSentinel),
+                 FlowOracleResourceFailure);
+    OracleWork exhausted_legacy{0u};
+    EXPECT_THROW(group_endpoint15_require_rejected(paper.grid, model, exhausted_legacy,
+                                                   "legacy resource control", kSentinel),
+                 FlowOracleResourceFailure);
 }
 
 }  // namespace

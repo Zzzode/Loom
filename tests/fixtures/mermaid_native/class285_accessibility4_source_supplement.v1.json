@@ -1,0 +1,2178 @@
+{
+  "schema": "class285_accessibility4_source_supplement/v1",
+  "qualification": "Complete graph proposal plus separate nonvisual metadata under the source-reviewed terminal adaptation. Original null authority and browser/ARIA/theme debts retained; runtime admission separate.",
+  "rows": [
+    {
+      "ordinal": 263,
+      "manifest_global_ordinal": 411,
+      "fixture": "class-diagram/visual-check/dark-theme.mmd",
+      "source_sha256": "df1262f42e99476d5e45c0ec6ecb934f14bc117908df948a4af48cc8a5372e51",
+      "source_bytes": 1125,
+      "accessibility_title": "This is a title",
+      "accessibility_description": "This is a description",
+      "presentation": {
+        "title": null,
+        "hide_empty_members_box": null
+      },
+      "model": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:416e696d616c",
+            "label": "Animal",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Animal"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+int age"
+                ]
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String gender"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+isMammal()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+mate()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:4475636b",
+            "label": "Duck",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Duck"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String beakColor"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+swim()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+quack()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:46697368",
+            "label": "Fish",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Fish"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "-int sizeInFeet"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "-canEat()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:5a65627261",
+            "label": "Zebra",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Zebra"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+bool is_wild"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+run()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:636c61737341",
+            "label": "classA",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classA"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737342",
+            "label": "classB",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classB"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737343",
+            "label": "classC",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classC"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737344",
+            "label": "classD",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classD"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737345",
+            "label": "classE",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classE"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737346",
+            "label": "classF",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classF"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737347",
+            "label": "classG",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classG"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737348",
+            "label": "classH",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classH"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737349",
+            "label": "classI",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classI"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734a",
+            "label": "classJ",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classJ"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734b",
+            "label": "classK",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classK"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734c",
+            "label": "classL",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classL"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734d",
+            "label": "classM",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classM"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734e",
+            "label": "classN",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classN"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734f",
+            "label": "classO",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classO"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737350",
+            "label": "classP",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classP"
+              ]
+            ],
+            "rows": []
+          }
+        ],
+        "relations": [
+          {
+            "source": "class:416e696d616c",
+            "target": "class:4475636b",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": "*",
+            "target_text": "1",
+            "order": 0
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:46697368",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": "1",
+            "target_text": "10",
+            "order": 1
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:5a65627261",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 2
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 3
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "start": "filled_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 4
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "start": "open_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 5
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 6
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 7
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 8
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 9
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 10
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "solid",
+            "label": "Inheritance",
+            "source_text": null,
+            "target_text": null,
+            "order": 11
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "start": "none",
+            "end": "filled_diamond",
+            "stroke": "solid",
+            "label": "Composition",
+            "source_text": null,
+            "target_text": null,
+            "order": 12
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "start": "none",
+            "end": "open_diamond",
+            "stroke": "solid",
+            "label": "Aggregation",
+            "source_text": null,
+            "target_text": null,
+            "order": 13
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "solid",
+            "label": "Association",
+            "source_text": null,
+            "target_text": null,
+            "order": 14
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "label": "Link(Solid)",
+            "source_text": null,
+            "target_text": null,
+            "order": 15
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "dotted",
+            "label": "Dependency",
+            "source_text": null,
+            "target_text": null,
+            "order": 16
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "dotted",
+            "label": "Realization",
+            "source_text": null,
+            "target_text": null,
+            "order": 17
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "Link(Dashed)",
+            "source_text": null,
+            "target_text": null,
+            "order": 18
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "model_sha256": "6e09a7e5fd950b894a383d166a00461e34722f2886e4d4d2638ef7d50e9288c4"
+    },
+    {
+      "ordinal": 264,
+      "manifest_global_ordinal": 412,
+      "fixture": "class-diagram/visual-check/default-theme.mmd",
+      "source_sha256": "760b8a5bd13cd3f57ed310ac4a0f291522b61a02e4738c620b0bb0e98310d241",
+      "source_bytes": 1131,
+      "accessibility_title": "This is a title",
+      "accessibility_description": "This is a description",
+      "presentation": {
+        "title": null,
+        "hide_empty_members_box": null
+      },
+      "model": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:416e696d616c",
+            "label": "Animal",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Animal"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+int age"
+                ]
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String gender"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+isMammal()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+mate()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:4475636b",
+            "label": "Duck",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Duck"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String beakColor"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+swim()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+quack()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:46697368",
+            "label": "Fish",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Fish"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "-int sizeInFeet"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "-canEat()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:5a65627261",
+            "label": "Zebra",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Zebra"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+bool is_wild"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+run()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:636c61737341",
+            "label": "classA",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classA"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737342",
+            "label": "classB",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classB"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737343",
+            "label": "classC",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classC"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737344",
+            "label": "classD",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classD"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737345",
+            "label": "classE",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classE"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737346",
+            "label": "classF",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classF"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737347",
+            "label": "classG",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classG"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737348",
+            "label": "classH",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classH"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737349",
+            "label": "classI",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classI"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734a",
+            "label": "classJ",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classJ"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734b",
+            "label": "classK",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classK"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734c",
+            "label": "classL",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classL"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734d",
+            "label": "classM",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classM"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734e",
+            "label": "classN",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classN"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734f",
+            "label": "classO",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classO"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737350",
+            "label": "classP",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classP"
+              ]
+            ],
+            "rows": []
+          }
+        ],
+        "relations": [
+          {
+            "source": "class:416e696d616c",
+            "target": "class:4475636b",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": "*",
+            "target_text": "1",
+            "order": 0
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:46697368",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": "1",
+            "target_text": "10",
+            "order": 1
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:5a65627261",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 2
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 3
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "start": "filled_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 4
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "start": "open_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 5
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 6
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 7
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 8
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 9
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 10
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "solid",
+            "label": "Inheritance",
+            "source_text": null,
+            "target_text": null,
+            "order": 11
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "start": "none",
+            "end": "filled_diamond",
+            "stroke": "solid",
+            "label": "Composition",
+            "source_text": null,
+            "target_text": null,
+            "order": 12
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "start": "none",
+            "end": "open_diamond",
+            "stroke": "solid",
+            "label": "Aggregation",
+            "source_text": null,
+            "target_text": null,
+            "order": 13
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "solid",
+            "label": "Association",
+            "source_text": null,
+            "target_text": null,
+            "order": 14
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "label": "Link(Solid)",
+            "source_text": null,
+            "target_text": null,
+            "order": 15
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "dotted",
+            "label": "Dependency",
+            "source_text": null,
+            "target_text": null,
+            "order": 16
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "dotted",
+            "label": "Realization",
+            "source_text": null,
+            "target_text": null,
+            "order": 17
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "Link(Dashed)",
+            "source_text": null,
+            "target_text": null,
+            "order": 18
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "model_sha256": "6e09a7e5fd950b894a383d166a00461e34722f2886e4d4d2638ef7d50e9288c4"
+    },
+    {
+      "ordinal": 271,
+      "manifest_global_ordinal": 419,
+      "fixture": "class-diagram/visual-check/forest-theme.mmd",
+      "source_sha256": "abac4c611f8dc5170a164b7662ff37e167297552f13bc5b14d83c151cd5e45d5",
+      "source_bytes": 1129,
+      "accessibility_title": "This is a title",
+      "accessibility_description": "This is a description",
+      "presentation": {
+        "title": null,
+        "hide_empty_members_box": null
+      },
+      "model": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:416e696d616c",
+            "label": "Animal",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Animal"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+int age"
+                ]
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String gender"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+isMammal()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+mate()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:4475636b",
+            "label": "Duck",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Duck"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String beakColor"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+swim()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+quack()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:46697368",
+            "label": "Fish",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Fish"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "-int sizeInFeet"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "-canEat()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:5a65627261",
+            "label": "Zebra",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Zebra"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+bool is_wild"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+run()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:636c61737341",
+            "label": "classA",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classA"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737342",
+            "label": "classB",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classB"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737343",
+            "label": "classC",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classC"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737344",
+            "label": "classD",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classD"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737345",
+            "label": "classE",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classE"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737346",
+            "label": "classF",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classF"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737347",
+            "label": "classG",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classG"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737348",
+            "label": "classH",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classH"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737349",
+            "label": "classI",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classI"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734a",
+            "label": "classJ",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classJ"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734b",
+            "label": "classK",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classK"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734c",
+            "label": "classL",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classL"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734d",
+            "label": "classM",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classM"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734e",
+            "label": "classN",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classN"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734f",
+            "label": "classO",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classO"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737350",
+            "label": "classP",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classP"
+              ]
+            ],
+            "rows": []
+          }
+        ],
+        "relations": [
+          {
+            "source": "class:416e696d616c",
+            "target": "class:4475636b",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": "*",
+            "target_text": "1",
+            "order": 0
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:46697368",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": "1",
+            "target_text": "10",
+            "order": 1
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:5a65627261",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 2
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 3
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "start": "filled_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 4
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "start": "open_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 5
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 6
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 7
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 8
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 9
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 10
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "solid",
+            "label": "Inheritance",
+            "source_text": null,
+            "target_text": null,
+            "order": 11
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "start": "none",
+            "end": "filled_diamond",
+            "stroke": "solid",
+            "label": "Composition",
+            "source_text": null,
+            "target_text": null,
+            "order": 12
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "start": "none",
+            "end": "open_diamond",
+            "stroke": "solid",
+            "label": "Aggregation",
+            "source_text": null,
+            "target_text": null,
+            "order": 13
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "solid",
+            "label": "Association",
+            "source_text": null,
+            "target_text": null,
+            "order": 14
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "label": "Link(Solid)",
+            "source_text": null,
+            "target_text": null,
+            "order": 15
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "dotted",
+            "label": "Dependency",
+            "source_text": null,
+            "target_text": null,
+            "order": 16
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "dotted",
+            "label": "Realization",
+            "source_text": null,
+            "target_text": null,
+            "order": 17
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "Link(Dashed)",
+            "source_text": null,
+            "target_text": null,
+            "order": 18
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "model_sha256": "6e09a7e5fd950b894a383d166a00461e34722f2886e4d4d2638ef7d50e9288c4"
+    },
+    {
+      "ordinal": 284,
+      "manifest_global_ordinal": 432,
+      "fixture": "class-diagram/visual-check/neutral-theme.mmd",
+      "source_sha256": "daa2d2b04208bde399fdc53975c887a328311e98095dbdf169e51d51ee8cb60f",
+      "source_bytes": 1131,
+      "accessibility_title": "This is a title",
+      "accessibility_description": "This is a description",
+      "presentation": {
+        "title": null,
+        "hide_empty_members_box": null
+      },
+      "model": {
+        "family": "class",
+        "direction": "TB",
+        "entities": [
+          {
+            "id": "class:416e696d616c",
+            "label": "Animal",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Animal"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+int age"
+                ]
+              },
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String gender"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+isMammal()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+mate()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:4475636b",
+            "label": "Duck",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Duck"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+String beakColor"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+swim()"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+quack()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:46697368",
+            "label": "Fish",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Fish"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "-int sizeInFeet"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "-canEat()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:5a65627261",
+            "label": "Zebra",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "Zebra"
+              ]
+            ],
+            "rows": [
+              {
+                "role": "attribute",
+                "alternatives": [
+                  "+bool is_wild"
+                ]
+              },
+              {
+                "role": "method",
+                "alternatives": [
+                  "+run()"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "class:636c61737341",
+            "label": "classA",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classA"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737342",
+            "label": "classB",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classB"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737343",
+            "label": "classC",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classC"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737344",
+            "label": "classD",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classD"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737345",
+            "label": "classE",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classE"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737346",
+            "label": "classF",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classF"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737347",
+            "label": "classG",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classG"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737348",
+            "label": "classH",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classH"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737349",
+            "label": "classI",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classI"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734a",
+            "label": "classJ",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classJ"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734b",
+            "label": "classK",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classK"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734c",
+            "label": "classL",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classL"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734d",
+            "label": "classM",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classM"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734e",
+            "label": "classN",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classN"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c6173734f",
+            "label": "classO",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classO"
+              ]
+            ],
+            "rows": []
+          },
+          {
+            "id": "class:636c61737350",
+            "label": "classP",
+            "shape": "box",
+            "owner": "",
+            "headers": [
+              [
+                "classP"
+              ]
+            ],
+            "rows": []
+          }
+        ],
+        "relations": [
+          {
+            "source": "class:416e696d616c",
+            "target": "class:4475636b",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": "*",
+            "target_text": "1",
+            "order": 0
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:46697368",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": "1",
+            "target_text": "10",
+            "order": 1
+          },
+          {
+            "source": "class:416e696d616c",
+            "target": "class:5a65627261",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 2
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 3
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "start": "filled_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 4
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "start": "open_diamond",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 5
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 6
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 7
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "start": "arrow",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 8
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "start": "triangle",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 9
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "",
+            "source_text": null,
+            "target_text": null,
+            "order": 10
+          },
+          {
+            "source": "class:636c61737341",
+            "target": "class:636c61737342",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "solid",
+            "label": "Inheritance",
+            "source_text": null,
+            "target_text": null,
+            "order": 11
+          },
+          {
+            "source": "class:636c61737343",
+            "target": "class:636c61737344",
+            "start": "none",
+            "end": "filled_diamond",
+            "stroke": "solid",
+            "label": "Composition",
+            "source_text": null,
+            "target_text": null,
+            "order": 12
+          },
+          {
+            "source": "class:636c61737345",
+            "target": "class:636c61737346",
+            "start": "none",
+            "end": "open_diamond",
+            "stroke": "solid",
+            "label": "Aggregation",
+            "source_text": null,
+            "target_text": null,
+            "order": 13
+          },
+          {
+            "source": "class:636c61737347",
+            "target": "class:636c61737348",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "solid",
+            "label": "Association",
+            "source_text": null,
+            "target_text": null,
+            "order": 14
+          },
+          {
+            "source": "class:636c61737349",
+            "target": "class:636c6173734a",
+            "start": "none",
+            "end": "none",
+            "stroke": "solid",
+            "label": "Link(Solid)",
+            "source_text": null,
+            "target_text": null,
+            "order": 15
+          },
+          {
+            "source": "class:636c6173734b",
+            "target": "class:636c6173734c",
+            "start": "none",
+            "end": "arrow",
+            "stroke": "dotted",
+            "label": "Dependency",
+            "source_text": null,
+            "target_text": null,
+            "order": 16
+          },
+          {
+            "source": "class:636c6173734d",
+            "target": "class:636c6173734e",
+            "start": "none",
+            "end": "triangle",
+            "stroke": "dotted",
+            "label": "Realization",
+            "source_text": null,
+            "target_text": null,
+            "order": 17
+          },
+          {
+            "source": "class:636c6173734f",
+            "target": "class:636c61737350",
+            "start": "none",
+            "end": "none",
+            "stroke": "dotted",
+            "label": "Link(Dashed)",
+            "source_text": null,
+            "target_text": null,
+            "order": 18
+          }
+        ],
+        "groups": [],
+        "notes": []
+      },
+      "model_sha256": "6e09a7e5fd950b894a383d166a00461e34722f2886e4d4d2638ef7d50e9288c4"
+    }
+  ]
+}

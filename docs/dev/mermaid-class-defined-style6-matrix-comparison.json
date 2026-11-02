@@ -1,0 +1,128 @@
+{
+  "schema": "mermaid_class_defined_style6_comparison/v1",
+  "before": {
+    "drawn": 657,
+    "fallback": 1488,
+    "error": 0
+  },
+  "after": {
+    "drawn": 663,
+    "fallback": 1482,
+    "error": 0
+  },
+  "changed_observations": [
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    }
+  ],
+  "other_observation_statuses_unchanged": 2732,
+  "matrix_sha256": "85d9020dc4366edc112e08fc575b935f162889bfb52693e9c096c2a576abbdb2",
+  "regression": {
+    "debug": {
+      "passed": 889,
+      "total": 889,
+      "seconds": 315.76,
+      "serial": {
+        "passed": 25,
+        "total": 25,
+        "seconds": 11.28
+      }
+    },
+    "release": {
+      "passed": 889,
+      "total": 889,
+      "seconds": 38.94,
+      "serial": {
+        "passed": 25,
+        "total": 25,
+        "seconds": 1.98
+      }
+    }
+  },
+  "source_asset_bytes": 22362,
+  "source_asset_sha256": "71684e48846f0f634e6d02e336d5f2ef08a1a0f2d4a7eb393119f88414322202",
+  "roster_bytes": 44497,
+  "roster_sha256": "9074853c00e5fabb72dc6b7451fabdc1c13618bdefd390832bc33682d3521d19",
+  "scope": "Complete originals at 240 columns; fallback/error fail. Body diagnostics, browser assertions, LLVM coverage and full-project CTest excluded."
+}

@@ -1,0 +1,595 @@
+{
+  "schema": "loom_mermaid_class26_diagnostic/v1",
+  "source_revision": "7d69a1178b7d36ff2332470fec97d340863db504",
+  "environment": "macOS; clang 23.1.3; uninstrumented Debug with temporary diagnostic logging; 2026-10-28",
+  "method": "Each complete pinned source passed directly to render_mermaid with a real fallback element. Temporary logs observed parser, layout, route and failing Work charges; source and probes were restored afterwards. No drawing credit is claimed.",
+  "matrix_sha256": "07b08446ff905bb6907353cd65d31533dbf1ad25f3b20f7db521cd1517ac0cb4",
+  "cases": [
+    {
+      "fixture": "class-diagram/nightly-check/2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+      "source_sha256": "6c1d14a70cc29966565d68e0e2a533b8a2ea2b236e1e7883e7eeb9694fe5e0ff",
+      "observations": [
+        "P0 parse=1 remaining=890682",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=885959",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=829552",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=825740",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=819669",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=811148",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=796203",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=791506",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=787308",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=771092"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality-2.mmd",
+      "source_sha256": "8ed3421207aa0c78c15e51975389a66ad185a124c7605815e76a6df328a308f8",
+      "observations": [
+        "P0 parse=1 remaining=890718",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=885995",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=829588",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=825776",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=819705",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=811184",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=796239",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=791542",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=787344",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=771128"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+      "source_sha256": "f120ad29e3710f3beface82f67ca1805588bf8f13003d5996bb741276bdf3fc4",
+      "observations": [
+        "P0 parse=1 remaining=890760",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=886037",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=829630",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=825818",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=819747",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=811226",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=796281",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=791584",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=787386",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=771170"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+      "source_sha256": "fe45f7b4f65da2345986699334a2395aa005601ac587ed91ffb1d0045c6cd74a",
+      "observations": [
+        "P0 parse=1 remaining=893074",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=888351",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=831944",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=828132",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=822061",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=813540",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=798595",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=793898",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=789700",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=773484"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+      "source_sha256": "2232ca046e809f0935da0e223f8ab8cf93e7935624f887909e779503eebead64",
+      "observations": [
+        "P0 parse=1 remaining=893206",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=888483",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=832076",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=828264",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=822193",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=813672",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=798727",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=794030",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=789832",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=773616"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-2-1-should-render-a-simple-class-diagrams-with-cardinality-without-htmllabels.mmd",
+      "source_sha256": "030638d281daabc2fd9a077b7f7457167d56f2509cb13659e9c67c0e785a638a",
+      "observations": [
+        "P0 parse=1 remaining=892350",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=887627",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=831220",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=827408",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=821337",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=812816",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=797871",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=793174",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=788976",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=772760"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-2-should-render-a-simple-class-diagrams-with-cardinality.mmd",
+      "source_sha256": "5b6027515e63daa089069b1ae7288cca936ead9825fa1b82737b46577b220a36",
+      "observations": [
+        "P0 parse=1 remaining=892332",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=887609",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=831202",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=827390",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=821319",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=812798",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=797853",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=793156",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=788958",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=772742"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/pr-check/2-should-render-a-simple-class-diagrams-with-cardinality-3.mmd",
+      "source_sha256": "0c98dc9ebb29e7522d4973db243ee428ed6327ce51a735d72af9ce2d3a79f531",
+      "observations": [
+        "P0 parse=1 remaining=892168",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=887445",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=831038",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=827226",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=821155",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=812634",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=797689",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=792992",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=788794",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=772578"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-dark-theme.mmd",
+      "source_sha256": "8f34809dc1536e474e6fe16bc15716a0c08f1b0a0aaee18a4481f2e0625af33e",
+      "observations": [
+        "P0 parse=1 remaining=890014",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=885291",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=828884",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=825072",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=819001",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=810480",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=795535",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=790838",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=786640",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=770424"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-neo-theme.mmd",
+      "source_sha256": "6e7a33a4a2082361a96a6ff2a6a6e2ba260032433754e168df79dc43a137421c",
+      "observations": [
+        "P0 parse=1 remaining=890204",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=885481",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=829074",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=825262",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=819191",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=810670",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=795725",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=791028",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=786830",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=770614"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-color-theme.mmd",
+      "source_sha256": "bc8e1af5c59a3d9fee0e684e001b6455bae1e2bd7121e2e0f88238f54c57b109",
+      "observations": [
+        "P0 parse=1 remaining=889900",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=885177",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=828770",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=824958",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=818887",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=810366",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=795421",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=790724",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=786526",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=770310"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-color-theme.mmd",
+      "source_sha256": "2dcf1bc94b582666e6b427d4788ba8d86476aed251dcf2b4703ff14c6a246e6e",
+      "observations": [
+        "P0 parse=1 remaining=889710",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=884987",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=828580",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=824768",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=818697",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=810176",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=795231",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=790534",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=786336",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=770120"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-dark-theme.mmd",
+      "source_sha256": "c4a3a7f745a6e654df855c62bae3bbeff357094a6fffb70b7aa1f818fd51ec42",
+      "observations": [
+        "P0 parse=1 remaining=889938",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=885215",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=828808",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=824996",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=818925",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=810404",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=795459",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=790762",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=786564",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=770348"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-classic-look-redux-theme.mmd",
+      "source_sha256": "aac31a0a3a1c1422b601ef6c42c878c5d79413de9c432f388f2f288ef49e8598",
+      "observations": [
+        "P0 parse=1 remaining=890128",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=885405",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=828998",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=825186",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=819115",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=810594",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=795649",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=790952",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=786754",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=770538"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-dark-theme.mmd",
+      "source_sha256": "251dfcd58fb6065d83fb2b0bfb0686d263bfbbe570b71a84ebc91a2290191174",
+      "observations": [
+        "P0 parse=1 remaining=895468",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=890745",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=834338",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=830526",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=824455",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=815934",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=800989",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=796292",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=792094",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=775878"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-neo-theme.mmd",
+      "source_sha256": "4129a6df12b3965fdaab2de5d200557fde420d2fe1ebd102f6a0a3a3265533f6",
+      "observations": [
+        "P0 parse=1 remaining=895658",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=890935",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=834528",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=830716",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=824645",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=816124",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=801179",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=796482",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=792284",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=776068"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-color-theme.mmd",
+      "source_sha256": "78b2f240e8fd2b28d14dd8b24f32f4f970c09e4fbab8558c70e5adfecac0c08c",
+      "observations": [
+        "P0 parse=1 remaining=895354",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=890631",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=834224",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=830412",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=824341",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=815820",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=800875",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=796178",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=791980",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=775764"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-color-theme.mmd",
+      "source_sha256": "8ded2e37d170c86d837a9f39d588de48f9ce2ebf87d7686bd492faa02e3a9478",
+      "observations": [
+        "P0 parse=1 remaining=895164",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=890441",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=834034",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=830222",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=824151",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=815630",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=800685",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=795988",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=791790",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=775574"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-dark-theme.mmd",
+      "source_sha256": "e57ca01696e0812584b8fc32e26b4660ae2188253abd4cab251da7b708a68d0b",
+      "observations": [
+        "P0 parse=1 remaining=895392",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=890669",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=834262",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=830450",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=824379",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=815858",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=800913",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=796216",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=792018",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=775802"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/cardinality-neo-look-redux-theme.mmd",
+      "source_sha256": "ecc062e47068a8b3442ddfae64a210532f9ca2824b2ac646acac57ecbf0f4e34",
+      "observations": [
+        "P0 parse=1 remaining=895582",
+        "P0 prepared entities=12 edges=8 width=68 height=200 remaining=890859",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=834452",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=830640",
+        "P0 candidate_pairs=1656 endpoint_texts=1 note=0 remaining=824569",
+        "P0 candidate_pairs=512 endpoint_texts=1 note=0 remaining=816048",
+        "P0 candidate_pairs=1456 endpoint_texts=1 note=0 remaining=801103",
+        "P0 candidate_pairs=372 endpoint_texts=1 note=0 remaining=796406",
+        "P0 candidate_pairs=312 endpoint_texts=1 note=0 remaining=792208",
+        "P0 edge_failed index=7 from=Class08 to=C2 remaining=775992"
+      ],
+      "caption_failure_detail": {
+        "candidate_pairs": 312,
+        "non_horizontal_endpoint": 270,
+        "clearance_point_not_free": 42,
+        "compound_routes": 0,
+        "work_remaining_positive": true
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-dark-theme.mmd",
+      "source_sha256": "a59d6699cd65874ba46eaaf4e49a51fe51ab01efa3b0be0ae09c6771556bfc22",
+      "observations": [
+        "P0 parse=1 remaining=806914",
+        "P0 prepared entities=16 edges=11 width=100 height=255 remaining=763477",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=636126",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=632166",
+        "P0 candidate_pairs=484 endpoint_texts=0 note=0 remaining=627083",
+        "P0 candidate_pairs=462 endpoint_texts=0 note=0 remaining=626514",
+        "P0 candidate_pairs=252 endpoint_texts=0 note=0 remaining=626155",
+        "P0 candidate_pairs=384 endpoint_texts=1 note=0 remaining=625329",
+        "P0 candidate_pairs=1736 endpoint_texts=1 note=0 remaining=620168",
+        "P0 candidate_pairs=2520 endpoint_texts=0 note=0 remaining=612825",
+        "P0 note_pair_reserve from=88 to=40 count=3520 remaining=593783",
+        "P0 note_sort_prepare pairs=3520 remaining=421079",
+        "P0 spend_failed count=297120 remaining=251943",
+        "P0 edge_failed index=10 from=<NUL>note1 to=Class10 remaining=0"
+      ]
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-neo-theme.mmd",
+      "source_sha256": "4f4b17074de4b745b71441f0570e79dae2695e3c89220f9c35e804929b86d168",
+      "observations": [
+        "P0 parse=1 remaining=807104",
+        "P0 prepared entities=16 edges=11 width=100 height=255 remaining=763667",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=636316",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=632356",
+        "P0 candidate_pairs=484 endpoint_texts=0 note=0 remaining=627273",
+        "P0 candidate_pairs=462 endpoint_texts=0 note=0 remaining=626704",
+        "P0 candidate_pairs=252 endpoint_texts=0 note=0 remaining=626345",
+        "P0 candidate_pairs=384 endpoint_texts=1 note=0 remaining=625519",
+        "P0 candidate_pairs=1736 endpoint_texts=1 note=0 remaining=620358",
+        "P0 candidate_pairs=2520 endpoint_texts=0 note=0 remaining=613015",
+        "P0 note_pair_reserve from=88 to=40 count=3520 remaining=593973",
+        "P0 note_sort_prepare pairs=3520 remaining=421269",
+        "P0 spend_failed count=297120 remaining=252133",
+        "P0 edge_failed index=10 from=<NUL>note1 to=Class10 remaining=0"
+      ]
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-color-theme.mmd",
+      "source_sha256": "94ef3fadec0aebb968d6e7fd2bf7d0b982780b8b4ffed58b1058c43b31b44e17",
+      "observations": [
+        "P0 parse=1 remaining=806800",
+        "P0 prepared entities=16 edges=11 width=100 height=255 remaining=763363",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=636012",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=632052",
+        "P0 candidate_pairs=484 endpoint_texts=0 note=0 remaining=626969",
+        "P0 candidate_pairs=462 endpoint_texts=0 note=0 remaining=626400",
+        "P0 candidate_pairs=252 endpoint_texts=0 note=0 remaining=626041",
+        "P0 candidate_pairs=384 endpoint_texts=1 note=0 remaining=625215",
+        "P0 candidate_pairs=1736 endpoint_texts=1 note=0 remaining=620054",
+        "P0 candidate_pairs=2520 endpoint_texts=0 note=0 remaining=612711",
+        "P0 note_pair_reserve from=88 to=40 count=3520 remaining=593669",
+        "P0 note_sort_prepare pairs=3520 remaining=420965",
+        "P0 spend_failed count=297120 remaining=251829",
+        "P0 edge_failed index=10 from=<NUL>note1 to=Class10 remaining=0"
+      ]
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-color-theme.mmd",
+      "source_sha256": "43472a3dd8daf1cc81eb861fb33132094fa2899e8d9e245c3512bd825aaaa903",
+      "observations": [
+        "P0 parse=1 remaining=806610",
+        "P0 prepared entities=16 edges=11 width=100 height=255 remaining=763173",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=635822",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=631862",
+        "P0 candidate_pairs=484 endpoint_texts=0 note=0 remaining=626779",
+        "P0 candidate_pairs=462 endpoint_texts=0 note=0 remaining=626210",
+        "P0 candidate_pairs=252 endpoint_texts=0 note=0 remaining=625851",
+        "P0 candidate_pairs=384 endpoint_texts=1 note=0 remaining=625025",
+        "P0 candidate_pairs=1736 endpoint_texts=1 note=0 remaining=619864",
+        "P0 candidate_pairs=2520 endpoint_texts=0 note=0 remaining=612521",
+        "P0 note_pair_reserve from=88 to=40 count=3520 remaining=593479",
+        "P0 note_sort_prepare pairs=3520 remaining=420775",
+        "P0 spend_failed count=297120 remaining=251639",
+        "P0 edge_failed index=10 from=<NUL>note1 to=Class10 remaining=0"
+      ]
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-dark-theme.mmd",
+      "source_sha256": "806c14cd7bbb7b0949217099a1477a07c0dbd204605aee87f19d8a1cc7677cd6",
+      "observations": [
+        "P0 parse=1 remaining=806838",
+        "P0 prepared entities=16 edges=11 width=100 height=255 remaining=763401",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=636050",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=632090",
+        "P0 candidate_pairs=484 endpoint_texts=0 note=0 remaining=627007",
+        "P0 candidate_pairs=462 endpoint_texts=0 note=0 remaining=626438",
+        "P0 candidate_pairs=252 endpoint_texts=0 note=0 remaining=626079",
+        "P0 candidate_pairs=384 endpoint_texts=1 note=0 remaining=625253",
+        "P0 candidate_pairs=1736 endpoint_texts=1 note=0 remaining=620092",
+        "P0 candidate_pairs=2520 endpoint_texts=0 note=0 remaining=612749",
+        "P0 note_pair_reserve from=88 to=40 count=3520 remaining=593707",
+        "P0 note_sort_prepare pairs=3520 remaining=421003",
+        "P0 spend_failed count=297120 remaining=251867",
+        "P0 edge_failed index=10 from=<NUL>note1 to=Class10 remaining=0"
+      ]
+    },
+    {
+      "fixture": "class-diagram/visual-check/full-with-notes-neo-look-redux-theme.mmd",
+      "source_sha256": "42e1534edff395dfc5f06308b4615a7462bd360997ea94380298dc34d2e593f5",
+      "observations": [
+        "P0 parse=1 remaining=807028",
+        "P0 prepared entities=16 edges=11 width=100 height=255 remaining=763591",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=636240",
+        "P0 candidate_pairs=484 endpoint_texts=1 note=0 remaining=632280",
+        "P0 candidate_pairs=484 endpoint_texts=0 note=0 remaining=627197",
+        "P0 candidate_pairs=462 endpoint_texts=0 note=0 remaining=626628",
+        "P0 candidate_pairs=252 endpoint_texts=0 note=0 remaining=626269",
+        "P0 candidate_pairs=384 endpoint_texts=1 note=0 remaining=625443",
+        "P0 candidate_pairs=1736 endpoint_texts=1 note=0 remaining=620282",
+        "P0 candidate_pairs=2520 endpoint_texts=0 note=0 remaining=612939",
+        "P0 note_pair_reserve from=88 to=40 count=3520 remaining=593897",
+        "P0 note_sort_prepare pairs=3520 remaining=421193",
+        "P0 spend_failed count=297120 remaining=252057",
+        "P0 edge_failed index=10 from=<NUL>note1 to=Class10 remaining=0"
+      ]
+    }
+  ],
+  "normalized_trace_file": "mermaid-class26-diagnostic-trace.txt",
+  "normalized_trace_sha256": "845579223a1b81fd978827748af317a83a5ca552c78301cd5facd4080eda92b1",
+  "normalization": "Workspace root replaced with <workspace>; NUL bytes replaced with <NUL>.",
+  "caption_trace_file": "mermaid-class26-caption-trace.txt.gz",
+  "caption_trace_gzip_sha256": "473b32015f9ffca7906a34824efab06c9b6837406503e7f4bdd74c541c01d734",
+  "caption_trace_normalization": "Workspace root replaced with <workspace>; NUL bytes replaced with <NUL>; gzip mtime is zero."
+}

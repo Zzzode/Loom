@@ -1,0 +1,75 @@
+{
+  "schema": "mermaid_class4_comparison/v1",
+  "before": {
+    "drawn": 629,
+    "fallback": 1501,
+    "error": 15
+  },
+  "after": {
+    "drawn": 633,
+    "fallback": 1501,
+    "error": 11
+  },
+  "changed_observations": [
+    {
+      "fixture": "class-diagram/visual-check/dark-theme.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "error",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/default-theme.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "error",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/forest-theme.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "error",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/visual-check/neutral-theme.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "error",
+        "narrow_40": "error",
+        "restored_240": "error"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    }
+  ],
+  "other_observations_unchanged": 2734,
+  "baseline_method": "Saved executed623 matrix plus the exact six previously verified ER6 observation deltas in mermaid-er6-matrix-comparison.json; no rendered output was used to author Models.",
+  "matrix_sha256": "ff3e3a75847f4d2809c6f29ff400aaf64e832fe71fd5b86736a4883104a26f6c",
+  "scope": "Complete original rendering at240; fallback/error fail. Mermaid regression only, not full project CTest or LLVM coverage."
+}

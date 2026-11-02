@@ -1,0 +1,226 @@
+{
+  "schema": "mermaid_class_direct_style13_comparison/v1",
+  "before": {
+    "drawn": 644,
+    "fallback": 1501,
+    "error": 0
+  },
+  "after": {
+    "drawn": 657,
+    "fallback": 1488,
+    "error": 0
+  },
+  "changed_observations": [
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-style-definition.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-style-definition.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition-2.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition-without-htmllabels.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "fixture": "class-diagram/nightly-check/should-render-a-simple-class-diagram-with-style-definition.mmd",
+      "track": "original",
+      "before": {
+        "wide_240": "source_fallback",
+        "narrow_40": "source_fallback",
+        "restored_240": "source_fallback"
+      },
+      "after": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    }
+  ],
+  "other_observation_statuses_unchanged": 2725,
+  "matrix_sha256": "4386959008e6dd13cd1eebc995c3a1bfab268c66172e801fed9aa0dafbf4a517",
+  "regression": {
+    "debug": {
+      "passed": 878,
+      "total": 878,
+      "seconds": 287.71,
+      "serial_style_resource_and_real_pty": {
+        "passed": 14,
+        "total": 14,
+        "seconds": 7.87
+      }
+    },
+    "release": {
+      "passed": 878,
+      "total": 878,
+      "seconds": 37.79,
+      "serial_style_resource_and_real_pty": {
+        "passed": 14,
+        "total": 14,
+        "seconds": 1.64
+      }
+    }
+  },
+  "source_asset_bytes": 35243,
+  "source_asset_sha256": "59e4506fe68605d3f91229a28c7dad809147769d7b431de743c6a591953c3fc0",
+  "roster_bytes": 45440,
+  "roster_sha256": "1f2097fe612ed9b4560a0463b34c77e4db664ae258593f801a7e4f1ccf471de1",
+  "scope": "Complete original sources at 240 columns; fallback/error fail. Body diagnostics, browser equivalence, LLVM coverage and full-project CTest are excluded."
+}

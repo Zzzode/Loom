@@ -12,6 +12,70 @@ renderer against the complete pinned upstream corpus. The acceptance target is
 is incomplete. Browser-specific assertions retain their separate obligations.
 Correct source fallback is useful, but it is not a successful drawing.
 
+## Interpreting test results and fallback
+
+Source fallback preserves the input when Loom cannot draw it faithfully. A
+passing fallback assertion verifies that preservation behavior only: it does
+not mean the diagram was rendered, its syntax is implemented, or an upstream
+drawing obligation was satisfied. Do not count a fallback as a successful
+drawing or use a passing test count as a Mermaid compatibility percentage.
+Likewise, line and branch coverage measure execution of the current code,
+including rejection and fallback paths; they do not measure the fraction of
+Mermaid syntax implemented.
+
+The `MermaidCapabilityReport.*` tests report known gaps without failing solely
+because those gaps remain. A green capability report or test suite therefore
+does not establish complete Mermaid support. Inspect the report's individual
+outcomes and `mandatory_gaps` as well as the strict regression results. Matrix
+errors are separate from both successful drawings and source fallback, even
+when a report test passes while recording a reviewed gap.
+
+### Instrumented Debug checkpoint (2026-10-27)
+
+An LLVM-instrumented Debug run discovered 821 `mermaid`-labeled CTest tests:
+820 passed and `MermaidOfficial.RoleBodyBatchParsedMutationsReachTheirSpecificTupleAndSchemaGuards`
+timed out at its 180-second limit. The same test passed when run directly
+without that limit in 218 seconds. The first CTest run was therefore not fully
+green; the direct retry completed the remaining test. This was one local run,
+not a Debug/Release graduation claim.
+
+The latest Class defined-style6 checkpoint on2026-10-30 draws
+**663/2,145 (30.91%)**,1482 fallbacks and zero errors; Class260/285 (91.23%).
+Debug/Release889/889 and serial style/resource/real-PTY25/25 each pass.
+See [executed evidence](mermaid-class-defined-style6-review.md). Earlier
+checkpoints remain historical; fallback and error count as failure.
+
+The following records preserve historical conformance evidence. Their work
+assignments and counts are date-local; use the latest checkpoint above and
+the implementation backlog for active work.
+
+The historical 2026-10-29 Debug and Release checkpoint draws **622/2,145
+(29.00%)** complete official originals at 240 columns, with 1,501 fallbacks and
+22 errors. Class draws **237/285 (83.16%)**, with 44 fallbacks and four errors.
+Both fallbacks and errors count as failure. See the [gap analysis](mermaid-gap-analysis.md)
+for the remaining family counts and [coverage plan](mermaid-coverage-plan.md)
+for the Class routing validation. The instrumentation figures and 596-drawing
+baseline in the following paragraphs are historical; no new LLVM code-coverage
+measurement is implied.
+
+At 240 columns its generated official original-source matrix recorded 596
+drawn, 1,501 source fallbacks and 48 errors across 2,145 files. Thus the
+observed drawing rate was **596/2,145 (27.79%)**; neither fallback nor errors
+earn drawing credit. For example, sequence drew 193/193, class drew 211/285,
+and flowchart drew 54/400. These are results for the pinned corpus and this
+terminal width, not proof of full family or upstream Mermaid conformance.
+
+For the Mermaid production source files, excluding test-only seams, the same
+run and direct retry measured 12,529/12,713 lines (98.55%), 13,890/17,779
+branches (78.13%), and 564/569 functions (99.12%) with LLVM coverage
+instrumentation. The generated `build/mermaid-coverage/coverage-report.txt` and
+`build/mermaid-coverage/tests/ui/mermaid-official-matrix.json` contain the local
+details; build artifacts are not a durable source of truth and should be
+regenerated for a new revision or environment.
+The [gap analysis](mermaid-gap-analysis.md) breaks down the fallback labels,
+all 48 matrix errors, and the capability areas identified by existing audits.
+
+## Historical full-suite target and executed checkpoints
 ## Verified delivery checkpoint (2026-10-28)
 
 Both full builds pass with warnings as errors. The final full CTest runs each
@@ -620,7 +684,7 @@ integrity only. It adds no upstream semantic or drawing credit; the joined
 semantic source-site lower bound remains 85. Evidence:
 `root-five-suite-full-declared-maintenance-and-native-proof-r5.json`.
 
-## Last formally admitted original drawing counts by type
+## Historical original drawing counts by type
 
 These are complete pinned originals at 240 columns in the last successfully
 joined Debug and Release matrices after the Issue4648 dual-consumer join
@@ -1740,7 +1804,7 @@ The 12 reporters are (counts and roster pins refreshed on 2026-10-25):
 | `MermaidCapabilityReport.Flow400CompleteSources` | `mermaid-flow-official400-whole-source.json` | visited 400, decoded/positive/mutated 54, pending 346, zero errors |
 | `MermaidCapabilityReport.MermanXY102` | `mermaid-merman-xy102-C2-semantics.json` | 102 inputs, 85 candidate/17 fallback, 82 active/20 profile pending, geometry 77, empty 5, partition 3/17/82/0 |
 | `MermaidCapabilityReport.Class481` | `mermaid-class481-native.json` | matched/mutated 341, pending 137, 3 positive fallbacks (140 gap rows) |
-| `MermaidCapabilityReport.Class285` | `mermaid-official-class285-source-scenes.json` | decoded 237, matched/mutated 211, pending 48 (74 gap rows) |
+| `MermaidCapabilityReport.Class285` | `mermaid-official-class285-source-scenes.json` | decoded 237, matched/mutated 237, pending 48 (48 gap rows) |
 | `MermaidCapabilityReport.ClassEndpoint29` | `mermaid-class-endpoint29-source-scenes.json` | matched/mutated 26, 3 named source fallbacks |
 | `MermaidCapabilityReport.State85` | `mermaid-state85-whole-source-scenes.json` | matched 71, geometry_errors 1, positive_pending 7, original_policy 1, choice_policy 1 (14 gap rows) |
 | `MermaidCapabilityReport.ClassCaptionStarvation8` | `mermaid-class-caption-starvation-source-scenes.json` | matched 6, fallbacks 2 |
@@ -2117,3 +2181,21 @@ original producer is restored and normal Debug/Release binaries are rebuilt;
 the same seven native tests reproduce the five/two result. This is a failed
 trial, not a retained fix or increased coverage. Evidence:
 `root-requirement11-parallel-connector-owner-failed-and-restored-proof-r5.json`.
+
+## Current Class direct-style subset
+
+Class `style ID` supports fill, stroke, color and stroke-width on root boxes.
+Colors admit hexadecimal3/4/6/8 and white, rejecting intermediate alpha and
+transparent stroke/foreground; transparent fill is allowed. Width0..64 projects
+to normal/bold border at4. Colors use palette hue roles, with source declarations
+and projection limits visible in the legend. Filled labels use palette.text;
+foreground-on-fill is disclosed as unprojected. The source TAB convention,
+normalized repeat counts, current-theme cache resolution, ASCII source fallback
+and bounded fit/Work rules are documented in
+[the executed Class13 contract](mermaid-class-style13-review.md).
+Unsupported CSS/properties/targets and incomplete fits preserve source and earn
+no rendering credit. Root Class single inline declarations and quoted single-target cssClass
+assignments now apply defined classes after complete parsing, with direct
+styles last. Definition hex3/6 and integer-px grammar remains bounded; undefined
+classes, target lists, defaults and unsupported forms preserve source. See
+[the executed D1b contract](mermaid-class-defined-style6-review.md).

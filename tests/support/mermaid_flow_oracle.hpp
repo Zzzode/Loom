@@ -182,6 +182,18 @@ struct Rect {
     int area() const { return (right - left + 1) * (bottom - top + 1); }
 };
 
+// Total order for closed-frame candidate vectors. Area keeps the intended
+// "smallest frame first" preference; the geometric coordinates break every
+// equal-area tie deterministically instead of leaving the permutation up to
+// the standard library's non-stable sort.
+inline bool frame_before_by_area(const Rect& a, const Rect& b) {
+    if (a.area() != b.area()) return a.area() < b.area();
+    if (a.top != b.top) return a.top < b.top;
+    if (a.left != b.left) return a.left < b.left;
+    if (a.right != b.right) return a.right < b.right;
+    return a.bottom < b.bottom;
+}
+
 // Closed test-private Model vocabulary. Its wire spelling is deliberately
 // handled by parse_shape below, so Shape::Decision is never a JSON alias.
 enum class Shape : std::uint8_t {
@@ -296,6 +308,14 @@ struct ShapeFrame : Rect {
     }
 };
 
+// Total order over typed frames: geometric frame order first, then shape so
+// two different shapes on the same rectangle never tie in a non-stable sort.
+inline bool shape_frame_before_by_area(const ShapeFrame& a, const ShapeFrame& b) {
+    if (frame_before_by_area(a, b)) return true;
+    if (frame_before_by_area(b, a)) return false;
+    return static_cast<int>(a.shape) < static_cast<int>(b.shape);
+}
+
 // Typed cap signal lets new private consumers classify exhaustion structurally.
 // Existing consumers keep the same runtime_error messages and behavior.
 struct FlowContourLimit final : std::runtime_error {
@@ -339,7 +359,7 @@ inline std::vector<Rect> closed_rectangles(const Grid& grid, OracleWork& work) {
                 if (!has(right, top, R)) break;
             }
         }
-    std::ranges::sort(frames, [](const Rect& a, const Rect& b) { return a.area() < b.area(); });
+    std::ranges::sort(frames, frame_before_by_area);
     return frames;
 }
 
@@ -450,8 +470,7 @@ inline std::vector<ShapeFrame> closed_frames(const Grid& grid, OracleWork& work)
                 }
             }
         }
-    std::ranges::sort(result,
-                      [](const ShapeFrame& a, const ShapeFrame& b) { return a.area() < b.area(); });
+    std::ranges::sort(result, shape_frame_before_by_area);
     return result;
 }
 
@@ -1878,8 +1897,7 @@ validate_impl(const Grid& grid, const Model& model, OracleWork& work,
         if (frames.size() + classic.size() > 128u)
             throw FlowContourLimit("Too many typed Flow contour candidates");
         frames.insert(frames.end(), classic.begin(), classic.end());
-        std::ranges::sort(
-            frames, [](const ShapeFrame& a, const ShapeFrame& b) { return a.area() < b.area(); });
+        std::ranges::sort(frames, shape_frame_before_by_area);
     }
     work.spend(8u * sizeof(std::vector<int>) + 8u * sizeof(int) + 512u);
     std::vector<std::vector<int>> candidates;

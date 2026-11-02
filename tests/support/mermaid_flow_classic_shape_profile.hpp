@@ -758,8 +758,7 @@ inline std::vector<ShapeFrame> classic_closed_frames(const Grid& grid, OracleWor
                 }
             }
         }
-    std::ranges::sort(result,
-                      [](const ShapeFrame& a, const ShapeFrame& b) { return a.area() < b.area(); });
+    std::ranges::sort(result, shape_frame_before_by_area);
     return result;
 }
 

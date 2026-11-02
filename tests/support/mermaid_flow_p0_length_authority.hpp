@@ -41,9 +41,9 @@ inline JsonVal flow_p0_length_reviewed(JsonVal supplement, OracleWork& work) {
     work.product(kFlow400LinkProfile3AssetBytes, 32u);
     work.spend(8192u);
     const auto cases = supplement.get("cases");
-    flow400_require(cases.is_arr() && cases.size() == 3u,
+    flow400_require(cases.is_arr() && cases.size() == 4u,
                     "Flow P0 length reviewed case denominator");
-    const auto selected = cases.at(1u);
+    const auto selected = cases.at(2u);
     flow400_linkprofile3_case_shape(selected, work);
     flow400_require(
         flow400_text(selected.get("case_id")) == "link_profile_294" &&

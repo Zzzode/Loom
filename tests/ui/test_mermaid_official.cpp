@@ -12014,9 +12014,9 @@ std::size_t official_flow_p0_length_identity(JsonVal supplement, const Observati
                 info.get_string("linkprofile3_reused_source_sha256") == kFlowP0LengthSourceSha,
             "Official Flow P0 length reuse proof identity");
     const auto cases = supplement.get("cases");
-    require(cases.is_arr() && cases.size() == 3u,
+    require(cases.is_arr() && cases.size() == 4u,
             "Official Flow P0 length reviewed authority unavailable");
-    const auto selected = cases.at(1u), base = selected.get("base_authority");
+    const auto selected = cases.at(2u), base = selected.get("base_authority");
     require(selected.get_string("case_id") == "link_profile_294" &&
                 base.get_int("ordinal") == 294 && base.get_int("manifest_global_ordinal") == 955 &&
                 selected.get_string("source_sha256") == kFlowP0LengthSourceSha &&
@@ -16092,6 +16092,9 @@ TEST(MermaidOfficialFlow400, LinkProfile3OwnedMetadataRequiresExactProvenanceAnd
         reject(row.raw_source_constraints, std::move(wrong_model),
                "OfficialFlow400 inconsistent LinkProfile3 authority metadata");
         auto failed = row;
+        // link_profile_019 shares a P0-owned fixture, so a failed row must
+        // drop drawn credit on every frame exactly like the P0 path.
+        failed.status = {"error", "error", "error"};
         failed.errors.emplace_back("source-authored LinkProfile3 geometry failure");
         OfficialFlowProgress failed_progress;
         failed_progress.captured = failed_progress.bound = failed_progress.decoded = true;
@@ -17024,7 +17027,8 @@ TEST(MermaidOfficialFlowP0Length,
     auto altered_root = altered.raw_json(
         flow_oracle::group_endpoint15_canonical(reviewed.supplement.root(), proof_work));
     altered.set_root(altered_root);
-    altered_root.get("cases").at(1u).set("link_profile_json", "{}");
+    // Tamper with the actually reused case (link_profile_294 at index 2).
+    altered_root.get("cases").at(2u).set("link_profile_json", "{}");
     const auto altered_document = json::parse(altered.to_string());
     ASSERT_TRUE(altered_document.has_value());
     EXPECT_THROW(static_cast<void>(official_flow_counts(std::vector<Observation>{row}, JsonVal{},

@@ -1043,14 +1043,21 @@ TEST(MermaidFlowGroupEndpointExtra7, NativeSourcesNeedFivePublishedFramesAndComp
         } else
             ++narrow_source_fallback;
         const auto control_row = group_endpoint_extra7_control_row(source_controls, tuple);
+        // The nine grid/model mutation controls are a separate verification
+        // phase from the five public frame captures; each phase gets its own
+        // bounded oracle budget (same pattern as the Block58 capture/binding/
+        // checking phases). Sharing one budget starved the dense scenes'
+        // fourth physical revalidation.
+        OracleWork control_work{kFlow400SceneLimit};
         const auto controls = group_endpoint_extra7_run_controls(
-            record, control_row, *frames[0], model, profile, witness, work, "native_raw");
+            record, control_row, *frames[0], model, profile, witness, control_work, "native_raw");
         semantic_rejections += controls.semantic_rejections;
         physical_rejections += controls.physical_rejections;
         decoder_successes += controls.decoder_successes;
         group_endpoint_extra7_append_case(local_verdict, local_cases, record, frame_hashes,
                                           narrow_is_source ? "source_fallback" : "drawn", controls);
         EXPECT_NE(work.remaining, 0u) << tuple.fixture;
+        EXPECT_NE(control_work.remaining, 0u) << tuple.fixture;
         ++visited;
     });
     RecordProperty("wide_complete_drawn_sources", static_cast<int>(wide_drawn));

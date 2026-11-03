@@ -121,3 +121,28 @@ in increasing blast radius:
 No `kWorkLimit` change, no predicate relaxation, no paper/roster
 regeneration in this phase, no implementation before Tech Lead
 confirmation of the design and the shared-change scope.
+
+## 7. Batch 1 outcome (D-038 sign-off, commit 40f2f322)
+
+Matrix layer: **4/11** error->drawn (spece-statements, 9-columns-grid,
+nested-redux-color, nested-redux-dark-color); block wide drawn 47->51,
+errors 11->7.
+
+Real five-frame consumer credit: **3/11 per Tech Lead D-038** —
+9-columns-grid, nested-redux-color and nested-redux-dark-color.
+
+`spece-statements` is matrix-drawn AND currently passes the terminal
+Block58 five-frame plane after batch 1, but it is **not** counted as a
+real accept: the renderer does not implement browser-faithful `space:N`
+spacer flow (frame dump: `space:3` does not reserve its row; the first
+block arrow flows into the `id1 id2` row). The terminal authority for this
+pinned source derives a terminal-native model that the engine matches, so
+the plane test is green without proving browser parity. It is assigned to
+the batch 3 feature cohort on product-semantics grounds, not a current
+test failure.
+
+Residual 7: batch 2 = six sources (three layout-layer overshoots —
+look-neo, look-neo-dark, rows-with-different-heights; plus the four
+shapes-inside-redux sources whose 256U/run bookkeeping is genuinely first
+work on the Block path); batch 3 = one source (spece-statements,
+browser-faithful space:N geometry).

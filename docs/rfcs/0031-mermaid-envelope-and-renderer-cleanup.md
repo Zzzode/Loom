@@ -786,3 +786,20 @@ and exact-roster reviews approve the bounded sub-batch. Complete evidence and
 six-original comparison: `../dev/mermaid-class-defined-style6-review.md`.
 No phase graduation or browser/full-project coverage is claimed. Continue
 Flow style4 and remaining P1 before P2/P3.
+
+Linux port Work-accounting probe (2026-11-03, no code change kept): on the
+Homebrew LLVM 23.1.2 libc++ Linux port, twelve ER107 originals and nine
+themed Block58 originals exceed the fixed 1,000,000 Work budget. Measured
+type sizes match macOS libc++ (std::string 24), and ASan/UBSan report
+nothing, so this is deterministic accounting, not ordering, hashing or UB.
+A trial replacing the six allocator capacity() terms in
+detail::styled_payload_bytes (src/ui/visual/mermaid_style_impl.cpp) with
+logical size() reduced the passing-route maximum only 971,611 -> 967,861;
+the same twelve ER sources still spent exactly 1,000,000 and Block58
+stayed 47/58, so the overshoot is charged further upstream by logical
+size-based fees (including the active-ER er_vector_room growth fee), not by
+the styled-payload gate. The trial was reverted. Do not raise kWorkLimit or
+relax a rejection: a separate design must bound the upstream per-byte ER/
+Block fees, re-derive ER107 consumed work against the reviewed 992,611
+ceiling, and re-run the dual-preset matrix and roster verifier before any
+credit. This is future design input only; no phase graduation is claimed.

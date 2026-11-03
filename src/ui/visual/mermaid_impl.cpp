@@ -4167,12 +4167,14 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     }
 
     // Charge after the peek span is known; the multiline route above walks the
-    // source one extra time and is bounded by the same term.
+    // source one extra time and is bounded by the same term. spend() drains the
+    // remaining balance on an unaffordable probe so the caller sees genuine
+    // exhaustion; an early pre-charge return would leave a positive balance and
+    // be misread as a semantic rejection by the layout cache.
     const std::size_t probe_total =
         kProbeFixed + (has_frontmatter_peek || multiline_directive
                            ? kProbePeekFixed + kProbePerPeekByte * peek_bytes
                            : 0u);
-    if (probe_total > work.remaining) return std::nullopt;
     if (!work.spend(probe_total)) return std::nullopt;
 
     // ---- ordered probes, first match wins; Charts is the terminal fallback ----

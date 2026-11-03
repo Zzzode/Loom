@@ -98,6 +98,15 @@ inline constexpr std::size_t kWorkLimit = 1'000'000;
 // R<=1024 and U<=240*R. Derived from the 240x1024 canvas contract, never tuned.
 inline constexpr std::size_t kErElementWorkLimit = 102'564'352;
 
+// D-035 batch 1: same meter on the Block packed path. Block edge/box cells
+// may carry bold (style bit 10) on top of the text node and the
+// foreground/background decorator pair, i.e. one extra node block per run
+// (D-018 decomposition: 416U = 128 vector + 128 text + 128 color pair + 32
+// slack; bold adds 128 -> 544U):
+// ElementWork_block(R,U) = 320R+512+544U, cap 320*1024+512+544*240*1024
+// = 134,021,632.
+inline constexpr std::size_t kBlockElementWorkLimit = 134'021'632;
+
 struct Work {
     std::size_t remaining = kWorkLimit;
     bool spend(std::size_t count = 1);
@@ -116,13 +125,14 @@ struct FinalEmissionTrace {
     std::size_t entry_remaining = 0u, emission_debit = 0u, preflight_debits = 0u,
                 successful_debits = 0u;
     std::size_t last_debit = 0u, failed_debit = 0u;
-    // ADR 0032 ElementWork meter (active-ER packed payloads only). Observation:
-    // element_active marks the ER meter path, element_cap is the bound in
-    // effect, element_debit accumulates the real Element fees actually charged
-    // and element_failed records the first refused fee. Injection: when
-    // element_work is non-null on ER entry, that caller-owned meter replaces
-    // the fresh capped one, letting tests assert exact-budget (remaining==0)
-    // and one-unit-short rejection. Non-ER families leave all four untouched.
+    // ElementWork meter for metered packed payloads (ADR 0032 active-ER;
+    // D-035 batch 1 Block). Observation: element_active marks the metered
+    // path, element_cap is the bound in effect, element_debit accumulates the
+    // real Element fees actually charged and element_failed records the first
+    // refused fee. Injection: when element_work is non-null on metered entry,
+    // that caller-owned meter replaces the fresh capped one, letting tests
+    // assert exact-budget (remaining==0) and one-unit-short rejection. Every
+    // non-packed family leaves all four untouched.
     bool element_active = false;
     std::size_t element_cap = 0u, element_debit = 0u, element_failed = 0u;
     Work* element_work = nullptr;

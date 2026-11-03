@@ -42,6 +42,7 @@ using loom::ui::mermaid::testing::GitGraph;
 using loom::ui::mermaid::testing::GitType;
 using loom::ui::mermaid::testing::kWorkLimit;
 using loom::ui::mermaid::testing::kErElementWorkLimit;
+using loom::ui::mermaid::testing::kBlockElementWorkLimit;
 using loom::ui::mermaid::testing::MermaidProbeDecision;
 using loom::ui::mermaid::testing::MermaidProbeFamily;
 using loom::ui::mermaid::testing::Work;
@@ -92,16 +93,18 @@ struct StyledRows {
     std::vector<std::vector<StyledRun>> rows;
 };
 
+// Which packed family, if any, gets the independent ElementWork meter for
+// its real ftxui Element fees (ADR 0032 ER; D-035 batch 1 Block). Off for
+// every non-packed family. payload_prepaid is the amount ErPaint prepaid for
+// the same payload's gates/bookkeeping (ER only; Block has no producer
+// prepayment and leaves it zero).
+enum class PackedMeter : unsigned char { Off, Er, Block };
 struct NativeLayout {
     std::vector<std::string> rows;
     std::optional<StyledRows> styles;
     std::size_t measured_layout_work = 0u;
     std::vector<std::uint16_t> packed_styles{};
-    // Active ER only. er_packed routes the real ftxui Element fees onto the
-    // independent ElementWork meter (ADR 0032); payload_prepaid is the amount
-    // ErPaint::finish prepaid for the same payload on the layout Work meter.
-    // Both are zero/false for Block and every non-ER family.
-    bool er_packed = false;
+    PackedMeter packed_meter = PackedMeter::Off;
     std::size_t payload_prepaid = 0u;
 };
 
@@ -160,7 +163,7 @@ bool valid_packed_rows(const std::vector<std::string>& rows,
 std::optional<ftxui::Element> finish_mermaid_payload(std::optional<LayoutPayload> payload,
                                                      ftxui::Element fallback, Work& work,
                                                      FinalEmissionTrace* trace = nullptr,
-                                                     bool er_packed = false,
+                                                     PackedMeter meter = PackedMeter::Off,
                                                      std::size_t* prepaid = nullptr);
 
 struct Point {

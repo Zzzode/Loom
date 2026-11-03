@@ -644,16 +644,17 @@ std::optional<StyledRows> extract_styled_rows(const Canvas& canvas,
 
 namespace {
 // Frozen gas footprint of NativeLayout as charged by the payload gates. ADR
-// 0032 added two ER-only side fields (bool er_packed + std::size_t
-// payload_prepaid), growing the real struct 88 -> 104 bytes. Those fields
-// fund no allocation on any path, so the non-ER families (Block, Class/State,
-// styled Flow) must keep paying the pre-ADR charge; the ER gates credit this
-// exact amount via packed_payload_prepaid. Keep this constant in lockstep
-// with the field set that predates ADR 0032.
+// 0032 added two ER-only side fields (later collapsed into a one-byte
+// PackedMeter tag plus std::size_t payload_prepaid), growing the real struct
+// 88 -> 104 bytes. Those fields fund no allocation on any path, so the
+// non-ER families (Class/State, styled Flow; Block gates use this path too
+// with no credit) must keep paying the pre-ADR charge; the ER gates credit
+// this exact amount via packed_payload_prepaid. Keep this constant in
+// lockstep with the field set that predates ADR 0032.
 constexpr std::size_t kNativeLayoutGasFootprint = 88u;
 // Mirror of NativeLayout's pre-ADR-0032 field set; locks the constant's
 // derivation against accidental field-set drift (the real NativeLayout adds
-// the two ER-only side fields).
+// the PackedMeter tag and the payload_prepaid side field).
 struct PreAdrNativeLayoutFootprint {
     std::vector<std::string> rows;
     std::optional<StyledRows> styles;

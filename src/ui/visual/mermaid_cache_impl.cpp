@@ -53,10 +53,10 @@ struct LayoutRowsCache::Impl {
         std::optional<detail::StyledRows> styles;
         std::size_t layout_work = 0;
         std::vector<std::uint16_t> packed_styles{};
-        // Active ER only (ADR 0032): payload_prepaid holds the post-gate
-        // remainder that still covers finish bookkeeping on a hit, when the
-        // Element tree is rebuilt and ElementWork is charged afresh.
-        bool er_packed = false;
+        // Metered packed family (ADR 0032 ER; D-035 batch 1 Block): on a hit
+        // the Element tree is rebuilt and ElementWork is charged afresh;
+        // payload_prepaid holds the ER post-gate bookkeeping remainder.
+        detail::PackedMeter packed_meter = detail::PackedMeter::Off;
         std::size_t payload_prepaid = 0u;
         std::size_t bytes = 0;
 
@@ -133,7 +133,7 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
                                     entry.styles,
                                     entry.layout_work,
                                     entry.packed_styles,
-                                    entry.er_packed,
+                                    entry.packed_meter,
                                     entry.payload_prepaid};
     }
     ++miss_count;
@@ -160,7 +160,7 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
     try {
         Entry entry{std::string(source), hash,           use_ascii,
                     fresh.rows,          fresh.styles,   fresh.measured_layout_work,
-                    fresh.packed_styles, fresh.er_packed, fresh.payload_prepaid,
+                    fresh.packed_styles, fresh.packed_meter, fresh.payload_prepaid,
                     fresh_bytes};
         lru.push_back(std::move(entry));
         auto inserted = std::prev(lru.end());

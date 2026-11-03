@@ -904,39 +904,47 @@ TEST(MermaidEr107ElementWork, All107PublicRendersExposeExactAndOneShortElementBu
     RecordProperty("max_layout_work", max_layout);
 }
 
-// F3/F1 wiring guard: Block shares the packed finish but never activates the
-// ElementWork meter or consumes an injected one; 100% of its finish fees stay
-// on layout Work.
-TEST(MermaidEr107ElementWork, NonErPackedFamilyNeverActivatesTheMeter) {
+// D-035 batch 1: Block shares the packed finish and now activates its OWN
+// ElementWork meter (bold-capable 544U/run, kBlockElementWorkLimit), never
+// the ER one; the uncredited 8B/256U bookkeeping stays on layout Work.
+TEST(MermaidEr107ElementWork, BlockPackedUsesItsOwnMeterNotErs) {
     namespace mt = loom::ui::mermaid::testing;
     const std::string raw = "block-beta\ncolumns 3\nblock:g\nA\nend\nspace B\ng --> B\n";
+    std::size_t layout_total = 0u, element_total = 0u;
     {
         mt::Work work;
         mt::FinalEmissionTrace trace;
         auto rendered =
             mt::render_mermaid_with_work(raw, ftxui::text("block-fallback"), false, work, &trace);
         ASSERT_TRUE(rendered.has_value());
-        EXPECT_FALSE(trace.element_active);
-        EXPECT_EQ(trace.element_debit, 0u);
-        EXPECT_EQ(trace.element_cap, 0u);
+        EXPECT_TRUE(trace.element_active);
+        EXPECT_EQ(trace.element_cap, mt::kBlockElementWorkLimit);
+        EXPECT_GT(trace.element_debit, 0u);
         EXPECT_EQ(trace.element_failed, 0u);
-        // The packed finish genuinely ran, entirely on the legacy Work meter.
         EXPECT_TRUE(trace.preflight_complete);
-        // All finish preflight fees landed on the legacy layout Work meter.
+        // Block has no ErPaint prepayment: every bookkeeping debit is real.
         EXPECT_GT(trace.emission_debit, 0u);
         EXPECT_EQ(trace.preflight_debits, trace.successful_debits);
-        // ADR 0032 MAJOR-1 guard: the NativeLayout growth must not move a
-        // single unit of a non-ER public render (pinned total incl. finish).
-        EXPECT_EQ(mt::kWorkLimit - work.remaining, 282110u);
+        layout_total = mt::kWorkLimit - work.remaining;
+        element_total = trace.element_debit;
+        // Real Element fees left the 1,000,000 layout pool entirely.
+        EXPECT_LT(layout_total, 282110u);
+    }
+    // F1: exact and one-unit-short on the Block element meter.
+    {
+        mt::Work layout{50'000'000u}, exact{element_total};
+        mt::FinalEmissionTrace trace;
+        trace.element_work = &exact;
+        EXPECT_TRUE(mt::render_mermaid_with_work(raw, ftxui::text("block-fallback"), false,
+                                                 layout, &trace));
+        EXPECT_EQ(exact.remaining, 0u);
     }
     {
-        mt::Work work, injected{123u};
+        mt::Work layout{50'000'000u}, short_one{element_total - 1u};
         mt::FinalEmissionTrace trace;
-        trace.element_work = &injected;
-        auto rendered =
-            mt::render_mermaid_with_work(raw, ftxui::text("block-fallback"), false, work, &trace);
-        ASSERT_TRUE(rendered.has_value());
-        EXPECT_FALSE(trace.element_active);
-        EXPECT_EQ(injected.remaining, 123u);
+        trace.element_work = &short_one;
+        EXPECT_FALSE(mt::render_mermaid_with_work(raw, ftxui::text("block-fallback"), false,
+                                                  layout, &trace));
+        EXPECT_GT(trace.element_failed, 0u);
     }
 }

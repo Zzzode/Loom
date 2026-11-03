@@ -608,3 +608,165 @@ TEST(MermaidBlockSource58Controls, PriorEdgeCaptionAndItsSideCellsSurviveLaterRo
     rejects(24, 1, " ");  // The second complete caption is independently required.
     rejects(28, 1, "─");  // The second caption's side reservation is observable.
 }
+
+// D-035 batch 1: Block packed Element emission runs on its own bounded meter,
+// parallel to the ADR 0032 ER ElementWork seam. Real Element fees leave the
+// 1,000,000 layout Work pool; the duplicated byte/run bookkeeping stays on
+// layout Work in full (Block has no producer prepayment).
+namespace {
+namespace mt = loom::ui::mermaid::testing;
+
+std::string read_pin_raw(std::string_view path) {
+    return read(kFixtures / "mermaid_official/cases" / std::string(path),
+                block::kMaxRawBytes);
+}
+}  // namespace
+
+TEST(MermaidBlockElementWork, PackedPublicRenderUsesIndependentBlockMeter) {
+    constexpr std::string_view raw = "block-beta\nA space B\nA -- \"界\" --> B\n";
+    mt::Work work;
+    mt::FinalEmissionTrace trace;
+    auto rendered =
+        mt::render_mermaid_with_work(raw, ftxui::text("fallback"), false, work, &trace);
+    ASSERT_TRUE(rendered);
+    EXPECT_TRUE(trace.styled_entered);
+    EXPECT_TRUE(trace.element_active);
+    EXPECT_TRUE(trace.preflight_complete);
+    EXPECT_EQ(trace.element_cap, mt::kBlockElementWorkLimit);
+    EXPECT_EQ(trace.element_failed, 0u);
+    EXPECT_GT(trace.element_debit, 0u);
+    // No ER prepayment exists for Block: every bookkeeping debit hits Work.
+    EXPECT_EQ(trace.preflight_debits, trace.successful_debits);
+    // The 8B/256U bookkeeping remains on layout Work; only element fees moved.
+    EXPECT_GT(trace.emission_debit, 0u);
+}
+
+TEST(MermaidBlockElementWork, StyleBitBoldIsAcceptedAndMeterIsBounded) {
+    // Edge bold (block-arrow with =) produces style bit 10, which the ER
+    // guard rejects but the Block meter must admit; cells still land within
+    // bits 0-10 and the derived cap applies.
+    constexpr std::string_view raw =
+        "block-beta\ncolumns 1\nA ==> B\n";
+    mt::Work work;
+    mt::FinalEmissionTrace trace;
+    auto rendered =
+        mt::render_mermaid_with_work(raw, ftxui::text("fallback"), false, work, &trace);
+    ASSERT_TRUE(rendered);
+    EXPECT_TRUE(trace.element_active);
+    constexpr std::size_t kExpectedCap =
+        320u * 1024u + 512u + 544u * 240u * 1024u;
+    static_assert(mt::kBlockElementWorkLimit == kExpectedCap);
+    static_assert(mt::kBlockElementWorkLimit > mt::kErElementWorkLimit);
+}
+
+TEST(MermaidBlockElementWork, ExactAndOneUnitShortForBothMetersOver58Pins) {
+    std::size_t admitted = 0u, metered_residual = 0u, layout_residual = 0u;
+    for (const auto& pin : block::kPins) {
+        SCOPED_TRACE(pin.path);
+        const std::string raw = read_pin_raw(pin.path);
+        // First pass measures both meter totals on the genuine pipeline.
+        mt::Work measured;
+        mt::FinalEmissionTrace probe;
+        auto reference =
+            mt::render_mermaid_with_work(raw, ftxui::text("fallback"), false, measured,
+                                         &probe);
+        if (!reference) {
+            // Batch 2 residual: rejected before Element emission (layout
+            // overshoot, meter inactive) or, for the four redux-container
+            // sources, on the 256U/run bookkeeping that stays on layout Work.
+            if (probe.element_active) {
+                // Batch 2: the 256U/run bookkeeping (real on Block — no
+                // ErPaint-equivalent prepayment) still lives on layout Work.
+                EXPECT_EQ(probe.element_failed, 0u) << pin.path;
+                EXPECT_GT(probe.failed_debit, 0u) << pin.path;
+                ++metered_residual;
+            } else {
+                // Batch 2: layout-layer overshoot before Element emission.
+                ++layout_residual;
+            }
+            continue;
+        }
+        ASSERT_TRUE(probe.element_active) << pin.path;
+        const std::size_t layout_used = mt::kWorkLimit - measured.remaining;
+        const std::size_t element_used = probe.element_debit;
+        ASSERT_GT(layout_used, 0u);
+        ASSERT_GT(element_used, 0u);
+        EXPECT_LT(element_used, mt::kBlockElementWorkLimit);
+
+        // Exact layout budget admits. (A one-unit-short layout Work is not a
+        // hard rejection on the public pipeline: fees fall across several
+        // phases with slack, unlike the packed Element preflight whose
+        // exact/short invariant is asserted separately below.)
+        mt::Work exact{layout_used};
+        EXPECT_TRUE(mt::render_mermaid_with_work(raw, ftxui::text("fallback"), false,
+                                                 exact));
+
+        // Exact Element budget admits via the injected seam; one unit short is
+        // a meter refusal, independent of the ample layout budget.
+        {
+            mt::Work layout{50'000'000u};
+            mt::Work element{element_used};
+            mt::FinalEmissionTrace injected;
+            injected.element_work = &element;
+            EXPECT_TRUE(mt::render_mermaid_with_work(raw, ftxui::text("fallback"), false,
+                                                     layout, &injected));
+            EXPECT_EQ(element.remaining, 0u);
+        }
+        {
+            mt::Work layout{50'000'000u};
+            mt::Work element{element_used - 1u};
+            mt::FinalEmissionTrace injected;
+            injected.element_work = &element;
+            EXPECT_FALSE(mt::render_mermaid_with_work(raw, ftxui::text("fallback"), false,
+                                                      layout, &injected));
+            EXPECT_GT(injected.element_failed, 0u);
+        }
+        ++admitted;
+    }
+    // D-035 batch 1 measured: 51/58 pins admit at the fixed 1,000,000 Work
+    // pool (47 before + 4 newly admitted). The seven residual pins split as
+    // designed: three layout-layer overshoots and four 256U/run bookkeeping
+    // cases, all deferred to batch 2.
+    EXPECT_EQ(admitted, 51u);
+    EXPECT_EQ(layout_residual, 3u);
+    EXPECT_EQ(metered_residual, 4u);
+}
+
+TEST(MermaidBlockElementWork, CacheHitRebuildsElementsOnFreshMeter) {
+    constexpr std::string_view raw = "block-beta\nA space B\nA -- \"界\" --> B\n";
+    auto fallback = ftxui::text("fallback");
+    loom::ui::mermaid::LayoutRowsCache cache(8, 4 * 1024 * 1024);
+    mt::Work miss;
+    mt::FinalEmissionTrace miss_trace;
+    ASSERT_TRUE(mt::CacheBudgetAccess::render(cache, raw, false, fallback, miss,
+                                              &miss_trace));
+    mt::Work hit;
+    mt::FinalEmissionTrace hit_trace;
+    ASSERT_TRUE(mt::CacheBudgetAccess::render(cache, raw, false, fallback, hit,
+                                              &hit_trace));
+    EXPECT_EQ(cache.hits(), 1u);
+    EXPECT_TRUE(hit_trace.element_active);
+    // ElementWork is recharged in full on the hit; layout Work only pays the
+    // cached measured layout.
+    EXPECT_EQ(hit_trace.element_debit, miss_trace.element_debit);
+    // Block has no prepaid gate credit: hit re-debits the full measured
+    // layout Work, identical to the miss (Elements are rebuilt either way).
+    EXPECT_EQ(hit.remaining, miss.remaining);
+    EXPECT_GT(hit_trace.element_debit, 0u);
+}
+
+TEST(MermaidBlockElementWork, NonPackedFamilyNeverActivatesMeter) {
+    // A legacy (non-packed, non-styled) family finishes through
+    // finish_legacy_rows: no Element meter, no packed preflight ledger.
+    constexpr std::string_view raw = "erDiagram\nPERSON ||--o{ ORDER : places\n";
+    mt::Work work;
+    mt::FinalEmissionTrace trace;
+    auto rendered =
+        mt::render_mermaid_with_work(raw, ftxui::text("fallback"), false, work, &trace);
+    ASSERT_TRUE(rendered);
+    EXPECT_FALSE(trace.element_active);
+    EXPECT_EQ(trace.element_debit, 0u);
+    EXPECT_EQ(trace.element_cap, 0u);
+    EXPECT_EQ(trace.element_failed, 0u);
+    EXPECT_FALSE(trace.preflight_complete);
+}

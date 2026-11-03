@@ -53,6 +53,11 @@ struct LayoutRowsCache::Impl {
         std::optional<detail::StyledRows> styles;
         std::size_t layout_work = 0;
         std::vector<std::uint16_t> packed_styles{};
+        // Active ER only (ADR 0032): payload_prepaid holds the post-gate
+        // remainder that still covers finish bookkeeping on a hit, when the
+        // Element tree is rebuilt and ElementWork is charged afresh.
+        bool er_packed = false;
+        std::size_t payload_prepaid = 0u;
         std::size_t bytes = 0;
 
         [[nodiscard]] bool matches(std::uint64_t h, std::string_view src,
@@ -124,8 +129,12 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
             return {};
         lru.splice(lru.end(), lru, found->second);
         ++hit_count;
-        return detail::NativeLayout{entry.rows, entry.styles, entry.layout_work,
-                                    entry.packed_styles};
+        return detail::NativeLayout{entry.rows,
+                                    entry.styles,
+                                    entry.layout_work,
+                                    entry.packed_styles,
+                                    entry.er_packed,
+                                    entry.payload_prepaid};
     }
     ++miss_count;
     auto computed = detail::layout_mermaid_content(source, use_ascii, work);
@@ -149,9 +158,10 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
         lru.erase(victim);
     }
     try {
-        Entry entry{std::string(source), hash,         use_ascii,
-                    fresh.rows,          fresh.styles, fresh.measured_layout_work,
-                    fresh.packed_styles, fresh_bytes};
+        Entry entry{std::string(source), hash,           use_ascii,
+                    fresh.rows,          fresh.styles,   fresh.measured_layout_work,
+                    fresh.packed_styles, fresh.er_packed, fresh.payload_prepaid,
+                    fresh_bytes};
         lru.push_back(std::move(entry));
         auto inserted = std::prev(lru.end());
         try {
@@ -198,7 +208,11 @@ testing::CacheBudgetAccess::render(LayoutRowsCache& cache, std::string_view sour
 std::optional<ftxui::Element>
 LayoutRowsCache::render_with_work(std::string_view source, bool use_ascii, ftxui::Element fallback,
                                   testing::Work& work, testing::FinalEmissionTrace* trace) {
+    // Preserve a caller-injected ElementWork meter (ADR 0032 F4) across the
+    // per-call observation reset.
+    testing::Work* injected_element_work = trace ? trace->element_work : nullptr;
     if (trace) *trace = {};
+    if (trace) trace->element_work = injected_element_work;
     if (!fallback) return {};
     try {
         return detail::finish_native_layout(impl_->resolve(source, use_ascii, work),

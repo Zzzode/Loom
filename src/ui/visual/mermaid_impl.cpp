@@ -1,5 +1,7 @@
 module;
 
+#include <cassert>
+
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/dom/node.hpp>
 #include <ftxui/screen/string.hpp>
@@ -3914,7 +3916,8 @@ std::optional<ftxui::Element> detail::finish_native_layout(std::optional<NativeL
         if (layout->styles) return {};
         return finish_mermaid_payload(
             LayoutPayload{std::move(layout->rows), std::move(layout->packed_styles)},
-            std::move(fallback), work, trace);
+            std::move(fallback), work, trace, layout->er_packed,
+            layout->er_packed ? &layout->payload_prepaid : nullptr);
     }
     if (!layout->styles) return finish_legacy_rows(std::move(layout->rows), std::move(fallback));
     if (trace) {
@@ -4222,8 +4225,17 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
 }
 
 bool detail::valid_packed_rows(const std::vector<std::string>& rows,
-                               const std::vector<std::uint16_t>& styles, Work& work) {
-    if (rows.size() > kHeightLimit || !work.spend(rows.size() * 32u + 128u)) return false;
+                               const std::vector<std::uint16_t>& styles, Work& work,
+                               std::size_t* prepaid) {
+    const auto deduct = [&](std::size_t charge) {
+        std::size_t credit = 0u;
+        if (prepaid) {
+            credit = std::min(charge, *prepaid);
+            *prepaid -= credit;
+        }
+        return work.spend(charge - credit);
+    };
+    if (rows.size() > kHeightLimit || !deduct(rows.size() * 32u + 128u)) return false;
     std::size_t bytes_to_scan = 0;
     for (const auto& row : rows) {
         if (row.size() > kSourceLimit) return false;
@@ -4231,7 +4243,7 @@ bool detail::valid_packed_rows(const std::vector<std::string>& rows,
     }
     if (rows.size() > kHeightLimit ||
         styles.size() > static_cast<std::size_t>(kWidthLimit * kHeightLimit) ||
-        !work.spend(bytes_to_scan * 4u + styles.size() * 2u))
+        !deduct(bytes_to_scan * 4u + styles.size() * 2u))
         return false;
     if (styles.empty()) return true;
     if (rows.empty() || rows.size() > kHeightLimit) return false;
@@ -4271,14 +4283,44 @@ bool detail::valid_packed_rows(const std::vector<std::string>& rows,
 
 std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<LayoutPayload> payload,
                                                              ftxui::Element fallback, Work& work,
-                                                             FinalEmissionTrace* trace) {
+                                                             FinalEmissionTrace* trace,
+                                                             bool er_packed,
+                                                             std::size_t* prepaid) {
     if (!fallback || !payload || payload->rows.empty()) return {};
     if (payload->styles.empty())
         return finish_legacy_rows(std::move(payload->rows), std::move(fallback));
+    // Active-ER ftxui Element emission runs on a separate bounded meter
+    // (ADR 0032). Worst case from the enforced canvas contract: R<=1024 and
+    // U<=240*R, so ElementWork(R,U)=320R+512+416U <= kErElementWorkLimit.
+    Work owned_element_work;
+    Work* element_meter = nullptr;
+    if (er_packed) {
+        static_assert(kErElementWorkLimit ==
+                          320u * static_cast<std::size_t>(kHeightLimit) + 512u +
+                              416u * static_cast<std::size_t>(kWidthLimit) *
+                                  static_cast<std::size_t>(kHeightLimit),
+                      "ADR 0032 ElementWork cap derivation");
+        if (trace && trace->element_work)
+            element_meter = trace->element_work;
+        else {
+            owned_element_work.remaining = kErElementWorkLimit;
+            element_meter = &owned_element_work;
+        }
+        // ErPaint emits only foreground/background roles (style bits 0-9); the
+        // 416U/run bound covers at most two decorator nodes, never bold.
+        for (const std::uint16_t code : payload->styles)
+            if ((code & ~static_cast<std::uint16_t>(0x03ffu)) != 0u) return {};
+        if (trace) {
+            trace->element_active = true;
+            trace->element_cap = element_meter->remaining;
+        }
+    }
     if (trace) {
         trace->styled_entered = true;
         trace->entry_remaining = work.remaining;
     }
+    // Legacy layout-Work debit, exact pre-ADR-0032 sequence: one atomic charge
+    // per fee, every family other than active ER (Block included) stays here.
     const auto pay = [&](std::size_t amount) {
         if (trace) {
             trace->last_debit = amount;
@@ -4294,10 +4336,51 @@ std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<Layou
         }
         return paid;
     };
-    if (!pay(payload->rows.size() * (8u * sizeof(ftxui::Element) + 64u) + 512u)) return {};
+    // Active ER: real ftxui Element fees go on ElementWork; the duplicated
+    // 8B/256U bookkeeping stays on layout Work, deducted from the ErPaint
+    // prepaid credit. A zero residual is already covered and does not spend.
+    const auto pay_element = [&](std::size_t amount) {
+        // Set above on every er_packed path (owned capped meter or the F4
+        // injected one); pay_element is never called for non-ER families.
+        assert(element_meter != nullptr);
+        const bool paid = element_meter->spend(amount);
+        if (trace) {
+            if (paid)
+                trace->element_debit += amount;
+            else
+                trace->element_failed = amount;
+        }
+        return paid;
+    };
+    const auto pay_credited = [&](std::size_t amount) {
+        const std::size_t credit = std::min(amount, *prepaid);
+        *prepaid -= credit;
+        const std::size_t residual = amount - credit;
+        if (residual == 0u) return true;
+        if (trace) {
+            trace->last_debit = residual;
+            ++trace->preflight_debits;
+        }
+        const bool paid = work.spend(residual);
+        if (trace) {
+            if (paid) {
+                trace->emission_debit += residual;
+                ++trace->successful_debits;
+            } else
+                trace->failed_debit = residual;
+        }
+        return paid;
+    };
+    const std::size_t run_bookkeeping = 8u * sizeof(StyledRun);
+    const std::size_t run_element = 8u * sizeof(ftxui::Element) + 288u;
+    if (er_packed) {
+        if (!pay_element(payload->rows.size() * (8u * sizeof(ftxui::Element) + 64u) + 512u))
+            return {};
+    } else if (!pay(payload->rows.size() * (8u * sizeof(ftxui::Element) + 64u) + 512u)) {
+        return {};
+    }
     std::size_t preflight_slot = 0;
     for (const auto& line : payload->rows) {
-        if (!pay(line.size() * 8u + 128u)) return {};
         std::size_t runs = 0, cells = 0;
         std::uint16_t previous = 0;
         for (std::size_t byte = 0; byte < line.size();) {
@@ -4312,7 +4395,17 @@ std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<Layou
             cells += static_cast<std::size_t>(occupied);
         }
         preflight_slot += cells;
-        if (!pay(runs * (8u * sizeof(StyledRun) + 8u * sizeof(ftxui::Element) + 288u))) return {};
+        if (er_packed) {
+            // Element first: a meter refusal leaves the layout Work untouched.
+            if (!pay_element(128u) || !pay_credited(line.size() * 8u)) return {};
+            // 8*sizeof(StyledRun) is duplicate run bookkeeping (credited on
+            // Work); 8*sizeof(Element)+288 funds the real node children.
+            if (!pay_element(runs * run_element) || !pay_credited(runs * run_bookkeeping))
+                return {};
+        } else {
+            if (!pay(line.size() * 8u + 128u)) return {};
+            if (!pay(runs * (run_bookkeeping + run_element))) return {};
+        }
     }
     if (trace) trace->preflight_complete = true;
     // This private finish only receives admitted payloads from the single
@@ -4390,6 +4483,11 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
                                                                    bool use_ascii, Work& work) {
     const auto starting_work = work.remaining;
     std::vector<std::uint16_t> packed_styles;
+    // Active ER sets both (ErPaint prepaid its payload; real Element fees move
+    // to ElementWork). Block and every other family leave them zero/false, so
+    // their charges and rejections are unchanged.
+    std::size_t payload_prepaid = 0u;
+    bool er_packed = false;
     if (source.empty() || source.size() > kSourceLimit) return {};
     if (use_ascii) {
         // An explicit bare Flow header is owned by the closed ASCII Flow
@@ -4437,8 +4535,10 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
         case detail::MermaidProbeFamily::Er:
         case detail::MermaidProbeFamily::State:
         case detail::MermaidProbeFamily::Requirement:
-            lines = detail::relations_layout(source, work, decision->class_envelope,
-                                             decision->requirement_input, &styles, &packed_styles);
+            er_packed = decision->family == detail::MermaidProbeFamily::Er;
+            lines = detail::relations_layout(
+                source, work, decision->class_envelope, decision->requirement_input, &styles,
+                &packed_styles, er_packed ? &payload_prepaid : nullptr);
             break;
         case detail::MermaidProbeFamily::Block: {
             auto payload = detail::block_layout(source, work);
@@ -4456,11 +4556,19 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
         }
     }
     if (!lines) return {};
-    NativeLayout result{std::move(*lines), std::move(styles), 0u, std::move(packed_styles)};
+    // er_packed means the ErPaint return path specifically; a bare plain-ER
+    // diagram comes back as legacy rows with no packed styles.
+    er_packed = er_packed && !packed_styles.empty();
+    NativeLayout result{std::move(*lines), std::move(styles), 0u, std::move(packed_styles),
+                        er_packed, payload_prepaid};
     if (!result.packed_styles.empty() &&
-        (result.styles || !valid_packed_rows(result.rows, result.packed_styles, work)))
+        (result.styles ||
+         !valid_packed_rows(result.rows, result.packed_styles, work,
+                            er_packed ? &result.payload_prepaid : nullptr)))
         return {};
-    if (!prepay_styled_payload(result, source.size(), work)) return {};
+    if (!prepay_styled_payload(result, source.size(), work,
+                               er_packed ? &result.payload_prepaid : nullptr))
+        return {};
     if (result.styles || !result.packed_styles.empty())
         result.measured_layout_work = starting_work - work.remaining;
     return result;
@@ -4478,7 +4586,11 @@ std::optional<ftxui::Element> detail::render_mermaid_with_budget(std::string_vie
                                                                  ftxui::Element fallback,
                                                                  bool use_ascii, Work& work,
                                                                  FinalEmissionTrace* trace) {
+    // Preserve a caller-injected ElementWork meter (ADR 0032 F4) across the
+    // per-call observation reset.
+    Work* injected_element_work = trace ? trace->element_work : nullptr;
     if (trace) *trace = {};
+    if (trace) trace->element_work = injected_element_work;
     if (!fallback) return {};
     try {
         return finish_native_layout(layout_mermaid_content(source, use_ascii, work),

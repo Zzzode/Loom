@@ -1935,8 +1935,12 @@ bool class_accessibility_set(std::string_view source, std::string_view logical, 
 std::optional<RelationDiagram> parse_relations(std::string_view source, Work& work,
                                                const ClassEnvelope* class_envelope = nullptr) {
     if (source.empty() || source.size() > kSourceLimit || !work.spend(source.size())) return {};
-    // Every parser branch pays for the two optional nonvisual Class fields.
-    if (!work.spend(8u * sizeof(std::optional<std::string>) + 128u)) return {};
+    // The two optional nonvisual Class-accessibility fields (added after the
+    // frozen base by 4b58709c) are engaged only on the Class/State continuation
+    // below; both ER branches return to parse_plain_er first, so their fixed
+    // prepay is charged there rather than unconditionally on entry. This
+    // restores the ER fee schedule of frozen base 115070b9 while leaving
+    // Class/State charges byte-identical.
     // All parser branches construct at most one Diagram; pay the new field
     // before either the unchanged plain-ER helper or Class/State construction.
     if (!work.spend(16u * sizeof(std::optional<bool>) + 8u * sizeof(std::vector<int>) +
@@ -2003,6 +2007,13 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
             }
         }
         if (state_route) {
+            // The outer frontmatter invocation builds no diagram itself, but
+            // at HEAD it paid the entry accessibility fee; keep State's
+            // frontmatter dispatch byte-identical (the recursive body call
+            // pays the continuation fee below). The ER envelope branch right
+            // after deliberately pays nothing: both accessibility fields are
+            // Class-only and ER restores the frozen fee-free schedule.
+            if (!work.spend(8u * sizeof(std::optional<std::string>) + 128u)) return {};
             auto state = state_source_envelope(original, work);
             if (!state) return {};
             auto diagram = parse_relations(state->body, work);
@@ -2034,6 +2045,10 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
     if (first.size() >= 9 && er_ascii_equal(first.substr(0, 9), "erDiagram") &&
         (first.size() == 9 || first[9] == ' ' || first[9] == '\t' || first[9] == '\r'))
         return parse_plain_er(original, work);
+    // Class/State continuation only: prepay the two accessibility
+    // optional<string> fields (reachable solely via Class accessibility
+    // metadata); ER's parse_plain_er never engages them.
+    if (!work.spend(8u * sizeof(std::optional<std::string>) + 128u)) return {};
     RelationDiagram diagram;
     if (class_envelope) {
         const auto bytes = class_envelope->title ? class_envelope->title->size() : 0u;
@@ -5748,7 +5763,8 @@ class_accessibility_metadata(std::string_view source, Work& work, bool class_env
 
 std::optional<std::vector<std::string>>
 relations_layout(std::string_view source, Work& work, bool class_envelope, bool requirement_input,
-                 std::optional<StyledRows>* styles, std::vector<std::uint16_t>* packed_styles) {
+                 std::optional<StyledRows>* styles, std::vector<std::uint16_t>* packed_styles,
+                 std::size_t* payload_prepaid) {
     // New bool/pointer forwarding and the bounded three-reference local closure
     // are charged even on default ER/State/Class paths, without a Work reset.
     if (!work.spend(8u * sizeof(void*) + 8u * sizeof(bool))) return {};
@@ -5922,6 +5938,13 @@ relations_layout(std::string_view source, Work& work, bool class_envelope, bool 
     if (er_paint) {
         auto payload = er_paint->finish(*diagram);
         if (!payload) return {};
+        // ErPaint::finish already emitted and paid for these exact rows/styles;
+        // give the layout-Work gates and finish bookkeeping the matching credit
+        // (the real ftxui Element fees use a separate ElementWork meter). ER is
+        // the only family that prepays.
+        if (payload_prepaid)
+            *payload_prepaid = packed_payload_prepaid(payload->rows, payload->styles,
+                                                      source.size());
         if (packed_styles) *packed_styles = std::move(payload->styles);
         return std::move(payload->rows);
     }

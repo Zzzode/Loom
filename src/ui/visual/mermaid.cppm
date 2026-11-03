@@ -93,6 +93,11 @@ export namespace loom::ui::mermaid::testing {
 
 inline constexpr std::size_t kWorkLimit = 1'000'000;
 
+// ADR 0032: independent worst-case ceiling for the real ftxui Element-tree
+// emission on the active-ER packed path: ElementWork(R,U)=320R+512+416U with
+// R<=1024 and U<=240*R. Derived from the 240x1024 canvas contract, never tuned.
+inline constexpr std::size_t kErElementWorkLimit = 102'564'352;
+
 struct Work {
     std::size_t remaining = kWorkLimit;
     bool spend(std::size_t count = 1);
@@ -111,6 +116,16 @@ struct FinalEmissionTrace {
     std::size_t entry_remaining = 0u, emission_debit = 0u, preflight_debits = 0u,
                 successful_debits = 0u;
     std::size_t last_debit = 0u, failed_debit = 0u;
+    // ADR 0032 ElementWork meter (active-ER packed payloads only). Observation:
+    // element_active marks the ER meter path, element_cap is the bound in
+    // effect, element_debit accumulates the real Element fees actually charged
+    // and element_failed records the first refused fee. Injection: when
+    // element_work is non-null on ER entry, that caller-owned meter replaces
+    // the fresh capped one, letting tests assert exact-budget (remaining==0)
+    // and one-unit-short rejection. Non-ER families leave all four untouched.
+    bool element_active = false;
+    std::size_t element_cap = 0u, element_debit = 0u, element_failed = 0u;
+    Work* element_work = nullptr;
 };
 
 // Testing-only budget injection into the exact public render pipeline.

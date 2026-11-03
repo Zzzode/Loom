@@ -27,7 +27,11 @@ TEST(MermaidClassStyleBaseline, PlainGlyphsAndMeasuredWorkRemainUnchanged) {
         std::string_view sha;
     };
 
-    constexpr std::array<Case, 5> cases{
+    // The ER row is 384 below the pre-ADR-0032 value: the two Class
+    // accessibility optional<string> fees moved off the ER branches back to
+    // the Class/State continuation (restoring frozen base 115070b9); glyphs
+    // are unchanged.
+    constexpr std::array<Case, 6> cases{
         {{"class_empty", "classDiagram\nclass Class10\n", false, 5665u,
           "8496805458e312cf261790f29488422b9ab8dd97285750405ecf4007b6000609"},
          {"class_members", "classDiagram\nclass A {\nint count\nrun() bool\n}\nA --> B : uses\n",
@@ -36,10 +40,16 @@ TEST(MermaidClassStyleBaseline, PlainGlyphsAndMeasuredWorkRemainUnchanged) {
           "---\nconfig:\n  htmlLabels: false\n  look: handDrawn\n---\nclassDiagram\nclass "
           "Class10\n",
           true, 11636u, "8496805458e312cf261790f29488422b9ab8dd97285750405ecf4007b6000609"},
-         {"er", "erDiagram\nPERSON ||--o{ ORDER : places\n", false, 12964u,
+         {"er", "erDiagram\nPERSON ||--o{ ORDER : places\n", false, 12580u,
           "603ce1720d358d2dd79213893a348e974ababfdfe7db7bb9cbe1894c0a9a3585"},
          {"state", "stateDiagram-v2\n[*] --> Waiting\nWaiting --> Done : next\n", false, 28796u,
-          "e8fa51965fffa49f6f8d81e600d826940f36f6341deae8eeed3fd46f10277f77"}}};
+          "e8fa51965fffa49f6f8d81e600d826940f36f6341deae8eeed3fd46f10277f77"},
+        // Frontmatter State recurses through parse_relations; the ADR 0032
+        // 384 relocation keeps its outer+inner schedule byte-identical.
+        {"state_frontmatter",
+          "---\ndescription: >-\n  StateEnvelopeBaselineToken\n---\nstateDiagram-v2\n"
+          "  [*] --> State1\n  State1 --> [*]\n",
+          false, 23775u, "4c7f95b173fca26b69f79b3459d75929a4f392e98409896b906b423b57c63231"}}};
     for (const auto& item : cases) {
         SCOPED_TRACE(item.name);
         testing::Work work;

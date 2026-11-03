@@ -3,15 +3,16 @@ rfc: 32
 title: Independent Work dimension for ER ftxui Element emission
 status: provisional
 owners: "@Zzzode"
-reviewers: ["agent:/root/b_accounting_review (ADR 0032 accounting, approved with invariants, 2026-11-03)", "agent:/root/b_matrix_regression_review (ADR 0032 matrix/regression, approved with gate conditions, 2026-11-03)"]
+reviewers: ["agent:/root/b_accounting_review (ADR 0032 design approved 2026-11-03; implementation re-review APPROVE after MAJOR-1/MINOR-1/NIT-1 fixes, 2026-11-03)", "agent:/root/b_matrix_regression_review (ADR 0032 design approved 2026-11-03; implementation matrix review APPROVE pending release/ASan gates, 2026-11-03)"]
 created: 2026-11-03
 last-reviewed: 2026-11-03
-tracking: Tech Lead D-021 design-only; implementation gated on decision D-022 and two read-only reviews
+tracking: Tech Lead D-021 design-only; D-023 implementation landed 2026-11-03, pending final accounting+matrix reviews and graduation
 ---
 
 # ADR 0032: Independent Work dimension for ER ftxui Element emission
 
-- Status: **Provisional** (design only; implementation needs decision D-022).
+- Status: **Provisional** (implemented under Tech Lead D-023 on 2026-11-03;
+  graduation pending the final two independent reviews — accounting and matrix).
 - Date: 2026-11-03.
 - Owners: `src/ui/visual/` (`loom.ui.visual.mermaid`).
 - Supersedes/extends: the single-meter accounting recorded in ADR/RFC 0031 and
@@ -140,24 +141,30 @@ is not an increase of `kWorkLimit`.
 
 ### Per-source predicted peaks vs the cap
 
-Measured on the 107 pinned ER originals at the packed-payload boundary
-(temporary trace, reverted). Maximum across all 107: **119,488** ElementWork
-(0.12% of `E_limit`). The eight sources that remain after the D-018 narrow
-credit (redux-color and redux-dark-color variants share identical geometry and
-thus the same R,U,E):
+Measured on the 107 pinned ER originals at the packed-payload boundary.
+**Implementation-verified 2026-11-03** through the ADR 0032 F4 public-path
+seam (`MermaidEr107ElementWork`, debug + release): 107/107 admitted, maximum
+ElementWork **119,488** (0.12% of `E_limit`), margin **102,444,864**. The F4
+run corrected one mislabeled row in the design-stage temporary trace: the
+112,512 drawing is `entities-with-aliases-handdrawn-look`, not the complex
+redux pair (which measure 94,304), so **nine** (not eight) originals exceed
+90,464. Only eight of them exhausted the shared pool before this ADR; the
+ninth fit under 1,000,000 on layout Work and never failed.
 
-| original (tail) | R | U | predicted ElementWork |
-|---|---:|---:|---:|
-| er-diagram-with-all-relationship-types … redux-color / … redux-dark-color (×2) | 117 | 196 | **119,488** |
-| complex-er-diagram-with-multiple-relationships … redux-color (×2) | 103 | 190 | **112,512** |
-| a-not-so-simple … without-htmllabels elk-layout | 80 | 171 | 97,248 |
-| a-not-so-simple … without-htmllabels handdrawn | 79 | 170 | 96,512 |
-| a-not-so-simple … without-htmllabels default | 77 | 168 | 95,040 |
-| a-not-so-simple … handdrawn-look | 76 | 167 | 94,304 |
+| original (tail) | ElementWork | layout Work (public) |
+|---|---:|---:|
+| er-diagram-with-all-relationship-types … redux-color / … redux-dark-color (×2) | **119,488** | 892,145 / 894,870 |
+| entities-with-aliases-handdrawn-look | **112,512** | 871,853 |
+| a-not-so-simple … without-htmllabels elk-layout | 97,248 | 992,611 |
+| a-not-so-simple … without-htmllabels handdrawn | 96,512 | 989,968 |
+| a-not-so-simple … without-htmllabels default | 95,040 | 984,266 |
+| a-not-so-simple … handdrawn-look | 94,304 | 981,446 |
+| complex-er-diagram-with-multiple-relationships … redux-color / … redux-dark-color (×2) | 94,304 | 983,439 / 985,714 |
 
-All other 99 originals: ≤ 90,464. The Element tree is built once per render
-regardless of capture width, so the 40-column frames incur no additional
-ElementWork (they cannot be treated differently from the 240 frames).
+The other 98 originals: ≤ 90,464 ElementWork. The Element tree is built once
+per render regardless of capture width, so the 40-column frames incur no
+additional ElementWork (they cannot be treated differently from the 240
+frames).
 
 Expected result under this ADR: each public render is independently gated by
 layout `Work <= 992,611` (frozen, unchanged) and
@@ -176,6 +183,47 @@ relaxing a predicate.
   credit defaults to zero for Block and every non-ER family.
 - No new abstraction beyond one bounded counter and its explicit cap; no change
   to public API, persisted format, CLI or wire.
+
+### Parser fee relocation carried by the same change
+
+The 992,611 figure presupposes one fee relocation that is part of the same
+ER-only restoration and is recorded here explicitly. Commit `4b58709c` (one of
+the two post-base commits that added the ER overshoot) added a
+`8*sizeof(std::optional<std::string>)+128 = 384` prepay at the entry of
+`parse_relations`, charged to **every** family. The two fields it funds are
+`RelationDiagram::class_accessibility_title` and
+`class_accessibility_description`; their only writer is the Class
+accessibility-metadata helper (`mermaid_relations_core_impl.cpp:1926`). Both ER
+branches return to `parse_plain_er` before the continuation where those fields
+are reachable, and a disengaged `optional<string>` allocates no heap, so the fee
+never corresponded to an ER allocation. The implementation moves the debit to
+the Class/State continuation (after both ER early returns): Class and State
+charges are byte-identical, and ER consumed Work drops by exactly 384, which is
+why the public-path layout maximum is exactly 992,611 rather than 992,995. The
+frozen base `115070b9` charged the fee nowhere (the fields did not exist yet).
+The relocation is placed so every non-ER schedule is byte-identical to HEAD:
+plain `classDiagram`/`stateDiagram*`, Class envelopes and Requirement pay it
+once on the continuation, and the **frontmatter-State** outer invocation —
+which at HEAD paid the entry fee and then recursed into `parse_relations`
+(768 total) — keeps a matching charge on its outer dispatch before the
+recursive body call, so its total is unchanged (the ER envelope branch next to
+it deliberately pays nothing). The only frozen test pin affected is the `er`
+row of `MermaidClassStyleBaseline.PlainGlyphsAndMeasuredWorkRemainUnchanged`
+(12,964 → 12,580; rendered glyph SHA unchanged); all four Class/State rows in
+that test stay byte-identical.
+
+### Frozen NativeLayout gas footprint (implementation-review finding)
+
+Adding `er_packed`/`payload_prepaid` grew `sizeof(NativeLayout)` 88 → 104, and
+`styled_payload_bytes` seeds its estimate from that size (charged ×6 by the
+gate2 prepay and reused as the cache byte measure). Charging the real new size
+would silently raise every styled non-ER render by 96 Work (Block, Class/State,
+styled Flow), violating the byte-identical gate. The charge basis is frozen at
+`kNativeLayoutGasFootprint = 88` (`mermaid_style_impl.cpp`, guarded by
+`static_assert(88 <= sizeof(NativeLayout))`): the two ER-only side fields fund
+no allocation on any path, ER's `packed_payload_prepaid` recomputes through the
+same function so its credit moves with the charge, and cache entry byte
+measurements return exactly to their HEAD values.
 
 ### Review gate conditions (both independent reviews APPROVED, 2026-11-03)
 
@@ -202,28 +250,48 @@ implementable otherwise.
    0–9, plus the ER-only meter wiring guard.
 4. **New test seam (F4).** Add a testing entry that injects/observes ElementWork
    so exact-budget (`remaining == 0`) and one-unit-short rejection invariants
-   can be asserted for all 107 sources on both presets (observed peak 119,488;
-   all others ≤ 90,464), alongside the existing Work seam.
+   can be asserted for all 107 sources on both presets (verified peak 119,488;
+   nine sources exceed 90,464 — see the measured table), alongside the existing
+   Work seam. The seam also proves a non-ER packed family (Block) never
+   activates the meter or touches an injected one.
 5. malloc-block headers are not counted anywhere in the gas scheme and per-run
    vector growth is covered by the row margin; 416U is therefore not a strict
    byte bound at adversarial run density, but the two safety guarantees (the
    meter never rejects an in-domain bounded drawing; real heap is still bounded
    by the canvas contract) are unaffected.
 
-### Predicted matrix delta (must be verified, not hand-edited)
+### Measured matrix delta (verified 2026-11-03, debug; release must match)
 
-Implementation should change exactly eight ER original rows: original-track
-ER wide/restored drawn **68 → 76**, fallback 138 → 130, errors stay 0; total
-original wide drawn **663 → 671 (31.28%)**, fallback 1482 → 1474. Narrow cells
-follow each source's existing geometry decision (source_fallback or drawn); the
-meter never changes geometry. The frozen `MermaidCapabilityReport.OfficialMatrix`
-pin (`test_mermaid_official.cpp:8266-8271`, 68/138 → 76/130) and the reviewed
-docs (`mermaid-obligation-ledger.md`, conformance/gap/backlog) update through the
-normal reviewed-ledger flow. The mandatory-gap roster
-(`tools/mermaid/e6c-mandatory-gap-roster.json`, pinned sha `1fe297da…`, 48 rows,
-all `body_diagnostic`, zero ER original rows) is **unchanged**: the eight errors
-clear and `unknown_messages` empties, with no `--write`; verifier 0 mismatch on
-both presets.
+The design-stage estimate compared against a hypothetical D-018 tree (only the
+marginal eight). Measured against **HEAD** — where the D-015 gate credits, the
+D-018 finish credit and this Element meter are all absent together (F2) — the
+change moves exactly **17** ER original rows (9 admitted by the re-added
+credits, 8 by the Element meter), row-by-row in the published
+`mermaid-official-matrix.json`:
+
+- original-track `er-diagram` wide/restored **drawn 158 → 175 (+17)**,
+  `source_fallback` 48 → 31 (−17), error rows stay 0;
+- original-track ALL-family wide/restored **drawn 835 → 852 (+17)**,
+  fallback 1297 → 1280; errors stay 13 (entirely non-ER);
+- ER narrow_40 drawn 113 → 120 (**+7**); the other ten rows keep their
+  pre-existing `source_fallback` geometry decision at 40 columns;
+- `ER107_native_whole_source.local_ready` 90 → 107; `failed_rows` 17 → 0;
+- every transition is `source_fallback → drawn`; there is **no** drawn→failure
+  and no new error. The hard aggregate pins at `test_mermaid_official.cpp:8260-8269`
+  (recorded diagnostics 206/68/138/0) and the owned-originals pin at :8251-8256
+  stay byte-unchanged and now pass; no frozen count pin is edited.
+
+The mandatory-gap roster (`tools/mermaid/e6c-mandatory-gap-roster.json`, 48
+rows, zero ER original rows) is **unchanged with no `--write`**: the published
+`mandatory_gaps` array is byte-identical before/after (52 rows), and the 17 ER
+`unknown_messages` (28 → 11) clear. Two distinct pre-existing baselines remain,
+identical before and after this change and out of scope: the four observed gap
+rows outside the pinned 48 (the Flow Extra7 set — shape-alias 02/06, dagre
+6088-2, sub-graphs) account for the 52-vs-48 roster difference, and the 11
+remaining unknown messages are the Block58 rows (nine themed accounting rows +
+two structural feature gaps). Reviewed ledger docs
+(`mermaid-obligation-ledger.md`, conformance/gap/backlog) update through the
+normal reviewed-ledger flow; no paper or roster is regenerated by this change.
 
 ## Testing and verification plan
 

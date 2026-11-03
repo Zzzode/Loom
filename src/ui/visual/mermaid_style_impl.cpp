@@ -642,9 +642,32 @@ std::optional<StyledRows> extract_styled_rows(const Canvas& canvas,
     return result;
 }
 
+namespace {
+// Frozen gas footprint of NativeLayout as charged by the payload gates. ADR
+// 0032 added two ER-only side fields (bool er_packed + std::size_t
+// payload_prepaid), growing the real struct 88 -> 104 bytes. Those fields
+// fund no allocation on any path, so the non-ER families (Block, Class/State,
+// styled Flow) must keep paying the pre-ADR charge; the ER gates credit this
+// exact amount via packed_payload_prepaid. Keep this constant in lockstep
+// with the field set that predates ADR 0032.
+constexpr std::size_t kNativeLayoutGasFootprint = 88u;
+// Mirror of NativeLayout's pre-ADR-0032 field set; locks the constant's
+// derivation against accidental field-set drift (the real NativeLayout adds
+// the two ER-only side fields).
+struct PreAdrNativeLayoutFootprint {
+    std::vector<std::string> rows;
+    std::optional<StyledRows> styles;
+    std::size_t measured_layout_work = 0u;
+    std::vector<std::uint16_t> packed_styles{};
+};
+static_assert(sizeof(PreAdrNativeLayoutFootprint) == kNativeLayoutGasFootprint);
+static_assert(kNativeLayoutGasFootprint <= sizeof(NativeLayout),
+              "charged footprint must never exceed the real struct");
+}  // namespace
+
 std::optional<std::size_t> styled_payload_bytes(const NativeLayout& layout,
                                                 std::size_t source_bytes) {
-    std::size_t total = sizeof(NativeLayout) + 256u;
+    std::size_t total = kNativeLayoutGasFootprint + 256u;
     if (!checked_product(total, source_bytes, 2u) ||
         !checked_product(total, layout.rows.capacity(), sizeof(std::string)))
         return {};
@@ -663,14 +686,61 @@ std::optional<std::size_t> styled_payload_bytes(const NativeLayout& layout,
     return total;
 }
 
-bool prepay_styled_payload(NativeLayout& layout, std::size_t source_bytes, Work& work) {
+bool prepay_styled_payload(NativeLayout& layout, std::size_t source_bytes, Work& work,
+                           std::size_t* prepaid) {
     if (!layout.styles && layout.packed_styles.empty()) return true;
     const auto bytes = styled_payload_bytes(layout, source_bytes);
     if (!bytes) return false;
     std::size_t charge = 512u;
-    if (!checked_product(charge, *bytes, 6u) || !checked_product(charge, source_bytes, 4u) ||
-        !work.spend(charge))
+    if (!checked_product(charge, *bytes, 6u) || !checked_product(charge, source_bytes, 4u))
         return false;
+    if (prepaid)
+        charge -= std::min(charge, *prepaid);
+    if (!work.spend(charge)) return false;
     return true;
+}
+
+std::size_t packed_payload_prepaid(const std::vector<std::string>& rows,
+                                   const std::vector<std::uint16_t>& styles,
+                                   std::size_t source_bytes) {
+    // Layout-Work amount ErPaint::finish prepaid for this exact packed payload:
+    // valid_packed_rows (full), prepay_styled_payload (full packed charge), and
+    // finish_mermaid_payload's duplicated bookkeeping (8B byte re-scan and
+    // 8*sizeof(StyledRun) run re-enumeration). The real ftxui Element fees are
+    // billed by the separate ElementWork meter and are not included.
+    std::size_t bytes = 0u, runs = 0u, slot = 0u;
+    for (const auto& line : rows) {
+        bytes += line.size();
+        std::size_t cells = 0u;
+        std::uint16_t previous = 0u;
+        for (std::size_t byte = 0u; byte < line.size();) {
+            const auto lead = static_cast<unsigned char>(line[byte]);
+            const std::size_t length = lead < 0x80 ? 1u : lead < 0xe0 ? 2u
+                                                      : lead < 0xf0   ? 3u
+                                                                      : 4u;
+            const auto occupied =
+                static_cast<std::size_t>(ftxui::string_width(line.substr(byte, length)));
+            byte += length;
+            if (occupied == 0u) continue;
+            if (slot + cells < styles.size()) {
+                const auto code = styles[slot + cells];
+                if (cells == 0u || code != previous) ++runs;
+                previous = code;
+            }
+            cells += occupied;
+        }
+        slot += cells;
+    }
+    std::size_t total = rows.size() * 32u + 128u + bytes * 4u + styles.size() * 2u;
+    const NativeLayout view{std::vector<std::string>(rows), std::nullopt, 0u,
+                            std::vector<std::uint16_t>(styles)};
+    if (const auto charged = styled_payload_bytes(view, source_bytes)) {
+        std::size_t styled = 512u;
+        if (checked_product(styled, *charged, 6u) &&
+            checked_product(styled, source_bytes, 4u))
+            total += styled;
+    }
+    total += bytes * 8u + runs * 8u * sizeof(StyledRun);
+    return total;
 }
 }  // namespace loom::ui::mermaid::detail

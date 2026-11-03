@@ -41,6 +41,7 @@ using loom::ui::mermaid::testing::GitDirection;
 using loom::ui::mermaid::testing::GitGraph;
 using loom::ui::mermaid::testing::GitType;
 using loom::ui::mermaid::testing::kWorkLimit;
+using loom::ui::mermaid::testing::kErElementWorkLimit;
 using loom::ui::mermaid::testing::MermaidProbeDecision;
 using loom::ui::mermaid::testing::MermaidProbeFamily;
 using loom::ui::mermaid::testing::Work;
@@ -96,6 +97,12 @@ struct NativeLayout {
     std::optional<StyledRows> styles;
     std::size_t measured_layout_work = 0u;
     std::vector<std::uint16_t> packed_styles{};
+    // Active ER only. er_packed routes the real ftxui Element fees onto the
+    // independent ElementWork meter (ADR 0032); payload_prepaid is the amount
+    // ErPaint::finish prepaid for the same payload on the layout Work meter.
+    // Both are zero/false for Block and every non-ER family.
+    bool er_packed = false;
+    std::size_t payload_prepaid = 0u;
 };
 
 bool set_flow_style_preview_for_testing(bool enabled);
@@ -111,7 +118,8 @@ std::optional<ftxui::Element> finish_native_layout(std::optional<NativeLayout> l
                                                    FinalEmissionTrace* trace = nullptr);
 std::optional<std::size_t> styled_payload_bytes(const NativeLayout& layout,
                                                 std::size_t source_bytes);
-bool prepay_styled_payload(NativeLayout& layout, std::size_t source_bytes, Work& work);
+bool prepay_styled_payload(NativeLayout& layout, std::size_t source_bytes, Work& work,
+                           std::size_t* prepaid = nullptr);
 
 std::optional<std::vector<std::string>> mindmap_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> sequence_layout(std::string_view source, Work& work);
@@ -121,7 +129,8 @@ std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source,
 std::optional<std::vector<std::string>>
 relations_layout(std::string_view source, Work& work, bool class_envelope = false,
                  bool requirement_input = false, std::optional<StyledRows>* styles = nullptr,
-                 std::vector<std::uint16_t>* packed_styles = nullptr);
+                 std::vector<std::uint16_t>* packed_styles = nullptr,
+                 std::size_t* payload_prepaid = nullptr);
 
 // RFC 0031 E6b: the layout-only seam behind both public render_mermaid
 // entry points. It runs the current family dispatch with a fresh Work budget
@@ -140,11 +149,19 @@ struct LayoutPayload {
 };
 
 std::optional<LayoutPayload> block_layout(std::string_view source, Work& work);
+// Combined layout-Work credit ErPaint::finish prepaid for the generic packed
+// gates and finish bookkeeping on one packed payload (active ER only).
+std::size_t packed_payload_prepaid(const std::vector<std::string>& rows,
+                                   const std::vector<std::uint16_t>& styles,
+                                   std::size_t source_bytes);
 bool valid_packed_rows(const std::vector<std::string>& rows,
-                       const std::vector<std::uint16_t>& styles, Work& work);
+                       const std::vector<std::uint16_t>& styles, Work& work,
+                       std::size_t* prepaid = nullptr);
 std::optional<ftxui::Element> finish_mermaid_payload(std::optional<LayoutPayload> payload,
                                                      ftxui::Element fallback, Work& work,
-                                                     FinalEmissionTrace* trace = nullptr);
+                                                     FinalEmissionTrace* trace = nullptr,
+                                                     bool er_packed = false,
+                                                     std::size_t* prepaid = nullptr);
 
 struct Point {
     int x = 0;

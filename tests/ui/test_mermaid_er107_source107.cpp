@@ -766,3 +766,177 @@ TEST(MermaidEr107Source107, QuotedRoleWhitespaceUsesTrimmedDisplayAndExactBlankD
     RecordProperty("captures_before_each_model", 15);
     RecordProperty("drawing_credit", 0);
 }
+
+// ADR 0032 F4: the independent ElementWork meter of the active-ER public path
+// is observable and injectable for every one of the 107 pinned originals, and
+// is inert for a non-ER packed family (Block). Exact-budget admission and
+// one-unit-short rejection hold for BOTH meters independently.
+TEST(MermaidEr107ElementWork, All107PublicRendersExposeExactAndOneShortElementBudget) {
+    namespace mt = loom::ui::mermaid::testing;
+    const auto fallback = [] { return ftxui::text("er107-element-work-fallback"); };
+    // Verified 2026-11-03 through the F4 public-path seam. The ADR 0032
+    // design-stage trace mislabeled the 112,512 row; the 112,512 drawing is
+    // entities-with-aliases-handdrawn-look, and the two complex redux variants
+    // measure 94,304. Peak and cap are unchanged by that correction.
+    const std::array<std::string_view, 9> expected_dense{
+        "er-diagram/visual-check/a-not-so-simple-er-diagram-handdrawn-look.mmd",
+        "er-diagram/visual-check/a-not-so-simple-er-diagram-without-htmllabels-default.mmd",
+        "er-diagram/visual-check/a-not-so-simple-er-diagram-without-htmllabels-elk-layout.mmd",
+        "er-diagram/visual-check/a-not-so-simple-er-diagram-without-htmllabels-handdrawn-look.mmd",
+        "er-diagram/visual-check/complex-er-diagram-with-multiple-relationships-neo-look-redux-color-theme.mmd",
+        "er-diagram/visual-check/complex-er-diagram-with-multiple-relationships-neo-look-redux-dark-color-theme.mmd",
+        "er-diagram/visual-check/entities-with-aliases-handdrawn-look.mmd",
+        "er-diagram/visual-check/er-diagram-with-all-relationship-types-neo-look-redux-color-theme.mmd",
+        "er-diagram/visual-check/er-diagram-with-all-relationship-types-neo-look-redux-dark-color-theme.mmd"};
+    std::vector<std::string_view> dense;
+    std::size_t admitted = 0, max_element = 0, max_layout = 0, over_run_bound = 0;
+    for (const auto& pin : er::kPins) {
+        const auto source =
+            read(kFixtures / "mermaid_official/cases" / std::string(pin.path));
+        mt::Work work;
+        mt::FinalEmissionTrace trace;
+        auto rendered = mt::render_mermaid_with_work(source, fallback(), false, work, &trace);
+        ASSERT_TRUE(rendered.has_value()) << pin.path;
+        EXPECT_TRUE(trace.element_active) << pin.path;
+        EXPECT_EQ(trace.element_cap, mt::kErElementWorkLimit) << pin.path;
+        EXPECT_EQ(trace.element_failed, 0u) << pin.path;
+        ASSERT_GT(trace.element_debit, 0u) << pin.path;
+        const std::size_t element_used = trace.element_debit;
+        const std::size_t layout_used = mt::kWorkLimit - work.remaining;
+        ASSERT_GT(layout_used, 0u) << pin.path;
+        ++admitted;
+        max_element = std::max(max_element, element_used);
+        max_layout = std::max(max_layout, layout_used);
+        // Layout Work stays inside the frozen factory ceiling (992,611).
+        EXPECT_LE(layout_used, 992611u) << pin.path;
+        // Real Element cost stays far inside the derived worst-case cap.
+        EXPECT_LE(element_used, mt::kErElementWorkLimit) << pin.path;
+        if (element_used > 90464u) {
+            ++over_run_bound;
+            dense.push_back(pin.path);
+            std::cout << "ER107_ELEMENT_DENSE " << pin.path << " element=" << element_used
+                      << " layout=" << layout_used << '\n';
+        }
+        // Exact ElementWork: the injected meter drains to zero and the render
+        // is admitted with the frozen layout meter untouched in amount.
+        {
+            mt::Work layout;
+            mt::Work element{element_used};
+            mt::FinalEmissionTrace injected;
+            injected.element_work = &element;
+            auto exact =
+                mt::render_mermaid_with_work(source, fallback(), false, layout, &injected);
+            EXPECT_TRUE(exact.has_value()) << pin.path;
+            EXPECT_EQ(element.remaining, 0u) << pin.path;
+            EXPECT_EQ(injected.element_failed, 0u) << pin.path;
+        }
+        // One unit of ElementWork short: refusal rejects the whole render.
+        {
+            mt::Work layout;
+            mt::Work element{element_used - 1u};
+            mt::FinalEmissionTrace injected;
+            injected.element_work = &element;
+            auto short_one =
+                mt::render_mermaid_with_work(source, fallback(), false, layout, &injected);
+            EXPECT_FALSE(short_one.has_value()) << pin.path;
+            EXPECT_GT(injected.element_failed, 0u) << pin.path;
+        }
+        // Exact and one-short layout Work reject independently of ElementWork.
+        {
+            mt::Work exact{layout_used};
+            EXPECT_TRUE(
+                mt::render_mermaid_with_work(source, fallback(), false, exact, nullptr)
+                    .has_value())
+                << pin.path;
+            EXPECT_EQ(exact.remaining, 0u) << pin.path;
+            mt::Work short_one{layout_used - 1u};
+            EXPECT_FALSE(
+                mt::render_mermaid_with_work(source, fallback(), false, short_one, nullptr)
+                    .has_value())
+                << pin.path;
+        }
+        // Cache miss then hit rebuilds fresh Elements: ElementWork is charged
+        // again in full on the hit and remains exactly injectable.
+        loom::ui::mermaid::LayoutRowsCache cache(8, 16 * 1024 * 1024);
+        {
+            mt::Work miss_work;
+            mt::FinalEmissionTrace miss_trace;
+            auto miss = mt::CacheBudgetAccess::render(cache, source, false, fallback(),
+                                                      miss_work, &miss_trace);
+            ASSERT_TRUE(miss.has_value()) << pin.path;
+            EXPECT_EQ(miss_trace.element_debit, element_used) << pin.path;
+            mt::Work hit_work;
+            mt::Work hit_element{element_used};
+            mt::FinalEmissionTrace hit_trace;
+            hit_trace.element_work = &hit_element;
+            auto hit = mt::CacheBudgetAccess::render(cache, source, false, fallback(),
+                                                     hit_work, &hit_trace);
+            EXPECT_TRUE(hit.has_value()) << pin.path;
+            EXPECT_EQ(hit_trace.element_debit, element_used) << pin.path;
+            EXPECT_EQ(hit_element.remaining, 0u) << pin.path;
+            mt::Work short_work;
+            mt::Work short_element{element_used - 1u};
+            mt::FinalEmissionTrace short_trace;
+            short_trace.element_work = &short_element;
+            auto short_hit = mt::CacheBudgetAccess::render(cache, source, false, fallback(),
+                                                           short_work, &short_trace);
+            EXPECT_FALSE(short_hit.has_value()) << pin.path;
+        }
+    }
+    std::cout << "ER107_ELEMENT_SUMMARY admitted=" << admitted << " max_element=" << max_element
+              << " max_layout=" << max_layout << " dense_over_90464=" << over_run_bound
+              << " cap=" << mt::kErElementWorkLimit
+              << " margin=" << (mt::kErElementWorkLimit - max_element) << '\n';
+    EXPECT_EQ(admitted, 107u);
+    // Pinned ADR 0032 observed peak across the 107 originals.
+    EXPECT_EQ(max_element, 119488u);
+    // The nine dense geometry groups, by exact source identity.
+    ASSERT_EQ(dense.size(), expected_dense.size());
+    std::ranges::sort(dense);
+    auto expected_sorted = expected_dense;
+    std::ranges::sort(expected_sorted);
+    for (std::size_t i = 0; i < dense.size(); ++i)
+        EXPECT_EQ(dense[i], expected_sorted[i]);
+    EXPECT_EQ(over_run_bound, 9u);
+    RecordProperty("max_element_work", max_element);
+    RecordProperty("element_work_cap", mt::kErElementWorkLimit);
+    RecordProperty("element_work_margin", mt::kErElementWorkLimit - max_element);
+    RecordProperty("max_layout_work", max_layout);
+}
+
+// F3/F1 wiring guard: Block shares the packed finish but never activates the
+// ElementWork meter or consumes an injected one; 100% of its finish fees stay
+// on layout Work.
+TEST(MermaidEr107ElementWork, NonErPackedFamilyNeverActivatesTheMeter) {
+    namespace mt = loom::ui::mermaid::testing;
+    const std::string raw = "block-beta\ncolumns 3\nblock:g\nA\nend\nspace B\ng --> B\n";
+    {
+        mt::Work work;
+        mt::FinalEmissionTrace trace;
+        auto rendered =
+            mt::render_mermaid_with_work(raw, ftxui::text("block-fallback"), false, work, &trace);
+        ASSERT_TRUE(rendered.has_value());
+        EXPECT_FALSE(trace.element_active);
+        EXPECT_EQ(trace.element_debit, 0u);
+        EXPECT_EQ(trace.element_cap, 0u);
+        EXPECT_EQ(trace.element_failed, 0u);
+        // The packed finish genuinely ran, entirely on the legacy Work meter.
+        EXPECT_TRUE(trace.preflight_complete);
+        // All finish preflight fees landed on the legacy layout Work meter.
+        EXPECT_GT(trace.emission_debit, 0u);
+        EXPECT_EQ(trace.preflight_debits, trace.successful_debits);
+        // ADR 0032 MAJOR-1 guard: the NativeLayout growth must not move a
+        // single unit of a non-ER public render (pinned total incl. finish).
+        EXPECT_EQ(mt::kWorkLimit - work.remaining, 282110u);
+    }
+    {
+        mt::Work work, injected{123u};
+        mt::FinalEmissionTrace trace;
+        trace.element_work = &injected;
+        auto rendered =
+            mt::render_mermaid_with_work(raw, ftxui::text("block-fallback"), false, work, &trace);
+        ASSERT_TRUE(rendered.has_value());
+        EXPECT_FALSE(trace.element_active);
+        EXPECT_EQ(injected.remaining, 123u);
+    }
+}

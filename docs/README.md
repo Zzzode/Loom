@@ -99,6 +99,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`rfcs/0029-model-capacity-metadata.md`](rfcs/0029-model-capacity-metadata.md) | **Implemented.** Read model context capacities from the configured service before using local fallback estimates. |
 | [`rfcs/0030-terminal-mermaid-diagrams.md`](rfcs/0030-terminal-mermaid-diagrams.md) | **Implementable.** Native terminal diagrams and pinned official-corpus capability matrix; Phase C is in progress and Phase D (bounded style projection) has an approved design. Unsupported source is preserved. |
 | [`rfcs/0031-mermaid-envelope-and-renderer-cleanup.md`](rfcs/0031-mermaid-envelope-and-renderer-cleanup.md) | **Implementable.** One bounded Mermaid metadata envelope, config-free gitGraph/state admission, relations split, family dispatch and structural cleanup; PRR approved, Phase E1 implemented (Linux PSS outstanding). |
+| [`rfcs/0032-mermaid-er-element-work-dimension.md`](rfcs/0032-mermaid-er-element-work-dimension.md) | **Proposed.** Design-only ADR for an independent, worst-case-bounded Work meter over active-ER ftxui Element emission, disjoint from the frozen 992,611 layout Work; needs D-022 and accounting/matrix reviews. |
 
 RFC process and stage gates: [`.agents/skills/rfc/SKILL.md`](../.agents/skills/rfc/SKILL.md).
 Attachments (phase plans, edge inventories, design docs): [`rfcs/attachments/`](rfcs/attachments/).

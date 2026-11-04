@@ -8340,8 +8340,8 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             std::ranges::count_if(observations, [](const Observation& row) {
                 return official_flow_shape_alias_body_owned(row);
             });
-        EXPECT_EQ(shape_alias_body_selected, 14u);
-        EXPECT_EQ(shape_alias_body_admitted, 14u);
+        EXPECT_EQ(shape_alias_body_selected, 16u);
+        EXPECT_EQ(shape_alias_body_admitted, 16u);
         EXPECT_EQ(flows.visited, 400u);
         EXPECT_EQ(flows.observed, 400u);
         EXPECT_EQ(flows.bound, 400u);

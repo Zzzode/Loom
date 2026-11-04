@@ -225,7 +225,15 @@ struct FlowShapeAliasBodyCase {
     std::string_view snapshot_sha;
 };
 
-inline constexpr std::array<FlowShapeAliasBodyCase, 14> kFlowShapeAliasBodyCases{{
+inline constexpr std::array<FlowShapeAliasBodyCase, 16> kFlowShapeAliasBodyCases{{
+    {154u, 815u, 137u, "256a73ac7c9341fe806b661cd15423ddad2ccf4730152e98a24e462402dc4446",
+     "flowchart \n n0@{ shape: event, label: \"event\" }\n n1@{ shape: rounded, label: \"rounded\" }\n",
+     "n0@{ shape: event, label: \"event\" }", "flow400_shape_alias_rounded_event_body.txt",
+     "32172be3228fcb3a5603fa506e55b2a55f87ad2f355635cc1873132c70f70fb9"},
+    {158u, 819u, 127u, "91a633da276b863801b67d73b3b88468bda742cdb25c37467024e8824d1f723f",
+     "flowchart \n n0@{ shape: diam, label: \"diam\" }\n n1@{ shape: decision, label: \"decision\" }\n n2@{ shape: diamond, label: \"diamond\" }\n",
+     "n0@{ shape: diam, label: \"diam\" }", "flow400_shape_alias_diamond_decision_body.txt",
+     "14a4756fdc61ba91e98dfc51efa77bb23f930a42fc48bbec32da107035a65984"},
     {153u, 814u, 146u, "46b9441910056321e6eee67f4876270cf299bfdd1285f213cfbfd2a587d84be2",
      "flowchart \n n0@{ shape: process, label: \"process\" }\n n1@{ shape: rect, label: \"rect\" "
      "}\n n2@{ shape: proc, label: \"proc\" }\n n3@{ shape: rectangle, label: \"rectangle\" }\n",

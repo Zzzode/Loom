@@ -305,6 +305,87 @@ TEST(MermaidBlock58Preflight, NineColumnSourceHasThreeRowsAndAllNineIndependentL
     rejects_without_resource([&] { plan::validate(reversed); });
 }
 
+TEST(MermaidBlock58Preflight, EdgeAllSpaceRowsCropButInternalRowsAndFlowSlotsAreKept) {
+    // D-049 batch 3: mermaid 12.2.0 crops leading/trailing all-space rows to
+    // zero height and zero adjacent gap; an internal all-space row keeps its
+    // full row plus gaps, and spaces always consume horizontal flow slots.
+    // Build the entities/placements only; callers mark spaces, then run the
+    // same measure/place the worksheet build does.
+    auto plan_with = [](std::vector<plan::Placement> placements) {
+        plan::Plan p;
+        plan::Entity root;
+        root.id = "@root";
+        root.group = true;
+        root.shape = "group";
+        p.entities.push_back(std::move(root));
+        for (std::size_t i = 0; i < placements.size(); ++i) {
+            plan::Entity e;
+            e.id = "@" + std::to_string(i + 1);
+            e.parent = 0;
+            e.shape = "rectangle";
+            e.rows = {"X"};
+            p.entities.push_back(std::move(e));
+        }
+        p.entities[0].children = std::move(placements);
+        return p;
+    };
+    auto layout = [](plan::Plan& p) {
+        plan::Ledger ledger;
+        plan::measure(p, 0, ledger);
+        plan::place(p, 0, {0, 0, p.entities[0].min_w, p.entities[0].min_h}, ledger);
+    };
+    auto mark_space = [](plan::Plan& p, std::size_t index) {
+        p.entities[index].space = true;
+        p.entities[index].shape = "space";
+    };
+    // columns 1: leading space row, A, trailing space row -> one content row.
+    {
+        plan::Plan p = plan_with({{1, 0, 0}, {2, 0, 1}, {3, 0, 2}});
+        mark_space(p, 1);
+        mark_space(p, 3);
+        layout(p);
+        // A is a 9x5 leaf; root pad is 2 (top+bottom inset 1): height 5+2.
+        EXPECT_EQ(p.entities[0].min_h, 7);
+        // Both edge spaces collapse to zero height at the leading inset.
+        EXPECT_EQ(p.entities[1].band.h, 0);
+        EXPECT_EQ(p.entities[3].band.h, 0);
+        // A starts exactly at the top inset; no blank band above it.
+        EXPECT_EQ(p.entities[2].band.y, 1);
+        EXPECT_EQ(p.entities[2].band.h, 5);
+    }
+    // columns 1: A, internal all-space row, B -> two content rows with one
+    // full 5-cell row and a 3-cell gap between them.
+    {
+        plan::Plan p = plan_with({{1, 0, 0}, {2, 0, 1}, {3, 0, 2}});
+        mark_space(p, 2);
+        layout(p);
+        EXPECT_EQ(p.entities[0].min_h, 5 + 3 + 5 + 3 + 5 + 2);
+        // A top inset, B after A(5) + gap(3) + space row(5) + gap(3).
+        EXPECT_EQ(p.entities[1].band.y, 1);
+        EXPECT_EQ(p.entities[3].band.y, 1 + 5 + 3 + 5 + 3);
+        EXPECT_EQ(p.entities[2].band.h, 5);  // internal spacer is NOT cropped
+    }
+    // columns 3: space:3 leading row, then ida idb idc. Flow slots shift the
+    // content row to grid row 1 even though the leading row is cropped.
+    {
+        plan::Plan p = plan_with(
+            {{1, 0, 0}, {2, 1, 0}, {3, 2, 0}, {4, 0, 1}, {5, 1, 1}, {6, 2, 1}});
+        mark_space(p, 1);
+        mark_space(p, 2);
+        mark_space(p, 3);
+        layout(p);
+        const auto& a = p.entities[4], & b = p.entities[5], & c = p.entities[6];
+        // All three content boxes share the cropped first content row.
+        EXPECT_EQ(a.band.y, b.band.y);
+        EXPECT_EQ(b.band.y, c.band.y);
+        // Column flow slots are still consumed: idb right of ida, idc last.
+        EXPECT_LT(a.band.x, b.band.x);
+        EXPECT_LT(b.band.x, c.band.x);
+        // Content sits at the top inset despite the three leading spaces.
+        EXPECT_EQ(a.band.y, 1);
+    }
+}
+
 TEST(MermaidBlock58Preflight, DescendantEdgesCrossActualContainerGatesWithoutRetargeting) {
     Inputs input;
     block::OracleWork work;

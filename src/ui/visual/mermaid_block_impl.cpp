@@ -152,6 +152,18 @@ inline void natural(Entity& e) {
         require(e.shape == "rectangle" || e.shape == "rounded_rectangle", "Block unknown shape");
 }
 
+// D-049 batch 3: a grid row counts as content when it holds any non-space
+// child. Spaces are invisible flow-slot placeholders, so all-space rows at
+// a group's leading/trailing edge are cropped (zero height and zero
+// adjacent gap), matching mermaid 12.2.0's findBounds crop; internal
+// all-space rows keep their full row height and gaps.
+inline bool row_has_content(const Plan& p, const Entity& group, int row) {
+    for (const auto& c : group.children)
+        if (c.row == row && !p.entities[static_cast<std::size_t>(c.child)].space)
+            return true;
+    return false;
+}
+
 inline int measure(Plan& p, int id, Ledger& ledger, int depth = 0) {
     require(depth <= 16, "Block depth");
     auto& e = p.entities.at(static_cast<std::size_t>(id));
@@ -176,10 +188,24 @@ inline int measure(Plan& p, int id, Ledger& ledger, int depth = 0) {
         e.row_heights[static_cast<std::size_t>(c.row)] =
             std::max(e.row_heights[static_cast<std::size_t>(c.row)],
                      p.entities[static_cast<std::size_t>(c.child)].min_h);
+    // Crop leading/trailing all-space rows: their height and both adjacent
+    // gaps vanish (mermaid 12.2.0 renders only the content-row span).
+    int first_content_row = 0;
+    while (first_content_row < row_count && !row_has_content(p, e, first_content_row))
+        ++first_content_row;
+    int last_content_row = row_count - 1;
+    while (last_content_row >= 0 && !row_has_content(p, e, last_content_row))
+        --last_content_row;
+    for (int r = 0; r < first_content_row; ++r) e.row_heights[static_cast<std::size_t>(r)] = 0;
+    for (int r = last_content_row + 1; r < row_count; ++r)
+        e.row_heights[static_cast<std::size_t>(r)] = 0;
     const int pad = id == 0 ? 2 : 4;
     e.min_w = k * unit + 3 * (k - 1) + pad;
-    e.min_h =
-        std::accumulate(e.row_heights.begin(), e.row_heights.end(), 0) + 3 * (row_count - 1) + pad;
+    int content_height = pad;
+    for (int r = first_content_row; r <= last_content_row; ++r)
+        content_height += e.row_heights[static_cast<std::size_t>(r)] +
+                          (r == last_content_row ? 0 : 3);
+    e.min_h = content_height;
     require(e.min_w <= 240 && e.min_h <= 1024, "Block intrinsic canvas bound");
     return e.min_w;
 }
@@ -216,6 +242,13 @@ inline void place(Plan& p, int id, Box band, Ledger& ledger) {
         ledger.pay(16, "column grant");
         e.columns[static_cast<std::size_t>(x)] = available / k + (x < available % k ? 1 : 0);
     }
+    int first_content_row = 0;
+    while (first_content_row < static_cast<int>(e.row_heights.size()) &&
+           !row_has_content(p, e, first_content_row))
+        ++first_content_row;
+    int last_content_row = static_cast<int>(e.row_heights.size()) - 1;
+    while (last_content_row >= 0 && !row_has_content(p, e, last_content_row))
+        --last_content_row;
     for (const auto& c : e.children) {
         ledger.pay(32, "grid placement");
         int x = band.x + pad, y = band.y + pad, w = 0;
@@ -223,7 +256,9 @@ inline void place(Plan& p, int id, Box band, Ledger& ledger) {
             ledger.pay(16, "column offset");
             x += e.columns[static_cast<std::size_t>(col)] + 3;
         }
-        for (int row = 0; row < c.row; ++row) {
+        // Offsets span only the cropped content rows; a trailing-space child
+        // lands at the content bottom (its band is invisible and unrouteable).
+        for (int row = first_content_row; row < c.row && row <= last_content_row; ++row) {
             ledger.pay(16, "row offset");
             y += e.row_heights[static_cast<std::size_t>(row)] + 3;
         }
@@ -233,8 +268,18 @@ inline void place(Plan& p, int id, Box band, Ledger& ledger) {
         }
         w += 3 * (c.span - 1);
         const auto& child = p.entities[static_cast<std::size_t>(c.child)];
-        const int height = child.min_h;
-        y += (e.row_heights[static_cast<std::size_t>(c.row)] - height) / 2;
+        // A space in a cropped edge row is outside the rendered content span:
+        // degenerate zero-height band anchored at the leading/trailing inset,
+        // never painted or routed through.
+        const bool cropped_edge_space =
+            child.space && (c.row < first_content_row || c.row > last_content_row);
+        const int height = cropped_edge_space ? 0 : child.min_h;
+        if (cropped_edge_space && c.row > last_content_row)
+            y = band.y + band.h - pad;  // trailing content inset
+        // A cropped zero-height edge row never shifts an invisible space
+        // above the group inset; no negative centering.
+        const int row_height = e.row_heights[static_cast<std::size_t>(c.row)];
+        y += cropped_edge_space ? 0 : std::max(0, (row_height - height) / 2);
         place(p, c.child, {x, y, w, height}, ledger);
     }
 }

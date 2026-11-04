@@ -19,7 +19,7 @@ inline constexpr std::string_view kDesignFileSha =
     "4df4b2242f959ae1379b965addbc2b599d51654b6276cadf227e3c641360304c";
 inline constexpr std::string_view kAuthorityReviewStatus = "B3_REVIEW_APPROVED";
 inline constexpr std::string_view kProjectionHelperSha =
-    "8b5374e9b9c888e26e90cff67a34195e6abd0541bbbae939f2253a57550efb24";
+    "2c339c2664c2d6f0c6a0633a703a1d6f045362efa6c3c8c73ed5f6c724f8bdc3";
 inline constexpr std::string_view kContourHelperSha =
     "ff966fdce81d2cc21b0f1f77ed832285fb5c35f3fa0c8685acdbb927f208992e";
 inline constexpr std::string_view kAdaptation = "block58_complete_original_authority/v1";
@@ -243,14 +243,33 @@ inline Size measurement(const projection::Plan& p, int id, OracleWork& work, int
         require(cols > 0 && rows > 0, "source: independent nonempty scope");
         require(e.row_heights.size() == static_cast<std::size_t>(rows),
                 "source: independent row count");
+        // Leading/trailing all-space rows crop to zero height/gap (mirror of
+        // the projection and production rule; mermaid 12.2.0 edge crop).
+        const auto row_has_content = [&](int row) {
+            for (const auto& child : e.children)
+                if (child.row == row && !p.entities.at(static_cast<std::size_t>(child.child)).space)
+                    return true;
+            return false;
+        };
+        int first_content_row = 0;
+        while (first_content_row < rows && !row_has_content(first_content_row))
+            ++first_content_row;
+        int last_content_row = rows - 1;
+        while (last_content_row >= 0 && !row_has_content(last_content_row))
+            --last_content_row;
+        for (int r = 0; r < first_content_row; ++r) heights[static_cast<std::size_t>(r)] = 0;
+        for (int r = last_content_row + 1; r < rows; ++r)
+            heights[static_cast<std::size_t>(r)] = 0;
         for (int row = 0; row < rows; ++row)
             require(e.row_heights[static_cast<std::size_t>(row)] ==
                         heights[static_cast<std::size_t>(row)],
                     "source: independent row maximum");
         const int inset = id ? 4 : 2;
-        size = {cols * unit + 3 * (cols - 1) + inset,
-                std::accumulate(heights.begin(), heights.begin() + rows, 0) + 3 * (rows - 1) +
-                    inset};
+        int content_height = inset;
+        for (int r = first_content_row; r <= last_content_row; ++r)
+            content_height += heights[static_cast<std::size_t>(r)] +
+                              (r == last_content_row ? 0 : 3);
+        size = {cols * unit + 3 * (cols - 1) + inset, content_height};
     }
     require(e.min_w == size.w && e.min_h == size.h, "source: independent intrinsic measurement");
     return size;
@@ -268,9 +287,11 @@ inline void placement(const projection::Plan& p, int id, Box expected, OracleWor
     require(same_box(e.body, body), "source: independent fixed/stretched body");
     if (e.group) {
         const int inset = id ? 2 : 1;
-        int k = 0;
-        for (const auto c : e.children)
+        int k = 0, rows = 0;
+        for (const auto c : e.children) {
             k = std::max(k, c.col + c.span);
+            rows = std::max(rows, c.row + 1);
+        }
         const int available = expected.w - 2 * inset - 3 * (k - 1);
         require(available >= k, "source: independent column grant");
         require(e.columns.size() == static_cast<std::size_t>(k),
@@ -282,14 +303,33 @@ inline void placement(const projection::Plan& p, int id, Box expected, OracleWor
         const auto start = [&](int col) {
             return expected.x + inset + col * (available / k + 3) + std::min(col, available % k);
         };
+        const auto row_has_content = [&](int row) {
+            for (const auto& child : e.children)
+                if (child.row == row && !p.entities.at(static_cast<std::size_t>(child.child)).space)
+                    return true;
+            return false;
+        };
+        int first_content_row = 0;
+        while (first_content_row < rows && !row_has_content(first_content_row))
+            ++first_content_row;
+        int last_content_row = rows - 1;
+        while (last_content_row >= 0 && !row_has_content(last_content_row))
+            --last_content_row;
         for (const auto c : e.children) {
-            int y = expected.y + inset;
-            for (int r = 0; r < c.row; ++r)
-                y += e.row_heights.at(static_cast<std::size_t>(r)) + 3;
             const auto& n = p.entities.at(static_cast<std::size_t>(c.child));
-            y += (e.row_heights.at(static_cast<std::size_t>(c.row)) - n.min_h) / 2;
+            const bool cropped_edge_space =
+                n.space && (c.row < first_content_row || c.row > last_content_row);
+            int y = expected.y + inset;
+            for (int r = first_content_row; r < c.row && r <= last_content_row; ++r)
+                y += e.row_heights.at(static_cast<std::size_t>(r)) + 3;
+            const int height = cropped_edge_space ? 0 : n.min_h;
+            if (cropped_edge_space && c.row > last_content_row)
+                y = expected.y + expected.h - inset;  // trailing content inset
+            y += cropped_edge_space
+                     ? 0
+                     : std::max(0, (e.row_heights.at(static_cast<std::size_t>(c.row)) - height) / 2);
             placement(p, c.child,
-                      {start(c.col), y, start(c.col + c.span) - start(c.col) - 3, n.min_h}, work);
+                      {start(c.col), y, start(c.col + c.span) - start(c.col) - 3, height}, work);
         }
     } else if (!e.space) {
         Box core = body;

@@ -80,10 +80,10 @@ HELPERS = tuple("tests/support/mermaid_block58_" + name + ".hpp" for name in
                 ("source", "projection", "contours", "boundary_authority", "authority", "official"))
 REVIEWED_HELPER_SHA = {
     'tests/support/mermaid_block58_source.hpp': 'e324bb0299d796f1c6b549ad19d38ee82f4e6f2c508a3b020a53ba69eb4c9b98',
-    'tests/support/mermaid_block58_projection.hpp': '8b5374e9b9c888e26e90cff67a34195e6abd0541bbbae939f2253a57550efb24',
+    'tests/support/mermaid_block58_projection.hpp': '2c339c2664c2d6f0c6a0633a703a1d6f045362efa6c3c8c73ed5f6c724f8bdc3',
     'tests/support/mermaid_block58_contours.hpp': 'ff966fdce81d2cc21b0f1f77ed832285fb5c35f3fa0c8685acdbb927f208992e',
     'tests/support/mermaid_block58_boundary_authority.hpp': 'f9657c35a1c264403199b9033c3a1015b12d9f773acb3be6b1bd1f627c36e22d',
-    'tests/support/mermaid_block58_authority.hpp': 'cf86ccffe73ae455c3904cc074a24b1a2dd5ef6a0d7f1ac998fe5490bb994b25',
+    'tests/support/mermaid_block58_authority.hpp': '06ff841981a6473f51fe61d261e63073d6e84b38fcdc4775a18375da5aea0947',
 }
 COMMON = ("src/ui/visual/mermaid_block_impl.cpp", "src/ui/visual/mermaid.cppm",
     "src/ui/visual/mermaid_detail.cppm", "src/ui/visual/mermaid_impl.cpp", "src/ui/visual/mermaid_cache_impl.cpp",

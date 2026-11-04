@@ -1,9 +1,10 @@
 # B6 design — dagre Flow residual drift (read-only)
 
-Status: **DESIGN, pending independent architect review per Tech Lead (no
-human gate). No production change yet.** Produced 2026-11-04 against
-`e27d5e48`. Investigation was read-only plus temporary, fully-reverted
-render probes in `test_mermaid_flow_ascii.cpp` (tree restored clean).
+Status: **SHIPPED 2026-11-04 as two local commits (not pushed): B6-A
+`41486ae2` (production gate), B6-B shape-alias body admission cohort —
+see section 8.** The text below is the original design record produced
+against `e27d5e48`; investigation was read-only plus temporary, fully-
+reverted render probes in `test_mermaid_flow_ascii.cpp` (tree restored).
 
 The four OfficialMatrix roster-drift rows (present at clean HEAD, the only
 remaining `-L mermaid` failure) split into **two different root causes**
@@ -187,3 +188,26 @@ Temporary render probes (since removed; tree restored) sharpened root cause A:
   faithfully (5 nodes/4 clusters 828x562; 4 nodes/1 cluster 608x282); the
   body diagnostics are already `drawn` (6088-2) / `source` (sub-graphs,
   double-circle witness) and behave independently of the original rows.
+
+## 8. Resolution (2026-11-04, local commits, not pushed)
+
+- **B6-A shipped as `41486ae2`** (production tightening,
+  `src/ui/visual/mermaid_impl.cpp` only): `flow_untrusted_dagre_compound`
+  on the configured-envelope Flow path with the two positive clauses D and
+  T from section 2. Matrix row diff was exactly the two originals
+  error->source_fallback; zero drawn false positives; boundary tests in
+  `test_mermaid_flow_ascii.cpp`.
+- **B6-B shipped as `52bfc8b7` via the B1 admission promotion**
+  (evidence/test only, no production change): `kFlowShapeAliasBodyCases`
+  14->16 with ordinals 154/global 815 (event/rounded, body offset 137)
+  and 158/global 819 (diam/decision/diamond, body offset 127), two
+  terminal-native snapshots generated through the production five-frame
+  capture pipeline, and the cohort EXPECTs 14->16. Both bodies bind to
+  the exact manifest diagnostic bytes and draw (06 keeps its expected
+  ordinary source fallback at 40 columns, art width 46). Independent
+  read-only adversarial reviews APPROVED the evidence.
+- After both sub-batches the observed official-matrix gap set is exactly
+  the frozen roster (48 rows); debug/release matrix and all evidence
+  reports are raw-byte identical; ASan/UBSan OfficialMatrix is clean;
+  roster `tools/mermaid/e6c-mandatory-gap-roster.json` was not edited and
+  no `--write` regeneration occurred.

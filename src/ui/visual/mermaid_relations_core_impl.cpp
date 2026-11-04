@@ -1808,44 +1808,102 @@ namespace {
 
 // RFC 0031 E2a: stateDiagram(-v2) admits a description-only frontmatter
 // envelope, optionally with a title the relations layout already projects.
-// config and init stay whole-source (E2b); the description is never rendered.
+// RFC 0031 E2b: additionally admits a closed whitelist of non-terminal
+// config leaves (logLevel/fontFamily/securityLevel at exact values) and
+// projects them as a user-visible disclosure footer. theme/look/layout,
+// init, and every other key stay whole-source.
 struct StateEnvelope {
     std::string_view body;
     std::optional<std::string> title;
+    std::vector<std::string> config_notices;
 };
+
+// State E2b projection constants, deliberately distinct from the ER
+// notice cap (32 bytes): the honest securityLevel disclosure is longer.
+constexpr std::size_t kStateNoticeLineLimit = 96u;
+constexpr std::string_view kStateNoticeHeader = "State native projection v1";
+
+std::optional<std::string> state_scalar_text(std::string_view raw, Work& work) {
+    auto value = er_strip_comment(raw);
+    if (!work.spend(value.size() + 1u)) return std::nullopt;
+    if (value.size() >= 2u &&
+        ((value.front() == '"' && value.back() == '"') ||
+         (value.front() == '\'' && value.back() == '\'')))
+        value = value.substr(1u, value.size() - 2u);
+    return std::string(value);
+}
+
+bool state_notice_line(std::vector<std::string>& notices, std::string_view line, Work& work) {
+    if (line.size() > kStateNoticeLineLimit ||
+        !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+        return false;
+    notices.emplace_back(line);
+    return true;
+}
 
 std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work& work) {
     if (!source.starts_with("---") || !work.spend(4u * sizeof(bool) + 16u)) return {};
     const auto parsed = detail::parse_envelope(source, work);
     if (!parsed || !parsed->has_frontmatter || !parsed->init.empty()) return {};
-    bool description_seen = false, title_seen = false;
+    bool description_seen = false, title_seen = false, config_seen = false;
+    // One bit per accepted leaf; the accepted value set is exact.
+    enum : unsigned { Log = 1u, Font = 2u, Security = 4u };
+    unsigned fields = 0u;
+    int log_value = 0;
+    std::string security_value;
     StateEnvelope result;
     for (const auto& event : parsed->events) {
         if (event.blank || event.comment) continue;
-        if (!event.top_level) return {};
-        if (event.path == "description") {
-            if (description_seen) return {};
-            description_seen = true;
-            continue;
-        }
-        if (event.path == "config") return {};
-        if (event.path == "title") {
-            if (title_seen) return {};
-            title_seen = true;
-            const auto decoded = er_yaml_value(er_strip_comment(event.value), work);
-            if (decoded.kind != ErMetaValue::Kind::Text || decoded.text.empty() ||
-                decoded.text.size() > kLabelLimit || !work.spend(decoded.text.size() * 4 + 1))
-                return {};
-            bool ink = false;
-            for (const unsigned char c : decoded.text) {
-                if (c < 0x20 || c > 0x7e) return {};
-                ink |= c != ' ';
+        if (event.top_level) {
+            if (event.path == "description") {
+                if (description_seen) return {};
+                description_seen = true;
+                continue;
             }
-            if (!ink) return {};
-            result.title = std::string(decoded.text);
-            continue;
+            if (event.path == "config") {
+                if (config_seen) return {};
+                config_seen = true;
+                continue;
+            }
+            if (event.path == "title") {
+                if (title_seen) return {};
+                title_seen = true;
+                const auto decoded = er_yaml_value(er_strip_comment(event.value), work);
+                if (decoded.kind != ErMetaValue::Kind::Text || decoded.text.empty() ||
+                    decoded.text.size() > kLabelLimit || !work.spend(decoded.text.size() * 4 + 1))
+                    return {};
+                bool ink = false;
+                for (const unsigned char c : decoded.text) {
+                    if (c < 0x20 || c > 0x7e) return {};
+                    ink |= c != ' ';
+                }
+                if (!ink) return {};
+                result.title = std::string(decoded.text);
+                continue;
+            }
+            return {};
         }
-        return {};
+        // E2b config subtree: indent-2 scalar leaves only, no nested maps,
+        // whitelist membership with exact values; everything else fails closed.
+        if (!config_seen || event.indent != 2 || event.namespace_entry) return {};
+        const auto mark = [&](unsigned bit) -> bool {
+            if (fields & bit) return false;
+            fields |= bit;
+            return true;
+        };
+        const auto scalar = state_scalar_text(event.value, work);
+        if (!scalar) return {};
+        if (event.path == "logLevel") {
+            if (!mark(Log) || (*scalar != "0" && *scalar != "1" && *scalar != "2")) return {};
+            log_value = (*scalar)[0] - '0';
+        } else if (event.path == "fontFamily") {
+            if (!mark(Font) || *scalar != "courier") return {};
+        } else if (event.path == "securityLevel") {
+            if (!mark(Security) || (*scalar != "loose" && *scalar != "sandbox")) return {};
+            security_value = *scalar;
+        } else {
+            return {};
+        }
     }
     if (!description_seen || !parsed->description) return {};
     const auto& description = *parsed->description;
@@ -1867,6 +1925,29 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
     }
     if (!content) return {};
     if (!parsed->raw_body.starts_with("stateDiagram")) return {};
+    // A present config map must carry at least one accepted leaf; an empty
+    // config block was whole-source before E2b and stays rejected.
+    if (config_seen && fields == 0u) return {};
+    // Assemble the disclosure footer in the fixed alphabetical leaf order.
+    if (fields != 0u) {
+        if (!state_notice_line(result.config_notices, kStateNoticeHeader, work)) return {};
+        if ((fields & Font) &&
+            !state_notice_line(result.config_notices,
+                               "config.fontFamily=\"courier\" -> terminal font; not applied", work))
+            return {};
+        if ((fields & Log)) {
+            std::string line = "config.logLevel=";
+            line += static_cast<char>('0' + log_value);
+            line += " -> logger only; not applied";
+            if (!state_notice_line(result.config_notices, line, work)) return {};
+        }
+        if ((fields & Security)) {
+            std::string line = "config.securityLevel=\"";
+            line += security_value;
+            line += "\" -> no interaction layer; not applied";
+            if (!state_notice_line(result.config_notices, line, work)) return {};
+        }
+    }
     result.body = parsed->raw_body;
     return result;
 }
@@ -2019,6 +2100,7 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
             auto diagram = parse_relations(state->body, work);
             if (!diagram) return {};
             if (state->title) diagram->diagram_title = *state->title;
+            diagram->state_config_notices = std::move(state->config_notices);
             return diagram;
         }
         auto envelope = er_source_envelope(original, work);
@@ -5981,6 +6063,23 @@ relations_layout(std::string_view source, Work& work, bool class_envelope, bool 
         auto owned = extract_styled_rows(canvas, result, leading_rows, drawing_rows, work);
         if (!owned) return {};
         if (styles) *styles = std::move(*owned);
+    }
+    // RFC 0031 E2b: state non-terminal config disclosure footer. Config-free
+    // state sources carry an empty vector and append nothing (byte-identical).
+    if (diagram->family == RelationFamily::State && !diagram->state_config_notices.empty()) {
+        const auto& notices = diagram->state_config_notices;
+        std::size_t bytes = 0u;
+        for (const auto& line : notices) {
+            if (line.size() > kStateNoticeLineLimit) return {};
+            bytes += line.size();
+        }
+        if (result.size() + 1u + notices.size() > static_cast<std::size_t>(kHeightLimit) ||
+            !work.spend((1u + notices.size()) * (4u * sizeof(std::string) + 256u) + bytes * 2u +
+                        256u))
+            return {};
+        result.emplace_back();
+        for (const auto& line : notices)
+            result.push_back(line);
     }
     return result;
 }

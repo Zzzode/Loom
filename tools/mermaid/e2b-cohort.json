@@ -1,0 +1,2150 @@
+{
+  "schema": "loom_mermaid_e2b_cohort/v1",
+  "rfc": 31,
+  "phase": "E2b",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter state original with a folded description and exactly the E2b non-terminal config leaves (logLevel/fontFamily/securityLevel at exact values), no nested maps, no body init",
+    "roots": [
+      "state-diagram-v2",
+      "state-diagram"
+    ],
+    "whitelist": {
+      "logLevel": [
+        "0",
+        "1",
+        "2"
+      ],
+      "fontFamily": [
+        "courier"
+      ],
+      "securityLevel": [
+        "loose",
+        "sandbox"
+      ]
+    },
+    "blocker_detection": "nine fixed source-content detectors plus one path/SHA-bound reviewed routing-debt set; no generator-time rendering; residual rows abort",
+    "width_policy": "E2b pre-registers the 240-column admission; narrow_40 is uniformly 'source'."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial evidence review fork, D-066 F0 (76 read-only checks; selection re-derived, blocker labels and fixture/manifest hashes spot-verified)",
+    "date": "2026-11-05",
+    "verdict": "approved",
+    "note": "Approval covers the ledger rows and the five-frame pixel gate only; upstream Chromium geometry truth for the 40 draw rows is a tracked follow-up before later state batches."
+  },
+  "counts": {
+    "total": 61,
+    "state_v2": 38,
+    "state_v1": 23,
+    "predicted_draw": 40,
+    "predicted_blocked": 21
+  },
+  "blocker_vocabulary": [
+    "state-non-state-body",
+    "state-composite-divider",
+    "state-style-statement",
+    "state-click-statement",
+    "state-choice-double-bracket",
+    "state-fork-join-html-entity",
+    "state-label-br-tab-rejected",
+    "state-edge-literal-newline",
+    "state-edge-html-entity",
+    "state-native-routing-debt"
+  ],
+  "rows": [
+    {
+      "path": "state-diagram-v2/nightly-check/clickable-state-with-tooltip.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "118bb9e5614059ec742c74ea51f08056c1295c3f0c4498824d4dfbf8fb73185b",
+      "manifest_sha256": "118bb9e5614059ec742c74ea51f08056c1295c3f0c4498824d4dfbf8fb73185b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "securityLevel",
+          "value": "loose"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-click-statement",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (no state click statement parse)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (no state click statement parse)",
+        "detail": "A click callback/tooltip statement has no terminal interaction layer and no state statement parser; it stays whole-source."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-allow-styles-to-take-effect-in-subgraphs.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "567bb1aafb4302760c276eb7e1a1902b66979c7fcb1b2d5ed28a2025e20cb419",
+      "manifest_sha256": "567bb1aafb4302760c276eb7e1a1902b66979c7fcb1b2d5ed28a2025e20cb419",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-style-statement",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
+        "detail": "The source applies classDef/class/style styling, which the terminal state renderer does not project; the statement is outside the accepted grammar/profile."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-let-styles-take-precedence-over-classes.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "4428e21d049c5d5bec80859b9bad7bc7bf96463a7b39c91b74415c9aaf41550a",
+      "manifest_sha256": "4428e21d049c5d5bec80859b9bad7bc7bf96463a7b39c91b74415c9aaf41550a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-style-statement",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
+        "detail": "The source applies classDef/class/style styling, which the terminal state renderer does not project; the statement is outside the accepted grammar/profile."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-can-have-multiple-classes-applied-to-multiple-states.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "24b76518cba69707bfbdc6717ec4b0b853ffed08170472eed1d56c718d49641b",
+      "manifest_sha256": "24b76518cba69707bfbdc6717ec4b0b853ffed08170472eed1d56c718d49641b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-style-statement",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
+        "detail": "The source applies classDef/class/style styling, which the terminal state renderer does not project; the statement is outside the accepted grammar/profile."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-it-should-be-possible-to-use-a-choice.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "f26e04c9435aecbdc5c54a0bb62ced329eb8b4aa8f3b87d31e2e4e5bee7c7bb7",
+      "manifest_sha256": "f26e04c9435aecbdc5c54a0bb62ced329eb8b4aa8f3b87d31e2e4e5bee7c7bb7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-choice-double-bracket",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (state choice declaration)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (state choice declaration)",
+        "detail": "The 'state X [[choice]]' double-bracket choice declaration is not parsed."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-handle-different-rendering-directions-in-composite-states.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "80ce6d70c07d1f197781aaaf7a2cb9252c338a30c3416fdc438f239fef865cfa",
+      "manifest_sha256": "80ce6d70c07d1f197781aaaf7a2cb9252c338a30c3416fdc438f239fef865cfa",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-handle-multiline-notes-with-different-line-breaks.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "4c80ee4167b01ebd03d49b1681639fc8dba5aea20155590bac1fb0ae13e4cd93",
+      "manifest_sha256": "4c80ee4167b01ebd03d49b1681639fc8dba5aea20155590bac1fb0ae13e4cd93",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-label-br-tab-rejected",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp:37-50 (br decoder)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp:37-50 (br decoder)",
+        "detail": "Only <br>, <br/>, <br /> are decoded to a line break; the stray-tab spelling <br\\t/> hits the '<' rejection in the plain-label decoder."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-handle-multiple-arrows-from-one-node-to-another.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "64bd3cef05eb22da377209dd75483959164ff78602611fc2f40c4a8bf784d4e0",
+      "manifest_sha256": "64bd3cef05eb22da377209dd75483959164ff78602611fc2f40c4a8bf784d4e0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-handle-multiple-notes-added-to-one-state.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "8434de39937b92747457a30215c98631759fbda0218c81aee6d027198f470481",
+      "manifest_sha256": "8434de39937b92747457a30215c98631759fbda0218c81aee6d027198f470481",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-compact-self-loop-edge.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "d853ae4f3601e44eb78837dc653105c40e987cacfd1250ea2fbc54d21b04229c",
+      "manifest_sha256": "d853ae4f3601e44eb78837dc653105c40e987cacfd1250ea2fbc54d21b04229c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-long-descriptions-with-additional-descriptions.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "b81eebf8d877d3adad6068a98968d3078db131bc8427fdd07a1d7f5ce2f8eff8",
+      "manifest_sha256": "b81eebf8d877d3adad6068a98968d3078db131bc8427fdd07a1d7f5ce2f8eff8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-note-with-multiple-lines-in-it.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "ec6d7d388b86b0bdaa7ac28fa70a31dd0fd5b50ea8356ec563f0da8ffb0d7450",
+      "manifest_sha256": "ec6d7d388b86b0bdaa7ac28fa70a31dd0fd5b50ea8356ec563f0da8ffb0d7450",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-simple-info.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "34569bb15cc373d53d6b14d07611fd37c6b601f61fc72d4ce38d49ee8bdee355",
+      "manifest_sha256": "34569bb15cc373d53d6b14d07611fd37c6b601f61fc72d4ce38d49ee8bdee355",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "1"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-non-state-body",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (state gate requires raw_body stateDiagram prefix)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (state gate requires raw_body stateDiagram prefix)",
+        "detail": "The body's first real line is not stateDiagram(-v2); the file belongs to a different family (e.g. a lone 'info' diagram) and the state envelope rejects it."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams-2.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "db8b3683237731fdebc8a0089845b42211dc34360b2dca10ba4df85a27c526ee",
+      "manifest_sha256": "db8b3683237731fdebc8a0089845b42211dc34360b2dca10ba4df85a27c526ee",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams-with-labels.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "4bafaf78477395eca79617efbbcdccc107453a67424b2282deb8ed3fce05e996",
+      "manifest_sha256": "4bafaf78477395eca79617efbbcdccc107453a67424b2282deb8ed3fce05e996",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-native-routing-debt",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (relations_layout)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (relations_layout)",
+        "detail": "The parser accepts the graph but the bounded native router cannot place the multiple labeled fan-out edges (including labeled composite entry/exit rows) without overlap. Not predictable lexically; sha-bound independent review set."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "95b3eb74239fc6cf2330cb33c266c521ce0e28de3b69633d9deef9f1edc345b7",
+      "manifest_sha256": "95b3eb74239fc6cf2330cb33c266c521ce0e28de3b69633d9deef9f1edc345b7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-single-state-with-short-descriptions.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "9ad3a525971be4912ed32077dff0a9e37dcda955b09f0b73dcd5b991c9c02beb",
+      "manifest_sha256": "9ad3a525971be4912ed32077dff0a9e37dcda955b09f0b73dcd5b991c9c02beb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-state-diagram-and-set-the-correct-length-of-the-labels.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "e54bfdc63fe0ba45d85b80de3f8034ae24827c6c86576b059d7fd8dd2164726a",
+      "manifest_sha256": "e54bfdc63fe0ba45d85b80de3f8034ae24827c6c86576b059d7fd8dd2164726a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-edge-html-entity",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder)",
+        "detail": "An edge label carries an HTML entity escape (e.g. #colon; / &amp;); the terminal decoder neither unescapes entities nor renders the quoted form, so it rejects."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-state-with-a-note-together-with-another-state.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "9285be9cd4ddd92ddf4bf9722079db3b05d5a186dc46c1f6217a74216f8b855a",
+      "manifest_sha256": "9285be9cd4ddd92ddf4bf9722079db3b05d5a186dc46c1f6217a74216f8b855a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-state-with-on-the-left-side-when-so-specified.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "e792c5440ede7e1cf9869699f59701b034e25c05f9f9b8eb75424d33870f11b8",
+      "manifest_sha256": "e792c5440ede7e1cf9869699f59701b034e25c05f9f9b8eb75424d33870f11b8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-state-with-states-in-it.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "f9aa3d03cf0110c0b808b66f43e482306db8832d9f3bd325549801a89331dadb",
+      "manifest_sha256": "f9aa3d03cf0110c0b808b66f43e482306db8832d9f3bd325549801a89331dadb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-states-with-descriptions-including-multi-line-descriptions.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "e12d0fea66e064ce99715b53c94988d0ee0b1264ae306da3db4a524c35f60bc3",
+      "manifest_sha256": "e12d0fea66e064ce99715b53c94988d0ee0b1264ae306da3db4a524c35f60bc3",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-transition-descriptions-with-new-lines.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "45e2f277d3591968b55b28c051dc2e8be8449f7899b12283c691336b6effa971",
+      "manifest_sha256": "45e2f277d3591968b55b28c051dc2e8be8449f7899b12283c691336b6effa971",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-edge-literal-newline",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (edge label scan)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (edge label scan)",
+        "detail": "A literal backslash-n inside an edge label is not a decoded line break and the label scan rejects the token."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-forks-and-joins.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "7e85c5f0e94201d8795144a3c4a47c0313d05b1f4bb1641f4696ecb5254a6c00",
+      "manifest_sha256": "7e85c5f0e94201d8795144a3c4a47c0313d05b1f4bb1641f4696ecb5254a6c00",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-forks-in-composite-states.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "5b9b3b443929b21f15f1f709ae4024f8886b941e04b045ec07e6d1334a48b2ea",
+      "manifest_sha256": "5b9b3b443929b21f15f1f709ae4024f8886b941e04b045ec07e6d1334a48b2ea",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-multiple-composite-states.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "2f33960772f20a70dc0758c7aef2d3082105cbf4452c9a6e5ecf7b7246f46aeb",
+      "manifest_sha256": "2f33960772f20a70dc0758c7aef2d3082105cbf4452c9a6e5ecf7b7246f46aeb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-state-descriptions.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "c92b123f747620977718b3201b5208995a699d1823f61b6653d3bcfbf6361eec",
+      "manifest_sha256": "c92b123f747620977718b3201b5208995a699d1823f61b6653d3bcfbf6361eec",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-simplest-composite-state.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "f27aee02055816039d1fa92c561656037c66281f4e1a8f9e9006c64f99a86ade",
+      "manifest_sha256": "f27aee02055816039d1fa92c561656037c66281f4e1a8f9e9006c64f99a86ade",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-state-label-with-names-in-it.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "8fd48d0464a3b45f53027872d5740c06500ad801667abdd786d867220cd4cbeb",
+      "manifest_sha256": "8fd48d0464a3b45f53027872d5740c06500ad801667abdd786d867220cd4cbeb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-width-of-compound-state-should-grow-with-title-if-title-is-wider.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "6afd11481ca16c98153a8ef6306ad189d5a5c3c2348a407376456245f31ea24a",
+      "manifest_sha256": "6afd11481ca16c98153a8ef6306ad189d5a5c3c2348a407376456245f31ea24a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/can-have-styles-applied.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "93deca4199fbb249936503df2c20c5e012d36a8958f9838884484786be4566eb",
+      "manifest_sha256": "93deca4199fbb249936503df2c20c5e012d36a8958f9838884484786be4566eb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-style-statement",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
+        "detail": "The source applies classDef/class/style styling, which the terminal state renderer does not project; the statement is outside the accepted grammar/profile."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-a-compound-state-should-be-able-to-link-to-itself.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "90e226a62a6c1f18b7d4aea19d3c7a41080948fcfc04162a138a6866be0bf05e",
+      "manifest_sha256": "90e226a62a6c1f18b7d4aea19d3c7a41080948fcfc04162a138a6866be0bf05e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-handle-transition-from-one-state-in-a-composite-state-to-a-composite-state.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "7f2cf7209db891ffa8a99c4c168c61e1537daea0f2e57e35ea8d1ade3d7d8736",
+      "manifest_sha256": "7f2cf7209db891ffa8a99c4c168c61e1537daea0f2e57e35ea8d1ade3d7d8736",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-should-render-a-long-descriptions-instead-of-id-when-available.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "a9b02c7b0f8af5f461888119a8dabcc16ad3ac86311ef6012de8e2cc6160dfc1",
+      "manifest_sha256": "a9b02c7b0f8af5f461888119a8dabcc16ad3ac86311ef6012de8e2cc6160dfc1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-should-render-a-state-with-a-note.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "18a12aefce24bebf1b45d05bd04eb8fd1e725dc5e6f76abf48482644705d9629",
+      "manifest_sha256": "18a12aefce24bebf1b45d05bd04eb8fd1e725dc5e6f76abf48482644705d9629",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-should-render-composite-states.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "f502ffd285c4cad4e13e08129e175cb31f9703ba1160a42cda1830a2cfea2a22",
+      "manifest_sha256": "f502ffd285c4cad4e13e08129e175cb31f9703ba1160a42cda1830a2cfea2a22",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-native-routing-debt",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (relations_layout)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (relations_layout)",
+        "detail": "The parser accepts the graph but the bounded native router cannot place the multiple labeled fan-out edges (including labeled composite entry/exit rows) without overlap. Not predictable lexically; sha-bound independent review set."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-should-render-concurrency-states.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "d7d7b46a1767502b7845e12e3ed4d58ba15ab54dbde445cafd7e65da88b6f9e4",
+      "manifest_sha256": "d7d7b46a1767502b7845e12e3ed4d58ba15ab54dbde445cafd7e65da88b6f9e4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-composite-divider",
+        "site": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
+        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
+        "detail": "A standalone '--' concurrency-region divider reaches edge parsing and is rejected."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-states-can-have-a-class-applied.mmd",
+      "family": "stateDiagram-v2",
+      "sha256": "9623c1c25ed14551350ebd291d5ef967399d49d64d84e1d30da408a286fd50cf",
+      "manifest_sha256": "9623c1c25ed14551350ebd291d5ef967399d49d64d84e1d30da408a286fd50cf",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-style-statement",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
+        "detail": "The source applies classDef/class/style styling, which the terminal state renderer does not project; the statement is outside the accepted grammar/profile."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-group-all-state-elements-under-a-single-root-g-wrapper.mmd",
+      "family": "stateDiagram",
+      "sha256": "fb45b332d1ba7172af4d4ee2b7ff359fade73284e5220d66f70b0f2ec63c6cc4",
+      "manifest_sha256": "fb45b332d1ba7172af4d4ee2b7ff359fade73284e5220d66f70b0f2ec63c6cc4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-handle-multiline-notes-with-different-line-breaks.mmd",
+      "family": "stateDiagram",
+      "sha256": "82ef1bc0f9dce6efaf0e8437a8da40ae54ca9e1b68125521e35d67a6b73c4a33",
+      "manifest_sha256": "82ef1bc0f9dce6efaf0e8437a8da40ae54ca9e1b68125521e35d67a6b73c4a33",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-label-br-tab-rejected",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp:37-50 (br decoder)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp:37-50 (br decoder)",
+        "detail": "Only <br>, <br/>, <br /> are decoded to a line break; the stray-tab spelling <br\\t/> hits the '<' rejection in the plain-label decoder."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-handle-multiple-arrows-from-one-node-to-another.mmd",
+      "family": "stateDiagram",
+      "sha256": "425ad50ce6897f082e2105053636ef387cb967203c544a15968d450bd84b717f",
+      "manifest_sha256": "425ad50ce6897f082e2105053636ef387cb967203c544a15968d450bd84b717f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-long-descriptions-instead-of-id-when-available.mmd",
+      "family": "stateDiagram",
+      "sha256": "12a97bbc358f95b8d9acb8370fbd363e7e0ae60815489ff6b1e5f1cde3f33973",
+      "manifest_sha256": "12a97bbc358f95b8d9acb8370fbd363e7e0ae60815489ff6b1e5f1cde3f33973",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-long-descriptions-with-additional-descriptions.mmd",
+      "family": "stateDiagram",
+      "sha256": "8f0ef20d4f42cdc7ef17f7f8b7074fff3cdb88d3ffa4664c6b82e90512a4263d",
+      "manifest_sha256": "8f0ef20d4f42cdc7ef17f7f8b7074fff3cdb88d3ffa4664c6b82e90512a4263d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-note-with-multiple-lines-in-it.mmd",
+      "family": "stateDiagram",
+      "sha256": "9acea87225c0f959e17c6fa73827433eb7d224f2c48c95cdc6002f2c64f74b5e",
+      "manifest_sha256": "9acea87225c0f959e17c6fa73827433eb7d224f2c48c95cdc6002f2c64f74b5e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-simple-state-diagrams-2.mmd",
+      "family": "stateDiagram",
+      "sha256": "d2f71241a9d9bc1c91ac0bdcce8f7b47c932bab38a877e6664c8ba8703ce2039",
+      "manifest_sha256": "d2f71241a9d9bc1c91ac0bdcce8f7b47c932bab38a877e6664c8ba8703ce2039",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-simple-state-diagrams.mmd",
+      "family": "stateDiagram",
+      "sha256": "4b07085b70c74ef741c1d52a44014d41b022fdaa495112c500497e66d0f1788e",
+      "manifest_sha256": "4b07085b70c74ef741c1d52a44014d41b022fdaa495112c500497e66d0f1788e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-single-state-with-short-descriptions.mmd",
+      "family": "stateDiagram",
+      "sha256": "83c2f9d84f710436f562bdbd8978afc48df8df5e4277ae6d2fcfe36ce5b1b067",
+      "manifest_sha256": "83c2f9d84f710436f562bdbd8978afc48df8df5e4277ae6d2fcfe36ce5b1b067",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-state-with-a-note.mmd",
+      "family": "stateDiagram",
+      "sha256": "9531ea132ab4107cb89d1eeb9a573e4f54dbe4c6d464a45d5c246f5c82b295c0",
+      "manifest_sha256": "9531ea132ab4107cb89d1eeb9a573e4f54dbe4c6d464a45d5c246f5c82b295c0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-state-with-on-the-left-side-when-so-specified.mmd",
+      "family": "stateDiagram",
+      "sha256": "203bc05d8fa5afc42339e8a7008232629c37dc2708bcee8fb0c8c70d79b63809",
+      "manifest_sha256": "203bc05d8fa5afc42339e8a7008232629c37dc2708bcee8fb0c8c70d79b63809",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-transition-descriptions-with-new-lines.mmd",
+      "family": "stateDiagram",
+      "sha256": "d8467f15728ffa3f59f6598562de2055a5c050093a1382f0d9a460883df39c68",
+      "manifest_sha256": "d8467f15728ffa3f59f6598562de2055a5c050093a1382f0d9a460883df39c68",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-edge-literal-newline",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (edge label scan)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (edge label scan)",
+        "detail": "A literal backslash-n inside an edge label is not a decoded line break and the label scan rejects the token."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram/nightly-check/simplest-composite-state.mmd",
+      "family": "stateDiagram",
+      "sha256": "b2d46510b439f25b9d35c74f7a2695857eb8a598a09bb2abae754578d910f1e1",
+      "manifest_sha256": "b2d46510b439f25b9d35c74f7a2695857eb8a598a09bb2abae754578d910f1e1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-a-simple-state-diagrams-with-labels.mmd",
+      "family": "stateDiagram",
+      "sha256": "ba4df81bd51e6f5eb27e2155ab0a50ff8429e450a14f2b66db8ab766b1868255",
+      "manifest_sha256": "ba4df81bd51e6f5eb27e2155ab0a50ff8429e450a14f2b66db8ab766b1868255",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-native-routing-debt",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (relations_layout)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (relations_layout)",
+        "detail": "The parser accepts the graph but the bounded native router cannot place the multiple labeled fan-out edges (including labeled composite entry/exit rows) without overlap. Not predictable lexically; sha-bound independent review set."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-a-state-with-a-note-together-with-another-state.mmd",
+      "family": "stateDiagram",
+      "sha256": "da5c52f61aa323b4ebbab45b43c2fd3b1af3079782cb4d39fe194ae3aa9e1495",
+      "manifest_sha256": "da5c52f61aa323b4ebbab45b43c2fd3b1af3079782cb4d39fe194ae3aa9e1495",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-a-state-with-states-in-it.mmd",
+      "family": "stateDiagram",
+      "sha256": "6e0d7464684146bc3e189727b547be0e5798f494d48a8fa80dd5f0d64cb24634",
+      "manifest_sha256": "6e0d7464684146bc3e189727b547be0e5798f494d48a8fa80dd5f0d64cb24634",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-a-states-with-descriptions-including-multi-line-descriptions.mmd",
+      "family": "stateDiagram",
+      "sha256": "d5217e9f51e8ecfa7f11a4f3cf38a5e6365eb64da392cddde21b5b57737317de",
+      "manifest_sha256": "d5217e9f51e8ecfa7f11a4f3cf38a5e6365eb64da392cddde21b5b57737317de",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-composite-states.mmd",
+      "family": "stateDiagram",
+      "sha256": "c512386e92a656dcc486e843065695f0384d51e62fe22434724d9b0b9690a46d",
+      "manifest_sha256": "c512386e92a656dcc486e843065695f0384d51e62fe22434724d9b0b9690a46d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-native-routing-debt",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (relations_layout)",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (relations_layout)",
+        "detail": "The parser accepts the graph but the bounded native router cannot place the multiple labeled fan-out edges (including labeled composite entry/exit rows) without overlap. Not predictable lexically; sha-bound independent review set."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-concurrency-states.mmd",
+      "family": "stateDiagram",
+      "sha256": "cdde17d1b4ec8625178b26f02e51b81defeed533272e7e9b1fbb97fd6c484d90",
+      "manifest_sha256": "cdde17d1b4ec8625178b26f02e51b81defeed533272e7e9b1fbb97fd6c484d90",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-composite-divider",
+        "site": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
+        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
+        "detail": "A standalone '--' concurrency-region divider reaches edge parsing and is rejected."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-forks-and-joins.mmd",
+      "family": "stateDiagram",
+      "sha256": "720446399a881566a297294db6c211b832fe287e765016486fc505157f63a6d8",
+      "manifest_sha256": "720446399a881566a297294db6c211b832fe287e765016486fc505157f63a6d8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-fork-join-html-entity",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder rejects '<'/'>')",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder rejects '<'/'>')",
+        "detail": "The fork/join declaration is HTML-entity-encoded (&lt;&lt;fork&gt;&gt;); the terminal label decoder passes the entities literally and the state form is not recognized."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-forks-in-composit-states.mmd",
+      "family": "stateDiagram",
+      "sha256": "680e05b204658ff75db721de7ac3db6770aba1b2fdfc33c779bd5e0ffc122228",
+      "manifest_sha256": "680e05b204658ff75db721de7ac3db6770aba1b2fdfc33c779bd5e0ffc122228",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "state-fork-join-html-entity",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder rejects '<'/'>')",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder rejects '<'/'>')",
+        "detail": "The fork/join declaration is HTML-entity-encoded (&lt;&lt;fork&gt;&gt;); the terminal label decoder passes the entities literally and the state form is not recognized."
+      },
+      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-multiple-composit-states.mmd",
+      "family": "stateDiagram",
+      "sha256": "a060879343beae4859a915c89a024ffa3a600eb1945e958a6494e8b5a7adf3cf",
+      "manifest_sha256": "a060879343beae4859a915c89a024ffa3a600eb1945e958a6494e8b5a7adf3cf",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-state-descriptions.mmd",
+      "family": "stateDiagram",
+      "sha256": "9e67357a2999d865ba6b41e965bcd820294a9c2d9d3a05c0db21b82e0b417895",
+      "manifest_sha256": "9e67357a2999d865ba6b41e965bcd820294a9c2d9d3a05c0db21b82e0b417895",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "0"
+        }
+      ],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
+    }
+  ]
+}

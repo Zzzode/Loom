@@ -5473,6 +5473,31 @@ std::optional<bool> e2a_cohort_row(std::string_view path) {
     return found->second;
 }
 
+// RFC 0031 E2b reviewed cohort: state originals carrying exactly the
+// non-terminal config whitelist, with the disclosure footer.
+const std::map<std::string, bool>& e2b_cohort_map() {
+    static const std::map<std::string, bool> map = [] {
+        std::map<std::string, bool> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/e2b-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "E2b cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "E2b cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            rows.emplace(row.get_string("path"), row.get_string("prediction") == "predicted-draw");
+        });
+        return rows;
+    }();
+    return map;
+}
+
+std::optional<bool> e2b_cohort_row(std::string_view path) {
+    const auto& rows = e2b_cohort_map();
+    const auto found = rows.find(std::string(path));
+    if (found == rows.end()) return std::nullopt;
+    return found->second;
+}
+
 constexpr std::string_view kRequirementMarkdownPath =
     "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd";
 constexpr std::string_view kRequirementMarkdownSourceSha =
@@ -8012,6 +8037,29 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.source_sha256 = fixture.get_string("sha256");
                     row.expected = drawn ? "drawn" : "source";
                     row.reason = "RFC-0031 E2a reviewed cohort";
+                    const char* wide = drawn ? "drawn" : "source_fallback";
+                    row.status = {wide, "source_fallback", wide};
+                    row.expected_states = {drawn ? "drawn" : "source", "source",
+                                           drawn ? "drawn" : "source"};
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+            // RFC 0031 E2b: state originals with non-terminal config are
+            // governed by their own reviewed ledger; the per-row pixel and
+            // footer gate is test_mermaid_e2b_cohort.
+            if (class_path.is_str()) {
+                const auto cohort = e2b_cohort_row(class_path.as_str());
+                if (cohort) {
+                    const bool drawn = *cohort;
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = (*fs::path(row.path).begin()).string();
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = drawn ? "drawn" : "source";
+                    row.reason = "RFC-0031 E2b reviewed cohort";
                     const char* wide = drawn ? "drawn" : "source_fallback";
                     row.status = {wide, "source_fallback", wide};
                     row.expected_states = {drawn ? "drawn" : "source", "source",

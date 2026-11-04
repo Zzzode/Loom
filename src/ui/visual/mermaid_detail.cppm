@@ -370,6 +370,9 @@ struct RelationDiagram {
     std::vector<StateScopeDirection> state_scope_directions;
     std::vector<int> class_typed_entities;
     std::vector<StateTextRecord> state_texts;
+    // RFC 0031 E2b: accepted non-terminal frontmatter leaves on state
+    // sources, projected to the user as a bounded disclosure footer.
+    std::vector<std::string> state_config_notices;
     std::unique_ptr<ClassDirectStyles> direct_styles;
     std::optional<std::string_view> state_direction(int owner, Work& work) const;
     std::optional<std::size_t> state_text_index(int target, Work& work) const;

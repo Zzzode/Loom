@@ -1540,6 +1540,9 @@ bool flow_envelope_parse_prepay(std::string_view body, Work& work) {
 struct FlowEnvelope {
     std::string_view body;
     std::optional<std::string> title;
+    // B6: the frontmatter explicitly selected dagre. Only these configured
+    // whole sources are eligible for the untrusted-compound fallback gate.
+    bool dagre_layout = false;
 };
 
 std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& work) {
@@ -1743,7 +1746,7 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
         dagre_title_top_margin_zero ||
         (description &&
          (courier_only || courier_nested_false || logging_false || both_false || strict))) {
-        FlowEnvelope result{envelope->raw_body, {}};
+        FlowEnvelope result{envelope->raw_body, {}, (fields & Layout) != 0u};
         if (title) {
             const auto& value = envelope->title->text;
             if (!work.spend(value.size() * 8u + sizeof(std::string) + 128u)) return {};
@@ -3320,6 +3323,78 @@ bool paint_flow_styles(Canvas& canvas, const Diagram& graph, const FlowStyles& s
     return true;
 }
 
+// B6 dagre Flow admission gate. The terminal layout is not dagre: it ranks
+// child group frames as atomic quotient items but routes vertex connectors
+// to the real descendant boxes, so a connector between two disjoint nested
+// subtrees overpaints frame walls/title bands that no rank reserved. This
+// is a POSITIVE, structural gate for the two compound profiles known to be
+// unfaithful, evaluated only for a whole source whose frontmatter selected
+// dagre. It never keys on `layout: dagre` alone (many dagre-flagged flows
+// paint faithfully), and it runs only on the configured envelope path, so
+// frontmatter-stripped body diagnostics and bare/ASCII graphs are exempt.
+// Returns true when the configured whole source must stay whole-null
+// (ordinary fallback). A Work exhaustion is a safe whole-source reject.
+bool flow_untrusted_dagre_compound(const Diagram& graph, Work& work) {
+    const std::size_t vertices = graph.vertices.size(), groups = graph.groups.size(),
+                      edges = graph.edges.size();
+    if (!work.spend(vertices * 16u + edges * 16u + groups * 32u + 512u)) return true;
+    if (groups == 0u) return false;
+
+    auto is_ancestor = [&](int ancestor, int descendant) {
+        for (int node = descendant, hops = 0; node >= 0 && hops <= static_cast<int>(groups);
+             ++hops, node = graph.groups[static_cast<std::size_t>(node)].parent)
+            if (node == ancestor) return true;
+        return false;
+    };
+    auto owner_group = [&](const Endpoint& endpoint) -> int {
+        if (endpoint.kind != EndpointKind::Vertex || endpoint.index >= vertices) return -1;
+        return graph.vertices[endpoint.index].group;
+    };
+
+    // Clause D: a vertex edge between two disjoint owner groups, both nested
+    // below root (the route crosses each leaf frame and an unreserved
+    // enclosing interior).
+    for (const auto& edge : graph.edges) {
+        const int a = owner_group(edge.from), b = owner_group(edge.to);
+        if (a >= 0 && b >= 0 && a != b && graph.groups[static_cast<std::size_t>(a)].parent >= 0 &&
+            graph.groups[static_cast<std::size_t>(b)].parent >= 0 && !is_ancestor(a, b) &&
+            !is_ancestor(b, a))
+            return true;
+    }
+
+    // Clause T: external u->v plus a shortcut u->m->v through one member m
+    // of a group neither u nor v belongs to (the group frame is forced into
+    // an intermediate rank while connectors reach the real in-frame box).
+    auto subtree_contains_vertex = [&](int group, std::size_t vertex) {
+        for (int node = graph.vertices[vertex].group, hops = 0;
+             node >= 0 && hops <= static_cast<int>(groups);
+             ++hops, node = graph.groups[static_cast<std::size_t>(node)].parent)
+            if (node == group) return true;
+        return false;
+    };
+    // A vertex edge matches a given endpoint.
+    auto edge_between = [&](std::size_t from, std::size_t to) {
+        const Endpoint a{EndpointKind::Vertex, from}, b{EndpointKind::Vertex, to};
+        return std::ranges::any_of(graph.edges,
+                                   [&](const Edge& edge) { return edge.from == a && edge.to == b; });
+    };
+    for (std::size_t m = 0; m < vertices; ++m) {
+        const int member_group = graph.vertices[m].group;
+        if (member_group < 0) continue;
+        for (std::size_t u = 0; u < vertices; ++u) {
+            if (u == m || !edge_between(u, m) || subtree_contains_vertex(member_group, u))
+                continue;
+            for (std::size_t v = 0; v < vertices; ++v) {
+                if (v == m || v == u || !edge_between(m, v) ||
+                    subtree_contains_vertex(member_group, v))
+                    continue;
+                if (edge_between(u, v)) return true;
+            }
+        }
+    }
+    return false;
+}
+
 std::optional<std::vector<std::string>>
 flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nullptr,
             const FlowStyles* source_styles = nullptr,
@@ -4562,6 +4637,10 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             if (!envelope || !flow_envelope_parse_prepay(envelope->body, work)) return {};
             const auto diagram = parse(envelope->body, work, true, &flow_styles);
             if (!diagram) return {};
+            // B6: keep configured dagre compound graphs the terminal router
+            // paints unfaithfully whole-null (ordinary fallback); bare/body
+            // paths never set the dagre bit and are unaffected.
+            if (envelope->dagre_layout && flow_untrusted_dagre_compound(*diagram, work)) return {};
             lines = flow_layout(*diagram, work, nullptr, flow_styles.get(), &styles);
             if (lines && envelope->title && !prepend_flow_title(*lines, *envelope->title, work))
                 return {};

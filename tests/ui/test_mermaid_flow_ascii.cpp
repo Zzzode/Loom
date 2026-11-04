@@ -1068,4 +1068,56 @@ TEST(MermaidFlowAsciiGrid18, OriginalSkipEdgeAllSixDeclarationOrders) {
     run_skip_function(2u);
 }
 
+
+// B6 dagre Flow gate: compound nested-subgraph profiles the non-dagre router
+// paints unfaithfully stay whole-null for the CONFIGURED whole source, while
+// the frontmatter-stripped body and structurally simple/shallower siblings
+// keep rendering. Verified against upstream dagre Chromium geometry.
+TEST(MermaidFlowDagreCompoundGate, UntrustedNestedCompoundsStayWholeNull) {
+    using loom::ui::mermaid::render_mermaid;
+    constexpr std::string_view kFm =
+        "---\ndescription:\n  multi line folded\n  description text\nconfig:\n  layout: dagre\n  flowchart:\n"
+        "    titleTopMargin: 0\n---\n";
+    auto draws = [&](std::string_view body) {
+        const std::string source = std::string(kFm) + std::string(body);
+        return render_mermaid(source, ftxui::text("FB"), false).has_value();
+    };
+    // Clause D: three duplicate edges from a deeply nested leaf group into a
+    // disjoint deeply nested leaf group (6088-2).
+    const std::string clause_d =
+        "flowchart LR\n  a\n  subgraph s0[\"A\"]\n  subgraph s8[\"A\"]\n  subgraph s1[\"A\"]\n"
+        "  D{\"X\"}\n  E[Q]\n  end\n  subgraph s3[\"B\"]\n  F[Q]\n  I\n  end\n"
+        "      D --> I\n      D --> I\n      D --> I\n  I{\"X\"}\n  end\n  end\n";
+    EXPECT_FALSE(draws(clause_d));
+    // Clause T: external C shortcut triangle C-D, C-E, D-E through D's group.
+    const std::string clause_t =
+        "flowchart LR\n  subgraph g[\"Untitled subgraph\"]\n        D[\"Option 1\"]\n  end\n"
+        "    C{\"E\"} -- One --> D\n    C -- Two --> E(\"Option 2\")\n    D --> E\n      A[\"A\"]\n";
+    EXPECT_FALSE(draws(clause_t));
+    // Depth-1 cross-sibling member edges still render (57-style): groups one,
+    // two, three are direct children of root (parent == -1).
+    const std::string depth_one =
+        "flowchart TB\n  c1-->a2\n  subgraph one\n  a1-->a2\n  end\n  subgraph two\n  b1-->b2\n  end\n"
+        "  subgraph three\n  c1-->c2\n  end\n  one --> two\n  three --> two\n  two --> c2\n";
+    EXPECT_TRUE(draws(depth_one));
+    // A member edge that only leaves the group one-way (no external triangle)
+    // still renders.
+    const std::string one_way =
+        "flowchart LR\n  subgraph g[\"G\"]\n  D[\"D\"]\n  end\n  D --> E[\"E\"]\n";
+    EXPECT_TRUE(draws(one_way));
+    // No groups at all: gate never fires even with dagre config.
+    EXPECT_TRUE(draws("flowchart LR\n  A --> B\n  A --> C\n"));
+}
+
+TEST(MermaidFlowDagreCompoundGate, FrontmatterStrippedBodyIsExempt) {
+    using loom::ui::mermaid::render_mermaid;
+    // The exact 6088-2 body (no frontmatter) is an admitted, snapshot-pinned
+    // drawn body; the gate applies only to the configured whole source.
+    const std::string body =
+        "flowchart LR\n  a\n  subgraph s0[\"A\"]\n  subgraph s8[\"A\"]\n  subgraph s1[\"A\"]\n"
+        "  D{\"X\"}\n  E[Q]\n  end\n  subgraph s3[\"B\"]\n  F[Q]\n  I\n  end\n"
+        "      D --> I\n      D --> I\n      D --> I\n  I{\"X\"}\n  end\n  end\n";
+    EXPECT_TRUE(render_mermaid(body, ftxui::text("FB"), false).has_value());
+}
+
 }  // namespace

@@ -3917,7 +3917,8 @@ std::optional<ftxui::Element> detail::finish_native_layout(std::optional<NativeL
         return finish_mermaid_payload(
             LayoutPayload{std::move(layout->rows), std::move(layout->packed_styles)},
             std::move(fallback), work, trace, layout->packed_meter,
-            layout->packed_meter == PackedMeter::Er ? &layout->payload_prepaid : nullptr);
+            layout->packed_meter == PackedMeter::Er ? &layout->payload_prepaid : nullptr,
+            layout->packed_meter == PackedMeter::Block ? &layout->payload_work : nullptr);
     }
     if (!layout->styles) return finish_legacy_rows(std::move(layout->rows), std::move(fallback));
     if (trace) {
@@ -4226,14 +4227,20 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
 
 bool detail::valid_packed_rows(const std::vector<std::string>& rows,
                                const std::vector<std::uint16_t>& styles, Work& work,
-                               std::size_t* prepaid) {
+                               std::size_t* prepaid, Work* prep_sink) {
     const auto deduct = [&](std::size_t charge) {
+        // The sole call site routes one family at a time: ER carries the
+        // prepaid credit, Block carries the preparation sink; never both
+        // (credit would otherwise be consumed but ignored).
+        assert(!(prepaid != nullptr && prep_sink != nullptr));
         std::size_t credit = 0u;
         if (prepaid) {
             credit = std::min(charge, *prepaid);
             *prepaid -= credit;
         }
-        return work.spend(charge - credit);
+        // D-035 batch 2: Block routes gate charges to its own preparation
+        // meter; every other family keeps them on layout Work.
+        return (prep_sink ? prep_sink->spend(charge) : work.spend(charge - credit));
     };
     if (rows.size() > kHeightLimit || !deduct(rows.size() * 32u + 128u)) return false;
     std::size_t bytes_to_scan = 0;
@@ -4285,7 +4292,8 @@ std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<Layou
                                                              ftxui::Element fallback, Work& work,
                                                              FinalEmissionTrace* trace,
                                                              PackedMeter meter,
-                                                             std::size_t* prepaid) {
+                                                             std::size_t* prepaid,
+                                                             Work* external_meter) {
     if (!fallback || !payload || payload->rows.empty()) return {};
     if (payload->styles.empty())
         return finish_legacy_rows(std::move(payload->rows), std::move(fallback));
@@ -4301,7 +4309,7 @@ std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<Layou
         // box cells add one bold node (style bit 10): +128 -> 544U.
         constexpr std::size_t kRunElementEr = 416u, kRunElementBlock = 544u;
         const std::size_t limit = meter == PackedMeter::Er ? kErElementWorkLimit
-                                                            : kBlockElementWorkLimit;
+                                                            : kBlockPayloadWorkLimit;
         static_assert(kErElementWorkLimit ==
                           320u * static_cast<std::size_t>(kHeightLimit) + 512u +
                               kRunElementEr * static_cast<std::size_t>(kWidthLimit) *
@@ -4314,6 +4322,10 @@ std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<Layou
                       "D-035 Block ElementWork cap derivation");
         if (trace && trace->element_work)
             element_meter = trace->element_work;
+        else if (external_meter)
+            // D-035 batch 2 Block: the preparation meter created before the
+            // gates (or reconstructed on a cache hit) continues here.
+            element_meter = external_meter;
         else {
             owned_element_work.remaining = limit;
             element_meter = &owned_element_work;
@@ -4368,8 +4380,9 @@ std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<Layou
     };
     // ER-only: duplicated 8B/256U bookkeeping stays on layout Work, deducted
     // from the ErPaint prepaid credit. A zero residual is already covered and
-    // does not spend. Block has no producer prepayment: its bookkeeping is
-    // charged in full via pay().
+    // does not spend. D-035 batch 2 leaves Block out of this lambda: Block's
+    // bookkeeping rides the payload meter via pay_element (pay_bookkeeping
+    // below selects the route), so Block finish never touches layout Work.
     const auto pay_credited = [&](std::size_t amount) {
         const std::size_t credit = prepaid ? std::min(amount, *prepaid) : 0u;
         if (prepaid) *prepaid -= credit;
@@ -4413,10 +4426,17 @@ std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<Layou
         preflight_slot += cells;
         if (metered) {
             // Element first: a meter refusal leaves the layout Work untouched.
-            if (!pay_element(128u) || !pay_credited(line.size() * 8u)) return {};
-            // run_bookkeeping is duplicate run enumeration (Work, ER-credited);
-            // run_element funds the real node children (ElementWork).
-            if (!pay_element(runs * run_element) || !pay_credited(runs * run_bookkeeping))
+            if (!pay_element(128u)) return {};
+            // ER's bookkeeping is duplicated ErPaint work on layout Work
+            // (credited). Block's whole preparation is on its own meter
+            // (D-035 batch 2), including the byte rescan and run enumeration.
+            const auto pay_bookkeeping = [&](std::size_t amount) {
+                return meter == PackedMeter::Er ? pay_credited(amount)
+                                                : pay_element(amount);
+            };
+            if (!pay_bookkeeping(line.size() * 8u)) return {};
+            if (!pay_element(runs * run_element) ||
+                !pay_bookkeeping(runs * run_bookkeeping))
                 return {};
         } else {
             if (!pay(line.size() * 8u + 128u)) return {};
@@ -4505,6 +4525,10 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
     // charges and rejections are unchanged.
     std::size_t payload_prepaid = 0u;
     PackedMeter packed_meter = PackedMeter::Off;
+    // D-035 batch 2: Block-only preparation meter, funding the two packed
+    // gates and finish bookkeeping/Element fees. Stays default (and unused)
+    // for every other family.
+    Work payload_work;
     bool er_packed = false;
     if (source.empty() || source.size() > kSourceLimit) return {};
     if (use_ascii) {
@@ -4564,6 +4588,10 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             lines = std::move(payload->rows);
             packed_styles = std::move(payload->styles);
             packed_meter = PackedMeter::Block;
+            // D-035 batch 2: every post-parser packed cost (gates + finish
+            // preparation) runs on its own bounded meter, keeping dense
+            // themed composites inside the fixed layout Work pool.
+            payload_work.remaining = kBlockPayloadWorkLimit;
             break;
         }
         case detail::MermaidProbeFamily::Mindmap:
@@ -4580,17 +4608,21 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
     if (er_packed) packed_meter = PackedMeter::Er;
     if (packed_styles.empty()) packed_meter = PackedMeter::Off;
     NativeLayout result{std::move(*lines), std::move(styles), 0u, std::move(packed_styles),
-                        packed_meter, payload_prepaid};
+                        packed_meter, payload_prepaid, std::move(payload_work), 0u};
+    Work* const block_prep =
+        result.packed_meter == PackedMeter::Block ? &result.payload_work : nullptr;
     if (!result.packed_styles.empty() &&
         (result.styles ||
          !valid_packed_rows(result.rows, result.packed_styles, work,
-                            er_packed ? &result.payload_prepaid : nullptr)))
+                            er_packed ? &result.payload_prepaid : nullptr, block_prep)))
         return {};
     if (!prepay_styled_payload(result, source.size(), work,
-                               er_packed ? &result.payload_prepaid : nullptr))
+                               er_packed ? &result.payload_prepaid : nullptr, block_prep))
         return {};
     if (result.styles || !result.packed_styles.empty())
         result.measured_layout_work = starting_work - work.remaining;
+    if (result.packed_meter == PackedMeter::Block)
+        result.measured_payload_work = kBlockPayloadWorkLimit - result.payload_work.remaining;
     return result;
 }
 

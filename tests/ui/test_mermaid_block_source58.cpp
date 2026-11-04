@@ -609,10 +609,12 @@ TEST(MermaidBlockSource58Controls, PriorEdgeCaptionAndItsSideCellsSurviveLaterRo
     rejects(28, 1, "─");  // The second caption's side reservation is observable.
 }
 
-// D-035 batch 1: Block packed Element emission runs on its own bounded meter,
-// parallel to the ADR 0032 ER ElementWork seam. Real Element fees leave the
-// 1,000,000 layout Work pool; the duplicated byte/run bookkeeping stays on
-// layout Work in full (Block has no producer prepayment).
+// D-035 batch 2: the Block packed path runs one independent bounded meter
+// for EVERY post-block_layout cost: the two packed gates, the duplicated
+// 8B/256U finish bookkeeping and the real Element fees (kBlockPayloadWorkLimit
+// = 224,107,664, derived from the 240x1024 canvas with B <= 3*S + source and
+// capacity-growth terms). The 1,000,000 layout Work pool funds
+// parsing/block_layout only; finish never debits it for Block.
 namespace {
 namespace mt = loom::ui::mermaid::testing;
 
@@ -632,19 +634,27 @@ TEST(MermaidBlockElementWork, PackedPublicRenderUsesIndependentBlockMeter) {
     EXPECT_TRUE(trace.styled_entered);
     EXPECT_TRUE(trace.element_active);
     EXPECT_TRUE(trace.preflight_complete);
-    EXPECT_EQ(trace.element_cap, mt::kBlockElementWorkLimit);
     EXPECT_EQ(trace.element_failed, 0u);
+    // Gate charges were already drawn before finish entry: the observed cap
+    // is the post-gate balance, and both phases close inside the fixed cap.
+    const std::size_t gate_used = mt::kBlockPayloadWorkLimit - trace.element_cap;
+    EXPECT_GT(gate_used, 0u);
     EXPECT_GT(trace.element_debit, 0u);
-    // No ER prepayment exists for Block: every bookkeeping debit hits Work.
-    EXPECT_EQ(trace.preflight_debits, trace.successful_debits);
-    // The 8B/256U bookkeeping remains on layout Work; only element fees moved.
-    EXPECT_GT(trace.emission_debit, 0u);
+    EXPECT_LE(trace.element_debit, trace.element_cap);
+    EXPECT_LE(gate_used + trace.element_debit, mt::kBlockPayloadWorkLimit);
+    // Batch 2: Block finish draws nothing from layout Work — no ER-style
+    // prepayment exists, every preflight/Element fee rides the payload meter.
+    EXPECT_EQ(trace.emission_debit, 0u);
+    EXPECT_EQ(trace.preflight_debits, 0u);
+    EXPECT_EQ(trace.successful_debits, 0u);
+    EXPECT_EQ(trace.failed_debit, 0u);
 }
 
 TEST(MermaidBlockElementWork, StyleBitBoldIsAcceptedAndMeterIsBounded) {
     // Edge bold (block-arrow with =) produces style bit 10, which the ER
     // guard rejects but the Block meter must admit; cells still land within
-    // bits 0-10 and the derived cap applies.
+    // bits 0-10. kBlockElementWorkLimit stays the derived Element-fee
+    // component of the batch-2 payload cap (gates/bookkeeping excluded).
     constexpr std::string_view raw =
         "block-beta\ncolumns 1\nA ==> B\n";
     mt::Work work;
@@ -657,55 +667,53 @@ TEST(MermaidBlockElementWork, StyleBitBoldIsAcceptedAndMeterIsBounded) {
         320u * 1024u + 512u + 544u * 240u * 1024u;
     static_assert(mt::kBlockElementWorkLimit == kExpectedCap);
     static_assert(mt::kBlockElementWorkLimit > mt::kErElementWorkLimit);
+    static_assert(mt::kBlockPayloadWorkLimit > mt::kBlockElementWorkLimit);
 }
 
 TEST(MermaidBlockElementWork, ExactAndOneUnitShortForBothMetersOver58Pins) {
-    std::size_t admitted = 0u, metered_residual = 0u, layout_residual = 0u;
+    std::size_t admitted = 0u;
+    std::size_t max_layout = 0u, max_gate = 0u, max_finish = 0u, max_payload = 0u;
     for (const auto& pin : block::kPins) {
         SCOPED_TRACE(pin.path);
         const std::string raw = read_pin_raw(pin.path);
-        // First pass measures both meter totals on the genuine pipeline.
+        // First pass measures both meters on the genuine pipeline.
         mt::Work measured;
         mt::FinalEmissionTrace probe;
         auto reference =
             mt::render_mermaid_with_work(raw, ftxui::text("fallback"), false, measured,
                                          &probe);
-        if (!reference) {
-            // Batch 2 residual: rejected before Element emission (layout
-            // overshoot, meter inactive) or, for the four redux-container
-            // sources, on the 256U/run bookkeeping that stays on layout Work.
-            if (probe.element_active) {
-                // Batch 2: the 256U/run bookkeeping (real on Block — no
-                // ErPaint-equivalent prepayment) still lives on layout Work.
-                EXPECT_EQ(probe.element_failed, 0u) << pin.path;
-                EXPECT_GT(probe.failed_debit, 0u) << pin.path;
-                ++metered_residual;
-            } else {
-                // Batch 2: layout-layer overshoot before Element emission.
-                ++layout_residual;
-            }
-            continue;
-        }
+        // D-035 batch 2 acceptance: every pin admits at the fixed 1,000,000
+        // layout Work pool — the gates and finish fees ride the independent
+        // Block payload meter. No residual classification remains.
+        ASSERT_TRUE(reference) << pin.path;
         ASSERT_TRUE(probe.element_active) << pin.path;
         const std::size_t layout_used = mt::kWorkLimit - measured.remaining;
-        const std::size_t element_used = probe.element_debit;
+        const std::size_t gate_used = mt::kBlockPayloadWorkLimit - probe.element_cap;
+        const std::size_t finish_used = probe.element_debit;
         ASSERT_GT(layout_used, 0u);
-        ASSERT_GT(element_used, 0u);
-        EXPECT_LT(element_used, mt::kBlockElementWorkLimit);
+        ASSERT_GT(gate_used, 0u);
+        ASSERT_GT(finish_used, 0u);
+        // The whole post-parser preparation closes inside the derived cap.
+        EXPECT_LE(gate_used + finish_used, mt::kBlockPayloadWorkLimit) << pin.path;
+        max_layout = std::max(max_layout, layout_used);
+        max_gate = std::max(max_gate, gate_used);
+        max_finish = std::max(max_finish, finish_used);
+        max_payload = std::max(max_payload, gate_used + finish_used);
 
-        // Exact layout budget admits. (A one-unit-short layout Work is not a
-        // hard rejection on the public pipeline: fees fall across several
-        // phases with slack, unlike the packed Element preflight whose
-        // exact/short invariant is asserted separately below.)
+        // Exact layout budget admits with zero remainder (Block finish never
+        // touches layout Work); the pipeline is a deterministic fee sequence.
         mt::Work exact{layout_used};
         EXPECT_TRUE(mt::render_mermaid_with_work(raw, ftxui::text("fallback"), false,
                                                  exact));
+        EXPECT_EQ(exact.remaining, 0u);
 
-        // Exact Element budget admits via the injected seam; one unit short is
-        // a meter refusal, independent of the ample layout budget.
+        // Exact FINISH meter budget admits via the injected seam; one unit
+        // short is a meter refusal independent of the ample layout budget.
+        // (The injection governs finish fees; the gates re-run against the
+        // internal meter at full cap and are not part of this budget.)
         {
             mt::Work layout{50'000'000u};
-            mt::Work element{element_used};
+            mt::Work element{finish_used};
             mt::FinalEmissionTrace injected;
             injected.element_work = &element;
             EXPECT_TRUE(mt::render_mermaid_with_work(raw, ftxui::text("fallback"), false,
@@ -714,7 +722,7 @@ TEST(MermaidBlockElementWork, ExactAndOneUnitShortForBothMetersOver58Pins) {
         }
         {
             mt::Work layout{50'000'000u};
-            mt::Work element{element_used - 1u};
+            mt::Work element{finish_used - 1u};
             mt::FinalEmissionTrace injected;
             injected.element_work = &element;
             EXPECT_FALSE(mt::render_mermaid_with_work(raw, ftxui::text("fallback"), false,
@@ -723,13 +731,21 @@ TEST(MermaidBlockElementWork, ExactAndOneUnitShortForBothMetersOver58Pins) {
         }
         ++admitted;
     }
-    // D-035 batch 1 measured: 51/58 pins admit at the fixed 1,000,000 Work
-    // pool (47 before + 4 newly admitted). The seven residual pins split as
-    // designed: three layout-layer overshoots and four 256U/run bookkeeping
-    // cases, all deferred to batch 2.
-    EXPECT_EQ(admitted, 51u);
-    EXPECT_EQ(layout_residual, 3u);
-    EXPECT_EQ(metered_residual, 4u);
+    // D-035 batch 2: 58/58 pins admit (51 after batch 1; the three gate
+    // overshoots and four 256U/run bookkeeping tails now ride the payload
+    // meter), all with exact/one-unit-short invariants on both meters.
+    EXPECT_EQ(admitted, 58u);
+    std::cout << "BLOCK58_PAYLOAD_SUMMARY admitted=" << admitted
+              << " max_layout=" << max_layout << " max_gate=" << max_gate
+              << " max_finish=" << max_finish << " max_payload=" << max_payload
+              << " cap=" << mt::kBlockPayloadWorkLimit
+              << " margin=" << (mt::kBlockPayloadWorkLimit - max_payload) << '\n';
+    RecordProperty("max_layout_work", max_layout);
+    RecordProperty("max_gate_work", max_gate);
+    RecordProperty("max_finish_work", max_finish);
+    RecordProperty("max_payload_work", max_payload);
+    RecordProperty("payload_work_cap", mt::kBlockPayloadWorkLimit);
+    RecordProperty("payload_work_margin", mt::kBlockPayloadWorkLimit - max_payload);
 }
 
 TEST(MermaidBlockElementWork, CacheHitRebuildsElementsOnFreshMeter) {
@@ -749,6 +765,9 @@ TEST(MermaidBlockElementWork, CacheHitRebuildsElementsOnFreshMeter) {
     // ElementWork is recharged in full on the hit; layout Work only pays the
     // cached measured layout.
     EXPECT_EQ(hit_trace.element_debit, miss_trace.element_debit);
+    // Batch 2: the hit rebuilds the preparation meter at the same post-gate
+    // balance (gates are not re-run), so finish observes an identical cap.
+    EXPECT_EQ(hit_trace.element_cap, miss_trace.element_cap);
     // Block has no prepaid gate credit: hit re-debits the full measured
     // layout Work, identical to the miss (Elements are rebuilt either way).
     EXPECT_EQ(hit.remaining, miss.remaining);

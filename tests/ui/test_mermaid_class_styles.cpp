@@ -1724,7 +1724,10 @@ TEST(MermaidPackedIntegration, SharedLedgerPrepaysFinalEmissionAndCacheHitCopies
     ASSERT_TRUE(full.preflight_complete);
     ASSERT_TRUE(full.allocation_started);
     ASSERT_TRUE(full.returned_native);
-    ASSERT_GT(full.emission_debit, 0u);
+    // D-035 batch 2: Block finish rides the payload meter; the layout Work
+    // ledger in finish stays empty while the payload ledger is nonempty.
+    ASSERT_EQ(full.emission_debit, 0u);
+    ASSERT_GT(full.element_debit, 0u);
     const auto spent = testing::kWorkLimit - measured.remaining;
     testing::Work exact{spent};
     testing::FinalEmissionTrace exact_trace;
@@ -1734,11 +1737,12 @@ TEST(MermaidPackedIntegration, SharedLedgerPrepaysFinalEmissionAndCacheHitCopies
     testing::FinalEmissionTrace cut_trace;
     EXPECT_FALSE(
         testing::render_mermaid_with_work(source, fallback, false, short_work, &cut_trace));
-    EXPECT_TRUE(cut_trace.styled_entered);
+    // The marginal fee now sits in the layout phase (parse/block_layout):
+    // finish is never entered, so every finish observation stays reset.
+    EXPECT_FALSE(cut_trace.styled_entered);
     EXPECT_FALSE(cut_trace.preflight_complete);
     EXPECT_FALSE(cut_trace.allocation_started);
     EXPECT_FALSE(cut_trace.returned_native);
-    EXPECT_EQ(cut_trace.failed_debit, full.last_debit);
     loom::ui::mermaid::LayoutRowsCache cold(4u, 1u << 20u);
     testing::Work exhausted{1u};
     EXPECT_FALSE(testing::CacheBudgetAccess::render(cold, source, false, fallback, exhausted));
@@ -1748,7 +1752,9 @@ TEST(MermaidPackedIntegration, SharedLedgerPrepaysFinalEmissionAndCacheHitCopies
     EXPECT_EQ(cold.size(), 1u);
     loom::ui::mermaid::LayoutRowsCache cache(4u, 1u << 20u);
     testing::Work miss;
-    ASSERT_TRUE(testing::CacheBudgetAccess::render(cache, source, false, fallback, miss));
+    testing::FinalEmissionTrace miss_trace;
+    ASSERT_TRUE(testing::CacheBudgetAccess::render(cache, source, false, fallback, miss,
+                                                   &miss_trace));
     EXPECT_EQ(cache.size(), 1u);
     EXPECT_GT(cache.byte_size(), source.size());
     testing::Work hit;
@@ -1757,6 +1763,10 @@ TEST(MermaidPackedIntegration, SharedLedgerPrepaysFinalEmissionAndCacheHitCopies
         testing::CacheBudgetAccess::render(cache, source, false, fallback, hit, &hit_trace));
     EXPECT_EQ(hit.remaining, miss.remaining);
     EXPECT_EQ(hit_trace.emission_debit, full.emission_debit);
+    // The hit rebuilds the payload meter at the post-gate balance: identical
+    // cap and identical finish fees to the miss.
+    EXPECT_EQ(hit_trace.element_cap, miss_trace.element_cap);
+    EXPECT_EQ(hit_trace.element_debit, full.element_debit);
     EXPECT_EQ(cache.hits(), 1u);
     testing::Work insufficient{spent - 1u};
     testing::FinalEmissionTrace cached_cut;

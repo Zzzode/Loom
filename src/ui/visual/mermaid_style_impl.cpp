@@ -688,7 +688,7 @@ std::optional<std::size_t> styled_payload_bytes(const NativeLayout& layout,
 }
 
 bool prepay_styled_payload(NativeLayout& layout, std::size_t source_bytes, Work& work,
-                           std::size_t* prepaid) {
+                           std::size_t* prepaid, Work* prep_sink) {
     if (!layout.styles && layout.packed_styles.empty()) return true;
     const auto bytes = styled_payload_bytes(layout, source_bytes);
     if (!bytes) return false;
@@ -697,7 +697,11 @@ bool prepay_styled_payload(NativeLayout& layout, std::size_t source_bytes, Work&
         return false;
     if (prepaid)
         charge -= std::min(charge, *prepaid);
-    if (!work.spend(charge)) return false;
+    if (prep_sink) {
+        if (!prep_sink->spend(charge)) return false;
+    } else {
+        if (!work.spend(charge)) return false;
+    }
     return true;
 }
 

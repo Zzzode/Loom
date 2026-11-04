@@ -56,8 +56,13 @@ struct LayoutRowsCache::Impl {
         // Metered packed family (ADR 0032 ER; D-035 batch 1 Block): on a hit
         // the Element tree is rebuilt and ElementWork is charged afresh;
         // payload_prepaid holds the ER post-gate bookkeeping remainder.
+        // D-035 batch 2 Block: payload_work_used is the gate debit recorded
+        // against the independent preparation meter on the miss; the hit
+        // rebuilds that meter at cap-minus-used so finish draws the same
+        // remaining balance without re-running the gates.
         detail::PackedMeter packed_meter = detail::PackedMeter::Off;
         std::size_t payload_prepaid = 0u;
+        std::size_t payload_work_used = 0u;
         std::size_t bytes = 0;
 
         [[nodiscard]] bool matches(std::uint64_t h, std::string_view src,
@@ -129,16 +134,34 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
             return {};
         lru.splice(lru.end(), lru, found->second);
         ++hit_count;
+        // Block hits do not re-run the preparation gates; rebuild the meter at
+        // the post-gate balance the miss recorded. Other families leave it
+        // defaulted and untouched.
+        detail::Work payload_work;
+        if (entry.packed_meter == detail::PackedMeter::Block)
+            payload_work.remaining = detail::kBlockPayloadWorkLimit - entry.payload_work_used;
         return detail::NativeLayout{entry.rows,
                                     entry.styles,
                                     entry.layout_work,
                                     entry.packed_styles,
                                     entry.packed_meter,
-                                    entry.payload_prepaid};
+                                    entry.payload_prepaid,
+                                    std::move(payload_work),
+                                    entry.packed_meter == detail::PackedMeter::Block
+                                        ? entry.payload_work_used
+                                        : 0u};
     }
     ++miss_count;
     auto computed = detail::layout_mermaid_content(source, use_ascii, work);
-    // Exhaustion is a call-local outcome, never a semantic rejection cache entry.
+    // Layout-Work exhaustion is a call-local outcome, never a semantic
+    // rejection cache entry: the next call may bring a larger budget.
+    // D-035 batch 2: a Block payload-meter refusal leaves layout Work
+    // unfinished, but it is still deterministic across calls — a hit
+    // rebuilds the meter at exactly the miss's post-gate balance (cap minus
+    // measured_payload_work) and re-runs the same source-derived fee
+    // sequence, so miss failure and hit outcome cannot diverge; the
+    // static_assert-derived canvas cap keeps that refusal unreachable for
+    // any admitted geometry regardless.
     if (!computed && work.remaining == 0u) return {};
     auto fresh = computed ? std::move(*computed) : detail::NativeLayout{};
     const auto measured = (fresh.styles || !fresh.packed_styles.empty())
@@ -161,6 +184,7 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
         Entry entry{std::string(source), hash,           use_ascii,
                     fresh.rows,          fresh.styles,   fresh.measured_layout_work,
                     fresh.packed_styles, fresh.packed_meter, fresh.payload_prepaid,
+                    fresh.measured_payload_work,
                     fresh_bytes};
         lru.push_back(std::move(entry));
         auto inserted = std::prev(lru.end());

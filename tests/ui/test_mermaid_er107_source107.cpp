@@ -904,9 +904,10 @@ TEST(MermaidEr107ElementWork, All107PublicRendersExposeExactAndOneShortElementBu
     RecordProperty("max_layout_work", max_layout);
 }
 
-// D-035 batch 1: Block shares the packed finish and now activates its OWN
-// ElementWork meter (bold-capable 544U/run, kBlockElementWorkLimit), never
-// the ER one; the uncredited 8B/256U bookkeeping stays on layout Work.
+// D-035 batch 2: Block activates its OWN bounded preparation meter
+// (kBlockPayloadWorkLimit), never the ER one. It funds both packed gates,
+// the bold-capable 544U/run Element fees and the uncredited 8B/256U
+// bookkeeping; Block finish therefore draws zero layout Work.
 TEST(MermaidEr107ElementWork, BlockPackedUsesItsOwnMeterNotErs) {
     namespace mt = loom::ui::mermaid::testing;
     const std::string raw = "block-beta\ncolumns 3\nblock:g\nA\nend\nspace B\ng --> B\n";
@@ -918,19 +919,26 @@ TEST(MermaidEr107ElementWork, BlockPackedUsesItsOwnMeterNotErs) {
             mt::render_mermaid_with_work(raw, ftxui::text("block-fallback"), false, work, &trace);
         ASSERT_TRUE(rendered.has_value());
         EXPECT_TRUE(trace.element_active);
-        EXPECT_EQ(trace.element_cap, mt::kBlockElementWorkLimit);
-        EXPECT_GT(trace.element_debit, 0u);
         EXPECT_EQ(trace.element_failed, 0u);
         EXPECT_TRUE(trace.preflight_complete);
-        // Block has no ErPaint prepayment: every bookkeeping debit is real.
-        EXPECT_GT(trace.emission_debit, 0u);
-        EXPECT_EQ(trace.preflight_debits, trace.successful_debits);
+        // Post-gate balance: the gates were already drawn before finish.
+        const std::size_t gate_used = mt::kBlockPayloadWorkLimit - trace.element_cap;
+        EXPECT_GT(gate_used, 0u);
+        EXPECT_GT(trace.element_debit, 0u);
+        EXPECT_LE(gate_used + trace.element_debit, mt::kBlockPayloadWorkLimit);
+        // Block has no ErPaint prepayment and batch 2 moves every finish fee
+        // off layout Work: the layout ledger in finish stays empty.
+        EXPECT_EQ(trace.emission_debit, 0u);
+        EXPECT_EQ(trace.preflight_debits, 0u);
+        EXPECT_EQ(trace.successful_debits, 0u);
         layout_total = mt::kWorkLimit - work.remaining;
         element_total = trace.element_debit;
-        // Real Element fees left the 1,000,000 layout pool entirely.
+        // Only parsing/block_layout draw from the 1,000,000 layout pool now;
+        // strictly under the batch-1 finish-inclusive bound.
         EXPECT_LT(layout_total, 282110u);
     }
-    // F1: exact and one-unit-short on the Block element meter.
+    // F1: exact and one-unit-short on the Block FINISH meter (the injected
+    // seam governs finish fees; gates re-run against the internal meter).
     {
         mt::Work layout{50'000'000u}, exact{element_total};
         mt::FinalEmissionTrace trace;

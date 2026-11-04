@@ -107,6 +107,43 @@ inline constexpr std::size_t kErElementWorkLimit = 102'564'352;
 // = 134,021,632.
 inline constexpr std::size_t kBlockElementWorkLimit = 134'021'632;
 
+// D-035 batch 2: Block payload-preparation meter. A Block render bounds every
+// post-block_layout packed cost on one fresh meter: the two validation/
+// preparation gates (gate1 32R+128+4B+2S; gate2 512+6*styled_bytes+
+// 4*source), the duplicated 8B/256U finish bookkeeping, and the Element
+// fees above. Worst case derived from the canvas contract: R<=1024,
+// cells/styles S<=240*R, source<=kSourceLimit.
+//
+// Byte bound B = sum of emitted row bytes. A cell carries either a
+// generator-emitted glyph (box/arrow glyphs are 3-byte BMP at most —
+// verified over every literal in mermaid_block_impl.cpp) or label bytes
+// copied out of the source (total label bytes <= source_bytes), so
+// B <= 3*S + source. styled_payload_bytes additionally bills ALLOCATOR
+// CAPACITY: libc++ std::string capacity <= 22 (SSO) + 2*size and vector
+// capacity <= 2*size under geometric growth, which is encoded directly in
+// the styled term below. Every term is checked with
+// checked_product/Work.spend.
+constexpr std::size_t block_payload_work_limit(std::size_t width, std::size_t height,
+                                               std::size_t source_limit) {
+    const std::size_t r = height, s = width * height;
+    const std::size_t bytes = 3u * s + source_limit;  // B <= 3*S + source
+    const std::size_t gate1 = 32u * r + 128u + 4u * bytes + 2u * s;
+    // 88-byte frozen footprint + 256 reserve + rows vector (24*2R growth) +
+    // per-row string capacity (22 SSO + 2*B) + packed-styles vector (2*2S) +
+    // 2*source bytes.
+    const std::size_t styled = 88u + 256u + 48u * r + 22u * r + 2u * bytes + 4u * s +
+                               2u * source_limit;
+    const std::size_t gate2 = 512u + 6u * styled + 4u * source_limit;
+    const std::size_t bookkeeping = 8u * bytes + 256u * s;
+    const std::size_t elements = 320u * r + 512u + 544u * s;
+    return gate1 + gate2 + bookkeeping + elements;
+}
+inline constexpr std::size_t kBlockPayloadWorkLimit =
+    block_payload_work_limit(240u, 1024u, 65536u);
+// Pinned numeric ceiling: gate1 3,735,680 + gate2 17,013,264 + finish
+// bookkeeping 69,337,088 + Element fees 134,021,632.
+static_assert(kBlockPayloadWorkLimit == 224'107'664u);
+
 struct Work {
     std::size_t remaining = kWorkLimit;
     bool spend(std::size_t count = 1);
@@ -126,11 +163,17 @@ struct FinalEmissionTrace {
                 successful_debits = 0u;
     std::size_t last_debit = 0u, failed_debit = 0u;
     // ElementWork meter for metered packed payloads (ADR 0032 active-ER;
-    // D-035 batch 1 Block). Observation: element_active marks the metered
-    // path, element_cap is the bound in effect, element_debit accumulates the
-    // real Element fees actually charged and element_failed records the first
-    // refused fee. Injection: when element_work is non-null on metered entry,
-    // that caller-owned meter replaces the fresh capped one, letting tests
+    // D-035 batch 1 Block Element fees; D-035 batch 2 Block preparation).
+    // Observation: element_active marks the metered path, element_cap is the
+    // meter balance at finish entry (ER: full kErElementWorkLimit; Block:
+    // kBlockPayloadWorkLimit minus the two gate charges), element_debit
+    // accumulates the finish fees actually charged (Block: entry/per-row/
+    // Element fees plus the 8B/256U bookkeeping; never the gate charges,
+    // which are observable as kBlockPayloadWorkLimit-element_cap) and
+    // element_failed records the first refused fee. Injection: when
+    // element_work is non-null on metered entry, that caller-owned meter
+    // replaces the production one for FINISH fees (the Block gates have
+    // already run against the internal preparation meter), letting tests
     // assert exact-budget (remaining==0) and one-unit-short rejection. Every
     // non-packed family leaves all four untouched.
     bool element_active = false;

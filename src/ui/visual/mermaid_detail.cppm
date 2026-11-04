@@ -43,6 +43,7 @@ using loom::ui::mermaid::testing::GitType;
 using loom::ui::mermaid::testing::kWorkLimit;
 using loom::ui::mermaid::testing::kErElementWorkLimit;
 using loom::ui::mermaid::testing::kBlockElementWorkLimit;
+using loom::ui::mermaid::testing::kBlockPayloadWorkLimit;
 using loom::ui::mermaid::testing::MermaidProbeDecision;
 using loom::ui::mermaid::testing::MermaidProbeFamily;
 using loom::ui::mermaid::testing::Work;
@@ -93,11 +94,12 @@ struct StyledRows {
     std::vector<std::vector<StyledRun>> rows;
 };
 
-// Which packed family, if any, gets the independent ElementWork meter for
-// its real ftxui Element fees (ADR 0032 ER; D-035 batch 1 Block). Off for
-// every non-packed family. payload_prepaid is the amount ErPaint prepaid for
-// the same payload's gates/bookkeeping (ER only; Block has no producer
-// prepayment and leaves it zero).
+// Which packed family, if any, owns an independent Work meter separate from
+// the layout pool. ER meters only the real Element fees (ADR 0032); Block
+// meters the whole post-block_layout payload preparation — gates, finish
+// bookkeeping and Element fees (D-035 batch 2). Off for every other family.
+// payload_prepaid is the amount ErPaint prepaid for the same payload's
+// gates/bookkeeping (ER only; Block has no producer prepayment).
 enum class PackedMeter : unsigned char { Off, Er, Block };
 struct NativeLayout {
     std::vector<std::string> rows;
@@ -106,6 +108,11 @@ struct NativeLayout {
     std::vector<std::uint16_t> packed_styles{};
     PackedMeter packed_meter = PackedMeter::Off;
     std::size_t payload_prepaid = 0u;
+    // Block payload-preparation meter (D-035 batch 2): live after the gates
+    // on a miss; reconstructed on a cache hit with measured_payload_work
+    // re-debited. Unused for ER and non-packed families.
+    Work payload_work{};
+    std::size_t measured_payload_work = 0u;
 };
 
 bool set_flow_style_preview_for_testing(bool enabled);
@@ -122,7 +129,7 @@ std::optional<ftxui::Element> finish_native_layout(std::optional<NativeLayout> l
 std::optional<std::size_t> styled_payload_bytes(const NativeLayout& layout,
                                                 std::size_t source_bytes);
 bool prepay_styled_payload(NativeLayout& layout, std::size_t source_bytes, Work& work,
-                           std::size_t* prepaid = nullptr);
+                           std::size_t* prepaid = nullptr, Work* prep_sink = nullptr);
 
 std::optional<std::vector<std::string>> mindmap_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> sequence_layout(std::string_view source, Work& work);
@@ -159,12 +166,13 @@ std::size_t packed_payload_prepaid(const std::vector<std::string>& rows,
                                    std::size_t source_bytes);
 bool valid_packed_rows(const std::vector<std::string>& rows,
                        const std::vector<std::uint16_t>& styles, Work& work,
-                       std::size_t* prepaid = nullptr);
+                       std::size_t* prepaid = nullptr, Work* prep_sink = nullptr);
 std::optional<ftxui::Element> finish_mermaid_payload(std::optional<LayoutPayload> payload,
                                                      ftxui::Element fallback, Work& work,
                                                      FinalEmissionTrace* trace = nullptr,
                                                      PackedMeter meter = PackedMeter::Off,
-                                                     std::size_t* prepaid = nullptr);
+                                                     std::size_t* prepaid = nullptr,
+                                                     Work* external_meter = nullptr);
 
 struct Point {
     int x = 0;

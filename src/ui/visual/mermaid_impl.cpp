@@ -74,6 +74,7 @@ struct RichLabel {
 struct RichLabels {
     std::vector<std::vector<detail::LabelRun>> vertex;
     std::vector<std::vector<detail::LabelRun>> edge;
+    std::vector<std::vector<detail::LabelRun>> group;
     // Disclosure footer lines for accepted non-terminal keys (frontmatter
     // htmlLabels / body init flowchart.htmlLabels), appended below the art.
     std::vector<std::string> notices;
@@ -82,7 +83,7 @@ struct RichLabels {
     bool activate(Work& work) {
         if (paid) return true;
         constexpr std::size_t kFee =
-            (64u + 128u) * sizeof(std::vector<detail::LabelRun>) + 256u;
+            (64u + 128u + kGroupLimit) * sizeof(std::vector<detail::LabelRun>) + 256u;
         if (!work.spend(kFee)) return false;
         paid = true;
         return true;
@@ -99,6 +100,13 @@ struct RichLabels {
         if (!activate(work)) return false;
         edge.resize(std::max(edge.size(), index + 1u));
         edge[index] = runs;
+        return true;
+    }
+    bool bind_group(std::size_t index, const std::vector<detail::LabelRun>& runs, Work& work) {
+        if (runs.empty()) return true;
+        if (!activate(work)) return false;
+        group.resize(std::max(group.size(), index + 1u));
+        group[index] = runs;
         return true;
     }
 };
@@ -1255,9 +1263,6 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
                             return v.id == *header->id;
                         })))
             return false;
-        // FS-1: Markdown subgraph titles are a later cohort; a backtick title
-        // rejects whole-source instead of painting its markup literally.
-        if (!header->rich.empty()) return false;
         std::optional<std::size_t> existing;
         if (header->id)
             for (std::size_t n = 0; n < graph.groups.size(); ++n) {
@@ -1283,6 +1288,11 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
             return false;
         if (existing) {
             if (graph.groups[*existing].text != header->title) return false;
+            if (rich) {
+                const auto& bound = *existing < rich->group.size() ? rich->group[*existing]
+                                                                    : std::vector<detail::LabelRun>{};
+                if (bound.empty() != header->rich.empty()) return false;
+            }
             saw_reopen = true;
             graph.group_stack.push_back(*existing);
             return true;
@@ -1295,6 +1305,8 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
              {},
              graph.next_order++,
              implicit_id});
+        if (rich && !rich->bind_group(graph.groups.size() - 1u, header->rich, work))
+            return false;
         graph.group_stack.push_back(graph.groups.size() - 1);
         return true;
     }
@@ -1463,6 +1475,7 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
     if (rich) {
         rich->vertex.clear();
         rich->edge.clear();
+        rich->group.clear();
         rich->notices.clear();
         rich->paid = false;
     }
@@ -2944,7 +2957,8 @@ std::optional<Region> place_region(const Diagram& graph, int owner, Direction in
     return result;
 }
 
-bool group_frame(Canvas& canvas, const Box& box, std::string_view title) {
+bool group_frame(Canvas& canvas, const Box& box, std::string_view title,
+                 const std::vector<detail::LabelRun>* rich = nullptr) {
     auto put = [&](Point point, unsigned bits, unsigned allowed, bool corner) {
         if (!canvas.put(point, line_glyph(bits), corner)) return false;
         canvas.at(point).bits = bits;
@@ -2964,7 +2978,9 @@ bool group_frame(Canvas& canvas, const Box& box, std::string_view title) {
         !put({box.x, box.y + box.height - 1}, kRight | kUp, 0, true) ||
         !put({box.x + box.width - 1, box.y + box.height - 1}, kLeft | kUp, 0, true))
         return false;
-    return canvas.multiline({box.x, box.y + 1}, title, box.width);
+    const Point title_at{box.x, box.y + 1};
+    return rich ? canvas.multiline_rich(title_at, *rich, box.width)
+                : canvas.multiline(title_at, title, box.width);
 }
 
 struct Port {
@@ -3834,13 +3850,18 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
                                            [](const auto& runs) { return !runs.empty(); });
             };
         const bool rich_present =
-            rich && (runs_nonempty(rich->vertex) || runs_nonempty(rich->edge));
+            rich && (runs_nonempty(rich->vertex) || runs_nonempty(rich->edge) ||
+                     runs_nonempty(rich->group));
         if (rich_present && !canvas.ensure_styles()) return {};
         if (region)
-            for (const auto& [index, box] : region->groups)
-                if (index >= graph.groups.size() ||
-                    !group_frame(canvas, box, graph.groups[index].text))
+            for (const auto& [index, box] : region->groups) {
+                if (index >= graph.groups.size()) return {};
+                const std::vector<detail::LabelRun>* group_runs = nullptr;
+                if (rich && index < rich->group.size() && !rich->group[index].empty())
+                    group_runs = &rich->group[index];
+                if (!group_frame(canvas, box, graph.groups[index].text, group_runs))
                     return {};
+            }
         for (std::size_t n = 0; n < placed->size(); ++n) {
             const std::vector<detail::LabelRun>* runs = nullptr;
             if (rich && n < rich->vertex.size() && !rich->vertex[n].empty())

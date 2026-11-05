@@ -48,6 +48,7 @@
       "html_labels": false,
       "extra_config_keys": [],
       "has_init": false,
+      "disclosure_footer": false,
       "prediction": "predicted-blocked",
       "expected_states": {
         "wide_240": "source",
@@ -85,6 +86,7 @@
         "markdownAutoWrap"
       ],
       "has_init": false,
+      "disclosure_footer": false,
       "prediction": "predicted-blocked",
       "expected_states": {
         "wide_240": "source",
@@ -122,6 +124,7 @@
         "markdownAutoWrap"
       ],
       "has_init": false,
+      "disclosure_footer": false,
       "prediction": "predicted-blocked",
       "expected_states": {
         "wide_240": "source",
@@ -159,6 +162,7 @@
         "markdownAutoWrap"
       ],
       "has_init": false,
+      "disclosure_footer": false,
       "prediction": "predicted-blocked",
       "expected_states": {
         "wide_240": "source",
@@ -194,6 +198,7 @@
       "html_labels": true,
       "extra_config_keys": [],
       "has_init": false,
+      "disclosure_footer": true,
       "prediction": "predicted-draw",
       "expected_states": {
         "wide_240": "drawn",
@@ -224,6 +229,7 @@
       "html_labels": false,
       "extra_config_keys": [],
       "has_init": false,
+      "disclosure_footer": true,
       "prediction": "predicted-draw",
       "expected_states": {
         "wide_240": "drawn",
@@ -254,6 +260,7 @@
       "html_labels": false,
       "extra_config_keys": [],
       "has_init": false,
+      "disclosure_footer": false,
       "prediction": "predicted-blocked",
       "expected_states": {
         "wide_240": "source",

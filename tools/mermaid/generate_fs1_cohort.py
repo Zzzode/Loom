@@ -237,6 +237,9 @@ def build(repo_root):
             "html_labels": entry["html_labels"],
             "extra_config_keys": entry["extra_config_keys"],
             "has_init": False,
+            # Whole source carries the config.htmlLabels disclosure footer
+            # (also at narrow width it stays source); the body does not.
+            "disclosure_footer": not blocked,
             "prediction": "predicted-blocked" if blocked else "predicted-draw",
             "expected_states": {
                 "wide_240": "source" if blocked else "drawn",

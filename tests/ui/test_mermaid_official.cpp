@@ -5506,6 +5506,7 @@ std::optional<bool> e2b_cohort_row(std::string_view path) {
 struct Fs1CohortEntry {
     bool draw = false;
     bool html_labels = true;
+    bool disclosure_footer = false;
     std::array<std::string, 3> original_states;
     std::array<std::string, 3> body_states;
 };
@@ -5522,6 +5523,8 @@ const std::map<std::string, Fs1CohortEntry>& fs1_cohort_map() {
             Fs1CohortEntry entry;
             entry.draw = row.get_string("prediction") == "predicted-draw";
             entry.html_labels = row.get("html_labels").as_bool();
+            if (row.get("disclosure_footer").is_bool())
+                entry.disclosure_footer = row.get("disclosure_footer").as_bool();
             const auto original = row.get("expected_states");
             const auto body = row.get("expected_body_states");
             auto load = [](JsonVal states) {
@@ -5542,6 +5545,51 @@ const Fs1CohortEntry* fs1_cohort_row(std::string_view path) {
     const auto& rows = fs1_cohort_map();
     const auto found = rows.find(std::string(path));
     return found == rows.end() ? nullptr : &found->second;
+}
+
+// RFC 0031 FS-1 group-title cohort: the reviewed Markdown subgraph-heading
+// ledger (tools/mermaid/fs1g-cohort.json). Same per-state entry shape.
+const std::map<std::string, Fs1CohortEntry>& fs1g_cohort_map() {
+    static const std::map<std::string, Fs1CohortEntry> map = [] {
+        std::map<std::string, Fs1CohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/fs1g-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "FS1 group cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "FS1 group cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            Fs1CohortEntry entry;
+            entry.draw = row.get_string("prediction") == "predicted-draw";
+            // Group-title rows carry no htmlLabels disclosure footer.
+            entry.html_labels = false;
+            if (row.get("disclosure_footer").is_bool())
+                entry.disclosure_footer = row.get("disclosure_footer").as_bool();
+            const auto original = row.get("expected_states");
+            const auto body = row.get("expected_body_states");
+            auto load = [](JsonVal states) {
+                return std::array<std::string, 3>{states.get_string("wide_240"),
+                                                  states.get_string("narrow_40"),
+                                                  states.get_string("restored_240")};
+            };
+            entry.original_states = load(original);
+            entry.body_states = load(body);
+            rows.emplace(row.get_string("path"), std::move(entry));
+        });
+        return rows;
+    }();
+    return map;
+}
+
+const Fs1CohortEntry* fs1g_cohort_row(std::string_view path) {
+    const auto& rows = fs1g_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
+// Unified lookup across the two disjoint FS-1 cohorts.
+const Fs1CohortEntry* fs1_any_cohort_row(std::string_view path) {
+    if (const auto* row = fs1_cohort_row(path)) return row;
+    return fs1g_cohort_row(path);
 }
 
 constexpr std::string_view kRequirementMarkdownPath =
@@ -8324,11 +8372,12 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                                })) {
                     observations.push_back(
                         run_official_flow_shape_alias_body(fixture, i, source, diagnostic, body));
-                } else if (const auto* fs1 = fs1_cohort_row(path)) {
+                } else if (const auto* fs1 = fs1_any_cohort_row(path)) {
                     // FS-1: record the body-only ledger disposition (the body
-                    // drops the frontmatter/footer). The live pixel gate is
-                    // test_mermaid_fs1_cohort; blocked-row bodies stay source
-                    // through the closed Markdown subset in run_case.
+                    // drops the frontmatter/footer). The live pixel gates are
+                    // test_mermaid_fs1_cohort / test_mermaid_fs1g_cohort;
+                    // blocked-row bodies stay source through the closed
+                    // Markdown subset in run_case.
                     if (!fs1->draw) {
                         observations.push_back(run_case(path, "body_diagnostic", body, diagnostic));
                     } else {
@@ -8522,14 +8571,16 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         // Shape aliases include the independently checked filled Fork/Join
         // contour. Body diagnostics add no original-file drawing credit.
         EXPECT_EQ(flows.decoded, 85u);
-        // RFC 0031 FS-1 admits two ledger-reviewed Markdown-label originals on
-        // source-byte identity (no upstream Model): they count admitted but
-        // not decoded, moving the pending bucket from 315 to 313.
-        EXPECT_EQ(flows.pending, 313u);
+        // RFC 0031 FS-1 admits ledger-reviewed Markdown originals on
+        // source-byte identity (no upstream Model): two label originals move
+        // pending 315 -> 313, then one Markdown subgraph-heading original
+        // (group-title cohort) moves it 313 -> 312. All three count admitted
+        // but not decoded.
+        EXPECT_EQ(flows.pending, 312u);
         EXPECT_EQ(flows.errors, 0u);
         EXPECT_EQ(flows.resources, 0u);
-        EXPECT_EQ(flows.admitted, 87u);
-        EXPECT_EQ(flows.mutated, 87u);
+        EXPECT_EQ(flows.admitted, 88u);
+        EXPECT_EQ(flows.mutated, 88u);
         for (const auto count : applications)
             projection_consumed(count);
         role_batch_consumed(role_counts, role_batch.facts.root());
@@ -13241,14 +13292,16 @@ Observation run_official_flow400_case(
             model = flow_oracle::flow400_typed_source4_model(*typed_selection, work);
         else
             model = flow_oracle::flow400_model(authority, work);
-        // RFC 0031 FS-1: the two reviewed ledger originals admit Markdown
-        // labels on ledger-pinned source bytes rather than a source Model.
-        // The five captured frames prove the admission inline; the durable
-        // pixel/footer gate is test_mermaid_fs1_cohort. decoded stays false
-        // (no upstream Model), the ledger authority is recognised in the
-        // accumulation gate, and the whole source keeps exact ordinary source
-        // at 40 columns because of the disclosure footer.
-        if (const auto* fs1 = fs1_cohort_row(path); fs1 && fs1->draw) {
+        // RFC 0031 FS-1: reviewed ledger originals (Markdown labels and/or
+        // subgraph headings) admit on ledger-pinned source bytes rather than
+        // a source Model. The five captured frames prove the admission
+        // inline; the durable pixel/footer gates are test_mermaid_fs1_cohort
+        // and test_mermaid_fs1g_cohort. decoded stays false (no upstream
+        // Model), the ledger authority is recognised in the accumulation
+        // gate. Per-track per-width outcomes come straight from the ledger:
+        // label rows keep exact source at 40 (disclosure footer too wide);
+        // the narrow footer-free group-title row draws at every width.
+        if (const auto* fs1 = fs1_any_cohort_row(path); fs1 && fs1->draw) {
             p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
             const bool wide_source = flow_oracle::flow400_same(*frames[0], *frames[3], work);
             p.narrow_ordinary = flow_oracle::flow400_same(*frames[1], *frames[4], work);
@@ -13260,16 +13313,24 @@ Observation run_official_flow400_case(
             const std::string footer =
                 "config.htmlLabels=" + std::string(fs1->html_labels ? "true" : "false") +
                 " -> native text labels; not applied";
-            require(!wide_source && p.narrow_ordinary && p.restored,
-                    "FS1 ledger draw frame protocol (wide native, 40 source, restore)");
-            require(wide_text.find(footer) != std::string::npos,
-                    "FS1 ledger draw missing disclosure footer");
+            require(!wide_source && p.restored,
+                    "FS1 ledger draw frame protocol (wide native, restore)");
+            require(p.narrow_ordinary == (fs1->original_states[1] == "source"),
+                    "FS1 ledger narrow frame disagrees with ledger");
+            if (fs1->disclosure_footer)
+                require(wide_text.find(footer) != std::string::npos,
+                        "FS1 ledger draw missing disclosure footer");
+            else
+                require(wide_text.find(" -> native text labels; not applied") ==
+                                std::string::npos,
+                        "FS1 ledger draw unexpectedly carries a disclosure footer");
             require(wide_text.find("**") == std::string::npos,
                     "FS1 ledger draw leaked Markdown bold markers");
             static_cast<void>(flow_oracle::flow400_following(*frames[0], work, kSentinel));
-            row.status = {"drawn", "source_fallback", "drawn"};
+            const bool narrow_drawn = fs1->original_states[1] == "drawn";
+            row.status = {"drawn", narrow_drawn ? "drawn" : "source_fallback", "drawn"};
             row.expected = "drawn";
-            row.expected_states = {"drawn", "source", "drawn"};
+            row.expected_states = {"drawn", narrow_drawn ? "drawn" : "source", "drawn"};
             row.reason = "RFC-0031 FS-1 reviewed cohort";
             row.decision_reasons.fill(row.reason);
             row.role_model_sha = row.source_sha256;  // ledger-pinned source identity

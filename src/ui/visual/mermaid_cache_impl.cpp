@@ -123,8 +123,9 @@ LayoutRowsCache& LayoutRowsCache::operator=(LayoutRowsCache&&) noexcept = defaul
 
 std::optional<detail::NativeLayout>
 LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::Work& work) {
-    // Preview layouts must never enter or reuse the normal cache namespace.
-    if (detail::flow_style_preview_active())
+    // Unadmitted handDrawn-look layouts must never enter or reuse the normal
+    // cache namespace.
+    if (detail::flow_handdrawn_preview_active())
         return detail::layout_mermaid_content(source, use_ascii, work);
     const std::uint64_t hash = layout_cache_hash(source, use_ascii);
     if (const auto found = index.find(hash);

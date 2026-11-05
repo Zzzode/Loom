@@ -5626,6 +5626,50 @@ const Fs2CohortEntry* fs2_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0031 FS-3a style-projection cohort: the reviewed ledger at
+// tools/mermaid/fs3-cohort.json. Four draw rows are byte-bound to the
+// immutable FlowStyle4 authority asset; three of them also draw the whole
+// original at 240 (the handDrawn-look row stays whole source pending FS-8),
+// and all four bodies draw. The 66 blocked rows stay source on both tracks.
+struct Fs3CohortEntry {
+    bool draw = false;
+    bool original_draws = false;
+    std::array<std::string, 3> original_states;
+    std::array<std::string, 3> body_states;
+};
+const std::map<std::string, Fs3CohortEntry>& fs3_cohort_map() {
+    static const std::map<std::string, Fs3CohortEntry> map = [] {
+        std::map<std::string, Fs3CohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/fs3-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "FS3 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "FS3 cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            Fs3CohortEntry entry;
+            entry.draw = row.get_string("prediction") == "predicted-draw";
+            const auto original = row.get("expected_states");
+            const auto body = row.get("expected_body_states");
+            auto load = [](JsonVal states) {
+                return std::array<std::string, 3>{states.get_string("wide_240"),
+                                                  states.get_string("narrow_40"),
+                                                  states.get_string("restored_240")};
+            };
+            entry.original_states = load(original);
+            entry.body_states = load(body);
+            entry.original_draws = entry.original_states[0] == "drawn";
+            rows.emplace(row.get_string("path"), std::move(entry));
+        });
+        return rows;
+    }();
+    return map;
+}
+const Fs3CohortEntry* fs3_cohort_row(std::string_view path) {
+    const auto& rows = fs3_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 constexpr std::string_view kRequirementMarkdownPath =
     "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd";
 constexpr std::string_view kRequirementMarkdownSourceSha =
@@ -8458,6 +8502,33 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                         row.decision_reasons.fill(row.reason);
                         observations.push_back(std::move(row));
                     }
+                } else if (const auto* fs3 = fs3_cohort_row(path)) {
+                    // FS-3a: classDef/class/direct-style projection graduated.
+                    // Blocked-row bodies (66) keep source via run_case; the
+                    // four authority bodies draw at 240 and stay source at
+                    // narrow_40. Live pixel/legend gate is
+                    // test_mermaid_fs3_cohort; the full-scene oracle is
+                    // MermaidFlowStyle4OraclePrototype.
+                    if (!fs3->draw) {
+                        observations.push_back(run_case(path, "body_diagnostic", body, diagnostic));
+                    } else {
+                        Observation row;
+                        row.path = path;
+                        row.track = "body_diagnostic";
+                        row.type = "flowchart";
+                        row.source_sha256 = digest(body);
+                        row.expected = "drawn";
+                        row.reason = "RFC-0031 FS-3a reviewed style cohort (body)";
+                        const auto state_status = [](const std::string& state) {
+                            return state == "drawn" ? "drawn" : "source_fallback";
+                        };
+                        row.status = {state_status(fs3->body_states[0]),
+                                      state_status(fs3->body_states[1]),
+                                      state_status(fs3->body_states[2])};
+                        row.expected_states = fs3->body_states;
+                        row.decision_reasons.fill(row.reason);
+                        observations.push_back(std::move(row));
+                    }
                 } else {
                     const auto selected =
                         body22_select(policies, role_batch.policy.root(), raw_batch.policy.root(),
@@ -8634,13 +8705,14 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         // RFC 0031 FS-1 admits ledger-reviewed Markdown originals on
         // source-byte identity (no upstream Model): two label originals move
         // pending 315 -> 313, then one Markdown subgraph-heading original
-        // (group-title cohort) moves it 313 -> 312. All three count admitted
-        // but not decoded.
-        EXPECT_EQ(flows.pending, 312u);
+        // (group-title cohort) moves it 313 -> 312. FS-3a moves three
+        // FlowStyle4 authority originals 312 -> 309. All count admitted but
+        // not decoded.
+        EXPECT_EQ(flows.pending, 309u);
         EXPECT_EQ(flows.errors, 0u);
         EXPECT_EQ(flows.resources, 0u);
-        EXPECT_EQ(flows.admitted, 88u);
-        EXPECT_EQ(flows.mutated, 88u);
+        EXPECT_EQ(flows.admitted, 91u);
+        EXPECT_EQ(flows.mutated, 91u);
         for (const auto count : applications)
             projection_consumed(count);
         role_batch_consumed(role_counts, role_batch.facts.root());
@@ -13410,6 +13482,57 @@ Observation run_official_flow400_case(
                     "OfficialFlow400 FS1 ledger evidence write failed");
             return row;
         }
+        // RFC 0031 FS-3a: three of the four FlowStyle4 authority originals
+        // (the non-handDrawn rows) admit on ledger-pinned source bytes once
+        // the classDef/class/direct-style projection graduated to production.
+        // The five captured frames prove the admission inline; the durable
+        // pixel/legend gate is test_mermaid_fs3_cohort and the full-scene
+        // oracle is MermaidFlowStyle4OraclePrototype (eight negatives per
+        // scene). decoded stays false (no upstream Model); the handDrawn
+        // authority row is absent from the original hook and keeps pending.
+        if (const auto* fs3 = fs3_cohort_row(path); fs3 && fs3->draw && fs3->original_draws) {
+            p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
+            const bool wide_source = flow_oracle::flow400_same(*frames[0], *frames[3], work);
+            p.narrow_ordinary = flow_oracle::flow400_same(*frames[1], *frames[4], work);
+            std::string wide_text;
+            wide_text.reserve(static_cast<std::size_t>(frames[0]->width) *
+                              static_cast<std::size_t>(frames[0]->height));
+            for (int y = 0; y < frames[0]->height; ++y)
+                wide_text += frames[0]->row(y);
+            require(!wide_source && p.restored,
+                    "FS3 ledger draw frame protocol (wide native, restore)");
+            require(p.narrow_ordinary == (fs3->original_states[1] == "source"),
+                    "FS3 ledger narrow frame disagrees with ledger");
+            require(fs3->original_states[0] == "drawn" &&
+                        fs3->original_states[2] == "drawn",
+                    "FS3 original draw rows must paint at both wide frames");
+            // The styled statements are consumed into the graph and disclosed
+            // only through the verbatim projection legend.
+            require(wide_text.find(" -> ") != std::string::npos,
+                    "FS3 ledger draw missing the projection legend");
+            static_cast<void>(flow_oracle::flow400_following(*frames[0], work, kSentinel));
+            row.status = {"drawn", "source_fallback", "drawn"};
+            row.expected = "drawn";
+            row.expected_states = {"drawn", "source", "drawn"};
+            row.reason = "RFC-0031 FS-3a reviewed style cohort";
+            row.decision_reasons.fill(row.reason);
+            row.role_model_sha = row.source_sha256;  // ledger-pinned source identity
+            row.raw_source_authority = "immutable_Flow400_8Models_plus_FS3StyleCohort3";
+            p.phase = "complete";
+            p.admitted = true;
+            p.mutated = true;
+            p.remaining[2] = p.remaining[3] = p.remaining[4] = p.remaining[5] =
+                p.remaining[6] = work.remaining;
+            row.raw_source_constraints = official_flow_info(p, work.remaining);
+            data.set("contract", kOfficialFlow400Contract);
+            data.set("actual", row.raw_source_constraints);
+            data.set("foreign_assertions_certified", 0);
+            diagnostic.set_root(data);
+            diagnostics << diagnostic.to_string() << '\n';
+            require(static_cast<bool>(diagnostics),
+                    "OfficialFlow400 FS3 ledger evidence write failed");
+            return row;
+        }
         p.remaining[2] = work.remaining;
         if (!model) {
             p.pending = true;
@@ -13547,6 +13670,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         row.raw_source_authority == "immutable_Flow400_8Models_plus_Issue4648";
     const bool fs1_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS1Cohort2";
+    const bool fs3_selected =
+        row.raw_source_authority == "immutable_Flow400_8Models_plus_FS3StyleCohort3";
     if (strand_selected)
         official_flow_strand_keys(info);
     else if (p0_length_selected)
@@ -13675,7 +13800,11 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         // FS-1 ledger rows admit on source-byte identity plus an inline
         // five-frame proof; they deliberately carry no upstream Model, so
         // whole_Model_decoded is exempt only for that reviewed authority.
-        require(captured && bound && (decoded || fs1_selected) && !pending && restored &&
+        // FS-1/FS-3 ledger rows admit on source-byte identity plus an inline
+        // five-frame proof; they deliberately carry no upstream Model, so
+        // whole_Model_decoded is exempt only for those reviewed authorities.
+        require(captured && bound && (decoded || fs1_selected || fs3_selected) && !pending &&
+                    restored &&
                     mutated && !resource && row.role_model_sha.size() == 64u &&
                     row.errors.empty() && row.status[0] == "drawn" && row.status[2] == "drawn" &&
                     (row.status[1] == "drawn" || (row.status[1] == "source_fallback" && ordinary)),
@@ -13692,7 +13821,7 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
     }
     require(selected || typed || classic_selected || link_selected || group_selected ||
                 title_selected || title_margin_selected || shape_alias_selected ||
-                issue4648_selected || strand_selected || fs1_selected ||
+                issue4648_selected || strand_selected || fs1_selected || fs3_selected ||
                 row.raw_source_authority == "immutable_Flow400_whole_8Models_392null" ||
                 same_run_body,
             "OfficialFlow400 unknown source authority");
@@ -13720,6 +13849,13 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                     row.source_sha256 == flow_oracle::kFlow400Issue4648SourceSha &&
                     row.role_model_sha == flow_oracle::kFlow400Issue4648ModelSha,
                 "OfficialFlow400 Issue4648 source/model authority");
+    if (fs3_selected) {
+        const auto* ledger = fs3_cohort_row(row.path);
+        require(ledger && ledger->draw && ledger->original_draws,
+                "OfficialFlow400 FS3 admitted original must be a ledger draw row");
+        require(row.role_model_sha.size() == 64u,
+                "OfficialFlow400 FS3 ledger source identity sha");
+    }
     if (title_selected) {
         require(row.path == flow_oracle::kFlowTitleFixture &&
                     row.source_sha256 == flow_oracle::kFlowTitleSourceSha &&

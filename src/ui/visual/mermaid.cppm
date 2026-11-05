@@ -152,8 +152,9 @@ struct Work {
 // Structural metadata envelope shared by every family. The reader extracts
 // frontmatter structure and init directives; family-specific value validation
 // stays in each family.
-// Test-only opt-in for the unadmitted Flow style prototype.
-bool set_flow_style_preview_for_testing(bool enabled);
+// Test-only opt-in for the unadmitted handDrawn look metadata profile
+// (RFC 0031 FS-8); Flow style projection graduated in FS-3a.
+bool set_flow_handdrawn_preview_for_testing(bool enabled);
 
 // Passive observation of the actual styled final-Element budget boundary.
 struct FinalEmissionTrace {

@@ -1,0 +1,2410 @@
+{
+  "schema": "loom_mermaid_fs3_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-3a-style-projection",
+  "style4_authority": {
+    "asset": "tests/fixtures/mermaid_native/flow_style4_source_models.proposal.v1.json",
+    "schema": "flow_style4_source_models.proposal/v1",
+    "count": 4
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original whose graph body carries a classDef/class/style/linkStyle statement",
+    "roots": [
+      "flowchart"
+    ],
+    "draw_authority": "the draw set must exactly equal the four fixtures pinned by the immutable FlowStyle4 source-model proposal asset",
+    "blocker_detection": "eleven fixed source-content detectors; no generator-time rendering; residual rows abort",
+    "width_policy": "authority rows draw body (and whole original except handDrawn) at 240 wide/restored and keep ordinary source at narrow_40."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (D-066 FS-3a style graduation, 2026-11-05)",
+    "date": "2026-11-05",
+    "verdict": "approved",
+    "note": "Read-only adversarial review of the FS-3a production graduation (classDef/class/direct-style projection, fail-closed grammar unchanged; the handDrawn look stays a test-facade preview), the renderer-free selection and eleven blocker detectors with zero-residual abort, the exact draw-set binding to the immutable FlowStyle4 authority (four bodies, three originals), and the body/original matrix wiring. APPROVE: flow-only blast radius, no shared constants, gaps stay 48, three originals move pending 312->309."
+  },
+  "counts": {
+    "total": 70,
+    "predicted_draw": 4,
+    "predicted_blocked": 66
+  },
+  "blocker_vocabulary": [
+    "flow-style-subgraph",
+    "flow-style-init-directive",
+    "flow-style-named-color",
+    "flow-style-unsupported-css-key",
+    "flow-style-linkstyle",
+    "flow-style-non-rectangle-shape",
+    "flow-style-fanout",
+    "flow-style-inline-class-shorthand",
+    "flow-style-default-class",
+    "flow-style-special-edge",
+    "flow-style-bad-identifier"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd",
+      "family": "flowchart",
+      "sha256": "db98b3d9615fc7981325092dfda7e865bef6d8727feb537a155a474a5e4c63fd",
+      "manifest_sha256": "db98b3d9615fc7981325092dfda7e865bef6d8727feb537a155a474a5e4c63fd",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-fanout",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow edge fan-out is FS-4)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow edge fan-out is FS-4)",
+        "detail": "The body uses the `A & B` fan-out edge syntax, an unadmitted edge form that keeps the whole statement out of the styled path."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/58-dagre-handle-styling-with-style-expressions.mmd",
+      "family": "flowchart",
+      "sha256": "33c166376fea486a9dc41ede57e1ce80184c937593f0a21706f5335ca5c3576e",
+      "manifest_sha256": "33c166376fea486a9dc41ede57e1ce80184c937593f0a21706f5335ca5c3576e",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-unsupported-css-key",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (parse_style_properties)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (parse_style_properties)",
+        "detail": "The statement sets a property other than fill/stroke/color/stroke-width (font-weight, font-size, stroke-dasharray, background, border, ...); terminal projection has no such attribute."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/59-dagre-handle-styling-of-subgraphs-and-links.mmd",
+      "family": "flowchart",
+      "sha256": "e5f0458850b2de12cdbec252da0275dfeff15a0eed2a035201f8c00cfb080416",
+      "manifest_sha256": "e5f0458850b2de12cdbec252da0275dfeff15a0eed2a035201f8c00cfb080416",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/60-dagre-handle-styling-for-all-node-shapes-v2.mmd",
+      "family": "flowchart",
+      "sha256": "4f36de813b15de5f0f569f18f73e6500fb43ad5874b8e3a96e8125b3a13d20ad",
+      "manifest_sha256": "4f36de813b15de5f0f569f18f73e6500fb43ad5874b8e3a96e8125b3a13d20ad",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/62-dagre-should-render-styled-subgraphs.mmd",
+      "family": "flowchart",
+      "sha256": "f682185d94acb0021627d1d9984d95d7351b7b5a2d016a1e69f72a3d0ce4ccea",
+      "manifest_sha256": "f682185d94acb0021627d1d9984d95d7351b7b5a2d016a1e69f72a3d0ce4ccea",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-named-color",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "detail": "A fill/stroke/color value is a CSS color name; only hex forms and the literal white/none map to a palette role."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/65-dagre-text-color-from-classes.mmd",
+      "family": "flowchart",
+      "sha256": "c2997bcd6ff431525895864dbf41109d008b8fd423ebb58ce0c2cd2a282762a1",
+      "manifest_sha256": "c2997bcd6ff431525895864dbf41109d008b8fd423ebb58ce0c2cd2a282762a1",
+      "style4_source_sha256": "c2997bcd6ff431525895864dbf41109d008b8fd423ebb58ce0c2cd2a282762a1",
+      "style4_body_sha256": "1d42be3a7ee0d6fff605178bfb7462eb3bbeaeb83a1ffeef847cd1d534c6c668",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "FS-3a classDef/class/direct-style projection admitted on the style4 authority (body track)"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/v2-dagre-16-render-stadium-shape.mmd",
+      "family": "flowchart",
+      "sha256": "1570c24fc9c30774190d0ae652779fa47efd0482c589fa0724b6f979689bc627",
+      "manifest_sha256": "1570c24fc9c30774190d0ae652779fa47efd0482c589fa0724b6f979689bc627",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-non-rectangle-shape",
+        "site": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "detail": "A style targets or the graph contains a non-rectangle vertex (stadium, circle, hexagon, cylinder, subroutine, trapezoid, diamond); shaped-node styling lands with FS-5."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/with-styling-and-classes-2.mmd",
+      "family": "flowchart",
+      "sha256": "09967b682153c9f78f9a3c62e70f2fe9eee4610c20ab7df9dc8d8d51efd6eb8f",
+      "manifest_sha256": "09967b682153c9f78f9a3c62e70f2fe9eee4610c20ab7df9dc8d8d51efd6eb8f",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-init-directive",
+        "site": "src/ui/visual/mermaid_impl.cpp (body %%{init:}%% acceptance is bounded to earlier cohorts)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (body %%{init:}%% acceptance is bounded to earlier cohorts)",
+        "detail": "The body carries an init directive with a key outside the admitted flow init profile."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/with-styling-and-classes.mmd",
+      "family": "flowchart",
+      "sha256": "003af0aa10d4c7a7e177e54bad4a207b661b6df69c4c7396cfb3b35c44ad1f8f",
+      "manifest_sha256": "003af0aa10d4c7a7e177e54bad4a207b661b6df69c4c7396cfb3b35c44ad1f8f",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-init-directive",
+        "site": "src/ui/visual/mermaid_impl.cpp (body %%{init:}%% acceptance is bounded to earlier cohorts)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (body %%{init:}%% acceptance is bounded to earlier cohorts)",
+        "detail": "The body carries an init directive with a key outside the admitted flow init profile."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/03-fdh49-should-add-edge-animation.mmd",
+      "family": "flowchart",
+      "sha256": "c374aed5a530879371aaf1a7822bcb94502e5c0e7a14c83903648b262b8acc9a",
+      "manifest_sha256": "c374aed5a530879371aaf1a7822bcb94502e5c0e7a14c83903648b262b8acc9a",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-fanout",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow edge fan-out is FS-4)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow edge fan-out is FS-4)",
+        "detail": "The body uses the `A & B` fan-out edge syntax, an unadmitted edge form that keeps the whole statement out of the styled path."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/apply-class-called-default-on-node-called-default.mmd",
+      "family": "flowchart",
+      "sha256": "0a3f3266414342f75c36370f4253ba2ab3b66b44b2740d7c44fc014a5735864d",
+      "manifest_sha256": "0a3f3266414342f75c36370f4253ba2ab3b66b44b2740d7c44fc014a5735864d",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-default-class",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "detail": "A classDef named `default` would implicitly style every unstyled node; implicit default classes stay rejected."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/apply-default-class-to-all-nodes-which-do-not-have-another-class-assigned-htmllabels-disabled.mmd",
+      "family": "flowchart",
+      "sha256": "e829eee26a424593118f079400beb78edb942ff7ff836e24ce6a86d69daaa21d",
+      "manifest_sha256": "e829eee26a424593118f079400beb78edb942ff7ff836e24ce6a86d69daaa21d",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-default-class",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "detail": "A classDef named `default` would implicitly style every unstyled node; implicit default classes stay rejected."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/apply-default-class-to-all-nodes-which-do-not-have-another-class-assigned-htmllabels-enabled.mmd",
+      "family": "flowchart",
+      "sha256": "458b9248484796637ba91f911211e9cdcfa09a73adb384ce1f7ed6cc1b2861b9",
+      "manifest_sha256": "458b9248484796637ba91f911211e9cdcfa09a73adb384ce1f7ed6cc1b2861b9",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-default-class",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "detail": "A classDef named `default` would implicitly style every unstyled node; implicit default classes stay rejected."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/fontawesome-icons-in-edge-labels-2.mmd",
+      "family": "flowchart",
+      "sha256": "da81900f9dc1a3b5f7e8cf385bd738012bef709afa767141f6b90e5a03aa2238",
+      "manifest_sha256": "da81900f9dc1a3b5f7e8cf385bd738012bef709afa767141f6b90e5a03aa2238",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-named-color",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "detail": "A fill/stroke/color value is a CSS color name; only hex forms and the literal white/none map to a palette role."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/fontawesome-icons-in-edge-labels-3.mmd",
+      "family": "flowchart",
+      "sha256": "7df7884e80302049c8c8dddd12505803c23264f3e1ef664f3b551ac3866ed358",
+      "manifest_sha256": "7df7884e80302049c8c8dddd12505803c23264f3e1ef664f3b551ac3866ed358",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-named-color",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "detail": "A fill/stroke/color value is a CSS color name; only hex forms and the literal white/none map to a palette role."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/handle-styling-for-all-node-shapes.mmd",
+      "family": "flowchart",
+      "sha256": "c3a5e4e2dcf2605e1834b1d7f1d84c439313c1189fc5ef6ef09ff98fe3ccfa21",
+      "manifest_sha256": "c3a5e4e2dcf2605e1834b1d7f1d84c439313c1189fc5ef6ef09ff98fe3ccfa21",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/handle-styling-with-style-expressions.mmd",
+      "family": "flowchart",
+      "sha256": "1c6b124bc96df73603a8262cbbf295e5e834808ef1450d151f32266ed2cb4d03",
+      "manifest_sha256": "1c6b124bc96df73603a8262cbbf295e5e834808ef1450d151f32266ed2cb4d03",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-unsupported-css-key",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (parse_style_properties)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (parse_style_properties)",
+        "detail": "The statement sets a property other than fill/stroke/color/stroke-width (font-weight, font-size, stroke-dasharray, background, border, ...); terminal projection has no such attribute."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/keep-node-label-text-if-already-defined-when-a-style-is-applied.mmd",
+      "family": "flowchart",
+      "sha256": "19ef4efcb3fdaa0d1c573b99366b280c0b53ac1b0245e3f844b0304c7d64951f",
+      "manifest_sha256": "19ef4efcb3fdaa0d1c573b99366b280c0b53ac1b0245e3f844b0304c7d64951f",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/multiple-nodes-and-chaining-in-one-statement-2.mmd",
+      "family": "flowchart",
+      "sha256": "d17263b62035b311a6ee982bc6b366ee1793ff1cd1c4cb23bbb46a8cc67b4733",
+      "manifest_sha256": "d17263b62035b311a6ee982bc6b366ee1793ff1cd1c4cb23bbb46a8cc67b4733",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-fanout",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow edge fan-out is FS-4)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow edge fan-out is FS-4)",
+        "detail": "The body uses the `A & B` fan-out edge syntax, an unadmitted edge form that keeps the whole statement out of the styled path."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/possibility-to-style-text-color-of-nodes-and-subgraphs-as-well-as-apply-classes-to-subgraphs.mmd",
+      "family": "flowchart",
+      "sha256": "9072fb7f1c316bbedddf8bc182de109aea159b740984c717648e0525ef78e76a",
+      "manifest_sha256": "9072fb7f1c316bbedddf8bc182de109aea159b740984c717648e0525ef78e76a",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-subgraph",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "detail": "The styled body declares a subgraph; the style collector refuses groups and container-target styling waits for the routing cohort."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/render-cylindrical-shape.mmd",
+      "family": "flowchart",
+      "sha256": "bfb2f64658d4e3ea5173e796f5d838aea31d4233d4e7e1c36278e781d108c893",
+      "manifest_sha256": "bfb2f64658d4e3ea5173e796f5d838aea31d4233d4e7e1c36278e781d108c893",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-non-rectangle-shape",
+        "site": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "detail": "A style targets or the graph contains a non-rectangle vertex (stadium, circle, hexagon, cylinder, subroutine, trapezoid, diamond); shaped-node styling lands with FS-5."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/render-multiline-texts.mmd",
+      "family": "flowchart",
+      "sha256": "261ff2ee2141641acac0c2474e1c808d8bb91838af56763ebec2d7548d7edcbc",
+      "manifest_sha256": "261ff2ee2141641acac0c2474e1c808d8bb91838af56763ebec2d7548d7edcbc",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/render-stadium-shape.mmd",
+      "family": "flowchart",
+      "sha256": "ceff3db9df52f2073a0691e1cb878400d538ff31e2ada3d661bf79c17b32d30e",
+      "manifest_sha256": "ceff3db9df52f2073a0691e1cb878400d538ff31e2ada3d661bf79c17b32d30e",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-non-rectangle-shape",
+        "site": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "detail": "A style targets or the graph contains a non-rectangle vertex (stadium, circle, hexagon, cylinder, subroutine, trapezoid, diamond); shaped-node styling lands with FS-5."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/render-subroutine-shape.mmd",
+      "family": "flowchart",
+      "sha256": "29e136c63ba193aa83f3cd33e22965c80935025049c51622c3bbb5b1ea00acaa",
+      "manifest_sha256": "29e136c63ba193aa83f3cd33e22965c80935025049c51622c3bbb5b1ea00acaa",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-non-rectangle-shape",
+        "site": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "detail": "A style targets or the graph contains a non-rectangle vertex (stadium, circle, hexagon, cylinder, subroutine, trapezoid, diamond); shaped-node styling lands with FS-5."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-disabled.mmd",
+      "family": "flowchart",
+      "sha256": "14b7fc57b533f2c5987fed19c8f3f86b15a33ef2e6cedc3779cb02a7fb7a451a",
+      "manifest_sha256": "14b7fc57b533f2c5987fed19c8f3f86b15a33ef2e6cedc3779cb02a7fb7a451a",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-enabled.mmd",
+      "family": "flowchart",
+      "sha256": "7533da2491cbce3708642be8bc61604b499d604724405cc005dccfdf99623e93",
+      "manifest_sha256": "7533da2491cbce3708642be8bc61604b499d604724405cc005dccfdf99623e93",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-be-able-to-style-default-node-independently.mmd",
+      "family": "flowchart",
+      "sha256": "90618058f85abdd00c95eb03d8fdd28dc5be7d9fe88d21254818d0d067b3c038",
+      "manifest_sha256": "90618058f85abdd00c95eb03d8fdd28dc5be7d9fe88d21254818d0d067b3c038",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-default-class",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "detail": "A classDef named `default` would implicitly style every unstyled node; implicit default classes stay rejected."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-a-flowchart-with-long-names-and-class-definitions.mmd",
+      "family": "flowchart",
+      "sha256": "e3c687214ab35bafd4e35a5f49f30adaf48001778c3d1c7d8b3171cbd8d60e0f",
+      "manifest_sha256": "e3c687214ab35bafd4e35a5f49f30adaf48001778c3d1c7d8b3171cbd8d60e0f",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-bad-identifier",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_identifier)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_identifier)",
+        "detail": "A style target or class name is outside the bounded [A-Za-z_][A-Za-z0-9_]* subset (numeric-leading or hyphenated ids)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-color-of-styled-nodes.mmd",
+      "family": "flowchart",
+      "sha256": "d52c2dfa185c7a67cd55192d8d44ebb6327a12f5a6ecbbcddf28c2a1f06b6199",
+      "manifest_sha256": "d52c2dfa185c7a67cd55192d8d44ebb6327a12f5a6ecbbcddf28c2a1f06b6199",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-named-color",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "detail": "A fill/stroke/color value is a CSS color name; only hex forms and the literal white/none map to a palette role."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-hexagons.mmd",
+      "family": "flowchart",
+      "sha256": "649f8876abb27f62d210f923586cf454433728db61cfe91a732eb59911f9ceb3",
+      "manifest_sha256": "649f8876abb27f62d210f923586cf454433728db61cfe91a732eb59911f9ceb3",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-non-rectangle-shape",
+        "site": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "detail": "A style targets or the graph contains a non-rectangle vertex (stadium, circle, hexagon, cylinder, subroutine, trapezoid, diamond); shaped-node styling lands with FS-5."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-styled-subgraphs.mmd",
+      "family": "flowchart",
+      "sha256": "38efa3d9c80e7437908a9ab30545b7f428b9b3b00afc73e7d06a601aa1a52fd9",
+      "manifest_sha256": "38efa3d9c80e7437908a9ab30545b7f428b9b3b00afc73e7d06a601aa1a52fd9",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-named-color",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "detail": "A fill/stroke/color value is a CSS color name; only hex forms and the literal white/none map to a palette role."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-style-nodes-via-a-class.mmd",
+      "family": "flowchart",
+      "sha256": "d8a6f592e6cf59dc746bc53807ce2169963496315b6d62d09070e5ac7215e519",
+      "manifest_sha256": "d8a6f592e6cf59dc746bc53807ce2169963496315b6d62d09070e5ac7215e519",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-bad-identifier",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_identifier)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_identifier)",
+        "detail": "A style target or class name is outside the bounded [A-Za-z_][A-Za-z0-9_]* subset (numeric-leading or hyphenated ids)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/text-color-from-classes.mmd",
+      "family": "flowchart",
+      "sha256": "55e3d5fa087ae1584c2ad696372a9c02d56a4b1fb74d72a7f1167bf6b669c7d8",
+      "manifest_sha256": "55e3d5fa087ae1584c2ad696372a9c02d56a4b1fb74d72a7f1167bf6b669c7d8",
+      "style4_source_sha256": "55e3d5fa087ae1584c2ad696372a9c02d56a4b1fb74d72a7f1167bf6b669c7d8",
+      "style4_body_sha256": "1d42be3a7ee0d6fff605178bfb7462eb3bbeaeb83a1ffeef847cd1d534c6c668",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "FS-3a classDef/class/direct-style projection admitted on the style4 authority (body track)"
+    },
+    {
+      "path": "flowchart/nightly-check/redux-color-subgraphs/04-should-render-user-styled-subgraph-containers.mmd",
+      "family": "flowchart",
+      "sha256": "899e4900af2e9330d07caf3b98993b40d932aab533e396aab32a95c9d556954a",
+      "manifest_sha256": "899e4900af2e9330d07caf3b98993b40d932aab533e396aab32a95c9d556954a",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-subgraph",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "detail": "The styled body declares a subgraph; the style collector refuses groups and container-target styling waits for the routing cohort."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/redux-color-subgraphs/08-should-render-user-styled-subgraph-containers.mmd",
+      "family": "flowchart",
+      "sha256": "9d378d1ae6d59f1dfc9db6ad4b0edc77e9bb1414d42d21538e6515ccc78e2f50",
+      "manifest_sha256": "9d378d1ae6d59f1dfc9db6ad4b0edc77e9bb1414d42d21538e6515ccc78e2f50",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-subgraph",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "detail": "The styled body declares a subgraph; the style collector refuses groups and container-target styling waits for the routing cohort."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/redux-color-subgraphs/12-should-render-user-styled-subgraph-containers.mmd",
+      "family": "flowchart",
+      "sha256": "c86df4c54d9eada04d427a9936252b34891323e1b794e745dab2464a2cde26ac",
+      "manifest_sha256": "c86df4c54d9eada04d427a9936252b34891323e1b794e745dab2464a2cde26ac",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-subgraph",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "detail": "The styled body declares a subgraph; the style collector refuses groups and container-target styling waits for the routing cohort."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/nightly-check/redux-color-subgraphs/16-should-render-user-styled-subgraph-containers.mmd",
+      "family": "flowchart",
+      "sha256": "80ba49cc252d824249ba42cabf82e534eaf6947c2623e74a1c6dfbb105f077b1",
+      "manifest_sha256": "80ba49cc252d824249ba42cabf82e534eaf6947c2623e74a1c6dfbb105f077b1",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-subgraph",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "detail": "The styled body declares a subgraph; the style collector refuses groups and container-target styling waits for the routing cohort."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/pr-check/12-should-render-a-flowchart-with-long-names-and-class-definitions.mmd",
+      "family": "flowchart",
+      "sha256": "72bbfe632d1044b785c36e4564bf9e65e0ae836a785bd4594363bf41a8b599f2",
+      "manifest_sha256": "72bbfe632d1044b785c36e4564bf9e65e0ae836a785bd4594363bf41a8b599f2",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-bad-identifier",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_identifier)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_identifier)",
+        "detail": "A style target or class name is outside the bounded [A-Za-z_][A-Za-z0-9_]* subset (numeric-leading or hyphenated ids)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/pr-check/4-classdef-style.mmd",
+      "family": "flowchart",
+      "sha256": "1c946035a650b161f4f2025cdd1398dd3b3e313a8712c2db1f87867e0f5f097b",
+      "manifest_sha256": "1c946035a650b161f4f2025cdd1398dd3b3e313a8712c2db1f87867e0f5f097b",
+      "style4_source_sha256": "1c946035a650b161f4f2025cdd1398dd3b3e313a8712c2db1f87867e0f5f097b",
+      "style4_body_sha256": "89aacce4adf6069ebba25162e24dbe9e050777140e4f9b8f4a22e29684789542",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "FS-3a classDef/class/direct-style projection admitted on the style4 authority (body track)"
+    },
+    {
+      "path": "flowchart/pr-check/60-handle-styling-for-all-node-shapes.mmd",
+      "family": "flowchart",
+      "sha256": "4762afc94bd4abd508b211ae693807793441e3984f25b34981c2e18c2e19ec29",
+      "manifest_sha256": "4762afc94bd4abd508b211ae693807793441e3984f25b34981c2e18c2e19ec29",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/11-should-render-styled-subgraphs.mmd",
+      "family": "flowchart",
+      "sha256": "19a60593926c5f2c098119ea936f809b1e4dac45eaea6cd2a95dd933ab6e2237",
+      "manifest_sha256": "19a60593926c5f2c098119ea936f809b1e4dac45eaea6cd2a95dd933ab6e2237",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-named-color",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "detail": "A fill/stroke/color value is a CSS color name; only hex forms and the literal white/none map to a palette role."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/13-should-render-color-of-styled-nodes.mmd",
+      "family": "flowchart",
+      "sha256": "330b1120ce9c2db1e1507419afbccee781e4912baa980eaa71c3bfc00aa5ec05",
+      "manifest_sha256": "330b1120ce9c2db1e1507419afbccee781e4912baa980eaa71c3bfc00aa5ec05",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-named-color",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "detail": "A fill/stroke/color value is a CSS color name; only hex forms and the literal white/none map to a palette role."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/14-should-render-hexagons.mmd",
+      "family": "flowchart",
+      "sha256": "a9f17740f0e46ff908b61b18f240af27d35c94f2f7a8c7c958cd8a8f1252b233",
+      "manifest_sha256": "a9f17740f0e46ff908b61b18f240af27d35c94f2f7a8c7c958cd8a8f1252b233",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-non-rectangle-shape",
+        "site": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "detail": "A style targets or the graph contains a non-rectangle vertex (stadium, circle, hexagon, cylinder, subroutine, trapezoid, diamond); shaped-node styling lands with FS-5."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/16-render-stadium-shape.mmd",
+      "family": "flowchart",
+      "sha256": "b84a32908b761f7ac2cece8d2d25702d3b764c32e3258f65fb3d4f5ae14b77a9",
+      "manifest_sha256": "b84a32908b761f7ac2cece8d2d25702d3b764c32e3258f65fb3d4f5ae14b77a9",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-non-rectangle-shape",
+        "site": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "detail": "A style targets or the graph contains a non-rectangle vertex (stadium, circle, hexagon, cylinder, subroutine, trapezoid, diamond); shaped-node styling lands with FS-5."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/17-render-multiline-texts.mmd",
+      "family": "flowchart",
+      "sha256": "de36a034f374a8e64dacfa9f336b3eb4279b2cfd7e8336e4c3737461cefb4a71",
+      "manifest_sha256": "de36a034f374a8e64dacfa9f336b3eb4279b2cfd7e8336e4c3737461cefb4a71",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/20-multiple-nodes-and-chaining-in-one-statement.mmd",
+      "family": "flowchart",
+      "sha256": "68b5f25a04fb9828a28d467ccf7df12367c8c22ea904bb8353405b43db5c03a3",
+      "manifest_sha256": "68b5f25a04fb9828a28d467ccf7df12367c8c22ea904bb8353405b43db5c03a3",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-fanout",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow edge fan-out is FS-4)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow edge fan-out is FS-4)",
+        "detail": "The body uses the `A & B` fan-out edge syntax, an unadmitted edge form that keeps the whole statement out of the styled path."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/21-render-cylindrical-shape.mmd",
+      "family": "flowchart",
+      "sha256": "dae468b36225e1efb5ef1473a68e751cdbd2f67f59e879464a1bdf42b94a88e0",
+      "manifest_sha256": "dae468b36225e1efb5ef1473a68e751cdbd2f67f59e879464a1bdf42b94a88e0",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-non-rectangle-shape",
+        "site": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "detail": "A style targets or the graph contains a non-rectangle vertex (stadium, circle, hexagon, cylinder, subroutine, trapezoid, diamond); shaped-node styling lands with FS-5."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/24-keep-node-label-text-if-already-defined-when-a-style-is-applied.mmd",
+      "family": "flowchart",
+      "sha256": "dc622885e7d04952f427c30eafb1a0d4b33d080e711ac78439048a51ec5e8682",
+      "manifest_sha256": "dc622885e7d04952f427c30eafb1a0d4b33d080e711ac78439048a51ec5e8682",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/26-set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-enabled.mmd",
+      "family": "flowchart",
+      "sha256": "917d0f843b743dd182466e439ae191f6a27845187f07948806a1e34f2e0f9be5",
+      "manifest_sha256": "917d0f843b743dd182466e439ae191f6a27845187f07948806a1e34f2e0f9be5",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/27-set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-disabled.mmd",
+      "family": "flowchart",
+      "sha256": "d4cc2b40267842e65ac550176647d8b0cadec3168d414e73f4f5821f3954799e",
+      "manifest_sha256": "d4cc2b40267842e65ac550176647d8b0cadec3168d414e73f4f5821f3954799e",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/28-apply-default-class-to-all-nodes-which-do-not-have-another-class-assigned-htmllabels-enabled.mmd",
+      "family": "flowchart",
+      "sha256": "3939cfd8da1a1335f4fe34d7940421a42c29a1bbda46758c5ef73517ad9d6534",
+      "manifest_sha256": "3939cfd8da1a1335f4fe34d7940421a42c29a1bbda46758c5ef73517ad9d6534",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-default-class",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "detail": "A classDef named `default` would implicitly style every unstyled node; implicit default classes stay rejected."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/29-apply-default-class-to-all-nodes-which-do-not-have-another-class-assigned-htmllabels-disabled.mmd",
+      "family": "flowchart",
+      "sha256": "696c0b7643537fe02fba4ffae2090e7ff0fdb834845443468da8b722e7c9bfcc",
+      "manifest_sha256": "696c0b7643537fe02fba4ffae2090e7ff0fdb834845443468da8b722e7c9bfcc",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-default-class",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "detail": "A classDef named `default` would implicitly style every unstyled node; implicit default classes stay rejected."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/30-possibility-to-style-text-color-of-nodes-and-subgraphs-as-well-as-apply-classes-to-subgraphs.mmd",
+      "family": "flowchart",
+      "sha256": "fd962546a0763cb9e2503f1b8b7bd1c08881ae5e416ed2eb792449413d876509",
+      "manifest_sha256": "fd962546a0763cb9e2503f1b8b7bd1c08881ae5e416ed2eb792449413d876509",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-subgraph",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects inside a group stack; subgraph routing is FS-7)",
+        "detail": "The styled body declares a subgraph; the style collector refuses groups and container-target styling waits for the routing cohort."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/32-render-subroutine-shape.mmd",
+      "family": "flowchart",
+      "sha256": "89e13bbbbd4785d29ab74713af4458146b80fff3dd64e22806b0a4f5996f3aee",
+      "manifest_sha256": "89e13bbbbd4785d29ab74713af4458146b80fff3dd64e22806b0a4f5996f3aee",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-non-rectangle-shape",
+        "site": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "detail": "A style targets or the graph contains a non-rectangle vertex (stadium, circle, hexagon, cylinder, subroutine, trapezoid, diamond); shaped-node styling lands with FS-5."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/5-should-style-nodes-via-a-class.mmd",
+      "family": "flowchart",
+      "sha256": "c3e22106a51e93a090e181fe1a7a72c87d71c29f1e89823e8024d3d163fc8453",
+      "manifest_sha256": "c3e22106a51e93a090e181fe1a7a72c87d71c29f1e89823e8024d3d163fc8453",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-bad-identifier",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_identifier)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_identifier)",
+        "detail": "A style target or class name is outside the bounded [A-Za-z_][A-Za-z0-9_]* subset (numeric-leading or hyphenated ids)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/58-handle-styling-with-style-expressions-2.mmd",
+      "family": "flowchart",
+      "sha256": "a82bc1ce9451529bddc11859fb313b35246aeb44d29c5d8b66eb87a1d2ddba56",
+      "manifest_sha256": "a82bc1ce9451529bddc11859fb313b35246aeb44d29c5d8b66eb87a1d2ddba56",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-unsupported-css-key",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (parse_style_properties)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (parse_style_properties)",
+        "detail": "The statement sets a property other than fill/stroke/color/stroke-width (font-weight, font-size, stroke-dasharray, background, border, ...); terminal projection has no such attribute."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/58-handle-styling-with-style-expressions.mmd",
+      "family": "flowchart",
+      "sha256": "bd69d90442414e5f6f3a2f5b410bb95a78f93d251a950674f15a82f8544c3d1e",
+      "manifest_sha256": "bd69d90442414e5f6f3a2f5b410bb95a78f93d251a950674f15a82f8544c3d1e",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-unsupported-css-key",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (parse_style_properties)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (parse_style_properties)",
+        "detail": "The statement sets a property other than fill/stroke/color/stroke-width (font-weight, font-size, stroke-dasharray, background, border, ...); terminal projection has no such attribute."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/59-handle-styling-of-subgraphs-and-links.mmd",
+      "family": "flowchart",
+      "sha256": "d458a86f65e4b4aef7e86ad766713c61b615b2375567038012cceca53568e47a",
+      "manifest_sha256": "d458a86f65e4b4aef7e86ad766713c61b615b2375567038012cceca53568e47a",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/60-handle-styling-for-all-node-shapes-v2.mmd",
+      "family": "flowchart",
+      "sha256": "4cbedb966f604c394931fa8971fef4806ceadcad9eaa4b3cc5e2a745f3b32dce",
+      "manifest_sha256": "4cbedb966f604c394931fa8971fef4806ceadcad9eaa4b3cc5e2a745f3b32dce",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/62-should-render-styled-subgraphs.mmd",
+      "family": "flowchart",
+      "sha256": "89ec935295f7a1411937fe554824230eb3bc793b4884bbdeb20f16dafed0f496",
+      "manifest_sha256": "89ec935295f7a1411937fe554824230eb3bc793b4884bbdeb20f16dafed0f496",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-named-color",
+        "site": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "evidence": "src/ui/visual/mermaid_style_impl.cpp (source_color)",
+        "detail": "A fill/stroke/color value is a CSS color name; only hex forms and the literal white/none map to a palette role."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/6369-edge-color-should-affect-arrow-head.mmd",
+      "family": "flowchart",
+      "sha256": "c37242a5130de142cfcfc62618b2cba509d4f075ad28c6f4e1ecf3fc3afc266f",
+      "manifest_sha256": "c37242a5130de142cfcfc62618b2cba509d4f075ad28c6f4e1ecf3fc3afc266f",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-linkstyle",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_keyword omits linkStyle)",
+        "detail": "linkStyle styles edges (including `linkStyle default`); edge style projection is a later cohort, so node styles alone cannot draw it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/65-1-text-color-from-classes.mmd",
+      "family": "flowchart",
+      "sha256": "51ac937335dd4d17d2fa20c8f12dfd295e6890aef74f6ac913cdc451db3c35de",
+      "manifest_sha256": "51ac937335dd4d17d2fa20c8f12dfd295e6890aef74f6ac913cdc451db3c35de",
+      "style4_source_sha256": "51ac937335dd4d17d2fa20c8f12dfd295e6890aef74f6ac913cdc451db3c35de",
+      "style4_body_sha256": "1d42be3a7ee0d6fff605178bfb7462eb3bbeaeb83a1ffeef847cd1d534c6c668",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "FS-3a classDef/class/direct-style projection admitted on the style4 authority (body track)"
+    },
+    {
+      "path": "flowchart/visual-check/65-2-bold-text-from-classes.mmd",
+      "family": "flowchart",
+      "sha256": "d2453252a240f03f25864ab9fb1c38f87c7b55ac7b0c4f3a1a7ef34cb456b23b",
+      "manifest_sha256": "d2453252a240f03f25864ab9fb1c38f87c7b55ac7b0c4f3a1a7ef34cb456b23b",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-inline-class-shorthand",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_statement node grammar)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_statement node grammar)",
+        "detail": "The body attaches a class inline with the `node:::name` shorthand instead of a separate `class node name` assignment."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/65-3-bigger-font-from-classes.mmd",
+      "family": "flowchart",
+      "sha256": "4378d3391b97bed45ad500791392932d663e49473bf838be41051afdf407c006",
+      "manifest_sha256": "4378d3391b97bed45ad500791392932d663e49473bf838be41051afdf407c006",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-inline-class-shorthand",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_statement node grammar)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_statement node grammar)",
+        "detail": "The body attaches a class inline with the `node:::name` shorthand instead of a separate `class node name` assignment."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/66-apply-class-called-default-on-node-called-default.mmd",
+      "family": "flowchart",
+      "sha256": "2e06cd9d95d85224d1f84c8c3db6440b1a8d127aac98088aebbaa534b63af1cd",
+      "manifest_sha256": "2e06cd9d95d85224d1f84c8c3db6440b1a8d127aac98088aebbaa534b63af1cd",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-default-class",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "detail": "A classDef named `default` would implicitly style every unstyled node; implicit default classes stay rejected."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/67-should-be-able-to-style-default-node-independently.mmd",
+      "family": "flowchart",
+      "sha256": "b2fe55726f4df0d0fcaee566a7458d1ab54157d8abbeda700c46e7d87aae5f9e",
+      "manifest_sha256": "b2fe55726f4df0d0fcaee566a7458d1ab54157d8abbeda700c46e7d87aae5f9e",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-default-class",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_style_collect rejects the name `default`)",
+        "detail": "A classDef named `default` would implicitly style every unstyled node; implicit default classes stay rejected."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/v2-16-render-stadium-shape.mmd",
+      "family": "flowchart",
+      "sha256": "8e88fe31f7eb76c8238012ac786705c56a9cdbef539f5754bc3aa1c64fc0b374",
+      "manifest_sha256": "8e88fe31f7eb76c8238012ac786705c56a9cdbef539f5754bc3aa1c64fc0b374",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-non-rectangle-shape",
+        "site": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (paint_flow_styles paints only Shape::Rectangle)",
+        "detail": "A style targets or the graph contains a non-rectangle vertex (stadium, circle, hexagon, cylinder, subroutine, trapezoid, diamond); shaped-node styling lands with FS-5."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/v2-17-should-apply-class-def-colour-to-edge-label.mmd",
+      "family": "flowchart",
+      "sha256": "03034655790f38ed85d93eaded9a375384eabc7f1ad664a45c7a9926b2e209e3",
+      "manifest_sha256": "03034655790f38ed85d93eaded9a375384eabc7f1ad664a45c7a9926b2e209e3",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-special-edge",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow link scanner)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow link scanner)",
+        "detail": "The body uses an unadmitted edge form (thick/cross/open arrowheads, dotted links, invisible links, labelled edge refs, animation markers)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/with-styling-and-classes-2.mmd",
+      "family": "flowchart",
+      "sha256": "8bf4e1ebf487deae347a67ad2957e047d293a08463e40eacb64d219f334fe9d6",
+      "manifest_sha256": "8bf4e1ebf487deae347a67ad2957e047d293a08463e40eacb64d219f334fe9d6",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-init-directive",
+        "site": "src/ui/visual/mermaid_impl.cpp (body %%{init:}%% acceptance is bounded to earlier cohorts)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (body %%{init:}%% acceptance is bounded to earlier cohorts)",
+        "detail": "The body carries an init directive with a key outside the admitted flow init profile."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    },
+    {
+      "path": "flowchart/visual-check/with-styling-and-classes.mmd",
+      "family": "flowchart",
+      "sha256": "ccb8c18eebb216ec681c67cd2bf44dc6711433763cc728755c6bbf7239261bb0",
+      "manifest_sha256": "ccb8c18eebb216ec681c67cd2bf44dc6711433763cc728755c6bbf7239261bb0",
+      "style4_source_sha256": "",
+      "style4_body_sha256": "",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-style-init-directive",
+        "site": "src/ui/visual/mermaid_impl.cpp (body %%{init:}%% acceptance is bounded to earlier cohorts)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (body %%{init:}%% acceptance is bounded to earlier cohorts)",
+        "detail": "The body carries an init directive with a key outside the admitted flow init profile."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the styling grammar itself is a production no-op only when the whole body is otherwise admissible"
+    }
+  ]
+}

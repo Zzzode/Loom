@@ -12,8 +12,8 @@ import :detail;
 // testing entities. No logic is moved or duplicated here.
 namespace loom::ui::mermaid::testing {
 
-bool set_flow_style_preview_for_testing(bool enabled) {
-    return detail::set_flow_style_preview_for_testing(enabled);
+bool set_flow_handdrawn_preview_for_testing(bool enabled) {
+    return detail::set_flow_handdrawn_preview_for_testing(enabled);
 }
 
 std::optional<ftxui::Element> render_mermaid_with_work(std::string_view source,

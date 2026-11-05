@@ -18,8 +18,11 @@ namespace loom::ui::mermaid {
 namespace {
 
 using namespace detail;
-// Unadmitted Flow work is available only through the reviewed test facade.
-thread_local bool flow_style_preview = false;
+// RFC 0031 FS-3a: classDef/class/direct-style projection graduated to
+// production, so no style gate remains. The handDrawn look metadata profile
+// (FS-8) is still unadmitted and available only through the reviewed test
+// facade.
+thread_local bool flow_handdrawn_preview = false;
 
 std::string_view trim(std::string_view value) {
     while (!value.empty() && (value.front() == ' ' || value.front() == '\t'))
@@ -1654,7 +1657,7 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
                     prepaid = true;
                 }
             } else {
-                if (flow_style_preview && flow_style_keyword(statement)) {
+                if (flow_style_keyword(statement)) {
                     if (!style_result || !diagram.group_stack.empty() ||
                         !flow_style_collect(statement, physical, pending_styles, work))
                         return {};
@@ -1997,7 +2000,8 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
                 const auto scalar = trim(event.value);
                 if (!mark(Layout) || (scalar != "dagre" && scalar != "\"dagre\"")) return {};
             } else if (event.path == "look") {
-                if (!flow_style_preview || !mark(Look) || trim(event.value) != "handDrawn")
+                if (!flow_handdrawn_preview || !mark(Look) ||
+                    trim(event.value) != "handDrawn")
                     return {};
             } else if (event.path == "fontFamily") {
                 const auto scalar = trim(event.value);
@@ -4381,14 +4385,14 @@ ftxui::Color style_role_color(SemanticColorRole role, bool background,
 }
 }  // namespace
 
-bool detail::set_flow_style_preview_for_testing(bool enabled) {
-    const bool previous = flow_style_preview;
-    flow_style_preview = enabled;
+bool detail::set_flow_handdrawn_preview_for_testing(bool enabled) {
+    const bool previous = flow_handdrawn_preview;
+    flow_handdrawn_preview = enabled;
     return previous;
 }
 
-bool detail::flow_style_preview_active() {
-    return flow_style_preview;
+bool detail::flow_handdrawn_preview_active() {
+    return flow_handdrawn_preview;
 }
 
 std::optional<ftxui::Element> detail::finish_native_layout(std::optional<NativeLayout> layout,

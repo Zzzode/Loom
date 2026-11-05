@@ -1284,15 +1284,15 @@ TEST(MermaidFinalEmissionTrace, SamePublicLedgerReachesLastDebitAndPreservesComp
 }  // namespace
 
 namespace {
-struct FlowStylePreview {
-    bool previous = testing::set_flow_style_preview_for_testing(true);
+struct FlowHanddrawnPreview {
+    bool previous = testing::set_flow_handdrawn_preview_for_testing(true);
 
-    ~FlowStylePreview() { testing::set_flow_style_preview_for_testing(previous); }
+    ~FlowHanddrawnPreview() { testing::set_flow_handdrawn_preview_for_testing(previous); }
 };
 
 TEST(MermaidFlowStyle4Prototype,
      CompleteOriginalAndBodyInputsReachRealStyledEmissionWithoutCoverageCredit) {
-    FlowStylePreview preview;
+    FlowHanddrawnPreview preview;
     StyleThemeRestore restore;
     using namespace loom::ui::design::theme;
     set_theme(ThemeVariant::Dark);
@@ -1369,7 +1369,7 @@ TEST(MermaidFlowStyle4Prototype,
 
 namespace {
 TEST(MermaidFlowStyle4Diagnostic, LookRemovalIdentifiesCandidatesWithoutOriginalCredit) {
-    FlowStylePreview preview;
+    FlowHanddrawnPreview preview;
     const auto path =
         std::filesystem::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
     std::ifstream input(path, std::ios::binary);
@@ -1405,7 +1405,7 @@ TEST(MermaidFlowStyle4Diagnostic, LookRemovalIdentifiesCandidatesWithoutOriginal
 
 namespace {
 TEST(MermaidFlowStyle4Metadata, ExactStrictHandDrawnProfilePreservesOtherClosedConfigurations) {
-    FlowStylePreview preview;
+    FlowHanddrawnPreview preview;
     const std::string prefix =
         "---\ndescription: >-\n  Strict handDrawn metadata profile\nconfig:\n";
     const std::string strict = "  look: handDrawn\n  htmlLabels: true\n  flowchart:\n    "
@@ -1448,7 +1448,7 @@ std::string flow_style4_fenced(std::string_view source, std::string_view languag
 
 TEST(MermaidFlowStyle4OraclePrototype,
      EveryOriginalAndSeparateBodyRequiresWholeGraphLegendAndAllAttributes) {
-    FlowStylePreview preview;
+    FlowHanddrawnPreview preview;
     StyleThemeRestore restore;
     using namespace loom::ui::design::theme;
     set_theme(ThemeVariant::Dark);
@@ -1547,7 +1547,7 @@ TEST(MermaidFlowStyle4OraclePrototype,
 
 namespace {
 TEST(MermaidFlowStyles, ExactRgbHueBoundaryBelongsToOrangeAndKeepsPaletteProjection) {
-    FlowStylePreview preview;
+    FlowHanddrawnPreview preview;
     StyleThemeRestore restore;
     using namespace loom::ui::design::theme;
     set_theme(ThemeVariant::Dark);
@@ -1657,7 +1657,7 @@ TEST(MermaidFlowStyle4Oracle,
 
 TEST(MermaidFlowStyles,
      OrderedReapplicationDirectLastAndClosedSourceGrammarKeepTheirActualMeanings) {
-    FlowStylePreview preview;
+    FlowHanddrawnPreview preview;
     StyleThemeRestore restore;
     using namespace loom::ui::design::theme;
     set_theme(ThemeVariant::Dark);
@@ -1698,17 +1698,33 @@ TEST(MermaidFlowStyles,
 }  // namespace
 
 namespace {
-TEST(MermaidFlowStylePreview, DefaultRenderingAndCacheCannotPublishUnadmittedPreviewLayouts) {
-    const std::string source = "flowchart LR\nA-->B\nclassDef c fill:#f9f\nclass A c\n";
-    EXPECT_FALSE(loom::ui::mermaid::render_mermaid(source, ftxui::text("SOURCE")));
+// RFC 0031 FS-3a: flowchart classDef/class/direct-style projection graduated,
+// so styled flow layouts render and cache in the default path. The handDrawn
+// look metadata profile (FS-8) is the remaining test-facade-only preview: it
+// must neither render by default nor enter the production cache namespace.
+TEST(MermaidFlowHanddrawnPreview,
+     GraduatedStylesRenderAndCacheByDefaultWhileHandDrawnLookStaysClosed) {
+    const std::string styled = "flowchart LR\nA-->B\nclassDef c fill:#f9f\nclass A c\n";
+    EXPECT_TRUE(loom::ui::mermaid::render_mermaid(styled, ftxui::text("SOURCE")));
     loom::ui::mermaid::LayoutRowsCache cache(4u, 1u << 20u);
+    EXPECT_TRUE(cache.render(styled, false, ftxui::text("SOURCE")));
+    EXPECT_EQ(cache.size(), 1u);
+
+    const std::string handdrawn =
+        "---\ndescription: >-\n  Closed handDrawn profile\nconfig:\n"
+        "  look: handDrawn\n  htmlLabels: true\n  flowchart:\n"
+        "    htmlLabels: true\n  securityLevel: loose\n---\nflowchart LR\nA-->B\n";
+    EXPECT_FALSE(loom::ui::mermaid::render_mermaid(handdrawn, ftxui::text("SOURCE")));
+    loom::ui::mermaid::LayoutRowsCache hand_cache(4u, 1u << 20u);
     {
-        FlowStylePreview preview;
-        EXPECT_TRUE(cache.render(source, false, ftxui::text("SOURCE")));
-        EXPECT_EQ(cache.size(), 0u);
+        FlowHanddrawnPreview preview;
+        EXPECT_TRUE(loom::ui::mermaid::render_mermaid(handdrawn, ftxui::text("SOURCE")));
+        // The facade renders the preview but keeps it out of the production
+        // cache namespace: a cache render returns a layout yet stores nothing.
+        EXPECT_TRUE(hand_cache.render(handdrawn, false, ftxui::text("SOURCE")));
+        EXPECT_EQ(hand_cache.size(), 0u);
     }
-    EXPECT_FALSE(cache.render(source, false, ftxui::text("SOURCE")));
-    EXPECT_FALSE(loom::ui::mermaid::render_mermaid(source, ftxui::text("SOURCE")));
+    EXPECT_FALSE(loom::ui::mermaid::render_mermaid(handdrawn, ftxui::text("SOURCE")));
 }
 }  // namespace
 

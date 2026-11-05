@@ -115,8 +115,10 @@ struct NativeLayout {
     std::size_t measured_payload_work = 0u;
 };
 
-bool set_flow_style_preview_for_testing(bool enabled);
-bool flow_style_preview_active();
+// RFC 0031 FS-3a graduated classDef/class/direct-style projection; only the
+// handDrawn look metadata profile (FS-8) remains a test-facade-only preview.
+bool set_flow_handdrawn_preview_for_testing(bool enabled);
+bool flow_handdrawn_preview_active();
 std::optional<NativeLayout> layout_mermaid_content(std::string_view source, bool use_ascii,
                                                    Work& work);
 std::optional<ftxui::Element> render_mermaid_with_budget(std::string_view source,

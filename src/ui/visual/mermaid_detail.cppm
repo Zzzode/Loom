@@ -197,6 +197,15 @@ struct Cell {
     unsigned allowed = kRight | kDown | kLeft | kUp;
 };
 
+// One styled run of a Markdown flow label; '\n' inside text is a visual row
+// break. Empty attribute runs are plain.
+struct LabelRun {
+    std::string text;
+    bool bold = false;
+    bool underline = false;
+    bool operator==(const LabelRun&) const = default;
+};
+
 struct Canvas {
     int width;
     int height;
@@ -213,6 +222,13 @@ struct Canvas {
     bool text(Point p, std::string_view value);
     bool multiline(Point p, std::string_view value, int width);
     bool segment(Point from, Point to, bool dashed = false);
+    // Markdown-label painting: allocate the parallel style plane on demand,
+    // merge bold/underline into the cell style, and center/row-break a run
+    // list exactly like multiline().
+    bool ensure_styles();
+    bool mark_style(Point p, const SemanticCellStyle& style);
+    bool text_styled(Point p, std::string_view value, const SemanticCellStyle& style);
+    bool multiline_rich(Point p, const std::vector<LabelRun>& runs, int width);
     std::vector<std::string> lines();
 };
 

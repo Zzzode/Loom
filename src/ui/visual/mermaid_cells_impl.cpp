@@ -197,6 +197,69 @@ bool Canvas::multiline(Point p, std::string_view value, int width) {
     return true;
 }
 
+bool Canvas::ensure_styles() {
+    if (styles) return true;
+    const auto count = cells.size();
+    if (!work.spend(count * sizeof(SemanticCellStyle) + 256u)) return false;
+    styles = std::make_unique<std::vector<SemanticCellStyle>>(count);
+    return true;
+}
+
+bool Canvas::mark_style(Point p, const SemanticCellStyle& applied) {
+    if (!inside(p) || !work.spend(8u)) return false;
+    auto& current = (*styles)[static_cast<std::size_t>(index(p))];
+    // Bold/underline are attributes of Markdown spans; merge them so a later
+    // pass (flow CSS projection) never silently erases span emphasis.
+    current.bold = current.bold || applied.bold;
+    current.underline = current.underline || applied.underline;
+    return true;
+}
+
+bool Canvas::text_styled(Point p, std::string_view value, const SemanticCellStyle& style) {
+    for (const auto& glyph : ftxui::Utf8ToGlyphs(std::string(value))) {
+        if (!put(p, glyph)) return false;
+        if ((style.bold || style.underline) && !mark_style(p, style)) return false;
+        ++p.x;
+    }
+    return true;
+}
+
+bool Canvas::multiline_rich(Point p, const std::vector<LabelRun>& runs, int width) {
+    if (!ensure_styles()) return false;
+    struct Piece {
+        std::string text;
+        SemanticCellStyle style;
+    };
+    std::vector<std::vector<Piece>> rows{1};
+    for (const auto& run : runs) {
+        SemanticCellStyle style;
+        style.bold = run.bold;
+        style.underline = run.underline;
+        std::size_t at = 0;
+        const auto& text = run.text;
+        while (at <= text.size()) {
+            const auto nl = text.find('\n', at);
+            auto piece = text.substr(at, nl == std::string::npos ? std::string::npos : nl - at);
+            if (!piece.empty()) rows.back().push_back({std::string(piece), style});
+            if (nl == std::string::npos) break;
+            rows.emplace_back();
+            at = nl + 1u;
+        }
+    }
+    for (const auto& row : rows) {
+        int row_width = 0;
+        for (const auto& piece : row)
+            row_width += ftxui::string_width(piece.text);
+        int x = p.x + (width - row_width) / 2;
+        for (const auto& piece : row) {
+            if (!text_styled({x, p.y}, piece.text, piece.style)) return false;
+            x += ftxui::string_width(piece.text);
+        }
+        ++p.y;
+    }
+    return true;
+}
+
 bool Canvas::segment(Point from, Point to, bool dashed) {
     if (from.x != to.x && from.y != to.y) return false;
     const Point step{(to.x > from.x) - (to.x < from.x), (to.y > from.y) - (to.y < from.y)};

@@ -123,7 +123,10 @@ target_compile_definitions(test_mermaid_official PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 gtest_discover_tests(test_mermaid_official
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+    # OfficialMatrix renders five frames for all 2145 pinned originals in one
+    # thread (~250s unloaded); it is the serial batch gate and needs headroom
+    # when the parallel suite oversubscribes CPU on a loaded machine.
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
 
 add_executable(test_mermaid_terminal test_mermaid_terminal.cpp)
 target_link_libraries(test_mermaid_terminal
@@ -306,6 +309,13 @@ add_executable(test_mermaid_e2b_cohort test_mermaid_e2b_cohort.cpp)
 target_link_libraries(test_mermaid_e2b_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_e2b_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+add_executable(test_mermaid_fs1_cohort test_mermaid_fs1_cohort.cpp)
+target_link_libraries(test_mermaid_fs1_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_fs1_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 

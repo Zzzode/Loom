@@ -12,6 +12,7 @@ import std;
 import :detail;
 import loom.ui.foundation.theme_provider;
 import loom.ui.foundation.design_tokens;
+import loom.serdes.json;
 
 namespace loom::ui::mermaid {
 namespace {
@@ -56,7 +57,163 @@ bool plain_unicode(std::string_view text) {
     return detail::unicode_text(text) && text.find_first_of("<>&#`") == std::string_view::npos;
 }
 
-std::optional<std::string> label(std::string_view input, bool delimited = false) {
+// A decoded flow label plus its Markdown span runs. Runs is empty for a
+// plain label; for a backtick Markdown string it carries bold/underline
+// spans and its concatenated text equals `text`.
+struct RichLabel {
+    std::string text;
+    std::vector<detail::LabelRun> runs;
+};
+
+// FS-1: per-diagram Markdown state kept entirely OUTSIDE the hot parse
+// structs so Diagram/Vertex/Edge/Group stay byte-identical to HEAD and the
+// sizeof-driven gas profile (and dense-graph budget boundary) is unchanged.
+// The tables are sparse: the bounded worst-case slot fee is paid once, only
+// on the first label that actually carries spans, and rows are filled lazily;
+// an absent index paints as a plain label.
+struct RichLabels {
+    std::vector<std::vector<detail::LabelRun>> vertex;
+    std::vector<std::vector<detail::LabelRun>> edge;
+    // Disclosure footer lines for accepted non-terminal keys (frontmatter
+    // htmlLabels / body init flowchart.htmlLabels), appended below the art.
+    std::vector<std::string> notices;
+    bool paid = false;
+
+    bool activate(Work& work) {
+        if (paid) return true;
+        constexpr std::size_t kFee =
+            (64u + 128u) * sizeof(std::vector<detail::LabelRun>) + 256u;
+        if (!work.spend(kFee)) return false;
+        paid = true;
+        return true;
+    }
+    bool bind_vertex(std::size_t index, std::vector<detail::LabelRun> runs, Work& work) {
+        if (runs.empty()) return true;
+        if (!activate(work)) return false;
+        vertex.resize(std::max(vertex.size(), index + 1u));
+        vertex[index] = std::move(runs);
+        return true;
+    }
+    bool bind_edge(std::size_t index, const std::vector<detail::LabelRun>& runs, Work& work) {
+        if (runs.empty()) return true;
+        if (!activate(work)) return false;
+        edge.resize(std::max(edge.size(), index + 1u));
+        edge[index] = runs;
+        return true;
+    }
+};
+
+// Closed Markdown-string subset (FS-1): whole content wrapped in backticks,
+// `**bold**`, `*underline*` (no nesting), physical newlines and <br> as row
+// breaks. Anything else (unbalanced markers, other tags/entities, inner
+// backticks) rejects so the source keeps its ordinary fallback.
+
+std::optional<RichLabel> markdown_label(std::string_view input) {
+    if (input.size() < 2u || input.front() != '`' || input.back() != '`') return {};
+    const auto raw = input.substr(1u, input.size() - 2u);
+    // Physical newlines are visual row breaks; mermaid createText trims the
+    // continuation indentation. Trim each physical line of the WHOLE content
+    // once: trimming per parsed run would swallow spaces adjacent to markup on
+    // the same line ("in **the** hog" would become "inthehog").
+    std::string content;
+    {
+        std::size_t at = 0;
+        bool first_line = true;
+        while (true) {
+            const auto nl = raw.find('\n', at);
+            auto line = raw.substr(at, nl == std::string_view::npos ? raw.size() - at : nl - at);
+            while (!line.empty() && (line.front() == ' ' || line.front() == '\t'))
+                line.remove_prefix(1);
+            while (!line.empty() && (line.back() == ' ' || line.back() == '\t'))
+                line.remove_suffix(1);
+            if (!first_line) content += '\n';
+            content += line;
+            first_line = false;
+            if (nl == std::string_view::npos) break;
+            at = nl + 1u;
+        }
+    }
+    RichLabel result;
+    // A run segment may span visual row breaks ('\n'); each physical line of
+    // it must be ordinary printable unicode with no tag/entity/backtick chars.
+    auto valid_segment = [](std::string_view segment) {
+        std::size_t at = 0;
+        while (true) {
+            const auto nl = segment.find('\n', at);
+            const auto line =
+                segment.substr(at, nl == std::string_view::npos ? segment.size() - at : nl - at);
+            if (!line.empty() &&
+                (!plain_unicode(line) || ftxui::Utf8ToGlyphs(std::string{line}).empty()))
+                return false;
+            if (nl == std::string_view::npos) return true;
+            at = nl + 1u;
+        }
+    };
+    auto append_plain = [&](std::string_view segment) -> bool {
+        if (segment.empty()) return true;
+        if (!valid_segment(segment)) return false;
+        result.text += segment;
+        if (!result.runs.empty() && !result.runs.back().bold &&
+            !result.runs.back().underline)
+            result.runs.back().text += segment;
+        else
+            result.runs.emplace_back(std::string{segment}, false, false);
+        return true;
+    };
+    auto append_styled = [&](std::string_view segment, bool bold) -> bool {
+        if (segment.empty() || !valid_segment(segment)) return false;
+        result.text += segment;
+        // Merge with an adjacent identical-style run.
+        if (!result.runs.empty() && result.runs.back().bold == bold &&
+            result.runs.back().underline == !bold)
+            result.runs.back().text += segment;
+        else
+            result.runs.emplace_back(std::string{segment}, bold, !bold);
+        return true;
+    };
+    std::size_t at = 0;
+    while (at < content.size()) {
+        if (content.compare(at, 4, "<br>") == 0 ||
+            content.compare(at, 5, "<br/>") == 0 ||
+            content.compare(at, 6, "<br />") == 0) {
+            if (!append_plain("\n")) return {};
+            at = content.find('>', at) + 1u;
+            continue;
+        }
+        const char ch = content[at];
+        if (ch == '<') return {};  // no tags other than <br> forms
+        if (ch == '*') {
+            const bool bold = content.compare(at, 2, "**") == 0;
+            const std::string_view marker = bold ? "**" : "*";
+            const std::size_t open = at + marker.size();
+            std::size_t close = std::string_view::npos;
+            if (bold) {
+                const auto candidate = content.find("**", open);
+                if (candidate != std::string_view::npos) close = candidate;
+            } else {
+                // A single-* span may not contain another '*' (no nesting).
+                for (std::size_t scan = open; scan < content.size(); ++scan) {
+                    if (content[scan] == '*') {
+                        close = scan;
+                        break;
+                    }
+                }
+            }
+            if (close == std::string_view::npos) return {};
+            if (!append_styled(content.substr(open, close - open), bold)) return {};
+            at = close + marker.size();
+            continue;
+        }
+        const auto next = content.find_first_of("*<", at);
+        const auto end = next == std::string_view::npos ? content.size() : next;
+        if (!append_plain(content.substr(at, end - at))) return {};
+        at = end;
+    }
+    if (trim(result.text).empty()) return {};
+    return result;
+}
+
+std::optional<RichLabel> label(std::string_view input, bool delimited = false) {
     input = trim(input);
     if (input.empty()) return {};
     if (input.front() == '"') {
@@ -69,6 +226,9 @@ std::optional<std::string> label(std::string_view input, bool delimited = false)
         if (input.find('"') != std::string_view::npos) return {};
         if (delimited && input.find_first_of("[]{}()|") != std::string_view::npos) return {};
     }
+    if (input.size() >= 2u && input.front() == '`' && input.back() == '`')
+        return markdown_label(input);
+    RichLabel result;
     // The pinned Mermaid createText renderer expands Font Awesome markers,
     // even inside otherwise plain quoted labels. Drawing them literally would
     // lose an icon while claiming the whole diagram was understood.
@@ -112,7 +272,8 @@ std::optional<std::string> label(std::string_view input, bool delimited = false)
         if (glyphs > kLabelLimit || cells > kLabelLimit) return {};
     }
     if (trim(decoded).empty()) return {};
-    return decoded;
+    result.text = std::move(decoded);
+    return result;
 }
 
 struct Scanner {
@@ -169,7 +330,7 @@ struct Scanner {
         return {};
     }
 
-    std::optional<std::string> enclosed(char close) {
+    std::optional<RichLabel> enclosed(char close) {
         const auto raw = enclosed_view(close);
         return raw ? label(*raw, true) : std::nullopt;
     }
@@ -528,7 +689,6 @@ struct Diagram {
     std::size_t next_order = 0;
     std::size_t group_counter = 0;
     bool has_group_endpoint = false;
-
     std::optional<std::size_t> vertex(std::string id, Work& work,
                                       bool& cross_owner_membership_request) {
         (void)work;  // RFC 0031 E5: per-vertex bookkeeping folded into the
@@ -788,6 +948,7 @@ bool flow_parse_prepay(std::string_view body, Work& work, bool full_profile,
 struct GroupHeader {
     std::optional<std::string> id;
     std::string title;
+    std::vector<detail::LabelRun> rich;
 };
 
 std::optional<GroupHeader> flow_group_header(Scanner& group) {
@@ -795,7 +956,7 @@ std::optional<GroupHeader> flow_group_header(Scanner& group) {
     const auto source = group.rest;
     if (source.empty()) return {};
     std::optional<std::string> id;
-    std::optional<std::string> title;
+    std::optional<RichLabel> title;
     if (source.front() != '"') {
         id = group.id();
         if (id) {
@@ -813,12 +974,12 @@ std::optional<GroupHeader> flow_group_header(Scanner& group) {
         title = label(source);
         if (!title) return {};
         group.rest = {};
-        if (title->find_first_of(" \t") != std::string::npos)
+        if (title->text.find_first_of(" \t") != std::string::npos)
             id.reset();
         else
-            id = *title;
+            id = title->text;
     }
-    return GroupHeader{std::move(id), std::move(*title)};
+    return GroupHeader{std::move(id), std::move(title->text), std::move(title->runs)};
 }
 
 struct FlowShapeData {
@@ -885,8 +1046,9 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
         if (scanner.rest.empty() || scanner.rest.front() != '"') return {};
         const auto end = scanner.rest.find('"', 1u);
         if (end == std::string_view::npos) return {};
-        shape_label = label(scanner.rest.substr(0u, end + 1u));
-        if (!shape_label) return {};
+        const auto decoded = label(scanner.rest.substr(0u, end + 1u));
+        if (!decoded) return {};
+        shape_label = decoded->text;
         scanner.rest.remove_prefix(end + 1u);
         scanner.space();
     }
@@ -902,7 +1064,7 @@ bool classic_opener(std::string_view text) {
 
 struct ClassicDeclaration {
     Shape shape;
-    std::string text;
+    RichLabel label;
 };
 
 std::optional<ClassicDeclaration> classic_declaration(Scanner& scanner, Work& work) {
@@ -966,7 +1128,8 @@ std::optional<ClassicDeclaration> classic_declaration(Scanner& scanner, Work& wo
 }
 
 std::optional<std::size_t> flow_node_from_id(std::string id, Scanner& scanner, Diagram& graph,
-                                             Work& work, bool& cross_owner_membership_request) {
+                                             Work& work, bool& cross_owner_membership_request,
+                                             RichLabels* rich) {
     // Unsupported structural keywords must not turn into ordinary nodes.
     constexpr std::string_view reserved[]{"end",       "subgraph", "direction", "style",
                                           "linkStyle", "classDef", "class",     "click"};
@@ -992,9 +1155,10 @@ std::optional<std::size_t> flow_node_from_id(std::string id, Scanner& scanner, D
         if (!declaration) return {};
         auto& node = graph.vertices[*index];
         if (node.explicit_label &&
-            (node.text != declaration->text || node.shape != declaration->shape))
+            (node.text != declaration->label.text || node.shape != declaration->shape))
             return {};
-        node.text = declaration->text;
+        node.text = declaration->label.text;
+        if (rich && !rich->bind_vertex(*index, std::move(declaration->label.runs), work)) return {};
         node.shape = declaration->shape;
         node.explicit_label = true;
         scanner.space();
@@ -1015,11 +1179,12 @@ std::optional<std::size_t> flow_node_from_id(std::string id, Scanner& scanner, D
     const auto shape = open == '['   ? Shape::Rectangle
                        : open == '(' ? Shape::Rounded
                                      : Shape::Decision;
-    auto text = scanner.enclosed(open == '[' ? ']' : open == '(' ? ')' : '}');
-    if (!text) return {};
+    auto labeled = scanner.enclosed(open == '[' ? ']' : open == '(' ? ')' : '}');
+    if (!labeled) return {};
     auto& node = graph.vertices[*index];
-    if (node.explicit_label && (node.text != *text || node.shape != shape)) return {};
-    node.text = std::move(*text);
+    if (node.explicit_label && (node.text != labeled->text || node.shape != shape)) return {};
+    node.text = std::move(labeled->text);
+    if (rich && !rich->bind_vertex(*index, std::move(labeled->runs), work)) return {};
     node.shape = shape;
     node.explicit_label = true;
     scanner.space();
@@ -1032,7 +1197,7 @@ std::optional<std::size_t> flow_node_from_id(std::string id, Scanner& scanner, D
 }
 
 std::optional<Endpoint> flow_endpoint(Scanner& scanner, Diagram& graph, Work& work,
-                                      bool& cross_owner_membership_request) {
+                                      bool& cross_owner_membership_request, RichLabels* rich) {
     auto id = scanner.id();
     if (!id) return {};
     // Only an exact, already-declared Group.id has group endpoint meaning.
@@ -1052,12 +1217,14 @@ std::optional<Endpoint> flow_endpoint(Scanner& scanner, Diagram& graph, Work& wo
         return Endpoint{EndpointKind::Group, index};
     }
     const auto vertex =
-        flow_node_from_id(std::move(*id), scanner, graph, work, cross_owner_membership_request);
+        flow_node_from_id(std::move(*id), scanner, graph, work, cross_owner_membership_request,
+                          rich);
     return vertex ? std::optional<Endpoint>{Endpoint{EndpointKind::Vertex, *vertex}} : std::nullopt;
 }
 
 bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::string_view original,
-                    bool already_prepaid, bool& saw_reopen, bool& cross_owner_membership_request) {
+                    bool already_prepaid, bool& saw_reopen, bool& cross_owner_membership_request,
+                    RichLabels* rich = nullptr) {
     // RFC 0031 E5: the former bounded statement-local fee is covered by the
     // whole-body flow_parse_prepay (bare or configured profile) charged at
     // parse() entry; only the reopen profile activation below still charges.
@@ -1088,6 +1255,9 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
                             return v.id == *header->id;
                         })))
             return false;
+        // FS-1: Markdown subgraph titles are a later cohort; a backtick title
+        // rejects whole-source instead of painting its markup literally.
+        if (!header->rich.empty()) return false;
         std::optional<std::size_t> existing;
         if (header->id)
             for (std::size_t n = 0; n < graph.groups.size(); ++n) {
@@ -1153,7 +1323,7 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
         std::vector<Endpoint> result;
         while (true) {
             const auto endpoint =
-                flow_endpoint(scanner, graph, work, cross_owner_membership_request);
+                flow_endpoint(scanner, graph, work, cross_owner_membership_request, rich);
             if (!endpoint || result.size() >= kEndpointSlots) return {};
             // A group id has a closed scalar grammar. Reject both `G & A`
             // and `A & G` before reserving or storing the mixed compound.
@@ -1180,7 +1350,7 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
     // label copies are covered by the whole-body flow_parse_prepay fee.
     while (!scanner.rest.empty()) {
         LinkLexeme link = complete_flow_link(scanner.rest);
-        std::optional<std::string> edge_label;
+        std::optional<RichLabel> edge_label;
         if (link.state == LinkScan::Unsupported) return false;
         if (link.state == LinkScan::Complete) {
             scanner.rest.remove_prefix(link.consumed);
@@ -1224,9 +1394,15 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
             return false;
         graph.has_group_endpoint = graph.has_group_endpoint || carries_group;
         for (const auto a : *from)
-            for (const auto b : *to)
-                graph.edges.push_back({a, b, edge_label, link.stroke, link.arrow_start,
-                                       link.arrow_end, link.minimum_length});
+            for (const auto b : *to) {
+                graph.edges.push_back(
+                    {a, b,
+                     edge_label ? std::optional<std::string>{edge_label->text} : std::nullopt,
+                     link.stroke, link.arrow_start, link.arrow_end, link.minimum_length});
+                if (edge_label && rich &&
+                    !rich->bind_edge(graph.edges.size() - 1u, edge_label->runs, work))
+                    return false;
+            }
         emitted_link = true;
         from = std::move(to);
         scanner.space();
@@ -1234,9 +1410,63 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
     return !uses_group_endpoint || emitted_link;
 }
 
+// FS-1: the one accepted body directive. {"flowchart":{"htmlLabels":bool}}
+// changes only SVG label anchoring upstream; the terminal renders plain
+// text labels under either value, so it is non-terminal and disclosed.
+bool flow_init_directive(std::string_view line, Work& work,
+                         std::vector<std::string>& notices) {
+    constexpr std::string_view kPrefix = "%%{init:";
+    constexpr std::string_view kSuffix = "}%%";
+    if (!line.starts_with(kPrefix) || !line.ends_with(kSuffix) ||
+        line.size() <= kPrefix.size() + kSuffix.size())
+        return false;
+    const auto payload =
+        trim(line.substr(kPrefix.size(), line.size() - kPrefix.size() - kSuffix.size()));
+    const auto document = loom::utils::json::parse(payload);
+    if (!document) return false;
+    using loom::utils::json::JsonVal;
+    const auto root = document->root();
+    if (!root.is_obj()) return false;
+    if (!work.spend(payload.size() * 4u + 256u)) return false;
+    bool html_labels = false;
+    std::size_t top_count = 0;
+    bool ok = true;
+    root.iter_obj([&](JsonVal key, JsonVal value) {
+        if (!ok) return;
+        ++top_count;
+        if (key.as_str() != "flowchart" || !value.is_obj()) {
+            ok = false;
+            return;
+        }
+        std::size_t nested = 0;
+        value.iter_obj([&](JsonVal nkey, JsonVal nvalue) {
+            if (!ok) return;
+            ++nested;
+            if (nkey.as_str() != "htmlLabels" || !nvalue.is_bool()) ok = false;
+            else
+                html_labels = nvalue.as_bool();
+        });
+        if (nested != 1u) ok = false;
+    });
+    if (!ok || top_count != 1u) return false;
+    notices.push_back(std::string("config.flowchart.htmlLabels=") + (html_labels ? "true" : "false") +
+                      " -> native text labels; not applied");
+    return true;
+}
+
 std::optional<Diagram> parse(std::string_view source, Work& work, bool already_prepaid = false,
-                             std::unique_ptr<FlowStyles>* style_result = nullptr) {
+                             std::unique_ptr<FlowStyles>* style_result = nullptr,
+                             RichLabels* rich = nullptr) {
     if (style_result) style_result->reset();
+    // A failed first attempt (e.g. primary parse of a frontmatter source) must
+    // not leave stale runs/notices for the envelope retry that reuses this.
+    if (rich) {
+        rich->vertex.clear();
+        rich->edge.clear();
+        rich->notices.clear();
+        rich->paid = false;
+    }
+    std::vector<std::string> discarded_notices;
     std::unique_ptr<FlowStyles> pending_styles;
     if (source.empty() || source.size() > kSourceLimit) return {};
     // RFC 0031 E5: the bare whole-body profile is charged as soon as a valid
@@ -1263,7 +1493,14 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
         source = end == std::string_view::npos ? std::string_view{} : source.substr(end + 1);
         if (line.ends_with('\r')) line.remove_suffix(1);
         line = trim(line);
-        if (line.starts_with("%%{")) return {};
+        if (line.starts_with("%%{")) {
+            // FS-1: the closed non-terminal init whitelist; every other
+            // directive keeps the whole source on ordinary fallback.
+            if (!flow_init_directive(line, work,
+                                     rich ? rich->notices : discarded_notices))
+                return {};
+            continue;
+        }
         if (line.empty() || line.starts_with("%%")) continue;
         bool quoted = false;
         bool escaped = false;
@@ -1329,7 +1566,7 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
                         !flow_style_collect(statement, physical, pending_styles, work))
                         return {};
                 } else if (!flow_statement(statement, diagram, work, original, already_prepaid,
-                                           saw_reopen, cross_owner_membership_request))
+                                           saw_reopen, cross_owner_membership_request, rich))
                     return {};
                 have_statement = true;
             }
@@ -1543,6 +1780,10 @@ struct FlowEnvelope {
     // B6: the frontmatter explicitly selected dagre. Only these configured
     // whole sources are eligible for the untrusted-compound fallback gate.
     bool dagre_layout = false;
+    // FS-1: top-level config.htmlLabels was present (non-terminal: it only
+    // selects SVG label anchoring upstream; the terminal draws text either
+    // way). Disclosed below the art via Diagram::config_notices.
+    std::optional<bool> html_labels;
 };
 
 std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& work) {
@@ -1719,7 +1960,7 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
     if ((!description && !config) || (description && !description_text)) return {};
     if (!config) {
         if (title) return {};
-        return FlowEnvelope{envelope->raw_body, {}};
+        return FlowEnvelope{envelope->raw_body, {}, false, std::nullopt};
     }
     const bool legacy_dagre = fields == Layout && !title;
     const bool dagre_diagram_title = fields == Layout && title;
@@ -1735,6 +1976,10 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
     const bool courier_nested_false =
         fields == (Font | Flowchart | NestedHtml) && !nested_html_value;
     const bool logging_false = fields == (Log | RootHtml) && log_one && !root_html_value;
+    // FS-1: a lone top-level htmlLabels (either value) only switches SVG label
+    // anchoring upstream; terminal text geometry is identical. Non-terminal,
+    // disclosed per diagram.
+    const bool root_html_only = fields == RootHtml;
     const bool both_false =
         fields == (RootHtml | Flowchart | NestedHtml) && !root_html_value && !nested_html_value;
     const unsigned strict_bits = RootHtml | Flowchart | NestedHtml | Security;
@@ -1743,10 +1988,11 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
                         root_html_value && nested_html_value;
     if (legacy_dagre || dagre_diagram_title || terminal_max_width ||
         terminal_zero_diagram_padding || title_top_margin_zero_without_layout ||
-        dagre_title_top_margin_zero ||
+        dagre_title_top_margin_zero || root_html_only ||
         (description &&
          (courier_only || courier_nested_false || logging_false || both_false || strict))) {
-        FlowEnvelope result{envelope->raw_body, {}, (fields & Layout) != 0u};
+        FlowEnvelope result{envelope->raw_body, {}, (fields & Layout) != 0u,
+                            root_html_only ? std::optional<bool>{root_html_value} : std::nullopt};
         if (title) {
             const auto& value = envelope->title->text;
             if (!work.spend(value.size() * 8u + sizeof(std::string) + 128u)) return {};
@@ -2236,7 +2482,8 @@ bool paint_multiline(Canvas& canvas, FlowTextCollector* collector, Point point,
 }
 
 bool node_box(Canvas& canvas, const Box& box, const Vertex& node,
-              FlowTextCollector* collector = nullptr) {
+              FlowTextCollector* collector = nullptr,
+              const std::vector<detail::LabelRun>* rich = nullptr) {
     for (int y = 0; y < box.height; ++y)
         for (int x = 0; x < box.width; ++x)
             if (!canvas.put({box.x + x, box.y + y}, " ")) return false;
@@ -2284,8 +2531,10 @@ bool node_box(Canvas& canvas, const Box& box, const Vertex& node,
                           ? collector->row_count(node.text)
                           : std::optional<int>{static_cast<int>(label_rows(node.text).size())};
     if (!rows) return false;
-    return paint_multiline(canvas, collector, {box.x, box.y + (box.height - *rows) / 2}, node.text,
-                           box.width);
+    const Point at{box.x, box.y + (box.height - *rows) / 2};
+    if (!collector && rich && !rich->empty())
+        return canvas.multiline_rich(at, *rich, box.width);
+    return paint_multiline(canvas, collector, at, node.text, box.width);
 }
 
 // Ranking ignores DFS back edges only in its temporary DAG. All original
@@ -3167,7 +3416,8 @@ bool connect(Canvas& canvas, Router& router, const Port& from, const Port& to,
              const std::optional<std::string>& label_text, bool arrow_start, bool arrow_end,
              Stroke stroke = Stroke::Solid, FlowTextCollector* collector = nullptr,
              std::vector<unsigned char>* routed = nullptr, bool protect_from = false,
-             bool protect_to = false, bool orthogonal_only = false) {
+             bool protect_to = false, bool orthogonal_only = false,
+             const std::vector<detail::LabelRun>* rich_label = nullptr) {
     if ((protect_from || protect_to) && !canvas.work.spend(8u * sizeof(ScopedGroupBorder) + 128u))
         return false;
     const auto start = arrow_start ? from.outside + from.normal : from.outside;
@@ -3266,7 +3516,11 @@ bool connect(Canvas& canvas, Router& router, const Port& from, const Port& to,
                            false, arrow_end, stroke, {}, suffix, routed, orthogonal_only))
                 return false;
             reserve(true);
-            if (!paint_multiline(canvas, collector, position, *label_text, length)) {
+            const bool label_painted =
+                (!collector && rich_label && !rich_label->empty())
+                    ? canvas.multiline_rich(position, *rich_label, length)
+                    : paint_multiline(canvas, collector, position, *label_text, length);
+            if (!label_painted) {
                 // The ordinary branch returns as before. The collector may fail
                 // after recording a private cell, so release its temporary text
                 // reservation before the discarded ASCII layout falls back.
@@ -3291,7 +3545,12 @@ bool paint_flow_styles(Canvas& canvas, const Diagram& graph, const FlowStyles& s
     if (!work.spend(count * (sizeof(SemanticCellStyle) + 8u) +
                     4u * sizeof(std::vector<SemanticCellStyle>) + 256u))
         return false;
-    canvas.styles = std::make_unique<std::vector<SemanticCellStyle>>(count);
+    // Markdown span emphasis may already own the style plane; reuse it and
+    // merge bold/underline rather than wiping label emphasis.
+    if (!canvas.styles)
+        canvas.styles = std::make_unique<std::vector<SemanticCellStyle>>(count);
+    else if (canvas.styles->size() != count)
+        return false;
     for (std::size_t n = 0; n < boxes.size(); ++n) {
         const auto& properties = styles.effective[n];
         if (!properties.fill && !properties.stroke && !properties.color && !properties.width)
@@ -3308,11 +3567,13 @@ bool paint_flow_styles(Canvas& canvas, const Diagram& graph, const FlowStyles& s
                 const bool border = x == box.x || y == box.y || x == box.x + box.width - 1 ||
                                     y == box.y + box.height - 1;
                 const bool stroke = border || canvas.at(at).bits != 0u;
-                SemanticCellStyle value;
+                SemanticCellStyle value =
+                    (*canvas.styles)[static_cast<std::size_t>(canvas.index(at))];
                 if (!border && filled) value.fill = properties.fill->role;
                 if (stroke) {
                     if (properties.stroke) value.foreground = properties.stroke->role;
-                    value.bold = properties.width && *properties.width >= 4.0;
+                    value.bold = value.bold ||
+                                 (properties.width && *properties.width >= 4.0);
                 } else if (filled)
                     value.foreground = SemanticColorRole::Neutral;
                 else if (properties.color)
@@ -3398,7 +3659,8 @@ bool flow_untrusted_dagre_compound(const Diagram& graph, Work& work) {
 std::optional<std::vector<std::string>>
 flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nullptr,
             const FlowStyles* source_styles = nullptr,
-            std::optional<StyledRows>* styled_output = nullptr) {
+            std::optional<StyledRows>* styled_output = nullptr,
+            const RichLabels* rich = nullptr) {
     if (source_styles && (!styled_output || collector)) return {};
     // Classify once for placement and both routing passes. Packed scalar keys
     // avoid a quadratic scan on the legacy dense-graph budget boundary.
@@ -3566,17 +3828,31 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
             routed.assign(canvas_area, 0u);
         }
         Canvas canvas(width, height, work);
+        const auto runs_nonempty =
+            [](const std::vector<std::vector<detail::LabelRun>>& table) {
+                return std::ranges::any_of(table,
+                                           [](const auto& runs) { return !runs.empty(); });
+            };
+        const bool rich_present =
+            rich && (runs_nonempty(rich->vertex) || runs_nonempty(rich->edge));
+        if (rich_present && !canvas.ensure_styles()) return {};
         if (region)
             for (const auto& [index, box] : region->groups)
                 if (index >= graph.groups.size() ||
                     !group_frame(canvas, box, graph.groups[index].text))
                     return {};
-        for (std::size_t n = 0; n < placed->size(); ++n)
-            if (!node_box(canvas, (*placed)[n], graph.vertices[n], pass_collector)) return {};
+        for (std::size_t n = 0; n < placed->size(); ++n) {
+            const std::vector<detail::LabelRun>* runs = nullptr;
+            if (rich && n < rich->vertex.size() && !rich->vertex[n].empty())
+                runs = &rich->vertex[n];
+            if (!node_box(canvas, (*placed)[n], graph.vertices[n], pass_collector, runs))
+                return {};
+        }
 
         Router router(canvas, strict ? nullptr : &routed);
         std::unordered_set<int> used_ports;
-        const auto route_one = [&](const Edge& edge, const EndpointBox& source_box,
+        const auto route_one = [&](std::size_t edge_index, const Edge& edge,
+                                   const EndpointBox& source_box,
                                    const EndpointBox& target_box) {
             const auto& from = source_box.box;
             const auto& to = target_box.box;
@@ -3680,10 +3956,15 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
                 for (const auto& target : targets) {
                     if (!work.remaining) return false;
                     if (used_ports.contains(canvas.index(target.border))) continue;
+                    const std::vector<detail::LabelRun>* edge_rich = nullptr;
+                    if (rich && edge_index < rich->edge.size() &&
+                        !rich->edge[edge_index].empty())
+                        edge_rich = &rich->edge[edge_index];
                     if (!connect(canvas, router, source, target, edge.text, edge.arrow_start,
                                  edge.arrow_end, edge.stroke, pass_collector,
                                  strict ? nullptr : &routed, edge.from.kind == EndpointKind::Group,
-                                 edge.to.kind == EndpointKind::Group, independent_strands))
+                                 edge.to.kind == EndpointKind::Group, independent_strands,
+                                 edge_rich))
                         continue;
                     used_ports.insert(canvas.index(source.border));
                     used_ports.insert(canvas.index(target.border));
@@ -3699,7 +3980,7 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
                 tagged_routing_order.begin(), tagged_routing_order.end(),
                 [](const RoutedEdge& a, const RoutedEdge& b) { return a.distance < b.distance; });
             for (const auto& route : tagged_routing_order)
-                if (!route_one(graph.edges[route.edge], route.from, route.to)) {
+                if (!route_one(route.edge, graph.edges[route.edge], route.from, route.to)) {
                     return std::optional<std::vector<std::string>>{};
                 }
         } else {
@@ -3725,11 +4006,10 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
                 [&](std::size_t a, std::size_t b) { return edge_distance(a) < edge_distance(b); });
             for (const auto index : routing_order) {
                 const auto& edge = graph.edges[index];
-                if (!route_one(edge,
+                if (!route_one(index, edge,
                                {(*placed)[edge.from.index], graph.vertices[edge.from.index].shape},
-                               {(*placed)[edge.to.index], graph.vertices[edge.to.index].shape})) {
+                               {(*placed)[edge.to.index], graph.vertices[edge.to.index].shape}))
                     return std::optional<std::vector<std::string>>{};
-                }
             }
         }
 
@@ -3738,20 +4018,47 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
         auto lines = pass_collector ? pass_collector->finish(canvas)
                                     : std::optional<std::vector<std::string>>{canvas.lines()};
         if (!lines || lines->empty()) return {};
+        const auto art_rows = lines->size();
         if (source_styles) {
-            const auto drawing_rows = lines->size();
-            if (drawing_rows + source_styles->legend.size() >
+            if (art_rows + source_styles->legend.size() >
                     static_cast<std::size_t>(kHeightLimit) ||
-                !work.spend((drawing_rows + source_styles->legend.size()) * 4u *
+                !work.spend((art_rows + source_styles->legend.size()) * 4u *
                                 sizeof(std::string) +
                             4u * sizeof(std::vector<std::string>) + 256u))
                 return {};
-            lines->reserve(drawing_rows + source_styles->legend.size());
+            lines->reserve(art_rows + source_styles->legend.size());
             for (const auto& record : source_styles->legend) {
                 if (!work.spend(record.size() * 8u + 256u)) return {};
                 lines->push_back(record);
             }
-            auto styled = extract_styled_rows(canvas, *lines, 0u, drawing_rows, work);
+        }
+        // FS-1: disclosure footer for accepted non-terminal body init
+        // directives, appended BEFORE style extraction so the styled-row plane
+        // covers the footer as plain runs (drawing_rows stays the canvas art).
+        // The collector (ASCII) path carries no notices.
+        static const std::vector<std::string> kNoNotices;
+        const std::vector<std::string>& notices = rich ? rich->notices : kNoNotices;
+        if (!pass_collector && !notices.empty()) {
+            constexpr std::size_t kFlowNoticeLineLimit = 96u;
+            std::size_t bytes = 0;
+            for (const auto& notice : notices) {
+                if (notice.size() > kFlowNoticeLineLimit) return {};
+                bytes += notice.size();
+            }
+            if (lines->size() + 1u + notices.size() >
+                    static_cast<std::size_t>(kHeightLimit) ||
+                !work.spend((1u + notices.size()) *
+                                    (4u * sizeof(std::string) + 256u) +
+                                bytes * 2u + 256u))
+                return {};
+            lines->emplace_back();
+            for (const auto& notice : notices)
+                lines->push_back(notice);
+        }
+        // Style extraction spans only the canvas art rows (drawing_rows);
+        // legend/footer rows map to plain runs.
+        if (source_styles || (rich_present && styled_output)) {
+            auto styled = extract_styled_rows(canvas, *lines, 0u, art_rows, work);
             if (!styled) return {};
             *styled_output = std::move(*styled);
         }
@@ -4622,8 +4929,9 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
     std::optional<std::vector<std::string>> lines;
     std::optional<StyledRows> styles;
     std::unique_ptr<FlowStyles> flow_styles;
-    if (const auto diagram = parse(source, work, false, &flow_styles)) {
-        lines = flow_layout(*diagram, work, nullptr, flow_styles.get(), &styles);
+    RichLabels rich;
+    if (const auto diagram = parse(source, work, false, &flow_styles, &rich)) {
+        lines = flow_layout(*diagram, work, nullptr, flow_styles.get(), &styles, &rich);
     } else {
         // RFC 0031 E4: ordered family probes replace the mutable flag cluster.
         // Classification is one textual scan; execution spends exactly the
@@ -4635,13 +4943,17 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
         case detail::MermaidProbeFamily::Flow: {
             const auto envelope = flow_envelope_body(source, work);
             if (!envelope || !flow_envelope_parse_prepay(envelope->body, work)) return {};
-            const auto diagram = parse(envelope->body, work, true, &flow_styles);
+            auto diagram = parse(envelope->body, work, true, &flow_styles, &rich);
             if (!diagram) return {};
-            // B6: keep configured dagre compound graphs the terminal router
-            // paints unfaithfully whole-null (ordinary fallback); bare/body
-            // paths never set the dagre bit and are unaffected.
-            if (envelope->dagre_layout && flow_untrusted_dagre_compound(*diagram, work)) return {};
-            lines = flow_layout(*diagram, work, nullptr, flow_styles.get(), &styles);
+            // FS-1: disclose the accepted non-terminal frontmatter key through
+            // the same footer channel as body init directives.
+            if (envelope->html_labels)
+                rich.notices.push_back(
+                    std::string("config.htmlLabels=") + (*envelope->html_labels ? "true" : "false") +
+                    " -> native text labels; not applied");
+            if (envelope->dagre_layout && flow_untrusted_dagre_compound(*diagram, work))
+                return {};
+            lines = flow_layout(*diagram, work, nullptr, flow_styles.get(), &styles, &rich);
             if (lines && envelope->title && !prepend_flow_title(*lines, *envelope->title, work))
                 return {};
             break;
@@ -4681,7 +4993,8 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             break;
         }
     }
-    if (!lines) return {};
+    if (!lines)
+        return {};
     // A bare plain-ER diagram comes back as legacy rows with no packed styles.
     er_packed = er_packed && !packed_styles.empty();
     if (er_packed) packed_meter = PackedMeter::Er;

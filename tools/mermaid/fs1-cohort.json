@@ -1,0 +1,277 @@
+{
+  "schema": "loom_mermaid_fs1_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-1",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original whose config map is exactly {htmlLabels: bool}, folded description allowed, body carries a backtick Markdown string, no body init directive",
+    "roots": [
+      "flowchart"
+    ],
+    "blocker_detection": "three fixed source-content detectors (Markdown subgraph title, non-whitelisted config leaf, angle/raw-HTML in span); no generator-time rendering; residual rows abort",
+    "width_policy": "original track pre-registers the 240-column admission and narrow_40 stays source (the disclosure footer exceeds 40 columns); body track states are recorded in expected_body_states."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review, main-agent inline (D-066 FS-1, 2026-11-05)",
+    "date": "2026-11-05",
+    "verdict": "approved",
+    "note": "Read-only adversarial review of the production diff, mechanical selection/blocker detectors, ledger rows, pixel/footer gate, and matrix wiring. No blocker/major findings; two minor follow-ups noted (symmetric rejection of a lone '>' inside a span; move semantics for fan-out edge runs)."
+  },
+  "counts": {
+    "total": 7,
+    "predicted_draw": 2,
+    "predicted_blocked": 5
+  },
+  "blocker_vocabulary": [
+    "flow-md-subgraph-title",
+    "flow-md-nonwhitelisted-config-key",
+    "flow-md-angle-in-span"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/v2/04-should-render-raw-strings-with-htmllabels-false.mmd",
+      "family": "flowchart",
+      "sha256": "9d51e104745d69087add1b9ebe01365b47373232a7aa27ff6d76da72db4287ba",
+      "manifest_sha256": "9d51e104745d69087add1b9ebe01365b47373232a7aa27ff6d76da72db4287ba",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "html_labels": false,
+      "extra_config_keys": [],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-md-subgraph-title",
+        "site": "src/ui/visual/mermaid_impl.cpp (subgraph heading parse rejects a non-empty Markdown run set)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (subgraph heading parse rejects a non-empty Markdown run set)",
+        "detail": "A 'subgraph' heading is itself a backtick Markdown string (subgraph[\"`...`\"] / subgraph `...`). Markdown subgraph titles are a later cohort, so the whole source keeps ordinary fallback."
+      },
+      "ledger_note": "Blocked by a closed source-content Markdown/config detector"
+    },
+    {
+      "path": "flowchart/nightly-check/v2/05-should-wrap-edge-labels-markdownautowrap-true-htmllabels-true.mmd",
+      "family": "flowchart",
+      "sha256": "2c4f2a29464b0271aae7dbd6c0ef850be31be6ea3e056774cae4959cf1f95b09",
+      "manifest_sha256": "2c4f2a29464b0271aae7dbd6c0ef850be31be6ea3e056774cae4959cf1f95b09",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "html_labels": true,
+      "extra_config_keys": [
+        "markdownAutoWrap"
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-md-nonwhitelisted-config-key",
+        "site": "src/ui/visual/mermaid_impl.cpp flow_envelope_body (FS-1 root_html_only profile admits exactly one htmlLabels leaf)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp flow_envelope_body (FS-1 root_html_only profile admits exactly one htmlLabels leaf)",
+        "detail": "The frontmatter config carries a leaf other than htmlLabels (e.g. markdownAutoWrap); markdown auto-wrapping changes label geometry and is outside the one-key non-terminal whitelist."
+      },
+      "ledger_note": "Blocked by a closed source-content Markdown/config detector"
+    },
+    {
+      "path": "flowchart/nightly-check/v2/06-should-wrap-edge-labels-markdownautowrap-true-htmllabels-false.mmd",
+      "family": "flowchart",
+      "sha256": "1a1c65163ec96b5c06f6c10c77c190dd0f3e26cc7bae6b1e210612218c5f6e3e",
+      "manifest_sha256": "1a1c65163ec96b5c06f6c10c77c190dd0f3e26cc7bae6b1e210612218c5f6e3e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "html_labels": false,
+      "extra_config_keys": [
+        "markdownAutoWrap"
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-md-nonwhitelisted-config-key",
+        "site": "src/ui/visual/mermaid_impl.cpp flow_envelope_body (FS-1 root_html_only profile admits exactly one htmlLabels leaf)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp flow_envelope_body (FS-1 root_html_only profile admits exactly one htmlLabels leaf)",
+        "detail": "The frontmatter config carries a leaf other than htmlLabels (e.g. markdownAutoWrap); markdown auto-wrapping changes label geometry and is outside the one-key non-terminal whitelist."
+      },
+      "ledger_note": "Blocked by a closed source-content Markdown/config detector"
+    },
+    {
+      "path": "flowchart/nightly-check/v2/07-should-wrap-edge-labels-markdownautowrap-false-htmllabels-true.mmd",
+      "family": "flowchart",
+      "sha256": "479bc5e21cceb71930a204967be55b542e8eea1f31f55f7f0ece24b76215fb00",
+      "manifest_sha256": "479bc5e21cceb71930a204967be55b542e8eea1f31f55f7f0ece24b76215fb00",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "html_labels": true,
+      "extra_config_keys": [
+        "markdownAutoWrap"
+      ],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-md-nonwhitelisted-config-key",
+        "site": "src/ui/visual/mermaid_impl.cpp flow_envelope_body (FS-1 root_html_only profile admits exactly one htmlLabels leaf)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp flow_envelope_body (FS-1 root_html_only profile admits exactly one htmlLabels leaf)",
+        "detail": "The frontmatter config carries a leaf other than htmlLabels (e.g. markdownAutoWrap); markdown auto-wrapping changes label geometry and is outside the one-key non-terminal whitelist."
+      },
+      "ledger_note": "Blocked by a closed source-content Markdown/config detector"
+    },
+    {
+      "path": "flowchart/pr-check/6-markdown-label-html-true.mmd",
+      "family": "flowchart",
+      "sha256": "eea13adccbce502d4bbf4da37154411a4d6d4e35307597f33902270db090555a",
+      "manifest_sha256": "eea13adccbce502d4bbf4da37154411a4d6d4e35307597f33902270db090555a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "html_labels": true,
+      "extra_config_keys": [],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "FS-1 root htmlLabels non-terminal admission with Markdown node/edge labels and a per-diagram disclosure footer"
+    },
+    {
+      "path": "flowchart/pr-check/7-markdown-label-html-false.mmd",
+      "family": "flowchart",
+      "sha256": "477c7d29c97074aae66bb4c432db81788dc0f73938d1d6955ac05f1d89649981",
+      "manifest_sha256": "477c7d29c97074aae66bb4c432db81788dc0f73938d1d6955ac05f1d89649981",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "html_labels": false,
+      "extra_config_keys": [],
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "FS-1 root htmlLabels non-terminal admission with Markdown node/edge labels and a per-diagram disclosure footer"
+    },
+    {
+      "path": "flowchart/visual-check/5b-angle-brackets-should-be-work-without-html-labels.mmd",
+      "family": "flowchart",
+      "sha256": "65c23817a1369a2010681354c24c5938d8863d632660a35f9e36bc55db30b722",
+      "manifest_sha256": "65c23817a1369a2010681354c24c5938d8863d632660a35f9e36bc55db30b722",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "html_labels": false,
+      "extra_config_keys": [],
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-md-angle-in-span",
+        "site": "src/ui/visual/mermaid_impl.cpp markdown_label (any '<' other than <br>/<br/>/<br /> rejects the span)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp markdown_label (any '<' other than <br>/<br/>/<br /> rejects the span)",
+        "detail": "A backtick Markdown span contains a literal '<' or '>' (comparison operators / raw HTML) that is not an accepted <br> line break; the closed Markdown subset rejects it rather than painting raw markup."
+      },
+      "ledger_note": "Blocked by a closed source-content Markdown/config detector"
+    }
+  ]
+}

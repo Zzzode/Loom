@@ -38,6 +38,32 @@ mechanism (reviewed Model + terminal snapshots, evidence bound after five
 captures — the ER107/Block58/shape-alias pattern), never by weakening the
 generic runner. Bodies follow `kFlowShapeAliasBodyCases`-style cohorts.
 
+### ASan timing evidence (Class285 serial run)
+
+The earlier observation that a serial
+`MermaidCapabilityReport.Class285` run under ASan exceeds 600 s had **no
+on-disk record** (the `build/asan` tree had been deleted by a disk
+cleanup) and was treated as unverified until re-measured.
+
+Re-measured 2026-11-05 on the boxed Homebrew LLVM 23.1.2 toolchain with
+the fixed asan preset (commit `dd276fad`; no `CXXFLAGS` workaround):
+
+- command: `./test_mermaid_relations_semantics
+  --gtest_filter='MermaidCapabilityReport.Class285'`, serial, with
+  `ASAN_OPTIONS=detect_leaks=1:halt_on_error=1` and
+  `UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1`;
+- result: **PASSED in 850,369 ms (~14 min 10 s), zero ASan/UBSan/Leak
+  reports**;
+- emitted `mermaid-official-class285-source-scenes.json` is
+  byte-identical (sha256
+  `2539debd548074b9d15f8ae7950d10aef36064850d19e55a013bb3f21719b578`)
+  to the debug-preset report; counts decoded 260 / pending 25 /
+  geometry errors 0 / oracle-or-resource errors 0.
+
+Consequence: the 600 s ctest timeout makes Class285 under ASan a
+direct-binary-only gate (consistent with gate 4 above); serial wall time
+is ~14 min, not merely >600 s.
+
 ## 2. Fallback census (2145 originals, wide-frame)
 
 | family | drawn | fallback | dominant root cause |

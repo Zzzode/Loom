@@ -5592,6 +5592,40 @@ const Fs1CohortEntry* fs1_any_cohort_row(std::string_view path) {
     return fs1g_cohort_row(path);
 }
 
+// RFC 0031 FS-2 click-no-op body cohort: the reviewed ledger at
+// tools/mermaid/fs2-cohort.json. Whole originals stay source; only the
+// frontmatter-free body disposition is recorded, so the entry carries just
+// the body states (no htmlLabels / disclosure footer).
+struct Fs2CohortEntry {
+    bool draw = false;
+    std::array<std::string, 3> body_states;
+};
+const std::map<std::string, Fs2CohortEntry>& fs2_cohort_map() {
+    static const std::map<std::string, Fs2CohortEntry> map = [] {
+        std::map<std::string, Fs2CohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/fs2-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "FS2 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "FS2 cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            Fs2CohortEntry entry;
+            entry.draw = row.get_string("prediction") == "predicted-draw";
+            const auto body = row.get("expected_body_states");
+            entry.body_states = {body.get_string("wide_240"), body.get_string("narrow_40"),
+                                 body.get_string("restored_240")};
+            rows.emplace(row.get_string("path"), std::move(entry));
+        });
+        return rows;
+    }();
+    return map;
+}
+const Fs2CohortEntry* fs2_cohort_row(std::string_view path) {
+    const auto& rows = fs2_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 constexpr std::string_view kRequirementMarkdownPath =
     "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd";
 constexpr std::string_view kRequirementMarkdownSourceSha =
@@ -8395,6 +8429,32 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                                       state_status(fs1->body_states[1]),
                                       state_status(fs1->body_states[2])};
                         row.expected_states = fs1->body_states;
+                        row.decision_reasons.fill(row.reason);
+                        observations.push_back(std::move(row));
+                    }
+                } else if (const auto* fs2 = fs2_cohort_row(path)) {
+                    // FS-2: a click interaction binding is a non-visual no-op.
+                    // Blocked-row bodies (classDef/style debt) keep source via
+                    // run_case; draw-row bodies draw at 240 and stay source at
+                    // narrow_40. Live pixel/no-leak gate is
+                    // test_mermaid_fs2_cohort.
+                    if (!fs2->draw) {
+                        observations.push_back(run_case(path, "body_diagnostic", body, diagnostic));
+                    } else {
+                        Observation row;
+                        row.path = path;
+                        row.track = "body_diagnostic";
+                        row.type = "flowchart";
+                        row.source_sha256 = digest(body);
+                        row.expected = "drawn";
+                        row.reason = "RFC-0031 FS-2 reviewed click no-op cohort (body)";
+                        const auto state_status = [](const std::string& state) {
+                            return state == "drawn" ? "drawn" : "source_fallback";
+                        };
+                        row.status = {state_status(fs2->body_states[0]),
+                                      state_status(fs2->body_states[1]),
+                                      state_status(fs2->body_states[2])};
+                        row.expected_states = fs2->body_states;
                         row.decision_reasons.fill(row.reason);
                         observations.push_back(std::move(row));
                     }

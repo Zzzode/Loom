@@ -344,8 +344,8 @@ private:
                           "bold\nclassDef pink fill:#f9f\nclassDef bold "
                           "stroke:#333,stroke-width:6px,color:#fff\n```\n\nCLASS_DEFINED_DONE"
                         : "```mermaid\nflowchart TD\nA --> B\nsubgraph "
-                          "UnsupportedGroup\nC\nend\nclick A "
-                          "\"https://example.invalid\"\n```\n\nFALLBACK_DONE");
+                          "UnsupportedGroup\nC\nend\nlinkStyle 0 "
+                          "stroke:#ff0000,stroke-width:2px\n```\n\nFALLBACK_DONE");
                 send_bytes(
                     "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: " +
                     std::to_string(body.size()) + "\r\nConnection: close\r\n\r\n" + body);
@@ -3160,7 +3160,7 @@ void run_mermaid_case(const std::string& binary, const fs::path& root, const fs:
         const auto frame = terminal.latest_frame_text();
         return terminal.idle_response_visible("FALLBACK_DONE") &&
                frame.find("subgraph UnsupportedGroup") != std::string::npos &&
-               frame.find("click A") != std::string::npos &&
+               frame.find("linkStyle 0") != std::string::npos &&
                frame.find("flowchart TD") != std::string::npos;
     }),
             "unsupported Mermaid syntax did not retain the complete source");

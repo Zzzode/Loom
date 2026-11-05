@@ -326,6 +326,20 @@ gtest_discover_tests(test_mermaid_fs1g_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+add_executable(test_mermaid_fs2_click test_mermaid_fs2_click.cpp)
+target_link_libraries(test_mermaid_fs2_click
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_fs2_click
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+add_executable(test_mermaid_fs2_cohort test_mermaid_fs2_cohort.cpp)
+target_link_libraries(test_mermaid_fs2_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_fs2_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
 # ---------------------------------------------------------------------------
 # Text-content property tests for the FTXUI terminal renderer.
 # ---------------------------------------------------------------------------

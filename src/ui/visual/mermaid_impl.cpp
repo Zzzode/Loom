@@ -1328,6 +1328,86 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
             return false;
         return true;
     }
+    // FS-2: a `click` binding is a non-visual interaction statement; the
+    // terminal has no interaction layer, so a well-formed binding is consumed
+    // as a no-op (no node, edge, or canvas row). The bound id is not required
+    // to name a declared vertex: an inert binding on an unknown id can create
+    // no geometry, so it is intentionally still a no-op. Accepted shapes mirror
+    // the Mermaid flow grammar:
+    //   click <id> "<url>" ["<tooltip>"] [<target>]
+    //   click <id> href "<url>" [<target>]
+    //   click <id> <callback> [","? "<arg>"]...
+    // Anything else (no binding, unterminated quote, trailing garbage, a bare
+    // link target outside mermaid's set) fails closed and keeps the whole
+    // source on ordinary fallback.
+    if (text.starts_with("click ") || text.starts_with("click\t")) {
+        Scanner click{text};
+        click.take("click");
+        click.space();
+        const auto node = click.id();
+        if (!node || node->empty()) return false;
+        click.space();
+        if (click.rest.empty()) return false;
+        bool explicit_href = false;
+        if (click.rest.starts_with("href") && click.rest.size() > 4u &&
+            (click.rest[4] == ' ' || click.rest[4] == '\t')) {
+            click.take("href");
+            click.space();
+            explicit_href = true;
+        }
+        auto quoted = [&]() -> bool {
+            if (!click.rest.starts_with('"')) return false;
+            // A standalone quoted token: the next unescaped quote terminates it
+            // (enclosed_view treats quotes as paired escapes and is meant for
+            // pipe-delimited edge labels, not ordinary strings).
+            bool escaped = false;
+            std::size_t at = 1u;
+            for (; at < click.rest.size(); ++at) {
+                const char ch = click.rest[at];
+                if (escaped) {
+                    escaped = false;
+                    continue;
+                }
+                if (ch == '\\') {
+                    escaped = true;
+                    continue;
+                }
+                if (ch == '"') break;
+            }
+            if (at >= click.rest.size()) return false;  // unterminated quote
+            click.rest.remove_prefix(at + 1u);
+            click.space();
+            return true;
+        };
+        if (click.rest.starts_with('"')) {
+            // Hyperlink form: quoted URL, then at most one quoted tooltip, then
+            // an optional bare link target restricted to mermaid's set.
+            if (!quoted()) return false;
+            if (click.rest.starts_with('"') && !quoted()) return false;
+            if (!click.rest.empty()) {
+                constexpr std::string_view kTargets[]{"_blank", "_self", "_parent", "_top"};
+                const auto target = click.id();
+                if (!target ||
+                    std::ranges::find(kTargets, std::string_view{*target}) == std::end(kTargets))
+                    return false;
+                click.space();
+            }
+            return click.rest.empty();
+        }
+        if (explicit_href) return false;  // href requires a quoted URL
+        // Callback form: bare callback name followed by zero or more quoted
+        // arguments separated by an optional comma (both historical spellings
+        // appear in the pinned corpus).
+        const auto callback = click.id();
+        if (!callback) return false;
+        click.space();
+        while (!click.rest.empty()) {
+            static_cast<void>(click.take(","));
+            click.space();
+            if (!quoted()) return false;
+        }
+        return true;
+    }
     Scanner scanner{text};
     bool uses_group_endpoint = false;
     auto nodes = [&]() -> std::optional<std::vector<Endpoint>> {

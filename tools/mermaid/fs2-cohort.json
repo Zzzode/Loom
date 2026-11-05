@@ -1,0 +1,536 @@
+{
+  "schema": "loom_mermaid_fs2_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-2-click",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original whose graph body binds a click interaction statement",
+    "roots": [
+      "flowchart"
+    ],
+    "blocker_detection": "six fixed source-content detectors (subgraph, init, fa icon, classDef/style, non-rectangle shape, special edge); no generator-time rendering; residual rows abort",
+    "width_policy": "whole original stays source at all widths; body draws at 240 wide/restored and stays source at narrow_40 (fan-out wider than 40 columns)."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (D-066 FS-2 click no-op, 2026-11-05)",
+    "date": "2026-11-05",
+    "verdict": "approved",
+    "note": "Read-only adversarial review of the production click no-op branch (hyper/href/callback forms, fail-closed target whitelist), the mechanical selection/blocker detectors, ledger disjointness/zero-residual abort, body pixel/no-leak gate, and body-only matrix wiring. APPROVE: flow-only blast radius, no shared constants, two target body rows, gaps stay 48."
+  },
+  "counts": {
+    "total": 16,
+    "predicted_draw": 2,
+    "predicted_blocked": 14
+  },
+  "blocker_vocabulary": [
+    "flow-click-style-classdef"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/dagre/v2-dagre-16-render-stadium-shape.mmd",
+      "family": "flowchart",
+      "sha256": "1570c24fc9c30774190d0ae652779fa47efd0482c589fa0724b6f979689bc627",
+      "manifest_sha256": "1570c24fc9c30774190d0ae652779fa47efd0482c589fa0724b6f979689bc627",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/handle-link-click-events-link-anchor-mailto-other-protocol-script.mmd",
+      "family": "flowchart",
+      "sha256": "4c8065692bca33241b9581e889d4618f84481b5f5c707a613ab43c3ca4bb6cb2",
+      "manifest_sha256": "4c8065692bca33241b9581e889d4618f84481b5f5c707a613ab43c3ca4bb6cb2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "FS-2 click interaction binding admitted as a non-visual no-op on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/render-cylindrical-shape.mmd",
+      "family": "flowchart",
+      "sha256": "bfb2f64658d4e3ea5173e796f5d838aea31d4233d4e7e1c36278e781d108c893",
+      "manifest_sha256": "bfb2f64658d4e3ea5173e796f5d838aea31d4233d4e7e1c36278e781d108c893",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/render-stadium-shape.mmd",
+      "family": "flowchart",
+      "sha256": "ceff3db9df52f2073a0691e1cb878400d538ff31e2ada3d661bf79c17b32d30e",
+      "manifest_sha256": "ceff3db9df52f2073a0691e1cb878400d538ff31e2ada3d661bf79c17b32d30e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/render-subroutine-shape.mmd",
+      "family": "flowchart",
+      "sha256": "29e136c63ba193aa83f3cd33e22965c80935025049c51622c3bbb5b1ea00acaa",
+      "manifest_sha256": "29e136c63ba193aa83f3cd33e22965c80935025049c51622c3bbb5b1ea00acaa",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-disabled.mmd",
+      "family": "flowchart",
+      "sha256": "14b7fc57b533f2c5987fed19c8f3f86b15a33ef2e6cedc3779cb02a7fb7a451a",
+      "manifest_sha256": "14b7fc57b533f2c5987fed19c8f3f86b15a33ef2e6cedc3779cb02a7fb7a451a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-enabled.mmd",
+      "family": "flowchart",
+      "sha256": "7533da2491cbce3708642be8bc61604b499d604724405cc005dccfdf99623e93",
+      "manifest_sha256": "7533da2491cbce3708642be8bc61604b499d604724405cc005dccfdf99623e93",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-hexagons.mmd",
+      "family": "flowchart",
+      "sha256": "649f8876abb27f62d210f923586cf454433728db61cfe91a732eb59911f9ceb3",
+      "manifest_sha256": "649f8876abb27f62d210f923586cf454433728db61cfe91a732eb59911f9ceb3",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/visual-check/14-should-render-hexagons.mmd",
+      "family": "flowchart",
+      "sha256": "a9f17740f0e46ff908b61b18f240af27d35c94f2f7a8c7c958cd8a8f1252b233",
+      "manifest_sha256": "a9f17740f0e46ff908b61b18f240af27d35c94f2f7a8c7c958cd8a8f1252b233",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/visual-check/16-render-stadium-shape.mmd",
+      "family": "flowchart",
+      "sha256": "b84a32908b761f7ac2cece8d2d25702d3b764c32e3258f65fb3d4f5ae14b77a9",
+      "manifest_sha256": "b84a32908b761f7ac2cece8d2d25702d3b764c32e3258f65fb3d4f5ae14b77a9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/visual-check/21-render-cylindrical-shape.mmd",
+      "family": "flowchart",
+      "sha256": "dae468b36225e1efb5ef1473a68e751cdbd2f67f59e879464a1bdf42b94a88e0",
+      "manifest_sha256": "dae468b36225e1efb5ef1473a68e751cdbd2f67f59e879464a1bdf42b94a88e0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/visual-check/25-handle-link-click-events-link-anchor-mailto-other-protocol-script.mmd",
+      "family": "flowchart",
+      "sha256": "8c59912ddfa9930680068c303edbec9809acf7b9723b0fd71aed8a030a69d5ff",
+      "manifest_sha256": "8c59912ddfa9930680068c303edbec9809acf7b9723b0fd71aed8a030a69d5ff",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "FS-2 click interaction binding admitted as a non-visual no-op on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/26-set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-enabled.mmd",
+      "family": "flowchart",
+      "sha256": "917d0f843b743dd182466e439ae191f6a27845187f07948806a1e34f2e0f9be5",
+      "manifest_sha256": "917d0f843b743dd182466e439ae191f6a27845187f07948806a1e34f2e0f9be5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/visual-check/27-set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-disabled.mmd",
+      "family": "flowchart",
+      "sha256": "d4cc2b40267842e65ac550176647d8b0cadec3168d414e73f4f5821f3954799e",
+      "manifest_sha256": "d4cc2b40267842e65ac550176647d8b0cadec3168d414e73f4f5821f3954799e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/visual-check/32-render-subroutine-shape.mmd",
+      "family": "flowchart",
+      "sha256": "89e13bbbbd4785d29ab74713af4458146b80fff3dd64e22806b0a4f5996f3aee",
+      "manifest_sha256": "89e13bbbbd4785d29ab74713af4458146b80fff3dd64e22806b0a4f5996f3aee",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    },
+    {
+      "path": "flowchart/visual-check/v2-16-render-stadium-shape.mmd",
+      "family": "flowchart",
+      "sha256": "8e88fe31f7eb76c8238012ac786705c56a9cdbef539f5754bc3aa1c64fc0b374",
+      "manifest_sha256": "8e88fe31f7eb76c8238012ac786705c56a9cdbef539f5754bc3aa1c64fc0b374",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "flow-click-style-classdef",
+        "site": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classDef/style projection is FS-3)",
+        "detail": "The click-bearing body carries a classDef/style/class/linkStyle statement; CSS-to-terminal styling is a later cohort, so consuming the click no-op alone cannot draw the body."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the click statement itself is a no-op"
+    }
+  ]
+}

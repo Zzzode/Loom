@@ -29,6 +29,7 @@ const fs::path kTestsDir{LOOM_TESTS_DIR};
 const fs::path kCases = kTestsDir / "fixtures/mermaid_official/cases";
 const fs::path kManifest = kTestsDir / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger = kTestsDir / "../tools/mermaid/e2a-cohort.json";
+const fs::path kE2bLedger = kTestsDir / "../tools/mermaid/e2b-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -244,6 +245,15 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     auto ledger = parse_ledger();
     ledger.root().get("rows").iter(
         [&](const JsonVal row) { cohort.insert(row.get_string("path")); });
+    // RFC 0031 E2b admits a reviewed set of state inert-config originals to
+    // native drawing; those rows are expected to change surface, so they are
+    // outside this whole-source scan just like the E2a ledger rows.
+    auto e2b = json::parse(read_file(kE2bLedger));
+    ASSERT_TRUE(e2b.has_value()) << "E2b cohort ledger must parse";
+    e2b->root().get("rows").iter([&](const JsonVal row) {
+        if (row.get_string("prediction") == "predicted-draw")
+            cohort.insert(row.get_string("path"));
+    });
     static constexpr const char* kRoots[] = {"git", "state-diagram", "state-diagram-v2"};
     int checked = 0;
     for (const char* root_name : kRoots) {

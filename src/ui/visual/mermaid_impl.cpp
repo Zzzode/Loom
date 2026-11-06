@@ -431,6 +431,7 @@ enum class Shape {
     ForkJoin,
     DividedRectangle,
     FlippedTriangle,
+    SlopedRectangle,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -453,6 +454,7 @@ bool classic_shape(Shape shape) {
     case Shape::ForkJoin:
     case Shape::DividedRectangle:
     case Shape::FlippedTriangle:
+    case Shape::SlopedRectangle:
         return true;
     case Shape::Rectangle:
     case Shape::Rounded:
@@ -467,6 +469,7 @@ int classic_height(Shape shape) {
     if (shape == Shape::DoubleCircle) return 13;
     if (shape == Shape::Cylinder) return 7;
     if (shape == Shape::DividedRectangle) return 7;
+    if (shape == Shape::SlopedRectangle) return 7;
     if (shape == Shape::ForkJoin) return 5;
     return 5;
 }
@@ -474,7 +477,7 @@ int classic_height(Shape shape) {
 int classic_min_width(Shape shape) {
     if (shape == Shape::DoubleCircle) return 13;
     if (shape == Shape::Cylinder || shape == Shape::Parallelogram ||
-        shape == Shape::ParallelogramAlt)
+        shape == Shape::ParallelogramAlt || shape == Shape::SlopedRectangle)
         return 11;
     if (shape == Shape::ForkJoin) return 17;
     return 9;
@@ -500,6 +503,7 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::Delay:
     case Shape::ForkJoin:
     case Shape::DividedRectangle:
+    case Shape::SlopedRectangle:
     case Shape::Rectangle:
     case Shape::Rounded:
     case Shape::Decision:
@@ -1139,6 +1143,9 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
     else if (*token == "flip-tri" || *token == "manual-file" ||
              *token == "flipped-triangle")
         shape = Shape::FlippedTriangle;
+    else if (*token == "sl-rect" || *token == "manual-input" ||
+             *token == "sloped-rectangle")
+        shape = Shape::SlopedRectangle;
     else if (*token == "delay" || *token == "half-rounded-rectangle")
         shape = Shape::Delay;
     else if (*token == "fork" || *token == "join")
@@ -2363,6 +2370,28 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
             if (!put(x, t, "─")) return false;
         for (int y = 1; y < box.height - 1; ++y)
             if (!put(l + y, t + y, "╲") || !put(r - y, t + y, "╱")) return false;
+        return true;
+    }
+    case Shape::SlopedRectangle: {
+        // Manual-input shape: a rectangle whose top edge slopes up to the
+        // right, so the right wall extends two rows above the left wall
+        // (upstream shapes/slopedRect.ts polygon).
+        if (b - t + 1 < 7) return false;
+        if (!put(l, t + 2, "┌") || !put(r, t, "┐") || !put(l + 1, t + 1, "╱") ||
+            !put(r, t + 1, "│") || !put(l, b, "└") || !put(r, b, "┘"))
+            return false;
+        for (int x = l + 2; x < r; ++x)
+            if (!put(x, t, "─")) return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, t + 2, "─")) return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, b, "─")) return false;
+        for (int y = t + 3; y < b; ++y)
+            if (!put(l, y, "│")) return false;
+        // The right wall runs from the raised top (t, t+1 explicit above)
+        // straight down; fill from t+2 so no cell breaks the contour.
+        for (int y = t + 2; y < b; ++y)
+            if (!put(r, y, "│")) return false;
         return true;
     }
     case Shape::Delay:

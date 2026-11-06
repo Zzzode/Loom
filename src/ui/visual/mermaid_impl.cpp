@@ -429,6 +429,7 @@ enum class Shape {
     Delay,
     SmallCircle,
     ForkJoin,
+    DividedRectangle,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -449,6 +450,7 @@ bool classic_shape(Shape shape) {
     case Shape::Delay:
     case Shape::SmallCircle:
     case Shape::ForkJoin:
+    case Shape::DividedRectangle:
         return true;
     case Shape::Rectangle:
     case Shape::Rounded:
@@ -462,6 +464,7 @@ int classic_height(Shape shape) {
     if (shape == Shape::Circle || shape == Shape::SmallCircle) return 9;
     if (shape == Shape::DoubleCircle) return 13;
     if (shape == Shape::Cylinder) return 7;
+    if (shape == Shape::DividedRectangle) return 7;
     if (shape == Shape::ForkJoin) return 5;
     return 5;
 }
@@ -493,6 +496,7 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::Asymmetric:
     case Shape::Delay:
     case Shape::ForkJoin:
+    case Shape::DividedRectangle:
     case Shape::Rectangle:
     case Shape::Rounded:
     case Shape::Decision:
@@ -1133,6 +1137,9 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
         shape = Shape::Delay;
     else if (*token == "fork" || *token == "join")
         shape = Shape::ForkJoin;
+    else if (*token == "div-rect" || *token == "div-proc" ||
+             *token == "divided-rectangle" || *token == "divided-process")
+        shape = Shape::DividedRectangle;
     else
         return {};
     std::optional<std::string> shape_label;
@@ -2366,6 +2373,15 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
         for (int y = t + 1; y < b; ++y)
             if (!put(l + 2, y, "║") || !put(r - 2, y, "║")) return false;
         return true;
+    case Shape::DividedRectangle: {
+        // A process box split into an empty title band (top two rows) and a
+        // body band that carries the label.
+        if (!sharp() || b - t + 1 < 7) return false;
+        const int divider = t + 2;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, divider, "─")) return false;
+        return put(l, divider, "├") && put(r, divider, "┤");
+    }
     case Shape::Hexagon:
         if (!put(l + 2, t, "╱") || !put(r - 2, t, "╲") || !put(l + 1, t + 1, "╱") ||
             !put(r - 1, t + 1, "╲") || !put(l, t + 2, "│") || !put(r, t + 2, "│") ||
@@ -2720,7 +2736,13 @@ bool node_box(Canvas& canvas, const Box& box, const Vertex& node,
                           ? collector->row_count(node.text)
                           : std::optional<int>{static_cast<int>(label_rows(node.text).size())};
     if (!rows) return false;
-    const Point at{box.x, box.y + (box.height - *rows) / 2};
+    // A divided rectangle reserves its top two rows (t, t+1) plus the divider
+    // row as the title band; the label is centred across the body rows
+    // t+3..b-1, i.e. offset 3 plus half of the (height-4-rows) remainder.
+    int label_top = box.y + (box.height - *rows) / 2;
+    if (node.shape == Shape::DividedRectangle && box.height >= 7)
+        label_top = box.y + 3 + (box.height - 4 - *rows) / 2;
+    const Point at{box.x, label_top};
     if (!collector && rich && !rich->empty())
         return canvas.multiline_rich(at, *rich, box.width);
     return paint_multiline(canvas, collector, at, node.text, box.width);

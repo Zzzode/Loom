@@ -240,18 +240,46 @@ std::optional<RichLabel> label(std::string_view input, bool delimited = false) {
     if (input.size() >= 2u && input.front() == '`' && input.back() == '`')
         return markdown_label(input);
     RichLabel result;
-    // The pinned Mermaid createText renderer expands Font Awesome markers,
-    // even inside otherwise plain quoted labels. Drawing them literally would
-    // lose an icon while claiming the whole diagram was understood.
-    for (std::size_t at = 0; (at = input.find("fa", at)) != std::string_view::npos; ++at) {
-        auto marker = input.substr(at + 2);
-        if (!marker.empty() &&
-            std::string_view{"bklrs"}.find(marker.front()) != std::string_view::npos)
-            marker.remove_prefix(1);
-        if (!marker.starts_with(":fa-")) continue;
-        marker.remove_prefix(4);
-        if (!marker.empty() && (marker.front() == '-' || id_char(marker.front()))) return {};
+    // RFC 0031 FS-6: the pinned Mermaid createText renderer expands Font
+    // Awesome markers in plain (and quoted) labels. The terminal has no icon
+    // font, so a recognized marker projects to one fixed marker cell and the
+    // human label text is retained; a marker whose icon name is outside the
+    // closed vocabulary fails closed (whole-source fallback) instead of
+    // drawing the marker literally and pretending the diagram was understood.
+    // The optional style prefix (fas:/fab:/fal:/far:/fak:) is consumed.
+    constexpr std::string_view kIconNames[]{"car", "code"};
+    constexpr std::string_view kIconMarker = "\xE2\x96\xA0";  // U+25A0 BLACK SQUARE
+    std::string projected;
+    projected.reserve(input.size());
+    for (std::size_t at = 0; at <= input.size();) {
+        const auto next = input.find("fa", at);
+        if (next == std::string_view::npos) {
+            projected += input.substr(at);
+            break;
+        }
+        projected += input.substr(at, next - at);
+        std::size_t p = next + 2u;
+        if (p < input.size() &&
+            std::string_view{"bklrs"}.find(input[p]) != std::string_view::npos)
+            ++p;
+        if (input.substr(p).starts_with(":fa-")) {
+            p += 4u;
+            std::size_t q = p;
+            while (q < input.size() && (id_char(input[q]) || input[q] == '-')) ++q;
+            const std::string_view icon_name = input.substr(p, q - p);
+            if (!icon_name.empty() &&
+                std::ranges::find(kIconNames, icon_name) != std::end(kIconNames)) {
+                projected += kIconMarker;
+                at = q;
+                continue;
+            }
+            // A well-formed marker naming an unknown icon cannot be projected.
+            if (q > p) return {};
+        }
+        projected += "fa";
+        at = next + 2u;
     }
+    input = projected;
     // Flowchart line breaks are presentation syntax, not arbitrary HTML. Decode
     // only the explicit break forms, then validate every retained plain row.
     std::string decoded;

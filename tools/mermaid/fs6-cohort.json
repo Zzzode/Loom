@@ -1,0 +1,1799 @@
+{
+  "schema": "loom_mermaid_fs6_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-6-fontawesome-icons",
+  "icon_projection": {
+    "marker": "U+25A0 BLACK SQUARE",
+    "admitted_icons": [
+      "car",
+      "code"
+    ],
+    "style_prefixes": [
+      "fa",
+      "fas",
+      "fab",
+      "fal",
+      "far",
+      "fak"
+    ]
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original whose text binds a FontAwesome fa:fa-<name> marker",
+    "roots": [
+      "flowchart"
+    ],
+    "blocker_detection": "two fixed source-content detectors (unknown icon, theme/init config); no generator-time rendering; residual rows abort",
+    "width_policy": "draw bodies paint at 240; the pinned simple graphs also paint at narrow_40; whole originals paint only for the 17 admitted-frontmatter rows."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (D-066 FS-6 fontawesome icons, 2026-11-06)",
+    "date": "2026-11-06",
+    "verdict": "approved",
+    "note": "Read-only adversarial review of the closed {car, code} icon projection (fixed marker cell, retained human text, unknown markers fail closed), the two-detector zero-residual selection, the pinned per-width geometry sets, and the body/original matrix wiring. APPROVE: label-only blast radius, no shared constants, gaps stay 48, 17 originals move pending 309->292."
+  },
+  "counts": {
+    "total": 54,
+    "predicted_draw": 34,
+    "predicted_blocked": 20,
+    "predicted_original_draw": 17
+  },
+  "blocker_vocabulary": [
+    "flow-fa-unknown-icon",
+    "flow-fa-theme-config"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/classic/01-38-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+      "family": "flowchart",
+      "sha256": "c885aa8a9968cbfde107951d07c96e26713fb781354251133dd82f1d64a8e211",
+      "manifest_sha256": "c885aa8a9968cbfde107951d07c96e26713fb781354251133dd82f1d64a8e211",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/classic/02-39-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+      "family": "flowchart",
+      "sha256": "cee2b4f3aaf50157dee1fffbf7acb815e332291713e7d759e223eddd3f0102a6",
+      "manifest_sha256": "cee2b4f3aaf50157dee1fffbf7acb815e332291713e7d759e223eddd3f0102a6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/01-7-dagre-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+      "family": "flowchart",
+      "sha256": "02c52915b0c595162178d7e70cf539f2a5795d418b7979f53e6b566d637ad1c2",
+      "manifest_sha256": "02c52915b0c595162178d7e70cf539f2a5795d418b7979f53e6b566d637ad1c2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/02-1-dagre-should-render-a-simple-flowchart.mmd",
+      "family": "flowchart",
+      "sha256": "1c7a92dc044018f8b4c488cbdd84759fc5dfe9a7c7b6e64c87ec7c413804f67f",
+      "manifest_sha256": "1c7a92dc044018f8b4c488cbdd84759fc5dfe9a7c7b6e64c87ec7c413804f67f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/03-1-dagre-should-render-a-simple-flowchart.mmd",
+      "family": "flowchart",
+      "sha256": "f5e09148e70743c2e86fbb2f96a6b64bd2d492d55be472fa8fa768ac806f3c3b",
+      "manifest_sha256": "f5e09148e70743c2e86fbb2f96a6b64bd2d492d55be472fa8fa768ac806f3c3b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/04-8-dagre-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+      "family": "flowchart",
+      "sha256": "03af2420d3160fd5828b9285789bf6e270cbcc1daea9526f301b2e806eac2772",
+      "manifest_sha256": "03af2420d3160fd5828b9285789bf6e270cbcc1daea9526f301b2e806eac2772",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/2-dagre-should-render-a-simple-flowchart-with-diagrampadding-set-to-0.mmd",
+      "family": "flowchart",
+      "sha256": "de8d8a5fbb4b45d701157cab5a8938ad727ae595aabcb89799d2013e7d272edf",
+      "manifest_sha256": "de8d8a5fbb4b45d701157cab5a8938ad727ae595aabcb89799d2013e7d272edf",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/6080-should-handle-diamond-shape-intersections.mmd",
+      "family": "flowchart",
+      "sha256": "6fdbab6613773a69e6ea51cc52ca0e139096675e157b9dbb3d02ded563aac90b",
+      "manifest_sha256": "6fdbab6613773a69e6ea51cc52ca0e139096675e157b9dbb3d02ded563aac90b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/6088-1-should-handle-diamond-shape-intersections.mmd",
+      "family": "flowchart",
+      "sha256": "79b04fd6802557f35199e35fd3aa2382e3725af6453accda745c93fbac1099e2",
+      "manifest_sha256": "79b04fd6802557f35199e35fd3aa2382e3725af6453accda745c93fbac1099e2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "code"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/6088-3-should-handle-diamond-shape-intersections.mmd",
+      "family": "flowchart",
+      "sha256": "849e43023271a4714c0d7c8f0030db94d3cf79f0d6a7a0e7951fbe81e0fb5d6d",
+      "manifest_sha256": "849e43023271a4714c0d7c8f0030db94d3cf79f0d6a7a0e7951fbe81e0fb5d6d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "code"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/6088-4-should-handle-diamond-shape-intersections.mmd",
+      "family": "flowchart",
+      "sha256": "d58ffd1ff891fed3cfef05fce74af44c6473e855584b5e948455dd4e74ff2741",
+      "manifest_sha256": "d58ffd1ff891fed3cfef05fce74af44c6473e855584b5e948455dd4e74ff2741",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/61-dagre-fontawesome-icons-in-edge-labels.mmd",
+      "family": "flowchart",
+      "sha256": "47bc36231891c556ad8c9c35264a876f0ff6f4cf0dc20569472910cd00519afc",
+      "manifest_sha256": "47bc36231891c556ad8c9c35264a876f0ff6f4cf0dc20569472910cd00519afc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/01-fdh39-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+      "family": "flowchart",
+      "sha256": "26afbc81a26e17b619ba0d4332f444d8b86a629bb1cac4d9023e63cb02bc56e6",
+      "manifest_sha256": "26afbc81a26e17b619ba0d4332f444d8b86a629bb1cac4d9023e63cb02bc56e6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/02-fdh38-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+      "family": "flowchart",
+      "sha256": "c171b3541d989268d771f59df46a768ce7cb689d9025d84dbcb8d63f201e4cfe",
+      "manifest_sha256": "c171b3541d989268d771f59df46a768ce7cb689d9025d84dbcb8d63f201e4cfe",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/fontawesome-icons-in-edge-labels.mmd",
+      "family": "flowchart",
+      "sha256": "a0725e07cecd9a98198f71550f8556a29852a3784e61d3420a57d846884ee639",
+      "manifest_sha256": "a0725e07cecd9a98198f71550f8556a29852a3784e61d3420a57d846884ee639",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/render-a-simple-flowchart-with-nodespacing-set-to-100.mmd",
+      "family": "flowchart",
+      "sha256": "dab2f47f235e05f3c443fe545ace6b177926d29cb1359ae8d48526e4ea868662",
+      "manifest_sha256": "dab2f47f235e05f3c443fe545ace6b177926d29cb1359ae8d48526e4ea868662",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/render-a-simple-flowchart-with-rankspacing-set-to-100.mmd",
+      "family": "flowchart",
+      "sha256": "9cf3a610a60c1698ff4dbb9c166239427d1a12cede49035d1f9504ec7ed7e2de",
+      "manifest_sha256": "9cf3a610a60c1698ff4dbb9c166239427d1a12cede49035d1f9504ec7ed7e2de",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-a-flowchart-full-of-icons.mmd",
+      "family": "flowchart",
+      "sha256": "d08fecfcad14a373e2bd32e37b848ac6f94d58763c79cf240ed10c646b825b36",
+      "manifest_sha256": "d08fecfcad14a373e2bd32e37b848ac6f94d58763c79cf240ed10c646b825b36",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "circle",
+        "cogs",
+        "creative-commons",
+        "database",
+        "server"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-no-htmllabels.mmd",
+      "family": "flowchart",
+      "sha256": "45018c7555d9f5652271e63c2960d913da6a3abd88639b2e2e5cd69c6def7874",
+      "manifest_sha256": "45018c7555d9f5652271e63c2960d913da6a3abd88639b2e2e5cd69c6def7874",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-comments.mmd",
+      "family": "flowchart",
+      "sha256": "fab060b2548ab46980633064b8e62573880e4fb0c7ba374cbcbd574a37876f65",
+      "manifest_sha256": "fab060b2548ab46980633064b8e62573880e4fb0c7ba374cbcbd574a37876f65",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-diagrampadding-set-to-0.mmd",
+      "family": "flowchart",
+      "sha256": "139b95807fa3f86137ee473c2e1bf8beb3733146dee1c8b7360dc5c2638cbfb8",
+      "manifest_sha256": "139b95807fa3f86137ee473c2e1bf8beb3733146dee1c8b7360dc5c2638cbfb8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-htmllabels.mmd",
+      "family": "flowchart",
+      "sha256": "684d73586ad61902fdd36a3cb7aeb729bd2007be4a7af61d3153db771c1fe0bc",
+      "manifest_sha256": "684d73586ad61902fdd36a3cb7aeb729bd2007be4a7af61d3153db771c1fe0bc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/icon/01-should-render-registered-icons-on-theme-default.mmd",
+      "family": "flowchart",
+      "sha256": "8c1d6bf8284d635aae42ed4d65af6590a1c062a30f52855b1ed6e935473c8bdb",
+      "manifest_sha256": "8c1d6bf8284d635aae42ed4d65af6590a1c062a30f52855b1ed6e935473c8bdb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "bell"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/nightly-check/icon/02-should-render-icons-from-fontawesome-library-on-theme-default.mmd",
+      "family": "flowchart",
+      "sha256": "9062da9d27d24d5f83182f36ed19dffbe6b67b095dc25762bfd983e3fc88147e",
+      "manifest_sha256": "9062da9d27d24d5f83182f36ed19dffbe6b67b095dc25762bfd983e3fc88147e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car",
+        "coffee",
+        "facebook",
+        "github",
+        "twitter"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/nightly-check/icon/03-should-render-icons-from-fontawesome-library-on-theme-dark.mmd",
+      "family": "flowchart",
+      "sha256": "281e2704915f205c44800626a1b936d1107c9c016454f710e755cf403df6c379",
+      "manifest_sha256": "281e2704915f205c44800626a1b936d1107c9c016454f710e755cf403df6c379",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car",
+        "coffee",
+        "facebook",
+        "github",
+        "twitter"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/nightly-check/icon/04-should-render-registered-icons-on-theme-forest.mmd",
+      "family": "flowchart",
+      "sha256": "58aa76ca69ebd974ad60576f5f7875aef6340be0df5dfdf6c4a94bb2522d6dc8",
+      "manifest_sha256": "58aa76ca69ebd974ad60576f5f7875aef6340be0df5dfdf6c4a94bb2522d6dc8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "bell"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/nightly-check/icon/05-should-render-registered-icons-on-theme-dark.mmd",
+      "family": "flowchart",
+      "sha256": "2b36b7b17fed188754cd39be1bf863e1d64b9fae2830318bbc183da41d86f5d2",
+      "manifest_sha256": "2b36b7b17fed188754cd39be1bf863e1d64b9fae2830318bbc183da41d86f5d2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "bell"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/nightly-check/icon/06-should-render-icons-from-fontawesome-library-on-theme-base.mmd",
+      "family": "flowchart",
+      "sha256": "669ff5f3960fb4258342252310371495b184b230f47c4464c8d22a5bb5f211a7",
+      "manifest_sha256": "669ff5f3960fb4258342252310371495b184b230f47c4464c8d22a5bb5f211a7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car",
+        "coffee",
+        "facebook",
+        "github",
+        "twitter"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/nightly-check/icon/07-should-render-registered-icons-on-theme-base.mmd",
+      "family": "flowchart",
+      "sha256": "4bc47f2ecf4f6860d62927ff30ff3e4242c9cb971632a7cafd40f4bc51693d58",
+      "manifest_sha256": "4bc47f2ecf4f6860d62927ff30ff3e4242c9cb971632a7cafd40f4bc51693d58",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "bell"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/nightly-check/icon/08-should-render-icons-from-fontawesome-library-on-theme-forest.mmd",
+      "family": "flowchart",
+      "sha256": "f6310551ec41a0dacc6eddf98eb406224e7915bc32649f173304aa57b18aacc5",
+      "manifest_sha256": "f6310551ec41a0dacc6eddf98eb406224e7915bc32649f173304aa57b18aacc5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car",
+        "coffee",
+        "facebook",
+        "github",
+        "twitter"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/nightly-check/icon/09-should-render-icons-from-fontawesome-library-on-theme-neutral.mmd",
+      "family": "flowchart",
+      "sha256": "f92691c162bbbf604ef6ad2d0872879228fd7505221e71a5a8cbfe1935ce7baa",
+      "manifest_sha256": "f92691c162bbbf604ef6ad2d0872879228fd7505221e71a5a8cbfe1935ce7baa",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car",
+        "coffee",
+        "facebook",
+        "github",
+        "twitter"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/nightly-check/icon/10-should-render-registered-icons-on-theme-neutral.mmd",
+      "family": "flowchart",
+      "sha256": "8781c1b2f78524518fa0d7331a9569ab099ebb12d0cf54f76e363d3d35dda3fc",
+      "manifest_sha256": "8781c1b2f78524518fa0d7331a9569ab099ebb12d0cf54f76e363d3d35dda3fc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "bell"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/nightly-check/v2/01-7-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+      "family": "flowchart",
+      "sha256": "bd626dceaf02f6cd6a0cd38c01c6c2020a8d771e9fd53697b9382c9da39f7d9c",
+      "manifest_sha256": "bd626dceaf02f6cd6a0cd38c01c6c2020a8d771e9fd53697b9382c9da39f7d9c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/v2/02-8-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+      "family": "flowchart",
+      "sha256": "4c677f83e1b7841bff75670a3a19059cc56ec8bbd4e621d5599db50911be6691",
+      "manifest_sha256": "4c677f83e1b7841bff75670a3a19059cc56ec8bbd4e621d5599db50911be6691",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/1-should-render-a-simple-flowchart-no-htmllabels.mmd",
+      "family": "flowchart",
+      "sha256": "6d9afc6169f067e686139182776ceb763cbc986015e19659c0a47f49b7faddc6",
+      "manifest_sha256": "6d9afc6169f067e686139182776ceb763cbc986015e19659c0a47f49b7faddc6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/1-should-render-a-simple-flowchart.mmd",
+      "family": "flowchart",
+      "sha256": "11a60b0a057df79f512f28e4a15299dbad890b54668d1695357991706e9a0d2e",
+      "manifest_sha256": "11a60b0a057df79f512f28e4a15299dbad890b54668d1695357991706e9a0d2e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/15-should-render-a-simple-flowchart-with-comments.mmd",
+      "family": "flowchart",
+      "sha256": "452aa793b54d87052e1dd79117963ae0026fb378d09e71a111672f7bc4db1cc5",
+      "manifest_sha256": "452aa793b54d87052e1dd79117963ae0026fb378d09e71a111672f7bc4db1cc5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/2-should-render-a-simple-flowchart-with-diagrampadding-set-to-0.mmd",
+      "family": "flowchart",
+      "sha256": "3ba585ffc08acf1c0a7bbd6e2b10daca807f80697f83da50cd689b63f7d370df",
+      "manifest_sha256": "3ba585ffc08acf1c0a7bbd6e2b10daca807f80697f83da50cd689b63f7d370df",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/2-should-render-a-simple-flowchart-with-htmllabels.mmd",
+      "family": "flowchart",
+      "sha256": "30fe20733d4209365a9bd3a740f47f91499083efd77010c1c2118d8987959b4b",
+      "manifest_sha256": "30fe20733d4209365a9bd3a740f47f91499083efd77010c1c2118d8987959b4b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/22-render-a-simple-flowchart-with-nodespacing-set-to-100.mmd",
+      "family": "flowchart",
+      "sha256": "29e2c1181c903536ee1a0efbecfc845c76c010cf5b56a670f4ecf323693d5a6c",
+      "manifest_sha256": "29e2c1181c903536ee1a0efbecfc845c76c010cf5b56a670f4ecf323693d5a6c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/23-render-a-simple-flowchart-with-rankspacing-set-to-100.mmd",
+      "family": "flowchart",
+      "sha256": "d31e14f1865ebdd27d60467c72defb436450ca6435354fc84ade624a47e8f904",
+      "manifest_sha256": "d31e14f1865ebdd27d60467c72defb436450ca6435354fc84ade624a47e8f904",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/33-should-render-a-simple-flowchart-with-diagrampadding-set-to-0.mmd",
+      "family": "flowchart",
+      "sha256": "80d6f033f228d0d0410d0fd23454c48cf8b7dd5610676ae9d444e90f7176f673",
+      "manifest_sha256": "80d6f033f228d0d0410d0fd23454c48cf8b7dd5610676ae9d444e90f7176f673",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/61-fontawesome-icons-in-edge-labels-2.mmd",
+      "family": "flowchart",
+      "sha256": "336aff7b28c824d228d33b16bec73838b33822c68c1285132c4bc94e34a47fc2",
+      "manifest_sha256": "336aff7b28c824d228d33b16bec73838b33822c68c1285132c4bc94e34a47fc2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/61-fontawesome-icons-in-edge-labels.mmd",
+      "family": "flowchart",
+      "sha256": "4fd758f5936b81e74edacd59a0dd471972d9c3519ce78cf3217724b456481b55",
+      "manifest_sha256": "4fd758f5936b81e74edacd59a0dd471972d9c3519ce78cf3217724b456481b55",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/6a-should-render-complex-html-in-labels-with-sandbox-security.mmd",
+      "family": "flowchart",
+      "sha256": "89a356cab9817e7caa5a253a0ac84885921672d83b0fcc55629c3334ea344aea",
+      "manifest_sha256": "89a356cab9817e7caa5a253a0ac84885921672d83b0fcc55629c3334ea344aea",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/7-should-render-a-flowchart-full-of-icons.mmd",
+      "family": "flowchart",
+      "sha256": "022bbce3195f8989bb72341bda01635a537c2d3718da02ba8f6e71982353eb4e",
+      "manifest_sha256": "022bbce3195f8989bb72341bda01635a537c2d3718da02ba8f6e71982353eb4e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "circle",
+        "cogs",
+        "creative-commons",
+        "database",
+        "server"
+      ],
+      "blocker": {
+        "kind": "flow-fa-unknown-icon",
+        "site": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (label() closed icon vocabulary)",
+        "detail": "The body binds an icon outside the projected {car, code} set (bell, coffee, github, twitter, facebook, cogs, circle, server, database, creative-commons); the terminal has no glyph for it."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/visual-check/dark-theme-legacy-graph.mmd",
+      "family": "flowchart",
+      "sha256": "6b7bae6e81bb2125f489c27b461548770422415b4802d6a8957c1e5a4db33620",
+      "manifest_sha256": "6b7bae6e81bb2125f489c27b461548770422415b4802d6a8957c1e5a4db33620",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": {
+        "kind": "flow-fa-theme-config",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/visual-check/dark-theme-new-syntax.mmd",
+      "family": "flowchart",
+      "sha256": "05a06becd21354a9899836d7938eb055ed9621414305eed001683fa94a8d0cc5",
+      "manifest_sha256": "05a06becd21354a9899836d7938eb055ed9621414305eed001683fa94a8d0cc5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": {
+        "kind": "flow-fa-theme-config",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/visual-check/default-theme-legacy-graph.mmd",
+      "family": "flowchart",
+      "sha256": "5dbaad1e7f01360117b06eedd7f265f42fa2d9c4cf4044253a0690e399f8e219",
+      "manifest_sha256": "5dbaad1e7f01360117b06eedd7f265f42fa2d9c4cf4044253a0690e399f8e219",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": {
+        "kind": "flow-fa-theme-config",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/visual-check/default-theme-new-syntax.mmd",
+      "family": "flowchart",
+      "sha256": "3d0125cba308a4d308889163d5b898da1a1b27da056ec471c9e0d2ad5b12247d",
+      "manifest_sha256": "3d0125cba308a4d308889163d5b898da1a1b27da056ec471c9e0d2ad5b12247d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": {
+        "kind": "flow-fa-theme-config",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/visual-check/forest-theme-legacy-graph.mmd",
+      "family": "flowchart",
+      "sha256": "2da3419fa82156b3416ac14ccc686d0a4667d44ded95bbfbfbd378e438715da1",
+      "manifest_sha256": "2da3419fa82156b3416ac14ccc686d0a4667d44ded95bbfbfbd378e438715da1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": {
+        "kind": "flow-fa-theme-config",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/visual-check/forest-theme-new-syntax.mmd",
+      "family": "flowchart",
+      "sha256": "e63c9e507958fb806b848ab20b079cff3ea115a8d7545800b265c05baf919e62",
+      "manifest_sha256": "e63c9e507958fb806b848ab20b079cff3ea115a8d7545800b265c05baf919e62",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": {
+        "kind": "flow-fa-theme-config",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/visual-check/neutral-theme-legacy-graph.mmd",
+      "family": "flowchart",
+      "sha256": "587d8af5483bea71b1477d00c06766aaf1389351a1085dd1b4365c651fb1bbd1",
+      "manifest_sha256": "587d8af5483bea71b1477d00c06766aaf1389351a1085dd1b4365c651fb1bbd1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": {
+        "kind": "flow-fa-theme-config",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    },
+    {
+      "path": "flowchart/visual-check/neutral-theme-new-syntax.mmd",
+      "family": "flowchart",
+      "sha256": "bcc82a2ca34c41720d95a8c88b5cbcf38df47c851e8f45a0f079f91a8c967812",
+      "manifest_sha256": "bcc82a2ca34c41720d95a8c88b5cbcf38df47c851e8f45a0f079f91a8c967812",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "icons": [
+        "car"
+      ],
+      "blocker": {
+        "kind": "flow-fa-theme-config",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
+        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+      },
+      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+    }
+  ]
+}

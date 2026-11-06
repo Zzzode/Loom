@@ -291,6 +291,43 @@ std::optional<RichLabel> label(std::string_view input, bool delimited = false) {
             decoded += '\n';
             input.remove_prefix(end + 1);
             ++glyphs;
+        } else if (input.starts_with("<strong>") || input.starts_with("<b>")) {
+            // Inline emphasis wrapper: drop the tag, retain the inner text.
+            input.remove_prefix(input.starts_with("<strong>") ? 8u : 3u);
+        } else if (input.starts_with("</strong>") || input.starts_with("</b>")) {
+            input.remove_prefix(input.starts_with("</strong>") ? 9u : 4u);
+        } else if (input.starts_with("<img") && input.size() > 4u &&
+                   (input[4] == '>' || input[4] == '/' || input[4] == ' ' ||
+                    input[4] == '\t' || input[4] == '\n' || input[4] == '\r')) {
+            // Void image element with optional attributes. The tag-name
+            // boundary is required so "<imgrand>" cannot masquerade as an
+            // image. Find the closing '>' while skipping single/double
+            // quoted attribute spans so a '>' inside a value cannot
+            // truncate the tag and leak attribute fragments as text; a
+            // missing close, an embedded newline or a nested '<' is not a
+            // label tag.
+            std::size_t close = std::string_view::npos;
+            char quote = '\0';
+            for (std::size_t at = 4u; at < input.size(); ++at) {
+                const char ch = input[at];
+                if (quote != '\0') {
+                    if (ch == quote) quote = '\0';
+                    continue;
+                }
+                if (ch == '\n') return {};
+                if (ch == '"' || ch == '\'') {
+                    quote = ch;
+                } else if (ch == '>') {
+                    close = at;
+                    break;
+                } else if (ch == '\n' || ch == '<') {
+                    return {};
+                }
+            }
+            if (close == std::string_view::npos || quote != '\0') return {};
+            input.remove_prefix(close + 1);
+        } else if (input.starts_with('<')) {
+            return {};  // unknown inline tag fails closed
         } else {
             const auto end = input.find('<');
             const auto row = input.substr(0, end);
@@ -304,9 +341,6 @@ std::optional<RichLabel> label(std::string_view input, bool delimited = false) {
             cells += static_cast<std::size_t>(ftxui::string_width(std::string(row)));
             decoded += row;
             input.remove_prefix(row.size());
-            if (!input.empty() && !input.starts_with("<br>") && !input.starts_with("<br/>") &&
-                !input.starts_with("<br />"))
-                return {};
         }
         if (glyphs > kLabelLimit || cells > kLabelLimit) return {};
     }

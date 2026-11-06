@@ -1,0 +1,356 @@
+{
+  "schema": "loom_mermaid_fs4h_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-4h-inline-html-labels",
+  "html_projection": {
+    "admitted_tags": [
+      "br",
+      "strong",
+      "b",
+      "img"
+    ],
+    "strong": "wrapper stripped, inner text retained",
+    "img": "void element consumed with no text",
+    "other_tags": "fail closed"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original whose body carries an inline <strong> or <img> label tag",
+    "roots": [
+      "flowchart"
+    ],
+    "blocker_detection": "one fixed source-content detector (image-label scanner limit); no generator-time rendering; residual rows abort",
+    "width_policy": "draw rows paint at 240, 40 and the restored frame; originals paint only for the five admitted-frontmatter rows."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (D-066 FS-4h inline HTML labels, 2026-11-06)",
+    "date": "2026-11-06",
+    "verdict": "approved",
+    "note": "Read-only adversarial review of the closed inline-HTML label projection (strong/b stripped with text retained, void img consumed, all other tags fail closed), the single image-label blocker with zero residual, and the body/original matrix wiring. APPROVE: label-only blast radius, no shared constants, gaps stay 48, five originals move pending 292->287."
+  },
+  "counts": {
+    "total": 10,
+    "predicted_draw": 8,
+    "predicted_blocked": 2,
+    "predicted_original_draw": 5
+  },
+  "blocker_vocabulary": [
+    "flow-html-image-label"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/dagre/5-dagre-should-render-escaped-without-html-labels.mmd",
+      "family": "flowchart",
+      "sha256": "4c30ecf93746b599f568cd6a2e6d694593cdb852317c3bf44f42de6249e3c677",
+      "manifest_sha256": "4c30ecf93746b599f568cd6a2e6d694593cdb852317c3bf44f42de6249e3c677",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "tags": [
+        "strong"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-4h closed inline-HTML label projection on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/6-dagre-should-render-non-escaped-with-html-labels.mmd",
+      "family": "flowchart",
+      "sha256": "acb492239e0604249ad353a2b6b61b493d015444195b22268dc545cd1acac63c",
+      "manifest_sha256": "acb492239e0604249ad353a2b6b61b493d015444195b22268dc545cd1acac63c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "tags": [
+        "strong"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-4h closed inline-HTML label projection on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-escaped-without-html-labels.mmd",
+      "family": "flowchart",
+      "sha256": "05dd13707f0564b2127008583eb529bdfc775ac7ca3a437a45a10c97572cf420",
+      "manifest_sha256": "05dd13707f0564b2127008583eb529bdfc775ac7ca3a437a45a10c97572cf420",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "tags": [
+        "strong"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-4h closed inline-HTML label projection on the body track"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-render-non-escaped-with-html-labels.mmd",
+      "family": "flowchart",
+      "sha256": "f64a102d8189fa660ce4ec38a7ec650a54bc9088a3dcbbfdcc2665d02ef5cf81",
+      "manifest_sha256": "f64a102d8189fa660ce4ec38a7ec650a54bc9088a3dcbbfdcc2665d02ef5cf81",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "tags": [
+        "strong"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-4h closed inline-HTML label projection on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/36-should-render-escaped-without-html-labels.mmd",
+      "family": "flowchart",
+      "sha256": "66cfdcb235479bc9c29bfd0b47acffd523c143fcea7e8c8f1a6bfcb5f57eca65",
+      "manifest_sha256": "66cfdcb235479bc9c29bfd0b47acffd523c143fcea7e8c8f1a6bfcb5f57eca65",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "tags": [
+        "strong"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-4h closed inline-HTML label projection on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/37-should-render-non-escaped-with-html-labels.mmd",
+      "family": "flowchart",
+      "sha256": "639f031d4ff3989daacb92a87b0397792bcfedb02163506187bc14f5e68ffc3d",
+      "manifest_sha256": "639f031d4ff3989daacb92a87b0397792bcfedb02163506187bc14f5e68ffc3d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "tags": [
+        "strong"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-4h closed inline-HTML label projection on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/4023-should-render-html-labels-with-images-and-or-text-correctly.mmd",
+      "family": "flowchart",
+      "sha256": "ffbb034de0ca1572566faf7e158a82085084a325d8206b4bc6ae651cbcc47d71",
+      "manifest_sha256": "ffbb034de0ca1572566faf7e158a82085084a325d8206b4bc6ae651cbcc47d71",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "tags": [
+        "img"
+      ],
+      "blocker": {
+        "kind": "flow-html-image-label",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow node statement scanner)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow node statement scanner)",
+        "detail": "The label embeds an <img> element; the node scanner cannot delimit an unquoted bracket label carrying the attribute's embedded quotes (or an image-only node has no retained text), so the whole source stays on ordinary fallback even though the label-level <img> projection itself is admitted."
+      },
+      "ledger_note": "Blocked: the node scanner cannot delimit this <img> label"
+    },
+    {
+      "path": "flowchart/visual-check/4439-should-render-the-graph-even-if-some-images-are-missing.mmd",
+      "family": "flowchart",
+      "sha256": "c34f2eb73f5f327ff7a3ee08d0c968d62c9721cf1647303735f0eca897c8e2ba",
+      "manifest_sha256": "c34f2eb73f5f327ff7a3ee08d0c968d62c9721cf1647303735f0eca897c8e2ba",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "tags": [
+        "img"
+      ],
+      "blocker": {
+        "kind": "flow-html-image-label",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow node statement scanner)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow node statement scanner)",
+        "detail": "The label embeds an <img> element; the node scanner cannot delimit an unquoted bracket label carrying the attribute's embedded quotes (or an image-only node has no retained text), so the whole source stays on ordinary fallback even though the label-level <img> projection itself is admitted."
+      },
+      "ledger_note": "Blocked: the node scanner cannot delimit this <img> label"
+    },
+    {
+      "path": "flowchart/visual-check/5-should-render-escaped-without-html-labels.mmd",
+      "family": "flowchart",
+      "sha256": "0c9bdad106992d543c28872cef30397a66170fd6d2f51ac8385c5c122ce051a9",
+      "manifest_sha256": "0c9bdad106992d543c28872cef30397a66170fd6d2f51ac8385c5c122ce051a9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "tags": [
+        "strong"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-4h closed inline-HTML label projection on the body track"
+    },
+    {
+      "path": "flowchart/visual-check/6-should-render-non-escaped-with-html-labels.mmd",
+      "family": "flowchart",
+      "sha256": "11c3f8faa91b1465833f4166dfcaf8350d45e17470a329d0d414cc5d5c48d2b2",
+      "manifest_sha256": "11c3f8faa91b1465833f4166dfcaf8350d45e17470a329d0d414cc5d5c48d2b2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "tags": [
+        "strong"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-4h closed inline-HTML label projection on the body track"
+    }
+  ]
+}

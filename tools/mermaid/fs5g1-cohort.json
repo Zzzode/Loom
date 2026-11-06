@@ -1,0 +1,267 @@
+{
+  "schema": "loom_mermaid_fs5g1_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-5-g1-card-folder-shapes",
+  "shape_projection": {
+    "group": [
+      {
+        "shape": "notched-rectangle card",
+        "aliases": [
+          "card",
+          "notch-rect",
+          "notched-rectangle"
+        ],
+        "contour": "rectangle with the top-left corner cut by a one-cell diagonal"
+      },
+      {
+        "shape": "folder/directory",
+        "aliases": [
+          "folder",
+          "directory"
+        ],
+        "contour": "body rectangle with a top-left tab one row tall (~0.38 width)"
+      }
+    ]
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original that binds a node to a card (card/notch-rect/notched-rectangle) or folder (folder/directory) shape",
+    "roots": [
+      "flowchart"
+    ],
+    "draw_authority": "the two alias smoke fixtures with no other shape/theme debt; the four shape-themes rows carry compound exotic-shape debt (lin-rect, text) and theme config",
+    "width_policy": "draw rows paint body+original at 240 and restored; narrow_40 is per-row - the folder row draws (fits), the card row keeps ordinary source."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D-066 FS-5 G1 card+folder grouped batch, 2026-11-07)",
+    "date": "2026-11-07",
+    "verdict": "approved",
+    "note": "Read-only adversarial review (zero builds; separate fresh-context agent) of both contours against the upstream card.ts/folder.ts polygons, the five-alias fail-closed vocabulary, generic classic sizing, and the zero-residual 2-draw/4-blocked partition with its per-row narrow split (folder draws at narrow_40, card keeps source). First verdict REQUEST-CHANGES with two MAJORs invisible on the edgeless alias smoke fixtures: the folder top port outside cell was a blocked bbox-interior blank (router dropped it) and folder had no left/right ports; fixed by unblocking the single above-body-edge centre cell in classic_port_corridors (verified strictly right of the tab for all widths) and giving folder the normal four cardinal ports, plus TB/LR edge-attachment regression gtests. MINOR (narrow-policy doc text) and a clamp-comment NIT also fixed; re-review APPROVE. Additive contours, no Work/shared-constant/router/gaps change, gaps stay 48, two originals move pending 279->277."
+  },
+  "counts": {
+    "total": 6,
+    "predicted_draw": 2,
+    "predicted_blocked": 4,
+    "predicted_original_draw": 2
+  },
+  "blocker_vocabulary": [
+    "flow-card-folder-compound"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/shape-alias/13-all-notched-rectangle-card-notch-rect-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "02edeeb3d9c17777017e0914c6e77dbf57013a92aeeb37bb820883575fed4939",
+      "manifest_sha256": "02edeeb3d9c17777017e0914c6e77dbf57013a92aeeb37bb820883575fed4939",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "notched-rectangle",
+        "card",
+        "notch-rect"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G1 card/folder contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/42-all-folder-directory-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "8d4b5112b1eebddc53efd8ab08094a6e2706eb6d0069c87c17e020e398701b35",
+      "manifest_sha256": "8d4b5112b1eebddc53efd8ab08094a6e2706eb6d0069c87c17e020e398701b35",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "folder",
+        "directory"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G1 card/folder contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/06-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "a98f6aea2075b3d075a9a7980c9c13b85d9d7fb1c9ad1c7cd5a635699a240d1a",
+      "manifest_sha256": "a98f6aea2075b3d075a9a7980c9c13b85d9d7fb1c9ad1c7cd5a635699a240d1a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "card",
+        "notch-rect",
+        "notched-rectangle"
+      ],
+      "blocker": {
+        "kind": "flow-card-folder-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a card/folder node among other exotic shape aliases (lin-rect/lined-rectangle, text) whose contours the terminal does not project (and theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt around the card/folder node"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/16-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "3c448f8d861f064184bc012e38990103879ab64fc8cee20aee9efc2911281516",
+      "manifest_sha256": "3c448f8d861f064184bc012e38990103879ab64fc8cee20aee9efc2911281516",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "card",
+        "notch-rect",
+        "notched-rectangle"
+      ],
+      "blocker": {
+        "kind": "flow-card-folder-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a card/folder node among other exotic shape aliases (lin-rect/lined-rectangle, text) whose contours the terminal does not project (and theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt around the card/folder node"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/26-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "da07bfbadfdd1cd7c629a983f3334968f7ac3f4017938f9964148148aadf59ee",
+      "manifest_sha256": "da07bfbadfdd1cd7c629a983f3334968f7ac3f4017938f9964148148aadf59ee",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "card",
+        "notch-rect",
+        "notched-rectangle"
+      ],
+      "blocker": {
+        "kind": "flow-card-folder-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a card/folder node among other exotic shape aliases (lin-rect/lined-rectangle, text) whose contours the terminal does not project (and theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt around the card/folder node"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/36-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "5b9c82a204a0c8750101bb2ed023c02bf8d69f71d3124010e9c8ece9dbd32021",
+      "manifest_sha256": "5b9c82a204a0c8750101bb2ed023c02bf8d69f71d3124010e9c8ece9dbd32021",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "card",
+        "notch-rect",
+        "notched-rectangle"
+      ],
+      "blocker": {
+        "kind": "flow-card-folder-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a card/folder node among other exotic shape aliases (lin-rect/lined-rectangle, text) whose contours the terminal does not project (and theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt around the card/folder node"
+    }
+  ]
+}

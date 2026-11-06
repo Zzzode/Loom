@@ -433,6 +433,8 @@ enum class Shape {
     FlippedTriangle,
     SlopedRectangle,
     WindowPane,
+    Card,
+    Folder,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -457,6 +459,8 @@ bool classic_shape(Shape shape) {
     case Shape::FlippedTriangle:
     case Shape::SlopedRectangle:
     case Shape::WindowPane:
+    case Shape::Card:
+    case Shape::Folder:
         return true;
     case Shape::Rectangle:
     case Shape::Rounded:
@@ -507,6 +511,8 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::ForkJoin:
     case Shape::DividedRectangle:
     case Shape::SlopedRectangle:
+    case Shape::Card:
+    case Shape::Folder:
     case Shape::Rectangle:
     case Shape::Rounded:
     case Shape::Decision:
@@ -1152,6 +1158,11 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
     else if (*token == "win-pane" || *token == "internal-storage" ||
              *token == "window-pane")
         shape = Shape::WindowPane;
+    else if (*token == "card" || *token == "notch-rect" ||
+             *token == "notched-rectangle")
+        shape = Shape::Card;
+    else if (*token == "folder" || *token == "directory")
+        shape = Shape::Folder;
     else if (*token == "delay" || *token == "half-rounded-rectangle")
         shape = Shape::Delay;
     else if (*token == "fork" || *token == "join")
@@ -2419,6 +2430,45 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
             if (y != mid_y && !put(mid_x, y, "│")) return false;
         return true;
     }
+    case Shape::Card: {
+        // Notched-rectangle card: a rectangle whose top-left corner is cut
+        // by a one-cell diagonal (upstream shapes/card.ts polygon).
+        if (b - t + 1 < 5) return false;
+        if (!put(l + 1, t, "┌") || !put(r, t, "┐") || !put(l, t + 1, "╱") ||
+            !put(l, b, "└") || !put(r, b, "┘"))
+            return false;
+        for (int x = l + 2; x < r; ++x)
+            if (!put(x, t, "─")) return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, b, "─")) return false;
+        for (int y = t + 2; y < b; ++y)
+            if (!put(l, y, "│")) return false;
+        for (int y = t + 1; y < b; ++y)
+            if (!put(r, y, "│")) return false;
+        return true;
+    }
+    case Shape::Folder: {
+        // Folder/directory: a body rectangle with a tab on the top-left that
+        // is one row tall (upstream shapes/folder.ts polygon); the body's top
+        // edge sits one row below the tab.
+        if (b - t + 1 < 5) return false;
+        int tab = (r - l + 1) * 38 / 100;  // ~0.38 of the width, upstream ratio
+        if (tab < 2) tab = 2;
+        if (tab > r - l - 2) tab = r - l - 2;  // keep at least two edge cells
+        if (!put(l, t, "┌") || !put(l + tab, t, "┐") || !put(l, t + 1, "├") ||
+            !put(l + tab, t + 1, "┴") || !put(r, t + 1, "┐") ||
+            !put(l, b, "└") || !put(r, b, "┘"))
+            return false;
+        for (int x = l + 1; x < l + tab; ++x)
+            if (!put(x, t, "─")) return false;
+        for (int x = l + 1; x < r; ++x)
+            if (x != l + tab && !put(x, t + 1, "─")) return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, b, "─")) return false;
+        for (int y = t + 2; y < b; ++y)
+            if (!put(l, y, "│") || !put(r, y, "│")) return false;
+        return true;
+    }
     case Shape::Delay:
         if (!put(l, t, "┌") || !put(r - 2, t, "─") || !put(l, t + 1, "│") ||
             !put(r - 1, t + 1, "╮") || !put(l, t + 2, "│") || !put(r, t + 2, ")") ||
@@ -2538,10 +2588,20 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
 }
 
 bool classic_port_corridors(Canvas& canvas, const Box& box, Shape shape) {
+    const int middle_y = box.y + box.height / 2;
     const bool shifted_side = shape == Shape::Trapezoid || shape == Shape::TrapezoidAlt ||
                               shape == Shape::Parallelogram || shape == Shape::ParallelogramAlt;
+    if (shape == Shape::Folder) {
+        // A top edge lands on the full-width body edge (row t+1), so its
+        // outside cell is the blank one row above at the centre column —
+        // inside the prefilled bbox but honest exterior (right of the short
+        // tab). Unblock just that cell for the incoming shaft.
+        const Point above{box.x + box.width / 2, box.y};
+        if (canvas.at(above).glyph != " ") return false;
+        if (!canvas.put(above, " ", false)) return false;
+        return true;
+    }
     if (!shifted_side) return true;
-    const int middle_y = box.y + box.height / 2;
     const Point left{box.x, middle_y}, right{box.x + box.width - 1, middle_y};
     // These are the two blank envelope cells immediately outside the actual
     // l+1/r-1 side terminals. Keep the contour and interior blocked.
@@ -3277,6 +3337,14 @@ std::vector<Port> ports(const Box& box, Shape shape, Point target) {
         if (shape == Shape::Triangle || shape == Shape::FlippedTriangle) {
             add({middle_x, box.y}, {0, -1});
             add({middle_x, box.y + box.height - 1}, {0, 1});
+        } else if (shape == Shape::Folder) {
+            // Only the left tab occupies the top row; a top edge attaches to
+            // the full-width body edge one row below. The body walls are
+            // straight, so expose the normal four cardinal ports.
+            add({middle_x, box.y + 1}, {0, -1});
+            add({middle_x, box.y + box.height - 1}, {0, 1});
+            add({box.x, middle_y}, {-1, 0});
+            add({box.x + box.width - 1, middle_y}, {1, 0});
         } else if (shape == Shape::Asymmetric) {
             add({box.x, middle_y}, {-1, 0});
             add({box.x + box.width - 1, middle_y}, {1, 0});

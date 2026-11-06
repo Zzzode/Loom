@@ -5825,6 +5825,44 @@ const Fs5bCohortEntry* fs5b_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0031 FS-5c flipped-triangle cohort: the reviewed ledger at
+// tools/mermaid/fs5c-cohort.json. One alias smoke fixture draws on both
+// tracks at 240 (no narrow); four compound shape-theme rows stay source.
+struct Fs5cCohortEntry {
+    bool draw = false;
+    std::array<std::string, 3> original_states;
+    std::array<std::string, 3> body_states;
+};
+const std::map<std::string, Fs5cCohortEntry>& fs5c_cohort_map() {
+    static const std::map<std::string, Fs5cCohortEntry> map = [] {
+        std::map<std::string, Fs5cCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/fs5c-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "FS5c cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "FS5c cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            Fs5cCohortEntry entry;
+            entry.draw = row.get_string("prediction") == "predicted-draw";
+            auto load = [](JsonVal states) {
+                return std::array<std::string, 3>{states.get_string("wide_240"),
+                                                  states.get_string("narrow_40"),
+                                                  states.get_string("restored_240")};
+            };
+            entry.original_states = load(row.get("expected_states"));
+            entry.body_states = load(row.get("expected_body_states"));
+            rows.emplace(row.get_string("path"), std::move(entry));
+        });
+        return rows;
+    }();
+    return map;
+}
+const Fs5cCohortEntry* fs5c_cohort_row(std::string_view path) {
+    const auto& rows = fs5c_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 constexpr std::string_view kRequirementMarkdownPath =
     "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd";
 constexpr std::string_view kRequirementMarkdownSourceSha =
@@ -8777,6 +8815,29 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                         row.decision_reasons.fill(row.reason);
                         observations.push_back(std::move(row));
                     }
+                } else if (const auto* fs5c = fs5c_cohort_row(path)) {
+                    // FS-5c: flipped-triangle contour. One draw body; the
+                    // compound shape-theme rows keep source via run_case.
+                    if (!fs5c->draw) {
+                        observations.push_back(run_case(path, "body_diagnostic", body, diagnostic));
+                    } else {
+                        Observation row;
+                        row.path = path;
+                        row.track = "body_diagnostic";
+                        row.type = "flowchart";
+                        row.source_sha256 = digest(body);
+                        row.expected = "drawn";
+                        row.reason = "RFC-0031 FS-5c reviewed flipped-triangle cohort (body)";
+                        const auto state_status = [](const std::string& state) {
+                            return state == "drawn" ? "drawn" : "source_fallback";
+                        };
+                        row.status = {state_status(fs5c->body_states[0]),
+                                      state_status(fs5c->body_states[1]),
+                                      state_status(fs5c->body_states[2])};
+                        row.expected_states = fs5c->body_states;
+                        row.decision_reasons.fill(row.reason);
+                        observations.push_back(std::move(row));
+                    }
                 } else {
                     const auto selected =
                         body22_select(policies, role_batch.policy.root(), raw_batch.policy.root(),
@@ -8959,12 +9020,13 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         // FontAwesome-marker originals 309 -> 292. FS-4h moves five inline-
         // HTML label originals 292 -> 287. FS-5a moves four label-only
         // shape-data originals 287 -> 283. FS-5b moves one divided-rectangle
-        // original 283 -> 282. All count admitted but not decoded.
-        EXPECT_EQ(flows.pending, 282u);
+        // original 283 -> 282. FS-5c moves one flipped-triangle original
+        // 282 -> 281. All count admitted but not decoded.
+        EXPECT_EQ(flows.pending, 281u);
         EXPECT_EQ(flows.errors, 0u);
         EXPECT_EQ(flows.resources, 0u);
-        EXPECT_EQ(flows.admitted, 118u);
-        EXPECT_EQ(flows.mutated, 118u);
+        EXPECT_EQ(flows.admitted, 119u);
+        EXPECT_EQ(flows.mutated, 119u);
         for (const auto count : applications)
             projection_consumed(count);
         role_batch_consumed(role_counts, role_batch.facts.root());
@@ -13963,6 +14025,46 @@ Observation run_official_flow400_case(
                     "OfficialFlow400 FS5b ledger evidence write failed");
             return row;
         }
+        // RFC 0031 FS-5c: the one flipped-triangle alias smoke fixture
+        // admits once its contour exists. Five frames prove the admission
+        // inline; the durable pixel gate is test_mermaid_fs5c_cohort.
+        if (const auto* fs5c = fs5c_cohort_row(path); fs5c && fs5c->draw) {
+            p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
+            const bool wide_source = flow_oracle::flow400_same(*frames[0], *frames[3], work);
+            p.narrow_ordinary = flow_oracle::flow400_same(*frames[1], *frames[4], work);
+            std::string wide_text;
+            wide_text.reserve(static_cast<std::size_t>(frames[0]->width) *
+                              static_cast<std::size_t>(frames[0]->height));
+            for (int y = 0; y < frames[0]->height; ++y)
+                wide_text += frames[0]->row(y);
+            require(!wide_source && p.restored,
+                    "FS5c ledger draw frame protocol (wide native, restore)");
+            require(p.narrow_ordinary, "FS5c ledger draw row keeps ordinary narrow source");
+            require(wide_text.find("shape:") == std::string::npos,
+                    "FS5c ledger draw leaked shape-data syntax");
+            static_cast<void>(flow_oracle::flow400_following(*frames[0], work, kSentinel));
+            row.status = {"drawn", "source_fallback", "drawn"};
+            row.expected = "drawn";
+            row.expected_states = {"drawn", "source", "drawn"};
+            row.reason = "RFC-0031 FS-5c reviewed flipped-triangle cohort";
+            row.decision_reasons.fill(row.reason);
+            row.role_model_sha = row.source_sha256;
+            row.raw_source_authority = "immutable_Flow400_8Models_plus_FS5cFlipTriCohort1";
+            p.phase = "complete";
+            p.admitted = true;
+            p.mutated = true;
+            p.remaining[2] = p.remaining[3] = p.remaining[4] = p.remaining[5] =
+                p.remaining[6] = work.remaining;
+            row.raw_source_constraints = official_flow_info(p, work.remaining);
+            data.set("contract", kOfficialFlow400Contract);
+            data.set("actual", row.raw_source_constraints);
+            data.set("foreign_assertions_certified", 0);
+            diagnostic.set_root(data);
+            diagnostics << diagnostic.to_string() << '\n';
+            require(static_cast<bool>(diagnostics),
+                    "OfficialFlow400 FS5c ledger evidence write failed");
+            return row;
+        }
         p.remaining[2] = work.remaining;
         if (!model) {
             p.pending = true;
@@ -14110,6 +14212,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS5aShapeDataCohort4";
     const bool fs5b_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS5bDividedRectCohort1";
+    const bool fs5c_selected =
+        row.raw_source_authority == "immutable_Flow400_8Models_plus_FS5cFlipTriCohort1";
     if (strand_selected)
         official_flow_strand_keys(info);
     else if (p0_length_selected)
@@ -14243,7 +14347,7 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         // whole_Model_decoded is exempt only for those reviewed authorities.
         require(captured && bound &&
                     (decoded || fs1_selected || fs3_selected || fs6_selected || fs4h_selected ||
-                     fs5a_selected || fs5b_selected) &&
+                     fs5a_selected || fs5b_selected || fs5c_selected) &&
                     !pending && restored &&
                     mutated && !resource && row.role_model_sha.size() == 64u &&
                     row.errors.empty() && row.status[0] == "drawn" && row.status[2] == "drawn" &&
@@ -14263,6 +14367,7 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                 title_selected || title_margin_selected || shape_alias_selected ||
                 issue4648_selected || strand_selected || fs1_selected || fs3_selected ||
                 fs6_selected || fs4h_selected || fs5a_selected || fs5b_selected ||
+                fs5c_selected ||
                 row.raw_source_authority == "immutable_Flow400_whole_8Models_392null" ||
                 same_run_body,
             "OfficialFlow400 unknown source authority");
@@ -14324,6 +14429,13 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                 "OfficialFlow400 FS5b admitted original must be the ledger draw row");
         require(row.role_model_sha.size() == 64u,
                 "OfficialFlow400 FS5b ledger source identity sha");
+    }
+    if (fs5c_selected) {
+        const auto* ledger = fs5c_cohort_row(row.path);
+        require(ledger && ledger->draw,
+                "OfficialFlow400 FS5c admitted original must be the ledger draw row");
+        require(row.role_model_sha.size() == 64u,
+                "OfficialFlow400 FS5c ledger source identity sha");
     }
     if (title_selected) {
         require(row.path == flow_oracle::kFlowTitleFixture &&

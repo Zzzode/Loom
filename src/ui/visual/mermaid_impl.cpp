@@ -430,6 +430,7 @@ enum class Shape {
     SmallCircle,
     ForkJoin,
     DividedRectangle,
+    FlippedTriangle,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -451,6 +452,7 @@ bool classic_shape(Shape shape) {
     case Shape::SmallCircle:
     case Shape::ForkJoin:
     case Shape::DividedRectangle:
+    case Shape::FlippedTriangle:
         return true;
     case Shape::Rectangle:
     case Shape::Rounded:
@@ -490,6 +492,7 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::Parallelogram:
     case Shape::ParallelogramAlt:
     case Shape::Triangle:
+    case Shape::FlippedTriangle:
         return true;
     case Shape::Stadium:
     case Shape::Subroutine:
@@ -1133,6 +1136,9 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
         shape = Shape::DoubleCircle;
     else if (*token == "extract" || *token == "tri" || *token == "triangle")
         shape = Shape::Triangle;
+    else if (*token == "flip-tri" || *token == "manual-file" ||
+             *token == "flipped-triangle")
+        shape = Shape::FlippedTriangle;
     else if (*token == "delay" || *token == "half-rounded-rectangle")
         shape = Shape::Delay;
     else if (*token == "fork" || *token == "join")
@@ -2267,7 +2273,7 @@ std::optional<Box> node_size(const Vertex& node, Work& work) {
             if (diameter > kWidthLimit || diameter > kHeightLimit) return {};
             return Box{0, 0, diameter, diameter};
         }
-        if (node.shape == Shape::Triangle) {
+        if (node.shape == Shape::Triangle || node.shape == Shape::FlippedTriangle) {
             int height = std::max(5, label_width(node.text) + 2);
             if ((height % 2) == 0) ++height;
             const int width = 2 * height - 1;
@@ -2343,6 +2349,20 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
         if (!put(l, b, "╱") || !put(r, b, "╲")) return false;
         for (int x = l + 1; x < r; ++x)
             if (!put(x, b, "─")) return false;
+        return true;
+    }
+    case Shape::FlippedTriangle: {
+        // Manual-file shape: the vertical mirror of Triangle — the flat edge
+        // is on top and the apex sits at the bottom centre.
+        if (box.height < 5 || (box.height % 2) == 0 || box.width != 2 * box.height - 1)
+            return false;
+        const int center = box.x + box.width / 2;
+        if (!put(center, b, "▽")) return false;
+        if (!put(l, t, "╲") || !put(r, t, "╱")) return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, t, "─")) return false;
+        for (int y = 1; y < box.height - 1; ++y)
+            if (!put(l + y, t + y, "╲") || !put(r - y, t + y, "╱")) return false;
         return true;
     }
     case Shape::Delay:
@@ -2666,6 +2686,7 @@ private:
         if (glyph == "▶") return ">";
         if (glyph == "◀") return "<";
         if (glyph == "▼") return "v";
+        if (glyph == "▽") return "v";
         if (glyph == "▲") return "^";
         if (glyph == "█" || glyph == "▛" || glyph == "▜" || glyph == "▙" || glyph == "▟")
             return "#";
@@ -3199,7 +3220,7 @@ std::vector<Port> ports(const Box& box, Shape shape, Point target) {
     if (classic_shape(shape)) {
         const int middle_x = box.x + box.width / 2;
         const int middle_y = box.y + box.height / 2;
-        if (shape == Shape::Triangle) {
+        if (shape == Shape::Triangle || shape == Shape::FlippedTriangle) {
             add({middle_x, box.y}, {0, -1});
             add({middle_x, box.y + box.height - 1}, {0, 1});
         } else if (shape == Shape::Asymmetric) {

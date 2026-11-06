@@ -432,6 +432,7 @@ enum class Shape {
     DividedRectangle,
     FlippedTriangle,
     SlopedRectangle,
+    WindowPane,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -455,6 +456,7 @@ bool classic_shape(Shape shape) {
     case Shape::DividedRectangle:
     case Shape::FlippedTriangle:
     case Shape::SlopedRectangle:
+    case Shape::WindowPane:
         return true;
     case Shape::Rectangle:
     case Shape::Rounded:
@@ -496,6 +498,7 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::ParallelogramAlt:
     case Shape::Triangle:
     case Shape::FlippedTriangle:
+    case Shape::WindowPane:
         return true;
     case Shape::Stadium:
     case Shape::Subroutine:
@@ -1146,6 +1149,9 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
     else if (*token == "sl-rect" || *token == "manual-input" ||
              *token == "sloped-rectangle")
         shape = Shape::SlopedRectangle;
+    else if (*token == "win-pane" || *token == "internal-storage" ||
+             *token == "window-pane")
+        shape = Shape::WindowPane;
     else if (*token == "delay" || *token == "half-rounded-rectangle")
         shape = Shape::Delay;
     else if (*token == "fork" || *token == "join")
@@ -2392,6 +2398,25 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
         // straight down; fill from t+2 so no cell breaks the contour.
         for (int y = t + 2; y < b; ++y)
             if (!put(r, y, "│")) return false;
+        return true;
+    }
+    case Shape::WindowPane: {
+        // Internal-storage shape: a rectangle split into four panes by one
+        // horizontal and one vertical divider through the centre (upstream
+        // shapes/windowPane.ts). The centred label is painted afterwards and
+        // overwrites the cross at its centre, as in upstream.
+        if (!sharp() || box.height < 5 || (box.height % 2) == 0 ||
+            (box.width % 2) == 0)
+            return false;
+        const int mid_y = t + (b - t) / 2;
+        const int mid_x = l + (r - l) / 2;
+        if (!put(l, mid_y, "├") || !put(r, mid_y, "┤") ||
+            !put(mid_x, t, "┬") || !put(mid_x, b, "┴"))
+            return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, mid_y, x == mid_x ? "┼" : "─")) return false;
+        for (int y = t + 1; y < b; ++y)
+            if (y != mid_y && !put(mid_x, y, "│")) return false;
         return true;
     }
     case Shape::Delay:

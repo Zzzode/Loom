@@ -1,0 +1,224 @@
+{
+  "schema": "loom_mermaid_fs5e_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-5e-window-pane-shape",
+  "shape_projection": {
+    "aliases": [
+      "win-pane",
+      "internal-storage",
+      "window-pane"
+    ],
+    "contour": "rectangle split into four panes by a horizontal and a vertical centre divider",
+    "upstream_witness": "packages/mermaid/src/rendering-util/rendering-elements/shapes/windowPane.ts at mermaid@12.2.0 (1fb78698)"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original that binds a node to a window-pane (internal-storage) shape (any of three aliases)",
+    "roots": [
+      "flowchart"
+    ],
+    "draw_authority": "the single alias smoke fixture with no other shape/theme debt; the four shape-themes rows carry compound exotic-shape debt",
+    "width_policy": "the draw row paints body+original at 240 and restored; it keeps ordinary source at narrow_40."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D-066 FS-5e window-pane, 2026-11-07)",
+    "date": "2026-11-07",
+    "verdict": "approved",
+    "note": "Read-only adversarial review (zero builds; separate fresh-context agent) of the contour against the upstream windowPane.ts rectangle-plus-cross path (integral centre row/column; ┬/┴/├/┤ wall junctions, centre ┼ overwritten by the centred label, faithful to the upstream label-over-cross), the three-alias fail-closed vocabulary (no prefix collision), generic classic sizing/ports landing on the real junctions, five-frame Flow400 wiring parity with FS-5d, and the zero-residual 1-draw/4-blocked partition. APPROVE: no MAJOR/MINOR; additive contour, no Work/shared-constant/router/gaps change, gaps stay 48, one original moves pending 280->279."
+  },
+  "counts": {
+    "total": 5,
+    "predicted_draw": 1,
+    "predicted_blocked": 4,
+    "predicted_original_draw": 1
+  },
+  "blocker_vocabulary": [
+    "flow-win-pane-compound"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/shape-alias/27-all-win-pane-internal-storage-window-pane-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "2895b0f44973a933508bb0a00c81a4b94cbfba7d1b261b4900ec5d2c714467f2",
+      "manifest_sha256": "2895b0f44973a933508bb0a00c81a4b94cbfba7d1b261b4900ec5d2c714467f2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "win-pane",
+        "internal-storage",
+        "window-pane"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5e window-pane contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/02-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "a8efdc88002a401024d099d0de3b1ab29367edc859588b0a3bce6904dbaee22e",
+      "manifest_sha256": "a8efdc88002a401024d099d0de3b1ab29367edc859588b0a3bce6904dbaee22e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "win-pane",
+        "internal-storage",
+        "window-pane"
+      ],
+      "blocker": {
+        "kind": "flow-win-pane-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a window-pane node among many other exotic shape aliases (and theme config) whose contours the terminal does not project; the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt around the window-pane node"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/12-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "40274af77bf8ade30265e95d770b06c094437ecd9569b7d2e22509d754d98c9a",
+      "manifest_sha256": "40274af77bf8ade30265e95d770b06c094437ecd9569b7d2e22509d754d98c9a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "win-pane",
+        "internal-storage",
+        "window-pane"
+      ],
+      "blocker": {
+        "kind": "flow-win-pane-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a window-pane node among many other exotic shape aliases (and theme config) whose contours the terminal does not project; the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt around the window-pane node"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/22-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "d30be929581652766f759801fa38f9100d87e3b17f6de623988c04a95c4a08fd",
+      "manifest_sha256": "d30be929581652766f759801fa38f9100d87e3b17f6de623988c04a95c4a08fd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "win-pane",
+        "internal-storage",
+        "window-pane"
+      ],
+      "blocker": {
+        "kind": "flow-win-pane-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a window-pane node among many other exotic shape aliases (and theme config) whose contours the terminal does not project; the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt around the window-pane node"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/32-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "f3fe3e89b62a929c07005f10235febb0572e1ff7ee53b848a1ece8b58ab9ccd5",
+      "manifest_sha256": "f3fe3e89b62a929c07005f10235febb0572e1ff7ee53b848a1ece8b58ab9ccd5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "win-pane",
+        "internal-storage",
+        "window-pane"
+      ],
+      "blocker": {
+        "kind": "flow-win-pane-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a window-pane node among many other exotic shape aliases (and theme config) whose contours the terminal does not project; the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt around the window-pane node"
+    }
+  ]
+}

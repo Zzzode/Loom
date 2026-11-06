@@ -87,7 +87,9 @@ TEST(MermaidFs5dSlopedRectangle, RaisedRightWallSignatureDistinguishesManualToke
 
 TEST(MermaidFs5dSlopedRectangle, UnknownShapeAliasKeepsWholeSource) {
     // An exotic alias without a terminal contour, and a near-miss of the
-    // mapped token, still force ordinary source fallback.
-    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: win-pane, label: \"x\" }\n"));
+    // mapped token, still force ordinary source fallback. The negative
+    // example must stay an alias no batch admits yet; win-pane graduated in
+    // FS-5e, so use hourglass (exotic contour still unsupported) here.
+    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: hourglass, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: sl-rectangle, label: \"x\" }\n"));
 }

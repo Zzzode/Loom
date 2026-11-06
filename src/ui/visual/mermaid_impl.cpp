@@ -1058,6 +1058,9 @@ std::optional<GroupHeader> flow_group_header(Scanner& group) {
 struct FlowShapeData {
     Shape shape = Shape::Rectangle;
     std::optional<std::string> label;
+    // True only when the block explicitly carried `shape:`. A label-only
+    // `@{ label: }` block leaves the node's existing bracket shape intact.
+    bool shape_specified = false;
 };
 
 std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
@@ -1066,6 +1069,29 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
     (void)work;
     if (!scanner.take("@{")) return {};
     scanner.space();
+    // FS-5a: label-only metadata `@{ label: "text" }` with no shape key is a
+    // rectangular labeled node. Accept an optional space before the colon and
+    // whitespace around the quoted value; anything else (icon, animation, a
+    // second key, a non-rectangle shape) falls through to the shape
+    // production below and fails closed.
+    // `take("label")` is a raw prefix match; the immediately following
+    // space()+required `:` below is what distinguishes it from keys like
+    // "labelled"/"labelX" — do not insert any acceptance between them.
+    if (scanner.take("label")) {
+        scanner.space();
+        if (!scanner.take(":")) return {};
+        scanner.space();
+        if (scanner.rest.empty() || scanner.rest.front() != '"') return {};
+        const auto end = scanner.rest.find('"', 1u);
+        if (end == std::string_view::npos) return {};
+        const auto decoded = label(scanner.rest.substr(0u, end + 1u));
+        if (!decoded) return {};
+        auto shape_label = std::move(decoded->text);
+        scanner.rest.remove_prefix(end + 1u);
+        scanner.space();
+        if (!scanner.take("}")) return {};
+        return FlowShapeData{Shape::Rectangle, std::move(shape_label), false};
+    }
     if (!scanner.take("shape")) return {};
     scanner.space();
     if (!scanner.take(":")) return {};
@@ -1126,7 +1152,7 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
         scanner.space();
     }
     if (!scanner.take("}")) return {};
-    return FlowShapeData{shape, std::move(shape_label)};
+    return FlowShapeData{shape, std::move(shape_label), true};
 }
 
 bool classic_opener(std::string_view text) {
@@ -1215,7 +1241,9 @@ std::optional<std::size_t> flow_node_from_id(std::string id, Scanner& scanner, D
         const auto metadata = flow_shape_data(scanner, work);
         if (!metadata) return {};
         auto& node = graph.vertices[*index];
-        node.shape = metadata->shape;  // Pinned FlowDB shape metadata is last-wins.
+        // Explicit `shape:` metadata is last-wins; a label-only block leaves
+        // the shape the node (possibly declared earlier) already has.
+        if (metadata->shape_specified) node.shape = metadata->shape;
         if (metadata->label) {
             if (node.explicit_label && node.text != *metadata->label) return {};
             node.text = std::move(*metadata->label);
@@ -1264,7 +1292,9 @@ std::optional<std::size_t> flow_node_from_id(std::string id, Scanner& scanner, D
     if (scanner.rest.starts_with("@{")) {
         const auto metadata = flow_shape_data(scanner, work);
         if (!metadata || (metadata->label && *metadata->label != node.text)) return {};
-        node.shape = metadata->shape;  // Metadata follows this vertex declaration and wins.
+        // Explicit `shape:` metadata wins; a label-only block must not
+        // flatten the bracket shape this vertex already declared.
+        if (metadata->shape_specified) node.shape = metadata->shape;
     }
     return index;
 }

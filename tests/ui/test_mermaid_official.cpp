@@ -5750,6 +5750,43 @@ const Fs4hCohortEntry* fs4h_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0031 FS-5a label-only shape-data cohort: the reviewed ledger at
+// tools/mermaid/fs5a-cohort.json. Four id@{ label: "..." } rows draw on both
+// tracks at 240; the one edge-link graph also paints at narrow_40.
+struct Fs5aCohortEntry {
+    std::array<std::string, 3> original_states;
+    std::array<std::string, 3> body_states;
+};
+const std::map<std::string, Fs5aCohortEntry>& fs5a_cohort_map() {
+    static const std::map<std::string, Fs5aCohortEntry> map = [] {
+        std::map<std::string, Fs5aCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/fs5a-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "FS5a cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "FS5a cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            require(row.get_string("prediction") == "predicted-draw",
+                    "FS5a cohort is all-draw");
+            auto load = [](JsonVal states) {
+                return std::array<std::string, 3>{states.get_string("wide_240"),
+                                                  states.get_string("narrow_40"),
+                                                  states.get_string("restored_240")};
+            };
+            rows.emplace(row.get_string("path"),
+                         Fs5aCohortEntry{load(row.get("expected_states")),
+                                         load(row.get("expected_body_states"))});
+        });
+        return rows;
+    }();
+    return map;
+}
+const Fs5aCohortEntry* fs5a_cohort_row(std::string_view path) {
+    const auto& rows = fs5a_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 constexpr std::string_view kRequirementMarkdownPath =
     "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd";
 constexpr std::string_view kRequirementMarkdownSourceSha =
@@ -8660,6 +8697,25 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                         row.decision_reasons.fill(row.reason);
                         observations.push_back(std::move(row));
                     }
+                } else if (const auto* fs5a = fs5a_cohort_row(path)) {
+                    // FS-5a: label-only @{ label: } shape-data node. All four
+                    // bodies draw; per-width states come from the ledger.
+                    Observation row;
+                    row.path = path;
+                    row.track = "body_diagnostic";
+                    row.type = "flowchart";
+                    row.source_sha256 = digest(body);
+                    row.expected = "drawn";
+                    row.reason = "RFC-0031 FS-5a reviewed label-only shape-data cohort (body)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(fs5a->body_states[0]),
+                                  state_status(fs5a->body_states[1]),
+                                  state_status(fs5a->body_states[2])};
+                    row.expected_states = fs5a->body_states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
                 } else {
                     const auto selected =
                         body22_select(policies, role_batch.policy.root(), raw_batch.policy.root(),
@@ -8839,13 +8895,15 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         // (group-title cohort) moves it 313 -> 312. FS-3a moves three
         // FlowStyle4 authority originals 312 -> 309. FS-6 moves seventeen
         // FontAwesome-marker originals 309 -> 292. FS-4h moves five inline-
-        // HTML label originals 292 -> 287. All count admitted but not
+        // FontAwesome-marker originals 309 -> 292. FS-4h moves five inline-
+        // HTML label originals 292 -> 287. FS-5a moves four label-only
+        // shape-data originals 287 -> 283. All count admitted but not
         // decoded.
-        EXPECT_EQ(flows.pending, 287u);
+        EXPECT_EQ(flows.pending, 283u);
         EXPECT_EQ(flows.errors, 0u);
         EXPECT_EQ(flows.resources, 0u);
-        EXPECT_EQ(flows.admitted, 113u);
-        EXPECT_EQ(flows.mutated, 113u);
+        EXPECT_EQ(flows.admitted, 117u);
+        EXPECT_EQ(flows.mutated, 117u);
         for (const auto count : applications)
             projection_consumed(count);
         role_batch_consumed(role_counts, role_batch.facts.root());
@@ -13759,6 +13817,51 @@ Observation run_official_flow400_case(
                     "OfficialFlow400 FS4h ledger evidence write failed");
             return row;
         }
+        // RFC 0031 FS-5a: four ledger originals whose only blocker was a
+        // label-only @{ label: } shape-data node admit on ledger-pinned
+        // source bytes once that form parses as a rectangular node. Five
+        // captured frames prove the admission inline; the durable pixel gate
+        // is test_mermaid_fs5a_cohort. decoded stays false (no upstream
+        // Model); the single edge-link graph also paints at narrow_40.
+        if (const auto* fs5a = fs5a_cohort_row(path)) {
+            p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
+            const bool wide_source = flow_oracle::flow400_same(*frames[0], *frames[3], work);
+            p.narrow_ordinary = flow_oracle::flow400_same(*frames[1], *frames[4], work);
+            std::string wide_text;
+            wide_text.reserve(static_cast<std::size_t>(frames[0]->width) *
+                              static_cast<std::size_t>(frames[0]->height));
+            for (int y = 0; y < frames[0]->height; ++y)
+                wide_text += frames[0]->row(y);
+            require(!wide_source && p.restored,
+                    "FS5a ledger draw frame protocol (wide native, restore)");
+            const bool narrow_draw = fs5a->original_states[1] == "drawn";
+            require(p.narrow_ordinary == !narrow_draw,
+                    "FS5a ledger narrow frame disagrees with ledger");
+            require(wide_text.find("@{") == std::string::npos,
+                    "FS5a ledger draw leaked the shape-data syntax");
+            static_cast<void>(flow_oracle::flow400_following(*frames[0], work, kSentinel));
+            row.status = {"drawn", narrow_draw ? "drawn" : "source_fallback", "drawn"};
+            row.expected = "drawn";
+            row.expected_states = {"drawn", narrow_draw ? "drawn" : "source", "drawn"};
+            row.reason = "RFC-0031 FS-5a reviewed label-only shape-data cohort";
+            row.decision_reasons.fill(row.reason);
+            row.role_model_sha = row.source_sha256;  // ledger-pinned source identity
+            row.raw_source_authority = "immutable_Flow400_8Models_plus_FS5aShapeDataCohort4";
+            p.phase = "complete";
+            p.admitted = true;
+            p.mutated = true;
+            p.remaining[2] = p.remaining[3] = p.remaining[4] = p.remaining[5] =
+                p.remaining[6] = work.remaining;
+            row.raw_source_constraints = official_flow_info(p, work.remaining);
+            data.set("contract", kOfficialFlow400Contract);
+            data.set("actual", row.raw_source_constraints);
+            data.set("foreign_assertions_certified", 0);
+            diagnostic.set_root(data);
+            diagnostics << diagnostic.to_string() << '\n';
+            require(static_cast<bool>(diagnostics),
+                    "OfficialFlow400 FS5a ledger evidence write failed");
+            return row;
+        }
         p.remaining[2] = work.remaining;
         if (!model) {
             p.pending = true;
@@ -13902,6 +14005,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS6FaCohort17";
     const bool fs4h_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS4HtmlLabelCohort5";
+    const bool fs5a_selected =
+        row.raw_source_authority == "immutable_Flow400_8Models_plus_FS5aShapeDataCohort4";
     if (strand_selected)
         official_flow_strand_keys(info);
     else if (p0_length_selected)
@@ -14034,7 +14139,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         // five-frame proof; they deliberately carry no upstream Model, so
         // whole_Model_decoded is exempt only for those reviewed authorities.
         require(captured && bound &&
-                    (decoded || fs1_selected || fs3_selected || fs6_selected || fs4h_selected) &&
+                    (decoded || fs1_selected || fs3_selected || fs6_selected || fs4h_selected ||
+                     fs5a_selected) &&
                     !pending && restored &&
                     mutated && !resource && row.role_model_sha.size() == 64u &&
                     row.errors.empty() && row.status[0] == "drawn" && row.status[2] == "drawn" &&
@@ -14053,7 +14159,7 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
     require(selected || typed || classic_selected || link_selected || group_selected ||
                 title_selected || title_margin_selected || shape_alias_selected ||
                 issue4648_selected || strand_selected || fs1_selected || fs3_selected ||
-                fs6_selected || fs4h_selected ||
+                fs6_selected || fs4h_selected || fs5a_selected ||
                 row.raw_source_authority == "immutable_Flow400_whole_8Models_392null" ||
                 same_run_body,
             "OfficialFlow400 unknown source authority");
@@ -14101,6 +14207,13 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                 "OfficialFlow400 FS4h admitted original must be a ledger draw row");
         require(row.role_model_sha.size() == 64u,
                 "OfficialFlow400 FS4h ledger source identity sha");
+    }
+    if (fs5a_selected) {
+        const auto* ledger = fs5a_cohort_row(row.path);
+        require(ledger != nullptr,
+                "OfficialFlow400 FS5a admitted original must be a ledger row");
+        require(row.role_model_sha.size() == 64u,
+                "OfficialFlow400 FS5a ledger source identity sha");
     }
     if (title_selected) {
         require(row.path == flow_oracle::kFlowTitleFixture &&

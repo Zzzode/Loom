@@ -435,6 +435,9 @@ enum class Shape {
     WindowPane,
     Card,
     Folder,
+    HorizontalCylinder,
+    LinedCylinder,
+    Datastore,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -461,6 +464,9 @@ bool classic_shape(Shape shape) {
     case Shape::WindowPane:
     case Shape::Card:
     case Shape::Folder:
+    case Shape::HorizontalCylinder:
+    case Shape::LinedCylinder:
+    case Shape::Datastore:
         return true;
     case Shape::Rectangle:
     case Shape::Rounded:
@@ -476,6 +482,7 @@ int classic_height(Shape shape) {
     if (shape == Shape::Cylinder) return 7;
     if (shape == Shape::DividedRectangle) return 7;
     if (shape == Shape::SlopedRectangle) return 7;
+    if (shape == Shape::LinedCylinder) return 7;
     if (shape == Shape::ForkJoin) return 5;
     return 5;
 }
@@ -483,7 +490,8 @@ int classic_height(Shape shape) {
 int classic_min_width(Shape shape) {
     if (shape == Shape::DoubleCircle) return 13;
     if (shape == Shape::Cylinder || shape == Shape::Parallelogram ||
-        shape == Shape::ParallelogramAlt || shape == Shape::SlopedRectangle)
+        shape == Shape::ParallelogramAlt || shape == Shape::SlopedRectangle ||
+        shape == Shape::LinedCylinder)
         return 11;
     if (shape == Shape::ForkJoin) return 17;
     return 9;
@@ -503,6 +511,8 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::Triangle:
     case Shape::FlippedTriangle:
     case Shape::WindowPane:
+    case Shape::HorizontalCylinder:
+    case Shape::LinedCylinder:
         return true;
     case Shape::Stadium:
     case Shape::Subroutine:
@@ -513,6 +523,7 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::SlopedRectangle:
     case Shape::Card:
     case Shape::Folder:
+    case Shape::Datastore:
     case Shape::Rectangle:
     case Shape::Rounded:
     case Shape::Decision:
@@ -1163,6 +1174,14 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
         shape = Shape::Card;
     else if (*token == "folder" || *token == "directory")
         shape = Shape::Folder;
+    else if (*token == "h-cyl" || *token == "das" ||
+             *token == "horizontal-cylinder")
+        shape = Shape::HorizontalCylinder;
+    else if (*token == "lin-cyl" || *token == "disk" ||
+             *token == "lined-cylinder")
+        shape = Shape::LinedCylinder;
+    else if (*token == "datastore" || *token == "data-store")
+        shape = Shape::Datastore;
     else if (*token == "delay" || *token == "half-rounded-rectangle")
         shape = Shape::Delay;
     else if (*token == "fork" || *token == "join")
@@ -2527,6 +2546,57 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
         for (int y = t + 2; y <= b - 2; ++y)
             if (!put(l, y, "│") || !put(r, y, "│")) return false;
         return true;
+    case Shape::LinedCylinder: {
+        // Disk storage: the vertical database cylinder plus one extra ellipse
+        // line just under the top face marking a stacked disk
+        // (upstream shapes/linedCylinder.ts inner line, offset 0.1*h).
+        if (!put(l + 2, t, "╭") || !put(r - 2, t, "╮") || !put(l + 1, t + 1, "╭") ||
+            !put(r - 1, t + 1, "╮") || !put(l + 1, b - 1, "╰") || !put(r - 1, b - 1, "╯") ||
+            !put(l + 2, b, "╰") || !put(r - 2, b, "╯"))
+            return false;
+        for (int x = l + 3; x < r - 2; ++x)
+            if (!put(x, t, "─") || !put(x, b, "─")) return false;
+        for (int x = l + 2; x < r - 1; ++x)
+            if (!put(x, t + 1, "─") || !put(x, b - 1, "─")) return false;
+        for (int y = t + 2; y <= b - 2; ++y)
+            if (!put(l, y, "│") || !put(r, y, "│")) return false;
+        // The stacked-disk line on the first body row, meeting the walls.
+        if (!put(l, t + 2, "├") || !put(r, t + 2, "┤")) return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, t + 2, "─")) return false;
+        return true;
+    }
+    case Shape::HorizontalCylinder: {
+        // Direct-access storage: a cylinder lying on its side - straight top
+        // and bottom edges, shallow elliptical end caps one cell deep on the
+        // middle row, and a centre vertical line for the far rim (upstream
+        // shapes/tiltedCylinder.ts, rx << ry).
+        if (box.height < 5 || (box.height % 2) == 0) return false;
+        const int mid = t + (b - t) / 2;
+        if (!put(l, t, "┌") || !put(r, t, "┐") || !put(l, b, "└") ||
+            !put(r, b, "┘") || !put(mid, t, "┬") || !put(mid, b, "┴"))
+            return false;
+        for (int x = l + 1; x < r; ++x)
+            if (x != mid && (!put(x, t, "─") || !put(x, b, "─"))) return false;
+        for (int y = t + 1; y < b; ++y) {
+            if (y == mid) {
+                if (!put(l, y, "(") || !put(r, y, ")")) return false;
+            } else if (!put(l, y, "│") || !put(r, y, "│")) {
+                return false;
+            }
+            if (y != mid && !put(mid, y, "│")) return false;
+        }
+        return true;
+    }
+    case Shape::Datastore: {
+        // Data-flow data store: an open rectangle with only the top and
+        // bottom rules (upstream shapes/datastore.ts draws two lines and
+        // suppresses the side walls with stroke-dasharray).
+        if (box.height < 3) return false;
+        for (int x = l; x <= r; ++x)
+            if (!put(x, t, "─") || !put(x, b, "─")) return false;
+        return true;
+    }
     case Shape::Asymmetric:
         if (!put(l + 2, t, "╱") || !put(r, t, "┐") || !put(l + 1, t + 1, "╱") ||
             !put(l, t + 2, "◁") || !put(l + 1, b - 1, "╲") || !put(l + 2, b, "╲") ||
@@ -3335,6 +3405,11 @@ std::vector<Port> ports(const Box& box, Shape shape, Point target) {
         const int middle_x = box.x + box.width / 2;
         const int middle_y = box.y + box.height / 2;
         if (shape == Shape::Triangle || shape == Shape::FlippedTriangle) {
+            add({middle_x, box.y}, {0, -1});
+            add({middle_x, box.y + box.height - 1}, {0, 1});
+        } else if (shape == Shape::Datastore) {
+            // An open rectangle with no side walls: only the top and bottom
+            // rules are contour, so edges attach vertically.
             add({middle_x, box.y}, {0, -1});
             add({middle_x, box.y + box.height - 1}, {0, 1});
         } else if (shape == Shape::Folder) {

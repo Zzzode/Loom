@@ -1,0 +1,454 @@
+{
+  "schema": "loom_mermaid_fs5g2_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-5-g2-cylinder-family",
+  "shape_projection": {
+    "group": [
+      {
+        "shape": "horizontal cylinder",
+        "aliases": [
+          "h-cyl",
+          "das",
+          "horizontal-cylinder"
+        ]
+      },
+      {
+        "shape": "lined cylinder",
+        "aliases": [
+          "lin-cyl",
+          "disk",
+          "lined-cylinder"
+        ]
+      },
+      {
+        "shape": "datastore",
+        "aliases": [
+          "datastore",
+          "data-store"
+        ]
+      }
+    ]
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original binding a cylinder-family shape (h-cyl/das/horizontal-cylinder, lin-cyl/disk/lined-cylinder, or datastore/data-store)",
+    "roots": [
+      "flowchart"
+    ],
+    "draw_authority": "the three alias smoke fixtures (22/23/41); eight shape-themes rows carry independent exotic-shape/theme debt",
+    "width_policy": "draw rows paint body+original at 240 and restored; narrow_40 is per-row."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D-066 FS-5 G2 cylinder family, 2026-11-07)",
+    "date": "2026-11-07",
+    "verdict": "approved",
+    "note": "Read-only adversarial review (zero builds; separate fresh-context agent) of all three contours against tiltedCylinder.ts/linedCylinder.ts/datastore.ts: horizontal cylinder (sideways caps + centre far-rim line), lined cylinder (vertical database cylinder reused plus a stacked-disk line one row above the label), and the open datastore (two rules, no side walls -> top/bottom-only ports, matching the Triangle port invariant; sideways edges detour onto a rule and still render). Eight-alias fail-closed vocabulary (disk/das/data-store checked for collisions), zero-residual 3-draw/8-blocked partition with two blocker kinds and per-row narrow (only the short-label datastore draws at narrow_40). APPROVE: no MAJOR; pre-commit additions: a datastore LR edge regression (MINOR) plus header/dead-branch/comment NITs, all applied. Additive contours, no Work/shared-constant/router/gaps change, gaps stay 48, three originals move pending 277->274."
+  },
+  "counts": {
+    "total": 11,
+    "predicted_draw": 3,
+    "predicted_blocked": 8,
+    "predicted_original_draw": 3
+  },
+  "blocker_vocabulary": [
+    "flow-hcyl-compound",
+    "flow-lincyl-compound"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/shape-alias/22-all-h-cyl-das-horizontal-cylinder-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "37ad485c62041af4c562d9942b9b199727a2bf6f8e26257cbd6eccfc968eec19",
+      "manifest_sha256": "37ad485c62041af4c562d9942b9b199727a2bf6f8e26257cbd6eccfc968eec19",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "h-cyl",
+        "das",
+        "horizontal-cylinder"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G2 cylinder-family contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/23-all-lin-cyl-disk-lined-cylinder-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "8ca4728e044738c8b8638a08eb8fdc49f9a725eae8b0cf7c1ca74cf2177940f9",
+      "manifest_sha256": "8ca4728e044738c8b8638a08eb8fdc49f9a725eae8b0cf7c1ca74cf2177940f9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "lin-cyl",
+        "disk",
+        "lined-cylinder"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G2 cylinder-family contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/41-all-datastore-data-store-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "a5c474465130a5ec7f5a6ecdea0bd2790d546ded80d6471cc8ac8f2a2372e2a1",
+      "manifest_sha256": "a5c474465130a5ec7f5a6ecdea0bd2790d546ded80d6471cc8ac8f2a2372e2a1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "datastore",
+        "data-store"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G2 cylinder-family contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/01-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "f7ed40695577f23ee2088f8dace703a54c14058afc227172c3ee2ac1edd28108",
+      "manifest_sha256": "f7ed40695577f23ee2088f8dace703a54c14058afc227172c3ee2ac1edd28108",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "h-cyl",
+        "das",
+        "horizontal-cylinder"
+      ],
+      "blocker": {
+        "kind": "flow-hcyl-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a horizontal-cylinder node among other exotic shape aliases (hourglass) whose contours the terminal does not project (and theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/04-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "29cfdec9770aecf2e34c0e8ee8cada56ddf405e218776c2070d1dd7e0276940b",
+      "manifest_sha256": "29cfdec9770aecf2e34c0e8ee8cada56ddf405e218776c2070d1dd7e0276940b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "lin-cyl",
+        "disk",
+        "lined-cylinder"
+      ],
+      "blocker": {
+        "kind": "flow-lincyl-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a lined-cylinder node among other exotic shape aliases (document, notched-pentagon, stacked-document) and theme config; the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/11-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "ff38da669bd4915b994688d6cb809af35cfd3326759a7359f8267d0df090eabd",
+      "manifest_sha256": "ff38da669bd4915b994688d6cb809af35cfd3326759a7359f8267d0df090eabd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "h-cyl",
+        "das",
+        "horizontal-cylinder"
+      ],
+      "blocker": {
+        "kind": "flow-hcyl-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a horizontal-cylinder node among other exotic shape aliases (hourglass) whose contours the terminal does not project (and theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/15-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "ea2c8ddda5a0d536dd218bfec495557873cd98cb02d0f7bcf2f82fb1f606a9f4",
+      "manifest_sha256": "ea2c8ddda5a0d536dd218bfec495557873cd98cb02d0f7bcf2f82fb1f606a9f4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "lin-cyl",
+        "disk",
+        "lined-cylinder"
+      ],
+      "blocker": {
+        "kind": "flow-lincyl-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a lined-cylinder node among other exotic shape aliases (document, notched-pentagon, stacked-document) and theme config; the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/21-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "d5b762315057eaef4d181f572a9a76545d78074dc751417c64830464ba2f1989",
+      "manifest_sha256": "d5b762315057eaef4d181f572a9a76545d78074dc751417c64830464ba2f1989",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "h-cyl",
+        "das",
+        "horizontal-cylinder"
+      ],
+      "blocker": {
+        "kind": "flow-hcyl-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a horizontal-cylinder node among other exotic shape aliases (hourglass) whose contours the terminal does not project (and theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/23-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "0a258779a215c24bcb22e53ea5b444b04af87cf992c138af1a8853e9a49bf569",
+      "manifest_sha256": "0a258779a215c24bcb22e53ea5b444b04af87cf992c138af1a8853e9a49bf569",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "lin-cyl",
+        "disk",
+        "lined-cylinder"
+      ],
+      "blocker": {
+        "kind": "flow-lincyl-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a lined-cylinder node among other exotic shape aliases (document, notched-pentagon, stacked-document) and theme config; the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/31-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "29e2563d7fcc9613a36ce50d2085425c1a898e88879261918c80cdcbf8eae549",
+      "manifest_sha256": "29e2563d7fcc9613a36ce50d2085425c1a898e88879261918c80cdcbf8eae549",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "h-cyl",
+        "das",
+        "horizontal-cylinder"
+      ],
+      "blocker": {
+        "kind": "flow-hcyl-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a horizontal-cylinder node among other exotic shape aliases (hourglass) whose contours the terminal does not project (and theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/34-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "36fa99de88ab832a2c0de3b4abb02e925c48bcc005e0128a83f4cda604fef7dc",
+      "manifest_sha256": "36fa99de88ab832a2c0de3b4abb02e925c48bcc005e0128a83f4cda604fef7dc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "lin-cyl",
+        "disk",
+        "lined-cylinder"
+      ],
+      "blocker": {
+        "kind": "flow-lincyl-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a lined-cylinder node among other exotic shape aliases (document, notched-pentagon, stacked-document) and theme config; the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    }
+  ]
+}

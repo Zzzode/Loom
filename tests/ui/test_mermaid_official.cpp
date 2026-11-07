@@ -6213,6 +6213,49 @@ const Fs5g7CohortEntry* fs5g7_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0031 stadium multiline-label cohort (body-only). The single row draws
+// on the body track; its whole original is rejected because the frontmatter
+// combines top-level htmlLabels=false (RootHtml) with fontFamily=courier
+// (Font), which matches no whole-source admission profile. So it has no
+// Flow400 whole-source admission and does not move pending/admitted counts.
+struct MultilineStadiumCohortEntry {
+    bool draw = false;
+    bool original_draw = false;
+    std::array<std::string, 3> original_states;
+    std::array<std::string, 3> body_states;
+};
+const std::map<std::string, MultilineStadiumCohortEntry>& multiline_stadium_cohort_map() {
+    static const std::map<std::string, MultilineStadiumCohortEntry> map = [] {
+        std::map<std::string, MultilineStadiumCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/multiline-stadium-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "Multiline stadium cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "Multiline stadium cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            MultilineStadiumCohortEntry entry;
+            entry.draw = row.get_string("prediction") == "predicted-draw";
+            entry.original_draw =
+                !(row.has("track_scope") && row.get_string("track_scope") == "body-only");
+            auto load = [](JsonVal states) {
+                return std::array<std::string, 3>{states.get_string("wide_240"),
+                                                  states.get_string("narrow_40"),
+                                                  states.get_string("restored_240")};
+            };
+            entry.original_states = load(row.get("expected_states"));
+            entry.body_states = load(row.get("expected_body_states"));
+            rows.emplace(row.get_string("path"), std::move(entry));
+        });
+        return rows;
+    }();
+    return map;
+}
+const MultilineStadiumCohortEntry* multiline_stadium_cohort_row(std::string_view path) {
+    const auto& rows = multiline_stadium_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 constexpr std::string_view kRequirementMarkdownPath =
     "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd";
 constexpr std::string_view kRequirementMarkdownSourceSha =
@@ -9400,6 +9443,27 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                         row.decision_reasons.fill(row.reason);
                         observations.push_back(std::move(row));
                     }
+                } else if (const auto* ml = multiline_stadium_cohort_row(path)) {
+                    // Stadium multiline label: body-only draw (the whole
+                    // original remains source behind the nested-config gate).
+                    require(ml->draw && !ml->original_draw,
+                            "Multiline stadium cohort must be a body-only row");
+                    Observation row;
+                    row.path = path;
+                    row.track = "body_diagnostic";
+                    row.type = "flowchart";
+                    row.source_sha256 = digest(body);
+                    row.expected = "drawn";
+                    row.reason = "RFC-0031 stadium multiline-label cohort (body)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(ml->body_states[0]),
+                                  state_status(ml->body_states[1]),
+                                  state_status(ml->body_states[2])};
+                    row.expected_states = ml->body_states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
                 } else {
                     const auto selected =
                         body22_select(policies, role_batch.policy.root(), raw_batch.policy.root(),

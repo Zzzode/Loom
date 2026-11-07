@@ -2401,7 +2401,19 @@ std::optional<Box> node_size(const Vertex& node, Work& work) {
     (void)work;
     const int rows = static_cast<int>(label_rows(node.text).size());
     if (classic_shape(node.shape)) {
-        if (rows != 1) return {};
+        if (rows != 1) {
+            // Explicit multi-line labels (authored <br/>) are admitted only
+            // for box contours whose glyph scales cleanly with height; the
+            // stadium end caps are drawn relative to t/b so a taller box keeps
+            // the same silhouette. Fixed-silhouette classics (rings,
+            // triangles, waves) keep single-row-only sizing and fail closed.
+            if (node.shape != Shape::Stadium) return {};
+            const int width = std::max(classic_min_width(node.shape),
+                                       label_width(node.text) + 4);
+            const int height = rows + 4;  // top/bottom border + one-cell padding
+            if (width > kWidthLimit || height > kHeightLimit) return {};
+            return Box{0, 0, width, height};
+        }
         if (node.shape == Shape::ForkJoin) {
             const int width = std::max(classic_min_width(node.shape), label_width(node.text) + 8);
             if (width > kWidthLimit) return {};

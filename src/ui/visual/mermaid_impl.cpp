@@ -438,6 +438,11 @@ enum class Shape {
     HorizontalCylinder,
     LinedCylinder,
     Datastore,
+    NotchedPentagon,
+    Hourglass,
+    Bolt,
+    BowTie,
+    Brace,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -467,6 +472,11 @@ bool classic_shape(Shape shape) {
     case Shape::HorizontalCylinder:
     case Shape::LinedCylinder:
     case Shape::Datastore:
+    case Shape::NotchedPentagon:
+    case Shape::Hourglass:
+    case Shape::Bolt:
+    case Shape::BowTie:
+    case Shape::Brace:
         return true;
     case Shape::Rectangle:
     case Shape::Rounded:
@@ -513,6 +523,9 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::WindowPane:
     case Shape::HorizontalCylinder:
     case Shape::LinedCylinder:
+    case Shape::Hourglass:
+    case Shape::Bolt:
+    case Shape::BowTie:
         return true;
     case Shape::Stadium:
     case Shape::Subroutine:
@@ -524,6 +537,8 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::Card:
     case Shape::Folder:
     case Shape::Datastore:
+    case Shape::NotchedPentagon:
+    case Shape::Brace:
     case Shape::Rectangle:
     case Shape::Rounded:
     case Shape::Decision:
@@ -1182,6 +1197,19 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
         shape = Shape::LinedCylinder;
     else if (*token == "datastore" || *token == "data-store")
         shape = Shape::Datastore;
+    else if (*token == "notch-pent" || *token == "loop-limit" ||
+             *token == "notched-pentagon")
+        shape = Shape::NotchedPentagon;
+    else if (*token == "collate" || *token == "hourglass")
+        shape = Shape::Hourglass;
+    else if (*token == "bolt" || *token == "com-link" ||
+             *token == "lightning-bolt")
+        shape = Shape::Bolt;
+    else if (*token == "bow-rect" || *token == "stored-data" ||
+             *token == "bow-tie-rectangle")
+        shape = Shape::BowTie;
+    else if (*token == "comment" || *token == "brace-l")
+        shape = Shape::Brace;
     else if (*token == "delay" || *token == "half-rounded-rectangle")
         shape = Shape::Delay;
     else if (*token == "fork" || *token == "join")
@@ -2597,6 +2625,90 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
             if (!put(x, t, "─") || !put(x, b, "─")) return false;
         return true;
     }
+    case Shape::NotchedPentagon: {
+        // Loop-limit trapezoidal pentagon: the top edge is inset on both
+        // sides with a one-row shoulder dropping to the straight walls
+        // (upstream shapes/trapezoidalPentagon.ts, top edge 80% of width).
+        if (b - t + 1 < 5) return false;
+        int inset = (r - l + 1) / 10;
+        if (inset < 1) inset = 1;
+        const int lt = l + inset, rt = r - inset;
+        if (lt >= rt) return false;
+        if (!put(lt, t, "┌") || !put(rt, t, "┐") || !put(l, t + 1, "╱") ||
+            !put(r, t + 1, "╲") || !put(l, b, "└") || !put(r, b, "┘"))
+            return false;
+        for (int x = lt + 1; x < rt; ++x)
+            if (!put(x, t, "─")) return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, b, "─")) return false;
+        for (int y = t + 2; y < b; ++y)
+            if (!put(l, y, "│") || !put(r, y, "│")) return false;
+        return true;
+    }
+    case Shape::Hourglass:
+    case Shape::BowTie: {
+        // Collate hourglass / stored-data bow tie: a full top and bottom
+        // edge whose sides sweep one cell inward toward the label row and
+        // back out (upstream hourglass.ts / bowTieRect.ts converge at the
+        // centre; at cell resolution the single-row waist opens to carry the
+        // centred label, the bow tie's concave arcs collapsing onto the same
+        // diagonals).
+        if (box.height < 5 || (box.height % 2) == 0) return false;
+        if (!put(l, t, "┌") || !put(r, t, "┐") || !put(l, b, "└") ||
+            !put(r, b, "┘") || !put(l + 1, t + 1, "╲") ||
+            !put(r - 1, t + 1, "╱") || !put(l + 1, b - 1, "╱") ||
+            !put(r - 1, b - 1, "╲"))
+            return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, t, "─") || !put(x, b, "─")) return false;
+        return true;
+    }
+    case Shape::Bolt: {
+        // Communication-link lightning bolt: a right-aligned head, a
+        // down-left stroke to the waist, a right jog, then a down-left stroke
+        // to a left-aligned tail (upstream shapes/lightningBolt.ts zig-zag).
+        if (b - t + 1 < 5) return false;
+        const int midx = l + (r - l) / 2;
+        if (!put(r, t, "┐") || !put(midx, t, "┌") || !put(l, t + 1, "╱") ||
+            !put(midx, t + 1, "╲") || !put(l, t + 2, "└") ||
+            !put(r, t + 2, "┐") || !put(l, b, "└") || !put(r, b, "┘") ||
+            !put(midx, b - 1, "╱") || !put(r, b - 1, "╲"))
+            return false;
+        for (int x = midx + 1; x < r; ++x)
+            if (!put(x, t, "─")) return false;
+        // The waist jog is a near-full-width edge (upstream E2): paint across
+        // the whole interior; the centred label overwrites its middle.
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, t + 2, "─")) return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, b, "─")) return false;
+        return true;
+    }
+    case Shape::Brace: {
+        // Comment curly brace on the LEFT opening rightward: straight top,
+        // right and bottom rules, a left wall, and a brace tip on the middle
+        // row meeting the interior rule at ┤ (upstream
+        // shapes/curlyBraceLeft.ts; the rounded curls are below cell
+        // resolution).
+        if (b - t + 1 < 5) return false;
+        const int midy = t + (b - t) / 2;
+        if (!put(l, t, "┌") || !put(r, t, "┐") || !put(l, midy, "◁") ||
+            !put(r, midy, "┤") || !put(l, b, "└") || !put(r, b, "┘"))
+            return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, t, "─") || !put(x, b, "─") || !put(x, midy, "─"))
+                return false;
+        for (int y = t + 1; y < midy; ++y)
+            if (!put(l, y, "│")) return false;
+        for (int y = midy + 1; y < b; ++y)
+            if (!put(l, y, "│")) return false;
+        // Skip midy: the interior rule already put ┤ there.
+        for (int y = t + 1; y < midy; ++y)
+            if (!put(r, y, "│")) return false;
+        for (int y = midy + 1; y < b; ++y)
+            if (!put(r, y, "│")) return false;
+        return true;
+    }
     case Shape::Asymmetric:
         if (!put(l + 2, t, "╱") || !put(r, t, "┐") || !put(l + 1, t + 1, "╱") ||
             !put(l, t + 2, "◁") || !put(l + 1, b - 1, "╲") || !put(l + 2, b, "╲") ||
@@ -3407,9 +3519,11 @@ std::vector<Port> ports(const Box& box, Shape shape, Point target) {
         if (shape == Shape::Triangle || shape == Shape::FlippedTriangle) {
             add({middle_x, box.y}, {0, -1});
             add({middle_x, box.y + box.height - 1}, {0, 1});
-        } else if (shape == Shape::Datastore) {
-            // An open rectangle with no side walls: only the top and bottom
-            // rules are contour, so edges attach vertically.
+        } else if (shape == Shape::Datastore || shape == Shape::Hourglass ||
+                   shape == Shape::BowTie) {
+            // Open two-rule (datastore) and centre-waisted (hourglass/bow
+            // tie) contours have no straight side wall at the middle row:
+            // edges attach at the continuous top/bottom edges only.
             add({middle_x, box.y}, {0, -1});
             add({middle_x, box.y + box.height - 1}, {0, 1});
         } else if (shape == Shape::Folder) {

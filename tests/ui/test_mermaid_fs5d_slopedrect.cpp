@@ -90,6 +90,6 @@ TEST(MermaidFs5dSlopedRectangle, UnknownShapeAliasKeepsWholeSource) {
     // mapped token, still force ordinary source fallback. The negative
     // example must stay an alias no batch admits yet; win-pane graduated in
     // FS-5e, so use hourglass (exotic contour still unsupported) here.
-    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: hourglass, label: \"x\" }\n"));
+    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: paper-tape, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: sl-rectangle, label: \"x\" }\n"));
 }

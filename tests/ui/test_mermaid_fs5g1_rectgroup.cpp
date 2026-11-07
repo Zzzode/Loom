@@ -78,7 +78,7 @@ TEST(MermaidFs5g1, FolderAliasesDrawWithTabAndBodyEdge) {
 }
 
 TEST(MermaidFs5g1, UnknownShapeAliasesKeepWholeSource) {
-    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: bolt, label: \"x\" }\n"));
+    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: paper-tape, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: cardd, label: \"x\" }\n"));
 }
 

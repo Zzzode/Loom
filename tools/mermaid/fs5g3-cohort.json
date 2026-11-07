@@ -1,0 +1,933 @@
+{
+  "schema": "loom_mermaid_fs5g3_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-5-g3-polygon-family",
+  "shape_projection": {
+    "aliases_bound_in_cohort": 13,
+    "contours": 5
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original binding a G3 polygon shape (notched-pentagon/loop-limit, collate/hourglass, bolt/com-link, bow-rect/stored-data, comment/brace-l)",
+    "roots": [
+      "flowchart"
+    ],
+    "draw_authority": "the five alias smoke fixtures (30/40/19/36/17); twenty shape-themes rows carry independent exotic-shape or neo-look debt",
+    "width_policy": "draw rows paint body+original at 240 and restored; narrow_40 is per-row."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D-066 FS-5 G3 polygon family, 2026-11-07)",
+    "date": "2026-11-07",
+    "verdict": "approved",
+    "note": "Read-only adversarial review (zero builds; separate fresh-context agent) of five stylized cell projections against trapezoidalPentagon/hourglass/lightningBolt/bowTieRect/curlyBraceLeft.ts: notched pentagon, hourglass and bow tie (centre one-row waist, top/bottom-only ports), lightning bolt zig-zag, and the left curly-brace comment. 13-alias fail-closed vocabulary, five blocker families, per-row narrow (brace/hourglass draw at narrow_40). First verdict REQUEST-CHANGES: MAJOR was the brace interior-rule ┤ unconditionally overwritten by the right-wall loop (a dead write on every render), MINOR a half-width bolt jog for short labels and incomplete hourglass blocker evidence; fixed by splitting the brace right wall to skip the mid row, painting the bolt jog full width, documenting both the neo-look and single-quote body gates for the hourglass themes, and adding exact-glyph regression gtests; re-review APPROVE. Additive contours, no Work/shared-constant/router/gaps change, gaps stay 48, five originals move pending 274->269."
+  },
+  "counts": {
+    "total": 25,
+    "predicted_draw": 5,
+    "predicted_blocked": 20,
+    "predicted_original_draw": 5
+  },
+  "blocker_vocabulary": [
+    "flow-g3-pent-compound",
+    "flow-g3-bolt-compound",
+    "flow-g3-bowtie-compound",
+    "flow-g3-hourglass-neo",
+    "flow-g3-brace-compound"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/shape-alias/17-all-comment-brace-l-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "c75b40176b6c3ca47eaa756a4e0a4fb027bf1d7ce1f19441bd1bc00ac3f18e97",
+      "manifest_sha256": "c75b40176b6c3ca47eaa756a4e0a4fb027bf1d7ce1f19441bd1bc00ac3f18e97",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "comment",
+        "brace-l"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G3 polygon-family contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/19-all-bolt-com-link-lightning-bolt-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "b290150472af22b17ba662d6dca4a90f6ad874ef7c19e12108551832f51f80c4",
+      "manifest_sha256": "b290150472af22b17ba662d6dca4a90f6ad874ef7c19e12108551832f51f80c4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "bolt",
+        "com-link",
+        "lightning-bolt"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G3 polygon-family contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/30-all-notch-pent-loop-limit-notched-pentagon-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "e499f36a4443f37c2acb271e218e0a1b1654388f1ec585eb13d1fe49e582a222",
+      "manifest_sha256": "e499f36a4443f37c2acb271e218e0a1b1654388f1ec585eb13d1fe49e582a222",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "notch-pent",
+        "loop-limit",
+        "notched-pentagon"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G3 polygon-family contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/36-all-bow-rect-stored-data-bow-tie-rectangle-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "e2a56640c51990d4f49dfe559c0c879c338cce39fb563b53b0d7f37628fdd91a",
+      "manifest_sha256": "e2a56640c51990d4f49dfe559c0c879c338cce39fb563b53b0d7f37628fdd91a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "bow-rect",
+        "stored-data",
+        "bow-tie-rectangle"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G3 polygon-family contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/40-all-collate-hourglass-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "d098c969b87196b6b67ea04b46b2fcf7619c38f175dc1b2c3ac7fbbaffcb2c0e",
+      "manifest_sha256": "d098c969b87196b6b67ea04b46b2fcf7619c38f175dc1b2c3ac7fbbaffcb2c0e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "collate",
+        "hourglass"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G3 polygon-family contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/01-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "f7ed40695577f23ee2088f8dace703a54c14058afc227172c3ee2ac1edd28108",
+      "manifest_sha256": "f7ed40695577f23ee2088f8dace703a54c14058afc227172c3ee2ac1edd28108",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "collate",
+        "hourglass"
+      ],
+      "blocker": {
+        "kind": "flow-g3-hourglass-neo",
+        "site": "src/domain/frontmatter config grammar (look whitelist)",
+        "evidence": "src/domain/frontmatter config grammar (look whitelist)",
+        "detail": "The whole original is rejected because the frontmatter sets look/theme neo, which the parser rejects (only handDrawn is a whitelisted look and theme is not an indent-2 key); independently, the body track also fails closed because every shape-data label in these theme fixtures is single-quoted and flow_shape_data accepts only double quotes. Either gate alone keeps the source on ordinary fallback after hourglass is admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/02-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "a8efdc88002a401024d099d0de3b1ab29367edc859588b0a3bce6904dbaee22e",
+      "manifest_sha256": "a8efdc88002a401024d099d0de3b1ab29367edc859588b0a3bce6904dbaee22e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bolt",
+        "com-link",
+        "lightning-bolt"
+      ],
+      "blocker": {
+        "kind": "flow-g3-bolt-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a bolt node among other exotic shape aliases (documents, filled-circle, tagged-rectangle) and neo theme config."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/03-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "9d0f7f775073657a12f80e506a8602eeda208c4a107e7b1626300f1682e61946",
+      "manifest_sha256": "9d0f7f775073657a12f80e506a8602eeda208c4a107e7b1626300f1682e61946",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "stored-data",
+        "bow-tie-rectangle"
+      ],
+      "blocker": {
+        "kind": "flow-g3-bowtie-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a bow-tie node among other exotic shape aliases (crossed-circle, curved-trapezoid, tagged-document) and neo theme."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/04-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "29cfdec9770aecf2e34c0e8ee8cada56ddf405e218776c2070d1dd7e0276940b",
+      "manifest_sha256": "29cfdec9770aecf2e34c0e8ee8cada56ddf405e218776c2070d1dd7e0276940b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "notch-pent",
+        "loop-limit",
+        "notched-pentagon"
+      ],
+      "blocker": {
+        "kind": "flow-g3-pent-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a notched-pentagon node among other exotic shape aliases (document, stacked-document) and neo theme config; whole source stays on ordinary fallback until those are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/05-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "2f3f62cb5d0ee8a7274dc11c87445ffc1751cad44cd37c257694831dd73a06a9",
+      "manifest_sha256": "2f3f62cb5d0ee8a7274dc11c87445ffc1751cad44cd37c257694831dd73a06a9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "comment",
+        "brace-l"
+      ],
+      "blocker": {
+        "kind": "flow-g3-brace-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a brace/comment node among other exotic shape aliases (brace-r, braces, lined/tagged-document) and neo theme."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/11-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "ff38da669bd4915b994688d6cb809af35cfd3326759a7359f8267d0df090eabd",
+      "manifest_sha256": "ff38da669bd4915b994688d6cb809af35cfd3326759a7359f8267d0df090eabd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "collate",
+        "hourglass"
+      ],
+      "blocker": {
+        "kind": "flow-g3-hourglass-neo",
+        "site": "src/domain/frontmatter config grammar (look whitelist)",
+        "evidence": "src/domain/frontmatter config grammar (look whitelist)",
+        "detail": "The whole original is rejected because the frontmatter sets look/theme neo, which the parser rejects (only handDrawn is a whitelisted look and theme is not an indent-2 key); independently, the body track also fails closed because every shape-data label in these theme fixtures is single-quoted and flow_shape_data accepts only double quotes. Either gate alone keeps the source on ordinary fallback after hourglass is admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/12-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "40274af77bf8ade30265e95d770b06c094437ecd9569b7d2e22509d754d98c9a",
+      "manifest_sha256": "40274af77bf8ade30265e95d770b06c094437ecd9569b7d2e22509d754d98c9a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bolt",
+        "com-link",
+        "lightning-bolt"
+      ],
+      "blocker": {
+        "kind": "flow-g3-bolt-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a bolt node among other exotic shape aliases (documents, filled-circle, tagged-rectangle) and neo theme config."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/13-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "1d26cf80f4388d707cdc8d150cadb04cae9a9282b5613b3afce0f57bc0f4af83",
+      "manifest_sha256": "1d26cf80f4388d707cdc8d150cadb04cae9a9282b5613b3afce0f57bc0f4af83",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "stored-data",
+        "bow-tie-rectangle"
+      ],
+      "blocker": {
+        "kind": "flow-g3-bowtie-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a bow-tie node among other exotic shape aliases (crossed-circle, curved-trapezoid, tagged-document) and neo theme."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/14-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "ecaa3f283b02b4a545120d023c0a2601ccdb49b0a3af0da01fae7ccc00d776fb",
+      "manifest_sha256": "ecaa3f283b02b4a545120d023c0a2601ccdb49b0a3af0da01fae7ccc00d776fb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "comment",
+        "brace-l"
+      ],
+      "blocker": {
+        "kind": "flow-g3-brace-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a brace/comment node among other exotic shape aliases (brace-r, braces, lined/tagged-document) and neo theme."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/15-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "ea2c8ddda5a0d536dd218bfec495557873cd98cb02d0f7bcf2f82fb1f606a9f4",
+      "manifest_sha256": "ea2c8ddda5a0d536dd218bfec495557873cd98cb02d0f7bcf2f82fb1f606a9f4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "notch-pent",
+        "loop-limit",
+        "notched-pentagon"
+      ],
+      "blocker": {
+        "kind": "flow-g3-pent-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a notched-pentagon node among other exotic shape aliases (document, stacked-document) and neo theme config; whole source stays on ordinary fallback until those are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/21-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "d5b762315057eaef4d181f572a9a76545d78074dc751417c64830464ba2f1989",
+      "manifest_sha256": "d5b762315057eaef4d181f572a9a76545d78074dc751417c64830464ba2f1989",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "collate",
+        "hourglass"
+      ],
+      "blocker": {
+        "kind": "flow-g3-hourglass-neo",
+        "site": "src/domain/frontmatter config grammar (look whitelist)",
+        "evidence": "src/domain/frontmatter config grammar (look whitelist)",
+        "detail": "The whole original is rejected because the frontmatter sets look/theme neo, which the parser rejects (only handDrawn is a whitelisted look and theme is not an indent-2 key); independently, the body track also fails closed because every shape-data label in these theme fixtures is single-quoted and flow_shape_data accepts only double quotes. Either gate alone keeps the source on ordinary fallback after hourglass is admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/22-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "d30be929581652766f759801fa38f9100d87e3b17f6de623988c04a95c4a08fd",
+      "manifest_sha256": "d30be929581652766f759801fa38f9100d87e3b17f6de623988c04a95c4a08fd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bolt",
+        "com-link",
+        "lightning-bolt"
+      ],
+      "blocker": {
+        "kind": "flow-g3-bolt-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a bolt node among other exotic shape aliases (documents, filled-circle, tagged-rectangle) and neo theme config."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/23-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "0a258779a215c24bcb22e53ea5b444b04af87cf992c138af1a8853e9a49bf569",
+      "manifest_sha256": "0a258779a215c24bcb22e53ea5b444b04af87cf992c138af1a8853e9a49bf569",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "notch-pent",
+        "loop-limit",
+        "notched-pentagon"
+      ],
+      "blocker": {
+        "kind": "flow-g3-pent-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a notched-pentagon node among other exotic shape aliases (document, stacked-document) and neo theme config; whole source stays on ordinary fallback until those are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/24-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "d994574f030005905942691edcbfd03db59a04acb6185f22fd8c5cf0a6e524c5",
+      "manifest_sha256": "d994574f030005905942691edcbfd03db59a04acb6185f22fd8c5cf0a6e524c5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "stored-data",
+        "bow-tie-rectangle"
+      ],
+      "blocker": {
+        "kind": "flow-g3-bowtie-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a bow-tie node among other exotic shape aliases (crossed-circle, curved-trapezoid, tagged-document) and neo theme."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/25-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "3a2d9d862d55b86c946acd51bf3945358e15fd25d9507780f6ddc7963d42cfe5",
+      "manifest_sha256": "3a2d9d862d55b86c946acd51bf3945358e15fd25d9507780f6ddc7963d42cfe5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "comment",
+        "brace-l"
+      ],
+      "blocker": {
+        "kind": "flow-g3-brace-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a brace/comment node among other exotic shape aliases (brace-r, braces, lined/tagged-document) and neo theme."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/31-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "29e2563d7fcc9613a36ce50d2085425c1a898e88879261918c80cdcbf8eae549",
+      "manifest_sha256": "29e2563d7fcc9613a36ce50d2085425c1a898e88879261918c80cdcbf8eae549",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "collate",
+        "hourglass"
+      ],
+      "blocker": {
+        "kind": "flow-g3-hourglass-neo",
+        "site": "src/domain/frontmatter config grammar (look whitelist)",
+        "evidence": "src/domain/frontmatter config grammar (look whitelist)",
+        "detail": "The whole original is rejected because the frontmatter sets look/theme neo, which the parser rejects (only handDrawn is a whitelisted look and theme is not an indent-2 key); independently, the body track also fails closed because every shape-data label in these theme fixtures is single-quoted and flow_shape_data accepts only double quotes. Either gate alone keeps the source on ordinary fallback after hourglass is admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/32-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "f3fe3e89b62a929c07005f10235febb0572e1ff7ee53b848a1ece8b58ab9ccd5",
+      "manifest_sha256": "f3fe3e89b62a929c07005f10235febb0572e1ff7ee53b848a1ece8b58ab9ccd5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bolt",
+        "com-link",
+        "lightning-bolt"
+      ],
+      "blocker": {
+        "kind": "flow-g3-bolt-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a bolt node among other exotic shape aliases (documents, filled-circle, tagged-rectangle) and neo theme config."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/33-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "2a0c66bc74bb03b0ddcfe3fbd2f2fb0c6602b39287695cf5513849f9ae50b0fb",
+      "manifest_sha256": "2a0c66bc74bb03b0ddcfe3fbd2f2fb0c6602b39287695cf5513849f9ae50b0fb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "stored-data",
+        "bow-tie-rectangle"
+      ],
+      "blocker": {
+        "kind": "flow-g3-bowtie-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a bow-tie node among other exotic shape aliases (crossed-circle, curved-trapezoid, tagged-document) and neo theme."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/34-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "36fa99de88ab832a2c0de3b4abb02e925c48bcc005e0128a83f4cda604fef7dc",
+      "manifest_sha256": "36fa99de88ab832a2c0de3b4abb02e925c48bcc005e0128a83f4cda604fef7dc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "notch-pent",
+        "loop-limit",
+        "notched-pentagon"
+      ],
+      "blocker": {
+        "kind": "flow-g3-pent-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a notched-pentagon node among other exotic shape aliases (document, stacked-document) and neo theme config; whole source stays on ordinary fallback until those are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/35-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "151cb4217518cc7f4a6b5cb952186aa277e926b53fcad1644f207a4b8fabff85",
+      "manifest_sha256": "151cb4217518cc7f4a6b5cb952186aa277e926b53fcad1644f207a4b8fabff85",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "comment",
+        "brace-l"
+      ],
+      "blocker": {
+        "kind": "flow-g3-brace-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a brace/comment node among other exotic shape aliases (brace-r, braces, lined/tagged-document) and neo theme."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/neo-theme debt"
+    }
+  ]
+}

@@ -94,7 +94,7 @@ TEST(MermaidFs5g2, ShapesAcceptEdges) {
 }
 
 TEST(MermaidFs5g2, UnknownShapeAliasesKeepWholeSource) {
-    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: hourglass, label: \"x\" }\n"));
+    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: paper-tape, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: h-cyl-x, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: datastores, label: \"x\" }\n"));
 }

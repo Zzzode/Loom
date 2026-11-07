@@ -445,6 +445,10 @@ enum class Shape {
     Brace,
     StackedRectangle,
     TaggedRectangle,
+    Document,
+    StackedDocument,
+    LinedDocument,
+    TaggedDocument,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -481,6 +485,10 @@ bool classic_shape(Shape shape) {
     case Shape::Brace:
     case Shape::StackedRectangle:
     case Shape::TaggedRectangle:
+    case Shape::Document:
+    case Shape::StackedDocument:
+    case Shape::LinedDocument:
+    case Shape::TaggedDocument:
         return true;
     case Shape::Rectangle:
     case Shape::Rounded:
@@ -545,6 +553,10 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::Brace:
     case Shape::StackedRectangle:
     case Shape::TaggedRectangle:
+    case Shape::Document:
+    case Shape::StackedDocument:
+    case Shape::LinedDocument:
+    case Shape::TaggedDocument:
     case Shape::Rectangle:
     case Shape::Rounded:
     case Shape::Decision:
@@ -1222,6 +1234,15 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
     else if (*token == "tag-rect" || *token == "tag-proc" ||
              *token == "tagged-rectangle" || *token == "tagged-process")
         shape = Shape::TaggedRectangle;
+    else if (*token == "doc" || *token == "document")
+        shape = Shape::Document;
+    else if (*token == "docs" || *token == "documents" ||
+             *token == "st-doc" || *token == "stacked-document")
+        shape = Shape::StackedDocument;
+    else if (*token == "lin-doc" || *token == "lined-document")
+        shape = Shape::LinedDocument;
+    else if (*token == "tag-doc" || *token == "tagged-document")
+        shape = Shape::TaggedDocument;
     else if (*token == "delay" || *token == "half-rounded-rectangle")
         shape = Shape::Delay;
     else if (*token == "fork" || *token == "join")
@@ -2376,6 +2397,22 @@ std::optional<Box> node_size(const Vertex& node, Work& work) {
             if (width > kWidthLimit) return {};
             return Box{0, 0, width, 5};
         }
+        if (node.shape == Shape::Document || node.shape == Shape::LinedDocument ||
+            node.shape == Shape::TaggedDocument) {
+            // Five-row chamber plus one bottom row for the wave trough floor
+            // (upstream waveEdgedRectangle sine edge projects one cell deep).
+            int width = std::max(classic_min_width(node.shape), label_width(node.text) + 4);
+            if (node.shape == Shape::TaggedDocument) width += 1;  // side tag tip column
+            if (width > kWidthLimit) return {};
+            return Box{0, 0, width, 6};
+        }
+        if (node.shape == Shape::StackedDocument) {
+            // Back sheet peeking one row at the top and one column at the
+            // right, six-row front chamber plus the trough floor row.
+            int width = std::max(classic_min_width(node.shape), label_width(node.text) + 4) + 1;
+            if (width > kWidthLimit) return {};
+            return Box{0, 0, width, 7};
+        }
         const int padding =
             node.shape == Shape::Subroutine || node.shape == Shape::DoubleCircle ? 8 : 4;
         int width = std::max(classic_min_width(node.shape), label_width(node.text) + padding);
@@ -2413,6 +2450,26 @@ bool classic_ring(Canvas& canvas, int left, int top, int right, int bottom) {
     for (int y = top + 2; y <= bottom - 2; ++y)
         if (!put(left, y, "│") || !put(right, y, "│")) return false;
     return true;
+}
+
+// Shared sine-wave bottom edge of the four document shapes (upstream
+// generateFullSineWavePoints, 0.8 of a cycle across the width). At cell
+// resolution the wave projects as a single centred one-cell trough: the
+// baseline rule descends and rises around a one-cell gap, with the trough
+// floor one row below. The caller owns the (l,base)/(r,base) corners.
+// Returns false only for a chamber too narrow to fit the trough.
+bool classic_wave_bottom(Canvas& canvas, int l, int r, int base_y, int floor_y) {
+    if (r - l + 1 < 7) return false;
+    const int mid = l + (r - l) / 2;
+    const auto put = [&](int x, int y, std::string_view glyph) {
+        return canvas.put({x, y}, glyph);
+    };
+    for (int x = l + 1; x < mid - 1; ++x)
+        if (!put(x, base_y, "─")) return false;
+    for (int x = mid + 2; x < r; ++x)
+        if (!put(x, base_y, "─")) return false;
+    return put(mid - 1, base_y, "╲") && put(mid + 1, base_y, "╱") &&
+           put(mid, floor_y, "─");
 }
 
 bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
@@ -2777,6 +2834,86 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
             return false;
         return true;
     }
+    case Shape::Document: {
+        // A rectangle whose bottom edge is a single centred one-cell wave
+        // trough (upstream waveEdgedRectangle); the last box row carries the
+        // trough floor.
+        if (b - t + 1 < 6) return false;
+        const int base = b - 1;
+        if (!put(l, t, "┌") || !put(r, t, "┐") ||
+            !put(l, base, "└") || !put(r, base, "┘"))
+            return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, t, "─")) return false;
+        for (int y = t + 1; y < base; ++y)
+            if (!put(l, y, "│") || !put(r, y, "│")) return false;
+        return classic_wave_bottom(canvas, l, r, base, b);
+    }
+    case Shape::LinedDocument: {
+        // Wave document with a book binding: a second vertical rule one
+        // column inside the left edge, junctioned into the top edge and the
+        // wave baseline (upstream linedWaveEdgedRect extra left rule).
+        if (b - t + 1 < 6) return false;
+        const int base = b - 1;
+        if (!put(l, t, "┌") || !put(r, t, "┐") ||
+            !put(l, base, "└") || !put(r, base, "┘"))
+            return false;
+        for (int x = l + 1; x < r; ++x)
+            if (!put(x, t, "─")) return false;
+        for (int y = t + 1; y < base; ++y)
+            if (!put(l, y, "│") || !put(r, y, "│")) return false;
+        if (!classic_wave_bottom(canvas, l, r, base, b)) return false;
+        if (!put(l + 1, t, "├") || !put(l + 1, base, "┴")) return false;
+        for (int y = t + 1; y < base; ++y)
+            if (!put(l + 1, y, "│")) return false;
+        return true;
+    }
+    case Shape::TaggedDocument: {
+        // Wave document with a small side tag pointing right at the middle
+        // row (upstream taggedWaveEdgedRectangle triangle). The box gains one
+        // column for the tip; the chamber is columns l..r-1. The tag slants
+        // replace the right wall one row above and below the tip.
+        if (b - t + 1 < 6) return false;
+        const int base = b - 1;
+        // The tag spans the three interior rows, so its centre is the mean
+        // of top-edge and baseline rows; the slants meet the top-right
+        // corner and the wave corner directly (chamber is five rows tall).
+        const int midy = (t + base) / 2;
+        if (!put(l, t, "┌") || !put(r - 1, t, "┐") ||
+            !put(l, base, "└") || !put(r - 1, base, "┘"))
+            return false;
+        for (int x = l + 1; x < r - 1; ++x)
+            if (!put(x, t, "─")) return false;
+        for (int y = t + 1; y < base; ++y) {
+            if (!put(l, y, "│")) return false;
+            if (y < midy - 1 || y > midy + 1) {
+                if (!put(r - 1, y, "│")) return false;
+            }
+        }
+        if (!put(r - 1, midy - 1, "╲") || !put(r, midy, "▷") ||
+            !put(r - 1, midy + 1, "╱"))
+            return false;
+        return classic_wave_bottom(canvas, l, r - 1, base, b);
+    }
+    case Shape::StackedDocument: {
+        // Multi-document: the stacked-rectangle back sheet (one row peeking
+        // at the top, one column at the right) combined with the wave bottom
+        // on the front chamber (upstream multiWaveEdgedRectangle).
+        if (b - t + 1 < 7) return false;
+        const int base = b - 1;
+        if (!put(r - 1, t, "─") || !put(r, t, "┐")) return false;
+        if (!put(r, t + 1, "│")) return false;
+        for (int y = t + 2; y <= base; ++y)
+            if (!put(r, y, "│")) return false;
+        if (!put(l, t + 1, "┌") || !put(r - 1, t + 1, "┐") ||
+            !put(l, base, "└") || !put(r - 1, base, "┘") || !put(r, b, "┘"))
+            return false;
+        for (int x = l + 1; x < r - 1; ++x)
+            if (!put(x, t + 1, "─")) return false;
+        for (int y = t + 2; y < base; ++y)
+            if (!put(l, y, "│") || !put(r - 1, y, "│")) return false;
+        return classic_wave_bottom(canvas, l, r - 1, base, b);
+    }
     case Shape::Asymmetric:
         if (!put(l + 2, t, "╱") || !put(r, t, "┐") || !put(l + 1, t + 1, "╱") ||
             !put(l, t + 2, "◁") || !put(l + 1, b - 1, "╲") || !put(l + 2, b, "╲") ||
@@ -2851,12 +2988,16 @@ bool classic_port_corridors(Canvas& canvas, const Box& box, Shape shape) {
         if (!canvas.put(above, " ", false)) return false;
         return true;
     }
-    if (shape == Shape::StackedRectangle) {
+    if (shape == Shape::StackedRectangle || shape == Shape::StackedDocument) {
         // The front chamber starts one row below the back-sheet peek; a top
         // edge onto the front needs the centre cell on the back row unblocked
         // (it is blank unless the box is so narrow the centre sits on the
-        // back corner, in which case there is nothing to unblock).
-        const Point above{box.x + box.width / 2, box.y};
+        // back corner, in which case there is nothing to unblock). The
+        // stacked document's front chamber is one column narrower (its extra
+        // column is the back wall), so its centre is one cell left.
+        const int cx = box.x + box.width / 2 -
+                       (shape == Shape::StackedDocument ? 1 : 0);
+        const Point above{cx, box.y};
         if (canvas.at(above).glyph == " " && !canvas.put(above, " ", false))
             return false;
         return true;
@@ -3145,9 +3286,11 @@ bool node_box(Canvas& canvas, const Box& box, const Vertex& node,
     int label_top = box.y + (box.height - *rows) / 2;
     if (node.shape == Shape::DividedRectangle && box.height >= 7)
         label_top = box.y + 3 + (box.height - 4 - *rows) / 2;
-    // The stacked rectangle's sixth row is the back-sheet peek at the top;
-    // the label is centred in the five-row front chamber (rows t+1..b).
-    if (node.shape == Shape::StackedRectangle)
+    // The stacked rectangle/document reserves its top row for the back-sheet
+    // peek; the label is centred in the front chamber (rows t+1..b-1 for the
+    // rectangle, t+1..b-1 for the document whose last row is the trough floor).
+    if (node.shape == Shape::StackedRectangle ||
+        node.shape == Shape::StackedDocument)
         label_top = box.y + 1 + (box.height - 1 - *rows) / 2;
     const Point at{box.x, label_top};
     if (!collector && rich && !rich->empty())
@@ -3640,6 +3783,35 @@ std::vector<Port> ports(const Box& box, Shape shape, Point target) {
             add({middle_x, box.y + box.height - 1}, {0, 1});
             add({box.x, middle_y}, {-1, 0});
             add({box.x + box.width - 2, middle_y}, {1, 0});
+        } else if (shape == Shape::Document || shape == Shape::LinedDocument) {
+            // The wave trough is centred on l + (width-1)/2 (the baseline's
+            // descent/aspect centre), which differs from width/2 by one column
+            // for even widths; top and bottom ports must share that axis so an
+            // incoming TB arrow meets the trough floor cell. Side walls stay
+            // straight at the middle row.
+            const int wave_x = box.x + (box.width - 1) / 2;
+            add({wave_x, box.y}, {0, -1});
+            add({wave_x, box.y + box.height - 1}, {0, 1});
+            add({box.x, middle_y}, {-1, 0});
+            add({box.x + box.width - 1, middle_y}, {1, 0});
+        } else if (shape == Shape::StackedDocument) {
+            // Front chamber is one column narrower than the box (back sheet
+            // peeks right); top attaches to the front edge and bottom to the
+            // trough floor, both on the chamber centre column.
+            const int cx = middle_x - 1;
+            add({cx, box.y + 1}, {0, -1});
+            add({cx, box.y + box.height - 1}, {0, 1});
+            add({box.x, middle_y}, {-1, 0});
+            add({box.x + box.width - 1, middle_y}, {1, 0});
+        } else if (shape == Shape::TaggedDocument) {
+            // Chamber centre carries top and trough-floor ports; side ports
+            // meet the tag centre row, the right one landing on the tip.
+            const int cx = middle_x - 1;
+            const int tag_y = box.y + (box.height - 2) / 2;
+            add({cx, box.y}, {0, -1});
+            add({cx, box.y + box.height - 1}, {0, 1});
+            add({box.x, tag_y}, {-1, 0});
+            add({box.x + box.width - 1, tag_y}, {1, 0});
         } else if (shape == Shape::Asymmetric) {
             add({box.x, middle_y}, {-1, 0});
             add({box.x + box.width - 1, middle_y}, {1, 0});

@@ -459,6 +459,20 @@ gtest_discover_tests(test_mermaid_fs5g4_offsetgroup
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+add_executable(test_mermaid_fs5g5_wavegroup test_mermaid_fs5g5_wavegroup.cpp)
+target_link_libraries(test_mermaid_fs5g5_wavegroup
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_fs5g5_wavegroup
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+add_executable(test_mermaid_fs5g5_cohort test_mermaid_fs5g5_cohort.cpp)
+target_link_libraries(test_mermaid_fs5g5_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_fs5g5_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
 add_executable(test_mermaid_fs5a_shapedata test_mermaid_fs5a_shapedata.cpp)
 target_link_libraries(test_mermaid_fs5a_shapedata
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)

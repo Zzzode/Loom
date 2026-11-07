@@ -58,6 +58,8 @@ TEST(MermaidFs5cFlippedTriangle, UpwardTriangleTokenKeepsUpApex) {
 
 TEST(MermaidFs5cFlippedTriangle, UnknownShapeAliasKeepsWholeSource) {
     // An exotic alias that has no terminal contour still forces ordinary
-    // source fallback (the diagram must not silently degrade).
-    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: doc, label: \"x\" }\n"));
+    // source fallback (the diagram must not silently degrade). paper-tape
+    // is the deliberately far-roadmap token (wave rectangle, not yet
+    // admitted), not any alias queued in upcoming batches.
+    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: paper-tape, label: \"x\" }\n"));
 }

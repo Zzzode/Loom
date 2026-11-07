@@ -194,8 +194,8 @@ TEST(MermaidFs5g5, BottomPortAlignsWithTroughOnEvenWidth) {
 }
 
 TEST(MermaidFs5g5, UnknownShapeAliasesKeepWholeSource) {
-    // paper-tape is the far-roadmap wave-rectangle alias (shape 35).
-    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: paper-tape, label: \"x\" }\n"));
+    // `cloud` is the far-roadmap cloud-shape alias, not yet admitted.
+    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: cloud, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: doc-x, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: st-doc-x, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: tagged-documents, label: \"x\" }\n"));

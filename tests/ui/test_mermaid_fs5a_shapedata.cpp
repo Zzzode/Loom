@@ -53,7 +53,7 @@ TEST(MermaidFs5aShapeData, UnknownShapeDataKeysKeepWholeSource) {
     // An icon binding or an explicit non-rectangle shape is not a plain
     // label node and must keep whole-source fallback.
     EXPECT_FALSE(drawn_native("flowchart TD\nB@{ icon: \"fa:bell\", label: \"x\" }\n"));
-    EXPECT_FALSE(drawn_native("flowchart TD\nB@{ shape: paper-tape, label: \"x\" }\n"));
+    EXPECT_FALSE(drawn_native("flowchart TD\nB@{ shape: cloud, label: \"x\" }\n"));
     // A dangling or empty metadata block is not a label node.
     EXPECT_FALSE(drawn_native("flowchart TD\nB@{ label: }\n"));
     // Same-prefix keys are not the label key.
@@ -70,5 +70,5 @@ TEST(MermaidFs5aShapeData, LabelOnlyMetadataDoesNotFlattenBracketShape) {
     // An explicit shape in the metadata is still honored (non-rectangle
     // shapes outside the renderer fail closed as before).
     EXPECT_FALSE(drawn_native(
-        "flowchart LR\nA(Round)@{ shape: paper-tape, label: \"Round\" } --> B\n"));
+        "flowchart LR\nA(Round)@{ shape: cloud, label: \"Round\" } --> B\n"));
 }

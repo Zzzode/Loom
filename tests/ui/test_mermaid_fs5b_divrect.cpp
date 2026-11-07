@@ -49,5 +49,5 @@ TEST(MermaidFs5bDividedRectangle, AliasTokensDrawWithDividerAndBodyLabel) {
 TEST(MermaidFs5bDividedRectangle, UnknownProcessAliasKeepsWholeSource) {
     // An exotic process alias that has no terminal contour still forces
     // ordinary source fallback (the diagram must not silently degrade).
-    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: paper-tape, label: \"x\" }\n"));
+    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: cloud, label: \"x\" }\n"));
 }

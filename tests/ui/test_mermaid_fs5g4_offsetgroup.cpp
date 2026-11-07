@@ -81,7 +81,7 @@ TEST(MermaidFs5g4, ShapesAcceptEdges) {
 }
 
 TEST(MermaidFs5g4, UnknownShapeAliasesKeepWholeSource) {
-    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: paper-tape, label: \"x\" }\n"));
+    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: cloud, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: st-rect-x, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: tagged-rects, label: \"x\" }\n"));
 }

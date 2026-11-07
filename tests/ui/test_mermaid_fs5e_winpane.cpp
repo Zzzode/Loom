@@ -49,6 +49,6 @@ TEST(MermaidFs5eWindowPane, AliasTokensDrawWithCrossDividersAndLabels) {
 TEST(MermaidFs5eWindowPane, UnknownShapeAliasKeepsWholeSource) {
     // Exotic aliases without a terminal contour, and a near-miss of the
     // mapped token, still force ordinary source fallback.
-    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: paper-tape, label: \"x\" }\n"));
+    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: cloud, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: win-pan, label: \"x\" }\n"));
 }

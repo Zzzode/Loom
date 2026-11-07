@@ -452,6 +452,9 @@ enum class Shape {
     FilledCircle,
     FramedCircle,
     CrossedCircle,
+    ShadedProcess,
+    CurvedTrapezoid,
+    PaperTape,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -495,6 +498,9 @@ bool classic_shape(Shape shape) {
     case Shape::FilledCircle:
     case Shape::FramedCircle:
     case Shape::CrossedCircle:
+    case Shape::ShadedProcess:
+    case Shape::CurvedTrapezoid:
+    case Shape::PaperTape:
         return true;
     case Shape::Rectangle:
     case Shape::Rounded:
@@ -566,6 +572,9 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::StackedDocument:
     case Shape::LinedDocument:
     case Shape::TaggedDocument:
+    case Shape::ShadedProcess:
+    case Shape::CurvedTrapezoid:
+    case Shape::PaperTape:
     case Shape::Rectangle:
     case Shape::Rounded:
     case Shape::Decision:
@@ -1261,6 +1270,15 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
     else if (*token == "cross-circ" || *token == "summary" ||
              *token == "crossed-circle")
         shape = Shape::CrossedCircle;
+    else if (*token == "lin-rect" || *token == "lined-rectangle" ||
+             *token == "lin-proc" || *token == "lined-process" ||
+             *token == "shaded-process")
+        shape = Shape::ShadedProcess;
+    else if (*token == "curv-trap" || *token == "curved-trapezoid" ||
+             *token == "display")
+        shape = Shape::CurvedTrapezoid;
+    else if (*token == "flag" || *token == "paper-tape")
+        shape = Shape::PaperTape;
     else if (*token == "delay" || *token == "half-rounded-rectangle")
         shape = Shape::Delay;
     else if (*token == "fork" || *token == "join")
@@ -2409,6 +2427,30 @@ std::optional<Box> node_size(const Vertex& node, Work& work) {
             if (diameter > kWidthLimit || diameter > kHeightLimit) return {};
             return Box{0, 0, diameter, diameter};
         }
+        if (node.shape == Shape::ShadedProcess) {
+            // Main chamber plus a one-column outer frame on the left
+            // (upstream shadedProcess FRAME_WIDTH); the label is centred in
+            // the chamber, which starts one column in.
+            int width = std::max(classic_min_width(node.shape), label_width(node.text) + 4) + 1;
+            if (width > kWidthLimit) return {};
+            return Box{0, 0, width, 5};
+        }
+        if (node.shape == Shape::CurvedTrapezoid) {
+            // Two-row chevron shoulders on the left and a half-round cap on
+            // the right (upstream curvedTrapezoid); reserve clearance for
+            // both around the label. The geometry needs at least eleven
+            // columns (chevron + body + cap), independent of the label.
+            int width = std::max(11, label_width(node.text) + 6);
+            if (width > kWidthLimit) return {};
+            return Box{0, 0, width, 7};
+        }
+        if (node.shape == Shape::PaperTape) {
+            // Five-row chamber plus a top crest row and a bottom trough row
+            // (upstream waveRectangle waves on both edges).
+            int width = std::max(classic_min_width(node.shape), label_width(node.text) + 4);
+            if (width > kWidthLimit) return {};
+            return Box{0, 0, width, 7};
+        }
         if (node.shape == Shape::Triangle || node.shape == Shape::FlippedTriangle) {
             int height = std::max(5, label_width(node.text) + 2);
             if ((height % 2) == 0) ++height;
@@ -2516,6 +2558,23 @@ bool classic_wave_bottom(Canvas& canvas, int l, int r, int base_y, int floor_y) 
         if (!put(x, base_y, "─")) return false;
     return put(mid - 1, base_y, "╲") && put(mid + 1, base_y, "╱") &&
            put(mid, floor_y, "─");
+}
+
+// Mirror of classic_wave_bottom for a wave CREST rising one row above the
+// top edge: the baseline carries an ascent and a descent around a gap, with
+// the crest cap one row above. The caller owns the (l,base)/(r,base) corners.
+bool classic_wave_top(Canvas& canvas, int l, int r, int base_y, int cap_y) {
+    if (r - l + 1 < 7) return false;
+    const int mid = l + (r - l) / 2;
+    const auto put = [&](int x, int y, std::string_view glyph) {
+        return canvas.put({x, y}, glyph);
+    };
+    for (int x = l + 1; x < mid - 1; ++x)
+        if (!put(x, base_y, "─")) return false;
+    for (int x = mid + 2; x < r; ++x)
+        if (!put(x, base_y, "─")) return false;
+    return put(mid - 1, base_y, "╱") && put(mid + 1, base_y, "╲") &&
+           put(mid, cap_y, "─");
 }
 
 bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
@@ -3015,6 +3074,58 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
             if (!put(l, y, "│") || !put(r - 1, y, "│")) return false;
         return classic_wave_bottom(canvas, l, r - 1, base, b);
     }
+    case Shape::ShadedProcess: {
+        // Lined/shaded process (upstream shadedProcess): a main chamber with
+        // a thin outer frame strip one column to its left. The frame is
+        // column l; the chamber is l+1..r.
+        if (b - t + 1 < 5) return false;
+        if (!put(l, t, "┌") || !put(l + 1, t, "┬") || !put(r, t, "┐") ||
+            !put(l, b, "└") || !put(l + 1, b, "┴") || !put(r, b, "┘"))
+            return false;
+        for (int x = l + 2; x < r; ++x)
+            if (!put(x, t, "─") || !put(x, b, "─")) return false;
+        for (int y = t + 1; y < b; ++y)
+            if (!put(l, y, "│") || !put(l + 1, y, "│") || !put(r, y, "│"))
+                return false;
+        return true;
+    }
+    case Shape::CurvedTrapezoid: {
+        // Display (upstream curvedTrapezoid): a two-row chevron point on the
+        // left feeding a straight body whose right end is a half-round cap.
+        // h=7: tip at the middle row, two stacked diagonal cells climbing to
+        // the shoulder corners; the cap spans three rows (radius ~h/2).
+        if (b - t + 1 < 7 || r - l + 1 < 11) return false;
+        const int midy = t + 3;
+        if (!put(l, midy, "◁") || !put(l + 2, t, "┌") || !put(l + 2, b, "└") ||
+            !put(r - 2, t, "╮") || !put(r - 2, b, "╯"))
+            return false;
+        if (!put(l + 1, t + 1, "╱") || !put(l + 1, t + 2, "╱") ||
+            !put(l + 1, b - 2, "╲") || !put(l + 1, b - 1, "╲"))
+            return false;
+        for (int x = l + 3; x < r - 2; ++x)
+            if (!put(x, t, "─") || !put(x, b, "─")) return false;
+        for (int y = t + 1; y < b; ++y)
+            if (!put(l + 2, y, "│")) return false;
+        if (!put(r - 1, t + 1, ")") || !put(r - 1, b - 1, ")"))
+            return false;
+        for (int y = t + 2; y < b - 1; ++y)
+            if (!put(r, y, ")")) return false;
+        return true;
+    }
+    case Shape::PaperTape: {
+        // Flag / paper tape (upstream waveRectangle): a rectangle whose top
+        // and bottom edges are both sine waves. The five-row chamber sits
+        // between a crest row (t) and a trough row (b).
+        if (b - t + 1 < 7) return false;
+        const int top_base = t + 1, base = b - 1;
+        if (!put(l, top_base, "┌") || !put(r, top_base, "┐") ||
+            !put(l, base, "└") || !put(r, base, "┘"))
+            return false;
+        for (int y = top_base + 1; y < base; ++y)
+            if (!put(l, y, "│") || !put(r, y, "│")) return false;
+        return classic_wave_top(canvas, l, r, top_base, t) &&
+               classic_wave_bottom(canvas, l, r, base, b);
+    }
     case Shape::Asymmetric:
         if (!put(l + 2, t, "╱") || !put(r, t, "┐") || !put(l + 1, t + 1, "╱") ||
             !put(l, t + 2, "◁") || !put(l + 1, b - 1, "╲") || !put(l + 2, b, "╲") ||
@@ -3397,10 +3508,16 @@ bool node_box(Canvas& canvas, const Box& box, const Vertex& node,
     if (node.shape == Shape::StackedRectangle ||
         node.shape == Shape::StackedDocument)
         label_top = box.y + 1 + (box.height - 1 - *rows) / 2;
-    const Point at{box.x, label_top};
+    // The shaded process label is centred in the main chamber one column
+    // right of the outer frame strip.
+    const int label_left =
+        node.shape == Shape::ShadedProcess ? box.x + 1 : box.x;
+    const int label_width_box =
+        node.shape == Shape::ShadedProcess ? box.width - 1 : box.width;
+    const Point at{label_left, label_top};
     if (!collector && rich && !rich->empty())
-        return canvas.multiline_rich(at, *rich, box.width);
-    return paint_multiline(canvas, collector, at, node.text, box.width);
+        return canvas.multiline_rich(at, *rich, label_width_box);
+    return paint_multiline(canvas, collector, at, node.text, label_width_box);
 }
 
 // Ranking ignores DFS back edges only in its temporary DAG. All original
@@ -3917,6 +4034,14 @@ std::vector<Port> ports(const Box& box, Shape shape, Point target) {
             add({cx, box.y + box.height - 1}, {0, 1});
             add({box.x, tag_y}, {-1, 0});
             add({box.x + box.width - 1, tag_y}, {1, 0});
+        } else if (shape == Shape::PaperTape) {
+            // Top attaches to the crest cap and bottom to the trough floor;
+            // both lie on the wave centre column (even widths included).
+            const int wave_x = box.x + (box.width - 1) / 2;
+            add({wave_x, box.y}, {0, -1});
+            add({wave_x, box.y + box.height - 1}, {0, 1});
+            add({box.x, middle_y}, {-1, 0});
+            add({box.x + box.width - 1, middle_y}, {1, 0});
         } else if (shape == Shape::Asymmetric) {
             add({box.x, middle_y}, {-1, 0});
             add({box.x + box.width - 1, middle_y}, {1, 0});

@@ -1,0 +1,518 @@
+{
+  "schema": "loom_mermaid_fs5g7_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-5-g7-misc-shapes",
+  "shape_projection": {
+    "group": [
+      {
+        "shape": "shaded/lined process",
+        "aliases": [
+          "lin-rect",
+          "lined-rectangle",
+          "lin-proc",
+          "lined-process",
+          "shaded-process"
+        ],
+        "contour": "main chamber with a one-column outer frame strip on the left"
+      },
+      {
+        "shape": "curved trapezoid (display)",
+        "aliases": [
+          "curv-trap",
+          "curved-trapezoid",
+          "display"
+        ],
+        "contour": "left two-row chevron point, right half-round cap; minimum eleven columns"
+      },
+      {
+        "shape": "paper tape (flag)",
+        "aliases": [
+          "flag",
+          "paper-tape"
+        ],
+        "contour": "rectangle with a sine-wave crest on the top edge and trough on the bottom edge"
+      }
+    ]
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original binding an FS-5 G7 shape alias",
+    "roots": [
+      "flowchart"
+    ],
+    "draw_authority": "the three alias smoke fixtures (15/24/35)",
+    "width_policy": "draw rows paint body+original at 240 and restored; narrow_40 is per-row."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D-066 FS-5 G7 misc shapes, 2026-11-07)",
+    "date": "2026-11-07",
+    "verdict": "approved",
+    "note": "Independent read-only adversarial review (fresh general-purpose agent, 2026-11-07): APPROVE with no MAJOR geometry defect. Addressed before commit: bottom-entering (BT) edge cases added for all three shapes plus row-level contour assertions and an even-width paper-tape crest-axis alignment guard; the selection regex rejects hyphen-suffixed near-misses; stale cohort header comment corrected. The eleven earlier fail-closed negatives that borrowed paper-tape moved to the still-unmapped cloud shape."
+  },
+  "counts": {
+    "total": 12,
+    "predicted_draw": 3,
+    "predicted_blocked": 9,
+    "predicted_original_draw": 3
+  },
+  "blocker_vocabulary": [
+    "flow-g7-neo-quoted-only",
+    "flow-g7-text-shape-debt",
+    "flow-g7-multiline-shape-label"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/shape-alias/15-all-lin-rect-lined-rectangle-lin-proc-lined-process-shaded-process-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "58a715b473ef21cf2623b630e6ca199a0b8c93423da9efe1b1353302e9d4bd22",
+      "manifest_sha256": "58a715b473ef21cf2623b630e6ca199a0b8c93423da9efe1b1353302e9d4bd22",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "lin-rect",
+        "lined-rectangle",
+        "lin-proc",
+        "lined-process",
+        "shaded-process"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G7 misc-shape contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/24-all-curv-trap-display-curved-trapezoid-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "526deb18dbce402048def774bbe8d2f30b10850802d0779afc3428ddfabaffac",
+      "manifest_sha256": "526deb18dbce402048def774bbe8d2f30b10850802d0779afc3428ddfabaffac",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "curv-trap",
+        "display",
+        "curved-trapezoid"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G7 misc-shape contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/35-all-flag-paper-tape-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "294c9a21beddede8b3a5b5e00c5d203358c1217d6723dfcfd912ccc4fd9505ba",
+      "manifest_sha256": "294c9a21beddede8b3a5b5e00c5d203358c1217d6723dfcfd912ccc4fd9505ba",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "flag",
+        "paper-tape"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G7 misc-shape contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/03-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "9d0f7f775073657a12f80e506a8602eeda208c4a107e7b1626300f1682e61946",
+      "manifest_sha256": "9d0f7f775073657a12f80e506a8602eeda208c4a107e7b1626300f1682e61946",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "crossed-circle",
+        "curved-trapezoid",
+        "divided-rectangle",
+        "tagged-document"
+      ],
+      "blocker": {
+        "kind": "flow-g7-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes)."
+      },
+      "ledger_note": "Blocked by independent shape/config/label debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/06-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "a98f6aea2075b3d075a9a7980c9c13b85d9d7fb1c9ad1c7cd5a635699a240d1a",
+      "manifest_sha256": "a98f6aea2075b3d075a9a7980c9c13b85d9d7fb1c9ad1c7cd5a635699a240d1a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "card",
+        "diamond",
+        "hexagon",
+        "lin-rect",
+        "text"
+      ],
+      "blocker": {
+        "kind": "flow-g7-text-shape-debt",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a lined-process node among the still-unmapped `text` short-name shape (plus neo config / single-quoted labels); the whole source stays on ordinary fallback until text is admitted."
+      },
+      "ledger_note": "Blocked by independent shape/config/label debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/13-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "1d26cf80f4388d707cdc8d150cadb04cae9a9282b5613b3afce0f57bc0f4af83",
+      "manifest_sha256": "1d26cf80f4388d707cdc8d150cadb04cae9a9282b5613b3afce0f57bc0f4af83",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "crossed-circle",
+        "curved-trapezoid",
+        "divided-rectangle",
+        "tagged-document"
+      ],
+      "blocker": {
+        "kind": "flow-g7-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes)."
+      },
+      "ledger_note": "Blocked by independent shape/config/label debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/16-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "3c448f8d861f064184bc012e38990103879ab64fc8cee20aee9efc2911281516",
+      "manifest_sha256": "3c448f8d861f064184bc012e38990103879ab64fc8cee20aee9efc2911281516",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "card",
+        "diamond",
+        "hexagon",
+        "lin-rect",
+        "text"
+      ],
+      "blocker": {
+        "kind": "flow-g7-text-shape-debt",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a lined-process node among the still-unmapped `text` short-name shape (plus neo config / single-quoted labels); the whole source stays on ordinary fallback until text is admitted."
+      },
+      "ledger_note": "Blocked by independent shape/config/label debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/24-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "d994574f030005905942691edcbfd03db59a04acb6185f22fd8c5cf0a6e524c5",
+      "manifest_sha256": "d994574f030005905942691edcbfd03db59a04acb6185f22fd8c5cf0a6e524c5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "crossed-circle",
+        "curved-trapezoid",
+        "divided-rectangle",
+        "tagged-document"
+      ],
+      "blocker": {
+        "kind": "flow-g7-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes)."
+      },
+      "ledger_note": "Blocked by independent shape/config/label debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/26-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "da07bfbadfdd1cd7c629a983f3334968f7ac3f4017938f9964148148aadf59ee",
+      "manifest_sha256": "da07bfbadfdd1cd7c629a983f3334968f7ac3f4017938f9964148148aadf59ee",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "card",
+        "diamond",
+        "hexagon",
+        "lin-rect",
+        "text"
+      ],
+      "blocker": {
+        "kind": "flow-g7-text-shape-debt",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a lined-process node among the still-unmapped `text` short-name shape (plus neo config / single-quoted labels); the whole source stays on ordinary fallback until text is admitted."
+      },
+      "ledger_note": "Blocked by independent shape/config/label debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/33-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "2a0c66bc74bb03b0ddcfe3fbd2f2fb0c6602b39287695cf5513849f9ae50b0fb",
+      "manifest_sha256": "2a0c66bc74bb03b0ddcfe3fbd2f2fb0c6602b39287695cf5513849f9ae50b0fb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "crossed-circle",
+        "curved-trapezoid",
+        "divided-rectangle",
+        "tagged-document"
+      ],
+      "blocker": {
+        "kind": "flow-g7-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes)."
+      },
+      "ledger_note": "Blocked by independent shape/config/label debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/36-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "5b9c82a204a0c8750101bb2ed023c02bf8d69f71d3124010e9c8ece9dbd32021",
+      "manifest_sha256": "5b9c82a204a0c8750101bb2ed023c02bf8d69f71d3124010e9c8ece9dbd32021",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "card",
+        "diamond",
+        "hexagon",
+        "lin-rect",
+        "text"
+      ],
+      "blocker": {
+        "kind": "flow-g7-text-shape-debt",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a lined-process node among the still-unmapped `text` short-name shape (plus neo config / single-quoted labels); the whole source stays on ordinary fallback until text is admitted."
+      },
+      "ledger_note": "Blocked by independent shape/config/label debt"
+    },
+    {
+      "path": "flowchart/visual-check/selected-shape-wrapping.mmd",
+      "family": "flowchart",
+      "sha256": "2d02b2ef04cefdff9b90428328b52bd1e2182bafea41356f1c8fd9bf3611a4d7",
+      "manifest_sha256": "2d02b2ef04cefdff9b90428328b52bd1e2182bafea41356f1c8fd9bf3611a4d7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "curv-trap",
+        "dbl-circ",
+        "delay",
+        "diamond",
+        "display",
+        "half-rounded-rectangle"
+      ],
+      "blocker": {
+        "kind": "flow-g7-multiline-shape-label",
+        "site": "src/ui/visual/mermaid_impl.cpp (node_size single-row guard)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (node_size single-row guard)",
+        "detail": "The shape nodes carry explicit <br/> line breaks; classic glyph shapes admit only a single label row (node_size returns empty for a multi-row label), so the body stays on ordinary fallback regardless of the wrapping/min-node-width frontmatter config."
+      },
+      "ledger_note": "Blocked by independent shape/config/label debt"
+    }
+  ]
+}

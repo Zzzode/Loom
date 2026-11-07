@@ -145,7 +145,7 @@ TEST(MermaidFs5g6, CrossedXIsTopBottomSymmetric) {
 }
 
 TEST(MermaidFs5g6, UnknownShapeAliasesKeepWholeSource) {
-    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: paper-tape, label: \"x\" }\n"));
+    EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: cloud, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: f-circ-x, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: filled-circles, label: \"x\" }\n"));
     EXPECT_FALSE(drawn_native("flowchart TD\nA@{ shape: cross-circ-x, label: \"x\" }\n"));

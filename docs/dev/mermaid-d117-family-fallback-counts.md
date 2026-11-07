@@ -79,17 +79,18 @@ when the body would draw.
 - ALL 42 nightly-check shape-alias smoke fixtures are mapped as of G7.
   Remaining shape debt lives only on compound rows: `text`/`odd`/
   `anchor`/`circle` short-name shapes and brace-r/braces, held in
-  practice by neo config + single-quoted shape-data labels. A separate
-  multi-line classic-label capability is needed for the
-  selected-shape-wrapping regression (`<br/>` nodes).
+  practice by neo config + single-quoted shape-data labels. The
+  multi-line classic-label capability now exists for the height-scaling
+  stadium contour (authored `<br/>` labels, body-only cohort); fixed
+  silhouettes (rings, triangles, waves) still fail closed.
 - Compound `shape-themes/connect-all` rows: blocked by other unmapped
   short-name shapes (`text`, `odd`, `anchor`, `circle`, plus the G6
   circles and brace-r) on top of neo config + single-quoted labels.
 - `subgraph` framing: ~31 body-fallback + 13 body-error rows.
 - Styling/structure: `classDef`/`class`/`style`/`linkStyle`, `init`
   directives, edge markers/styles, and `A & B` fan-out across the rest.
-- Body track at 240 after G7: 151 drawn / 201 fallback / **48 frozen
-  geometry errors**.
+- Body track at 240 after the stadium multiline cohort: 152 drawn /
+  200 fallback / **48 frozen geometry errors**.
 
 ## Candidate infeasible (needs evidence before final milestone)
 
@@ -98,6 +99,19 @@ when the body would draw.
   degraded textual projection behind a reviewed whitelist, or (b) keep
   ordinary fallback with a documented rationale. No decision made; do not
   silently force a lossy render.
+- **class link/callback (10 class originals, D-120, BLOCKED on frozen
+  contract):** the `link`/`callback` directive parser work is complete and
+  tests green (stashed in /tmp/g4probe/class-link-stash/), but admitting
+  these whole-null rows makes them native-draw, which trips the frozen
+  Class285/Class481 gate (`classes.errors` 0->10, gap roster 48->58). The
+  pinned facts (`official_class285_source_facts`, sha 9916a1cb) record
+  `class_interaction_contract` + `class_CSS_contract` debts that
+  explicitly say "no link/tooltip/callback terminal behavior is newly
+  approved". No parser-only path can clear this; the only route is the full
+  whole-Model supplement flow (new facts + independent interaction-contract
+  review + user re-baselining the frozen approval), a separate milestone.
+  Do NOT attempt native drawing of these in the current queue. The other 15
+  class fallbacks are cssClass/`:::` styling (same frozen style subsystem).
 
 ## Closure log
 
@@ -116,3 +130,12 @@ when the body would draw.
   fb 204->201, original narrow +1 (fixture 35), frozen gaps stay 48;
   debug/release reports byte-identical (sha256
   a85da2f6b9af94a738c3f607043b8bf2cfc74fa23d8571066c1dcf2b948a6f19).
+- 2026-11-08 (aba44036): stadium multiline-label cohort (D-120 Plan A,
+  body-only) - authored `<br/>` labels admitted for the height-scaling
+  stadium contour; fixed-silhouette classics stay fail closed. Whole
+  originals unchanged (961/1184, Flow 257/143, Class285 260/25, gaps 48);
+  flowchart body 240 drawn 151->152 / fb 201->200 (body ALL 345/200);
+  the one unlocked row's whole original stays source behind the
+  Font|RootHtml envelope gate. Debug/release reports byte-identical
+  (sha256
+  029cffd5fa551a9651bb92e8f24ef392fa9aee4f289fe0055dd7a040b7c83dc5).

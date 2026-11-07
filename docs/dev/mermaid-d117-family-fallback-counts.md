@@ -18,6 +18,7 @@ are not whole-original errors).
 | Baseline (D-066 start) | 2026-11-04 | e7fbd0ef | 863 | 1282 | 0 |
 | After FS-5 G5 (wave documents) | 2026-11-07 | 0b1c22c4 | 955 | 1190 | 0 |
 | After FS-5 G6 (circle family) | 2026-11-07 | 9a66bdfb | 958 | 1187 | 0 |
+| After FS-5 G7 (misc shapes; all 42 alias fixtures mapped) | 2026-11-07 | bb55b5bc | 961 | 1184 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -27,7 +28,7 @@ disposition (fix or documented infeasibility).
 
 | Family | Remaining fallback | Drawn | Notes |
 |---|---:|---:|---|
-| flowchart | 260 | 140 | active track; see breakdown below |
+| flowchart | 257 | 143 | active track; see breakdown below |
 | requirement | 160 | 12 | mostly unbuilt renderer surface |
 | git | 80 | 55 | |
 | state-diagram-v2 | 78 | 25 | |
@@ -64,7 +65,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1187** | **958** | |
+| **Total** | **1184** | **961** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -75,18 +76,19 @@ Whole-original frontmatter (neo `look`/`theme`, `wrappingWidth`/
 `minNodeWidth` layout config) independently keeps originals source even
 when the body would draw.
 
-- Shape-alias smoke fixtures still unmapped after G6: fixture 15
-  (lined/shaded rectangle), 24 (curved trapezoid/display), 35 (paper
-  tape/flag). G6 closed the circle family (16 framed/stop, 28 filled/
-  junction, 37 crossed/summary); the brace-r/braces and the `text`/`odd`/
-  `anchor`/`circle` short-name shapes remain on the connect-all rows.
+- ALL 42 nightly-check shape-alias smoke fixtures are mapped as of G7.
+  Remaining shape debt lives only on compound rows: `text`/`odd`/
+  `anchor`/`circle` short-name shapes and brace-r/braces, held in
+  practice by neo config + single-quoted shape-data labels. A separate
+  multi-line classic-label capability is needed for the
+  selected-shape-wrapping regression (`<br/>` nodes).
 - Compound `shape-themes/connect-all` rows: blocked by other unmapped
   short-name shapes (`text`, `odd`, `anchor`, `circle`, plus the G6
   circles and brace-r) on top of neo config + single-quoted labels.
 - `subgraph` framing: ~31 body-fallback + 13 body-error rows.
 - Styling/structure: `classDef`/`class`/`style`/`linkStyle`, `init`
   directives, edge markers/styles, and `A & B` fan-out across the rest.
-- Body track at 240 after G6: 148 drawn / 204 fallback / **48 frozen
+- Body track at 240 after G7: 151 drawn / 201 fallback / **48 frozen
   geometry errors**.
 
 ## Candidate infeasible (needs evidence before final milestone)
@@ -107,3 +109,10 @@ when the body would draw.
   137->140, overall 955->958, fallback 1190->1187, body 240 drawn
   145->148 / fb 207->204, original narrow +2 (fixtures 28/37 are fixed
   nine-cell glyphs), frozen gaps stay 48.
+- 2026-11-07 (bb55b5bc): FS-5 G7 misc shapes (+3: shaded/lined process, curved
+  trapezoid/display, paper tape/flag) - this closes ALL 42 nightly-check
+  shape-alias smoke fixtures. Flowchart whole-original drawn 140->143,
+  overall 958->961, fallback 1187->1184, body 240 drawn 148->151 /
+  fb 204->201, original narrow +1 (fixture 35), frozen gaps stay 48;
+  debug/release reports byte-identical (sha256
+  a85da2f6b9af94a738c3f607043b8bf2cfc74fa23d8571066c1dcf2b948a6f19).

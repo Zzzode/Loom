@@ -1,0 +1,627 @@
+{
+  "schema": "loom_mermaid_fs5g6_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-5-g6-circle-family",
+  "shape_projection": {
+    "group": [
+      {
+        "shape": "filled circle",
+        "aliases": [
+          "f-circ",
+          "junction",
+          "filled-circle"
+        ],
+        "contour": "fixed-size solid ring-silhouette disc, no label"
+      },
+      {
+        "shape": "framed circle",
+        "aliases": [
+          "fr-circ",
+          "framed-circle",
+          "stop"
+        ],
+        "contour": "outer ring with a filled ~10/14 inner core"
+      },
+      {
+        "shape": "crossed circle",
+        "aliases": [
+          "cross-circ",
+          "summary",
+          "crossed-circle"
+        ],
+        "contour": "fixed-size label-less ring with two crossing diameters (inscribed X); label cleared upstream, as for the filled circle"
+      }
+    ]
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original binding a circle-family shape alias",
+    "roots": [
+      "flowchart"
+    ],
+    "draw_authority": "the three alias smoke fixtures (16/28/37)",
+    "width_policy": "draw rows paint body+original at 240 and restored; narrow_40 is per-row."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D-066 FS-5 G6 circle family, 2026-11-07)",
+    "date": "2026-11-07",
+    "verdict": "approved",
+    "note": "Independent read-only adversarial review (fresh general-purpose agent, 2026-11-07): initially REQUEST CHANGES. Addressed before approval: the crossed circle is now the fixed-size label-less glyph upstream specifies (its node.label is cleared, like the filled circle), not a label-sized ring; the inscribed X is built by mirroring the top half so it stays symmetric for every odd diameter (the prior linear interpolation biased D == 5 mod 8), pinned by a top/bottom pixel symmetry guard; the X-endpoint extension to the straight wall cells is documented as the terminal 2:1 cell-aspect convention. The framed circle geometry and label retention were verified exactly faithful to stateEnd.ts."
+  },
+  "counts": {
+    "total": 15,
+    "predicted_draw": 3,
+    "predicted_blocked": 12,
+    "predicted_original_draw": 3
+  },
+  "blocker_vocabulary": [
+    "flow-g6-curved-trapezoid-debt",
+    "flow-g6-neo-quoted-only"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/shape-alias/16-all-fr-circ-framed-circle-stop-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "35eeee7f05aed76fdb542623b5af7353bdb71df13ec6f61dc2ce2cc7fb23d828",
+      "manifest_sha256": "35eeee7f05aed76fdb542623b5af7353bdb71df13ec6f61dc2ce2cc7fb23d828",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "fr-circ",
+        "framed-circle",
+        "stop"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G6 circle-family contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/28-all-f-circ-junction-filled-circle-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "c1d369561c953f05a350e7ca63e42d42e712c11c43422cd509ed87a5c0234fd7",
+      "manifest_sha256": "c1d369561c953f05a350e7ca63e42d42e712c11c43422cd509ed87a5c0234fd7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "f-circ",
+        "junction",
+        "filled-circle"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G6 circle-family contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/37-all-cross-circ-summary-crossed-circle-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "00b1182fe5ae941f4d6b00dc50a2e91a34e2064c821a4b544ec657806a0db1e2",
+      "manifest_sha256": "00b1182fe5ae941f4d6b00dc50a2e91a34e2064c821a4b544ec657806a0db1e2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "cross-circ",
+        "summary",
+        "crossed-circle"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G6 circle-family contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/02-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "a8efdc88002a401024d099d0de3b1ab29367edc859588b0a3bce6904dbaee22e",
+      "manifest_sha256": "a8efdc88002a401024d099d0de3b1ab29367edc859588b0a3bce6904dbaee22e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "documents",
+        "filled-circle",
+        "lightning-bolt",
+        "tagged-rectangle",
+        "window-pane"
+      ],
+      "blocker": {
+        "kind": "flow-g6-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/03-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "9d0f7f775073657a12f80e506a8602eeda208c4a107e7b1626300f1682e61946",
+      "manifest_sha256": "9d0f7f775073657a12f80e506a8602eeda208c4a107e7b1626300f1682e61946",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "crossed-circle",
+        "curved-trapezoid",
+        "divided-rectangle",
+        "tagged-document"
+      ],
+      "blocker": {
+        "kind": "flow-g6-curved-trapezoid-debt",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a crossed-circle node among the still-unmapped curved-trapezoid/display alias (and neo config); the whole source stays on ordinary fallback until that shape is admitted."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/07-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "986c0a4c9e2a645c57fe4fbdd63ad231ae7120e0e84afb1fc1bb1447b2291e58",
+      "manifest_sha256": "986c0a4c9e2a645c57fe4fbdd63ad231ae7120e0e84afb1fc1bb1447b2291e58",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "rect",
+        "rounded",
+        "start",
+        "stop"
+      ],
+      "blocker": {
+        "kind": "flow-g6-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/12-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "40274af77bf8ade30265e95d770b06c094437ecd9569b7d2e22509d754d98c9a",
+      "manifest_sha256": "40274af77bf8ade30265e95d770b06c094437ecd9569b7d2e22509d754d98c9a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "documents",
+        "filled-circle",
+        "lightning-bolt",
+        "tagged-rectangle",
+        "window-pane"
+      ],
+      "blocker": {
+        "kind": "flow-g6-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/13-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "1d26cf80f4388d707cdc8d150cadb04cae9a9282b5613b3afce0f57bc0f4af83",
+      "manifest_sha256": "1d26cf80f4388d707cdc8d150cadb04cae9a9282b5613b3afce0f57bc0f4af83",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "crossed-circle",
+        "curved-trapezoid",
+        "divided-rectangle",
+        "tagged-document"
+      ],
+      "blocker": {
+        "kind": "flow-g6-curved-trapezoid-debt",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a crossed-circle node among the still-unmapped curved-trapezoid/display alias (and neo config); the whole source stays on ordinary fallback until that shape is admitted."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/18-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "fbad136f1356bdc794274f31fe7886b421b1b52684f103437a95b8430c7860f5",
+      "manifest_sha256": "fbad136f1356bdc794274f31fe7886b421b1b52684f103437a95b8430c7860f5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "rect",
+        "rounded",
+        "start",
+        "stop"
+      ],
+      "blocker": {
+        "kind": "flow-g6-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/22-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "d30be929581652766f759801fa38f9100d87e3b17f6de623988c04a95c4a08fd",
+      "manifest_sha256": "d30be929581652766f759801fa38f9100d87e3b17f6de623988c04a95c4a08fd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "documents",
+        "filled-circle",
+        "lightning-bolt",
+        "tagged-rectangle",
+        "window-pane"
+      ],
+      "blocker": {
+        "kind": "flow-g6-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/24-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "d994574f030005905942691edcbfd03db59a04acb6185f22fd8c5cf0a6e524c5",
+      "manifest_sha256": "d994574f030005905942691edcbfd03db59a04acb6185f22fd8c5cf0a6e524c5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "crossed-circle",
+        "curved-trapezoid",
+        "divided-rectangle",
+        "tagged-document"
+      ],
+      "blocker": {
+        "kind": "flow-g6-curved-trapezoid-debt",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a crossed-circle node among the still-unmapped curved-trapezoid/display alias (and neo config); the whole source stays on ordinary fallback until that shape is admitted."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/27-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "840b968640c7e2d6d613ae16e6f48461ce84f26f559317cccc3285f5ddf7d8d8",
+      "manifest_sha256": "840b968640c7e2d6d613ae16e6f48461ce84f26f559317cccc3285f5ddf7d8d8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "rect",
+        "rounded",
+        "start",
+        "stop"
+      ],
+      "blocker": {
+        "kind": "flow-g6-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/32-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "f3fe3e89b62a929c07005f10235febb0572e1ff7ee53b848a1ece8b58ab9ccd5",
+      "manifest_sha256": "f3fe3e89b62a929c07005f10235febb0572e1ff7ee53b848a1ece8b58ab9ccd5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "documents",
+        "filled-circle",
+        "lightning-bolt",
+        "tagged-rectangle",
+        "window-pane"
+      ],
+      "blocker": {
+        "kind": "flow-g6-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/33-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "2a0c66bc74bb03b0ddcfe3fbd2f2fb0c6602b39287695cf5513849f9ae50b0fb",
+      "manifest_sha256": "2a0c66bc74bb03b0ddcfe3fbd2f2fb0c6602b39287695cf5513849f9ae50b0fb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "bow-rect",
+        "crossed-circle",
+        "curved-trapezoid",
+        "divided-rectangle",
+        "tagged-document"
+      ],
+      "blocker": {
+        "kind": "flow-g6-curved-trapezoid-debt",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a crossed-circle node among the still-unmapped curved-trapezoid/display alias (and neo config); the whole source stays on ordinary fallback until that shape is admitted."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/37-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "f4786bac45548ec663fde42be688b5a5e541d01b7ace6248bd6a57afda572de0",
+      "manifest_sha256": "f4786bac45548ec663fde42be688b5a5e541d01b7ace6248bd6a57afda572de0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "rect",
+        "rounded",
+        "start",
+        "stop"
+      ],
+      "blocker": {
+        "kind": "flow-g6-neo-quoted-only",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+      },
+      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+    }
+  ]
+}

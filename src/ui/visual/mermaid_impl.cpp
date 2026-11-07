@@ -449,6 +449,9 @@ enum class Shape {
     StackedDocument,
     LinedDocument,
     TaggedDocument,
+    FilledCircle,
+    FramedCircle,
+    CrossedCircle,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -489,6 +492,9 @@ bool classic_shape(Shape shape) {
     case Shape::StackedDocument:
     case Shape::LinedDocument:
     case Shape::TaggedDocument:
+    case Shape::FilledCircle:
+    case Shape::FramedCircle:
+    case Shape::CrossedCircle:
         return true;
     case Shape::Rectangle:
     case Shape::Rounded:
@@ -538,6 +544,9 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::Hourglass:
     case Shape::Bolt:
     case Shape::BowTie:
+    case Shape::FilledCircle:
+    case Shape::FramedCircle:
+    case Shape::CrossedCircle:
         return true;
     case Shape::Stadium:
     case Shape::Subroutine:
@@ -1243,6 +1252,15 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
         shape = Shape::LinedDocument;
     else if (*token == "tag-doc" || *token == "tagged-document")
         shape = Shape::TaggedDocument;
+    else if (*token == "f-circ" || *token == "junction" ||
+             *token == "filled-circle")
+        shape = Shape::FilledCircle;
+    else if (*token == "fr-circ" || *token == "framed-circle" ||
+             *token == "stop")
+        shape = Shape::FramedCircle;
+    else if (*token == "cross-circ" || *token == "summary" ||
+             *token == "crossed-circle")
+        shape = Shape::CrossedCircle;
     else if (*token == "delay" || *token == "half-rounded-rectangle")
         shape = Shape::Delay;
     else if (*token == "fork" || *token == "join")
@@ -2377,6 +2395,20 @@ std::optional<Box> node_size(const Vertex& node, Work& work) {
             if (diameter > kWidthLimit || diameter > kHeightLimit) return {};
             return Box{0, 0, diameter, diameter};
         }
+        if (node.shape == Shape::FilledCircle || node.shape == Shape::CrossedCircle) {
+            // Upstream filledCircle (radius 7) and crossedCircle
+            // (radius max(30,width)) are fixed-size label-less glyphs with
+            // node.label cleared, so the node size is independent of text.
+            const int diameter = classic_min_width(node.shape);
+            return Box{0, 0, diameter, diameter};
+        }
+        if (node.shape == Shape::FramedCircle) {
+            // The framed circle (stateEnd) keeps its label and sizes to it.
+            int diameter = std::max(classic_min_width(node.shape), label_width(node.text) + 4);
+            if ((diameter % 2) == 0) ++diameter;
+            if (diameter > kWidthLimit || diameter > kHeightLimit) return {};
+            return Box{0, 0, diameter, diameter};
+        }
         if (node.shape == Shape::Triangle || node.shape == Shape::FlippedTriangle) {
             int height = std::max(5, label_width(node.text) + 2);
             if ((height % 2) == 0) ++height;
@@ -2449,6 +2481,20 @@ bool classic_ring(Canvas& canvas, int left, int top, int right, int bottom) {
         if (!put(x, top + 1, "─") || !put(x, bottom - 1, "─")) return false;
     for (int y = top + 2; y <= bottom - 2; ++y)
         if (!put(left, y, "│") || !put(right, y, "│")) return false;
+    return true;
+}
+
+// Fill the straight-walled interior of a classic_ring outline with solid
+// blocks, yielding a filled disc (rows top+2..bottom-2, cols left+1..right-1).
+// The ring outline itself is preserved.
+bool classic_ring_fill(Canvas& canvas, int left, int top, int right, int bottom) {
+    if (right - left + 1 < 9 || bottom - top + 1 < 9) return false;
+    const auto put = [&](int x, int y, std::string_view glyph) {
+        return canvas.put({x, y}, glyph);
+    };
+    for (int y = top + 2; y <= bottom - 2; ++y)
+        for (int x = left + 1; x <= right - 1; ++x)
+            if (!put(x, y, "█")) return false;
     return true;
 }
 
@@ -2621,6 +2667,61 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
         return classic_ring(canvas, l, t, r, b);
     case Shape::DoubleCircle:
         return classic_ring(canvas, l, t, r, b) && classic_ring(canvas, l + 2, t + 2, r - 2, b - 2);
+    case Shape::FilledCircle:
+        // A solid disc: circular ring silhouette with a blocked interior
+        // (upstream filledCircle, fixed radius with the label cleared).
+        return classic_ring(canvas, l, t, r, b) && classic_ring_fill(canvas, l, t, r, b);
+    case Shape::FramedCircle: {
+        // UML final state: an outer ring with a filled inner core whose
+        // radius is 5/14 of the diameter (upstream stateEnd). The odd core
+        // diameter is at least five cells, so it extends beyond the single
+        // label row and stays visible around the centred text.
+        if (!classic_ring(canvas, l, t, r, b)) return false;
+        int side = (box.width * 10) / 14;  // inner diameter ~10/14 of outer
+        if ((side % 2) == 0) --side;
+        if (side < 5) side = 5;
+        const int inset = (box.width - side) / 2;
+        const int il = l + inset, ir = r - inset, it = t + inset, ib = b - inset;
+        for (int y = it; y <= ib; ++y)
+            for (int x = il; x <= ir; ++x)
+                if (!put(x, y, "█")) return false;
+        return true;
+    }
+    case Shape::CrossedCircle: {
+        // Summary: a ring with two crossing diameters (upstream
+        // crossedCircle createLine). Inscribe an X in the straight interior.
+        // The stroke endpoints meet the first/last straight wall cells rather
+        // than the ring's 45-degree points: the terminal's 2:1 cell aspect
+        // needs that extra step for the diagonals to read (same convention as
+        // Triangle's width = 2h-1). The bottom half mirrors the top so the X
+        // stays symmetric for every odd diameter (round-half-up on a linear
+        // interpolation would otherwise bias D == 5 mod 8).
+        if (!classic_ring(canvas, l, t, r, b)) return false;
+        const int top_y = t + 2, bottom_y = b - 2;
+        const int span = bottom_y - top_y + 1;
+        const int mid_row = span / 2;
+        // Descending-stroke column for interior row yy. The top half follows
+        // a left->right linear interpolation; the bottom half is derived by
+        // mirroring the top half across the centre rather than interpolated,
+        // so round-half-up ties (D == 5 mod 8) cannot skew one half outward.
+        const auto descent_col = [&](int yy) {
+            const auto linear = [&](int q) {
+                return l + (2 * q * (r - l) + (span - 1)) / (2 * (span - 1));
+            };
+            return yy <= mid_row ? linear(yy) : l + (r - l) - (linear(2 * mid_row - yy) - l);
+        };
+        for (int y = top_y; y <= bottom_y; ++y) {
+            const int yy = y - top_y;
+            const int xd = descent_col(yy);
+            const int xr = r - (xd - l);
+            if (yy == mid_row) {
+                if (!put(xd, y, "╳")) return false;
+            } else if (!put(xd, y, "╲") || !put(xr, y, "╱")) {
+                return false;
+            }
+        }
+        return true;
+    }
     case Shape::Subroutine:
         if (!sharp()) return false;
         for (int y = t + 1; y < b; ++y)
@@ -3280,6 +3381,10 @@ bool node_box(Canvas& canvas, const Box& box, const Vertex& node,
                           ? collector->row_count(node.text)
                           : std::optional<int>{static_cast<int>(label_rows(node.text).size())};
     if (!rows) return false;
+    // Filled and crossed circles are label-less glyph discs upstream (their
+    // node.label is cleared); painting text over them would be unreadable.
+    if (node.shape == Shape::FilledCircle || node.shape == Shape::CrossedCircle)
+        return true;
     // A divided rectangle reserves its top two rows (t, t+1) plus the divider
     // row as the title band; the label is centred across the body rows
     // t+3..b-1, i.e. offset 3 plus half of the (height-4-rows) remainder.

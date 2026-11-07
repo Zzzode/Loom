@@ -1,0 +1,277 @@
+{
+  "schema": "loom_mermaid_fs5g4_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-5-g4-stacked-tagged-rectangles",
+  "shape_projection": {
+    "group": [
+      {
+        "shape": "stacked rectangle",
+        "aliases": [
+          "procs",
+          "processes",
+          "st-rect",
+          "stacked-rectangle"
+        ],
+        "contour": "front rectangle with a back sheet peeking at the top-right"
+      },
+      {
+        "shape": "tagged rectangle",
+        "aliases": [
+          "tag-rect",
+          "tag-proc",
+          "tagged-rectangle",
+          "tagged-process"
+        ],
+        "contour": "rectangle with a folded corner tag extending one column at the bottom-right"
+      }
+    ]
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "frontmatter flowchart original binding a stacked or tagged rectangle shape",
+    "roots": [
+      "flowchart"
+    ],
+    "draw_authority": "the two alias smoke fixtures (34/39); the four shape-themes rows carry independent documents/filled-circle and neo theme debt",
+    "width_policy": "draw rows paint body+original at 240 and restored; narrow_40 is per-row."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D-066 FS-5 G4 stacked/tagged rectangles, 2026-11-07)",
+    "date": "2026-11-07",
+    "verdict": "approved",
+    "note": "Independent read-only adversarial review (fresh general-purpose agent, 2026-11-07): APPROVE with no MAJOR. Addressed before commit: tagged tip glyph corrected to the up-and-left corner matching the upstream right triangle; stacked back-sheet top cell uses a horizontal edge glyph; right-direction (LR outgoing / RL incoming) edge cases added for both shapes; generator blocker predicate made row-level."
+  },
+  "counts": {
+    "total": 6,
+    "predicted_draw": 2,
+    "predicted_blocked": 4,
+    "predicted_original_draw": 2
+  },
+  "blocker_vocabulary": [
+    "flow-g4-tag-compound"
+  ],
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/shape-alias/34-all-procs-processes-st-rect-stacked-rectangle-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "b1b89300eaa49b5de4775a343b1ab4359e7adb92d0d5e1ee5a082208a318ae5a",
+      "manifest_sha256": "b1b89300eaa49b5de4775a343b1ab4359e7adb92d0d5e1ee5a082208a318ae5a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "procs",
+        "processes",
+        "st-rect",
+        "stacked-rectangle"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G4 stacked/tagged rectangle contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-alias/39-all-tag-rect-tag-proc-tagged-rectangle-tagged-process-should-render-same-shape.mmd",
+      "family": "flowchart",
+      "sha256": "31a1c22e45139c4ebe86ab8b25f6e80017ee03cae0da527e446f17c0f34ca788",
+      "manifest_sha256": "31a1c22e45139c4ebe86ab8b25f6e80017ee03cae0da527e446f17c0f34ca788",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "shapes": [
+        "tag-rect",
+        "tag-proc",
+        "tagged-rectangle",
+        "tagged-process"
+      ],
+      "blocker": null,
+      "ledger_note": "FS-5 G4 stacked/tagged rectangle contour admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/02-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "a8efdc88002a401024d099d0de3b1ab29367edc859588b0a3bce6904dbaee22e",
+      "manifest_sha256": "a8efdc88002a401024d099d0de3b1ab29367edc859588b0a3bce6904dbaee22e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "tag-rect",
+        "tag-proc",
+        "tagged-rectangle",
+        "tagged-process"
+      ],
+      "blocker": {
+        "kind": "flow-g4-tag-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a tagged-rectangle node among other exotic shape aliases (documents, filled-circle) whose contours the terminal does not project (and neo theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/12-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "40274af77bf8ade30265e95d770b06c094437ecd9569b7d2e22509d754d98c9a",
+      "manifest_sha256": "40274af77bf8ade30265e95d770b06c094437ecd9569b7d2e22509d754d98c9a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "tag-rect",
+        "tag-proc",
+        "tagged-rectangle",
+        "tagged-process"
+      ],
+      "blocker": {
+        "kind": "flow-g4-tag-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a tagged-rectangle node among other exotic shape aliases (documents, filled-circle) whose contours the terminal does not project (and neo theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/22-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "d30be929581652766f759801fa38f9100d87e3b17f6de623988c04a95c4a08fd",
+      "manifest_sha256": "d30be929581652766f759801fa38f9100d87e3b17f6de623988c04a95c4a08fd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "tag-rect",
+        "tag-proc",
+        "tagged-rectangle",
+        "tagged-process"
+      ],
+      "blocker": {
+        "kind": "flow-g4-tag-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a tagged-rectangle node among other exotic shape aliases (documents, filled-circle) whose contours the terminal does not project (and neo theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    },
+    {
+      "path": "flowchart/nightly-check/shape-themes/32-connect-all-shapes-with-each-other.mmd",
+      "family": "flowchart",
+      "sha256": "f3fe3e89b62a929c07005f10235febb0572e1ff7ee53b848a1ece8b58ab9ccd5",
+      "manifest_sha256": "f3fe3e89b62a929c07005f10235febb0572e1ff7ee53b848a1ece8b58ab9ccd5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "shapes": [
+        "tag-rect",
+        "tag-proc",
+        "tagged-rectangle",
+        "tagged-process"
+      ],
+      "blocker": {
+        "kind": "flow-g4-tag-compound",
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
+        "detail": "The source binds a tagged-rectangle node among other exotic shape aliases (documents, filled-circle) whose contours the terminal does not project (and neo theme config); the whole source stays on ordinary fallback until those shapes are admitted."
+      },
+      "ledger_note": "Blocked by compound exotic-shape/theme debt"
+    }
+  ]
+}

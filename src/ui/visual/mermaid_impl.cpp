@@ -443,6 +443,8 @@ enum class Shape {
     Bolt,
     BowTie,
     Brace,
+    StackedRectangle,
+    TaggedRectangle,
 };
 enum class Stroke { Solid, Dotted, Thick };
 
@@ -477,6 +479,8 @@ bool classic_shape(Shape shape) {
     case Shape::Bolt:
     case Shape::BowTie:
     case Shape::Brace:
+    case Shape::StackedRectangle:
+    case Shape::TaggedRectangle:
         return true;
     case Shape::Rectangle:
     case Shape::Rounded:
@@ -539,6 +543,8 @@ bool classic_requires_odd_width(Shape shape) {
     case Shape::Datastore:
     case Shape::NotchedPentagon:
     case Shape::Brace:
+    case Shape::StackedRectangle:
+    case Shape::TaggedRectangle:
     case Shape::Rectangle:
     case Shape::Rounded:
     case Shape::Decision:
@@ -1210,6 +1216,12 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
         shape = Shape::BowTie;
     else if (*token == "comment" || *token == "brace-l")
         shape = Shape::Brace;
+    else if (*token == "procs" || *token == "processes" ||
+             *token == "st-rect" || *token == "stacked-rectangle")
+        shape = Shape::StackedRectangle;
+    else if (*token == "tag-rect" || *token == "tag-proc" ||
+             *token == "tagged-rectangle" || *token == "tagged-process")
+        shape = Shape::TaggedRectangle;
     else if (*token == "delay" || *token == "half-rounded-rectangle")
         shape = Shape::Delay;
     else if (*token == "fork" || *token == "join")
@@ -2351,6 +2363,19 @@ std::optional<Box> node_size(const Vertex& node, Work& work) {
             if (width > kWidthLimit || height > kHeightLimit) return {};
             return Box{0, 0, width, height};
         }
+        if (node.shape == Shape::StackedRectangle) {
+            // Front 5-row chamber plus one back sheet peeking at the top and
+            // one column peeking at the right (upstream multiRect rectOffset).
+            int width = std::max(classic_min_width(node.shape), label_width(node.text) + 4) + 1;
+            if (width > kWidthLimit) return {};
+            return Box{0, 0, width, 6};
+        }
+        if (node.shape == Shape::TaggedRectangle) {
+            // Front rectangle plus one column for the folded corner tag tip.
+            int width = std::max(classic_min_width(node.shape), label_width(node.text) + 4) + 1;
+            if (width > kWidthLimit) return {};
+            return Box{0, 0, width, 5};
+        }
         const int padding =
             node.shape == Shape::Subroutine || node.shape == Shape::DoubleCircle ? 8 : 4;
         int width = std::max(classic_min_width(node.shape), label_width(node.text) + padding);
@@ -2709,6 +2734,49 @@ bool classic_box(Canvas& canvas, const Box& box, Shape shape) {
             if (!put(r, y, "│")) return false;
         return true;
     }
+    case Shape::StackedRectangle: {
+        // Multi-process: a front rectangle with a second sheet peeking out
+        // along the top-right - a short back edge on the top row and a
+        // one-column back wall on the right (upstream shapes/multiRect.ts
+        // diagonal rectOffset). Box is 6 rows x (w+1); the front chamber is
+        // rows t+1..b, columns l..r-1.
+        if (b - t + 1 < 6) return false;
+        // Back sheet: a two-cell top edge ending at the top-right corner and
+        // a right wall one column beyond the front for the full height.
+        if (!put(r - 1, t, "─") || !put(r, t, "┐")) return false;
+        // Front rectangle (r-1 is the front top-right corner; the back wall
+        // continues one column beyond it down to the bottom).
+        if (!put(l, t + 1, "┌") || !put(r - 1, t + 1, "┐") ||
+            !put(l, b, "└") || !put(r - 1, b, "┘") || !put(r, b, "┘"))
+            return false;
+        for (int x = l + 1; x < r - 1; ++x)
+            if (!put(x, t + 1, "─") || !put(x, b, "─")) return false;
+        for (int y = t + 2; y < b; ++y)
+            if (!put(l, y, "│") || !put(r - 1, y, "│") || !put(r, y, "│"))
+                return false;
+        if (!put(r, t + 1, "│")) return false;
+        return true;
+    }
+    case Shape::TaggedRectangle: {
+        // Tagged process: a rectangle whose bottom-right corner is folded
+        // into a one-cell tag that extends one column right (upstream
+        // shapes/taggedRect.ts, tagWidth=tagHeight=0.2*h). Front chamber is
+        // columns l..r-1; column r carries only the folded tip.
+        if (b - t + 1 < 5) return false;
+        if (!put(l, t, "┌") || !put(r - 1, t, "┐") || !put(l, b, "└"))
+            return false;
+        for (int x = l + 1; x < r - 1; ++x)
+            if (!put(x, t, "─") || !put(x, b, "─")) return false;
+        for (int y = t + 1; y < b; ++y)
+            if (!put(l, y, "│") || !put(r - 1, y, "│")) return false;
+        // Folded tag: diagonal fold at the front bottom-right corner, a tip
+        // one column right, and the tag bottom aligned with the box bottom.
+        // The tip joins a left arm (to the fold diagonal) and an up arm (to
+        // the tag hypotenuse), i.e. a box up-and-left corner.
+        if (!put(r - 1, b, "╱") || !put(r, b - 1, "╱") || !put(r, b, "┘"))
+            return false;
+        return true;
+    }
     case Shape::Asymmetric:
         if (!put(l + 2, t, "╱") || !put(r, t, "┐") || !put(l + 1, t + 1, "╱") ||
             !put(l, t + 2, "◁") || !put(l + 1, b - 1, "╲") || !put(l + 2, b, "╲") ||
@@ -2781,6 +2849,24 @@ bool classic_port_corridors(Canvas& canvas, const Box& box, Shape shape) {
         const Point above{box.x + box.width / 2, box.y};
         if (canvas.at(above).glyph != " ") return false;
         if (!canvas.put(above, " ", false)) return false;
+        return true;
+    }
+    if (shape == Shape::StackedRectangle) {
+        // The front chamber starts one row below the back-sheet peek; a top
+        // edge onto the front needs the centre cell on the back row unblocked
+        // (it is blank unless the box is so narrow the centre sits on the
+        // back corner, in which case there is nothing to unblock).
+        const Point above{box.x + box.width / 2, box.y};
+        if (canvas.at(above).glyph == " " && !canvas.put(above, " ", false))
+            return false;
+        return true;
+    }
+    if (shape == Shape::TaggedRectangle) {
+        // The folded tag occupies only the bottom of the extra right column;
+        // a side edge onto the front wall needs the mid-row peek cell open.
+        const Point side{box.x + box.width - 1, middle_y};
+        if (canvas.at(side).glyph != " ") return false;
+        if (!canvas.put(side, " ", false)) return false;
         return true;
     }
     if (!shifted_side) return true;
@@ -3059,6 +3145,10 @@ bool node_box(Canvas& canvas, const Box& box, const Vertex& node,
     int label_top = box.y + (box.height - *rows) / 2;
     if (node.shape == Shape::DividedRectangle && box.height >= 7)
         label_top = box.y + 3 + (box.height - 4 - *rows) / 2;
+    // The stacked rectangle's sixth row is the back-sheet peek at the top;
+    // the label is centred in the five-row front chamber (rows t+1..b).
+    if (node.shape == Shape::StackedRectangle)
+        label_top = box.y + 1 + (box.height - 1 - *rows) / 2;
     const Point at{box.x, label_top};
     if (!collector && rich && !rich->empty())
         return canvas.multiline_rich(at, *rich, box.width);
@@ -3534,6 +3624,22 @@ std::vector<Port> ports(const Box& box, Shape shape, Point target) {
             add({middle_x, box.y + box.height - 1}, {0, 1});
             add({box.x, middle_y}, {-1, 0});
             add({box.x + box.width - 1, middle_y}, {1, 0});
+        } else if (shape == Shape::StackedRectangle) {
+            // Top edge attaches to the front chamber (row t+1, below the
+            // back-sheet peek); other ports sit on the front/back walls and
+            // bottom edge (corridor unblocks the centre back cell).
+            add({middle_x, box.y + 1}, {0, -1});
+            add({middle_x, box.y + box.height - 1}, {0, 1});
+            add({box.x, middle_y}, {-1, 0});
+            add({box.x + box.width - 1, middle_y}, {1, 0});
+        } else if (shape == Shape::TaggedRectangle) {
+            // The right side port lands on the FRONT wall one column inside;
+            // the folded tip column is opened by the corridor. Top/bottom and
+            // the left port sit on the front rectangle.
+            add({middle_x, box.y}, {0, -1});
+            add({middle_x, box.y + box.height - 1}, {0, 1});
+            add({box.x, middle_y}, {-1, 0});
+            add({box.x + box.width - 2, middle_y}, {1, 0});
         } else if (shape == Shape::Asymmetric) {
             add({box.x, middle_y}, {-1, 0});
             add({box.x + box.width - 1, middle_y}, {1, 0});

@@ -588,6 +588,9 @@ struct Vertex {
     std::string text;
     Shape shape = Shape::Rectangle;
     bool explicit_label = false;
+    // FS-aws: an admitted closed-vocabulary icon marker has already been
+    // prepended to text, so a repeated icon statement stays idempotent.
+    bool icon = false;
     int group = -1;
     std::size_t order = 0;
 };
@@ -871,7 +874,7 @@ struct Diagram {
                 return n;
             }
         if (vertices.size() >= 64u) return {};
-        vertices.push_back({id, id, Shape::Rectangle, false,
+        vertices.push_back({id, id, Shape::Rectangle, false, false,
                             group_stack.empty() ? -1 : static_cast<int>(group_stack.back()),
                             next_order++});
         return vertices.size() - 1;
@@ -1229,12 +1232,21 @@ std::optional<std::vector<std::string>> flow_prescan_group_ids(std::string_view 
     return ids;
 }
 
+// FS-aws: fixed marker cell (U+25A0 BLACK SQUARE, the same glyph FS-6 uses
+// for FontAwesome) plus the separator before the human text.
+constexpr std::string_view kAwsIconMarker = "\xE2\x96\xA0 ";
+
 struct FlowShapeData {
     Shape shape = Shape::Rectangle;
     std::optional<std::string> label;
     // True only when the block explicitly carried `shape:`. A label-only
     // `@{ label: }` block leaves the node's existing bracket shape intact.
     bool shape_specified = false;
+    // FS-aws: a closed-vocabulary `icon: "aws:..."` marker. The terminal has
+    // no icon font, so the node keeps its rectangle and the icon projects to
+    // one fixed marker cell prepended to the human text; an unknown icon or
+    // non-aws namespace fails closed.
+    bool icon = false;
 };
 
 std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
@@ -1265,6 +1277,48 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
         scanner.space();
         if (!scanner.take("}")) return {};
         return FlowShapeData{Shape::Rectangle, std::move(shape_label), false};
+    }
+    // FS-aws: `@{ icon: "aws:<name>" [, label: "text"] }`. Only the pinned
+    // AWS architecture vocabulary is admitted; the icon projects to a fixed
+    // marker cell (the terminal has no icon font) while the human label or,
+    // absent one, the node id is retained. Any other namespace, an unknown
+    // icon, or any extra key (shape/animation/second icon) fails closed.
+    if (scanner.take("icon")) {
+        constexpr std::string_view kAwsIconNames[] = {
+            "arch-amazon-cloudwatch", "arch-amazon-eks-cloud", "arch-amazon-route-53"};
+        scanner.space();
+        if (!scanner.take(":")) return {};
+        scanner.space();
+        if (scanner.rest.empty() || scanner.rest.front() != '"') return {};
+        const auto quote_end = scanner.rest.find('"', 1u);
+        if (quote_end == std::string_view::npos) return {};
+        const auto quoted = scanner.rest.substr(1u, quote_end - 1u);
+        constexpr std::string_view kAwsPrefix = "aws:";
+        if (!quoted.starts_with(kAwsPrefix) ||
+            quoted.find_first_of("\\`") != std::string_view::npos ||
+            std::ranges::find(kAwsIconNames, quoted.substr(kAwsPrefix.size())) ==
+                std::end(kAwsIconNames))
+            return {};
+        scanner.rest.remove_prefix(quote_end + 1u);
+        scanner.space();
+        std::optional<std::string> icon_label;
+        if (scanner.take(",")) {
+            scanner.space();
+            if (!scanner.take("label")) return {};
+            scanner.space();
+            if (!scanner.take(":")) return {};
+            scanner.space();
+            if (scanner.rest.empty() || scanner.rest.front() != '"') return {};
+            const auto end = scanner.rest.find('"', 1u);
+            if (end == std::string_view::npos) return {};
+            const auto decoded = label(scanner.rest.substr(0u, end + 1u));
+            if (!decoded) return {};
+            icon_label = decoded->text;
+            scanner.rest.remove_prefix(end + 1u);
+            scanner.space();
+        }
+        if (!scanner.take("}")) return {};
+        return FlowShapeData{Shape::Rectangle, std::move(icon_label), false, true};
     }
     if (!scanner.take("shape")) return {};
     scanner.space();
@@ -1490,9 +1544,23 @@ std::optional<std::size_t> flow_node_from_id(std::string id, Scanner& scanner, D
         // the shape the node (possibly declared earlier) already has.
         if (metadata->shape_specified) node.shape = metadata->shape;
         if (metadata->label) {
-            if (node.explicit_label && node.text != *metadata->label) return {};
+            // Compare against the logical label: an earlier icon block has
+            // already prepended the marker cell to node.text.
+            const auto logical =
+                node.icon && node.text.starts_with(kAwsIconMarker)
+                    ? std::string_view{node.text}.substr(kAwsIconMarker.size())
+                    : std::string_view{node.text};
+            if (node.explicit_label && logical != *metadata->label) return {};
             node.text = std::move(*metadata->label);
             node.explicit_label = true;
+        }
+        // FS-aws: surface the admitted icon as one fixed marker cell in front
+        // of the human text (the given label, otherwise the node id). The
+        // Vertex.icon flag keeps repeated icon statements idempotent; a label
+        // reassignment on an already-marked node re-applies the marker.
+        if (metadata->icon && (!node.icon || static_cast<bool>(metadata->label))) {
+            node.icon = true;
+            node.text = std::string{kAwsIconMarker} + node.text;
         }
         return index;
     }
@@ -1536,7 +1604,13 @@ std::optional<std::size_t> flow_node_from_id(std::string id, Scanner& scanner, D
     scanner.space();
     if (scanner.rest.starts_with("@{")) {
         const auto metadata = flow_shape_data(scanner, work);
-        if (!metadata || (metadata->label && *metadata->label != node.text)) return {};
+        // FS-aws: icon markers are projected only through the bare-id shape
+        // data path; a bracket-declared node carrying icon metadata has no
+        // marker injection site here, so reject it instead of silently
+        // dropping the icon.
+        if (!metadata || metadata->icon ||
+            (metadata->label && *metadata->label != node.text))
+            return {};
         // Explicit `shape:` metadata wins; a label-only block must not
         // flatten the bracket shape this vertex already declared.
         if (metadata->shape_specified) node.shape = metadata->shape;

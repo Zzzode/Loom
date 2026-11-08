@@ -6300,6 +6300,44 @@ const Fs7aCohortEntry* fs7a_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0031 FS-aws icon-shape cohort. Three description-only fixtures bind
+// closed-vocabulary `@{ icon: "aws:..." }` nodes; once the icon grammar is
+// admitted they draw on both tracks at every width.
+struct AwsIconCohortEntry {
+    bool draw = false;
+    std::array<std::string, 3> original_states;
+    std::array<std::string, 3> body_states;
+};
+const std::map<std::string, AwsIconCohortEntry>& aws_icon_cohort_map() {
+    static const std::map<std::string, AwsIconCohortEntry> map = [] {
+        std::map<std::string, AwsIconCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/aws-icon-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "AWS icon cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "AWS icon cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            AwsIconCohortEntry entry;
+            entry.draw = row.get_string("prediction") == "predicted-draw";
+            auto load = [](JsonVal states) {
+                return std::array<std::string, 3>{states.get_string("wide_240"),
+                                                  states.get_string("narrow_40"),
+                                                  states.get_string("restored_240")};
+            };
+            entry.original_states = load(row.get("expected_states"));
+            entry.body_states = load(row.get("expected_body_states"));
+            rows.emplace(row.get_string("path"), std::move(entry));
+        });
+        return rows;
+    }();
+    return map;
+}
+const AwsIconCohortEntry* aws_icon_cohort_row(std::string_view path) {
+    const auto& rows = aws_icon_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 constexpr std::string_view kRequirementMarkdownPath =
     "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd";
 constexpr std::string_view kRequirementMarkdownSourceSha =
@@ -9529,6 +9567,24 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.expected_states = fs7a->body_states;
                     row.decision_reasons.fill(row.reason);
                     observations.push_back(std::move(row));
+                } else if (const auto* aws = aws_icon_cohort_row(path)) {
+                    require(aws->draw, "AWS icon cohort rows must draw their body");
+                    Observation row;
+                    row.path = path;
+                    row.track = "body_diagnostic";
+                    row.type = "flowchart";
+                    row.source_sha256 = digest(body);
+                    row.expected = "drawn";
+                    row.reason = "RFC-0031 FS-aws icon-shape cohort (body)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(aws->body_states[0]),
+                                  state_status(aws->body_states[1]),
+                                  state_status(aws->body_states[2])};
+                    row.expected_states = aws->body_states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
                 } else {
                     const auto selected =
                         body22_select(policies, role_batch.policy.root(), raw_batch.policy.root(),
@@ -9722,12 +9778,13 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         // circle-family originals 263 -> 260. FS-5 G7 moves three misc-shape
         // originals 260 -> 257. FS-7a moves three subgraph-grammar originals
         // 257 -> 254 (direction-less headers and forward group references).
-        // All count admitted but not decoded.
-        EXPECT_EQ(flows.pending, 254u);
+        // FS-aws moves three closed-vocabulary icon-shape originals
+        // 254 -> 251. All count admitted but not decoded.
+        EXPECT_EQ(flows.pending, 251u);
         EXPECT_EQ(flows.errors, 0u);
         EXPECT_EQ(flows.resources, 0u);
-        EXPECT_EQ(flows.admitted, 146u);
-        EXPECT_EQ(flows.mutated, 146u);
+        EXPECT_EQ(flows.admitted, 149u);
+        EXPECT_EQ(flows.mutated, 149u);
         for (const auto count : applications)
             projection_consumed(count);
         role_batch_consumed(role_counts, role_batch.facts.root());
@@ -15182,6 +15239,42 @@ Observation run_official_flow400_case(
                     "OfficialFlow400 FS7a ledger evidence write failed");
             return row;
         }
+        // RFC 0031 FS-aws: three closed-vocabulary icon-shape fixtures admit
+        // as whole originals once the icon grammar exists. All three draw at
+        // every width. Five frames prove each admission inline; the durable
+        // gate is test_mermaid_aws_icon_cohort.
+        if (const auto* aws = aws_icon_cohort_row(path); aws && aws->draw) {
+            p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
+            const bool wide_source = flow_oracle::flow400_same(*frames[0], *frames[3], work);
+            p.narrow_ordinary = flow_oracle::flow400_same(*frames[1], *frames[4], work);
+            require(!wide_source && p.restored,
+                    "AWS icon ledger draw frame protocol (wide native, restore)");
+            const bool narrow_draw = aws->original_states[1] == "drawn";
+            require(p.narrow_ordinary == !narrow_draw,
+                    "AWS icon ledger narrow frame disagrees with ledger");
+            static_cast<void>(flow_oracle::flow400_following(*frames[0], work, kSentinel));
+            row.status = {"drawn", narrow_draw ? "drawn" : "source_fallback", "drawn"};
+            row.expected = "drawn";
+            row.expected_states = {"drawn", narrow_draw ? "drawn" : "source", "drawn"};
+            row.reason = "RFC-0031 FS-aws reviewed icon-shape cohort";
+            row.decision_reasons.fill(row.reason);
+            row.role_model_sha = row.source_sha256;
+            row.raw_source_authority = "immutable_Flow400_8Models_plus_FSAwsIconCohort3";
+            p.phase = "complete";
+            p.admitted = true;
+            p.mutated = true;
+            p.remaining[2] = p.remaining[3] = p.remaining[4] = p.remaining[5] =
+                p.remaining[6] = work.remaining;
+            row.raw_source_constraints = official_flow_info(p, work.remaining);
+            data.set("contract", kOfficialFlow400Contract);
+            data.set("actual", row.raw_source_constraints);
+            data.set("foreign_assertions_certified", 0);
+            diagnostic.set_root(data);
+            diagnostics << diagnostic.to_string() << '\n';
+            require(static_cast<bool>(diagnostics),
+                    "OfficialFlow400 AWS icon ledger evidence write failed");
+            return row;
+        }
         p.remaining[2] = work.remaining;
         if (!model) {
             p.pending = true;
@@ -15351,6 +15444,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS5g7MiscShapeCohort3";
     const bool fs7a_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS7aSubgraphCohort3";
+    const bool aws_icon_selected =
+        row.raw_source_authority == "immutable_Flow400_8Models_plus_FSAwsIconCohort3";
     if (strand_selected)
         official_flow_strand_keys(info);
     else if (p0_length_selected)
@@ -15487,7 +15582,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                      fs5a_selected || fs5b_selected || fs5c_selected || fs5d_selected ||
                      fs5e_selected || fs5g1_selected || fs5g2_selected ||
                      fs5g3_selected || fs5g4_selected || fs5g5_selected ||
-                     fs5g6_selected || fs5g7_selected || fs7a_selected) &&
+                     fs5g6_selected || fs5g7_selected || fs7a_selected ||
+                     aws_icon_selected) &&
                     !pending && restored &&
                     mutated && !resource && row.role_model_sha.size() == 64u &&
                     row.errors.empty() && row.status[0] == "drawn" && row.status[2] == "drawn" &&
@@ -15510,6 +15606,7 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                 fs5c_selected || fs5d_selected || fs5e_selected || fs5g1_selected ||
                 fs5g2_selected || fs5g3_selected || fs5g4_selected || fs5g5_selected ||
                 fs5g6_selected || fs5g7_selected || fs7a_selected ||
+                aws_icon_selected ||
                 row.raw_source_authority == "immutable_Flow400_whole_8Models_392null" ||
                 same_run_body,
             "OfficialFlow400 unknown source authority");
@@ -15648,6 +15745,13 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                 "OfficialFlow400 FS7a admitted original must be a whole-and-body ledger row");
         require(row.role_model_sha.size() == 64u,
                 "OfficialFlow400 FS7a ledger source identity sha");
+    }
+    if (aws_icon_selected) {
+        const auto* ledger = aws_icon_cohort_row(row.path);
+        require(ledger && ledger->draw,
+                "OfficialFlow400 AWS icon admitted original must be a ledger draw row");
+        require(row.role_model_sha.size() == 64u,
+                "OfficialFlow400 AWS icon ledger source identity sha");
     }
     if (title_selected) {
         require(row.path == flow_oracle::kFlowTitleFixture &&

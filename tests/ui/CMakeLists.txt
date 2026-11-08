@@ -754,3 +754,16 @@ gtest_discover_tests(test_mermaid_fs7a_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+add_executable(test_mermaid_aws_icon test_mermaid_aws_icon.cpp)
+target_link_libraries(test_mermaid_aws_icon
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_aws_icon
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+add_executable(test_mermaid_aws_icon_cohort test_mermaid_aws_icon_cohort.cpp)
+target_link_libraries(test_mermaid_aws_icon_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_aws_icon_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")

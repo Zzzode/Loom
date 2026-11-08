@@ -47,20 +47,20 @@
     "width_policy": "draw rows paint body+original at 240 and restored; narrow_40 is per-row."
   },
   "review": {
-    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D-066 FS-5 G6 circle family, 2026-11-07)",
-    "date": "2026-11-07",
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D-066 FS-5 G6 circle family, 2026-11-07; FS-sq single-quote follow-up re-reviewed 2026-11-08, task ad678f3037149e883)",
+    "date": "2026-11-08",
     "verdict": "approved",
-    "note": "Independent read-only adversarial review (fresh general-purpose agent, 2026-11-07): initially REQUEST CHANGES. Addressed before approval: the crossed circle is now the fixed-size label-less glyph upstream specifies (its node.label is cleared, like the filled circle), not a label-sized ring; the inscribed X is built by mirroring the top half so it stays symmetric for every odd diameter (the prior linear interpolation biased D == 5 mod 8), pinned by a top/bottom pixel symmetry guard; the X-endpoint extension to the straight wall cells is documented as the terminal 2:1 cell-aspect convention. The framed circle geometry and label retention were verified exactly faithful to stateEnd.ts."
+    "note": "Original 2026-11-07 review approved the circle-family geometry (filled/framed/crossed circles), including the crossed-circle label-less glyph, odd-diameter X symmetry, and framed-circle faithfulness. The 2026-11-08 FS-sq review (independent read-only adversarial agent, APPROVE) verified the single-quoted shape-data label admission and this ledger migration: the four 07/18/27/37 connect-all rows move from blocked to body-only draw (whole original stays neo-gated), and all eight remaining blocked rows carry the quote-independent classic-glyph routing-budget blocker (the curved-trapezoid alias was already mapped in G7). Its two MINOR findings are resolved: the helper comment no longer claims byte-identical double-quote trimming, and the stale curved-trapezoid blocker vocabulary is retired."
   },
   "counts": {
     "total": 15,
-    "predicted_draw": 3,
-    "predicted_blocked": 12,
-    "predicted_original_draw": 3
+    "predicted_draw": 7,
+    "predicted_blocked": 8,
+    "predicted_original_draw": 3,
+    "predicted_body_only_draw": 4
   },
   "blocker_vocabulary": [
-    "flow-g6-curved-trapezoid-debt",
-    "flow-g6-neo-quoted-only"
+    "flow-g6-classic-glyph-budget"
   ],
   "rows": [
     {
@@ -77,6 +77,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -109,6 +110,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
@@ -141,6 +143,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
@@ -173,6 +176,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -191,12 +195,12 @@
         "window-pane"
       ],
       "blocker": {
-        "kind": "flow-g6-neo-quoted-only",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+        "kind": "flow-g6-classic-glyph-budget",
+        "site": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "detail": "Every bound shape (including curved-trapezoid, mapped in FS-5 G7) and the single-quoted label are now accepted, but five heavy classic glyph contours fully interconnected in one graph exceed the bounded classic-shape routing/Work ceiling: the low-port glyphs (triangle, hourglass, bow-tie, datastore expose only two ports) cannot route the ten edges without crossing. This is quote-independent (the same graph fails with double quotes); the body stays on ordinary fallback pending the budget recalibration, and the neo frontmatter keeps the whole original source regardless."
       },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "ledger_note": "Blocked by remaining exotic-shape/budget debt"
     },
     {
       "path": "flowchart/nightly-check/shape-themes/03-connect-all-shapes-with-each-other.mmd",
@@ -212,6 +216,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -230,12 +235,12 @@
         "tagged-document"
       ],
       "blocker": {
-        "kind": "flow-g6-curved-trapezoid-debt",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "The source binds a crossed-circle node among the still-unmapped curved-trapezoid/display alias (and neo config); the whole source stays on ordinary fallback until that shape is admitted."
+        "kind": "flow-g6-classic-glyph-budget",
+        "site": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "detail": "Every bound shape (including curved-trapezoid, mapped in FS-5 G7) and the single-quoted label are now accepted, but five heavy classic glyph contours fully interconnected in one graph exceed the bounded classic-shape routing/Work ceiling: the low-port glyphs (triangle, hourglass, bow-tie, datastore expose only two ports) cannot route the ten edges without crossing. This is quote-independent (the same graph fails with double quotes); the body stays on ordinary fallback pending the budget recalibration, and the neo frontmatter keeps the whole original source regardless."
       },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "ledger_note": "Blocked by remaining exotic-shape/budget debt"
     },
     {
       "path": "flowchart/nightly-check/shape-themes/07-connect-all-shapes-with-each-other.mmd",
@@ -250,16 +255,17 @@
           "text": "---\n"
         }
       },
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
         "restored_240": "source"
       },
       "expected_body_states": {
-        "wide_240": "source",
-        "narrow_40": "source",
-        "restored_240": "source"
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
       },
       "shapes": [
         "rect",
@@ -267,13 +273,8 @@
         "start",
         "stop"
       ],
-      "blocker": {
-        "kind": "flow-g6-neo-quoted-only",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
-      },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "blocker": null,
+      "ledger_note": "FS-sq single-quoted label admitted; body draws, whole original stays neo-gated (body-only)"
     },
     {
       "path": "flowchart/nightly-check/shape-themes/12-connect-all-shapes-with-each-other.mmd",
@@ -289,6 +290,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -307,12 +309,12 @@
         "window-pane"
       ],
       "blocker": {
-        "kind": "flow-g6-neo-quoted-only",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+        "kind": "flow-g6-classic-glyph-budget",
+        "site": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "detail": "Every bound shape (including curved-trapezoid, mapped in FS-5 G7) and the single-quoted label are now accepted, but five heavy classic glyph contours fully interconnected in one graph exceed the bounded classic-shape routing/Work ceiling: the low-port glyphs (triangle, hourglass, bow-tie, datastore expose only two ports) cannot route the ten edges without crossing. This is quote-independent (the same graph fails with double quotes); the body stays on ordinary fallback pending the budget recalibration, and the neo frontmatter keeps the whole original source regardless."
       },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "ledger_note": "Blocked by remaining exotic-shape/budget debt"
     },
     {
       "path": "flowchart/nightly-check/shape-themes/13-connect-all-shapes-with-each-other.mmd",
@@ -328,6 +330,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -346,12 +349,12 @@
         "tagged-document"
       ],
       "blocker": {
-        "kind": "flow-g6-curved-trapezoid-debt",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "The source binds a crossed-circle node among the still-unmapped curved-trapezoid/display alias (and neo config); the whole source stays on ordinary fallback until that shape is admitted."
+        "kind": "flow-g6-classic-glyph-budget",
+        "site": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "detail": "Every bound shape (including curved-trapezoid, mapped in FS-5 G7) and the single-quoted label are now accepted, but five heavy classic glyph contours fully interconnected in one graph exceed the bounded classic-shape routing/Work ceiling: the low-port glyphs (triangle, hourglass, bow-tie, datastore expose only two ports) cannot route the ten edges without crossing. This is quote-independent (the same graph fails with double quotes); the body stays on ordinary fallback pending the budget recalibration, and the neo frontmatter keeps the whole original source regardless."
       },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "ledger_note": "Blocked by remaining exotic-shape/budget debt"
     },
     {
       "path": "flowchart/nightly-check/shape-themes/18-connect-all-shapes-with-each-other.mmd",
@@ -366,16 +369,17 @@
           "text": "---\n"
         }
       },
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
         "restored_240": "source"
       },
       "expected_body_states": {
-        "wide_240": "source",
-        "narrow_40": "source",
-        "restored_240": "source"
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
       },
       "shapes": [
         "rect",
@@ -383,13 +387,8 @@
         "start",
         "stop"
       ],
-      "blocker": {
-        "kind": "flow-g6-neo-quoted-only",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
-      },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "blocker": null,
+      "ledger_note": "FS-sq single-quoted label admitted; body draws, whole original stays neo-gated (body-only)"
     },
     {
       "path": "flowchart/nightly-check/shape-themes/22-connect-all-shapes-with-each-other.mmd",
@@ -405,6 +404,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -423,12 +423,12 @@
         "window-pane"
       ],
       "blocker": {
-        "kind": "flow-g6-neo-quoted-only",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+        "kind": "flow-g6-classic-glyph-budget",
+        "site": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "detail": "Every bound shape (including curved-trapezoid, mapped in FS-5 G7) and the single-quoted label are now accepted, but five heavy classic glyph contours fully interconnected in one graph exceed the bounded classic-shape routing/Work ceiling: the low-port glyphs (triangle, hourglass, bow-tie, datastore expose only two ports) cannot route the ten edges without crossing. This is quote-independent (the same graph fails with double quotes); the body stays on ordinary fallback pending the budget recalibration, and the neo frontmatter keeps the whole original source regardless."
       },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "ledger_note": "Blocked by remaining exotic-shape/budget debt"
     },
     {
       "path": "flowchart/nightly-check/shape-themes/24-connect-all-shapes-with-each-other.mmd",
@@ -444,6 +444,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -462,12 +463,12 @@
         "tagged-document"
       ],
       "blocker": {
-        "kind": "flow-g6-curved-trapezoid-debt",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "The source binds a crossed-circle node among the still-unmapped curved-trapezoid/display alias (and neo config); the whole source stays on ordinary fallback until that shape is admitted."
+        "kind": "flow-g6-classic-glyph-budget",
+        "site": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "detail": "Every bound shape (including curved-trapezoid, mapped in FS-5 G7) and the single-quoted label are now accepted, but five heavy classic glyph contours fully interconnected in one graph exceed the bounded classic-shape routing/Work ceiling: the low-port glyphs (triangle, hourglass, bow-tie, datastore expose only two ports) cannot route the ten edges without crossing. This is quote-independent (the same graph fails with double quotes); the body stays on ordinary fallback pending the budget recalibration, and the neo frontmatter keeps the whole original source regardless."
       },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "ledger_note": "Blocked by remaining exotic-shape/budget debt"
     },
     {
       "path": "flowchart/nightly-check/shape-themes/27-connect-all-shapes-with-each-other.mmd",
@@ -482,16 +483,17 @@
           "text": "---\n"
         }
       },
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
         "restored_240": "source"
       },
       "expected_body_states": {
-        "wide_240": "source",
-        "narrow_40": "source",
-        "restored_240": "source"
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
       },
       "shapes": [
         "rect",
@@ -499,13 +501,8 @@
         "start",
         "stop"
       ],
-      "blocker": {
-        "kind": "flow-g6-neo-quoted-only",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
-      },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "blocker": null,
+      "ledger_note": "FS-sq single-quoted label admitted; body draws, whole original stays neo-gated (body-only)"
     },
     {
       "path": "flowchart/nightly-check/shape-themes/32-connect-all-shapes-with-each-other.mmd",
@@ -521,6 +518,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -539,12 +537,12 @@
         "window-pane"
       ],
       "blocker": {
-        "kind": "flow-g6-neo-quoted-only",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
+        "kind": "flow-g6-classic-glyph-budget",
+        "site": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "detail": "Every bound shape (including curved-trapezoid, mapped in FS-5 G7) and the single-quoted label are now accepted, but five heavy classic glyph contours fully interconnected in one graph exceed the bounded classic-shape routing/Work ceiling: the low-port glyphs (triangle, hourglass, bow-tie, datastore expose only two ports) cannot route the ten edges without crossing. This is quote-independent (the same graph fails with double quotes); the body stays on ordinary fallback pending the budget recalibration, and the neo frontmatter keeps the whole original source regardless."
       },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "ledger_note": "Blocked by remaining exotic-shape/budget debt"
     },
     {
       "path": "flowchart/nightly-check/shape-themes/33-connect-all-shapes-with-each-other.mmd",
@@ -560,6 +558,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -578,12 +577,12 @@
         "tagged-document"
       ],
       "blocker": {
-        "kind": "flow-g6-curved-trapezoid-debt",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "The source binds a crossed-circle node among the still-unmapped curved-trapezoid/display alias (and neo config); the whole source stays on ordinary fallback until that shape is admitted."
+        "kind": "flow-g6-classic-glyph-budget",
+        "site": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (classic glyph router/Work budget)",
+        "detail": "Every bound shape (including curved-trapezoid, mapped in FS-5 G7) and the single-quoted label are now accepted, but five heavy classic glyph contours fully interconnected in one graph exceed the bounded classic-shape routing/Work ceiling: the low-port glyphs (triangle, hourglass, bow-tie, datastore expose only two ports) cannot route the ten edges without crossing. This is quote-independent (the same graph fails with double quotes); the body stays on ordinary fallback pending the budget recalibration, and the neo frontmatter keeps the whole original source regardless."
       },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "ledger_note": "Blocked by remaining exotic-shape/budget debt"
     },
     {
       "path": "flowchart/nightly-check/shape-themes/37-connect-all-shapes-with-each-other.mmd",
@@ -598,16 +597,17 @@
           "text": "---\n"
         }
       },
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
         "restored_240": "source"
       },
       "expected_body_states": {
-        "wide_240": "source",
-        "narrow_40": "source",
-        "restored_240": "source"
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
       },
       "shapes": [
         "rect",
@@ -615,13 +615,8 @@
         "start",
         "stop"
       ],
-      "blocker": {
-        "kind": "flow-g6-neo-quoted-only",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_shape_data vocabulary)",
-        "detail": "Every bound shape is mapped, but the whole original is rejected by neo look/theme config and the body independently by single-quoted shape-data labels (flow_shape_data accepts only double quotes); the source stays on ordinary fallback."
-      },
-      "ledger_note": "Blocked by remaining exotic-shape/theme debt"
+      "blocker": null,
+      "ledger_note": "FS-sq single-quoted label admitted; body draws, whole original stays neo-gated (body-only)"
     }
   ]
 }

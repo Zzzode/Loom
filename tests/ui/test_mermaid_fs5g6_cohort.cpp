@@ -3,8 +3,10 @@
 // the pinned manifest. The three alias smoke fixtures (16 framed/stop,
 // 28 filled/junction, 37 crossed/summary) render body and whole-original
 // at 240 wide and restored with their ring contours retained; only the
-// fixed-size filled-circle fixture draws narrow_40; the twelve compound
-// shape-theme rows stay source.
+// fixed-size filled-circle fixture draws narrow_40. The FS-sq follow-up
+// adds four body-only connect-all rows whose body draws after
+// single-quoted labels were admitted while the neo-gated whole original
+// stays source; the remaining eight compound rows stay source.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -75,6 +77,7 @@ JsonDoc parse_doc(const fs::path& path) {
 struct Row {
     std::string path;
     bool draw = false;
+    bool body_only = false;
     std::array<std::string, 3> original_states;
     std::array<std::string, 3> body_states;
 };
@@ -89,6 +92,8 @@ std::vector<Row> read_rows(const JsonVal& root) {
         Row row;
         row.path = value.get_string("path");
         row.draw = value.get_string("prediction") == "predicted-draw";
+        row.body_only = value.has("track_scope") &&
+                        value.get_string("track_scope") == "body-only";
         row.original_states = load(value.get("expected_states"));
         row.body_states = load(value.get("expected_body_states"));
         rows.push_back(std::move(row));
@@ -107,9 +112,10 @@ TEST(MermaidFs5g6Cohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_fs5g6_cohort/v1");
     const auto counts = root.get("counts");
     EXPECT_EQ(counts.get_int("total"), 15);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 3);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 12);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 7);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 8);
     EXPECT_EQ(counts.get_int("predicted_original_draw"), 3);
+    EXPECT_EQ(counts.get_int("predicted_body_only_draw"), 4);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     const auto manifest = parse_doc(kManifest);
@@ -126,7 +132,8 @@ TEST(MermaidFs5g6Cohort, LedgerSchemaReviewCountsAndManifest) {
 
 TEST(MermaidFs5g6Cohort, BodyAndOriginalStatesMatchLedger) {
     const auto ledger = parse_doc(kLedger);
-    int draw = 0;
+    int whole_draw = 0;
+    int body_only = 0;
     for (const auto& row : read_rows(ledger.root())) {
         const auto bytes = read_file(kCases / row.path);
         const auto body = body_after_frontmatter(bytes);
@@ -136,14 +143,25 @@ TEST(MermaidFs5g6Cohort, BodyAndOriginalStatesMatchLedger) {
         const CellCapture wide = capture(body, "mermaid", kWide);
         EXPECT_TRUE(same_surface(wide, capture(body, "mermaid", kWide))) << row.path;
         if (row.draw) {
-            ++draw;
+            // Both whole-and-body and body-only rows draw the body.
             ASSERT_FALSE(same_surface(wide, capture(body, "text", kWide))) << row.path;
             EXPECT_EQ(wide.text.find("shape:"), std::string::npos) << row.path;
             if (row.path.find("/28-all-f-circ") != std::string::npos)
                 EXPECT_NE(wide.text.find("█"), std::string::npos) << row.path;
+            if (row.body_only) {
+                ++body_only;
+                // The neo-gated whole original must remain exact source.
+                EXPECT_TRUE(same_surface(capture(bytes, "mermaid", kWide),
+                                          capture(bytes, "text", kWide)))
+                    << row.path;
+                EXPECT_EQ(row.original_states[0], "source") << row.path;
+            } else {
+                ++whole_draw;
+            }
         } else {
             EXPECT_TRUE(same_surface(wide, capture(body, "text", kWide))) << row.path;
         }
     }
-    EXPECT_EQ(draw, 3);
+    EXPECT_EQ(whole_draw, 3);
+    EXPECT_EQ(body_only, 4);
 }

@@ -6138,9 +6138,12 @@ const Fs5g5CohortEntry* fs5g5_cohort_row(std::string_view path) {
 // RFC 0031 FS-5 G6 circle-family cohort: the reviewed ledger at
 // tools/mermaid/fs5g6-cohort.json. Three circle alias smoke fixtures (16
 // framed/stop, 28 filled/junction, 37 crossed/summary) draw on both tracks
-// (narrow per-row); twelve compound shape-theme rows stay source.
+// (narrow per-row); the FS-sq follow-up adds four body-only connect-all
+// rows (body draws, neo-gated whole stays source); eight compound rows
+// stay source.
 struct Fs5g6CohortEntry {
     bool draw = false;
+    bool body_only = false;
     std::array<std::string, 3> original_states;
     std::array<std::string, 3> body_states;
 };
@@ -6155,6 +6158,8 @@ const std::map<std::string, Fs5g6CohortEntry>& fs5g6_cohort_map() {
         parsed->root().get("rows").iter([&](const JsonVal row) {
             Fs5g6CohortEntry entry;
             entry.draw = row.get_string("prediction") == "predicted-draw";
+            entry.body_only = row.has("track_scope") &&
+                              row.get_string("track_scope") == "body-only";
             auto load = [](JsonVal states) {
                 return std::array<std::string, 3>{states.get_string("wide_240"),
                                                   states.get_string("narrow_40"),
@@ -9479,9 +9484,9 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                         observations.push_back(std::move(row));
                     }
                 } else if (const auto* fs5g6 = fs5g6_cohort_row(path)) {
-                    // FS-5 G6: circle-family contours. Three draw bodies;
-                    // compound rows keep source via run_case (in practice
-                    // intercepted by earlier cohort branches).
+                    // FS-5 G6 circle contours plus the FS-sq body-only
+                    // connect-all rows; non-draw compound rows keep source
+                    // via run_case.
                     if (!fs5g6->draw) {
                         observations.push_back(run_case(path, "body_diagnostic", body, diagnostic));
                     } else {
@@ -9491,7 +9496,9 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                         row.type = "flowchart";
                         row.source_sha256 = digest(body);
                         row.expected = "drawn";
-                        row.reason = "RFC-0031 FS-5 G6 reviewed circle-family cohort (body)";
+                        row.reason = fs5g6->body_only
+                                         ? "RFC-0031 FS-sq single-quote body-only cohort (body)"
+                                         : "RFC-0031 FS-5 G6 reviewed circle-family cohort (body)";
                         const auto state_status = [](const std::string& state) {
                             return state == "drawn" ? "drawn" : "source_fallback";
                         };
@@ -15116,9 +15123,12 @@ Observation run_official_flow400_case(
         }
         // RFC 0031 FS-5 G6: the three circle-family alias smoke fixtures
         // (framed/stop, filled/junction, crossed/summary) admit once their
-        // contours exist. Five frames prove each admission inline; the
+        // contours exist. The FS-sq body-only rows are excluded here (their
+        // neo-gated whole original stays source) and handled solely by the
+        // body_diagnostic hook. Five frames prove each admission inline; the
         // durable gate is test_mermaid_fs5g6_cohort.
-        if (const auto* fs5g6 = fs5g6_cohort_row(path); fs5g6 && fs5g6->draw) {
+        if (const auto* fs5g6 = fs5g6_cohort_row(path);
+            fs5g6 && fs5g6->draw && !fs5g6->body_only) {
             p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
             const bool wide_source = flow_oracle::flow400_same(*frames[0], *frames[3], work);
             p.narrow_ordinary = flow_oracle::flow400_same(*frames[1], *frames[4], work);

@@ -1249,6 +1249,32 @@ struct FlowShapeData {
     bool icon = false;
 };
 
+// Reads a shape-data label value, which mermaid delimits with either a
+// single or double quote. Returns the decoded label and advances past the
+// closing quote, or nullopt on a missing/unterminated/escaped value. Both
+// quote styles share one strict rule: no backslash escapes and no embedded
+// double quote, so the plain-label validator never sees an unbalanced
+// quote. Decoding the unquoted inner text via label() also trims
+// surrounding whitespace; no pinned corpus label carries such padding, so
+// accepted output matches the prior double-quote path on every fixture.
+// (The AWS icon *name* is not routed through here; that fixed vocabulary
+// stays double-quoted.)
+std::optional<std::string> read_shape_data_label(Scanner& scanner) {
+    if (scanner.rest.empty()) return {};
+    const char quote = scanner.rest.front();
+    if (quote != '"' && quote != '\'') return {};
+    const auto close = scanner.rest.find(quote, 1u);
+    if (close == std::string_view::npos) return {};
+    const auto inner = scanner.rest.substr(1u, close - 1u);
+    if (inner.find('\\') != std::string_view::npos ||
+        inner.find('"') != std::string_view::npos)
+        return {};
+    const auto decoded = label(inner);
+    if (!decoded) return {};
+    scanner.rest.remove_prefix(close + 1u);
+    return decoded->text;
+}
+
 std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
     // RFC 0031 E5: this closed fixed-token production is covered by the
     // whole-body flow_parse_prepay fee.
@@ -1267,13 +1293,8 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
         scanner.space();
         if (!scanner.take(":")) return {};
         scanner.space();
-        if (scanner.rest.empty() || scanner.rest.front() != '"') return {};
-        const auto end = scanner.rest.find('"', 1u);
-        if (end == std::string_view::npos) return {};
-        const auto decoded = label(scanner.rest.substr(0u, end + 1u));
-        if (!decoded) return {};
-        auto shape_label = std::move(decoded->text);
-        scanner.rest.remove_prefix(end + 1u);
+        auto shape_label = read_shape_data_label(scanner);
+        if (!shape_label) return {};
         scanner.space();
         if (!scanner.take("}")) return {};
         return FlowShapeData{Shape::Rectangle, std::move(shape_label), false};
@@ -1308,13 +1329,8 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
             scanner.space();
             if (!scanner.take(":")) return {};
             scanner.space();
-            if (scanner.rest.empty() || scanner.rest.front() != '"') return {};
-            const auto end = scanner.rest.find('"', 1u);
-            if (end == std::string_view::npos) return {};
-            const auto decoded = label(scanner.rest.substr(0u, end + 1u));
-            if (!decoded) return {};
-            icon_label = decoded->text;
-            scanner.rest.remove_prefix(end + 1u);
+            icon_label = read_shape_data_label(scanner);
+            if (!icon_label) return {};
             scanner.space();
         }
         if (!scanner.take("}")) return {};
@@ -1441,13 +1457,8 @@ std::optional<FlowShapeData> flow_shape_data(Scanner& scanner, Work& work) {
         scanner.space();
         if (!scanner.take(":")) return {};
         scanner.space();
-        if (scanner.rest.empty() || scanner.rest.front() != '"') return {};
-        const auto end = scanner.rest.find('"', 1u);
-        if (end == std::string_view::npos) return {};
-        const auto decoded = label(scanner.rest.substr(0u, end + 1u));
-        if (!decoded) return {};
-        shape_label = decoded->text;
-        scanner.rest.remove_prefix(end + 1u);
+        shape_label = read_shape_data_label(scanner);
+        if (!shape_label) return {};
         scanner.space();
     }
     if (!scanner.take("}")) return {};

@@ -1255,7 +1255,7 @@ TEST(MermaidFlowSemantics, DiamondShapeAliasDrawsAsDecision) {
         EXPECT_TRUE(flow400_geometry(*frames[1], expected, work, kSentinel).empty());
 }
 
-TEST(MermaidFlowSemantics, BareFlowchartDefaultsToTBOnlyForGroupFreeProfile) {
+TEST(MermaidFlowSemantics, BareFlowchartDefaultsToTBIncludingGroupContainers) {
     constexpr std::string_view directed =
         "flowchart\nA[North source state] --> B[South target state]\n";
     const Model expected{"TB",
@@ -1285,7 +1285,26 @@ TEST(MermaidFlowSemantics, BareFlowchartDefaultsToTBOnlyForGroupFreeProfile) {
         EXPECT_TRUE(flow400_geometry(*frames[1], expected, work, kSentinel).empty());
     for (const auto& frame : frames)
         EXPECT_NE(flow400_following(*frame, work, kSentinel), frame->height);
-    check_source_policy("flowchart\nsubgraph G\nA --> B\nend\n");
+
+    // FS-7a: a direction-less header now admits group containers too, still
+    // defaulting to TB and byte-identical to an explicit TD header. The short
+    // labels fit the narrow frame, so both widths render natively and the
+    // restored frame equals the wide one.
+    constexpr std::string_view grouped = "flowchart\nsubgraph G\nA --> B\nend\n";
+    auto group_element = loom::ui::render_markdown(fenced(grouped, "mermaid"));
+    auto group_ordinary = loom::ui::render_markdown(fenced(grouped, "text"));
+    group_element->ComputeRequirement();
+    group_ordinary->ComputeRequirement();
+    const int group_height = std::max(
+        {32, group_element->requirement().min_y + 8, group_ordinary->requirement().min_y + 8});
+    const auto group_wide = capture(group_element, 240, group_height, &work);
+    const auto group_narrow = capture(group_element, 40, group_height, &work);
+    const auto group_restored = capture(group_element, 240, group_height, &work);
+    EXPECT_FALSE(flow400_same(group_wide, capture(group_ordinary, 240, group_height, &work), work));
+    EXPECT_FALSE(
+        flow400_same(group_narrow, capture(group_ordinary, 40, group_height, &work), work));
+    EXPECT_TRUE(flow400_same(group_wide, group_restored, work));
+    EXPECT_NE(flow400_following(group_wide, work, kSentinel), group_wide.height);
 }
 
 TEST(MermaidFlowResources, RetainsGroupCountAndDepthBounds) {
@@ -1436,9 +1455,13 @@ TEST(MermaidFlowSourceFacts, SiblingSubgraph57KeepsCompleteSourcesAndSharedTarge
 }
 
 TEST(MermaidFlowResources, RejectsMalformedForwardAndAggregateGroupEndpointGrammarWhole) {
-    const std::array<std::string_view, 7> sources{
+    // FS-7a admits the plain forward group reference (`A --> G` before
+    // `subgraph G`); that positive spelling is pinned in
+    // test_mermaid_fs7_subgraph.cpp. The remaining profiles are still
+    // malformed: unclosed/stray group, unterminated bracket, compound fan-out.
+    const std::array<std::string_view, 6> sources{
         {"flowchart TD\nsubgraph G\nA --> B\n", "flowchart TD\nend\nA --> B\n",
-         "flowchart TD\nA --> G\nsubgraph G\nB\nend\n", "flowchart TD\nsubgraph G [\nA\nend\n",
+         "flowchart TD\nsubgraph G [\nA\nend\n",
          "flowchart TD\nsubgraph G\nA\nend\nA & G --> B\n",
          "flowchart TD\nsubgraph G\nA\nend\nG & A --> B\n",
          "flowchart TD\nsubgraph G\nA\nend\nG --> A & B\n"}};

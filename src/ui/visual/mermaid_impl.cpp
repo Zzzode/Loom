@@ -817,6 +817,17 @@ struct Group {
     std::optional<Direction> direction;
     std::size_t order = 0;
     bool implicit_id = false;
+    // FS-7a: a shell pre-registered by the forward-reference pre-scan. It
+    // holds only the authored id so edges can target the group before its
+    // `subgraph` statement activates it; activation fills the remaining
+    // fields. A successful parse never leaves a shell deferred.
+    bool deferred = false;
+    // Set when an edge endpoint resolves to the group while it is still a
+    // deferred shell. Such a group may be declared exactly once: composing
+    // pre-declaration edges with the reopen identity-merge path is a separate
+    // reviewed interaction and stays whole-source rejected (its positive
+    // Model supplement is a standalone milestone).
+    bool forward_referenced = false;
 };
 enum class FlowStyleKind { Definition, Assignment, Direct };
 
@@ -1135,6 +1146,87 @@ std::optional<GroupHeader> flow_group_header(Scanner& group) {
             id = title->text;
     }
     return GroupHeader{std::move(id), std::move(title->text), std::move(title->runs)};
+}
+
+// FS-7a: collect the authored ids of every `subgraph` statement before the
+// main parse, so an edge may target a group whose declaration appears later
+// in the source (mermaid/dagre resolve cluster edges after the full parse).
+// The scan reuses flow_group_header unchanged, accepting exactly the headers
+// the real parser accepts and registering only fixed-id forms; quoted or
+// multi-word titles keep their generated subGraphN identity and can never be
+// forward-referenced.
+//
+// Each physical line is first split into top-level statements with the same
+// quote/bracket-aware ';' boundary parse() uses, so the text handed to
+// flow_group_header is byte-identical to what flow_statement later receives.
+// That matters for trailing-semicolon headers (`subgraph G;`,
+// `subgraph G [T];`): feeding the whole physical line would register a
+// mismatched shell (or hard-fail) and regress a source the main parser
+// admits. Bounded temporary work (at most kGroupLimit headers and one
+// GroupHeader per line) is covered by the whole-body flow_parse_prepay
+// charged before the pre-scan runs; the scan allocates no per-edge state.
+std::optional<std::vector<std::string>> flow_prescan_group_ids(std::string_view source) {
+    std::vector<std::string> ids;
+    auto scan_statement = [&](std::string_view statement) -> bool {
+        statement = trim(statement);
+        if (!statement.starts_with("subgraph ") &&
+            !statement.starts_with("subgraph\t"))
+            return true;
+        Scanner scanner{statement};
+        scanner.take("subgraph");
+        auto header = flow_group_header(scanner);
+        if (!header) return false;
+        if (header->id && std::ranges::find(ids, *header->id) == ids.end()) {
+            if (ids.size() >= kGroupLimit) return false;
+            ids.push_back(*header->id);
+        }
+        return true;
+    };
+    while (!source.empty()) {
+        const auto nl = source.find('\n');
+        auto line = source.substr(0, nl);
+        source = nl == std::string_view::npos ? std::string_view{} : source.substr(nl + 1);
+        if (line.ends_with('\r')) line.remove_suffix(1u);
+        line = trim(line);
+        if (line.empty() || line.starts_with("%%")) continue;
+        bool quoted = false, escaped = false;
+        char close = 0;
+        std::size_t start = 0;
+        for (std::size_t at = 0; at <= line.size(); ++at) {
+            const char ch = at == line.size() ? '\0' : line[at];
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (quoted && ch == '\\') {
+                escaped = true;
+                continue;
+            }
+            if (ch == '"') {
+                quoted = !quoted;
+                continue;
+            }
+            if (!quoted) {
+                if (close && ch == close)
+                    close = 0;
+                else if (!close &&
+                         (ch == '[' || ch == '(' || ch == '{' || ch == '|' ||
+                          (ch == '>' &&
+                           (at == 0u || (line[at - 1u] != '-' && line[at - 1u] != '=')))))
+                    close = ch == '[' || ch == '>' ? ']'
+                          : ch == '('             ? ')'
+                          : ch == '{'             ? '}'
+                                                  : '|';
+            }
+            if (ch != '\0' && (ch != ';' || close || quoted)) continue;
+            // An unterminated quote/bracket at the boundary rejects the
+            // pre-scan, matching the main parser's whole-source failure.
+            if (quoted || close || escaped) return {};
+            if (!scan_statement(line.substr(start, at - start))) return {};
+            start = at + 1;
+        }
+    }
+    return ids;
 }
 
 struct FlowShapeData {
@@ -1460,7 +1552,7 @@ std::optional<Endpoint> flow_endpoint(Scanner& scanner, Diagram& graph, Work& wo
     // The comparison charge precedes each scan; titles and implicit ids never
     // participate because the parser keeps no title lookup table.
     for (std::size_t index = 0u; index < graph.groups.size(); ++index) {
-        const auto& group = graph.groups[index];
+        auto& group = graph.groups[index];
         if (group.id != *id) continue;
         scanner.space();
         // A group name is an endpoint only. It cannot acquire a vertex shape,
@@ -1470,6 +1562,9 @@ std::optional<Endpoint> flow_endpoint(Scanner& scanner, Diagram& graph, Work& wo
             classic_opener(scanner.rest) || scanner.rest.starts_with("[") ||
             scanner.rest.starts_with("(") || scanner.rest.starts_with("{"))
             return {};
+        // Record a pre-declaration edge so the reopen path can keep the
+        // forward-reference + identity-merge combination fail-closed.
+        if (group.deferred) group.forward_referenced = true;
         return Endpoint{EndpointKind::Group, index};
     }
     const auto vertex =
@@ -1520,9 +1615,30 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
                 }
             }
         if (existing) {
+            auto& existing_group = graph.groups[*existing];
+            if (existing_group.deferred) {
+                // First activation of a forward-reference shell created by
+                // the pre-scan. Fill the fields the edge parser could not know
+                // and enter the normal group stack; no reopen fee is owed
+                // because the shell has never been an active container.
+                existing_group.deferred = false;
+                existing_group.text = std::move(header->title);
+                existing_group.parent =
+                    graph.group_stack.empty() ? -1 : static_cast<int>(graph.group_stack.back());
+                existing_group.order = graph.next_order++;
+                existing_group.implicit_id = false;
+                if (rich && !rich->bind_group(*existing, header->rich, work)) return false;
+                graph.group_stack.push_back(*existing);
+                return true;
+            }
             const int parent =
                 graph.group_stack.empty() ? -1 : static_cast<int>(graph.group_stack.back());
-            if (graph.groups[*existing].implicit_id || graph.groups[*existing].parent != parent ||
+            // A forward-referenced group is admitted only for a single
+            // declaration; reopening it would compose pre-declaration edge
+            // identity with the reopen merge, which has no reviewed positive
+            // Model, so the whole source stays on ordinary fallback.
+            if (existing_group.forward_referenced || existing_group.implicit_id ||
+                existing_group.parent != parent ||
                 std::ranges::find(graph.group_stack, *existing) != graph.group_stack.end())
                 return false;
             // Only a newly activated bare repeat pays the delta to the
@@ -1824,7 +1940,7 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
         if (value < 0x20 && value != '\n' && value != '\r' && value != '\t') return {};
     }
     Diagram diagram;
-    bool have_header = false, default_direction_header = false;
+    bool have_header = false;
     bool have_statement = false;
     while (!source.empty()) {
         const auto end = source.find('\n');
@@ -1881,7 +1997,6 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
                 if (!kind || (*kind != "graph" && *kind != "flowchart")) return {};
                 if (header.rest.empty()) {
                     diagram.direction = Direction::Down;
-                    default_direction_header = true;
                 } else {
                     if (header.rest.front() != ' ' && header.rest.front() != '\t') return {};
                     header.space();
@@ -1901,6 +2016,19 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
                     if (!flow_parse_prepay(original, work, false)) return {};
                     prepaid = true;
                 }
+                // FS-7a: pre-register every fixed-id subgraph as a deferred
+                // shell so edges appearing before its declaration resolve to
+                // EndpointKind::Group through the ordinary lookup path. This
+                // runs on the first (header) statement, so no vertex exists
+                // yet; a later vertex/group id clash is rejected by the
+                // subgraph branch and Diagram::vertex group-name guard. Any
+                // shell not reached by its declaration fails the deferred-
+                // residue check at the end of the parse.
+                const auto future_groups = flow_prescan_group_ids(original);
+                if (!future_groups) return {};
+                for (const auto& group_id : *future_groups)
+                    diagram.groups.push_back(
+                        {group_id, std::string{}, -1, std::nullopt, 0, false, true});
             } else {
                 if (flow_style_keyword(statement)) {
                     if (!style_result || !diagram.group_stack.empty() ||
@@ -1913,11 +2041,12 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
             }
         }
     }
-    // Mermaid defaults an omitted direction to TB. Keep that newly admitted
-    // header profile closed over group-free diagrams until the group layout
-    // can guarantee whole-scene output for its nested-container cases.
+    // FS-7a: a direction-less header defaults to TB (Direction::Down), the
+    // same layout input as an explicit `flowchart TD`, so group containers
+    // no longer reject that header profile. A deferred shell would mean a
+    // pre-registered group never reached its activation statement.
     if (!have_header || !have_statement || !diagram.group_stack.empty() ||
-        (default_direction_header && !diagram.groups.empty()) ||
+        std::ranges::any_of(diagram.groups, [](const Group& group) { return group.deferred; }) ||
         (diagram.vertices.empty() && diagram.groups.empty()))
         return {};
     if (saw_reopen) {

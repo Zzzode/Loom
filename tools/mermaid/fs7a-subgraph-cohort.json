@@ -1,0 +1,223 @@
+{
+  "schema": "loom_mermaid_fs7a_subgraph_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-7a-subgraph-grammar",
+  "grammar_projection": {
+    "direction_less_header": "flowchart/graph without a direction defaults to TB; group containers are byte-identical to an explicit TD header",
+    "forward_group_reference": "fixed-id subgraphs are pre-registered as deferred shells so edges may target a group before its declaration; closed group-endpoint grammar (scalar, solid, one-way, unlabelled, length one) is unchanged"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the subgraph fallback originals whose sole body blocker is the direction-less-header guard or a forward group reference",
+    "roots": [
+      "flowchart"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, FS-7a subgraph grammar, 2026-11-08)",
+    "date": "2026-11-08",
+    "verdict": "approved",
+    "note": "Independent read-only adversarial review (fresh general-purpose agent, 2026-11-08), two rounds. Round 1 REQUEST CHANGES; all findings closed: pre-scan semicolon boundaries now mirror the main parser's quote/bracket splitter (MAJOR), generator preserves the review block, unreachable vertex-clash check removed, pre-scan Work coverage documented, 7827 blocker restated as independently checkable structural facts. A fail-closed carve-out keeps forward-reference + reopen identity merge on ordinary fallback pending a separate positive-Model supplement; all 7 cohort rows use single declarations, so it costs no row. Round 2 APPROVE with no code defect; frozen Class285 (25/260/0), the 48 gaps, and the repeated-subgraph pinned asset are untouched."
+  },
+  "counts": {
+    "total": 7,
+    "predicted_draw": 7,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 3
+  },
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/dagre/3-dagre-a-link-with-correct-arrowhead-to-a-subgraph.mmd",
+      "family": "flowchart",
+      "sha256": "af2ddb380ed074d7a5bd6f366112db77d16ab2db70cf6a7fa3a0711792f9313c",
+      "manifest_sha256": "af2ddb380ed074d7a5bd6f366112db77d16ab2db70cf6a7fa3a0711792f9313c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7a subgraph grammar (direction-less header and forward group references) admitted"
+    },
+    {
+      "path": "flowchart/visual-check/3-a-link-with-correct-arrowhead-to-a-subgraph.mmd",
+      "family": "flowchart",
+      "sha256": "b7510250a50f57eb983ba34f9df3f47d1076f69a450e5500d82eb5cc29b9ade7",
+      "manifest_sha256": "b7510250a50f57eb983ba34f9df3f47d1076f69a450e5500d82eb5cc29b9ade7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7a subgraph grammar (direction-less header and forward group references) admitted"
+    },
+    {
+      "path": "flowchart/visual-check/5059-should-render-when-subgraph-contains-only-subgraphs-has-link-to-outside-and-itself-is-part-of-a-link.mmd",
+      "family": "flowchart",
+      "sha256": "26ba35022c048d3d3051ece73d52c095650df3626b28ee470b01c5534dddcbdf",
+      "manifest_sha256": "26ba35022c048d3d3051ece73d52c095650df3626b28ee470b01c5534dddcbdf",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7a subgraph grammar (direction-less header and forward group references) admitted"
+    },
+    {
+      "path": "flowchart/nightly-check/dagre/dagre-should-keep-the-entry-node-on-top-of-a-recursive-flow-nested-in-a-subgraph-with-dagre-keepentrynodeontop-true-7827.mmd",
+      "family": "flowchart",
+      "sha256": "a4df0847a6680b16ad68770bd06d2ce9289417cb602e244e3e02e153628f91db",
+      "manifest_sha256": "a4df0847a6680b16ad68770bd06d2ce9289417cb602e244e3e02e153628f91db",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7a subgraph grammar admits the body only; whole-source envelope render rejects at the 1,000,000 Work ceiling (kWorkLimit); all its frontmatter keys are admitted and the bare body draws, so only the deferred FS-1b gas-meter recalibration remains (also listed in docs/dev/mermaid-unsuccessful-cases.md)"
+    },
+    {
+      "path": "flowchart/visual-check/3258-should-render-subgraphs-with-large-nodespacing-and-rankspacing.mmd",
+      "family": "flowchart",
+      "sha256": "f036faefd20021fb8e76876326bb50c2d6ee602a7e9fadb4ada51aa6b1577170",
+      "manifest_sha256": "f036faefd20021fb8e76876326bb50c2d6ee602a7e9fadb4ada51aa6b1577170",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7a subgraph grammar admits the body only; whole source rejected: flowchart.nodeSpacing/rankSpacing plus a diagram title match no whole-source admission profile"
+    },
+    {
+      "path": "flowchart/visual-check/3258-should-render-subgraphs-with-main-graph-nodespacing-and-rankspacing.mmd",
+      "family": "flowchart",
+      "sha256": "72394a12df1d9e79e69c7383bcb1b20e7e8aac0a35da35efb47e8278f0dc10c3",
+      "manifest_sha256": "72394a12df1d9e79e69c7383bcb1b20e7e8aac0a35da35efb47e8278f0dc10c3",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7a subgraph grammar admits the body only; whole source rejected: flowchart.nodeSpacing/rankSpacing plus a diagram title match no whole-source admission profile"
+    },
+    {
+      "path": "flowchart/visual-check/should-render-self-loops.mmd",
+      "family": "flowchart",
+      "sha256": "c851c77aadeedf01199e26a68f090ff292ceeb209adddcf5b2f1fcad9d687b30",
+      "manifest_sha256": "c851c77aadeedf01199e26a68f090ff292ceeb209adddcf5b2f1fcad9d687b30",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7a subgraph grammar admits the body only; whole source rejected: flowchart.subGraphTitleMargin has no whole-source admission profile"
+    }
+  ]
+}

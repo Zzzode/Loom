@@ -1,10 +1,10 @@
 // RFC 0031 FS-7a subgraph-grammar durable cohort gate. Public API only:
 // enforces tools/mermaid/fs7a-subgraph-cohort.json against the live
 // renderer and the pinned manifest. Every row draws its BODY at 240 and
-// restored while staying source at 40 columns; the three
-// whole-and-body rows additionally draw the full frontmatter original at
-// 240/restored, while the four body-only rows keep their whole original
-// on ordinary fallback behind independent, documented gates.
+// restored while staying source at 40 columns; the five whole-and-body rows
+// additionally draw the full frontmatter original at 240/restored, while the
+// two body-only rows keep their whole original on ordinary fallback behind
+// independent, documented gates.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -81,7 +81,7 @@ TEST(MermaidFs7aCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_fs7a_subgraph_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 7);
     EXPECT_EQ(root.get("counts").get_int("predicted_draw"), 7);
-    EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 3);
+    EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 5);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     const auto manifest = parse_doc(kManifest);

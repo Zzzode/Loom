@@ -18,16 +18,16 @@
     ]
   },
   "review": {
-    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, FS-7a subgraph grammar, 2026-11-08)",
-    "date": "2026-11-08",
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, FS-7a subgraph grammar, 2026-11-08; FS-spacing follow-up re-reviewed 2026-11-09, task aee66c1df9b510318)",
+    "date": "2026-11-09",
     "verdict": "approved",
-    "note": "Independent read-only adversarial review (fresh general-purpose agent, 2026-11-08), two rounds. Round 1 REQUEST CHANGES; all findings closed: pre-scan semicolon boundaries now mirror the main parser's quote/bracket splitter (MAJOR), generator preserves the review block, unreachable vertex-clash check removed, pre-scan Work coverage documented, 7827 blocker restated as independently checkable structural facts. A fail-closed carve-out keeps forward-reference + reopen identity merge on ordinary fallback pending a separate positive-Model supplement; all 7 cohort rows use single declarations, so it costs no row. Round 2 APPROVE with no code defect; frozen Class285 (25/260/0), the 48 gaps, and the repeated-subgraph pinned asset are untouched."
+    "note": "Original 2026-11-08 review approved the direction-less header and forward group reference grammar (seven body draws, three whole originals). The 2026-11-09 FS-spacing follow-up whitelists non-terminal nodeSpacing/rankSpacing envelope leaves, promoting the two 3258 rows from body-only to whole-and-body (3 -> 5 whole originals); the 7827 Work-ceiling row and the subGraphTitleMargin self-loops row stay body-only. Re-reviewed as part of the FS-spacing adversarial review (APPROVE, no MAJOR). Final cross-cohort-migration re-review (2026-11-09, task a91f43e0c0b606c1d, read-only adversarial agent, zero builds): APPROVE with zero MAJOR and zero functional MINOR; three NITs, the stale-count comments were corrected and the shadowed defensive matrix branches were proven inert (no run_case, no gap-roster or Class285 impact)."
   },
   "counts": {
     "total": 7,
     "predicted_draw": 7,
     "predicted_blocked": 0,
-    "predicted_original_draw": 3
+    "predicted_original_draw": 5
   },
   "rows": [
     {
@@ -152,18 +152,18 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
         "restored_240": "drawn"
       },
-      "ledger_note": "FS-7a subgraph grammar admits the body only; whole source rejected: flowchart.nodeSpacing/rankSpacing plus a diagram title match no whole-source admission profile"
+      "ledger_note": "FS-7a subgraph grammar (direction-less header and forward group references) admitted"
     },
     {
       "path": "flowchart/visual-check/3258-should-render-subgraphs-with-main-graph-nodespacing-and-rankspacing.mmd",
@@ -179,18 +179,18 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
         "restored_240": "drawn"
       },
-      "ledger_note": "FS-7a subgraph grammar admits the body only; whole source rejected: flowchart.nodeSpacing/rankSpacing plus a diagram title match no whole-source admission profile"
+      "ledger_note": "FS-7a subgraph grammar (direction-less header and forward group references) admitted"
     },
     {
       "path": "flowchart/visual-check/should-render-self-loops.mmd",

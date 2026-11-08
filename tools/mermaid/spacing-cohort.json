@@ -1,0 +1,142 @@
+{
+  "schema": "loom_spacing_cohort/v1",
+  "rfc": 31,
+  "phase": "flowchart-spacing-envelope",
+  "whitelist": {
+    "leaves": "flowchart.nodeSpacing and flowchart.rankSpacing as a non-negative pixel integer, bare or single/double quoted; negative, fractional, non-numeric or structured values fail closed",
+    "effect": "dagre rank positioning only; no terminal rendering effect, disclosed through the existing non-terminal envelope path"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "visual-check flowchart fixture whose only unaccepted envelope leaves are non-negative nodeSpacing/rankSpacing scalars, with no look/theme hard gate; the handDrawn nightly variants stay excluded",
+    "roots": [
+      "flowchart"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, FS-spacing envelope cohort, 2026-11-09, task aee66c1df9b510318)",
+    "date": "2026-11-09",
+    "verdict": "approved",
+    "note": "Independent read-only adversarial review (fresh general-purpose agent, 2026-11-09): APPROVE with no MAJOR findings. The nodeSpacing/rankSpacing scalar parser and the narrow spacing_profile bit predicate are fail-closed and additive; every bypass attempt (sign, fraction, exponent, quote mismatch, empty, structured, indent-2 placement, look/theme gate, unknown sibling key) is rejected. Pre-existing envelope profiles, the body track (170/182/48), Class285 and the 48-gap roster cannot move. Two MINORs (generator review preservation and selector value mirroring) and four NITs were resolved before approval. Four whole-and-body rows move whole 967 -> 971 / fallback 1178 -> 1174; Flow 251 -> 247, admitted/mutated 149 -> 153. Final cross-cohort-migration re-review (2026-11-09, task a91f43e0c0b606c1d, read-only adversarial agent, zero builds): APPROVE with zero MAJOR and zero functional MINOR; three NITs, the stale-count comments were corrected and the shadowed defensive matrix branches were proven inert (no run_case, no gap-roster or Class285 impact)."
+  },
+  "counts": {
+    "total": 4,
+    "predicted_draw": 4,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 4
+  },
+  "rows": [
+    {
+      "path": "flowchart/visual-check/22-render-a-simple-flowchart-with-nodespacing-set-to-100.mmd",
+      "family": "flowchart",
+      "sha256": "29e2c1181c903536ee1a0efbecfc845c76c010cf5b56a670f4ecf323693d5a6c",
+      "manifest_sha256": "29e2c1181c903536ee1a0efbecfc845c76c010cf5b56a670f4ecf323693d5a6c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "non-terminal nodeSpacing/rankSpacing envelope leaves admitted; terminal fixed layout ignores dagre rank spacing, so whole and body render identically at 240/restored and keep source at 40 columns"
+    },
+    {
+      "path": "flowchart/visual-check/23-render-a-simple-flowchart-with-rankspacing-set-to-100.mmd",
+      "family": "flowchart",
+      "sha256": "d31e14f1865ebdd27d60467c72defb436450ca6435354fc84ade624a47e8f904",
+      "manifest_sha256": "d31e14f1865ebdd27d60467c72defb436450ca6435354fc84ade624a47e8f904",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "non-terminal nodeSpacing/rankSpacing envelope leaves admitted; terminal fixed layout ignores dagre rank spacing, so whole and body render identically at 240/restored and keep source at 40 columns"
+    },
+    {
+      "path": "flowchart/visual-check/3258-should-render-subgraphs-with-large-nodespacing-and-rankspacing.mmd",
+      "family": "flowchart",
+      "sha256": "f036faefd20021fb8e76876326bb50c2d6ee602a7e9fadb4ada51aa6b1577170",
+      "manifest_sha256": "f036faefd20021fb8e76876326bb50c2d6ee602a7e9fadb4ada51aa6b1577170",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "non-terminal nodeSpacing/rankSpacing envelope leaves admitted; terminal fixed layout ignores dagre rank spacing, so whole and body render identically at 240/restored and keep source at 40 columns"
+    },
+    {
+      "path": "flowchart/visual-check/3258-should-render-subgraphs-with-main-graph-nodespacing-and-rankspacing.mmd",
+      "family": "flowchart",
+      "sha256": "72394a12df1d9e79e69c7383bcb1b20e7e8aac0a35da35efb47e8278f0dc10c3",
+      "manifest_sha256": "72394a12df1d9e79e69c7383bcb1b20e7e8aac0a35da35efb47e8278f0dc10c3",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "non-terminal nodeSpacing/rankSpacing envelope leaves admitted; terminal fixed layout ignores dagre rank spacing, so whole and body render identically at 240/restored and keep source at 40 columns"
+    }
+  ]
+}

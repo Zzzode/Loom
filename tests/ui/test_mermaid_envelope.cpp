@@ -475,6 +475,143 @@ TEST(MermaidEnvelope, DagreBareRenders) {
     EXPECT_EQ(text.find("flowchart LR"), std::string::npos) << text;
 }
 
+// RFC 0031 FS-spacing: nodeSpacing/rankSpacing only position dagre ranks;
+// the terminal uses its own fixed layout, so they are non-terminal envelope
+// leaves and must not hold the whole source on ordinary fallback.
+namespace {
+bool renders_natively(const std::string& source) {
+    auto element = loom::ui::mermaid::render_mermaid(source, ftxui::text("FALLBACK_MARKER"));
+    if (!element) return false;
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(240),
+                                        ftxui::Dimension::Fixed(20));
+    ftxui::Render(screen, *element);
+    return screen.ToString().find("FALLBACK_MARKER") == std::string::npos;
+}
+}  // namespace
+
+TEST(MermaidEnvelope, NodeAndRankSpacingScalarsRenderNatively) {
+    // Bare non-negative integer.
+    EXPECT_TRUE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    nodeSpacing: 100\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // Quoted integer (the pinned rankSpacing spelling).
+    EXPECT_TRUE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    rankSpacing: '100'\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // Both keys together, including the small value 1 and 0.
+    EXPECT_TRUE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    nodeSpacing: 1\n    rankSpacing: 1\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    EXPECT_TRUE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    nodeSpacing: 0\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // Combined with the already-whitelisted courier font leaf.
+    EXPECT_TRUE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  fontFamily: courier\n  flowchart:\n    nodeSpacing: 50\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // Combined with a diagram title.
+    EXPECT_TRUE(renders_natively(
+        "---\n"
+        "title: Spacing example\n"
+        "config:\n  flowchart:\n    nodeSpacing: 250\n    rankSpacing: 250\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+}
+
+TEST(MermaidEnvelope, InvalidSpacingValuesKeepWholeSource) {
+    // Negative spacing is not a valid pixel value.
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    nodeSpacing: -5\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // Fractional pixel spacing.
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    rankSpacing: 1.5\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // Non-numeric string.
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    nodeSpacing: wide\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // Structured value.
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    nodeSpacing: [10, 20]\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // Exponential notation is not an integer pixel value.
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    nodeSpacing: 1e3\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // Mismatched and single-sided quotes leave a quote byte in the scalar.
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    nodeSpacing: '100\"\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    nodeSpacing: \"100\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // Empty quoted value.
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    nodeSpacing: ''\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // A spacing key at indent 2 is an unknown top-level leaf.
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  nodeSpacing: 100\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // A handDrawn look is an independent hard gate even with spacing.
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  look: handDrawn\n  flowchart:\n    nodeSpacing: 100\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    // An unknown sibling indent-4 key keeps the whole source.
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  flowchart:\n    nodeSpacing: 100\n    minNodeWidth: 0\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+}
+
 TEST(MermaidEnvelope, ErCommentFrontmatterRendersDirectly) {
     std::string source = "---\n"
                          "# root comment\n"

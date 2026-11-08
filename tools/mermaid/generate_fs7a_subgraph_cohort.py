@@ -13,21 +13,22 @@ every other grammar feature they use was already admitted:
    deferred shell; the shell is activated, never left deferred, when its
    declaration is reached.
 
-The seven unlocked corpus rows all draw on the BODY track. Three also
-draw as whole originals because their frontmatter already matches an
-admission profile (description-only, or the layout: dagre envelope); the
-other four stay whole-source pending behind independent, unchanged
-gates:
+The seven unlocked corpus rows all draw on the BODY track. Five also
+draw as whole originals: the original three match an admission profile
+(description-only, or the layout: dagre envelope), and the two 3258
+spacing rows were promoted body-only -> whole-and-body by RFC 0031
+FS-spacing, which whitelists the non-terminal flowchart.nodeSpacing/
+rankSpacing envelope leaves (their diagram title rides the same
+spacing profile). Two rows stay whole-source pending behind
+independent, unchanged gates:
 
 - the 7827 recursive-flow row exhausts the 1,000,000 Work ceiling
   (loom::ui::mermaid::kWorkLimit) on the whole-source envelope render
   path. Every frontmatter key it uses is individually admitted and its
   bare body draws, so no grammar or config gate remains — only the
   render budget, the deferred FS-1b gas-meter recalibration;
-- the two 3258 spacing rows carry flowchart.nodeSpacing/rankSpacing,
-  which has no whole-source admission profile;
-- the self-loops row carries flowchart.subGraphTitleMargin, likewise
-  without an admission profile.
+- the self-loops row carries flowchart.subGraphTitleMargin, which has
+  no whole-source admission profile.
 
 The generator preserves an existing ledger's review block when one is
 present, so re-running it after approval cannot silently reset the
@@ -64,13 +65,9 @@ ROWS = {
          "recalibration remains (also listed in "
          "docs/dev/mermaid-unsuccessful-cases.md)"),
     "flowchart/visual-check/3258-should-render-subgraphs-with-large-nodespacing-and-rankspacing.mmd":
-        ("body-only",
-         "whole source rejected: flowchart.nodeSpacing/rankSpacing plus a "
-         "diagram title match no whole-source admission profile"),
+        ("whole-and-body", None),
     "flowchart/visual-check/3258-should-render-subgraphs-with-main-graph-nodespacing-and-rankspacing.mmd":
-        ("body-only",
-         "whole source rejected: flowchart.nodeSpacing/rankSpacing plus a "
-         "diagram title match no whole-source admission profile"),
+        ("whole-and-body", None),
     "flowchart/visual-check/should-render-self-loops.mmd":
         ("body-only",
          "whole source rejected: flowchart.subGraphTitleMargin has no "
@@ -122,10 +119,27 @@ def build(repo_root):
     review = {
         "reviewer_agent": (
             "independent read-only adversarial review (fresh "
-            "general-purpose agent, FS-7a subgraph grammar, 2026-11-08)"),
-        "date": "2026-11-08",
-        "verdict": "REVIEW_PENDING",
-        "note": "Filled by the independent review before family closure.",
+            "general-purpose agent, FS-7a subgraph grammar, 2026-11-08; "
+            "FS-spacing follow-up re-reviewed 2026-11-09, task "
+            "aee66c1df9b510318; final cross-cohort-migration re-review "
+            "task a91f43e0c0b606c1d)"),
+        "date": "2026-11-09",
+        "verdict": "approved",
+        "note": (
+            "Original 2026-11-08 review approved the direction-less header "
+            "and forward group reference grammar (seven body draws, three "
+            "whole originals). The 2026-11-09 FS-spacing follow-up "
+            "whitelists non-terminal nodeSpacing/rankSpacing envelope "
+            "leaves, promoting the two 3258 rows from body-only to "
+            "whole-and-body (3 -> 5 whole originals); the 7827 Work-ceiling "
+            "row and the subGraphTitleMargin self-loops row stay body-only. "
+            "Re-reviewed as part of the FS-spacing adversarial review "
+            "(APPROVE, no MAJOR). Final cross-cohort-migration re-review "
+            "(2026-11-09, task a91f43e0c0b606c1d, read-only adversarial "
+            "agent, zero builds): APPROVE with zero MAJOR and zero "
+            "functional MINOR; three NITs, the stale-count comments were "
+            "corrected and the shadowed defensive matrix branches were "
+            "proven inert (no run_case, no gap-roster or Class285 impact)."),
     }
     # Preserve a recorded review across regeneration so re-running the
     # generator cannot silently reset an approved verdict.

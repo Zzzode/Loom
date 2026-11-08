@@ -2504,7 +2504,9 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
         Look = 1024u,
         MaxWidth = 128u,
         TitleTopMargin = 256u,
-        DiagramPadding = 512u
+        DiagramPadding = 512u,
+        NodeSpacing = 2048u,
+        RankSpacing = 4096u
     };
 
     bool description = false, description_text = false, config = false, title = false;
@@ -2649,6 +2651,24 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
                 // the exact inert profile and matches the terminal canvas.
                 if (!mark(DiagramPadding) || trim(event.value) != "0") return {};
                 diagram_padding_zero = true;
+            } else if (event.path == "flowchart.nodeSpacing" ||
+                       event.path == "flowchart.rankSpacing") {
+                // FS-spacing: dagre rank spacing only positions nodes in the
+                // upstream SVG layout; the terminal uses its own fixed layout,
+                // so a non-negative pixel value (bare or quoted integer) is a
+                // non-terminal leaf and never changes the rendered geometry.
+                auto scalar = trim(event.value);
+                // YAML allows the pixel integer bare or wrapped in either
+                // quote style; accept both but reject a mismatched pair.
+                if (scalar.size() >= 2u &&
+                    ((scalar.front() == '"' && scalar.back() == '"') ||
+                     (scalar.front() == '\'' && scalar.back() == '\'')))
+                    scalar = trim(scalar.substr(1u, scalar.size() - 2u));
+                if (scalar.empty()) return {};
+                for (const char ch : scalar)
+                    if (ch < '0' || ch > '9') return {};
+                if (!mark(event.path == "flowchart.nodeSpacing" ? NodeSpacing : RankSpacing))
+                    return {};
             } else {
                 return {};
             }
@@ -2685,9 +2705,18 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
     const bool strict = (fields == strict_bits || fields == (strict_bits | Layout) ||
                          fields == (strict_bits | Look)) &&
                         root_html_value && nested_html_value;
+    // FS-spacing: a validated nodeSpacing/rankSpacing leaf is non-terminal,
+    // so it may accompany one of two inert cores: a bare flowchart namespace
+    // or a courier-font flowchart. Anything richer keeps its existing exact
+    // profile below; this never admits a new visual key on its own.
+    const unsigned spacing_mask = NodeSpacing | RankSpacing;
+    const bool spacing_profile =
+        (fields & spacing_mask) && (fields & Flowchart) &&
+        ((fields & ~spacing_mask) == Flowchart ||
+         (fields & ~spacing_mask) == (Font | Flowchart));
     if (legacy_dagre || dagre_diagram_title || terminal_max_width ||
         terminal_zero_diagram_padding || title_top_margin_zero_without_layout ||
-        dagre_title_top_margin_zero || root_html_only ||
+        dagre_title_top_margin_zero || root_html_only || spacing_profile ||
         (description &&
          (courier_only || courier_nested_false || logging_false || both_false || strict))) {
         FlowEnvelope result{envelope->raw_body, {}, (fields & Layout) != 0u,

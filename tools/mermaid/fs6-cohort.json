@@ -28,19 +28,19 @@
       "flowchart"
     ],
     "blocker_detection": "two fixed body-content detectors (unknown icon, non-whitelisted init directive); no generator-time rendering; residual rows abort",
-    "width_policy": "draw bodies paint at 240; the pinned simple graphs also paint at narrow_40; whole originals paint only for the 17 admitted-frontmatter rows; the four FS-init body-only rows keep whole source behind the frontmatter theme gate."
+    "width_policy": "draw bodies paint at 240; the pinned simple graphs also paint at narrow_40; whole originals paint for the 19 admitted rows (17 frontmatter plus the 2 FS-spacing leaves); the four FS-init body-only rows keep whole source behind the frontmatter theme gate."
   },
   "review": {
-    "reviewer_agent": "independent read-only adversarial review (D-066 FS-6 fontawesome icons, 2026-11-06; FS-init logLevel/accessibility follow-up re-reviewed 2026-11-08, task a84b30aa96dc983db)",
-    "date": "2026-11-08",
+    "reviewer_agent": "independent read-only adversarial review (D-066 FS-6 fontawesome icons, 2026-11-06; FS-init follow-up 2026-11-08 task a84b30aa96dc983db; FS-spacing follow-up 2026-11-09 task aee66c1df9b510318; final cross-cohort-migration re-review task a91f43e0c0b606c1d)",
+    "date": "2026-11-09",
     "verdict": "approved",
-    "note": "Original 2026-11-06 review approved the closed {car, code} icon projection (fixed marker cell, retained human text, unknown markers fail closed), the zero-residual selection, the pinned per-width geometry sets, and the body/original matrix wiring. The 2026-11-08 FS-init follow-up review (independent read-only adversarial agent, first round REQUEST-CHANGES then APPROVE after the two MAJOR findings were closed) admits single-quoted logLevel directives and accTitle/accDescr scalars: the four legacy theme fixtures migrate from blocked (flow-fa-theme-config) to body-only draw — their body draws at 240/restored while the frontmatter theme key keeps the whole original source; the four new-syntax fixtures, whose directive adds a theme key, stay blocked. Partition 34/20/17 -> 38 body draw (17 whole-and-body + 21 body-only scope, the four FS-init rows being the new body-only members) / 16 blocked; the whole-original count stays 17. Fixture sha pins are unchanged."
+    "note": "Original 2026-11-06 review approved the closed {car, code} icon projection (fixed marker cell, retained human text, unknown markers fail closed), the zero-residual selection, the pinned per-width geometry sets, and the body/original matrix wiring. The 2026-11-08 FS-init follow-up admitted single-quoted logLevel directives and accTitle/accDescr scalars: four legacy theme fixtures migrated blocked -> body-only draw. The 2026-11-09 FS-spacing follow-up whitelists non-terminal nodeSpacing/rankSpacing envelope leaves: the 22/23 nodespacing/rankspacing fixtures migrate body-only -> whole-and-body, so whole originals move 17 -> 19 (body-only scope 21 -> 19); the 38/16 body partition and fixture sha pins are unchanged. Re-reviewed within the FS-spacing adversarial review (APPROVE, no MAJOR). Final cross-cohort-migration re-review (2026-11-09, task a91f43e0c0b606c1d, read-only adversarial agent, zero builds): APPROVE with zero MAJOR and zero functional MINOR; three NITs, the stale-count comments were corrected and the shadowed defensive matrix branches were proven inert (no run_case, no gap-roster or Class285 impact)."
   },
   "counts": {
     "total": 54,
     "predicted_draw": 38,
     "predicted_blocked": 16,
-    "predicted_original_draw": 17
+    "predicted_original_draw": 19
   },
   "blocker_vocabulary": [
     "flow-fa-unknown-icon",
@@ -1349,11 +1349,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -1364,7 +1364,7 @@
         "car"
       ],
       "blocker": null,
-      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+      "ledger_note": "FS-spacing: non-terminal nodeSpacing/rankSpacing envelope leaves admitted, so the whole original now draws"
     },
     {
       "path": "flowchart/visual-check/23-render-a-simple-flowchart-with-rankspacing-set-to-100.mmd",
@@ -1380,11 +1380,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -1395,7 +1395,7 @@
         "car"
       ],
       "blocker": null,
-      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
+      "ledger_note": "FS-spacing: non-terminal nodeSpacing/rankSpacing envelope leaves admitted, so the whole original now draws"
     },
     {
       "path": "flowchart/visual-check/33-should-render-a-simple-flowchart-with-diagrampadding-set-to-0.mmd",

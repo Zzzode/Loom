@@ -713,11 +713,11 @@ TEST(MarkdownMermaid, SequenceUnclosedActivationRetainsItsOwnedTail) {
 TEST(MarkdownMermaid, UnsupportedConstructsKeepEntireOriginalSource) {
     for (const std::string source :
          {"classDiagram\nclass PreservedClass\nclick PreservedClass \"https://example.com\"",
-          "flowchart TD\nA --> B\nclick A \"https://example.com\"",
-          "flowchart TD\nA[before &amp; after] --> B", "flowchart TD\nA[`rich`] --> B",
+          "flowchart TD\nA[before &amp; after] --> B",
           "flowchart TD\nA[\"#quot;\"] --> B", "flowchart TD\nA[\"a\\\\b\"] --> B",
           "flowchart TD\nA --> end", "flowchart TD\nA --> B\nend",
-          "flowchart TD\nA[\"a\u061cb\"] --> B", "flowchart TD\nA[\"a\u200eb\"] --> B",
+          "flowchart TD\nA[\"a\u061cb\"] --> B",
+          "flowchart TD\nA[\"a\u200eb\"] --> B",
           "flowchart TD\nA[\"a\u200fb\"] --> B", "flowchart TD\nA --> B\nA[one]\nA[two]",
           "flowchart TD\n%%{init: {}}%%\nA --> B", "flowchart TD\nA --> B residual",
           "sequenceDiagram\nloop->>A: Ping", "sequenceDiagram\nEND->>A: Ping",
@@ -728,6 +728,13 @@ TEST(MarkdownMermaid, UnsupportedConstructsKeepEntireOriginalSource) {
         const auto expected = render_document(render_markdown("```text\n" + source + "\n```"));
         EXPECT_EQ(mermaid_document(source), expected);
     }
+    // Constructs admitted by later cohorts draw natively instead of keeping
+    // the source: flowchart click bindings (FS-2, a non-visual no-op) and
+    // backtick markdown labels (FS-1). The LRM/RLM/ALM label cases in the
+    // loop above still keep the verbatim source.
+    expect_diagram(mermaid_document("flowchart TD\nA --> B\nclick A \"https://example.com\""),
+                   "flowchart TD");
+    expect_diagram(mermaid_document("flowchart TD\nA[`rich`] --> B"), "flowchart TD");
     expect_diagram(mermaid_document("flowchart TD\nA --> B\nsubgraph PreservedGroup\nC\nend"),
                    "flowchart TD");
     expect_diagram(mermaid_document("flowchart TD\nA[before<br/>after] --> B"), "flowchart TD");
@@ -895,17 +902,33 @@ TEST(MarkdownMermaid, FullSyntaxScanHandlesLongNumericRunsAndNumericPrefaces) {
 
 // RFC 0030 Phase B: these minimized regressions are derived from the pinned
 // official corpus/grammar. They are not original upstream fixture passes.
-TEST(MarkdownMermaid, OfficialFontAwesomeLabelsKeepSourceRatherThanLiteralIcons) {
+TEST(MarkdownMermaid, OfficialFontAwesomeMarkersProjectToFixedCellAndKeepHumanText) {
+    // FS-6 admits the closed {car, code} icon vocabulary: the fa:fa-<name>
+    // marker is consumed into one fixed cell (U+25A0) while the human label
+    // text survives, for every family prefix and all three label positions.
+    constexpr const char* kMarker = "\xE2\x96\xA0";  // U+25A0
     for (const auto* family : {"fa", "fab", "fak", "fal", "far", "fas"}) {
-        for (const auto& source :
-             {std::string("flowchart LR\nA[") + family + ":fa-car Car] --> B[Done]",
-              std::string("flowchart LR\nA[\"") + family + ":fa-car Car\"] --> B[Done]",
-              std::string("flowchart LR\nA -->|prefix ") + family + ":fa-car Car| B"}) {
+        const std::string sources[3] = {
+            std::string("flowchart LR\nA[") + family + ":fa-car Car] --> B[Done]",
+            std::string("flowchart LR\nA[\"") + family + ":fa-car Car\"] --> B[Done]",
+            std::string("flowchart LR\nA -->|prefix ") + family + ":fa-car Car| B"};
+        for (const auto& source : sources) {
             SCOPED_TRACE(source);
-            EXPECT_EQ(mermaid_document(source),
+            const auto rendered = mermaid_document(source);
+            EXPECT_NE(rendered,
                       render_document(render_markdown("```text\n" + source + "\n```")));
+            EXPECT_EQ(rendered.find("fa:fa-"), std::string::npos);
+            EXPECT_NE(rendered.find(kMarker), std::string::npos);
+            EXPECT_NE(rendered.find("Car"), std::string::npos);
         }
     }
+    // An unknown icon name is outside the closed vocabulary and must keep
+    // the whole source on ordinary fallback.
+    const std::string unknown = "flowchart LR\nA[fa:fa-zzzunknown Z] --> B";
+    EXPECT_EQ(mermaid_document(unknown),
+              render_document(render_markdown("```text\n" + unknown + "\n```")));
+    // These are ordinary node labels, not marker syntax (no fa:fa-<name>
+    // token), so they draw as plain text rather than projecting a marker.
     expect_diagram(mermaid_document("flowchart LR\nA[fa:description] --> B[fa:fa-]"),
                    "flowchart LR");
 }

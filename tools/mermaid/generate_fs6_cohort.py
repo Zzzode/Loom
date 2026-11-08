@@ -12,15 +12,24 @@ Selection (mechanical, byte-level, never derived from renderer output):
 FS-6 projects a recognized marker to one fixed terminal marker cell
 (U+25A0) because the terminal has no icon font, retaining the human
 label text. The admitted icon vocabulary is the closed set {car, code}.
-A selected row draws iff it has no marker outside that vocabulary AND no
-independent whole-source blocker. In the pinned corpus the other
-blockers are exactly two closed detectors, giving a 34 draw / 20
-blocked partition with zero residual:
+A selected row draws its body iff it has no marker outside that
+vocabulary AND every in-body `%%{init ...}%%` directive is on the
+whitelisted non-terminal set (single-key flowchart.htmlLabels or
+logLevel scalar grammar; RFC 0031 FS-init). In the pinned corpus the
+remaining body blockers are exactly two closed detectors, giving a
+38 body-draw / 16 blocked partition with zero residual:
   * flow-fa-unknown-icon: a marker names an icon other than car/code
     (bell, coffee, github, cogs, server, database, ...).
-  * flow-fa-theme-config: the frontmatter declares a `theme:` key or the
-    body carries an `%%{init ...}%%` directive (theme/init visual
-    payloads are Track A / later cohorts).
+  * flow-fa-theme-config: an in-body %%{init ...}%% directive carries a
+    payload outside the whitelist (e.g. a `theme` key). The four
+    new-syntax theme fixtures are the only such rows.
+
+The frontmatter `theme:` key never blocks the body track (frontmatter is
+stripped before body rendering); it keeps the WHOLE original on source
+through the envelope gate. Four legacy fixtures therefore draw body
+only (RFC 0031 FS-init also consumes their accTitle/accDescr scalars);
+they join the 17 pre-existing body-only rows, while the other 17 body
+draws also admit their whole originals.
 
 Per-width states are pinned path sets: the narrow 40-column frame draws
 only for the simple graphs that fit it; the durable cohort gtest
@@ -28,8 +37,9 @@ enforces every state live, so a geometry or vocabulary drift fails
 loudly even though the generator itself never renders.
 
 Draw bodies paint on the body track at 240 (wide + restored); 17 of the
-34 rows also draw the whole original at 240 (their frontmatter is
-admitted); the other 17 keep whole-original source. The handDrawn-look
+38 body-draw rows also draw the whole original at 240 (their
+frontmatter is admitted); the other 21 keep whole-original source (17
+pre-existing plus the 4 FS-init body-only rows). The handDrawn-look
 rows keep whole-original source with FS-8.
 
 Usage: python3 tools/mermaid/generate_fs6_cohort.py --repo-root . [--check]
@@ -61,15 +71,87 @@ WITNESS = {
         "database, creative-commons); the terminal has no glyph for it.",
     ),
     "flow-fa-theme-config": (
-        "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "The source declares a frontmatter `theme:` key or an in-body "
-        "%%{init ...}%% directive; themed visual payloads are not admitted "
-        "by the flow envelope profile (Track A / a later cohort).",
+        "src/ui/visual/mermaid_impl.cpp (flow_init_directive whitelist)",
+        "An in-body %%{init ...}%% directive carries a payload outside the "
+        "closed non-terminal whitelist (single-key flowchart.htmlLabels or "
+        "logLevel 0..5/named levels); the pinned rows add a `theme` key, so "
+        "the whole directive rejects and the body stays on ordinary "
+        "fallback.",
     ),
 }
 
 MARKER_RE = re.compile(r"fa[bklrs]?:fa-([A-Za-z0-9-]+)")
 ADMITTED_ICONS = {"car", "code"}
+LOG_LEVEL_NAMES = {"trace", "debug", "info", "warn", "error", "fatal"}
+
+# RFC 0031 FS-init: four legacy fixtures whose body directive is a
+# single-key logLevel payload (now whitelisted) and whose accTitle/
+# accDescr scalars are consumed. Their frontmatter still declares
+# `theme:`, so the body draws while the whole original stays source.
+BODY_ONLY_DRAW = {
+    "flowchart/visual-check/dark-theme-legacy-graph.mmd",
+    "flowchart/visual-check/default-theme-legacy-graph.mmd",
+    "flowchart/visual-check/forest-theme-legacy-graph.mmd",
+    "flowchart/visual-check/neutral-theme-legacy-graph.mmd",
+}
+
+DIRECTIVE_RE = re.compile(r"^\s*%%\{init:(.*)\}%%\s*$")
+
+
+def _normalize_single_quotes(payload):
+    """Mirror of normalize_directive_quotes in mermaid_impl.cpp: single
+    quotes become double quotes (backslash rejected, embedded double
+    quote escaped); double-quoted strings pass through verbatim."""
+    out = []
+    at = 0
+    while at < len(payload):
+        q = payload[at]
+        if q not in ("'", '"'):
+            out.append(q)
+            at += 1
+            continue
+        begin = at
+        at += 1
+        while at < len(payload) and payload[at] != q:
+            if q == "'" and payload[at] == "\\":
+                return None
+            at += 1
+        if at == len(payload):
+            return None
+        if q == '"':
+            out.append(payload[begin:at + 1])
+        else:
+            text = payload[begin + 1:at]
+            out.append('"' + text.replace('"', '\\"') + '"')
+        at += 1
+    return "".join(out)
+
+
+def admitted_init_directive(line):
+    """Mirror of flow_init_directive's closed one-key whitelist."""
+    match = DIRECTIVE_RE.match(line)
+    if not match:
+        return False
+    normalized = _normalize_single_quotes(match.group(1).strip())
+    if normalized is None:
+        return False
+    try:
+        payload = json.loads(normalized)
+    except json.JSONDecodeError:
+        return False
+    if not isinstance(payload, dict) or len(payload) != 1:
+        return False
+    (key, value), = payload.items()
+    if key == "logLevel":
+        if isinstance(value, bool):
+            return False
+        if isinstance(value, int):
+            return 0 <= value <= 5
+        return isinstance(value, str) and value in LOG_LEVEL_NAMES
+    if key == "flowchart":
+        return (isinstance(value, dict) and len(value) == 1 and
+                "htmlLabels" in value and isinstance(value["htmlLabels"], bool))
+    return False
 
 # Pinned per-row width/frontmatter geometry. These facts are not derivable
 # from source bytes without rendering, so they are pinned here and enforced
@@ -118,12 +200,16 @@ def split_source(text):
     return None
 
 
-def blocker(frontmatter, body):
+def body_blocker(body):
+    # The body track renders frontmatter-free text, so only in-body
+    # features can block it: an unknown icon or a non-whitelisted
+    # directive. The frontmatter theme gate belongs to the whole track.
     icons = set(MARKER_RE.findall(body))
     if icons - ADMITTED_ICONS:
         return "flow-fa-unknown-icon"
-    if re.search(r"^\s*theme:", frontmatter, re.M) or "%%{" in body:
-        return "flow-fa-theme-config"
+    for line in body.splitlines():
+        if "%%{" in line and not admitted_init_directive(line):
+            return "flow-fa-theme-config"
     return None
 
 
@@ -144,34 +230,48 @@ def build(repo_root):
         if not MARKER_RE.search(text):
             continue
         rel = path.relative_to(repo_root / CASES).as_posix()
-        kind = blocker(frontmatter, body)
+        kind = body_blocker(body)
         blocked = kind is not None
-        original_draws = (not blocked) and rel in ORIGINAL_DRAW
+        body_only = (not blocked) and rel in BODY_ONLY_DRAW
+        original_draws = (not blocked) and not body_only and rel in ORIGINAL_DRAW
         # Geometry pin consistency checks: a narrow-draw path must draw wide.
         if rel in BODY_NARROW_DRAW and blocked:
             raise ValueError(f"body narrow-draw path is blocked: {rel}")
         if rel in ORIGINAL_NARROW_DRAW and not original_draws:
             raise ValueError(f"original narrow-draw path is not an original draw: {rel}")
-        entries.append((rel, blocked, original_draws, kind))
+        if body_only and not re.search(r"^\s*theme:", frontmatter, re.M):
+            raise ValueError(f"body-only row lacks the frontmatter theme gate: {rel}")
+        if body_only and not re.search(r"^\s*acc(Title|Descr)\s*:", body, re.M):
+            raise ValueError(f"body-only row lacks accessibility statements: {rel}")
+        entries.append((rel, blocked, body_only, original_draws, kind))
     # The pinned draw sets must be subsets of the selection, and the closed
     # detectors must reproduce the partition exactly (zero residual).
-    selected = {rel for rel, _, _, _ in entries}
+    selected = {rel for rel, _, _, _, _ in entries}
     if not ORIGINAL_DRAW <= selected:
         raise ValueError("pinned original-draw path missing from selection")
-    draw_paths = {rel for rel, blocked, _, _ in entries if not blocked}
+    if not BODY_ONLY_DRAW <= selected:
+        raise ValueError("pinned body-only path missing from selection")
+    if ORIGINAL_DRAW & BODY_ONLY_DRAW:
+        raise ValueError("original-draw and body-only pin sets overlap")
+    draw_paths = {rel for rel, blocked, _, _, _ in entries if not blocked}
     if not draw_paths:
         raise ValueError("no draw rows")
     # Every pinned original-draw row must be a mechanical draw row.
     if not ORIGINAL_DRAW <= draw_paths:
         raise ValueError("pinned original-draw row is mechanically blocked")
-    # Every mechanical draw row not pinned as an original draw must keep whole
-    # source (its frontmatter is not admitted): enforced by count below.
     rows = []
     n_draw = n_blocked = n_original_draw = 0
-    for rel, blocked, original_draws, kind in entries:
+    n_body_only_scope = n_fs_init = 0
+    for rel, blocked, body_only, original_draws, kind in entries:
         n_blocked += blocked
         n_draw += not blocked
         n_original_draw += original_draws
+        n_fs_init += body_only
+        # A draw row whose whole original stays source is body-only scope.
+        # The 17 pre-existing rows already had this disposition before
+        # FS-init; the four pinned FS-init rows are the new members.
+        body_only_scope = (not blocked) and not original_draws
+        n_body_only_scope += body_only_scope
         site, detail = WITNESS[kind] if blocked else ("", "")
         manifest_row = manifest_rows[rel]
         body_narrow = (not blocked) and rel in BODY_NARROW_DRAW
@@ -183,6 +283,7 @@ def build(repo_root):
             "manifest_sha256": manifest_row["sha256"],
             "prior_status": manifest_row["raw"],
             "prediction": "predicted-blocked" if blocked else "predicted-draw",
+            "track_scope": "body-only" if body_only_scope else "whole-and-body",
             "expected_states": {
                 "wide_240": "drawn" if original_draws else "source",
                 "narrow_40": "drawn" if original_narrow else "source",
@@ -198,16 +299,22 @@ def build(repo_root):
                 {"kind": kind, "site": site, "evidence": site, "detail": detail}
                 if blocked else None),
             "ledger_note": (
+                "FS-init body-only: whitelisted logLevel directive and "
+                "accTitle/accDescr scalars admitted; the frontmatter theme "
+                "gate keeps the whole original source"
+                if body_only else
                 "FS-6 FontAwesome marker projected to a fixed terminal cell on "
                 "the body track"
                 if not blocked else
                 "Blocked by a closed source-content feature detector; the "
                 "marker vocabulary itself is only admitted for car/code"),
         })
-    if n_draw != 34 or n_blocked != 20 or n_original_draw != 17:
+    if (n_draw != 38 or n_blocked != 16 or n_original_draw != 17 or
+            n_body_only_scope != 21 or n_fs_init != 4):
         raise ValueError(
             f"partition drift: draw={n_draw} blocked={n_blocked} "
-            f"original_draw={n_original_draw}")
+            f"original_draw={n_original_draw} body_only_scope="
+            f"{n_body_only_scope} fs_init={n_fs_init}")
     return {
         "schema": SCHEMA,
         "rfc": 31,
@@ -227,25 +334,44 @@ def build(repo_root):
             "rule": "frontmatter flowchart original whose text binds a "
                     "FontAwesome fa:fa-<name> marker",
             "roots": ["flowchart"],
-            "blocker_detection": "two fixed source-content detectors "
-                                 "(unknown icon, theme/init config); no "
-                                 "generator-time rendering; residual rows abort",
+            "blocker_detection": "two fixed body-content detectors "
+                                 "(unknown icon, non-whitelisted init "
+                                 "directive); no generator-time rendering; "
+                                 "residual rows abort",
             "width_policy": "draw bodies paint at 240; the pinned simple "
                            "graphs also paint at narrow_40; whole originals "
-                           "paint only for the 17 admitted-frontmatter rows.",
+                           "paint only for the 17 admitted-frontmatter rows; "
+                           "the four FS-init body-only rows keep whole "
+                           "source behind the frontmatter theme gate.",
         },
         "review": {
             "reviewer_agent": "independent read-only adversarial review "
-                              "(D-066 FS-6 fontawesome icons, 2026-11-06)",
-            "date": "2026-11-06",
+                              "(D-066 FS-6 fontawesome icons, 2026-11-06; "
+                              "FS-init logLevel/accessibility follow-up "
+                              "re-reviewed 2026-11-08, task "
+                              "a84b30aa96dc983db)",
+            "date": "2026-11-08",
             "verdict": "approved",
-            "note": "Read-only adversarial review of the closed {car, code} "
-                    "icon projection (fixed marker cell, retained human "
-                    "text, unknown markers fail closed), the two-detector "
-                    "zero-residual selection, the pinned per-width geometry "
-                    "sets, and the body/original matrix wiring. APPROVE: "
-                    "label-only blast radius, no shared constants, gaps stay "
-                    "48, 17 originals move pending 309->292.",
+            "note": ("Original 2026-11-06 review approved the closed {car, "
+                     "code} icon projection (fixed marker cell, retained "
+                     "human text, unknown markers fail closed), the "
+                     "zero-residual selection, the pinned per-width geometry "
+                     "sets, and the body/original matrix wiring. The "
+                     "2026-11-08 FS-init follow-up review (independent "
+                     "read-only adversarial agent, first round "
+                     "REQUEST-CHANGES then APPROVE after the two MAJOR "
+                     "findings were closed) admits single-quoted logLevel "
+                     "directives and accTitle/accDescr scalars: the four "
+                     "legacy theme fixtures migrate from blocked "
+                     "(flow-fa-theme-config) to body-only draw — their body "
+                     "draws at 240/restored while the frontmatter theme key "
+                     "keeps the whole original source; the four new-syntax "
+                     "fixtures, whose directive adds a theme key, stay "
+                     "blocked. Partition 34/20/17 -> 38 body draw "
+                     "(17 whole-and-body + 21 body-only scope, the four "
+                     "FS-init rows being the new body-only members) / 16 "
+                     "blocked; the whole-original count stays 17. Fixture "
+                     "sha pins are unchanged."),
         },
         "counts": {
             "total": n_draw + n_blocked,

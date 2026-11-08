@@ -1,0 +1,142 @@
+{
+  "schema": "loom_init_loglevel_cohort/v1",
+  "rfc": 31,
+  "phase": "init-loglevel-accessibility",
+  "whitelist": {
+    "directive": "one-key %%{init}%% payload: flowchart.htmlLabels (existing) or logLevel as integer 0..5 / one of trace|debug|info|warn|error|fatal; single and double quoted strings, backslash rejected inside single quotes",
+    "accessibility": "scalar accTitle/accDescr lines consumed as non-visual no-ops; empty, >256 byte, markup/backtick content, duplicates and the accDescr block form fail closed"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "flowchart fixture whose sole body init directive is a single-key logLevel payload and whose body also carries accTitle/accDescr scalar statements",
+    "roots": [
+      "flowchart"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, FS-init logLevel/accessibility cohort, 2026-11-08, task a84b30aa96dc983db)",
+    "date": "2026-11-08",
+    "verdict": "approved",
+    "note": "Independent read-only adversarial review (fresh general-purpose agent, 2026-11-08): first round REQUEST-CHANGES caught two cross-cohort MAJORs — the four rows were already pinned as blocked in the FS-6 FontAwesome ledger (durable gate would go red) and the first OfficialMatrix hook was shadowed by the earlier FS-6 branch (dead code that would also trip the 48-gap roster). Both closed: FS-6 migrated in place to 38/16 with the rows as body-only members and the matrix hook removed, leaving this ledger as the independent durable capability gate. Re-review APPROVE; the directive normalizer mirrors class_init_meta, both whitelists are closed (logLevel 0..5/named levels, accessibility scalar contract), and the four new-syntax theme-key directives stay fail-closed."
+  },
+  "counts": {
+    "total": 4,
+    "predicted_draw": 4,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 0
+  },
+  "rows": [
+    {
+      "path": "flowchart/visual-check/dark-theme-legacy-graph.mmd",
+      "family": "flowchart",
+      "sha256": "6b7bae6e81bb2125f489c27b461548770422415b4802d6a8957c1e5a4db33620",
+      "manifest_sha256": "6b7bae6e81bb2125f489c27b461548770422415b4802d6a8957c1e5a4db33620",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "logLevel-only init directive plus accTitle/accDescr scalars admitted; body draws, whole original stays source because config.theme matches no envelope profile"
+    },
+    {
+      "path": "flowchart/visual-check/default-theme-legacy-graph.mmd",
+      "family": "flowchart",
+      "sha256": "5dbaad1e7f01360117b06eedd7f265f42fa2d9c4cf4044253a0690e399f8e219",
+      "manifest_sha256": "5dbaad1e7f01360117b06eedd7f265f42fa2d9c4cf4044253a0690e399f8e219",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "logLevel-only init directive plus accTitle/accDescr scalars admitted; body draws, whole original stays source because config.theme matches no envelope profile"
+    },
+    {
+      "path": "flowchart/visual-check/forest-theme-legacy-graph.mmd",
+      "family": "flowchart",
+      "sha256": "2da3419fa82156b3416ac14ccc686d0a4667d44ded95bbfbfbd378e438715da1",
+      "manifest_sha256": "2da3419fa82156b3416ac14ccc686d0a4667d44ded95bbfbfbd378e438715da1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "logLevel-only init directive plus accTitle/accDescr scalars admitted; body draws, whole original stays source because config.theme matches no envelope profile"
+    },
+    {
+      "path": "flowchart/visual-check/neutral-theme-legacy-graph.mmd",
+      "family": "flowchart",
+      "sha256": "587d8af5483bea71b1477d00c06766aaf1389351a1085dd1b4365c651fb1bbd1",
+      "manifest_sha256": "587d8af5483bea71b1477d00c06766aaf1389351a1085dd1b4365c651fb1bbd1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "logLevel-only init directive plus accTitle/accDescr scalars admitted; body draws, whole original stays source because config.theme matches no envelope profile"
+    }
+  ]
+}

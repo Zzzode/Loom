@@ -77,6 +77,7 @@ JsonDoc parse_doc(const fs::path& path) {
 struct Row {
     std::string path;
     bool draw = false;
+    bool body_only = false;
     std::array<std::string, 3> original_states;
     std::array<std::string, 3> body_states;
     std::vector<std::string> icons;
@@ -92,6 +93,8 @@ std::vector<Row> read_rows(const JsonVal& root) {
         Row row;
         row.path = value.get_string("path");
         row.draw = value.get_string("prediction") == "predicted-draw";
+        row.body_only = value.has("track_scope") &&
+                        value.get_string("track_scope") == "body-only";
         row.original_states = load(value.get("expected_states"));
         row.body_states = load(value.get("expected_body_states"));
         value.get("icons").iter([&](const JsonVal icon) {
@@ -116,8 +119,8 @@ TEST(MermaidFs6Cohort, LedgerMatchesSchemaReviewAndCounts) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_fs6_cohort/v1");
     const auto counts = root.get("counts");
     EXPECT_EQ(counts.get_int("total"), 54);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 34);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 20);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 38);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 16);
     EXPECT_EQ(counts.get_int("predicted_original_draw"), 17);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
@@ -128,13 +131,21 @@ TEST(MermaidFs6Cohort, LedgerMatchesSchemaReviewAndCounts) {
     EXPECT_TRUE(vocabulary.contains("flow-fa-unknown-icon"));
     EXPECT_TRUE(vocabulary.contains("flow-fa-theme-config"));
 
+    // RFC 0031 FS-init: the four legacy theme fixtures migrated from
+    // blocked to body-only draw; their whole originals stay source.
+    const std::set<std::string> kFsInitRows{
+        "flowchart/visual-check/dark-theme-legacy-graph.mmd",
+        "flowchart/visual-check/default-theme-legacy-graph.mmd",
+        "flowchart/visual-check/forest-theme-legacy-graph.mmd",
+        "flowchart/visual-check/neutral-theme-legacy-graph.mmd"};
+
     // Every draw row binds only the closed icon vocabulary; blocked rows
     // carrying the unknown-icon blocker must name at least one other icon.
     const auto manifest = parse_doc(kManifest);
     std::map<std::string, JsonVal> manifest_rows;
     manifest.root().get("fixtures").iter(
         [&](const JsonVal fixture) { manifest_rows.emplace(fixture.get_string("path"), fixture); });
-    int draw = 0, blocked = 0, original_draw = 0;
+    int draw = 0, blocked = 0, original_draw = 0, body_only = 0, fs_init = 0;
     for (const auto& row : read_rows(root)) {
         ASSERT_NE(manifest_rows.find(row.path), manifest_rows.end()) << row.path;
         EXPECT_EQ(loom::utils::crypto::sha256(read_file(kCases / row.path)),
@@ -145,13 +156,27 @@ TEST(MermaidFs6Cohort, LedgerMatchesSchemaReviewAndCounts) {
             for (const auto& icon : row.icons)
                 EXPECT_TRUE(icon == "car" || icon == "code") << icon << " " << row.path;
             if (row.original_states[0] == "drawn") ++original_draw;
+            if (row.body_only) {
+                ++body_only;
+                // A body-only row keeps the whole original source at every width.
+                EXPECT_EQ(row.original_states[0], "source") << row.path;
+                EXPECT_EQ(row.original_states[1], "source") << row.path;
+                EXPECT_EQ(row.original_states[2], "source") << row.path;
+            }
+            if (kFsInitRows.contains(row.path)) {
+                ++fs_init;
+                EXPECT_TRUE(row.body_only) << row.path;
+            }
         } else {
             ++blocked;
+            EXPECT_FALSE(row.body_only) << row.path;
         }
     }
-    EXPECT_EQ(draw, 34);
-    EXPECT_EQ(blocked, 20);
+    EXPECT_EQ(draw, 38);
+    EXPECT_EQ(blocked, 16);
     EXPECT_EQ(original_draw, 17);
+    EXPECT_EQ(body_only, 21);
+    EXPECT_EQ(fs_init, 4);
 }
 
 TEST(MermaidFs6Cohort, BodyStatesMatchLedgerWithMarkerProjection) {
@@ -175,7 +200,7 @@ TEST(MermaidFs6Cohort, BodyStatesMatchLedgerWithMarkerProjection) {
             EXPECT_TRUE(same_surface(wide, capture(body, "text", kWide))) << row.path;
         }
     }
-    EXPECT_EQ(draw, 34);
+    EXPECT_EQ(draw, 38);
 }
 
 TEST(MermaidFs6Cohort, WholeOriginalStatesMatchLedger) {

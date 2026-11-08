@@ -27,19 +27,19 @@
     "roots": [
       "flowchart"
     ],
-    "blocker_detection": "two fixed source-content detectors (unknown icon, theme/init config); no generator-time rendering; residual rows abort",
-    "width_policy": "draw bodies paint at 240; the pinned simple graphs also paint at narrow_40; whole originals paint only for the 17 admitted-frontmatter rows."
+    "blocker_detection": "two fixed body-content detectors (unknown icon, non-whitelisted init directive); no generator-time rendering; residual rows abort",
+    "width_policy": "draw bodies paint at 240; the pinned simple graphs also paint at narrow_40; whole originals paint only for the 17 admitted-frontmatter rows; the four FS-init body-only rows keep whole source behind the frontmatter theme gate."
   },
   "review": {
-    "reviewer_agent": "independent read-only adversarial review (D-066 FS-6 fontawesome icons, 2026-11-06)",
-    "date": "2026-11-06",
+    "reviewer_agent": "independent read-only adversarial review (D-066 FS-6 fontawesome icons, 2026-11-06; FS-init logLevel/accessibility follow-up re-reviewed 2026-11-08, task a84b30aa96dc983db)",
+    "date": "2026-11-08",
     "verdict": "approved",
-    "note": "Read-only adversarial review of the closed {car, code} icon projection (fixed marker cell, retained human text, unknown markers fail closed), the two-detector zero-residual selection, the pinned per-width geometry sets, and the body/original matrix wiring. APPROVE: label-only blast radius, no shared constants, gaps stay 48, 17 originals move pending 309->292."
+    "note": "Original 2026-11-06 review approved the closed {car, code} icon projection (fixed marker cell, retained human text, unknown markers fail closed), the zero-residual selection, the pinned per-width geometry sets, and the body/original matrix wiring. The 2026-11-08 FS-init follow-up review (independent read-only adversarial agent, first round REQUEST-CHANGES then APPROVE after the two MAJOR findings were closed) admits single-quoted logLevel directives and accTitle/accDescr scalars: the four legacy theme fixtures migrate from blocked (flow-fa-theme-config) to body-only draw — their body draws at 240/restored while the frontmatter theme key keeps the whole original source; the four new-syntax fixtures, whose directive adds a theme key, stay blocked. Partition 34/20/17 -> 38 body draw (17 whole-and-body + 21 body-only scope, the four FS-init rows being the new body-only members) / 16 blocked; the whole-original count stays 17. Fixture sha pins are unchanged."
   },
   "counts": {
     "total": 54,
-    "predicted_draw": 34,
-    "predicted_blocked": 20,
+    "predicted_draw": 38,
+    "predicted_blocked": 16,
     "predicted_original_draw": 17
   },
   "blocker_vocabulary": [
@@ -61,6 +61,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -91,6 +92,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -121,6 +123,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -151,6 +154,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -181,6 +185,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -211,6 +216,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -241,6 +247,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -271,6 +278,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -301,6 +309,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -331,6 +340,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -361,6 +371,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -391,6 +402,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
@@ -421,6 +433,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -451,6 +464,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -481,6 +495,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -511,6 +526,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -541,6 +557,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -571,6 +588,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -610,6 +628,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -640,6 +659,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -670,6 +690,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -700,6 +721,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -730,6 +752,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -765,6 +788,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -804,6 +828,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -843,6 +868,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -878,6 +904,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -913,6 +940,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -952,6 +980,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -987,6 +1016,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1026,6 +1056,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1065,6 +1096,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1100,6 +1132,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -1130,6 +1163,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -1160,6 +1194,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -1190,6 +1225,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -1220,6 +1256,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -1250,6 +1287,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -1280,6 +1318,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1310,6 +1349,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1340,6 +1380,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1370,6 +1411,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
@@ -1400,6 +1442,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
@@ -1430,6 +1473,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
@@ -1460,6 +1504,7 @@
         }
       },
       "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1490,6 +1535,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1528,27 +1574,23 @@
           "text": "---\n"
         }
       },
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
         "restored_240": "source"
       },
       "expected_body_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "icons": [
         "car"
       ],
-      "blocker": {
-        "kind": "flow-fa-theme-config",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
-      },
-      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+      "blocker": null,
+      "ledger_note": "FS-init body-only: whitelisted logLevel directive and accTitle/accDescr scalars admitted; the frontmatter theme gate keeps the whole original source"
     },
     {
       "path": "flowchart/visual-check/dark-theme-new-syntax.mmd",
@@ -1564,6 +1606,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1579,9 +1622,9 @@
       ],
       "blocker": {
         "kind": "flow-fa-theme-config",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_init_directive whitelist)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_init_directive whitelist)",
+        "detail": "An in-body %%{init ...}%% directive carries a payload outside the closed non-terminal whitelist (single-key flowchart.htmlLabels or logLevel 0..5/named levels); the pinned rows add a `theme` key, so the whole directive rejects and the body stays on ordinary fallback."
       },
       "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
     },
@@ -1598,27 +1641,23 @@
           "text": "---\n"
         }
       },
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
         "restored_240": "source"
       },
       "expected_body_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "icons": [
         "car"
       ],
-      "blocker": {
-        "kind": "flow-fa-theme-config",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
-      },
-      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+      "blocker": null,
+      "ledger_note": "FS-init body-only: whitelisted logLevel directive and accTitle/accDescr scalars admitted; the frontmatter theme gate keeps the whole original source"
     },
     {
       "path": "flowchart/visual-check/default-theme-new-syntax.mmd",
@@ -1634,6 +1673,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1649,9 +1689,9 @@
       ],
       "blocker": {
         "kind": "flow-fa-theme-config",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_init_directive whitelist)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_init_directive whitelist)",
+        "detail": "An in-body %%{init ...}%% directive carries a payload outside the closed non-terminal whitelist (single-key flowchart.htmlLabels or logLevel 0..5/named levels); the pinned rows add a `theme` key, so the whole directive rejects and the body stays on ordinary fallback."
       },
       "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
     },
@@ -1668,27 +1708,23 @@
           "text": "---\n"
         }
       },
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
         "restored_240": "source"
       },
       "expected_body_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "icons": [
         "car"
       ],
-      "blocker": {
-        "kind": "flow-fa-theme-config",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
-      },
-      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+      "blocker": null,
+      "ledger_note": "FS-init body-only: whitelisted logLevel directive and accTitle/accDescr scalars admitted; the frontmatter theme gate keeps the whole original source"
     },
     {
       "path": "flowchart/visual-check/forest-theme-new-syntax.mmd",
@@ -1704,6 +1740,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1719,9 +1756,9 @@
       ],
       "blocker": {
         "kind": "flow-fa-theme-config",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_init_directive whitelist)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_init_directive whitelist)",
+        "detail": "An in-body %%{init ...}%% directive carries a payload outside the closed non-terminal whitelist (single-key flowchart.htmlLabels or logLevel 0..5/named levels); the pinned rows add a `theme` key, so the whole directive rejects and the body stays on ordinary fallback."
       },
       "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
     },
@@ -1738,27 +1775,23 @@
           "text": "---\n"
         }
       },
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
         "restored_240": "source"
       },
       "expected_body_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "icons": [
         "car"
       ],
-      "blocker": {
-        "kind": "flow-fa-theme-config",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
-      },
-      "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
+      "blocker": null,
+      "ledger_note": "FS-init body-only: whitelisted logLevel directive and accTitle/accDescr scalars admitted; the frontmatter theme gate keeps the whole original source"
     },
     {
       "path": "flowchart/visual-check/neutral-theme-new-syntax.mmd",
@@ -1774,6 +1807,7 @@
         }
       },
       "prediction": "predicted-blocked",
+      "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "source",
         "narrow_40": "source",
@@ -1789,9 +1823,9 @@
       ],
       "blocker": {
         "kind": "flow-fa-theme-config",
-        "site": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "evidence": "src/ui/visual/mermaid_impl.cpp (flow envelope profile)",
-        "detail": "The source declares a frontmatter `theme:` key or an in-body %%{init ...}%% directive; themed visual payloads are not admitted by the flow envelope profile (Track A / a later cohort)."
+        "site": "src/ui/visual/mermaid_impl.cpp (flow_init_directive whitelist)",
+        "evidence": "src/ui/visual/mermaid_impl.cpp (flow_init_directive whitelist)",
+        "detail": "An in-body %%{init ...}%% directive carries a payload outside the closed non-terminal whitelist (single-key flowchart.htmlLabels or logLevel 0..5/named levels); the pinned rows add a `theme` key, so the whole directive rejects and the body stays on ordinary fallback."
       },
       "ledger_note": "Blocked by a closed source-content feature detector; the marker vocabulary itself is only admitted for car/code"
     }

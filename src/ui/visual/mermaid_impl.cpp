@@ -1951,9 +1951,67 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
     return !uses_group_endpoint || emitted_link;
 }
 
-// FS-1: the one accepted body directive. {"flowchart":{"htmlLabels":bool}}
-// changes only SVG label anchoring upstream; the terminal renders plain
-// text labels under either value, so it is non-terminal and disclosed.
+// Rewrites mermaid's single-quoted directive strings into strict JSON.
+// Double-quoted strings pass through verbatim; a single-quoted string is
+// rejected on any backslash (JSON5 escapes are not synthesized), validated
+// as unicode_text, and re-emitted with double quotes, escaping any embedded
+// double quote. Returns false on an unterminated quote or a raw control
+// byte. This mirrors the class family's class_init_meta normalizer.
+bool normalize_directive_quotes(std::string_view argument, std::string& normalized) {
+    normalized.clear();
+    normalized.reserve(argument.size() * 2u);
+    for (std::size_t at = 0; at < argument.size();) {
+        const char q = argument[at];
+        if (q != '\'' && q != '"') {
+            normalized += q;
+            ++at;
+            continue;
+        }
+        const auto begin = at++;
+        bool escape = false;
+        for (; at < argument.size(); ++at) {
+            const char c = argument[at];
+            if (q == '\'' && c == '\\') return false;
+            if (escape) {
+                escape = false;
+                continue;
+            }
+            if (c == '\\') {
+                escape = true;
+                continue;
+            }
+            if (c == q) break;
+            if (static_cast<unsigned char>(c) < 0x20) return false;
+        }
+        if (at == argument.size()) return false;
+        if (q == '"') {
+            normalized.append(argument.substr(begin, at - begin + 1));
+        } else {
+            const auto text = argument.substr(begin + 1, at - begin - 1);
+            if (!unicode_text(text)) return false;
+            normalized += '"';
+            for (const char c : text) {
+                if (c == '"') normalized += '\\';
+                normalized += c;
+            }
+            normalized += '"';
+        }
+        ++at;
+    }
+    return true;
+}
+
+// FS-1/FS-init: the closed body-directive whitelist. Two one-key shapes
+// are accepted, both non-terminal and disclosed below the art:
+//   {"flowchart":{"htmlLabels":bool}} changes only SVG label anchoring
+//       upstream; the terminal renders plain text labels either way.
+//   {"logLevel": <0..5|trace|debug|info|warn|error|fatal>} selects logger
+//       verbosity only and has no rendering effect (the class and state
+//       families whitelist the same value grammar).
+// Legacy mermaid spells the payload with single quotes, which the strict
+// JSON parser rejects, so the quote normalizer runs first. Any other key,
+// extra key, value outside the grammar, or malformed spelling keeps the
+// whole source on ordinary fallback.
 bool flow_init_directive(std::string_view line, Work& work,
                          std::vector<std::string>& notices) {
     constexpr std::string_view kPrefix = "%%{init:";
@@ -1963,35 +2021,106 @@ bool flow_init_directive(std::string_view line, Work& work,
         return false;
     const auto payload =
         trim(line.substr(kPrefix.size(), line.size() - kPrefix.size() - kSuffix.size()));
-    const auto document = loom::utils::json::parse(payload);
+    if (!work.spend(payload.size() * 4u + 256u)) return false;
+    std::string normalized;
+    if (!normalize_directive_quotes(payload, normalized) ||
+        !work.spend(normalized.size() * 8u + 64u))
+        return false;
+    const auto document = loom::utils::json::parse(normalized);
     if (!document) return false;
     using loom::utils::json::JsonVal;
     const auto root = document->root();
     if (!root.is_obj()) return false;
-    if (!work.spend(payload.size() * 4u + 256u)) return false;
-    bool html_labels = false;
+    constexpr std::array<std::string_view, 6> kLogLevelNames{
+        "trace", "debug", "info", "warn", "error", "fatal"};
     std::size_t top_count = 0;
+    std::string notice;
     bool ok = true;
     root.iter_obj([&](JsonVal key, JsonVal value) {
         if (!ok) return;
         ++top_count;
-        if (key.as_str() != "flowchart" || !value.is_obj()) {
-            ok = false;
-            return;
-        }
-        std::size_t nested = 0;
-        value.iter_obj([&](JsonVal nkey, JsonVal nvalue) {
-            if (!ok) return;
-            ++nested;
-            if (nkey.as_str() != "htmlLabels" || !nvalue.is_bool()) ok = false;
-            else
+        if (key.as_str() == "flowchart" && value.is_obj()) {
+            std::size_t nested = 0;
+            bool html_labels = false;
+            value.iter_obj([&](JsonVal nkey, JsonVal nvalue) {
+                if (!ok) return;
+                ++nested;
+                if (nkey.as_str() != "htmlLabels" || !nvalue.is_bool()) {
+                    ok = false;
+                    return;
+                }
                 html_labels = nvalue.as_bool();
-        });
-        if (nested != 1u) ok = false;
+            });
+            if (nested != 1u) {
+                ok = false;
+                return;
+            }
+            notice = std::string("config.flowchart.htmlLabels=") +
+                     (html_labels ? "true" : "false") +
+                     " -> native text labels; not applied";
+        } else if (key.as_str() == "logLevel") {
+            if (value.is_int()) {
+                const auto level = value.as_int();
+                if (level < 0 || level > 5) {
+                    ok = false;
+                    return;
+                }
+                notice = "config.logLevel=" + std::to_string(level) +
+                         " -> logger only; not applied";
+            } else if (value.is_str() &&
+                       std::ranges::find(kLogLevelNames, value.as_str()) !=
+                           std::end(kLogLevelNames)) {
+                notice = "config.logLevel=" + std::string(value.as_str()) +
+                         " -> logger only; not applied";
+            } else {
+                ok = false;
+            }
+        } else {
+            ok = false;
+        }
     });
     if (!ok || top_count != 1u) return false;
-    notices.push_back(std::string("config.flowchart.htmlLabels=") + (html_labels ? "true" : "false") +
-                      " -> native text labels; not applied");
+    notices.push_back(std::move(notice));
+    return true;
+}
+
+// FS-init: accessibility statements (`accTitle:` / `accDescr:`) carry
+// screen-reader metadata that upstream never paints, so the terminal
+// consumes them as validated no-ops, mirroring the class family's scalar
+// contract. Returns 1 for a title, 2 for a description, or 0 when the line
+// is not an accessibility statement. The multi-line `accDescr { ... }`
+// block form is not part of this whitelist and stays source.
+int flow_accessibility_kind(std::string_view line) {
+    int kind = 0;
+    if (line.starts_with("accTitle"))
+        kind = 1;
+    else if (line.starts_with("accDescr"))
+        kind = 2;
+    else
+        return 0;
+    if (line.size() == 8u || (line[8] != ':' && line[8] != ' ' && line[8] != '\t'))
+        return 0;
+    return kind;
+}
+
+// Validates one accessibility scalar: one optional colon, a non-empty
+// space-trimmed value of at most 256 bytes, valid unicode, and none of the
+// markup/backtick characters the terminal cannot represent. Duplicate
+// titles/descriptions reject the whole source.
+bool flow_consume_accessibility(int kind, std::string_view line, bool& title_seen,
+                                 bool& description_seen, Work& work) {
+    if ((kind == 1 && title_seen) || (kind == 2 && description_seen)) return false;
+    auto rest = trim(line.substr(8u));
+    if (rest.empty() || rest.front() != ':') return false;
+    rest = trim(rest.substr(1u));
+    if (rest.empty() || rest.size() > 256u ||
+        rest.find_first_of("<>&\\`") != std::string_view::npos || !unicode_text(rest))
+        return false;
+    if (!work.spend(rest.size() * 8u + 128u)) return false;
+    if (kind == 1)
+        title_seen = true;
+    else
+        description_seen = true;
     return true;
 }
 
@@ -2020,6 +2149,7 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
     bool prepaid = already_prepaid;
     const auto original = source;
     bool saw_reopen = false, cross_owner_membership_request = false;
+    bool acc_title_seen = false, acc_descr_seen = false;
     for (const auto byte : source) {
         const auto value = static_cast<unsigned char>(byte);
         if (value < 0x20 && value != '\n' && value != '\r' && value != '\t') return {};
@@ -2115,14 +2245,27 @@ std::optional<Diagram> parse(std::string_view source, Work& work, bool already_p
                     diagram.groups.push_back(
                         {group_id, std::string{}, -1, std::nullopt, 0, false, true});
             } else {
-                if (flow_style_keyword(statement)) {
+                if (const auto accessibility = flow_accessibility_kind(statement)) {
+                    // Non-visual screen-reader metadata; consumed and validated
+                    // but never counted as graph content. accTitle/accDescr are
+                    // diagram-level declarations, so one inside a subgraph is
+                    // outside this whitelist and keeps the whole source.
+                    if (!diagram.group_stack.empty() ||
+                        !flow_consume_accessibility(accessibility, statement,
+                                                    acc_title_seen, acc_descr_seen,
+                                                    work))
+                        return {};
+                } else if (flow_style_keyword(statement)) {
                     if (!style_result || !diagram.group_stack.empty() ||
                         !flow_style_collect(statement, physical, pending_styles, work))
                         return {};
-                } else if (!flow_statement(statement, diagram, work, original, already_prepaid,
-                                           saw_reopen, cross_owner_membership_request, rich))
-                    return {};
-                have_statement = true;
+                    have_statement = true;
+                } else {
+                    if (!flow_statement(statement, diagram, work, original, already_prepaid,
+                                        saw_reopen, cross_owner_membership_request, rich))
+                        return {};
+                    have_statement = true;
+                }
             }
         }
     }

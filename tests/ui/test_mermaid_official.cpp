@@ -5672,10 +5672,10 @@ const Fs3CohortEntry* fs3_cohort_row(std::string_view path) {
 
 // RFC 0031 FS-6 FontAwesome-icon cohort: the reviewed ledger at
 // tools/mermaid/fs6-cohort.json. Markers in the closed {car, code} vocabulary
-// project to one fixed terminal cell; 34 bodies draw at 240 (4 also draw at
+// project to one fixed terminal cell; 38 bodies draw at 240 (4 also draw at
 // narrow_40) and 17 of those admit the whole original at 240 (3 also at
-// narrow_40). The 20 blocked rows carry an unknown icon or a theme/init
-// config and keep source.
+// narrow_40); the other 21 draw body only. The 16 blocked rows carry an
+// unknown icon or a non-whitelisted init directive and keep source.
 struct Fs6CohortEntry {
     bool draw = false;
     std::array<std::string, 3> original_states;
@@ -9204,10 +9204,11 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     }
                 } else if (const auto* fs6 = fs6_cohort_row(path)) {
                     // FS-6: known FontAwesome markers project to a fixed
-                    // terminal cell. Blocked rows (unknown icon / theme
-                    // config) keep source via run_case; the 34 draw bodies
-                    // follow their pinned per-width states. Live pixel gate
-                    // is test_mermaid_fs6_cohort.
+                    // terminal cell. Blocked rows (unknown icon /
+                    // non-whitelisted init directive) keep source via
+                    // run_case; the 38 draw bodies follow their pinned
+                    // per-width states. Live pixel gate is
+                    // test_mermaid_fs6_cohort.
                     if (!fs6->draw) {
                         observations.push_back(run_case(path, "body_diagnostic", body, diagnostic));
                     } else {

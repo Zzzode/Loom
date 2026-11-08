@@ -19,6 +19,7 @@ are not whole-original errors).
 | After FS-5 G5 (wave documents) | 2026-11-07 | 0b1c22c4 | 955 | 1190 | 0 |
 | After FS-5 G6 (circle family) | 2026-11-07 | 9a66bdfb | 958 | 1187 | 0 |
 | After FS-5 G7 (misc shapes; all 42 alias fixtures mapped) | 2026-11-07 | bb55b5bc | 961 | 1184 | 0 |
+| After FS-7a (subgraph grammar; direction-less headers + forward group refs) | 2026-11-08 | 575fbcbc | 964 | 1181 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -28,7 +29,7 @@ disposition (fix or documented infeasibility).
 
 | Family | Remaining fallback | Drawn | Notes |
 |---|---:|---:|---|
-| flowchart | 257 | 143 | active track; see breakdown below |
+| flowchart | 254 | 146 | active track; see breakdown below |
 | requirement | 160 | 12 | mostly unbuilt renderer surface |
 | git | 80 | 55 | |
 | state-diagram-v2 | 78 | 25 | |
@@ -65,7 +66,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1184** | **961** | |
+| **Total** | **1181** | **964** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -86,11 +87,19 @@ when the body would draw.
 - Compound `shape-themes/connect-all` rows: blocked by other unmapped
   short-name shapes (`text`, `odd`, `anchor`, `circle`, plus the G6
   circles and brace-r) on top of neo config + single-quoted labels.
-- `subgraph` framing: ~31 body-fallback + 13 body-error rows.
+- `subgraph` framing: FS-7a admitted the grammar-clean rows — direction-less
+  (`flowchart`/`graph` with no direction, byte-identical to explicit TB)
+  headers and forward group references (an edge naming a subgraph before its
+  declaration) — moving 7 body rows to native (3 also whole-original via the
+  existing dagre/description envelope profiles). Forward-reference plus a
+  reopen stays fail-closed pending a separate positive-Model supplement.
+  Remaining subgraph debt is compound: `nodeSpacing`/`rankSpacing`/
+  `subGraphTitleMargin` config (no whole-source profile), the FS-1b Work
+  ceiling, collapsed-subgraph redirect, and nested `direction` rows.
 - Styling/structure: `classDef`/`class`/`style`/`linkStyle`, `init`
   directives, edge markers/styles, and `A & B` fan-out across the rest.
-- Body track at 240 after the stadium multiline cohort: 152 drawn /
-  200 fallback / **48 frozen geometry errors**.
+- Body track at 240 after FS-7a: 159 drawn / 193 fallback / **48 frozen
+  geometry errors**.
 
 ## Candidate infeasible (needs evidence before final milestone)
 
@@ -139,3 +148,26 @@ when the body would draw.
   Font|RootHtml envelope gate. Debug/release reports byte-identical
   (sha256
   029cffd5fa551a9651bb92e8f24ef392fa9aee4f289fe0055dd7a040b7c83dc5).
+- 2026-11-08 (575fbcbc): subgraph grammar — direction-less (`flowchart`/
+  `graph` with no direction, byte-identical to explicit TB) headers and
+  forward group references (an edge naming a subgraph before its
+  `subgraph` declaration, via deferred shells) admitted. Seven body rows
+  draw; three also whole-original through existing dagre/description
+  envelope profiles, four stay whole-source pending (FS-1b Work ceiling,
+  node/rank spacing, subGraphTitleMargin). Forward-ref plus reopen stays
+  fail-closed pending a positive-Model supplement. Whole-original drawn
+  961->964, fallback 1184->1181 (Flow pending 257->254, admitted/mutated
+  143->146); flowchart body 240 drawn 152->159 / fb 200->193 (body ALL
+  345->352 / 200->193); Class285 260/25/0 and gaps 48 unchanged;
+  debug/release reports byte-identical (sha256
+  b6dafa286abe663f24199efa4cb44d9ba673de97803a6ba6ed4acb7896c405ac).
+  Independent two-round read-only review APPROVE. Validation note: the
+  full 4337-suite non-mermaid failures (Streaming golden `/var/...` path,
+  E2E PTY sandbox, ServerMain socket load flake, two stale
+  MarkdownMermaid assertions) and ASan-only findings (LeakSanitizer in
+  AppRuntime/EnterpriseAuth, UBSan in custom_select/cache_paths, the
+  debug/release-only Extra7 preset identity guard, ASan 300s timeouts)
+  all reproduce at clean HEAD or lie outside the single changed
+  production file; #2103 (renamed
+  BareFlowchartDefaultsToTBIncludingGroupContainers) passes isolated at
+  0.20s and inside the full run — no FS-7a regression.

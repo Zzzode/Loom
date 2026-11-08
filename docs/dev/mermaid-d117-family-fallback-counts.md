@@ -108,7 +108,17 @@ when the body would draw.
   original). Five-plus heavy classic-glyph node graphs hit a separate
   quote-independent Work/layout budget (also fails with double quotes),
   tracked as the remaining connect-all blocker.
-- Body track at 240 after FS-sq: 166 drawn / 186 fallback / **48 frozen
+- Body `%%{init}%%` directives and accessibility statements (FS-init):
+  the directive whitelist gains single-quoted JSON5 normalization and the
+  inert `logLevel` key (integer 0..5 or the six named levels; the
+  pre-existing double-quoted `flowchart.htmlLabels` shape is unchanged),
+  and `accTitle:`/`accDescr:` scalars are consumed as non-visual no-ops
+  mirroring the class-family contract (block form, markup content,
+  duplicates and subgraph placement fail closed). Four legacy theme
+  fixtures draw body only; their frontmatter `theme:` key keeps the whole
+  original source. The four new-syntax siblings, whose directive adds a
+  `theme` key, stay fail-closed.
+- Body track at 240 after FS-init: 170 drawn / 182 fallback / **48 frozen
   geometry errors**.
 
 ## Candidate infeasible (needs evidence before final milestone)
@@ -233,3 +243,39 @@ when the body would draw.
   300s cap. Non-blocking follow-up: the G5/G7 ledgers still carry
   semantically-stale `neo-quoted-only` blocker labels (states remain
   source; no test asserts the kind string) for a future ledger pass.
+- 2026-11-08 (FS-init): body `%%{init}%%` logLevel directive plus
+  accTitle/accDescr accessibility statements — a quote normalizer
+  (mirroring the class family's class_init_meta) rewrites single-quoted
+  directive strings to strict JSON (backslash inside single quotes
+  rejected, unicode validated), and the directive whitelist gains a
+  second one-key shape `logLevel` (integer 0..5 or
+  trace/debug/info/warn/error/fatal) disclosed via the state-family
+  notice wording; the existing double-quoted flowchart.htmlLabels shape
+  is byte-for-byte unchanged. accTitle/accDescr scalar statements are
+  consumed as validated non-visual no-ops (mirroring the class
+  accessibility contract: <=256 bytes, no markup/backtick, no
+  duplicates, block form and subgraph placement fail closed). Four
+  legacy theme fixtures draw body only; their frontmatter `theme:` key
+  keeps the whole original source, and the four new-syntax siblings
+  (two-key logLevel+theme directive) stay fail-closed. The same four
+  rows were already pinned in the FS-6 FontAwesome ledger, which
+  migrates in place (fixture shas untouched): 34/20/17 -> 38 body draw
+  (17 whole-and-body + 21 body-only scope) / 16 blocked, blocker
+  vocabulary unchanged (12 unknown-icon, 4 theme-config). Whole
+  originals unchanged at 967/1178/0 (Flow pending 251,
+  admitted/mutated 149); flowchart body 240 drawn 166->170 / fb
+  186->182 (body ALL 359->363 / 186->182); Class285 260/25/0 and the
+  mandatory 48 gaps unchanged; integrity empty. Debug/release serial
+  reports byte-identical (sha256
+  8100368c224b754e8e9879b3a52a7b49b6969376a31e8266bd5e2ec317a9dea0).
+  Independent read-only adversarial review (fresh general-purpose
+  agent, task a84b30aa96dc983db, zero builds): first round
+  REQUEST-CHANGES caught two cross-cohort MAJORs (the FS-6 durable gate
+  would go red; the first matrix hook was FS-6-shadowed dead code that
+  also threatened the 48-gap roster) — both closed by the in-place FS-6
+  migration and hook removal, then re-review APPROVE. Full mermaid
+  label suite 1173/1173 green; ASan contact surface 14/14 with zero
+  sanitizer hits. Three-family serial timing gate written to the
+  independent log `/tmp/g4probe/serial-fs-init.log` (SERIAL_RC=0,
+  per-case times): #2609 227.53s, #2726 202.96s, #3520 28.25s, total
+  500.05s — all inside the 300s cap.

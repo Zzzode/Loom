@@ -459,6 +459,23 @@ namespace loom::testing {
     // without touching rendered content.  Applied to both the golden text
     // and the actual render, so the substitution is symmetric.
     {
+        // The welcome screen abbreviates an over-long cwd to the literal
+        // token "/var/…/" (U+2026).  The structured footer passes below
+        // handle only rows carrying the context bar / semantic usage
+        // shape, so collapse this bare body token globally as well.  The
+        // match is safe because of its specific shape — the U+2026
+        // ellipsis glyph plus an empty tail (trailing slash) — which only
+        // the logo's middle-truncation of a temp cwd can produce; an
+        // ordinary path such as "/var/log/..." contains no ellipsis.  The
+        // substitution is symmetric across golden and actual text.  A
+        // future non-slash-tailed form ("/var/…/T") would need a prefix
+        // rule added here.
+        const std::string abbreviated_mac_temp = "/var/\xE2\x80\xA6/";
+        for (std::size_t pos = clean.find(abbreviated_mac_temp);
+             pos != std::string::npos;
+             pos = clean.find(abbreviated_mac_temp, pos + 8)) {
+            clean.replace(pos, abbreviated_mac_temp.size(), "<tmpdir>");
+        }
         // macOS NSTemporaryDirectory: /var/folders/<xx>/<…>/T
         const std::string mac_prefix = "/var/folders/";
         std::size_t pos = 0;

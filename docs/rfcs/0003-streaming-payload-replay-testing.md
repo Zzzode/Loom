@@ -545,6 +545,13 @@ time-varying content so golden snapshots are reproducible:
 3. **Timestamp normalization**: replace relative timestamps
    (`just now`, `Xm ago`, `Xh ago`) with `<timestamp>`.
 4. **Trailing whitespace**: trim per line, collapse trailing blank lines.
+5. **Temp-directory normalization**: replace the OS temp cwd and its
+   rendered forms with `<tmpdir>` so snapshots recorded on macOS
+   (`/var/folders/.../T`, abbreviated in body text to the literal token
+   `/var/…/` and to folder-pill/footer stems) replay unchanged on Linux
+   (`/tmp`). The substitution is symmetric (applied to both the golden
+   text and the live render) and shape-constrained, so a real project path
+   such as `/var/log/...` is never rewritten.
 
 The normalization functions live in a shared header
 (`tests/screen_normalize.hpp`) so both the markdown snapshot suite and the

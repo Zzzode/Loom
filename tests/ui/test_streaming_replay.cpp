@@ -187,6 +187,35 @@ TEST(StreamingReplay, PlainFooterTempPathNormalization) {
     }
 }
 
+// The welcome screen abbreviates the long macOS temp cwd
+// (/var/folders/<xx>/<hash>/T) to the bare token "/var/…/" in ordinary
+// body text, outside any structured footer row. Golden snapshots recorded
+// on macOS carry that literal; Linux replay renders "/tmp" (already
+// normalized). Both must converge to "<tmpdir>".
+TEST(StreamingReplay, AbbreviatedMacTempTokenNormalization) {
+    using loom::testing::normalize_screen;
+    const std::string mac_token = "/var/\xE2\x80\xA6/";  // "/var/…/"
+    // A representative welcome-screen cwd row.
+    const std::string row = "██▍ ▋█▉  ▗▇█  ▐█▉▋██ ▐█▉ ▐█▉  " + mac_token;
+    EXPECT_EQ(normalize_screen(row),
+              "██▍ ▋█▉  ▗▇█  ▐█▉▋██ ▐█▉ ▐█▉  <tmpdir>");
+    // Every occurrence is substituted and the result is idempotent.
+    const std::string repeated = mac_token + " mid " + mac_token;
+    const std::string once = normalize_screen(repeated);
+    EXPECT_EQ(once, "<tmpdir> mid <tmpdir>");
+    EXPECT_EQ(normalize_screen(once), once);
+    // A real /var path that is not the abbreviated temp token is untouched.
+    EXPECT_EQ(normalize_screen("logs under /var/log/syslog today"),
+              "logs under /var/log/syslog today");
+    // The token without its trailing slash does not match.
+    EXPECT_EQ(normalize_screen("prefix /var/\xE2\x80\xA6 suffix"),
+              "prefix /var/\xE2\x80\xA6 suffix");
+    // The token at the very end of the string still substitutes.
+    EXPECT_EQ(normalize_screen("cwd row " + mac_token), "cwd row <tmpdir>");
+    // Two adjacent tokens with no separator both substitute.
+    EXPECT_EQ(normalize_screen(mac_token + mac_token), "<tmpdir><tmpdir>");
+}
+
 TEST(StreamingReplay, TextSimple) {
     auto snapshots = play_fixture("text_simple");
     expect_checkpoints(snapshots, {"after_commit", "after_end_query"});

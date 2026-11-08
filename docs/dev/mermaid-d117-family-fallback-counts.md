@@ -102,7 +102,13 @@ when the body would draw.
 - AWS icon shape data (`@{ icon: "aws:..." }`): FS-aws admitted a closed
   three-name vocabulary, each projecting to one fixed marker cell with the
   human text retained; unknown icons and non-aws namespaces fail closed.
-- Body track at 240 after FS-aws: 162 drawn / 190 fallback / **48 frozen
+- Single-quoted shape-data labels (`@{ ..., label: '...' }`): FS-sq admits
+  both quote styles through one strict validator; four neo connect-all
+  bodies now draw (body-only — the neo frontmatter still gates the whole
+  original). Five-plus heavy classic-glyph node graphs hit a separate
+  quote-independent Work/layout budget (also fails with double quotes),
+  tracked as the remaining connect-all blocker.
+- Body track at 240 after FS-sq: 166 drawn / 186 fallback / **48 frozen
   geometry errors**.
 
 ## Candidate infeasible (needs evidence before final milestone)
@@ -196,3 +202,34 @@ when the body would draw.
   A/B timing shows zero FS-aws cost (FS-7a baseline 291s vs FS-aws 287s);
   #2726 Class285 passes isolated (233s). This is environmental test
   fragility, not a code regression.
+- 2026-11-08 (FS-sq): single-quoted shape-data labels — `@{ ..., label:
+  '...' }` now decodes through one strict helper
+  (`read_shape_data_label`) shared by both quote styles; the AWS icon
+  *name* stays double-quoted and closed-vocabulary. No backslash, no
+  embedded double quote, same-quote matching, and the existing `label()`
+  validator keep the accept/reject set identical to the old double-quote
+  path plus the intended single-quote forms; malformed quoting fails
+  closed. Four neo shape-theme connect-all bodies draw as a body-only
+  cohort (the neo look/theme frontmatter still gates the whole
+  original). Five-node heavy classic-glyph graphs stay source under the
+  quote-independent routing/Work budget, so the fs5g6 ledger migrates in
+  place: 3 whole-and-body + 4 body-only draw, 8 blocked (the stale
+  curved-trapezoid/neo-quoted-only blocker vocabulary is retired into a
+  single `flow-g6-classic-glyph-budget`; fixture sha pins untouched).
+  Whole originals unchanged at 967/1178/0 (Flow pending 251,
+  admitted/mutated 149); flowchart body 240 drawn 162->166 / fb 190->186
+  (body ALL 355->359 / 190->186); Class285 260/25/0 and the mandatory 48
+  gaps unchanged; integrity empty. Debug/release serial reports
+  byte-identical (sha256
+  7a26ea36e2100c62229bc23fcf1f7334e035ab7432d4d6d6ae7cb9fac8ebf180).
+  Independent read-only adversarial review (fresh general-purpose agent,
+  task ad678f3037149e883, zero builds) APPROVE; both MINOR findings
+  resolved (helper comment no longer claims byte-identical double-quote
+  trimming; blocker vocabulary reclassified). Full mermaid label suite
+  1164/1164 green; ASan contact surface 21/21 with zero sanitizer hits.
+  Three-family serial timing gate written to the independent log
+  `/tmp/g4probe/serial-fs-sq.log` (SERIAL_RC=0, per-case times): #2609
+  250.03s, #2726 197.67s, #3511 28.77s, total 519.40s — all inside the
+  300s cap. Non-blocking follow-up: the G5/G7 ledgers still carry
+  semantically-stale `neo-quoted-only` blocker labels (states remain
+  source; no test asserts the kind string) for a future ledger pass.

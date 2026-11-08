@@ -21,6 +21,7 @@ are not whole-original errors).
 | After FS-5 G7 (misc shapes; all 42 alias fixtures mapped) | 2026-11-07 | bb55b5bc | 961 | 1184 | 0 |
 | After FS-7a (subgraph grammar; direction-less headers + forward group refs) | 2026-11-08 | 575fbcbc | 964 | 1181 | 0 |
 | After FS-aws (closed-vocabulary AWS icon shape data) | 2026-11-08 | 9f0ae75a | 967 | 1178 | 0 |
+| After FS-spacing (non-terminal nodeSpacing/rankSpacing envelope leaves) | 2026-11-09 | 0606f021 | 971 | 1174 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -30,7 +31,7 @@ disposition (fix or documented infeasibility).
 
 | Family | Remaining fallback | Drawn | Notes |
 |---|---:|---:|---|
-| flowchart | 251 | 149 | active track; see breakdown below |
+| flowchart | 247 | 153 | active track; see breakdown below |
 | requirement | 160 | 12 | mostly unbuilt renderer surface |
 | git | 80 | 55 | |
 | state-diagram-v2 | 78 | 25 | |
@@ -67,7 +68,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1178** | **967** | |
+| **Total** | **1174** | **971** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -94,9 +95,10 @@ when the body would draw.
   declaration) — moving 7 body rows to native (3 also whole-original via the
   existing dagre/description envelope profiles). Forward-reference plus a
   reopen stays fail-closed pending a separate positive-Model supplement.
-  Remaining subgraph debt is compound: `nodeSpacing`/`rankSpacing`/
-  `subGraphTitleMargin` config (no whole-source profile), the FS-1b Work
-  ceiling, collapsed-subgraph redirect, and nested `direction` rows.
+  Remaining subgraph debt is compound: `subGraphTitleMargin`
+  config (no whole-source profile; `nodeSpacing`/`rankSpacing` gained one
+  under FS-spacing), the FS-1b Work ceiling, collapsed-subgraph redirect,
+  and nested `direction` rows.
 - Styling/structure: `classDef`/`class`/`style`/`linkStyle`, `init`
   directives, edge markers/styles, and `A & B` fan-out across the rest.
 - AWS icon shape data (`@{ icon: "aws:..." }`): FS-aws admitted a closed
@@ -118,6 +120,16 @@ when the body would draw.
   fixtures draw body only; their frontmatter `theme:` key keeps the whole
   original source. The four new-syntax siblings, whose directive adds a
   `theme` key, stay fail-closed.
+- Whole-source envelope spacing leaves (FS-spacing): `flowchart.nodeSpacing`
+  and `flowchart.rankSpacing` only position dagre ranks in the upstream SVG
+  layout; the terminal uses its own fixed layout, so they are non-terminal.
+  A non-negative pixel integer (bare or single/double quoted) is now an
+  accepted envelope leaf alongside the bare `flowchart` namespace or a
+  courier-font flowchart; signs, fractions, exponents, mismatched quotes,
+  structured values and any visual co-key (look/theme/htmlLabels/...) keep
+  the source. Four whole-and-body fixtures now draw the full original at
+  240/restored (source at 40); the two nightly handDrawn lookalikes stay
+  excluded behind the `look` gate. The body track is unchanged.
 - Body track at 240 after FS-init: 170 drawn / 182 fallback / **48 frozen
   geometry errors**.
 
@@ -279,3 +291,44 @@ when the body would draw.
   independent log `/tmp/g4probe/serial-fs-init.log` (SERIAL_RC=0,
   per-case times): #2609 227.53s, #2726 202.96s, #3520 28.25s, total
   500.05s — all inside the 300s cap.
+- 2026-11-09 (FS-spacing, 0606f021): whole-source envelope spacing leaves
+  — `flowchart.nodeSpacing`/`rankSpacing` only position dagre ranks in the
+  upstream SVG layout, and the terminal uses its own fixed layout, so they
+  are non-terminal. A non-negative pixel integer (bare or single/double
+  quoted) is now an accepted indent-4 envelope leaf via two new ConfigBits
+  (NodeSpacing=2048, RankSpacing=4096) and a narrow `spacing_profile`
+  predicate that admits only the bare-flowchart or courier-font inert
+  cores; signs, fractions, exponents, mismatched/single-sided/empty quotes,
+  structured values, indent-2 placement and any visual co-key
+  (look/theme/htmlLabels/...) fail closed. Four pinned visual-check
+  fixtures draw the full frontmatter original at 240/restored while
+  keeping ordinary source at 40 columns (22 nodespacing, 23 rankspacing,
+  two 3258 subgraph spacing rows); the two nightly handDrawn lookalikes
+  stay excluded behind the `look` gate and the body track is unchanged.
+  All four already belong to earlier ledgers, which migrate in place with
+  fixture sha pins byte-untouched: FS-6 whole originals 17 -> 19
+  (body-only scope 21 -> 19; the 38/16 body partition is unchanged) and
+  FS-7a whole originals 3 -> 5 (its 7827 Work-ceiling row and the
+  subGraphTitleMargin self-loops row stay body-only). A new sha-pinned
+  spacing ledger with a corpus re-scan drift guard and a durable pixel
+  cohort gate accompany the change; the shadowed defensive matrix
+  branches are retained with explicit comments and were proven inert (no
+  run_case, so they cannot emit gap errors). Whole originals move
+  967 -> 971 drawn / 1178 -> 1174 fallback / 0 error (Flow pending
+  251 -> 247, admitted/mutated 149 -> 153); Class285 260/25/0, the
+  mandatory 48 gaps, and the body track 170/182/48 are unmoved;
+  integrity empty. Debug/release serial reports byte-identical (sha256
+  0fe22b004a364aceb3cd28131d0cd2430cfe7bfd7317c1722f67c9f5637803ec,
+  415 rows). Two independent read-only adversarial reviews (fresh
+  general-purpose agents, zero builds): the cohort review (task
+  aee66c1df9b510318) APPROVE after two MINORs and four NITs were
+  resolved; a final cross-cohort-migration re-review (task
+  a91f43e0c0b606c1d) APPROVE with zero MAJOR and zero functional MINOR —
+  its three NITs were closed by correcting the stale-count comments and
+  documenting the inert shadowed branches. Full mermaid label suite
+  1177/1177 green; ASan contact surface 35/35 (the original 30 plus the
+  migrated FS-6/FS-7a gates) with zero sanitizer hits. Three-family serial
+  timing gate written to the independent log
+  `/tmp/g4probe/serial-fs-spacing.log` (SERIAL_RC=0, per-case times):
+  #2610 206.89s, #2727 166.36s, #3525 23.02s, total 396.42s — all inside
+  the 300s cap.

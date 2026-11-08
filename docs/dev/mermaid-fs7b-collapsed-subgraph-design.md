@@ -309,3 +309,57 @@ repeat value. Plus a `static_assert` on `sizeof(Group)`.
   passed into `node_box` 3.5) are recorded as explicit design rules.
   After these edits the tier-1 Slice B is judged independently
   shippable; tier-2 Slice C is a small remap step on top.
+
+## 9. Slice B implementation findings (2026-11-09, WIP preserved not committed)
+
+The five-site Slice B production change was implemented and validated
+against the real renderer, then reverted to keep the tree green because
+its closure requires the ledger/matrix ceremony, which is deferred to a
+fresh-context session. The exact working patch is saved at
+`/tmp/g4probe/fs7b-wip/fs7b-sliceb-production.patch` (single file,
+`src/ui/visual/mermaid_impl.cpp`, 311 lines).
+
+Validated facts:
+
+- `sizeof(Group)` stays **80** before and after the trailing
+  `bool collapsed` (it lands in existing padding); a
+  `static_assert(sizeof(Group) == 80)` guards it.
+- With `any_group_collapsed == false` the code takes the original path
+  verbatim (all new structures stay empty), so non-collapsed graphs are
+  structurally unchanged.
+- Real CellCapture probes show the two tier-1 visual-check fixtures now
+  draw correctly: single-node renders `Start -> [My Group]` with the
+  internal A/B/C vertices and edges hidden; alongside-expanded renders a
+  plain `[Collapsed]` rectangle connected to the expanded `Expanded`
+  frame containing B1->B2. The two tier-2 fixtures stay on source
+  (fail-closed) as designed, since Slice B does not remap endpoints.
+- **Empirical body-flip blast radius is three fixtures, not two.** In
+  addition to the two pinned visual-check rows,
+  `nightly-check/handdrawn/should-redirect-a-collapsed-subgraph-using-the-handdrawn-look.mmd`
+  flips on the BODY track: its body carries the same collapse directive
+  and the `look: handDrawn` gate is frontmatter-only, so the body parser
+  admits it once the directive parses. The four redux-color-subgraphs
+  collapsed fixtures still fall back (other redux/theme debt).
+- Until a ledger authorizes these observations, OfficialMatrix reports
+  five new gap rows (48 -> 53) and `flows.errors` 0 -> 2: each tier-1
+  row yields one `flow_whole_null_unmet` (original track) and one
+  `ordinary_source_fallback_expected` (body_diagnostic), and the
+  handDrawn row yields one body_diagnostic gap.
+
+Required next-session closure (mirror the FS-7a ledger machinery):
+
+1. A new sha-pinned FS-7b cohort ledger + generator + durable gtest
+   (schema like `loom_mermaid_fs7a_subgraph_cohort/v1`). Rows: the two
+   visual-check fixtures as **whole-and-body**, and the handDrawn
+   fixture as **body-only** (its whole original stays source behind the
+   `look: handDrawn` FS-8 gate; do not attempt to draw that whole).
+2. A matrix loader plus a body_diagnostic hook and a Flow400
+   whole-source branch with the standard five-frame proof for the two
+   whole-and-body rows, reusing the existing FS-7a branch shape. No
+   shadowed hook (the FS-init MAJOR pattern): give the FS-7b rows their
+   own earliest-match branch and migrate rather than duplicate.
+3. The E6c roster stays at 48 — these observations become legitimate
+   ledger rows, not roster entries. Then run the full gate ceremony
+   (full `-L mermaid`, debug/release byte compare, ASan, the
+   three-family serial log, independent adversarial review).
+4. Slice C (the two tier-2 remap fixtures) remains a separate ledger.

@@ -96,9 +96,10 @@ when the body would draw.
   existing dagre/description envelope profiles). Forward-reference plus a
   reopen stays fail-closed pending a separate positive-Model supplement.
   Remaining subgraph debt is compound: `subGraphTitleMargin`
-  config (no whole-source profile; `nodeSpacing`/`rankSpacing` gained one
-  under FS-spacing), the FS-1b Work ceiling, collapsed-subgraph redirect,
-  and nested `direction` rows.
+  config (non-terminal but D-120 blocked for whole-source — see the
+  candidate-infeasible section; `nodeSpacing`/`rankSpacing` gained a
+  profile under FS-spacing), the FS-1b Work ceiling, collapsed-subgraph
+  redirect, and nested `direction` rows.
 - Styling/structure: `classDef`/`class`/`style`/`linkStyle`, `init`
   directives, edge markers/styles, and `A & B` fan-out across the rest.
 - AWS icon shape data (`@{ icon: "aws:..." }`): FS-aws admitted a closed
@@ -153,6 +154,29 @@ when the body would draw.
   review + user re-baselining the frozen approval), a separate milestone.
   Do NOT attempt native drawing of these in the current queue. The other 15
   class fallbacks are cssClass/`:::` styling (same frozen style subsystem).
+- **subGraphTitleMargin whole-source admission (1 whole original, D-120,
+  BLOCKED on the frozen gap roster; investigated 2026-11-09, no code
+  shipped):** `flowchart.subGraphTitleMargin` is a nested `{top, bottom}`
+  pixel map and is genuinely non-terminal — the renderer never reads it
+  (`grep` zero hits in `src/`) and `group_frame` places every subgraph
+  title at the fixed offset `{box.x, box.y + 1}`. Five corpus fixtures
+  carry the key. Whitelisting the map makes the renderer natively draw
+  three whole originals (self-loops plus the two plain title-margin
+  td/lr rows), but only self-loops has an FS-7a ledger branch that can
+  authorize the draw; the td/lr rows have no ledger admission and are
+  pinned in the E6c roster under the GE15
+  `group-edge-endpoint-outside-current-batch` body debt. The envelope
+  cannot distinguish self-loops from the lr row — their frontmatter
+  values are byte-identical (`top: 10`, `bottom: 5`) — so any whitelist
+  also flips td/lr, which then book as three new
+  `flow_whole_null_unmet` errors and move the mandatory roster 48 -> 51
+  (verified by a full OfficialMatrix run; `flows.errors` 0 -> 3). A
+  self-loops-only migration still leaves td/lr at roster 50, so no
+  green path exists without first closing the GE15 group-edge-endpoint
+  grammar and re-baselining the frozen roster in a separate milestone.
+  The other two fixtures stay out independently: the htmlLabels=false
+  sibling and the edge-labels row (whose body genuinely falls back on
+  cross-boundary labeled group edges).
 
 ## Closure log
 

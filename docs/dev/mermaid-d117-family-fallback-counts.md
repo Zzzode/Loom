@@ -20,6 +20,7 @@ are not whole-original errors).
 | After FS-5 G6 (circle family) | 2026-11-07 | 9a66bdfb | 958 | 1187 | 0 |
 | After FS-5 G7 (misc shapes; all 42 alias fixtures mapped) | 2026-11-07 | bb55b5bc | 961 | 1184 | 0 |
 | After FS-7a (subgraph grammar; direction-less headers + forward group refs) | 2026-11-08 | 575fbcbc | 964 | 1181 | 0 |
+| After FS-aws (closed-vocabulary AWS icon shape data) | 2026-11-08 | 9f0ae75a | 967 | 1178 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -29,7 +30,7 @@ disposition (fix or documented infeasibility).
 
 | Family | Remaining fallback | Drawn | Notes |
 |---|---:|---:|---|
-| flowchart | 254 | 146 | active track; see breakdown below |
+| flowchart | 251 | 149 | active track; see breakdown below |
 | requirement | 160 | 12 | mostly unbuilt renderer surface |
 | git | 80 | 55 | |
 | state-diagram-v2 | 78 | 25 | |
@@ -66,7 +67,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1181** | **964** | |
+| **Total** | **1178** | **967** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -98,7 +99,10 @@ when the body would draw.
   ceiling, collapsed-subgraph redirect, and nested `direction` rows.
 - Styling/structure: `classDef`/`class`/`style`/`linkStyle`, `init`
   directives, edge markers/styles, and `A & B` fan-out across the rest.
-- Body track at 240 after FS-7a: 159 drawn / 193 fallback / **48 frozen
+- AWS icon shape data (`@{ icon: "aws:..." }`): FS-aws admitted a closed
+  three-name vocabulary, each projecting to one fixed marker cell with the
+  human text retained; unknown icons and non-aws namespaces fail closed.
+- Body track at 240 after FS-aws: 162 drawn / 190 fallback / **48 frozen
   geometry errors**.
 
 ## Candidate infeasible (needs evidence before final milestone)
@@ -171,3 +175,24 @@ when the body would draw.
   production file; #2103 (renamed
   BareFlowchartDefaultsToTBIncludingGroupContainers) passes isolated at
   0.20s and inside the full run — no FS-7a regression.
+- 2026-11-08 (9f0ae75a, FS-aws): closed-vocabulary AWS icon shape data —
+  `@{ icon: "aws:..." }` admits three pinned AWS architecture names,
+  each projecting to one fixed U+25A0 marker cell with the human label
+  (or node id) retained; unknown icons and non-aws namespaces fail
+  closed, repeated icon statements stay idempotent, and bracket-node
+  icon metadata is rejected rather than dropped. Whole-original drawn
+  964->967, fallback 1181->1178 (Flow pending 254->251,
+  admitted/mutated 146->149); flowchart body 240 drawn 159->162 / fb
+  193->190 (body ALL 352->355 / 193->190); Class285 260/25/0 and gaps
+  48 unchanged; debug/release reports byte-identical (sha256
+  fa2f750af20a3181981ebec696382155a9e7f36a5504875a260b14181e1b6f70),
+  also byte-identical before/after the idempotency hardening. Two-round
+  independent read-only review APPROVE. Non-blocking follow-up R1: a
+  mixed icon/label redeclaration can omit the decoration cell (absent
+  from the corpus) — future hardening to re-prefix or fail-closed.
+  Timing note: #2609 Config110 sits ~287-291s against a 300s ctest cap;
+  under sustained host overload (load 53-68 on 56 cores) it can time out
+  in ctest but always PASSES run directly without the cap. Matched-load
+  A/B timing shows zero FS-aws cost (FS-7a baseline 291s vs FS-aws 287s);
+  #2726 Class285 passes isolated (233s). This is environmental test
+  fragility, not a code regression.

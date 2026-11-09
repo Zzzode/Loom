@@ -803,3 +803,23 @@ relax a rejection: a separate design must bound the upstream per-byte ER/
 Block fees, re-derive ER107 consumed work against the reviewed 992,611
 ceiling, and re-run the dual-preset matrix and roster verifier before any
 credit. This is future design input only; no phase graduation is claimed.
+
+Coverage metric for the zero-fallback program (2026-11-09): the term
+"coverage" is defined exclusively as a complete native render. A pinned
+original counts as covered only when the renderer parses and lays out the
+diagram itself and paints a native frame (the matrix state `drawn`) at the
+measured widths; the authoritative whole-original view is the 240-column
+`wide_240` frame, with the 40-column and restored frames recorded alongside.
+An ordinary whole-source fallback (`source_fallback`) — echoing the source
+verbatim inside a text code block — is NOT coverage even though the content
+remains visible: it is precisely the debt the D-066/D-117 program is driving
+to zero, and it is never relabeled as a draw. An `error` row is neither
+coverage nor acceptable, so the goal stays zero fallback and zero error. A
+frontmatter-free `body_diagnostic` draw does not count as whole-original
+coverage either (this is the standing Non-Goal above: no body-diagnostic
+result is counted as an original-file drawing); whole-original and body
+tracks are reported separately. The operational per-family counts live in
+`docs/dev/mermaid-d117-family-fallback-counts.md`, where for each family
+`drawn + source_fallback = family size`; at this writing the whole-original
+score is 976 drawn / 1169 fallback / 0 error across the 2145 pinned
+originals.

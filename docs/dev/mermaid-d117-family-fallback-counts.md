@@ -24,6 +24,7 @@ are not whole-original errors).
 | After FS-spacing (non-terminal nodeSpacing/rankSpacing envelope leaves) | 2026-11-09 | 0606f021 | 971 | 1174 | 0 |
 | After FS-7b Slice B (collapsed subgraphs render as one titled node) | 2026-11-09 | a2ea36e4 | 973 | 1172 | 0 |
 | After FS-7c Slice C (collapsed endpoint remap; redux bodies) | 2026-11-09 | c0510727 | 975 | 1170 | 0 |
+| After FS-elk (non-terminal elk.rectpacking layout engine) | 2026-11-09 | eb3118c8 | 976 | 1169 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -33,7 +34,7 @@ disposition (fix or documented infeasibility).
 
 | Family | Remaining fallback | Drawn | Notes |
 |---|---:|---:|---|
-| flowchart | 243 | 157 | active track; see breakdown below |
+| flowchart | 242 | 158 | active track; see breakdown below |
 | requirement | 160 | 12 | mostly unbuilt renderer surface |
 | git | 80 | 55 | |
 | state-diagram-v2 | 78 | 25 | |
@@ -70,7 +71,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1170** | **975** | |
+| **Total** | **1169** | **976** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -134,6 +135,20 @@ when the body would draw.
   the source. Four whole-and-body fixtures now draw the full original at
   240/restored (source at 40); the two nightly handDrawn lookalikes stay
   excluded behind the `look` gate. The body track is unchanged.
+- Layout-engine envelope leaves (FS-elk): the upstream `config.layout`
+  engine choice never reaches the terminal, which runs its own fixed
+  layout, so it is non-terminal exactly like the already-accepted
+  `layout: dagre`. Only the single bare `layout: elk.rectpacking` value is
+  whitelisted (one visual-check-free container fixture, whole-and-body,
+  draws at every width). Bare `elk` / `elk.box` stay whole-source for two
+  independent, evidence-backed reasons: their corpus fixtures either cross
+  the envelope double-parse Work ceiling (the FS-1b debt — the identical
+  graph draws on the single-parse body track, and the elk.box/rectpacking
+  pair differ only by two extra `%%` comment lines charged twice), or carry
+  a subgraph/body shape debt that opening the envelope would surface as a
+  new matrix error (verified by a broad-whitelist probe that flipped
+  `3-layout-elk-subgraphs` source→error). Quoted engine values, the `elk:`
+  option namespace and unknown engines fail closed.
 - Body track at 240 after FS-init: 170 drawn / 182 fallback / **48 frozen
   geometry errors**.
 
@@ -413,3 +428,29 @@ when the body would draw.
   fs7b_directive + fs7b_cohort + fs7_subgraph, 19 tests) zero sanitizer.
   Serial gate `/tmp/g4probe/serial-fs7c-remap.log` (SERIAL_RC=0): #2610
   220.53s, #2727 166.82s, #3536 23.20s — all inside the 300s cap.
+- 2026-11-09 (FS-elk `eb3118c8`): non-terminal layout-engine envelope
+  leaf. The terminal's fixed layout ignores the upstream engine, so bare
+  `layout: elk.rectpacking` joins the accepted `layout: dagre` profile via a
+  fresh `ElkEngine` ConfigBit and the exact predicate
+  `fields == (Layout | ElkEngine)`; the `Layout` bit stays set so the
+  untrusted-compound guard still closes subgraph-bearing graphs. Only one
+  fixture (the rectpacking container row) admits, whole-and-body, drawing at
+  every width. An initial broader whitelist (bare elk/elk.box + the
+  keepEntryNodeOnTop option) was rejected after a full matrix showed it
+  added a `3-layout-elk-subgraphs` source->error regression and changed
+  nothing for two FS-1b Work-ceiling fixtures; bare elk/elk.box, quoted
+  engines, the `elk:` option namespace and unknown engines are explicit
+  fail-closed Flow6/cohort controls. Whole originals move 975 -> 976 drawn /
+  1170 -> 1169 fallback / 0 error; Flow pending 243 -> 242,
+  admitted/mutated 157 -> 158 (242+158=400). Class285 260/25/0, the
+  mandatory 48-gap roster, and body 179/173/48 are unmoved; the full
+  debug/release OfficialMatrix JSON is byte-identical (sha256
+  2f41e510976905cbed7113e154f1ec58aa563e1e016c4ec7936b23619f528a85).
+  Independent read-only adversarial review (fresh general-purpose agent,
+  task a66265d289108d9b1, zero builds) APPROVE with zero MAJOR; its three
+  MINOR/NIT items were resolved (drift-guard regex now sees quoted elk,
+  namespace branch returned to the original one-liner, folded control
+  restored to bare elk). Full mermaid 1191/1191; ASan contact surface
+  (fselk_cohort + Flow6 envelope/folded controls, 7 tests) zero sanitizer.
+  Serial gate `/tmp/g4probe/serial-fselk-layout.log` (SERIAL_RC=0): #2610
+  205.83s, #2727 166.74s, #3539 22.97s — all inside the 300s cap.

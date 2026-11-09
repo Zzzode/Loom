@@ -23,6 +23,7 @@ are not whole-original errors).
 | After FS-aws (closed-vocabulary AWS icon shape data) | 2026-11-08 | 9f0ae75a | 967 | 1178 | 0 |
 | After FS-spacing (non-terminal nodeSpacing/rankSpacing envelope leaves) | 2026-11-09 | 0606f021 | 971 | 1174 | 0 |
 | After FS-7b Slice B (collapsed subgraphs render as one titled node) | 2026-11-09 | a2ea36e4 | 973 | 1172 | 0 |
+| After FS-7c Slice C (collapsed endpoint remap; redux bodies) | 2026-11-09 | c0510727 | 975 | 1170 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -32,7 +33,7 @@ disposition (fix or documented infeasibility).
 
 | Family | Remaining fallback | Drawn | Notes |
 |---|---:|---:|---|
-| flowchart | 245 | 155 | active track; see breakdown below |
+| flowchart | 243 | 157 | active track; see breakdown below |
 | requirement | 160 | 12 | mostly unbuilt renderer surface |
 | git | 80 | 55 | |
 | state-diagram-v2 | 78 | 25 | |
@@ -69,7 +70,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1172** | **973** | |
+| **Total** | **1170** | **975** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -100,8 +101,8 @@ when the body would draw.
   config (non-terminal but D-120 blocked for whole-source — see the
   candidate-infeasible section; `nodeSpacing`/`rankSpacing` gained a
   profile under FS-spacing), the FS-1b Work ceiling, collapsed-subgraph
-  endpoint remap (Slice C; Slice B already admits the no-remap collapse
-  cases and the handDrawn body), and nested `direction` rows.
+  double-collapse (outer and nested group both collapsed; Slice B/C admit
+  single-collapse including endpoint remap), and nested `direction` rows.
 - Styling/structure: `classDef`/`class`/`style`/`linkStyle`, `init`
   directives, edge markers/styles, and `A & B` fan-out across the rest.
 - AWS icon shape data (`@{ icon: "aws:..." }`): FS-aws admitted a closed
@@ -386,3 +387,29 @@ when the body would draw.
   fs7_subgraph + fs7a_cohort, 16 tests) zero sanitizer. Serial gate log
   `/tmp/g4probe/serial-fs7b-collapsed.log` (SERIAL_RC=0): #2610 209.39s,
   #2727 170.54s, #3531 24.10s — all inside the 300s cap.
+- 2026-11-09 (FS-7c Slice C `c0510727`): collapsed-subgraph endpoint
+  remap. A hidden vertex or nested-group endpoint is rewritten to the
+  collapsed ancestor's Group endpoint, so an edge into a collapsed group
+  terminates on its single rectangle instead of a hidden node. Same-leaf
+  internal edges and remap-only self-connections are dropped (an authored
+  self-loop on a visible vertex is preserved, regression-locked); edges
+  spanning two different collapsed groups, and double-nested collapse,
+  stay fail-closed. The tagged router routes a synthetic Edge so Group-
+  kind port sealing applies while the rich-label binding keeps the
+  original edge index. Six ledger rows: two description-only
+  whole-and-body visual-check fixtures, plus four redux-theme
+  body-only fixtures — the same remap unlocks their bodies, while their
+  whole originals stay source because the flow envelope whitelist has no
+  theme key and the terminal has no redux color contract (no loss of
+  expressible semantics). Two-round independent review (task
+  ae53da6338bbf34d2): r1 approved the two-fixture remap, r2 approved the
+  redux body-only expansion and caught an over-broad self-loop drop,
+  narrowed before approval. Whole originals move 973 -> 975 drawn /
+  1170 fallback (the four redux rows are body-only and do not change
+  whole counts); Flow pending 245 -> 243, admitted/mutated 155 -> 157.
+  Class285 260/25/0, the mandatory 48-gap roster, and body 170/182/48
+  are unmoved; debug/release Flow400 reports byte-identical (sha
+  04c72166). Full mermaid 1188/1188; ASan contact surface (fs7c_cohort +
+  fs7b_directive + fs7b_cohort + fs7_subgraph, 19 tests) zero sanitizer.
+  Serial gate `/tmp/g4probe/serial-fs7c-remap.log` (SERIAL_RC=0): #2610
+  220.53s, #2727 166.82s, #3536 23.20s — all inside the 300s cap.

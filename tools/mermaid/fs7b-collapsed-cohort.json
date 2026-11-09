@@ -1,0 +1,123 @@
+{
+  "schema": "loom_mermaid_fs7b_collapsed_subgraph_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-7b-collapsed-subgraph",
+  "grammar_projection": {
+    "collapse_directive": "a trailing <id>@{ view: collapsed } statement collapses an already-declared, non-deferred group to one titled rectangle; descendant vertices/frames/internal edges are hidden and external edges terminate on the collapsed node",
+    "slice_b_scope": "external edges already target the group id; endpoint remap for hidden descendants is deferred to Slice C"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the collapsed-subgraph originals whose sole body blocker is the unparsed view:collapsed directive and which need no endpoint remap",
+    "roots": [
+      "flowchart"
+    ],
+    "out_of_scope": {
+      "flowchart/nightly-check/redux-color-subgraphs/03-should-render-collapsed-subgraph-containers.mmd": "redux theme/neo config debt; the collapse directive is not the sole blocker",
+      "flowchart/nightly-check/redux-color-subgraphs/07-should-render-collapsed-subgraph-containers.mmd": "redux theme/neo config debt; the collapse directive is not the sole blocker",
+      "flowchart/nightly-check/redux-color-subgraphs/11-should-render-collapsed-subgraph-containers.mmd": "redux theme/neo config debt; the collapse directive is not the sole blocker",
+      "flowchart/nightly-check/redux-color-subgraphs/15-should-render-collapsed-subgraph-containers.mmd": "redux theme/neo config debt; the collapse directive is not the sole blocker",
+      "flowchart/visual-check/should-redirect-an-edge-targeting-a-deeply-nested-node-to-the-outermost-collapsed-subgraph.mmd": "Slice C: a vertex endpoint must remap onto the collapsed ancestor",
+      "flowchart/visual-check/should-collapse-nested-subgraphs-to-the-outermost-collapsed-ancestor.mmd": "Slice C: a nested-group endpoint must remap onto the collapsed ancestor"
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, FS-7b Slice B collapsed-subgraph, 2026-11-09, task acf9dfcbd2cb83b20, zero builds); r1 REQUEST-CHANGES -> r2 APPROVE",
+    "date": "2026-11-09",
+    "verdict": "approved",
+    "note": "r1 found two MAJORs, both fixed before approval: (1) an edge joining vertices hidden inside two DIFFERENT collapsed groups was silently dropped; the projection now distinguishes same-leaf internal edges (dropped) from different-leaf edges (fail-closed, deferred to Slice C remap), and the collapsed group's own visible endpoint is no longer misclassified as hidden; (2) the parser accept/reject matrix was untested, now locked by test_mermaid_fs7b_directive through the public render API with CellCapture comparisons. MINOR: the corpus drift regex now accepts both bare and double-quoted collapsed. Frozen contracts verified: no ungated hidden_vertex access, the non-collapsed path takes no new branch, sizeof(Group) stays 80 with no new unconditional Work spend, and the three fixtures are absent from the E6c 48-gap roster and every other cohort ledger. r2 APPROVE with no remaining MAJOR/MINOR/NIT."
+  },
+  "counts": {
+    "total": 3,
+    "predicted_draw": 3,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 2
+  },
+  "rows": [
+    {
+      "path": "flowchart/visual-check/should-render-a-collapsed-subgraph-as-a-single-node-with-edges-redirected-to-it.mmd",
+      "family": "flowchart",
+      "sha256": "0f27108cde4b8cb5625b05ad592fa7a7e82207ed428b37dbcf78c001f34df7bd",
+      "manifest_sha256": "0f27108cde4b8cb5625b05ad592fa7a7e82207ed428b37dbcf78c001f34df7bd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7b collapsed-subgraph directive admitted; the group renders as a single titled rectangle"
+    },
+    {
+      "path": "flowchart/visual-check/should-render-a-collapsed-subgraph-alongside-an-expanded-one.mmd",
+      "family": "flowchart",
+      "sha256": "df916c4d6aa8e0cdff0e4d24b37b3d57cb222735e1e1e65cf23a042bc155941c",
+      "manifest_sha256": "df916c4d6aa8e0cdff0e4d24b37b3d57cb222735e1e1e65cf23a042bc155941c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7b collapsed-subgraph directive admitted; the group renders as a single titled rectangle"
+    },
+    {
+      "path": "flowchart/nightly-check/handdrawn/should-redirect-a-collapsed-subgraph-using-the-handdrawn-look.mmd",
+      "family": "flowchart",
+      "sha256": "20c3ac86c7625f037ffe8c5ad4655b8392641619bbb07eaf819601aec0bb333b",
+      "manifest_sha256": "20c3ac86c7625f037ffe8c5ad4655b8392641619bbb07eaf819601aec0bb333b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7b admits the body only; whole original stays source behind the look: handDrawn (FS-8) frontmatter gate; the body track has no frontmatter and draws"
+    }
+  ]
+}

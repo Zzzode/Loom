@@ -831,7 +831,16 @@ struct Group {
     // reviewed interaction and stays whole-source rejected (its positive
     // Model supplement is a standalone milestone).
     bool forward_referenced = false;
+    // FS-7b: a trailing `id@{ view: collapsed }` directive collapses the
+    // group to a single titled node. Appended as the LAST data member: the
+    // positional aggregate initializers below rely on member order, and a
+    // same-typed bool inserted earlier would silently rebind their trailing
+    // arguments.
+    bool collapsed = false;
 };
+// FS-7b: the new trailing bool must stay inside the existing struct padding
+// so the sizeof-driven prepay and exact-budget tests cannot move.
+static_assert(sizeof(Group) == 80, "Group layout is part of the Work-budget contract");
 enum class FlowStyleKind { Definition, Assignment, Direct };
 
 struct FlowStyleRecord {
@@ -1776,6 +1785,52 @@ bool flow_statement(std::string_view text, Diagram& graph, Work& work, std::stri
         else
             return false;
         return true;
+    }
+    // FS-7b: a trailing `<id>@{ view: collapsed }` directive collapses an
+    // already-declared group to a single titled node. It is recognized only
+    // when the id names a group (a vertex shape-data statement falls through
+    // to the ordinary node path), only outside any open group, and only for a
+    // non-deferred group. The sole key is `view` with a bare or
+    // double-quoted `collapsed` value; body statements bypass the init
+    // directive quote normalizer, so single quotes are not accepted. This is
+    // a closed fixed-token production and spends no Work.
+    {
+        Scanner probe{text};
+        const auto candidate = probe.id();
+        probe.space();
+        if (candidate && probe.rest.starts_with("@{")) {
+            std::optional<std::size_t> group_index;
+            for (std::size_t n = 0; n < graph.groups.size(); ++n)
+                if (graph.groups[n].id == *candidate) {
+                    group_index = n;
+                    break;
+                }
+            if (group_index) {
+                if (!graph.group_stack.empty()) return false;
+                Scanner sc{text};
+                if (sc.id() != *candidate) return false;
+                sc.space();
+                if (!sc.take("@{")) return false;
+                sc.space();
+                if (!sc.take("view")) return false;
+                sc.space();
+                if (!sc.take(":")) return false;
+                sc.space();
+                if (sc.rest.starts_with('"')) {
+                    if (!sc.take("\"collapsed\"")) return false;
+                } else if (!sc.take("collapsed")) {
+                    return false;
+                }
+                sc.space();
+                if (!sc.take("}")) return false;
+                sc.space();
+                if (!sc.rest.empty()) return false;
+                auto& target = graph.groups[*group_index];
+                if (target.deferred) return false;
+                target.collapsed = true;  // idempotent on a well-formed repeat
+                return true;
+            }
+        }
     }
     // FS-2: a `click` binding is a non-visual interaction statement; the
     // terminal has no interaction layer, so a well-formed binding is consumed
@@ -4147,6 +4202,27 @@ std::optional<Region> place_region(const Diagram& graph, int owner, Direction in
         owner < 0 ? inherited
                   : graph.groups[static_cast<std::size_t>(owner)].direction.value_or(inherited);
 
+    // FS-7b: a collapsed group short-circuits to a single titled rectangle.
+    // It never enumerates its vertices or recurses into child groups, so all
+    // descendants are absent from every ancestor Region. The leaf box is the
+    // exact ordinary-rectangle node_size result (no title-band shift); the
+    // group stays in Region.groups, never Region.nodes (group indices share
+    // the vertex-slot namespace there).
+    if (owner >= 0 && graph.groups[static_cast<std::size_t>(owner)].collapsed) {
+        const auto& collapsed_group = graph.groups[static_cast<std::size_t>(owner)];
+        const Vertex leaf{collapsed_group.id, collapsed_group.text, Shape::Rectangle,
+                          false, false, -1, 0};
+        const auto leaf_box = node_size(leaf, work);
+        if (!leaf_box || leaf_box->width <= 0 || leaf_box->height <= 0 ||
+            leaf_box->width > kWidthLimit || leaf_box->height > kHeightLimit)
+            return {};
+        Region leaf_region;
+        leaf_region.width = leaf_box->width;
+        leaf_region.height = leaf_box->height;
+        leaf_region.groups.push_back({static_cast<std::size_t>(owner), *leaf_box});
+        return leaf_region;
+    }
+
     struct Item {
         std::size_t index, order;
         bool group;
@@ -5166,7 +5242,83 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
     }
     if (!placed) return {};
 
-    const bool has_group_endpoint = graph.has_group_endpoint;
+    // FS-7b: when no group is collapsed, every structure below is left empty
+    // and all consumers use the raw graph unchanged, so the byte-frozen
+    // non-collapsed paths take no new branch. When a group is collapsed, build
+    // a visibility map and a projected edge list that drops edges internal to
+    // a collapsed leaf; hidden vertices/groups are skipped by every consumer.
+    const bool any_group_collapsed =
+        std::ranges::any_of(graph.groups, [](const Group& group) { return group.collapsed; });
+    std::vector<char> hidden_vertex;
+    std::vector<Edge> projected_edges;
+    std::vector<std::size_t> projected_edge_index;
+    bool projected_has_group_endpoint = false;
+    if (any_group_collapsed) {
+        // Deepest collapsed ancestor of a group index, or -1. A collapsed
+        // group resolves to itself.
+        const auto collapsed_ancestor = [&](int group) -> int {
+            int current = group;
+            while (current >= 0) {
+                if (static_cast<std::size_t>(current) >= graph.groups.size()) return -1;
+                if (graph.groups[static_cast<std::size_t>(current)].collapsed) return current;
+                current = graph.groups[static_cast<std::size_t>(current)].parent;
+            }
+            return -1;
+        };
+        hidden_vertex.assign(graph.vertices.size(), 0);
+        for (std::size_t n = 0; n < graph.vertices.size(); ++n)
+            if (graph.vertices[n].group >= 0 &&
+                collapsed_ancestor(graph.vertices[n].group) >= 0)
+                hidden_vertex[n] = 1;
+        // Collapsed ancestor that HIDES this endpoint, or -1 when the endpoint
+        // stays visible. A vertex inside a collapsed group is hidden; a group
+        // endpoint is hidden only when it is a non-collapsed nested group
+        // swallowed by a collapsed ancestor — the collapsed leaf group itself
+        // stays visible (it is the rendered node).
+        const auto hidden_leaf = [&](const Endpoint& endpoint) -> int {
+            if (endpoint.kind == EndpointKind::Vertex) {
+                if (endpoint.index >= graph.vertices.size() ||
+                    graph.vertices[endpoint.index].group < 0)
+                    return -1;
+                return collapsed_ancestor(graph.vertices[endpoint.index].group);
+            }
+            if (endpoint.index >= graph.groups.size()) return -1;
+            const auto& group = graph.groups[endpoint.index];
+            if (group.collapsed) return -1;  // the collapsed leaf is visible
+            return collapsed_ancestor(static_cast<int>(endpoint.index));
+        };
+        projected_edges.reserve(graph.edges.size());
+        projected_edge_index.reserve(graph.edges.size());
+        for (std::size_t index = 0; index < graph.edges.size(); ++index) {
+            const auto& edge = graph.edges[index];
+            const int from_leaf = hidden_leaf(edge.from);
+            const int to_leaf = hidden_leaf(edge.to);
+            const bool from_hidden = from_leaf >= 0;
+            const bool to_hidden = to_leaf >= 0;
+            if (from_hidden && to_hidden) {
+                // Same collapsed leaf: a genuine internal edge, drop it.
+                // Different leaves: the edge would have to remap onto both
+                // collapsed nodes (Slice C); silently dropping it would paint
+                // two nodes with a missing edge, so fail closed instead.
+                if (from_leaf != to_leaf) return {};
+                continue;
+            }
+            // A single hidden endpoint would need collapsed-ancestor remap,
+            // which is the later Slice C; fail closed rather than route to a
+            // zero box in Slice B.
+            if (from_hidden || to_hidden) return {};
+            if (edge.from.kind == EndpointKind::Group || edge.to.kind == EndpointKind::Group)
+                projected_has_group_endpoint = true;
+            projected_edges.push_back(edge);
+            projected_edge_index.push_back(index);
+        }
+    }
+    const bool route_has_group_endpoint =
+        any_group_collapsed ? projected_has_group_endpoint : graph.has_group_endpoint;
+    const std::vector<Edge>& route_edges =
+        any_group_collapsed ? projected_edges : graph.edges;
+
+    const bool has_group_endpoint = route_has_group_endpoint;
 
     struct EndpointBox {
         Box box;
@@ -5179,6 +5331,7 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
         int distance = 0;
     };
 
+    std::vector<std::optional<Box>> group_boxes;
     std::vector<RoutedEdge> tagged_routing_order;
     if (has_group_endpoint) {
         // Route from the real box belonging to each authored endpoint. A group
@@ -5186,9 +5339,9 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
         // tables and the stable routing order are prepaid before allocation.
         const auto route_table_charge =
             graph.groups.size() * (sizeof(std::optional<Box>) + sizeof(Box) + 16u) +
-            graph.edges.size() * (2u * sizeof(RoutedEdge) + sizeof(std::size_t) + 48u);
+            route_edges.size() * (2u * sizeof(RoutedEdge) + sizeof(std::size_t) + 48u);
         if (!work.spend(route_table_charge)) return {};
-        std::vector<std::optional<Box>> group_boxes(graph.groups.size());
+        group_boxes.assign(graph.groups.size(), std::nullopt);
         if (region)
             for (const auto& [index, box] : region->groups) {
                 if (index >= group_boxes.size() || group_boxes[index] || box.width <= 0 ||
@@ -5196,11 +5349,16 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
                     return {};
                 group_boxes[index] = box;
             }
-        for (const auto& group : group_boxes)
-            if (!group) return {};
+        // Without collapse every group must have a box. With collapse, a group
+        // hidden inside a collapsed ancestor has no Region box and no kept edge
+        // references it, so only drawable groups are required.
+        if (!any_group_collapsed)
+            for (const auto& group : group_boxes)
+                if (!group) return {};
         const auto box_for = [&](const Endpoint& endpoint) -> std::optional<EndpointBox> {
             if (endpoint.kind == EndpointKind::Vertex) {
                 if (endpoint.index >= placed->size()) return {};
+                if (any_group_collapsed && hidden_vertex[endpoint.index]) return {};
                 const auto box = (*placed)[endpoint.index];
                 if (box.width <= 0 || box.height <= 0) return {};
                 return EndpointBox{box, graph.vertices[endpoint.index].shape};
@@ -5208,20 +5366,26 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
             if (endpoint.index >= group_boxes.size() || !group_boxes[endpoint.index]) return {};
             return EndpointBox{*group_boxes[endpoint.index], Shape::Rectangle};
         };
-        tagged_routing_order.reserve(graph.edges.size());
-        for (std::size_t index = 0; index < graph.edges.size(); ++index) {
-            const auto from = box_for(graph.edges[index].from);
-            const auto to = box_for(graph.edges[index].to);
+        tagged_routing_order.reserve(route_edges.size());
+        for (std::size_t position = 0; position < route_edges.size(); ++position) {
+            const auto original_index =
+                any_group_collapsed ? projected_edge_index[position] : position;
+            const auto from = box_for(route_edges[position].from);
+            const auto to = box_for(route_edges[position].to);
             if (!from || !to) return {};
             tagged_routing_order.push_back(
-                {index, *from, *to,
+                {original_index, *from, *to,
                  distance({from->box.x + from->box.width / 2, from->box.y + from->box.height / 2},
                           {to->box.x + to->box.width / 2, to->box.y + to->box.height / 2})});
         }
     }
 
     int width = 0, height = 0, longest = 0;
-    for (const auto& box : *placed) {
+    for (std::size_t slot = 0; slot < placed->size(); ++slot) {
+        // FS-7b: a vertex hidden inside a collapsed group keeps a zero box and
+        // contributes no canvas extent or validation.
+        if (any_group_collapsed && hidden_vertex[slot]) continue;
+        const auto& box = (*placed)[slot];
         if (box.width <= 0 || box.height <= 0) return {};
         width = std::max(width, box.x + box.width);
         height = std::max(height, box.y + box.height);
@@ -5230,7 +5394,7 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
         width = std::max(width, region->width);
         height = std::max(height, region->height);
     }
-    for (const auto& edge : graph.edges)
+    for (const auto& edge : route_edges)
         if (edge.text) longest = std::max(longest, label_width(*edge.text));
     if (longest + 4 > kWidthLimit) return {};
     width =
@@ -5295,10 +5459,21 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
                 const std::vector<detail::LabelRun>* group_runs = nullptr;
                 if (rich && index < rich->group.size() && !rich->group[index].empty())
                     group_runs = &rich->group[index];
-                if (!group_frame(canvas, box, graph.groups[index].text, group_runs))
+                if (graph.groups[index].collapsed) {
+                    // FS-7b: a collapsed group is a single titled rectangle,
+                    // not a frame. Reuse node_box with a synthetic vertex and
+                    // the group's rich runs so styled titles survive.
+                    const Vertex collapsed_node{graph.groups[index].id,
+                                                graph.groups[index].text, Shape::Rectangle,
+                                                false, false, -1, 0};
+                    if (!node_box(canvas, box, collapsed_node, pass_collector, group_runs))
+                        return {};
+                } else if (!group_frame(canvas, box, graph.groups[index].text, group_runs)) {
                     return {};
+                }
             }
         for (std::size_t n = 0; n < placed->size(); ++n) {
+            if (any_group_collapsed && hidden_vertex[n]) continue;  // FS-7b
             const std::vector<detail::LabelRun>* runs = nullptr;
             if (rich && n < rich->vertex.size() && !rich->vertex[n].empty())
                 runs = &rich->vertex[n];
@@ -5437,22 +5612,27 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
                 tagged_routing_order.begin(), tagged_routing_order.end(),
                 [](const RoutedEdge& a, const RoutedEdge& b) { return a.distance < b.distance; });
             for (const auto& route : tagged_routing_order)
+                // FS-7b Slice B: projected edges are unmodified copies, so the
+                // original Edge object still matches the routed boxes. Slice C
+                // (endpoint remap) must pass route_edges[position] here instead,
+                // because a remapped synthetic Edge carries a Group kind that
+                // diverges from graph.edges[route.edge] (design section 3.3.4).
                 if (!route_one(route.edge, graph.edges[route.edge], route.from, route.to)) {
                     return std::optional<std::vector<std::string>>{};
                 }
         } else {
             // The private parser only creates vertex endpoints on this branch, but
             // validate that invariant before the unchanged index-based route sort.
-            if (!work.spend(graph.edges.size() * (2u * sizeof(Endpoint) + 16u))) return {};
-            for (const auto& edge : graph.edges)
+            if (!work.spend(route_edges.size() * (2u * sizeof(Endpoint) + 16u))) return {};
+            for (const auto& edge : route_edges)
                 if (edge.from.kind != EndpointKind::Vertex ||
                     edge.to.kind != EndpointKind::Vertex || edge.from.index >= placed->size() ||
                     edge.to.index >= placed->size())
                     return {};
-            std::vector<std::size_t> routing_order(graph.edges.size());
+            std::vector<std::size_t> routing_order(route_edges.size());
             std::iota(routing_order.begin(), routing_order.end(), 0);
-            const auto edge_distance = [&](std::size_t index) {
-                const auto& edge = graph.edges[index];
+            const auto edge_distance = [&](std::size_t position) {
+                const auto& edge = route_edges[position];
                 const auto& a = (*placed)[edge.from.index];
                 const auto& b = (*placed)[edge.to.index];
                 return distance({a.x + a.width / 2, a.y + a.height / 2},
@@ -5461,9 +5641,11 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
             std::stable_sort(
                 routing_order.begin(), routing_order.end(),
                 [&](std::size_t a, std::size_t b) { return edge_distance(a) < edge_distance(b); });
-            for (const auto index : routing_order) {
-                const auto& edge = graph.edges[index];
-                if (!route_one(index, edge,
+            for (const auto position : routing_order) {
+                const auto original_index =
+                    any_group_collapsed ? projected_edge_index[position] : position;
+                const auto& edge = route_edges[position];
+                if (!route_one(original_index, edge,
                                {(*placed)[edge.from.index], graph.vertices[edge.from.index].shape},
                                {(*placed)[edge.to.index], graph.vertices[edge.to.index].shape}))
                     return std::optional<std::vector<std::string>>{};

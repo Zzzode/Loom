@@ -6306,6 +6306,48 @@ const Fs7aCohortEntry* fs7a_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0031 FS-7b collapsed-subgraph cohort. Three rows draw on the body
+// track (a collapsed group renders as one titled rectangle); two also draw
+// as whole originals, while the handDrawn row is body-only behind the
+// look:handDrawn gate. Per-row narrow states are measured, not assumed.
+struct Fs7bCohortEntry {
+    bool draw = false;
+    bool original_draw = false;
+    std::array<std::string, 3> original_states;
+    std::array<std::string, 3> body_states;
+};
+const std::map<std::string, Fs7bCohortEntry>& fs7b_cohort_map() {
+    static const std::map<std::string, Fs7bCohortEntry> map = [] {
+        std::map<std::string, Fs7bCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/fs7b-collapsed-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "FS-7b cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "FS-7b cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            Fs7bCohortEntry entry;
+            entry.draw = row.get_string("prediction") == "predicted-draw";
+            entry.original_draw =
+                !(row.has("track_scope") && row.get_string("track_scope") == "body-only");
+            auto load = [](JsonVal states) {
+                return std::array<std::string, 3>{states.get_string("wide_240"),
+                                                  states.get_string("narrow_40"),
+                                                  states.get_string("restored_240")};
+            };
+            entry.original_states = load(row.get("expected_states"));
+            entry.body_states = load(row.get("expected_body_states"));
+            rows.emplace(row.get_string("path"), std::move(entry));
+        });
+        return rows;
+    }();
+    return map;
+}
+const Fs7bCohortEntry* fs7b_cohort_row(std::string_view path) {
+    const auto& rows = fs7b_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0031 FS-spacing cohort. Four whole-and-body fixtures whose only
 // unaccepted envelope leaves are non-terminal flowchart.nodeSpacing/
 // rankSpacing scalars. Once whitelisted they draw on both tracks at
@@ -9618,6 +9660,28 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.expected_states = fs7a->body_states;
                     row.decision_reasons.fill(row.reason);
                     observations.push_back(std::move(row));
+                } else if (const auto* fs7b = fs7b_cohort_row(path)) {
+                    // FS-7b collapsed-subgraph cohort: every row draws its body
+                    // at the pinned widths; the whole-original disposition is
+                    // handled in the Flow400 whole-source path for the two
+                    // whole-and-body rows.
+                    require(fs7b->draw, "FS-7b cohort rows must draw their body");
+                    Observation row;
+                    row.path = path;
+                    row.track = "body_diagnostic";
+                    row.type = "flowchart";
+                    row.source_sha256 = digest(body);
+                    row.expected = "drawn";
+                    row.reason = "RFC-0031 FS-7b collapsed-subgraph cohort (body)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(fs7b->body_states[0]),
+                                  state_status(fs7b->body_states[1]),
+                                  state_status(fs7b->body_states[2])};
+                    row.expected_states = fs7b->body_states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
                 } else if (const auto* aws = aws_icon_cohort_row(path)) {
                     require(aws->draw, "AWS icon cohort rows must draw their body");
                     Observation row;
@@ -9855,13 +9919,14 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         // 257 -> 254 (direction-less headers and forward group references).
         // FS-aws moves three closed-vocabulary icon-shape originals
         // 254 -> 251. FS-spacing moves four non-terminal nodeSpacing/
-        // rankSpacing envelope originals 251 -> 247. All count admitted but
+        // rankSpacing envelope originals 251 -> 247. FS-7b moves two
+        // collapsed-subgraph originals 247 -> 245. All count admitted but
         // not decoded.
-        EXPECT_EQ(flows.pending, 247u);
+        EXPECT_EQ(flows.pending, 245u);
         EXPECT_EQ(flows.errors, 0u);
         EXPECT_EQ(flows.resources, 0u);
-        EXPECT_EQ(flows.admitted, 153u);
-        EXPECT_EQ(flows.mutated, 153u);
+        EXPECT_EQ(flows.admitted, 155u);
+        EXPECT_EQ(flows.mutated, 155u);
         for (const auto count : applications)
             projection_consumed(count);
         role_batch_consumed(role_counts, role_batch.facts.root());
@@ -15325,6 +15390,45 @@ Observation run_official_flow400_case(
                     "OfficialFlow400 FS7a ledger evidence write failed");
             return row;
         }
+        // RFC 0031 FS-7b: the two whole-and-body collapsed-subgraph fixtures
+        // admit as whole originals once the view:collapsed directive parses
+        // and the group projects to one titled rectangle. The handDrawn
+        // body-only row falls through to the ordinary whole-null pending path.
+        // Five frames prove each admission inline; the durable gate is
+        // test_mermaid_fs7b_cohort.
+        if (const auto* fs7b = fs7b_cohort_row(path); fs7b && fs7b->draw &&
+                                                       fs7b->original_draw) {
+            p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
+            const bool wide_source = flow_oracle::flow400_same(*frames[0], *frames[3], work);
+            p.narrow_ordinary = flow_oracle::flow400_same(*frames[1], *frames[4], work);
+            require(!wide_source && p.restored,
+                    "FS7b ledger draw frame protocol (wide native, restore)");
+            const bool narrow_draw = fs7b->original_states[1] == "drawn";
+            require(p.narrow_ordinary == !narrow_draw,
+                    "FS7b ledger narrow frame disagrees with ledger");
+            static_cast<void>(flow_oracle::flow400_following(*frames[0], work, kSentinel));
+            row.status = {"drawn", narrow_draw ? "drawn" : "source_fallback", "drawn"};
+            row.expected = "drawn";
+            row.expected_states = {"drawn", narrow_draw ? "drawn" : "source", "drawn"};
+            row.reason = "RFC-0031 FS-7b reviewed collapsed-subgraph cohort";
+            row.decision_reasons.fill(row.reason);
+            row.role_model_sha = row.source_sha256;
+            row.raw_source_authority = "immutable_Flow400_8Models_plus_FS7bCollapsedCohort2";
+            p.phase = "complete";
+            p.admitted = true;
+            p.mutated = true;
+            p.remaining[2] = p.remaining[3] = p.remaining[4] = p.remaining[5] =
+                p.remaining[6] = work.remaining;
+            row.raw_source_constraints = official_flow_info(p, work.remaining);
+            data.set("contract", kOfficialFlow400Contract);
+            data.set("actual", row.raw_source_constraints);
+            data.set("foreign_assertions_certified", 0);
+            diagnostic.set_root(data);
+            diagnostics << diagnostic.to_string() << '\n';
+            require(static_cast<bool>(diagnostics),
+                    "OfficialFlow400 FS7b ledger evidence write failed");
+            return row;
+        }
         // RFC 0031 FS-aws: three closed-vocabulary icon-shape fixtures admit
         // as whole originals once the icon grammar exists. All three draw at
         // every width. Five frames prove each admission inline; the durable
@@ -15575,6 +15679,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FSAwsIconCohort3";
     const bool spacing_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FSSpacingCohort4";
+    const bool fs7b_selected =
+        row.raw_source_authority == "immutable_Flow400_8Models_plus_FS7bCollapsedCohort2";
     if (strand_selected)
         official_flow_strand_keys(info);
     else if (p0_length_selected)
@@ -15712,7 +15818,7 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                      fs5e_selected || fs5g1_selected || fs5g2_selected ||
                      fs5g3_selected || fs5g4_selected || fs5g5_selected ||
                      fs5g6_selected || fs5g7_selected || fs7a_selected ||
-                     aws_icon_selected || spacing_selected) &&
+                     aws_icon_selected || spacing_selected || fs7b_selected) &&
                     !pending && restored &&
                     mutated && !resource && row.role_model_sha.size() == 64u &&
                     row.errors.empty() && row.status[0] == "drawn" && row.status[2] == "drawn" &&
@@ -15735,7 +15841,7 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                 fs5c_selected || fs5d_selected || fs5e_selected || fs5g1_selected ||
                 fs5g2_selected || fs5g3_selected || fs5g4_selected || fs5g5_selected ||
                 fs5g6_selected || fs5g7_selected || fs7a_selected ||
-                aws_icon_selected || spacing_selected ||
+                aws_icon_selected || spacing_selected || fs7b_selected ||
                 row.raw_source_authority == "immutable_Flow400_whole_8Models_392null" ||
                 same_run_body,
             "OfficialFlow400 unknown source authority");
@@ -15888,6 +15994,13 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                 "OfficialFlow400 FS-spacing admitted original must be a whole-and-body ledger row");
         require(row.role_model_sha.size() == 64u,
                 "OfficialFlow400 FS-spacing ledger source identity sha");
+    }
+    if (fs7b_selected) {
+        const auto* ledger = fs7b_cohort_row(row.path);
+        require(ledger && ledger->draw && ledger->original_draw,
+                "OfficialFlow400 FS-7b admitted original must be a whole-and-body ledger row");
+        require(row.role_model_sha.size() == 64u,
+                "OfficialFlow400 FS-7b ledger source identity sha");
     }
     if (title_selected) {
         require(row.path == flow_oracle::kFlowTitleFixture &&

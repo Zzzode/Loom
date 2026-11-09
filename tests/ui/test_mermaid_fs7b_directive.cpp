@@ -140,3 +140,56 @@ TEST(MermaidFs7bDirective, CrossCollapsedGroupEdgeFailsClosed) {
         "  end\n"
         "  g1@{ view: collapsed }\n"));
 }
+
+TEST(MermaidFs7bDirective, RemappedSelfConnectionIsDroppedNotDrawnAsLoop) {
+    // An edge from the collapsed group into one of its own hidden vertices
+    // projects to group -> group after remap. It is an internal/self
+    // connection and must be dropped; the external Start -> outer edge still
+    // makes the diagram draw natively (no painted self-loop).
+    EXPECT_TRUE(draws_native(
+        "flowchart TD\n"
+        "  Start --> outer\n"
+        "  subgraph outer [Outer]\n"
+        "    A\n"
+        "  end\n"
+        "  outer --> A\n"
+        "  outer@{ view: collapsed }\n"));
+}
+
+TEST(MermaidFs7bDirective, VisibleSelfLoopSurvivesInCollapsedGraph) {
+    // An authored self-loop on a fully visible vertex is an existing supported
+    // feature and must not be mistaken for a remap-internal connection just
+    // because the graph also contains a collapsed group.
+    EXPECT_TRUE(draws_native(
+        "flowchart TD\n"
+        "  X --> X\n"
+        "  subgraph g [G]\n"
+        "    A\n"
+        "  end\n"
+        "  g@{ view: collapsed }\n"));
+    // A visible group self-loop is likewise preserved.
+    EXPECT_TRUE(draws_native(
+        "flowchart TD\n"
+        "  g --> g\n"
+        "  subgraph g [G]\n"
+        "    A\n"
+        "  end\n"
+        "  g@{ view: collapsed }\n"));
+}
+
+TEST(MermaidFs7bDirective, DoubleCollapsedNestedGroupFailsClosed) {
+    // Both the outer and an inner group carry collapse directives. The outer
+    // short-circuits layout so the inner group has no region box; an edge
+    // remapped onto the inner group cannot be routed. The whole source stays
+    // on ordinary fallback rather than painting a partial graph.
+    EXPECT_FALSE(draws_native(
+        "flowchart TD\n"
+        "  Start --> A\n"
+        "  subgraph outer [Outer]\n"
+        "    subgraph inner [Inner]\n"
+        "      A\n"
+        "    end\n"
+        "  end\n"
+        "  outer@{ view: collapsed }\n"
+        "  inner@{ view: collapsed }\n"));
+}

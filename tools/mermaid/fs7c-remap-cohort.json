@@ -1,0 +1,196 @@
+{
+  "schema": "loom_mermaid_fs7c_collapsed_remap_cohort/v1",
+  "rfc": 31,
+  "phase": "FS-7c-collapsed-endpoint-remap",
+  "grammar_projection": {
+    "endpoint_remap": "a hidden vertex or nested-group endpoint is rewritten to the collapsed ancestor's Group endpoint; same-leaf internal edges and remapped self-connections are dropped and different-leaf edges stay fail-closed",
+    "known_limit_double_collapse": "when both an outer and a nested inner group carry collapse directives, the outer layout short-circuit leaves the inner group without a region box, so an edge remapped onto it fails closed to whole source; supporting it would require remapping to the outermost box-owning collapsed ancestor (no corpus fixture uses double collapse)"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "collapsed-subgraph originals whose external edge targets a hidden descendant and needs collapsed-ancestor remap",
+    "roots": [
+      "flowchart"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, FS-7c collapsed endpoint remap, 2026-11-09, task ae53da6338bbf34d2, zero builds); r1 approved the 2-fixture remap, r2 approved the 6-row body-only expansion",
+    "date": "2026-11-09",
+    "verdict": "approved",
+    "note": "r1 (2 rows) approved the projection that rewrites a hidden vertex/nested-group endpoint onto the collapsed ancestor Group endpoint, with the tagged router routing the synthetic Edge so Group-kind sealing applies while rich-label binding keeps the original index. r2 confirmed the expansion to six rows: the same remap unlocks the four redux-color-subgraphs BODIES, which are body-only because the flow envelope whitelist has no theme key and the terminal has no redux color contract, so the whole originals stay source with no loss of expressible semantics. Findings closed before approval: remapped self-connections are dropped only when an endpoint was actually remapped (an authored self-loop on a fully visible vertex is preserved, locked by a regression test); double-collapse stays fail-closed (documented known limit); the RoutedEdge Edge-copy budget increase on group-endpoint graphs is re-verified by dual-preset exact-budget gates. Frozen contracts unmoved: E6c 48-gap, Class285, sizeof(Group)==80, no new unconditional Work spend, non-collapsed graphs take the original path, and the ledger owns exactly the FS-7b out-of-scope set with no double ownership. No MAJOR/MINOR left open at approval."
+  },
+  "counts": {
+    "total": 6,
+    "predicted_draw": 6,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 2
+  },
+  "rows": [
+    {
+      "path": "flowchart/visual-check/should-redirect-an-edge-targeting-a-deeply-nested-node-to-the-outermost-collapsed-subgraph.mmd",
+      "family": "flowchart",
+      "sha256": "9fc45b40c6c516ab95a413566c7a6cd0b3d9ccab0ff7671700c04008463b23fe",
+      "manifest_sha256": "9fc45b40c6c516ab95a413566c7a6cd0b3d9ccab0ff7671700c04008463b23fe",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7c: a vertex endpoint nested inside the collapsed group is remapped to the collapsed ancestor Group endpoint"
+    },
+    {
+      "path": "flowchart/visual-check/should-collapse-nested-subgraphs-to-the-outermost-collapsed-ancestor.mmd",
+      "family": "flowchart",
+      "sha256": "215203549d6e8596af66288ed348dc429d92717b3e781e1f2e6f638fde568f4f",
+      "manifest_sha256": "215203549d6e8596af66288ed348dc429d92717b3e781e1f2e6f638fde568f4f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7c: a nested-group endpoint swallowed by the collapsed ancestor is remapped to the collapsed ancestor Group endpoint"
+    },
+    {
+      "path": "flowchart/nightly-check/redux-color-subgraphs/03-should-render-collapsed-subgraph-containers.mmd",
+      "family": "flowchart",
+      "sha256": "6fdf541d7fb1d3a7e02b11faf07cc00a48fa09d152ac7344cc5ebe38332b11d9",
+      "manifest_sha256": "6fdf541d7fb1d3a7e02b11faf07cc00a48fa09d152ac7344cc5ebe38332b11d9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; whole original stays source behind the theme: redux frontmatter"
+    },
+    {
+      "path": "flowchart/nightly-check/redux-color-subgraphs/07-should-render-collapsed-subgraph-containers.mmd",
+      "family": "flowchart",
+      "sha256": "15f344629fc9c03a098bb90cadabf818ee976a8aeaa074f5a748bae2c4137b6b",
+      "manifest_sha256": "15f344629fc9c03a098bb90cadabf818ee976a8aeaa074f5a748bae2c4137b6b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; whole original stays source behind the theme: redux frontmatter"
+    },
+    {
+      "path": "flowchart/nightly-check/redux-color-subgraphs/11-should-render-collapsed-subgraph-containers.mmd",
+      "family": "flowchart",
+      "sha256": "aa0c3b4743fde40112e5545864c69c8cf012a5ddde503c6d7567329237871700",
+      "manifest_sha256": "aa0c3b4743fde40112e5545864c69c8cf012a5ddde503c6d7567329237871700",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; whole original stays source behind the theme: redux frontmatter"
+    },
+    {
+      "path": "flowchart/nightly-check/redux-color-subgraphs/15-should-render-collapsed-subgraph-containers.mmd",
+      "family": "flowchart",
+      "sha256": "f2cc0d907884b44b3f12f4982c967963ac1e039ba6b84e61e9b9491ef3f90598",
+      "manifest_sha256": "f2cc0d907884b44b3f12f4982c967963ac1e039ba6b84e61e9b9491ef3f90598",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "body-only",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; whole original stays source behind the theme: redux frontmatter"
+    }
+  ]
+}

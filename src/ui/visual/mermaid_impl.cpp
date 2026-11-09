@@ -5287,6 +5287,12 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
             if (group.collapsed) return -1;  // the collapsed leaf is visible
             return collapsed_ancestor(static_cast<int>(endpoint.index));
         };
+        // Project a hidden endpoint onto its collapsed ancestor as a Group
+        // endpoint; a visible endpoint passes through unchanged (leaf < 0).
+        const auto project_endpoint = [&](const Endpoint& endpoint, int leaf) -> Endpoint {
+            if (leaf < 0) return endpoint;
+            return Endpoint{EndpointKind::Group, static_cast<std::size_t>(leaf)};
+        };
         projected_edges.reserve(graph.edges.size());
         projected_edge_index.reserve(graph.edges.size());
         for (std::size_t index = 0; index < graph.edges.size(); ++index) {
@@ -5297,19 +5303,31 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
             const bool to_hidden = to_leaf >= 0;
             if (from_hidden && to_hidden) {
                 // Same collapsed leaf: a genuine internal edge, drop it.
-                // Different leaves: the edge would have to remap onto both
-                // collapsed nodes (Slice C); silently dropping it would paint
-                // two nodes with a missing edge, so fail closed instead.
+                // Different leaves: remapping would join two collapsed nodes;
+                // that conservative case stays fail-closed (no Slice C fixture
+                // needs it) rather than risking a fan-in port conflict.
                 if (from_leaf != to_leaf) return {};
                 continue;
             }
-            // A single hidden endpoint would need collapsed-ancestor remap,
-            // which is the later Slice C; fail closed rather than route to a
-            // zero box in Slice B.
-            if (from_hidden || to_hidden) return {};
-            if (edge.from.kind == EndpointKind::Group || edge.to.kind == EndpointKind::Group)
+            // FS-7b Slice C: a single hidden endpoint (a vertex inside, or a
+            // nested group swallowed by, a collapsed ancestor) is remapped onto
+            // the collapsed group's own endpoint. The synthetic Edge copies
+            // every other field so labels, arrows and stroke survive; only the
+            // hidden endpoint's kind/index change.
+            Edge projected = edge;
+            projected.from = project_endpoint(edge.from, from_leaf);
+            projected.to = project_endpoint(edge.to, to_leaf);
+            // A remap that collapses both endpoints onto the same node (an
+            // edge from the collapsed group into one of its own hidden
+            // vertices) is an internal/self connection with no external
+            // meaning: drop it rather than paint an unreviewed self-loop.
+            // Guard on an actual remap so an authored self-loop on a fully
+            // visible vertex (an existing supported feature) is never dropped.
+            if ((from_hidden || to_hidden) && projected.from == projected.to) continue;
+            if (projected.from.kind == EndpointKind::Group ||
+                projected.to.kind == EndpointKind::Group)
                 projected_has_group_endpoint = true;
-            projected_edges.push_back(edge);
+            projected_edges.push_back(std::move(projected));
             projected_edge_index.push_back(index);
         }
     }
@@ -5326,7 +5344,8 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
     };
 
     struct RoutedEdge {
-        std::size_t edge = 0u;
+        std::size_t edge = 0u;       // original graph.edges index (rich-label binding)
+        Edge routed;                 // edge actually routed (synthetic after FS-7b remap)
         EndpointBox from, to;
         int distance = 0;
     };
@@ -5337,6 +5356,10 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
         // Route from the real box belonging to each authored endpoint. A group
         // is its painted frame, never a representative child vertex. These
         // tables and the stable routing order are prepaid before allocation.
+        // FS-7c: RoutedEdge now carries a synthetic Edge (so remapped Group
+        // kinds reach route_one); this larger per-edge charge applies to every
+        // group-endpoint graph, so the GroupEndpoint15/FS-7a exact-budget gates
+        // are re-verified in both presets as part of each collapse cohort.
         const auto route_table_charge =
             graph.groups.size() * (sizeof(std::optional<Box>) + sizeof(Box) + 16u) +
             route_edges.size() * (2u * sizeof(RoutedEdge) + sizeof(std::size_t) + 48u);
@@ -5374,7 +5397,7 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
             const auto to = box_for(route_edges[position].to);
             if (!from || !to) return {};
             tagged_routing_order.push_back(
-                {original_index, *from, *to,
+                {original_index, route_edges[position], *from, *to,
                  distance({from->box.x + from->box.width / 2, from->box.y + from->box.height / 2},
                           {to->box.x + to->box.width / 2, to->box.y + to->box.height / 2})});
         }
@@ -5612,12 +5635,11 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
                 tagged_routing_order.begin(), tagged_routing_order.end(),
                 [](const RoutedEdge& a, const RoutedEdge& b) { return a.distance < b.distance; });
             for (const auto& route : tagged_routing_order)
-                // FS-7b Slice B: projected edges are unmodified copies, so the
-                // original Edge object still matches the routed boxes. Slice C
-                // (endpoint remap) must pass route_edges[position] here instead,
-                // because a remapped synthetic Edge carries a Group kind that
-                // diverges from graph.edges[route.edge] (design section 3.3.4).
-                if (!route_one(route.edge, graph.edges[route.edge], route.from, route.to)) {
+                // FS-7b: route the (possibly remapped) synthetic Edge so the
+                // Group-kind sealing in route_one sees the projected endpoint;
+                // route.edge still carries the original index for rich-label
+                // binding and disclosure (design section 3.3.4).
+                if (!route_one(route.edge, route.routed, route.from, route.to)) {
                     return std::optional<std::vector<std::string>>{};
                 }
         } else {

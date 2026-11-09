@@ -6384,6 +6384,41 @@ const Fs7bCohortEntry* fs7c_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0031 FS-elk layout-engine cohort. One whole-and-body fixture whose
+// sole blocker is the non-terminal bare `layout: elk.rectpacking` envelope
+// leaf. Same entry shape as FS-7b/FS-7c.
+const std::map<std::string, Fs7bCohortEntry>& fselk_cohort_map() {
+    static const std::map<std::string, Fs7bCohortEntry> map = [] {
+        std::map<std::string, Fs7bCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/fselk-layout-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "FS-elk cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "FS-elk cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            Fs7bCohortEntry entry;
+            entry.draw = row.get_string("prediction") == "predicted-draw";
+            entry.original_draw =
+                !(row.has("track_scope") && row.get_string("track_scope") == "body-only");
+            auto load = [](JsonVal states) {
+                return std::array<std::string, 3>{states.get_string("wide_240"),
+                                                  states.get_string("narrow_40"),
+                                                  states.get_string("restored_240")};
+            };
+            entry.original_states = load(row.get("expected_states"));
+            entry.body_states = load(row.get("expected_body_states"));
+            rows.emplace(row.get_string("path"), std::move(entry));
+        });
+        return rows;
+    }();
+    return map;
+}
+const Fs7bCohortEntry* fselk_cohort_row(std::string_view path) {
+    const auto& rows = fselk_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0031 FS-spacing cohort. Four whole-and-body fixtures whose only
 // unaccepted envelope leaves are non-terminal flowchart.nodeSpacing/
 // rankSpacing scalars. Once whitelisted they draw on both tracks at
@@ -9739,6 +9774,28 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.expected_states = fs7c->body_states;
                     row.decision_reasons.fill(row.reason);
                     observations.push_back(std::move(row));
+                } else if (const auto* fselk = fselk_cohort_row(path)) {
+                    // FS-elk layout-engine cohort: the body already draws on
+                    // the single-parse path; this pins the cohort ownership
+                    // and states. Whole-original admission is handled in the
+                    // Flow400 whole-source path.
+                    require(fselk->draw, "FS-elk cohort rows must draw their body");
+                    Observation row;
+                    row.path = path;
+                    row.track = "body_diagnostic";
+                    row.type = "flowchart";
+                    row.source_sha256 = digest(body);
+                    row.expected = "drawn";
+                    row.reason = "RFC-0031 FS-elk layout-engine cohort (body)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(fselk->body_states[0]),
+                                  state_status(fselk->body_states[1]),
+                                  state_status(fselk->body_states[2])};
+                    row.expected_states = fselk->body_states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
                 } else if (const auto* aws = aws_icon_cohort_row(path)) {
                     require(aws->draw, "AWS icon cohort rows must draw their body");
                     Observation row;
@@ -9978,13 +10035,14 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         // 254 -> 251. FS-spacing moves four non-terminal nodeSpacing/
         // rankSpacing envelope originals 251 -> 247. FS-7b moves two
         // collapsed-subgraph originals 247 -> 245. FS-7c moves two
-        // endpoint-remap originals 245 -> 243. All count admitted but
-        // not decoded.
-        EXPECT_EQ(flows.pending, 243u);
+        // endpoint-remap originals 245 -> 243. FS-elk moves one non-terminal
+        // elk.rectpacking layout-engine original 243 -> 242. All count
+        // admitted but not decoded.
+        EXPECT_EQ(flows.pending, 242u);
         EXPECT_EQ(flows.errors, 0u);
         EXPECT_EQ(flows.resources, 0u);
-        EXPECT_EQ(flows.admitted, 157u);
-        EXPECT_EQ(flows.mutated, 157u);
+        EXPECT_EQ(flows.admitted, 158u);
+        EXPECT_EQ(flows.mutated, 158u);
         for (const auto count : applications)
             projection_consumed(count);
         role_batch_consumed(role_counts, role_batch.facts.root());
@@ -15525,6 +15583,44 @@ Observation run_official_flow400_case(
                     "OfficialFlow400 FS7c ledger evidence write failed");
             return row;
         }
+        // RFC 0031 FS-elk: the single bare elk.rectpacking engine fixture
+        // admits as a whole original once the non-terminal envelope leaf is
+        // whitelisted. Five frames prove the admission inline; the durable
+        // pixel gate is test_mermaid_fselk_cohort.
+        if (const auto* fselk = fselk_cohort_row(path);
+            fselk && fselk->draw && fselk->original_draw) {
+            p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
+            const bool wide_source = flow_oracle::flow400_same(*frames[0], *frames[3], work);
+            p.narrow_ordinary = flow_oracle::flow400_same(*frames[1], *frames[4], work);
+            require(!wide_source && p.restored,
+                    "FS-elk ledger draw frame protocol (wide native, restore)");
+            const bool narrow_draw = fselk->original_states[1] == "drawn";
+            require(p.narrow_ordinary == !narrow_draw,
+                    "FS-elk ledger narrow frame disagrees with ledger");
+            static_cast<void>(flow_oracle::flow400_following(*frames[0], work, kSentinel));
+            row.status = {"drawn", narrow_draw ? "drawn" : "source_fallback", "drawn"};
+            row.expected = "drawn";
+            row.expected_states = {"drawn", narrow_draw ? "drawn" : "source", "drawn"};
+            row.reason = "RFC-0031 FS-elk reviewed layout-engine envelope cohort";
+            row.decision_reasons.fill(row.reason);
+            row.role_model_sha = row.source_sha256;
+            row.raw_source_authority =
+                "immutable_Flow400_8Models_plus_FSElkLayoutCohort1";
+            p.phase = "complete";
+            p.admitted = true;
+            p.mutated = true;
+            p.remaining[2] = p.remaining[3] = p.remaining[4] = p.remaining[5] =
+                p.remaining[6] = work.remaining;
+            row.raw_source_constraints = official_flow_info(p, work.remaining);
+            data.set("contract", kOfficialFlow400Contract);
+            data.set("actual", row.raw_source_constraints);
+            data.set("foreign_assertions_certified", 0);
+            diagnostic.set_root(data);
+            diagnostics << diagnostic.to_string() << '\n';
+            require(static_cast<bool>(diagnostics),
+                    "OfficialFlow400 FS-elk ledger evidence write failed");
+            return row;
+        }
         // RFC 0031 FS-aws: three closed-vocabulary icon-shape fixtures admit
         // as whole originals once the icon grammar exists. All three draw at
         // every width. Five frames prove each admission inline; the durable
@@ -15779,6 +15875,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS7bCollapsedCohort2";
     const bool fs7c_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS7cCollapsedRemapCohort2";
+    const bool fselk_selected =
+        row.raw_source_authority == "immutable_Flow400_8Models_plus_FSElkLayoutCohort1";
     if (strand_selected)
         official_flow_strand_keys(info);
     else if (p0_length_selected)
@@ -15917,7 +16015,7 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                      fs5g3_selected || fs5g4_selected || fs5g5_selected ||
                      fs5g6_selected || fs5g7_selected || fs7a_selected ||
                      aws_icon_selected || spacing_selected || fs7b_selected ||
-                     fs7c_selected) &&
+                     fs7c_selected || fselk_selected) &&
                     !pending && restored &&
                     mutated && !resource && row.role_model_sha.size() == 64u &&
                     row.errors.empty() && row.status[0] == "drawn" && row.status[2] == "drawn" &&
@@ -15941,6 +16039,7 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                 fs5g2_selected || fs5g3_selected || fs5g4_selected || fs5g5_selected ||
                 fs5g6_selected || fs5g7_selected || fs7a_selected ||
                 aws_icon_selected || spacing_selected || fs7b_selected || fs7c_selected ||
+                fselk_selected ||
                 row.raw_source_authority == "immutable_Flow400_whole_8Models_392null" ||
                 same_run_body,
             "OfficialFlow400 unknown source authority");
@@ -16107,6 +16206,13 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
                 "OfficialFlow400 FS-7c admitted original must be a whole-and-body ledger row");
         require(row.role_model_sha.size() == 64u,
                 "OfficialFlow400 FS-7c ledger source identity sha");
+    }
+    if (fselk_selected) {
+        const auto* ledger = fselk_cohort_row(row.path);
+        require(ledger && ledger->draw && ledger->original_draw,
+                "OfficialFlow400 FS-elk admitted original must be a whole-and-body ledger row");
+        require(row.role_model_sha.size() == 64u,
+                "OfficialFlow400 FS-elk ledger source identity sha");
     }
     if (title_selected) {
         require(row.path == flow_oracle::kFlowTitleFixture &&

@@ -1,0 +1,69 @@
+{
+  "schema": "loom_mermaid_fselk_layout_cohort/v1",
+  "rfc": 31,
+  "phase": "flowchart-elk-layout-envelope",
+  "whitelist": {
+    "engine_values": "only bare layout: elk.rectpacking is admitted; bare elk, elk.box, quoted engine values, the elk: option namespace and unknown engines fail closed",
+    "effect": "engine selection only drives upstream layout; no terminal rendering effect",
+    "fs1b_note": "bare elk / elk.box fixtures stay source behind the envelope double-parse Work ceiling (FS-1b); their bodies already draw on the single-parse body track"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the one flowchart fixture whose sole blocker is the elk.rectpacking engine envelope leaf and whose body draws with Work headroom and no subgraph",
+    "roots": [
+      "flowchart"
+    ],
+    "excluded": [
+      "flowchart/nightly-check/elk-container-algorithms/elk-box-layout-with-edges.mmd",
+      "flowchart/nightly-check/elk-container-algorithms/elk-subgraph-with-box-algorithm.mmd",
+      "flowchart/pr-check/3-layout-elk-subgraphs.mmd",
+      "flowchart/visual-check/should-keep-the-true-entry-on-top-when-a-back-edge-feeds-it-79.mmd",
+      "flowchart/visual-check/subgraph-titles-wider-than-children.mmd"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, FS-elk layout-engine envelope cohort, 2026-11-09, task a66265d289108d9b1, zero builds)",
+    "date": "2026-11-09",
+    "verdict": "approved",
+    "note": "APPROVE with no MAJOR. The whitelist admits exactly one bare value, layout: elk.rectpacking, behind the exact bit predicate fields == (Layout | ElkEngine); bare elk/elk.box, quoted and unknown engine values, the elk: option namespace and any co-key all fail closed, and no existing profile predicate can fire with the new bit set. The narrowing is evidence-driven: a broader whitelist added a matrix error on the subgraph-bearing 3-layout-elk-subgraphs fixture and changed nothing for elk-box/back-edge-79, which stay source behind the FS-1b envelope double-parse Work ceiling (their bodies already draw on the single-parse track). Frozen contracts unmoved: E6c 48-gap, Class285 260/25/0, body 170/182/48; only one production file and the flow envelope path change, no new Work spend. All seven new Flow6 source shas were recomputed and match; count arithmetic 243->242 / 157->158 keeps 242+158=400 with errors 0. MINORs resolved before approval: the drift-guard regex now also sees quoted elk values (safe miss direction regardless), the namespace_entry branch was returned to its original one-liner once the elk namespace was removed, and the folded control was restored to its original bare-elk row. The elk option-namespace closed control pairs with an elk engine because the namespace rule is pre-existing and independently correct."
+  },
+  "counts": {
+    "total": 1,
+    "predicted_draw": 1,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 1
+  },
+  "rows": [
+    {
+      "path": "flowchart/nightly-check/elk-container-algorithms/elk-rectpacking-layout-with-edges.mmd",
+      "family": "flowchart",
+      "sha256": "41d05da46b57190fada19a2448ea3ea1427d1fa3663116c5f28b22965ad8ca7a",
+      "manifest_sha256": "41d05da46b57190fada19a2448ea3ea1427d1fa3663116c5f28b22965ad8ca7a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "FS-elk: non-terminal layout-engine selection; the terminal uses its own fixed layout and ignores the upstream engine, so the whole original draws once the envelope accepts bare layout: elk.rectpacking"
+    }
+  ]
+}

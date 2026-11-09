@@ -3248,7 +3248,7 @@ struct Flow6EnvelopeControl {
     std::string_view name, source, source_sha256;
 };
 
-constexpr std::array<Flow6EnvelopeControl, 8> kFlow6EnvelopePositive{{
+constexpr std::array<Flow6EnvelopeControl, 9> kFlow6EnvelopePositive{{
     {"description_only", R"FLOW6(---
 description:
   Flow.
@@ -3311,8 +3311,20 @@ flowchart LR
 A --> B
 )FLOW6",
      "c588dab034f21ef0eb0ad7ab95d0ecf70b0666c871bee2af21d214541d2061e1"},
+    // FS-elk: layout-engine selection is non-terminal because the terminal
+    // runs its own fixed layout. Only the single bare elk.rectpacking value is
+    // admitted; bare elk/elk.box, the elk option namespace and quoted or
+    // unknown engines stay in the closed table.
+    {"elk_rectpacking_engine", R"FLOW6(---
+config:
+  layout: elk.rectpacking
+---
+flowchart LR
+A --> B
+)FLOW6",
+     "c920d90a661e174687ccd07881a86c2b48799b1e4343efef445e4dbdadafff5e"},
 }};
-constexpr std::array<Flow6EnvelopeControl, 44> kFlow6EnvelopeClosed{{
+constexpr std::array<Flow6EnvelopeControl, 48> kFlow6EnvelopeClosed{{
     {"initial_byte_44", R"FLOW6(---
 description:
   , forbidden opener
@@ -3537,6 +3549,10 @@ flowchart LR
 A --> B
 )FLOW6",
      "e1825d8be514d136e07b8f5c70a0bc2db1c02298c3abd335a09a9c6014700015"},
+    // FS-elk boundary rows: only bare `layout: elk.rectpacking` is admitted.
+    // Bare elk stays closed (its corpus fixtures cross the envelope Work
+    // ceiling or carry subgraph/body debts), as do the sibling elk.box engine,
+    // a quoted engine value, the elk option namespace, and an unknown engine.
     {"different_layout", R"FLOW6(---
 config:
   layout: elk
@@ -3545,6 +3561,40 @@ flowchart LR
 A --> B
 )FLOW6",
      "6bfdde91877944b0b04172c071975fa6efb3a46107f862f58f5bf4787c9b4bdc"},
+    {"elk_box_sibling", R"FLOW6(---
+config:
+  layout: elk.box
+---
+flowchart LR
+A --> B
+)FLOW6",
+     "14b2b3276c40cf16bf1ea239d424a355bc2e8375a3f9a9b48e5509a3644b5249"},
+    {"unknown_layout_layered", R"FLOW6(---
+config:
+  layout: layered
+---
+flowchart LR
+A --> B
+)FLOW6",
+     "a5dc090379bd6089829a275183e887773103d32f33b02bcf9afa3e32d61ca0e1"},
+    {"elk_rectpacking_quoted", R"FLOW6(---
+config:
+  layout: "elk.rectpacking"
+---
+flowchart LR
+A --> B
+)FLOW6",
+     "130a9e547f8c20ed3989ba84756293c4fb041e76355b2a8bb9aab463b13175c2"},
+    {"elk_option_namespace", R"FLOW6(---
+config:
+  layout: elk
+  elk:
+    keepEntryNodeOnTop: true
+---
+flowchart LR
+A --> B
+)FLOW6",
+     "caaea51ad8e908ef90679fb7941ad972d34a9047a0d2f87dd096063e078ac74e"},
     {"layout_boolean", R"FLOW6(---
 config:
   layout: true

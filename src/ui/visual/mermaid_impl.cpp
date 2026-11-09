@@ -2561,7 +2561,15 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
         TitleTopMargin = 256u,
         DiagramPadding = 512u,
         NodeSpacing = 2048u,
-        RankSpacing = 4096u
+        RankSpacing = 4096u,
+        // FS-elk: an `elk.rectpacking` layout-engine value. The terminal runs
+        // its own fixed layout, so the upstream engine selection is
+        // non-terminal. The bare `elk` and `elk.box` values stay whole-source:
+        // every corpus fixture using them either crosses the envelope Work
+        // ceiling (FS-1b) or carries a subgraph/body debt that the open
+        // envelope would surface as unreviewed art, so only the single
+        // verified rectpacking profile is admitted.
+        ElkEngine = 8192u
     };
 
     bool description = false, description_text = false, config = false, title = false;
@@ -2657,7 +2665,19 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
             if (event.path.find('.') != std::string::npos) return {};
             if (event.path == "layout") {
                 const auto scalar = trim(event.value);
-                if (!mark(Layout) || (scalar != "dagre" && scalar != "\"dagre\"")) return {};
+                if (!mark(Layout)) return {};
+                if (scalar == "dagre" || scalar == "\"dagre\"") {
+                    // dagre engine selection stays on the existing profiles.
+                } else if (scalar == "elk.rectpacking") {
+                    // FS-elk: layout-engine selection is non-terminal. The
+                    // terminal runs its own fixed layout, so which upstream
+                    // engine positions nodes is ignored. Only the single bare
+                    // elk.rectpacking value is admitted; bare elk / elk.box,
+                    // quoted and unknown engine values keep the whole source.
+                    if (!mark(ElkEngine)) return {};
+                } else {
+                    return {};
+                }
             } else if (event.path == "look") {
                 if (!flow_handdrawn_preview || !mark(Look) ||
                     trim(event.value) != "handDrawn")
@@ -2738,6 +2758,11 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
     }
     const bool legacy_dagre = fields == Layout && !title;
     const bool dagre_diagram_title = fields == Layout && title;
+    // FS-elk: a single elk.rectpacking engine value. Layout stays marked, so
+    // the FlowEnvelope.dagre_layout flag below is set and the
+    // untrusted-compound gate still rejects a rectpacking graph that carries
+    // a subgraph.
+    const bool elk_rectpacking_profile = fields == (Layout | ElkEngine);
     const bool terminal_max_width = fields == (Flowchart | MaxWidth) && use_max_width.has_value();
     const bool terminal_zero_diagram_padding = (fields == (Flowchart | DiagramPadding) ||
                                                 fields == (Layout | Flowchart | DiagramPadding)) &&
@@ -2769,9 +2794,10 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
         (fields & spacing_mask) && (fields & Flowchart) &&
         ((fields & ~spacing_mask) == Flowchart ||
          (fields & ~spacing_mask) == (Font | Flowchart));
-    if (legacy_dagre || dagre_diagram_title || terminal_max_width ||
-        terminal_zero_diagram_padding || title_top_margin_zero_without_layout ||
-        dagre_title_top_margin_zero || root_html_only || spacing_profile ||
+    if (legacy_dagre || dagre_diagram_title || elk_rectpacking_profile ||
+        terminal_max_width || terminal_zero_diagram_padding ||
+        title_top_margin_zero_without_layout || dagre_title_top_margin_zero ||
+        root_html_only || spacing_profile ||
         (description &&
          (courier_only || courier_nested_false || logging_false || both_false || strict))) {
         FlowEnvelope result{envelope->raw_body, {}, (fields & Layout) != 0u,

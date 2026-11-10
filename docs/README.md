@@ -47,6 +47,7 @@ milestone prefixes (`M7-…`) — the milestone is metadata, not a filename.
 | [`dev/mermaid-coverage-plan.md`](dev/mermaid-coverage-plan.md) | Proposed roadmap for increasing faithful Mermaid drawing coverage and tracking remaining gaps. |
 | [`dev/mermaid-terminal-tests.md`](dev/mermaid-terminal-tests.md) | Complementary upstream terminal test inputs, immutable provenance, native execution baseline and semantic-port gates. |
 | [`dev/error-handling-conventions.md`](dev/error-handling-conventions.md) | `std::expected` / `Result<T>` error-handling conventions for the C++ tree. |
+| [`dev/engineering-efficiency.md`](dev/engineering-efficiency.md) | R&D efficiency as an inspected metric: measured test/build bottlenecks, evidence-backed rules to avoid false greens and rework, gate-layering policy, and the mandatory per-task retro. |
 | [`dev/ui-glossary.md`](dev/ui-glossary.md) | Canonical UI vocabulary: framework terms (Element/Component/Box/Screen) vs project terms (Block/Row/Panel/Pane/Store/…), deprecated terms. |
 
 ### Design documents (`design/`)

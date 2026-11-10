@@ -198,6 +198,16 @@ tool output, and wrong tool status. See `.agents/skills/debug-session/SKILL.md`.
 - **No constant-frequency render ticker** — the FTXUI UI is event-driven.
 - **FTXUI components must be held by state**, not reconstructed per render.
 - **Every change builds debug *and* release, with ctest green**, before committing.
+- **Engineering efficiency is an inspected, first-class metric.** Scale must
+  not make each unit of progress exponentially slower. Follow the evidence-
+  backed rules in `docs/dev/engineering-efficiency.md`: layer the gates
+  (targeted tests while iterating; full serial matrix/ASan/byte-compare only
+  at family closure), prefer the release preset for full-matrix runs (debug is
+  ~9× slower and the dual-preset byte gate proves equivalence), never trust a
+  target-only build's matrix verdict (stale-link false green), keep one writer
+  per build tree, and treat every false green/red or reverted implementation
+  as an efficiency defect to record there. When a task reveals a new slowdown
+  or rework loop, append it to that document instead of relearning it.
 - Prefer deleting dead code to fixing it.
 
 ### A hazard specific to this codebase
@@ -225,6 +235,10 @@ changing a wire shape, a registry key, or a tag format.
 
 - `docs/README.md` — docs index: structure, naming conventions, what is current.
 - `docs/dev/` — developer guides (conformance suite, error-handling conventions).
+  `docs/dev/engineering-efficiency.md` is the living R&D-efficiency register:
+  measured test/build bottlenecks, rules against false greens and rework, the
+  gate-layering policy, and the mandatory per-task efficiency retro — update it
+  when a task reveals a new slowdown, flake, or rework loop.
 - `docs/design/` — design documents and rationale (dialog system, no-DI ADR).
 - `docs/rfcs/` — RFCs (KEP-style, lint-checked).
 - `docs/decisions/` — decision registers (design-decisions.md — read this first).

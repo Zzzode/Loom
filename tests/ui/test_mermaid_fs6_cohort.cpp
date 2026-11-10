@@ -121,7 +121,7 @@ TEST(MermaidFs6Cohort, LedgerMatchesSchemaReviewAndCounts) {
     EXPECT_EQ(counts.get_int("total"), 54);
     EXPECT_EQ(counts.get_int("predicted_draw"), 38);
     EXPECT_EQ(counts.get_int("predicted_blocked"), 16);
-    EXPECT_EQ(counts.get_int("predicted_original_draw"), 19);
+    EXPECT_EQ(counts.get_int("predicted_original_draw"), 21);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -174,8 +174,8 @@ TEST(MermaidFs6Cohort, LedgerMatchesSchemaReviewAndCounts) {
     }
     EXPECT_EQ(draw, 38);
     EXPECT_EQ(blocked, 16);
-    EXPECT_EQ(original_draw, 19);
-    EXPECT_EQ(body_only, 19);
+    EXPECT_EQ(original_draw, 21);
+    EXPECT_EQ(body_only, 17);
     EXPECT_EQ(fs_init, 4);
 }
 
@@ -222,5 +222,5 @@ TEST(MermaidFs6Cohort, WholeOriginalStatesMatchLedger) {
             EXPECT_TRUE(same_surface(wide, capture(bytes, "text", kWide))) << row.path;
         }
     }
-    EXPECT_EQ(original_draw, 19);
+    EXPECT_EQ(original_draw, 21);
 }

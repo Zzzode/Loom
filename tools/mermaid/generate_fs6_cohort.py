@@ -30,7 +30,8 @@ through the envelope gate. Four legacy fixtures therefore draw body
 only (RFC 0031 FS-init also consumes their accTitle/accDescr scalars);
 they joined the 17 pre-existing body-only rows. RFC 0031 FS-spacing later
 promoted two of those body-only rows (22/23 nodeSpacing/rankSpacing) to
-whole-and-body, leaving 19 body-only rows while 19 body draws also admit
+whole-and-body, and RFC 0031 FS-maxwidth later promoted two dagre
+useMaxWidth rows, leaving 17 body-only rows while 21 body draws also admit
 their whole originals.
 
 Per-width states are pinned path sets: the narrow 40-column frame draws
@@ -38,11 +39,12 @@ only for the simple graphs that fit it; the durable cohort gtest
 enforces every state live, so a geometry or vocabulary drift fails
 loudly even though the generator itself never renders.
 
-Draw bodies paint on the body track at 240 (wide + restored); 19 of the
+Draw bodies paint on the body track at 240 (wide + restored); 21 of the
 38 body-draw rows also draw the whole original at 240 (17 with admitted
-frontmatter plus the 2 FS-spacing spacing-leaf rows); the other 19 keep
-whole-original source (15 pre-existing plus the 4 FS-init body-only
-rows). The handDrawn-look rows keep whole-original source with FS-8.
+frontmatter, the 2 FS-spacing spacing-leaf rows, and the 2 FS-maxwidth
+dagre+useMaxWidth rows); the other 17 keep whole-original source
+(13 pre-existing plus the 4 FS-init body-only rows). The handDrawn-look
+rows keep whole-original source with FS-8.
 
 Usage: python3 tools/mermaid/generate_fs6_cohort.py --repo-root . [--check]
 """
@@ -192,6 +194,15 @@ SPACING_WHOLE_DRAW = {
     "flowchart/visual-check/22-render-a-simple-flowchart-with-nodespacing-set-to-100.mmd",
     "flowchart/visual-check/23-render-a-simple-flowchart-with-rankspacing-set-to-100.mmd",
 }
+# RFC 0031 FS-maxwidth: these two dagre bodies were whole-source solely
+# because no envelope profile admitted the conjunction of a quoted dagre
+# layout engine with the non-terminal flowchart.useMaxWidth leaf. Once the
+# terminal_max_width predicate accepts the Layout|Flowchart|MaxWidth bit set
+# they draw the whole original too (240/restored; narrow stays source).
+MAXWIDTH_WHOLE_DRAW = {
+    "flowchart/nightly-check/dagre/01-7-dagre-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+    "flowchart/nightly-check/dagre/04-8-dagre-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+}
 ORIGINAL_NARROW_DRAW = {
     "flowchart/nightly-check/dagre/61-dagre-fontawesome-icons-in-edge-labels.mmd",
     "flowchart/visual-check/61-fontawesome-icons-in-edge-labels-2.mmd",
@@ -243,7 +254,8 @@ def build(repo_root):
         blocked = kind is not None
         body_only = (not blocked) and rel in BODY_ONLY_DRAW
         original_draws = (not blocked) and not body_only and (
-            rel in ORIGINAL_DRAW or rel in SPACING_WHOLE_DRAW)
+            rel in ORIGINAL_DRAW or rel in SPACING_WHOLE_DRAW or
+            rel in MAXWIDTH_WHOLE_DRAW)
         # Geometry pin consistency checks: a narrow-draw path must draw wide.
         if rel in BODY_NARROW_DRAW and blocked:
             raise ValueError(f"body narrow-draw path is blocked: {rel}")
@@ -263,13 +275,16 @@ def build(repo_root):
         raise ValueError("pinned body-only path missing from selection")
     if not SPACING_WHOLE_DRAW <= selected:
         raise ValueError("pinned spacing whole-draw path missing from selection")
-    if ORIGINAL_DRAW & BODY_ONLY_DRAW or SPACING_WHOLE_DRAW & BODY_ONLY_DRAW:
+    if not MAXWIDTH_WHOLE_DRAW <= selected:
+        raise ValueError("pinned maxwidth whole-draw path missing from selection")
+    if ORIGINAL_DRAW & BODY_ONLY_DRAW or SPACING_WHOLE_DRAW & BODY_ONLY_DRAW or \
+            MAXWIDTH_WHOLE_DRAW & BODY_ONLY_DRAW:
         raise ValueError("whole-draw and body-only pin sets overlap")
     draw_paths = {rel for rel, blocked, _, _, _ in entries if not blocked}
     if not draw_paths:
         raise ValueError("no draw rows")
     # Every pinned whole-draw row must be a mechanical draw row.
-    if not (ORIGINAL_DRAW | SPACING_WHOLE_DRAW) <= draw_paths:
+    if not (ORIGINAL_DRAW | SPACING_WHOLE_DRAW | MAXWIDTH_WHOLE_DRAW) <= draw_paths:
         raise ValueError("pinned whole-draw row is mechanically blocked")
     rows = []
     n_draw = n_blocked = n_original_draw = 0
@@ -318,14 +333,17 @@ def build(repo_root):
                 "FS-spacing: non-terminal nodeSpacing/rankSpacing envelope "
                 "leaves admitted, so the whole original now draws"
                 if rel in SPACING_WHOLE_DRAW else
+                "FS-maxwidth: the non-terminal useMaxWidth leaf now coexists "
+                "with a dagre layout engine, so the whole original draws"
+                if rel in MAXWIDTH_WHOLE_DRAW else
                 "FS-6 FontAwesome marker projected to a fixed terminal cell on "
                 "the body track"
                 if not blocked else
                 "Blocked by a closed source-content feature detector; the "
                 "marker vocabulary itself is only admitted for car/code"),
         })
-    if (n_draw != 38 or n_blocked != 16 or n_original_draw != 19 or
-            n_body_only_scope != 19 or n_fs_init != 4):
+    if (n_draw != 38 or n_blocked != 16 or n_original_draw != 21 or
+            n_body_only_scope != 17 or n_fs_init != 4):
         raise ValueError(
             f"partition drift: draw={n_draw} blocked={n_blocked} "
             f"original_draw={n_original_draw} body_only_scope="
@@ -355,8 +373,9 @@ def build(repo_root):
                                  "residual rows abort",
             "width_policy": "draw bodies paint at 240; the pinned simple "
                            "graphs also paint at narrow_40; whole originals "
-                           "paint for the 19 admitted rows (17 frontmatter "
-                           "plus the 2 FS-spacing leaves); the four FS-init "
+                           "paint for the 21 admitted rows (17 frontmatter, "
+                           "the 2 FS-spacing leaves, and the 2 FS-maxwidth "
+                           "dagre+useMaxWidth rows); the four FS-init "
                            "body-only rows keep whole source behind the "
                            "frontmatter theme gate.",
         },
@@ -367,8 +386,9 @@ def build(repo_root):
                               "a84b30aa96dc983db; FS-spacing follow-up "
                               "2026-11-09 task aee66c1df9b510318; final "
                               "cross-cohort-migration re-review task "
-                              "a91f43e0c0b606c1d)",
-            "date": "2026-11-09",
+                              "a91f43e0c0b606c1d; FS-maxwidth follow-up "
+                              "2026-11-10 task adbfe46e0fa362832)",
+            "date": "2026-11-10",
             "verdict": "approved",
             "note": ("Original 2026-11-06 review approved the closed {car, "
                      "code} icon projection (fixed marker cell, retained "
@@ -392,7 +412,18 @@ def build(repo_root):
                      "MINOR; three NITs, the stale-count comments were "
                      "corrected and the shadowed defensive matrix branches "
                      "were proven inert (no run_case, no gap-roster or "
-                     "Class285 impact)."),
+                     "Class285 impact). The 2026-11-10 FS-maxwidth follow-up "
+                     "adds the Layout|Flowchart|MaxWidth composite envelope "
+                     "profile: the two dagre useMaxWidth fixtures migrate "
+                     "body-only -> whole-and-body, so whole originals move "
+                     "19 -> 21 (body-only scope 19 -> 17); the 38/16 body "
+                     "partition, fixture sha pins, the 48-gap roster and "
+                     "Class285 are unchanged. Independent FS-maxwidth "
+                     "adversarial review (2026-11-10, task "
+                     "adbfe46e0fa362832, read-only, zero builds): APPROVE "
+                     "with zero MAJOR and zero functional MINOR; exhaustive "
+                     "bit enumeration proves only values 136/137 admit and no "
+                     "visual co-key can be smuggled in."),
         },
         "counts": {
             "total": n_draw + n_blocked,

@@ -3248,7 +3248,7 @@ struct Flow6EnvelopeControl {
     std::string_view name, source, source_sha256;
 };
 
-constexpr std::array<Flow6EnvelopeControl, 9> kFlow6EnvelopePositive{{
+constexpr std::array<Flow6EnvelopeControl, 10> kFlow6EnvelopePositive{{
     {"description_only", R"FLOW6(---
 description:
   Flow.
@@ -3323,6 +3323,18 @@ flowchart LR
 A --> B
 )FLOW6",
      "c920d90a661e174687ccd07881a86c2b48799b1e4343efef445e4dbdadafff5e"},
+    // FS-maxwidth: a quoted dagre engine coexisting with the non-terminal
+    // useMaxWidth leaf; the Layout|Flowchart|MaxWidth composite now admits.
+    {"dagre_use_max_width", R"FLOW6(---
+config:
+  layout: "dagre"
+  flowchart:
+    useMaxWidth: true
+---
+flowchart LR
+A --> B
+)FLOW6",
+     "b016a5e50901aa403090e325d33e5815a62d7b9179301870e1b73e19e55de0a1"},
 }};
 constexpr std::array<Flow6EnvelopeControl, 48> kFlow6EnvelopeClosed{{
     {"initial_byte_44", R"FLOW6(---

@@ -5673,10 +5673,11 @@ const Fs3CohortEntry* fs3_cohort_row(std::string_view path) {
 // RFC 0031 FS-6 FontAwesome-icon cohort: the reviewed ledger at
 // tools/mermaid/fs6-cohort.json. Markers in the closed {car, code} vocabulary
 // project to one fixed terminal cell; 38 bodies draw at 240 (4 also draw at
-// narrow_40) and 19 of those admit the whole original at 240 (3 also at
-// narrow_40 — the 17 frontmatter rows plus the 2 FS-spacing 22/23 rows);
-// the other 19 draw body only. The 16 blocked rows carry an unknown icon or
-// a non-whitelisted init directive and keep source.
+// narrow_40) and 21 of those admit the whole original at 240 (3 also at
+// narrow_40 — the 17 frontmatter rows, the 2 FS-spacing 22/23 rows, and the
+// 2 FS-maxwidth dagre+useMaxWidth rows); the other 17 draw body only. The
+// 16 blocked rows carry an unknown icon or a non-whitelisted init directive
+// and keep source.
 struct Fs6CohortEntry {
     bool draw = false;
     std::array<std::string, 3> original_states;
@@ -10036,13 +10037,14 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         // rankSpacing envelope originals 251 -> 247. FS-7b moves two
         // collapsed-subgraph originals 247 -> 245. FS-7c moves two
         // endpoint-remap originals 245 -> 243. FS-elk moves one non-terminal
-        // elk.rectpacking layout-engine original 243 -> 242. All count
-        // admitted but not decoded.
-        EXPECT_EQ(flows.pending, 242u);
+        // elk.rectpacking layout-engine original 243 -> 242. FS-maxwidth moves
+        // two dagre+useMaxWidth composite-profile originals 242 -> 240. All
+        // count admitted but not decoded.
+        EXPECT_EQ(flows.pending, 240u);
         EXPECT_EQ(flows.errors, 0u);
         EXPECT_EQ(flows.resources, 0u);
-        EXPECT_EQ(flows.admitted, 158u);
-        EXPECT_EQ(flows.mutated, 158u);
+        EXPECT_EQ(flows.admitted, 160u);
+        EXPECT_EQ(flows.mutated, 160u);
         for (const auto count : applications)
             projection_consumed(count);
         role_batch_consumed(role_counts, role_batch.facts.root());
@@ -14869,9 +14871,9 @@ Observation run_official_flow400_case(
         // the durable pixel gate is test_mermaid_fs6_cohort. decoded stays
         // false (no upstream Model); the 3 single-edge icon rows also paint at
         // narrow_40. RFC 0031 FS-spacing later promoted two more FS-6 rows
-        // (22/23 nodeSpacing/rankSpacing) to whole-and-body; they reach this
-        // same branch through their FS-6 ledger drawn state, so 19 whole
-        // originals now return here.
+        // (22/23 nodeSpacing/rankSpacing) and FS-maxwidth two dagre+useMaxWidth
+        // rows to whole-and-body; they reach this same branch through their
+        // FS-6 ledger drawn state, so 21 whole originals now return here.
         if (const auto* fs6 = fs6_cohort_row(path); fs6 && fs6->draw &&
                                                     fs6->original_states[0] == "drawn") {
             p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);

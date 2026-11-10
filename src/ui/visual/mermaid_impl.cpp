@@ -2763,7 +2763,16 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
     // untrusted-compound gate still rejects a rectpacking graph that carries
     // a subgraph.
     const bool elk_rectpacking_profile = fields == (Layout | ElkEngine);
-    const bool terminal_max_width = fields == (Flowchart | MaxWidth) && use_max_width.has_value();
+    // FS-maxwidth: useMaxWidth is responsive SVG sizing and is non-terminal,
+    // and a dagre layout engine is non-terminal too. The no-layout profile
+    // already exists; accept the conjunction so a quoted dagre engine can
+    // coexist with the useMaxWidth leaf. Exact bit equality keeps every other
+    // co-key (look/theme/...) failing closed; Layout stays marked so the
+    // untrusted-compound guard still rejects a subgraph-bearing graph.
+    const bool terminal_max_width =
+        (fields == (Flowchart | MaxWidth) ||
+         fields == (Layout | Flowchart | MaxWidth)) &&
+        use_max_width.has_value();
     const bool terminal_zero_diagram_padding = (fields == (Flowchart | DiagramPadding) ||
                                                 fields == (Layout | Flowchart | DiagramPadding)) &&
                                                diagram_padding_zero;

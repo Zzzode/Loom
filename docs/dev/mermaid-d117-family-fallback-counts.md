@@ -25,6 +25,7 @@ are not whole-original errors).
 | After FS-7b Slice B (collapsed subgraphs render as one titled node) | 2026-11-09 | a2ea36e4 | 973 | 1172 | 0 |
 | After FS-7c Slice C (collapsed endpoint remap; redux bodies) | 2026-11-09 | c0510727 | 975 | 1170 | 0 |
 | After FS-elk (non-terminal elk.rectpacking layout engine) | 2026-11-09 | eb3118c8 | 976 | 1169 | 0 |
+| After FS-maxwidth (dagre engine + useMaxWidth composite profile) | 2026-11-10 | 2f04cb74 | 978 | 1167 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -34,7 +35,7 @@ disposition (fix or documented infeasibility).
 
 | Family | Remaining fallback | Drawn | Notes |
 |---|---:|---:|---|
-| flowchart | 242 | 158 | active track; see breakdown below |
+| flowchart | 240 | 160 | active track; see breakdown below |
 | requirement | 160 | 12 | mostly unbuilt renderer surface |
 | git | 80 | 55 | |
 | state-diagram-v2 | 78 | 25 | |
@@ -71,7 +72,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1169** | **976** | |
+| **Total** | **1167** | **978** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -454,3 +455,23 @@ when the body would draw.
   (fselk_cohort + Flow6 envelope/folded controls, 7 tests) zero sanitizer.
   Serial gate `/tmp/g4probe/serial-fselk-layout.log` (SERIAL_RC=0): #2610
   205.83s, #2727 166.74s, #3539 22.97s — all inside the 300s cap.
+- 2026-11-10 (FS-maxwidth `2f04cb74`): composite envelope profile.
+  `flowchart.useMaxWidth` (responsive SVG sizing) and `layout: dagre` are each
+  already accepted non-terminal leaves, but no predicate admitted their
+  conjunction. The `terminal_max_width` profile now also matches the exact
+  `Layout | Flowchart | MaxWidth` bit set alongside the no-layout form; exact
+  equality keeps every visual co-key (look/theme/...) fail-closed and the
+  Layout bit still routes subgraph graphs through the untrusted-compound
+  guard. Two dagre useMaxWidth fixtures, already FS-6 body-only rows, migrate
+  in place to whole-and-body (240/restored draw, 40 stays source); they
+  authorize through the existing generic FS-6 Flow400 branch, so no new
+  authority string or matrix branch is added. A handDrawn useMaxWidth sibling
+  stays source behind its Look bit. Whole originals move 976 -> 978 drawn /
+  1169 -> 1167 fallback / 0 error; Flow pending 242 -> 240,
+  admitted/mutated 158 -> 160 (240+160=400). Class285 260/25/0, the
+  48-gap roster, and body 179/173/48 are unmoved; the full debug/release
+  OfficialMatrix JSON is byte-identical (sha256
+  adefc5c4c8c9397924231d568c2feebcdca9b2ff7772ec3615d2b184dff15237). Full
+  mermaid 1191/1191; ASan contact (fs6 cohort + Flow6 envelope/folded, 7
+  tests) zero sanitizer. Serial gate `/tmp/g4probe/serial-fsmaxwidth.log`
+  (SERIAL_RC=0): #2610 221.88s, #2727 171.30s, #3539 24.47s.

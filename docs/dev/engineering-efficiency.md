@@ -198,3 +198,22 @@ Attach a short efficiency section to each closure report, answering:
   debts, and (b) high fixed ceremony wall-clock (10.7k cold renders/run, 8.8×
   debug penalty, no matrix cache, monolithic serial tests, BMI fan-out). (a)
   is inherent to the remaining problem; (b) is addressable and tracked above.
+- **2026-11-10, FS-maxwidth cohort (2 whole draws, predating its commit).**
+  First cohort executed under the new layered/release-primary rules. (1)
+  Reused the pre-existing FS-6 ledger and its generic Flow400 whole branch
+  instead of creating a ledger/test-binary/authority string: the two rows
+  migrated body-only→whole-and-body in place, so the full suite count stayed
+  1191 (no new gtest target, no CMake reconfigure, no new authority whitelist
+  entry) — the fixed ceremony was amortized onto an existing gate. (2)
+  Iteration used release-targeted builds plus a temporary probe attached to an
+  already-built test binary (then removed), not full debug matrices; the full
+  release matrix ran once at ~28s and debug once only for the closing
+  byte-compare (identical, sha `adefc5c4`). (3) Scope discipline: a census
+  found six accepted-leaf/no-profile rows across five distinct missing
+  predicates; only the single cohesive `Layout|Flowchart|MaxWidth` pair (2
+  rows) was taken, deferring four other predicate shapes rather than bundling
+  unrelated changes. Gate wall-clock was still dominated by the 524s full
+  suite and 420s serial gate at family closure; no flake, no false green, no
+  reverted work. Lesson applied: prefer in-place ledger migration through a
+  generic branch over a parallel cohort whenever the rows already belong to an
+  admitted ledger.

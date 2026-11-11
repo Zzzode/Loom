@@ -27,6 +27,7 @@ are not whole-original errors).
 | After FS-elk (non-terminal elk.rectpacking layout engine) | 2026-11-09 | eb3118c8 | 976 | 1169 | 0 |
 | After FS-maxwidth (dagre engine + useMaxWidth composite profile) | 2026-11-10 | 2f04cb74 | 978 | 1167 | 0 |
 | After journey family renderer (10 theme-free originals) | 2026-11-11 | 744c3a24 | 988 | 1157 | 0 |
+| After timeline family renderer (7 theme-free originals) | 2026-11-12 | fe3eb520 | 995 | 1150 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -47,7 +48,7 @@ disposition (fix or documented infeasibility).
 | c4 | 32 | 0 | |
 | usecase | 32 | 0 | |
 | er-diagram | 31 | 13 | |
-| timeline | 30 | 0 | |
+| timeline | 23 | 7 | renderer added 2026-11-11; 23 themed rows stay source (no color contract) |
 | class-diagram | 25 | 260 | |
 | treemap | 26 | 0 | |
 | architecture | 20 | 0 | |
@@ -73,7 +74,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1157** | **988** | |
+| **Total** | **1150** | **995** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -496,3 +497,29 @@ when the body would draw.
   mermaid 1197/1197; ASan contact (6 journey tests) zero sanitizer. Serial
   gate `/tmp/g4probe/serial-journey.log` (SERIAL_RC=0): #2610 209.62s,
   #2727 169.10s, #3545 23.13s.
+- 2026-11-12 (timeline family renderer `fe3eb520`): second greenfield family. A new
+  `mermaid_timeline_impl.cpp` renders the timeline grammar
+  (`timeline [TD]`, title, sections, `period : event [: event]` plus colon
+  continuation lines) as a bounded native linear text table; 7 of 30
+  originals are theme-free and now draw whole-and-body, the other 23 carry a
+  theme/look visual gate and stay source (the terminal has no color contract).
+  The classifier adds MermaidProbeFamily::Timeline on the exact header
+  (including `timeline TD`) and a dispatch case; the matrix hook replaces the
+  run_case observation 1:1 (observation total stays 2738). Independent review
+  a7f26a8ecbe8991e6 APPROVE WITH CONDITIONS; all conditions resolved before
+  commit: M1 continuation lines now colon-split through the shared
+  append_events path (one corpus fixture's narrow-40 state flipped
+  source->drawn as a measured geometry consequence, NARROW_DRAW re-pinned),
+  N1 `<br>` markers matched case-insensitively via a single longest-first
+  scan, M3 durable fail-closed tests for orphan continuations, unknown
+  statements, all three caps, 65-cell hard words and whitespace events, B1
+  real review id in the ledger. A second independent read-only zero-build
+  review on the final diff returned APPROVE with zero MAJOR/MINOR; its four
+  NITs are all fail-closed-safe/corpus-absent, the section-cap semantic note
+  is documented in-code. Whole originals 988 -> 995 drawn /
+  1157 -> 1150 fallback / 0 error; timeline 7/23; flow 160/240 and body
+  372/173/48, the 48-gap roster and Class285 260/25/0 are unmoved;
+  debug/release OfficialMatrix JSON byte-identical (sha256
+  da43018998c11b96323ce0719bdbde9d67336e9ce20148b69e264a2ef0cfcce3).
+  Full mermaid 1207/1207; ASan contact (10 timeline + 6 journey tests) zero
+  sanitizer. Serial gate `/tmp/g4probe/serial-timeline.log` (SERIAL_RC=0).

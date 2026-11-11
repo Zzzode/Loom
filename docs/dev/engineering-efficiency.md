@@ -148,6 +148,20 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     hazard) and suffered identity confusion. Spawn a fresh general-purpose
     agent with an explicit zero-build brief; verify after the review that it
     wrote nothing and built nothing.
+18. **A token-splitting/segmentation fix can hold wide states while flipping
+    narrow states — re-measure every per-width geometry pin, not just the
+    240-column partition.** The timeline M1 colon-split fix left the 7-row
+    wide draw partition byte-identical but shortened one fixture's rows enough
+    to flip its 40-column state source->drawn. After any change to how a line
+    is split into tokens/events, regenerate the cohort's NARROW_DRAW pins from
+    live renders before trusting the ledger.
+19. **Enumerate the corpus's actual marker spellings before writing
+    case-folding/normalization code or its tests.** A first `<br>` sanitizer
+    handled upper-case variants but missed mixed case, and its test invented a
+    `<br >` spelling that exists nowhere in the corpus or the accepted
+    vocabulary. Run `grep -rhoiE '<pattern>' cases/<family>/ | sort | uniq -c`
+    first; code the real spellings, test the real spellings, and keep
+    invented forms as explicit fail-closed controls, not success cases.
 
 ## Per-task efficiency retro (mandatory at every closure)
 
@@ -217,3 +231,29 @@ Attach a short efficiency section to each closure report, answering:
   reverted work. Lesson applied: prefer in-place ledger migration through a
   generic branch over a parallel cohort whenever the rows already belong to an
   admitted ledger.
+- **2026-11-12, timeline family renderer (7 whole draws, predating its commit).**
+  Second greenfield family executed under release-primary/layered gates.
+  (1) Gate wall-clock: release full matrix ~92s vs debug ~761s (8.3x); all
+  iteration (M1 split fix, N1 case-folding, M3 fail-closed tests) ran against
+  release cohort binaries, debug matrix ran twice only because an M2 comment
+  landed between the two closing runs — the comment-only edit was separately
+  proven byte-identical (same release matrix sha before/after), so the second
+  debug run was ceremony, not diagnosis. (2) Two self-inflicted reds, both
+  caught by the new durable tests before any matrix gate: an uppercase-only
+  `<BR>` transform missed mixed-case markers (fixed by one longest-first
+  case-insensitive scan), and a test invented a non-canonical `<br >` spelling
+  absent from both the renderer vocabulary and the corpus (corrected to
+  canonical `<Br>`). Upstream check that would have prevented both: enumerate
+  corpus marker spellings with `grep -oiE` BEFORE writing folding code and
+  tests. (3) The M1 colon-split fix kept the 7-row wide-240 draw partition
+  exactly as the review predicted but flipped one fixture's narrow-40 state
+  source->drawn (shorter event rows fit 40 columns); the stale NARROW_DRAW pin
+  was caught by the live pixel gate and re-measured. Lesson: a segmentation
+  fix can hold wide states while moving narrow states — re-measure every
+  per-width pin after any token-splitting change, never assume only the wide
+  partition matters. (4) No shipped rework, no flake, no false green; frozen
+  contracts (flow 160/240, body 372/173/48, Class285, 48-gap roster) unmoved;
+  observation total held at 2738. (5) Greenfield economics confirmed again:
+  +7 draws for one ledger/one review/one gate, reusing the journey
+  text-table/visual-gate scaffolding — the same fixed ceremony that bought +1
+  on an envelope cohort now buys a whole family.

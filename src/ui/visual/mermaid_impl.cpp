@@ -6191,6 +6191,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     }
     bool sequence = false, er = false, gitgraph = false, state = false;
     bool mindmap = header == "mindmap";
+    bool journey = header == "journey";
     bool block_input = header == "block" || header == "block-beta";
     if (header == "---") {
         has_frontmatter_peek = true;
@@ -6228,6 +6229,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
                        (line.size() == 8u || line[8] == ' ' || line[8] == '\t' || line[8] == ':');
             state = line == "stateDiagram-v2" || line == "stateDiagram";
             mindmap = line == "mindmap";
+            journey = line == "journey";
             block_input = line == "block" || line == "block-beta";
             if (line.starts_with("classDiagram")) {
                 class_peek = class_prefix_header(line);
@@ -6287,6 +6289,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     if (!relations_owner) {
         decision.family = block_input ? MermaidProbeFamily::Block
                           : mindmap   ? MermaidProbeFamily::Mindmap
+                          : journey   ? MermaidProbeFamily::Journey
                                       : MermaidProbeFamily::Charts;
         return decision;
     }
@@ -6683,6 +6686,9 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
         }
         case detail::MermaidProbeFamily::Mindmap:
             lines = detail::mindmap_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::Journey:
+            lines = detail::journey_layout(source, work);
             break;
         case detail::MermaidProbeFamily::Charts:
             lines = detail::charts_layout(source, work);

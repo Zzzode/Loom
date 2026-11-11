@@ -313,6 +313,7 @@ enum class MermaidProbeFamily : unsigned char {
     Requirement,
     Charts,
     Mindmap,
+    Journey,
     Block
 };
 

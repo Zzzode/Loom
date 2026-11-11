@@ -1,0 +1,317 @@
+{
+  "schema": "loom_mermaid_journey_cohort/v1",
+  "rfc": 31,
+  "phase": "journey-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_journey_impl.cpp",
+    "grammar": "journey header; title; section; label: score [: actors]",
+    "theme_gate": "frontmatter theme/look or an in-body %%{init theme}%% directive keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "journey fixtures with no theme/look visual gate",
+    "roots": [
+      "journey"
+    ],
+    "clean_count": 10,
+    "themed_excluded_count": 8,
+    "themed_excluded": [
+      "journey/pr-check/dark-theme.mmd",
+      "journey/pr-check/default-theme.mmd",
+      "journey/pr-check/forest-theme.mmd",
+      "journey/pr-check/neutral-theme.mmd",
+      "journey/pr-check/redux-color-theme.mmd",
+      "journey/pr-check/redux-dark-color-theme.mmd",
+      "journey/pr-check/redux-dark-theme.mmd",
+      "journey/pr-check/redux-theme.mmd"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, journey renderer cohort, 2026-11-11, task a9c9dfef3711bc7f6, zero builds)",
+    "date": "2026-11-11",
+    "verdict": "approved",
+    "note": "Initial verdict REQUEST-CHANGES; all findings resolved before approval. MAJOR M1: score parse moved from throwing std::stoi to non-throwing std::from_chars with full-ptr/errc and 0..5 checks, so an over-long digit run fails closed (regression test added). MINOR m1: theme gate is key-based on frontmatter theme/look and directive-local in-body %%{init theme}%% scans, so a task label containing the word theme is not falsely rejected (tests added). m2: title/section/label/actor now pass unicode_text. m3: this review id replaced the placeholder. m4: the durable gate now renders and pins the body track separately and asserts the restored frame. NITs: task cap renamed kJourneyMaxTasksPerSection (per-section bound), CRLF trailing CR stripped, section names length-capped. The matrix hook only ever emits ledger statuses for exact ledger paths and replaces the run_case observation 1:1, so the 2738 observation total and the flow 48-gap/Class285 frozen contracts are unreachable from this change."
+  },
+  "counts": {
+    "total": 10,
+    "predicted_draw": 10,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 10
+  },
+  "rows": [
+    {
+      "path": "journey/nightly-check/left-margin-150px.mmd",
+      "family": "journey",
+      "sha256": "12352d4ea76b43cd07a0c063ad9e17f14fd1c269e524275a89c546bd9d0fa183",
+      "manifest_sha256": "12352d4ea76b43cd07a0c063ad9e17f14fd1c269e524275a89c546bd9d0fa183",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "journey renderer projects title/section/task/score/actors to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "journey/nightly-check/legend-diagram-spacing-long-labels.mmd",
+      "family": "journey",
+      "sha256": "dc499b08daad0644ff9728cac85aa6173892a78969f973bb2ec1f55f4619aba2",
+      "manifest_sha256": "dc499b08daad0644ff9728cac85aa6173892a78969f973bb2ec1f55f4619aba2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "journey renderer projects title/section/task/score/actors to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "journey/nightly-check/single-word-hyphenation.mmd",
+      "family": "journey",
+      "sha256": "e1d0405f577411861ae1199676de447152320713b2f0ac1fb33f10065a3567a5",
+      "manifest_sha256": "e1d0405f577411861ae1199676de447152320713b2f0ac1fb33f10065a3567a5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "journey renderer projects title/section/task/score/actors to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "journey/nightly-check/title-styling.mmd",
+      "family": "journey",
+      "sha256": "a744d3e50b94b4a68342f9d9bee33bc6401897885bd2c22f4a1bd0d2a3847bb6",
+      "manifest_sha256": "a744d3e50b94b4a68342f9d9bee33bc6401897885bd2c22f4a1bd0d2a3847bb6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "journey renderer projects title/section/task/score/actors to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "journey/nightly-check/usemaxwidth-true.mmd",
+      "family": "journey",
+      "sha256": "0d470733e388900fd17844f4b8e40c49b35f5d88c0f8ec218c38c8ec9216d9a1",
+      "manifest_sha256": "0d470733e388900fd17844f4b8e40c49b35f5d88c0f8ec218c38c8ec9216d9a1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "journey renderer projects title/section/task/score/actors to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "journey/nightly-check/whitespace-wrapping-no-hyphens.mmd",
+      "family": "journey",
+      "sha256": "5b4b994c929f3fbfba8c3680b1a9484e491255b3daf91934586f6adfcf212710",
+      "manifest_sha256": "5b4b994c929f3fbfba8c3680b1a9484e491255b3daf91934586f6adfcf212710",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "journey renderer projects title/section/task/score/actors to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "journey/nightly-check/wrap-long-labels-multiline-margins.mmd",
+      "family": "journey",
+      "sha256": "6ccdc164d86779290c114d3ec4b0896b5ec48ca55600d6ba6b90452869ff51f1",
+      "manifest_sha256": "6ccdc164d86779290c114d3ec4b0896b5ec48ca55600d6ba6b90452869ff51f1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "journey renderer projects title/section/task/score/actors to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "journey/pr-check/should-render-a-user-journey-chart.mmd",
+      "family": "journey",
+      "sha256": "cd0d14e55b988f77c6afa2f0b1587535e3c4470936aacee15fad9e80552aba67",
+      "manifest_sha256": "cd0d14e55b988f77c6afa2f0b1587535e3c4470936aacee15fad9e80552aba67",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "journey renderer projects title/section/task/score/actors to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "journey/pr-check/should-render-a-user-journey-diagram-when-usemaxwidth-is-false.mmd",
+      "family": "journey",
+      "sha256": "9c587a03aa6be23f4424b5779b5461bdfaa3370af0a90e97d631ca8d0cbff50a",
+      "manifest_sha256": "9c587a03aa6be23f4424b5779b5461bdfaa3370af0a90e97d631ca8d0cbff50a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "journey renderer projects title/section/task/score/actors to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "journey/pr-check/simple-test.mmd",
+      "family": "journey",
+      "sha256": "58984f5ed25071f29967f18d1251ba382123ec5f8805b2d49c5768d3d6ea182c",
+      "manifest_sha256": "58984f5ed25071f29967f18d1251ba382123ec5f8805b2d49c5768d3d6ea182c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "journey renderer projects title/section/task/score/actors to a bounded native text table; no theme key is present so the whole original draws"
+    }
+  ]
+}

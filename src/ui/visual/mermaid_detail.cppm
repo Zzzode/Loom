@@ -134,6 +134,7 @@ bool prepay_styled_payload(NativeLayout& layout, std::size_t source_bytes, Work&
                            std::size_t* prepaid = nullptr, Work* prep_sink = nullptr);
 
 std::optional<std::vector<std::string>> mindmap_layout(std::string_view source, Work& work);
+std::optional<std::vector<std::string>> journey_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> sequence_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> charts_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source, Work& work,

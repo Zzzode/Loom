@@ -1,0 +1,251 @@
+{
+  "schema": "loom_mermaid_timeline_cohort/v1",
+  "rfc": 31,
+  "phase": "timeline-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_timeline_impl.cpp",
+    "grammar": "timeline [TD]; title; section; period : event [: event]",
+    "theme_gate": "frontmatter theme/look or an in-body %%{init theme}%% directive keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "timeline fixtures with no theme/look visual gate",
+    "roots": [
+      "timeline"
+    ],
+    "clean_count": 7,
+    "themed_excluded_count": 23,
+    "themed_excluded": [
+      "timeline/nightly-check/10-should-render-a-simple-timeline-in-forest-theme.mmd",
+      "timeline/nightly-check/9-should-render-a-simple-timeline-in-neutral-theme.mmd",
+      "timeline/nightly-check/space-exploration-dark-theme-neo-look.mmd",
+      "timeline/nightly-check/space-exploration-default-theme-neo-look.mmd",
+      "timeline/nightly-check/space-exploration-forest-theme-neo-look.mmd",
+      "timeline/nightly-check/space-exploration-neo-dark-theme-classic-look.mmd",
+      "timeline/nightly-check/space-exploration-neo-dark-theme-neo-look.mmd",
+      "timeline/nightly-check/space-exploration-neo-theme-classic-look.mmd",
+      "timeline/nightly-check/space-exploration-neo-theme-neo-look.mmd",
+      "timeline/nightly-check/space-exploration-neutral-theme-neo-look.mmd",
+      "timeline/nightly-check/space-exploration-redux-color-theme-classic-look.mmd",
+      "timeline/nightly-check/space-exploration-redux-color-theme-neo-look.mmd",
+      "timeline/nightly-check/space-exploration-redux-dark-color-theme-classic-look.mmd",
+      "timeline/nightly-check/space-exploration-redux-dark-color-theme-neo-look.mmd",
+      "timeline/nightly-check/space-exploration-redux-dark-theme-classic-look.mmd",
+      "timeline/nightly-check/space-exploration-redux-dark-theme-neo-look.mmd",
+      "timeline/nightly-check/space-exploration-redux-theme-classic-look.mmd",
+      "timeline/nightly-check/space-exploration-redux-theme-neo-look.mmd",
+      "timeline/pr-check/4-should-render-a-simple-timeline-with-directives-and-disablemulticolor-true.mmd",
+      "timeline/pr-check/5-should-render-a-simple-timeline-with-directive-overridden-colors.mmd",
+      "timeline/pr-check/6-should-render-a-simple-timeline-in-base-theme.mmd",
+      "timeline/pr-check/7-should-render-a-simple-timeline-in-default-theme.mmd",
+      "timeline/pr-check/8-should-render-a-simple-timeline-in-dark-theme.mmd"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, timeline renderer cohort, 2026-11-11, task a7f26a8ecbe8991e6)",
+    "date": "2026-11-11",
+    "verdict": "approved",
+    "note": "APPROVE WITH CONDITIONS, all conditions resolved before commit. B1: this review block replaces the placeholder id. M1: colon continuation lines now split on ':' via the shared append_events path, matching the period-line grammar (corpus max 9 events/period, cap 16, so the 7-row draw partition is unchanged). M2: theme-gate shape differences vs the journey renderer produce zero corpus mismatches; documented in the renderer comments and kept key-based. M3: durable fail-closed tests added for continuation before period, unknown statement/header, event/period/section cap exhaustion, 65-cell hard word, and all-whitespace events. N1: <br> markers are now matched case-insensitively like upstream HTML tag matching, with regression coverage. N2/N3 accepted as-is."
+  },
+  "counts": {
+    "total": 7,
+    "predicted_draw": 7,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 7
+  },
+  "rows": [
+    {
+      "path": "timeline/nightly-check/11-should-render-timeline-with-many-stacked-events-and-proper-timeline-line-length.mmd",
+      "family": "timeline",
+      "sha256": "67755ad4ab7c645d58f33131fbdcd3bbdbe4d060d28110c1822147f6788d45ab",
+      "manifest_sha256": "67755ad4ab7c645d58f33131fbdcd3bbdbe4d060d28110c1822147f6788d45ab",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "timeline renderer projects title/section/period/events to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "timeline/nightly-check/13-should-render-a-simple-vertical-timeline-with-no-specific-sections.mmd",
+      "family": "timeline",
+      "sha256": "c95d069553fd0cc3c4222295f9f7fb6ee0364d5c0fea712689be51555e7ea7c1",
+      "manifest_sha256": "c95d069553fd0cc3c4222295f9f7fb6ee0364d5c0fea712689be51555e7ea7c1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "timeline renderer projects title/section/period/events to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "timeline/pr-check/1-should-render-a-simple-timeline-with-no-specific-sections.mmd",
+      "family": "timeline",
+      "sha256": "574da32c7b2a4903ec8108b2cb99d6b9bd100e6a6b2bd0cc7bde2b369d94720a",
+      "manifest_sha256": "574da32c7b2a4903ec8108b2cb99d6b9bd100e6a6b2bd0cc7bde2b369d94720a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "timeline renderer projects title/section/period/events to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "timeline/pr-check/12-should-render-timeline-with-proper-vertical-line-lengths-for-all-columns.mmd",
+      "family": "timeline",
+      "sha256": "4814bc421d5a64bda41d3cd5db4a882f9579c7fd1283da01bd2f8287b936576f",
+      "manifest_sha256": "4814bc421d5a64bda41d3cd5db4a882f9579c7fd1283da01bd2f8287b936576f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "timeline renderer projects title/section/period/events to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "timeline/pr-check/14-should-render-a-vertical-timeline-diagram-with-sections.mmd",
+      "family": "timeline",
+      "sha256": "e74cbc0fd3a6cd0ba6857890c501b7d99a57c5918c93dece79bbea35930e3961",
+      "manifest_sha256": "e74cbc0fd3a6cd0ba6857890c501b7d99a57c5918c93dece79bbea35930e3961",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "timeline renderer projects title/section/period/events to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "timeline/pr-check/2-should-render-a-timeline-diagram-with-sections.mmd",
+      "family": "timeline",
+      "sha256": "71b020aaa64e5e3de21a573689fc5a77c93a25815fbdda9d4f4f1502c8da641c",
+      "manifest_sha256": "71b020aaa64e5e3de21a573689fc5a77c93a25815fbdda9d4f4f1502c8da641c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "timeline renderer projects title/section/period/events to a bounded native text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "timeline/pr-check/3-should-render-a-complex-timeline-with-sections-and-long-events-text-with-br.mmd",
+      "family": "timeline",
+      "sha256": "3df128c38eb88d2c4bc9109646428658bfcbde55b977481686c621fb421b8528",
+      "manifest_sha256": "3df128c38eb88d2c4bc9109646428658bfcbde55b977481686c621fb421b8528",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "timeline renderer projects title/section/period/events to a bounded native text table; no theme key is present so the whole original draws"
+    }
+  ]
+}

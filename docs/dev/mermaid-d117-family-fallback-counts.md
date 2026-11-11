@@ -26,6 +26,7 @@ are not whole-original errors).
 | After FS-7c Slice C (collapsed endpoint remap; redux bodies) | 2026-11-09 | c0510727 | 975 | 1170 | 0 |
 | After FS-elk (non-terminal elk.rectpacking layout engine) | 2026-11-09 | eb3118c8 | 976 | 1169 | 0 |
 | After FS-maxwidth (dagre engine + useMaxWidth composite profile) | 2026-11-10 | 2f04cb74 | 978 | 1167 | 0 |
+| After journey family renderer (10 theme-free originals) | 2026-11-11 | 744c3a24 | 988 | 1157 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -51,7 +52,7 @@ disposition (fix or documented infeasibility).
 | treemap | 26 | 0 | |
 | architecture | 20 | 0 | |
 | sankey | 18 | 0 | |
-| journey | 18 | 0 | |
+| journey | 10 | 18 | renderer added 2026-11-11; 8 themed rows stay source (no color contract) |
 | pie | 17 | 7 | |
 | state-diagram | 26 | 16 | |
 | tree-view | 15 | 0 | |
@@ -72,7 +73,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1167** | **978** | |
+| **Total** | **1157** | **988** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -475,3 +476,23 @@ when the body would draw.
   mermaid 1191/1191; ASan contact (fs6 cohort + Flow6 envelope/folded, 7
   tests) zero sanitizer. Serial gate `/tmp/g4probe/serial-fsmaxwidth.log`
   (SERIAL_RC=0): #2610 221.88s, #2727 171.30s, #3539 24.47s.
+- 2026-11-11 (journey family renderer `744c3a24`): first greenfield family.
+  A new `mermaid_journey_impl.cpp` renders the journey grammar (title /
+  section / `label: score: actors`) as a bounded native text table; 10 of 18
+  originals are theme-free and now draw whole-and-body, the other 8 carry a
+  theme/look visual gate and stay source (the terminal has no color contract).
+  Scores parse via non-throwing from_chars (0..5, overflow fails closed), all
+  emitted strings pass unicode_text, and the visual gate is key-based so a
+  "theme" word in a task label is not falsely rejected. The classifier adds
+  MermaidProbeFamily::Journey on the exact header and a dispatch case; the
+  matrix hook replaces the run_case observation 1:1 (observation total stays
+  2738). Independent review a9c9dfef3711bc7f6 initially REQUEST-CHANGES (one
+  MAJOR: throwing std::stoi; plus text-safety/theme-precision/body-track
+  MINORs), all resolved before approval. Whole originals 978 -> 988 drawn /
+  1167 -> 1157 fallback / 0 error; journey 10/8; flow 160/240 and body
+  179/173/48, the 48-gap roster and Class285 260/25/0 are unmoved; full
+  debug/release OfficialMatrix JSON byte-identical (sha256
+  3ea1bfdfcfe0c9b6f3238cfc7a420689e09596b1ca33f26ad1756676828dbf0b). Full
+  mermaid 1197/1197; ASan contact (6 journey tests) zero sanitizer. Serial
+  gate `/tmp/g4probe/serial-journey.log` (SERIAL_RC=0): #2610 209.62s,
+  #2727 169.10s, #3545 23.13s.

@@ -28,6 +28,7 @@ are not whole-original errors).
 | After FS-maxwidth (dagre engine + useMaxWidth composite profile) | 2026-11-10 | 2f04cb74 | 978 | 1167 | 0 |
 | After journey family renderer (10 theme-free originals) | 2026-11-11 | 744c3a24 | 988 | 1157 | 0 |
 | After timeline family renderer (7 theme-free originals) | 2026-11-12 | fe3eb520 | 995 | 1150 | 0 |
+| After gantt family renderer (39 valid-date originals) | 2026-11-12 | 9e8d2950 | 1034 | 1111 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -41,7 +42,7 @@ disposition (fix or documented infeasibility).
 | requirement | 160 | 12 | mostly unbuilt renderer surface |
 | git | 80 | 55 | |
 | state-diagram-v2 | 78 | 25 | |
-| gantt | 52 | 0 | renderer not started |
+| gantt | 13 | 39 | renderer added 2026-11-12; 11 themed rows stay source (no color contract), 2 malformed-date fixtures fail closed |
 | swimlanes | 46 | 0 | renderer not started |
 | xychart | 46 | 2 | partial axes/art only |
 | agentflow | 38 | 0 | flowchart-syntax variant |
@@ -74,7 +75,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1150** | **995** | |
+| **Total** | **1111** | **1034** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -523,3 +524,34 @@ when the body would draw.
   da43018998c11b96323ce0719bdbde9d67336e9ce20148b69e264a2ef0cfcce3).
   Full mermaid 1207/1207; ASan contact (10 timeline + 6 journey tests) zero
   sanitizer. Serial gate `/tmp/g4probe/serial-timeline.log` (SERIAL_RC=0).
+- 2026-11-12 (gantt family renderer `9e8d2950`, local): third greenfield family and
+  the largest single pool so far. A new `mermaid_gantt_impl.cpp` projects the
+  gantt grammar (sections; done/active/crit/milestone tags; ids including the
+  two-id vertical-marker form; calendar/clock/epoch points; durations in
+  ms/s/m/h/d/w; after/until dependency lists; zero-span markers) to a bounded
+  native structural text table. It validates every token's shape but performs
+  NO calendar math, exclude resolution or dependency scheduling — an explicit
+  documented non-goal, since the terminal has no time axis. 39 of 52 originals
+  are theme-free with valid dates and now draw whole-and-body; 11 theme/look
+  fixtures stay source (no color contract); the two deliberately malformed
+  fixtures (3-digit year, 1-digit day) fail closed through strict date-shape
+  validation. Non-terminal directives (dateFormat/axisFormat/tickInterval/
+  excludes/includes/todayMarker/weekend/weekday) are bounded text, not
+  interpreted. The classifier adds MermaidProbeFamily::Gantt on the exact
+  header (including after a frontmatter fence) and a dispatch case; the matrix
+  hook replaces run_case observations 1:1 for the 39 ledger paths only
+  (observation total stays 2738; the 13 non-ledger gantt fixtures keep their
+  default source disposition). Independent read-only zero-build review
+  a5f5a7ca0477aa5e0 APPROVE with zero MAJOR; its one MINOR (zero-span
+  milestone rendered as "end 0" instead of the milestone marker) and four
+  NITs (id-cap ordering, after/until case folding, section-cap comment,
+  clock-validation wording) were all resolved before the ledger flipped to
+  approved, with regression assertions for the milestone span and
+  upper-case dependency keyword. Whole originals 995 -> 1034 drawn /
+  1150 -> 1111 fallback / 0 error; gantt 39/13; flow 160/240, body
+  372/173/48, the 48-gap roster and Class285 260/25/0 are unmoved;
+  debug/release OfficialMatrix JSON byte-identical (sha256
+  f62ffcf150c5a9f0b9b1d4b9fb009a896a6bd3500e974a315dff8080d3738cf3).
+  Full mermaid 1217/1217; ASan contact (10 gantt + adjacent journey/timeline
+  tests) zero sanitizer. Serial gate `/tmp/g4probe/serial-gantt.log`
+  (SERIAL_RC=0).

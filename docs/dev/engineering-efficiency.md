@@ -162,6 +162,16 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     vocabulary. Run `grep -rhoiE '<pattern>' cases/<family>/ | sort | uniq -c`
     first; code the real spellings, test the real spellings, and keep
     invented forms as explicit fail-closed controls, not success cases.
+20. **In a comma-field state-machine parser, every accept branch must advance
+    the field index; a missing increment fails whole files silently.** The
+    gantt lone-duration branch set the span but omitted `++index`, so the
+    trailing `index == field_count` guard rejected the whole source — and
+    because nearly every gantt ends with a chained `: 24d` task, one missing
+    increment suppressed ~24 fixtures at once. Synthetic happy-path tests
+    passed (they used other shapes); only the full-corpus partition test
+    exposed it. When adding a parser branch, explicitly trace index
+    advancement on every path, and keep the full-corpus draw-partition test as
+    the oracle rather than trusting hand-written single-shape cases.
 
 ## Per-task efficiency retro (mandatory at every closure)
 
@@ -257,3 +267,30 @@ Attach a short efficiency section to each closure report, answering:
   +7 draws for one ledger/one review/one gate, reusing the journey
   text-table/visual-gate scaffolding — the same fixed ceremony that bought +1
   on an envelope cohort now buys a whole family.
+- **2026-11-12, gantt family renderer (39 whole draws, predating its commit).**
+  Third and largest greenfield family; executed under release-primary/layered
+  gates with a pre-implementation design doc that froze the corpus census so
+  no re-census was needed during coding. (1) Gate wall-clock again dominated by
+  the ~95s release / ~13min debug matrix; all parser iteration ran on the
+  release cohort binary (~5s per full 39-fixture render pass). (2) Two real
+  parser defects were caught by the durable corpus gate before any matrix run:
+  a lone-duration branch set the span but forgot to advance the field index,
+  which the trailing `index == fields.size()` guard turned into a whole-source
+  reject — because nearly every gantt ends with a chained `: 24d` task, this
+  one missing `++index` suppressed ~24 fixtures at once; and the non-terminal
+  `weekend`/`weekday` directives plus the zero-span `vert, 01,` marker form
+  were absent from the first grammar pass. Both were shape gaps the synthetic
+  tests alone did not cover, which is why the live-fixture partition test is
+  the real oracle. (3) The independent reviewer reimplemented the parser in
+  Python and reproduced the exact 39/11/2 partition — the strongest
+  accept/reject verification this program has used; it also caught one MINOR
+  (milestone zero-span mislabeled "end 0") no test asserted. (4) NARROW_DRAW
+  again had to be measured, not assumed: 35 of 39 draw at 40 columns even
+  though the rows are long, because the structural table wraps rather than
+  overflowing — reinforcing rule 18 (re-measure every width pin). No flake, no
+  false green; frozen flow 160/240, body 372/173/48, Class285 and the 48-gap
+  roster unmoved; observation total held at 2738. (5) Throughput economics
+  improved again: +39 draws — the biggest single batch in the program — for
+  one design/ledger/review/gate, reusing the journey/timeline text-table and
+  visual-gate scaffolding. Rule 20 above captures the field-consumption
+  bookkeeping lesson.

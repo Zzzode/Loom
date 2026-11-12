@@ -172,6 +172,17 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     exposed it. When adding a parser branch, explicitly trace index
     advancement on every path, and keep the full-corpus draw-partition test as
     the oracle rather than trusting hand-written single-shape cases.
+21. **A structural parser must enforce node roles (leaf vs container), not
+    just token shapes — faithfully transcribing an impossible tree is still
+    over-acceptance.** The first treemap parser validated indentation and
+    values but allowed a value-bearing leaf to have nested children, a shape
+    upstream mermaid almost certainly rejects and that no corpus fixture uses.
+    The independent reviewer caught it; the fix tracks open leaf depths on a
+    stack and fails closed when a node would nest inside a leaf, with
+    leaf-child and valid-sibling regression tests. When modeling an
+    indentation/tree grammar, write down the role invariants (which node kinds
+    may have children) and test the impossible combination, even if the corpus
+    never contains it.
 
 ## Per-task efficiency retro (mandatory at every closure)
 
@@ -294,3 +305,28 @@ Attach a short efficiency section to each closure report, answering:
   one design/ledger/review/gate, reusing the journey/timeline text-table and
   visual-gate scaffolding. Rule 20 above captures the field-consumption
   bookkeeping lesson.
+- **2026-11-12, treemap family renderer (10 whole draws, D-137, predating its
+  commit).** First family self-selected under the D-137 mandate rather than
+  pre-scoped: a quick grammar/header census ranked the candidates and picked
+  treemap over agentflow (a flowchart-syntax variant that inherits frozen
+  shape/subgraph debt), c4 and usecase, because it is a self-contained
+  indentation tree with no edges or shapes and all 26 originals are real
+  source-backed fixtures. (1) The upfront census paid off again: the 26 files
+  split cleanly into 10 plain / 10 classDef / 6 frontmatter-config purely by
+  grep-able contracts, so the visual gate was written once and the live
+  partition test passed on the first full-corpus run — no parser rework loop
+  like gantt's index bug. (2) NARROW_DRAW still had to be measured, not
+  assumed: 9 of 10 draw at 40 columns; the single long-text fixture stays
+  source because its 64-cell wrap exceeds the 40-column terminal — another
+  confirmation of rule 18. (3) The independent reviewer (Python reference
+  model over all 26 files plus 67 attack cases) found zero MAJOR but caught a
+  real semantic gap the corpus never exercises: a value node was allowed to
+  have nested children, which upstream likely rejects. Fixed fail-closed with
+  a leaf-depth stack before the ledger flipped, plus direct cap tests. The
+  lesson: a structural parser must enforce node *roles* (leaf vs container),
+  not just token shapes — a faithful transcription of an impossible tree is
+  still over-acceptance. (4) No flake, no false green; frozen flow 160/240,
+  body 372/173/48, Class285, the 48-gap roster and observation total 2738 all
+  unmoved. (5) Throughput: +10 draws for one design-free census/ledger/review/
+  gate, reusing the journey/timeline/gantt scaffolding nearly verbatim. Rule
+  21 above captures the leaf-role enforcement lesson.

@@ -29,6 +29,7 @@ are not whole-original errors).
 | After journey family renderer (10 theme-free originals) | 2026-11-11 | 744c3a24 | 988 | 1157 | 0 |
 | After timeline family renderer (7 theme-free originals) | 2026-11-12 | fe3eb520 | 995 | 1150 | 0 |
 | After gantt family renderer (39 valid-date originals) | 2026-11-12 | 9e8d2950 | 1034 | 1111 | 0 |
+| After treemap family renderer (10 plain originals) | 2026-11-12 | 4deb2144 | 1044 | 1101 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -51,7 +52,7 @@ disposition (fix or documented infeasibility).
 | er-diagram | 31 | 13 | |
 | timeline | 23 | 7 | renderer added 2026-11-11; 23 themed rows stay source (no color contract) |
 | class-diagram | 25 | 260 | |
-| treemap | 26 | 0 | |
+| treemap | 16 | 10 | renderer added 2026-11-12; 10 classDef/::: style + 6 frontmatter config rows stay source (no color/number-format contract) |
 | architecture | 20 | 0 | |
 | sankey | 18 | 0 | |
 | journey | 10 | 18 | renderer added 2026-11-11; 8 themed rows stay source (no color contract) |
@@ -75,7 +76,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1111** | **1034** | |
+| **Total** | **1101** | **1044** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -554,4 +555,35 @@ when the body would draw.
   f62ffcf150c5a9f0b9b1d4b9fb009a896a6bd3500e974a315dff8080d3738cf3).
   Full mermaid 1217/1217; ASan contact (10 gantt + adjacent journey/timeline
   tests) zero sanitizer. Serial gate `/tmp/g4probe/serial-gantt.log`
+  (SERIAL_RC=0).
+- 2026-11-12 (treemap family renderer `4deb2144`, local; D-137 first self-selected
+  family): fourth greenfield family, chosen over agentflow/c4/usecase because
+  it is a self-contained indentation tree language with no flowchart
+  shape/subgraph debt, and its 26 originals have real source-backed coverage.
+  A new `mermaid_treemap_impl.cpp` projects the quoted container/leaf
+  hierarchy (2-space indentation; containers carry no value, leaves carry one
+  numeric value transcribed verbatim) to a bounded native indented outline; it
+  performs no rectangle geometry and no number formatting. 10 of 26 originals
+  are plain (no classDef/::: style, no frontmatter config) and now draw
+  whole-and-body; 10 stay source behind the classDef/::: color/stroke contract
+  and 6 behind the frontmatter treemap.valueFormat config (the formatter
+  changes visible leaf text); the key-based gate also keeps theme/look keys,
+  while the words "theme"/"config" inside descriptions or node names are not
+  false gates (three "theme"-named corpus fixtures draw). Both header
+  spellings `treemap` and `treemap-beta` are accepted. The classifier adds
+  MermaidProbeFamily::Treemap and a dispatch case; the matrix hook replaces
+  run_case observations 1:1 for the 10 ledger paths only (observation total
+  stays 2738; the 16 non-ledger treemap fixtures keep their default source
+  disposition). Independent read-only zero-build review a85ecf9e80f2a47e7
+  APPROVE with zero MAJOR; its two MINORs were resolved before the ledger
+  flipped to approved — M1 enforces a value node as a leaf (a node nested
+  deeper than an open leaf fails closed), M2 added direct depth/node cap
+  tests; the five NITs are intentional sibling parity or safe over-rejection.
+  Whole originals 1034 -> 1044 drawn / 1111 -> 1101 fallback / 0 error;
+  treemap 10/16; flow 160/240, body 372/173/48, the 48-gap roster and
+  Class285 260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  6aaeb5b7b143c426f27e63b672e1956f3e8c72d57fa2a76e6b95d17350bbb280).
+  Full mermaid 1225/1225; ASan contact (8 treemap + adjacent gantt/timeline/
+  journey tests) zero sanitizer. Serial gate `/tmp/g4probe/serial-treemap.log`
   (SERIAL_RC=0).

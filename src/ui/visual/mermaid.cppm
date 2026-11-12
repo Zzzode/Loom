@@ -318,6 +318,7 @@ enum class MermaidProbeFamily : unsigned char {
     Gantt,
     Treemap,
     C4,
+    Venn,
     Block
 };
 

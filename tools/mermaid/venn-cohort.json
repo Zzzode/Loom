@@ -1,0 +1,349 @@
+{
+  "schema": "loom_mermaid_venn_cohort/v1",
+  "rfc": 31,
+  "phase": "venn-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_venn_impl.cpp",
+    "grammar": "venn-beta; set/union names, :size, [\"label\"], nested text",
+    "theme_gate": "frontmatter theme/look/config or an in-body style/classDef/::: statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "venn fixtures with no frontmatter gate and no body style statement",
+    "roots": [
+      "venn"
+    ],
+    "draw_count": 11,
+    "frontmatter_gated_count": 7,
+    "frontmatter_gated": [
+      "venn/nightly-check/9-should-render-with-dark-theme.mmd",
+      "venn/nightly-check/explicit-set-style-over-redux-palette.mmd",
+      "venn/nightly-check/handdrawn/14-should-render-a-two-set-venn-diagram-with-handdrawn-look.mmd",
+      "venn/nightly-check/handdrawn/18-should-render-a-handdrawn-venn-with-custom-styles-and-text-nodes.mmd",
+      "venn/nightly-check/three-sets-redux-color-theme.mmd",
+      "venn/nightly-check/three-sets-redux-dark-color-theme.mmd",
+      "venn/pr-check/15-should-render-a-three-set-venn-with-handdrawn-look-and-title.mmd"
+    ],
+    "body_style_gated_count": 3,
+    "body_style_gated": [
+      "venn/nightly-check/13-should-render-a-complex-venn-with-labels-text-nodes-and-styles.mmd",
+      "venn/pr-check/11-should-render-a-venn-diagram-with-custom-text-colors-via-style.mmd",
+      "venn/pr-check/7-should-render-a-venn-diagram-with-custom-colors-via-style.mmd"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, venn renderer cohort, 2026-11-12, task ae64a3c38c96a9a8e)",
+    "date": "2026-11-12",
+    "verdict": "approved",
+    "note": "APPROVE with zero MAJOR. The reviewer's Python port reproduced the exact 11 draw / 7 frontmatter-gated / 3 body-style-gated partition over all 21 fixtures and ran 114 adversarial cases. M2 (title bypassed the guarded emission path) was fixed by routing the title through the same wrap+guarded push with a combined row cap; N1 (loose nesting) was tightened so sets/unions are depth 0 and text nodes depth 1, with fail-closed regression tests. M1 (quote-aware suffix scan) and M3 (C++/python gate parity on hypothetical inputs only) are fail-closed with zero corpus impact and sibling-renderer parity, deferred to a later hardening batch."
+  },
+  "counts": {
+    "total": 11,
+    "predicted_draw": 11,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 11
+  },
+  "rows": [
+    {
+      "path": "venn/nightly-check/10-should-render-a-venn-diagram-with-many-text-nodes.mmd",
+      "family": "venn",
+      "sha256": "00f2779814a6ea371d43cd429e63081e818be32ec040806e299b6e49e4e1ee20",
+      "manifest_sha256": "00f2779814a6ea371d43cd429e63081e818be32ec040806e299b6e49e4e1ee20",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "venn renderer projects sets/unions/text to a bounded native outline; no style/theme gate is present so it draws"
+    },
+    {
+      "path": "venn/nightly-check/12-should-render-a-two-set-venn-with-asymmetric-sizes.mmd",
+      "family": "venn",
+      "sha256": "98863f34b40aa6ce959b4e33e53721f1e6bde9e44cf33551c673f8e1845f785a",
+      "manifest_sha256": "98863f34b40aa6ce959b4e33e53721f1e6bde9e44cf33551c673f8e1845f785a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "venn renderer projects sets/unions/text to a bounded native outline; no style/theme gate is present so it draws"
+    },
+    {
+      "path": "venn/nightly-check/4-should-render-a-venn-diagram-with-custom-set-sizes.mmd",
+      "family": "venn",
+      "sha256": "3c5d6ec315bc9a651e75fb2985244f01ec857e0ee526b999dece0f98a34f52e7",
+      "manifest_sha256": "3c5d6ec315bc9a651e75fb2985244f01ec857e0ee526b999dece0f98a34f52e7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "venn renderer projects sets/unions/text to a bounded native outline; no style/theme gate is present so it draws"
+    },
+    {
+      "path": "venn/nightly-check/5-should-render-a-venn-diagram-with-labels.mmd",
+      "family": "venn",
+      "sha256": "a979b0267b8cc16532dbb29deb146176d42546cec5d04df82b203d48e27063aa",
+      "manifest_sha256": "a979b0267b8cc16532dbb29deb146176d42546cec5d04df82b203d48e27063aa",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "venn renderer projects sets/unions/text to a bounded native outline; no style/theme gate is present so it draws"
+    },
+    {
+      "path": "venn/pr-check/1-should-render-a-simple-two-set-venn-diagram.mmd",
+      "family": "venn",
+      "sha256": "97aee95e1601aadb38adc76d9a642e1d2d9983d1c5deedaab06d0e9416d64f34",
+      "manifest_sha256": "97aee95e1601aadb38adc76d9a642e1d2d9983d1c5deedaab06d0e9416d64f34",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "venn renderer projects sets/unions/text to a bounded native outline; no style/theme gate is present so it draws"
+    },
+    {
+      "path": "venn/pr-check/16-should-render-a-venn-diagram-with-a-3-set-union-without-explicit-pairwise-subsets.mmd",
+      "family": "venn",
+      "sha256": "3cbe87be26598706bc0ffbcef0c9614659a7e36ee53c03ebd6a094f727e9c03c",
+      "manifest_sha256": "3cbe87be26598706bc0ffbcef0c9614659a7e36ee53c03ebd6a094f727e9c03c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "venn renderer projects sets/unions/text to a bounded native outline; no style/theme gate is present so it draws"
+    },
+    {
+      "path": "venn/pr-check/17-should-render-a-venn-diagram-with-partial-pairwise-subsets.mmd",
+      "family": "venn",
+      "sha256": "e04e05a78b587248e5c90e672b89e157c129d7d207eab7fce8b6192d457cde93",
+      "manifest_sha256": "e04e05a78b587248e5c90e672b89e157c129d7d207eab7fce8b6192d457cde93",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "venn renderer projects sets/unions/text to a bounded native outline; no style/theme gate is present so it draws"
+    },
+    {
+      "path": "venn/pr-check/2-should-render-a-three-set-venn-diagram.mmd",
+      "family": "venn",
+      "sha256": "2a53b70a1252e15d3c975f31c63e5e2e0f6eeddcaa6650e164005e91374e9e6d",
+      "manifest_sha256": "2a53b70a1252e15d3c975f31c63e5e2e0f6eeddcaa6650e164005e91374e9e6d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "venn renderer projects sets/unions/text to a bounded native outline; no style/theme gate is present so it draws"
+    },
+    {
+      "path": "venn/pr-check/3-should-render-a-venn-diagram-with-a-title.mmd",
+      "family": "venn",
+      "sha256": "dfa0169483b15c335d593f6e41a723ec7d98ec3e9f3bb94ad54a71e777df30ac",
+      "manifest_sha256": "dfa0169483b15c335d593f6e41a723ec7d98ec3e9f3bb94ad54a71e777df30ac",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "venn renderer projects sets/unions/text to a bounded native outline; no style/theme gate is present so it draws"
+    },
+    {
+      "path": "venn/pr-check/6-should-render-a-venn-diagram-with-text-nodes.mmd",
+      "family": "venn",
+      "sha256": "b57f91dcdd440a437c68d47c1376df0f2adf798950e26ca1ff25779774536f96",
+      "manifest_sha256": "b57f91dcdd440a437c68d47c1376df0f2adf798950e26ca1ff25779774536f96",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "venn renderer projects sets/unions/text to a bounded native outline; no style/theme gate is present so it draws"
+    },
+    {
+      "path": "venn/pr-check/8-should-render-a-venn-diagram-with-string-identifiers.mmd",
+      "family": "venn",
+      "sha256": "da532c5dc0b59e08db1a69728eea5160141962d6eb12943dca6d174b82acfcff",
+      "manifest_sha256": "da532c5dc0b59e08db1a69728eea5160141962d6eb12943dca6d174b82acfcff",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "venn renderer projects sets/unions/text to a bounded native outline; no style/theme gate is present so it draws"
+    }
+  ]
+}

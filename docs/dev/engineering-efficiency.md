@@ -365,3 +365,27 @@ Attach a short efficiency section to each closure report, answering:
   body 372/173/48, Class285, the 48-gap roster and observation total 2738 all
   unmoved. Throughput: +23 draws for one census/ledger/review/gate, reusing the
   greenfield scaffolding.
+- **2026-11-12, venn family renderer (11 whole draws, D-148, predating its
+  commit).** Third D-137/D-148 self-selected family; a small declarative
+  grammar (set/union/text) close in shape to treemap. (1) The source-driven
+  live census again overrode a hand estimate: the initial grep suggested 14
+  draw, but separating frontmatter gates from in-body `style`/classDef/`:::`
+  color statements produced the true 11/7/3 partition. The generator's hard
+  drift guard and the live-fixture partition test are the only trustworthy
+  partition source — re-confirms rule 19. (2) The independent reviewer's M2
+  was the same class of defect as the earlier c4 finding (rule 22): the title
+  was inserted into the output vector directly, bypassing the row/width/Work
+  guard. Fixed by giving the title its own vector filled through the identical
+  guarded push and counting the row cap over the combined output. The fact
+  that the same anti-pattern recurred across two renderers is exactly why
+  rule 22 says to enumerate every path that reaches the output vector. (3) The
+  reviewer also surfaced a nesting over-acceptance (a set could nest under a
+  set); the corpus only ever uses two levels, so the role invariant was made
+  explicit (set/union depth 0, text depth 1) and tested both ways — another
+  application of rule 21. Two MINORs (quote-aware suffix scan, gate parity on
+  non-corpus inputs) were deliberately deferred: both fail closed, have zero
+  corpus impact, and "fixing" them without a corpus driver would be speculative
+  widening. No flake, no false green; frozen flow 160/240, body 372/173/48,
+  Class285, the 48-gap roster and observation total 2738 all unmoved.
+  Throughput: +11 draws for one census/ledger/review/gate on the shared
+  greenfield scaffolding.

@@ -31,6 +31,7 @@ are not whole-original errors).
 | After gantt family renderer (39 valid-date originals) | 2026-11-12 | 9e8d2950 | 1034 | 1111 | 0 |
 | After treemap family renderer (10 plain originals) | 2026-11-12 | 4deb2144 | 1044 | 1101 | 0 |
 | After c4 family renderer (23 structural originals) | 2026-11-12 | e70e8c34 | 1067 | 1078 | 0 |
+| After venn family renderer (11 clean originals) | 2026-11-13 | b53736d8 | 1078 | 1067 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -64,7 +65,7 @@ disposition (fix or documented infeasibility).
 | ishikawa | 13 | 0 | |
 | kanban | 11 | 0 | |
 | mindmap | 19 | 14 | |
-| venn | 21 | 0 | |
+| venn | 10 | 11 | renderer added 2026-11-12; 7 frontmatter theme/look/config + 3 body style/classDef rows stay source (no circle/color contract) |
 | wardley | 10 | 0 | |
 | railroad | 9 | 0 | |
 | block | 0 | 58 | complete (B0a/B6) |
@@ -77,7 +78,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1078** | **1067** | |
+| **Total** | **1067** | **1078** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -624,3 +625,36 @@ when the body would draw.
   Full mermaid 1232/1232; ASan contact (7 c4 + adjacent treemap/gantt/
   timeline/journey tests) zero sanitizer. Serial gate
   `/tmp/g4probe/serial-c4.log` (SERIAL_RC=0).
+- 2026-11-12 (venn family renderer `b53736d8`, local; D-148 self-selected
+  family): sixth greenfield family. A new `mermaid_venn_impl.cpp` projects
+  the venn-beta grammar — `set`/`union` declarations with optional `:size`
+  or `["label"]` suffixes and nested `text` nodes — to a bounded native
+  indented outline, preserving every set, union, size, label and text node
+  as text. No circle/overlap geometry and no color are attempted. 11 of 21
+  originals are clean and now draw whole-and-body; 10 stay source: seven
+  carry a frontmatter theme/look/config key and three an in-body
+  `style`/classDef/`:::` color statement. The source-driven census
+  corrected an initial 14-draw estimate to the actual 11 (the three body
+  style assignments had to be gated, not just frontmatter keys). Grammar
+  role invariants are enforced fail-closed: sets/unions sit at the base
+  indent level and a text node is exactly one level under one, so a nested
+  set or a deeper text node returns the whole source. The classifier adds
+  MermaidProbeFamily::Venn on the exact `venn-beta` header (including after
+  a frontmatter fence) and a dispatch case; the matrix hook replaces
+  run_case observations 1:1 for the 11 ledger paths only (observation
+  total stays 2738; the ten non-ledger venn fixtures keep their default
+  source disposition). Independent read-only zero-build review
+  ae64a3c38c96a9a8e APPROVE with zero MAJOR; its M2 (the title bypassed the
+  guarded emission path) was fixed by routing the title through the shared
+  wrap+guarded push with a combined row cap, and N1 (loose nesting) was
+  tightened to the two-level role invariant with regression tests; M1
+  (quote-aware suffix scan) and M3 (gate parity on hypothetical inputs)
+  are fail-closed with zero corpus impact and deferred to a later
+  hardening batch. Whole originals 1067 -> 1078 drawn / 1078 -> 1067
+  fallback / 0 error; venn 11/10; flow 160/240, body 372/173/48, the
+  48-gap roster and Class285 260/25/0 are unmoved; debug/release
+  OfficialMatrix JSON byte-identical (sha256
+  e9686dd1fecdf186899d5c09d2357dc9010984d3bdb6543ea923c468639ebf10).
+  Full mermaid 1238/1238; ASan contact (6 venn + adjacent c4/treemap/gantt/
+  timeline/journey tests) zero sanitizer. Serial gate
+  `/tmp/g4probe/serial-venn.log` (SERIAL_RC=0).

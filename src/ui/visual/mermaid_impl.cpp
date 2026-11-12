@@ -6201,6 +6201,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     };
     bool c4 = is_c4_header(header);
     bool venn = header == "venn-beta";
+    bool quadrant = header == "quadrantChart";
     bool block_input = header == "block" || header == "block-beta";
     if (header == "---") {
         has_frontmatter_peek = true;
@@ -6244,6 +6245,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             treemap = line == "treemap" || line == "treemap-beta";
             c4 = is_c4_header(line);
             venn = line == "venn-beta";
+            quadrant = line == "quadrantChart";
             block_input = line == "block" || line == "block-beta";
             if (line.starts_with("classDiagram")) {
                 class_peek = class_prefix_header(line);
@@ -6309,6 +6311,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
                           : treemap   ? MermaidProbeFamily::Treemap
                           : c4        ? MermaidProbeFamily::C4
                           : venn      ? MermaidProbeFamily::Venn
+                          : quadrant  ? MermaidProbeFamily::Quadrant
                                       : MermaidProbeFamily::Charts;
         return decision;
     }
@@ -6723,6 +6726,9 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             break;
         case detail::MermaidProbeFamily::Venn:
             lines = detail::venn_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::Quadrant:
+            lines = detail::quadrant_layout(source, work);
             break;
         case detail::MermaidProbeFamily::Charts:
             lines = detail::charts_layout(source, work);

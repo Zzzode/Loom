@@ -1,0 +1,240 @@
+{
+  "schema": "loom_mermaid_quadrant_cohort/v1",
+  "rfc": 31,
+  "phase": "quadrant-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_quadrant_impl.cpp",
+    "grammar": "quadrantChart; title, x-axis/y-axis labels, quadrant-1..4 labels, Name: [x, y] points",
+    "theme_gate": "frontmatter theme/look/config, an %%{init}%% directive, a classDef/::: statement or an inline point style keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "quadrant-chart fixtures with no frontmatter/init gate and no body style statement",
+    "roots": [
+      "quadrant-chart"
+    ],
+    "draw_count": 7,
+    "init_gated_count": 5,
+    "init_gated": [
+      "quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd",
+      "quadrant-chart/pr-check/should-able-to-render-x-axis-on-bottom-and-y-axis-on-right.mmd",
+      "quadrant-chart/pr-check/should-able-to-render-y-axis-on-right-side.mmd",
+      "quadrant-chart/pr-check/should-use-all-the-config.mmd",
+      "quadrant-chart/pr-check/should-use-all-the-theme-variable.mmd"
+    ],
+    "body_style_gated_count": 2,
+    "body_style_gated": [
+      "quadrant-chart/pr-check/it-should-render-data-points-with-styles-classes.mmd",
+      "quadrant-chart/pr-check/it-should-render-data-points-with-styles.mmd"
+    ],
+    "frontmatter_gated_count": 0,
+    "frontmatter_gated": []
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, quadrant renderer cohort, 2026-11-13, task ac14877d1a0f3b761)",
+    "date": "2026-11-13",
+    "verdict": "approved",
+    "note": "APPROVE with zero MAJOR. The reviewer independently reproduced the exact 7 draw / 5 init-gated / 2 body-style-gated partition over all 14 fixtures with two from-scratch analyses in /tmp, ported the parser line by line and ran 50+ adversarial probes (22 gate-boundary cases included) with all results matching. M1 was the pending-to-approved process flip of this block. N1 (the C++ gate skips literal spaces while the Python regex uses \\s*) and N2 (frontmatter closing-fence edge shape) are hypothetical-input-only divergences that both fail closed with zero corpus impact, deferred to a later hardening batch alongside the venn M1/M3 items; N3 coordinate/CRLF regression cases and the N4 trim_view lifetime comment were applied in the cohort test and renderer."
+  },
+  "counts": {
+    "total": 7,
+    "predicted_draw": 7,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 7
+  },
+  "rows": [
+    {
+      "path": "quadrant-chart/nightly-check/should-render-both-axes-labels-on-the-left-and-bottom-if-both-axes-have-only-one-label.mmd",
+      "family": "quadrant-chart",
+      "sha256": "affd05fa887c3c9eb225fcf445be0ae9d3cbb1ed8fc5db48993ae921486bff8e",
+      "manifest_sha256": "affd05fa887c3c9eb225fcf445be0ae9d3cbb1ed8fc5db48993ae921486bff8e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "quadrant renderer projects axes/quadrants/points to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "quadrant-chart/nightly-check/should-render-if-only-chart-type-is-provided.mmd",
+      "family": "quadrant-chart",
+      "sha256": "4a709360f11c57e4bc14905074ce454621d4061248d48377fce1c0fd6dda8f8f",
+      "manifest_sha256": "4a709360f11c57e4bc14905074ce454621d4061248d48377fce1c0fd6dda8f8f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "ledger_note": "quadrant renderer projects axes/quadrants/points to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "quadrant-chart/nightly-check/should-render-without-title.mmd",
+      "family": "quadrant-chart",
+      "sha256": "504cb675773b510c269607bc5254c030fe1f25817c967eef5b8ac78e40662ccd",
+      "manifest_sha256": "504cb675773b510c269607bc5254c030fe1f25817c967eef5b8ac78e40662ccd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "quadrant renderer projects axes/quadrants/points to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "quadrant-chart/pr-check/should-render-a-complete-quadrant-chart.mmd",
+      "family": "quadrant-chart",
+      "sha256": "af3e6dbad52e1ef2f39684a4207b8733299c17055821eb2cf20f78a3f9243a7c",
+      "manifest_sha256": "af3e6dbad52e1ef2f39684a4207b8733299c17055821eb2cf20f78a3f9243a7c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "quadrant renderer projects axes/quadrants/points to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "quadrant-chart/pr-check/should-render-without-points.mmd",
+      "family": "quadrant-chart",
+      "sha256": "d0477a10e1575488253d069e57f85f994cc55b76ee1a4d23c72fd7a1cbfcaee0",
+      "manifest_sha256": "d0477a10e1575488253d069e57f85f994cc55b76ee1a4d23c72fd7a1cbfcaee0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "quadrant renderer projects axes/quadrants/points to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "quadrant-chart/pr-check/should-render-x-axis-labels-in-the-center-if-x-axis-has-two-labels.mmd",
+      "family": "quadrant-chart",
+      "sha256": "c86fc43f6e2edb2bfa7cb87416dfcdd76caee7d1127a0b2399984e09f3413dc2",
+      "manifest_sha256": "c86fc43f6e2edb2bfa7cb87416dfcdd76caee7d1127a0b2399984e09f3413dc2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "quadrant renderer projects axes/quadrants/points to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "quadrant-chart/pr-check/should-render-y-axis-labels-in-the-center-if-y-axis-has-two-labels.mmd",
+      "family": "quadrant-chart",
+      "sha256": "7c44203bcf97bc7d8040a2438ae5e154c32d72237bdeba1c864568be47de65ac",
+      "manifest_sha256": "7c44203bcf97bc7d8040a2438ae5e154c32d72237bdeba1c864568be47de65ac",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "quadrant renderer projects axes/quadrants/points to a bounded native outline; no visual gate is present so it draws"
+    }
+  ]
+}

@@ -32,6 +32,7 @@ are not whole-original errors).
 | After treemap family renderer (10 plain originals) | 2026-11-12 | 4deb2144 | 1044 | 1101 | 0 |
 | After c4 family renderer (23 structural originals) | 2026-11-12 | e70e8c34 | 1067 | 1078 | 0 |
 | After venn family renderer (11 clean originals) | 2026-11-13 | b53736d8 | 1078 | 1067 | 0 |
+| After quadrant family renderer (7 clean originals) | 2026-11-13 | fbb34e13 | 1085 | 1060 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -61,7 +62,7 @@ disposition (fix or documented infeasibility).
 | pie | 17 | 7 | |
 | state-diagram | 26 | 16 | |
 | tree-view | 15 | 0 | |
-| quadrant-chart | 14 | 0 | |
+| quadrant-chart | 7 | 7 | renderer added 2026-11-13; 5 %%{init}%% visual directives (axis position/sizing/theme colors) + 2 inline point-style rows stay source (no geometry/color contract) |
 | ishikawa | 13 | 0 | |
 | kanban | 11 | 0 | |
 | mindmap | 19 | 14 | |
@@ -78,7 +79,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1067** | **1078** | |
+| **Total** | **1060** | **1085** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -658,3 +659,44 @@ when the body would draw.
   Full mermaid 1238/1238; ASan contact (6 venn + adjacent c4/treemap/gantt/
   timeline/journey tests) zero sanitizer. Serial gate
   `/tmp/g4probe/serial-venn.log` (SERIAL_RC=0).
+- 2026-11-13 (quadrant family renderer `fbb34e13`, local; D-157
+  self-selected family): seventh greenfield family. A new `mermaid_quadrant_impl.cpp`
+  projects the quadrantChart grammar — one title, x-axis/y-axis labels
+  (bare, `label -->`, `low --> high`), `quadrant-1..4` labels and named
+  `Name: [x, y]` data points — to a bounded native outline preserving
+  every axis, quadrant, point name and coordinate as text. No axis
+  geometry, plotting or color is attempted. 7 of 14 originals are clean
+  and now draw whole-and-body; 7 stay source: five carry an
+  `%%{init}%%` visual directive (axis position, chart sizing/padding,
+  themeVariables fill colors) and two carry inline per-point styles
+  (radius/color/stroke-color/stroke-width, one also with classDef/`:::`).
+  The source-driven live census corrected the initial 13/1 estimate to
+  the actual 7/7. The header-only fixture (an official empty-frame case)
+  draws as the single verbatim keyword row, through the same guarded
+  push as every other row; its one-line body is surface-identical to
+  plain text at every width, so the ledger pins distinct whole/body
+  states rather than one shared narrow flag. The classifier adds
+  MermaidProbeFamily::Quadrant on the exact `quadrantChart` header
+  (including after a frontmatter fence) and a dispatch case; the matrix
+  hook replaces run_case observations 1:1 for the 7 ledger paths only
+  (observation total stays 2738; the seven gated fixtures keep their
+  default source disposition). Independent read-only zero-build review
+  ac14877d1a0f3b761 APPROVE with zero MAJOR: it independently reproduced
+  the exact 7/5/2 partition with two from-scratch analyses, ported the
+  parser line by line and passed 50+ adversarial probes. Its N3/N4
+  (coordinate-shape/CRLF regression cases, trim_view lifetime comment)
+  were applied; N1/N2 are hypothetical-input-only, fail-closed with zero
+  corpus impact and deferred to a later hardening batch alongside the
+  venn M1/M3 items. Whole originals 1078 -> 1085 drawn / 1067 -> 1060
+  fallback / 0 error; quadrant 7/7; flow 160/240, body 372/173/48, the
+  48-gap roster and Class285 260/25/0 are unmoved; debug/release
+  OfficialMatrix JSON byte-identical (sha256
+  7dad26c2ef78f8c2b76415dde4142445391eaf6a81c3a3e4a0c05ce223472e6f;
+  release 28s, debug 242s). Full mermaid label suite 1245/1245 green
+  (the 1238 venn-era count plus the seven quadrant cohort cases).
+  ASan contact across the seven greenfield family cohorts (54 tests:
+  quadrant/venn/c4/treemap/gantt/timeline/journey) zero sanitizer
+  reports, logged at `/tmp/g4probe/quadrant/asan-contact.log`. Serial
+  gate `/tmp/g4probe/quadrant/serial-quadrant.log` — the Config110
+  whole-source, Class285, Block58 and ER107 admission tests run one at a
+  time — 4/4 passed (SERIAL_RC=0, ~402s).

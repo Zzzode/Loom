@@ -194,6 +194,16 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     row reaches the output vector and confirm each one passes the single
     cap/width/Work check — special input lines (title, header, footer) are the
     usual offenders.
+23. **Never re-emit a source keyword through a hand-counted fixed-length
+    substring; transcribe the token itself or derive the length from it.** The
+    quadrant renderer rebuilt the six-character `x-axis`/`y-axis` keyword with
+    `substr(0, 5)`, silently emitting `x-axi`. It compiled cleanly and the
+    draw-vs-source surface partition still passed — any native frame differs
+    from the text fallback — so the only thing that caught it was a verbatim
+    keyword assertion against the CellCapture text. When the output must
+    preserve a source token, copy the token (or use its measured length)
+    instead of retyping its width, and give every emitted keyword a literal
+    substring assertion in the cohort test, not just a draw/source boolean.
 
 ## Per-task efficiency retro (mandatory at every closure)
 
@@ -389,3 +399,35 @@ Attach a short efficiency section to each closure report, answering:
   Class285, the 48-gap roster and observation total 2738 all unmoved.
   Throughput: +11 draws for one census/ledger/review/gate on the shared
   greenfield scaffolding.
+- **2026-11-13, quadrant family renderer (7 whole draws, D-157, predating its
+  commit).** Seventh greenfield family; a flat declarative grammar
+  (title/axes/quadrant labels/[x, y] points), structurally closest to venn.
+  (1) The live census again overrode the mandate's hand estimate: the brief
+  said 13 clean / 1 gated, but separating %%{init}%% visual directives
+  (axis position, chart sizing, themeVariables colors) and inline point
+  styles gave the true 7 draw / 5 init-gated / 2 body-style-gated partition.
+  Re-confirms rule 19; the generator drift guard is the acceptance oracle,
+  not the estimate. (2) New defect class, captured as rule 23: the axis
+  keyword was re-emitted via a hand-counted `substr(0, 5)` for the
+  6-character `x-axis`/`y-axis`, silently producing `x-axi`. It compiled and
+  the draw-vs-source surface partition still passed (any native frame
+  differs from text), so only a verbatim keyword assertion in the
+  CellCapture test caught it. (3) The corpus contains a valid header-only
+  "empty frame" fixture; the sibling-wide `out.empty() => reject` convention
+  would have dropped a clean original, so the empty case emits the one
+  verbatim keyword row through the same guarded push (rule 22 respected).
+  (4) Per-track surface equivalence: the header-only fixture draws on the
+  whole track (frontmatter makes the surfaces differ) but its one-line body
+  is surface-identical to plain text at every width, so the ledger carries
+  distinct whole/body state pins, not one shared narrow flag — another
+  rule-18 style reminder that geometry pins are per track. (5) Machine
+  environment drift, not a code defect: gtest discovery and test binaries
+  failed with `libssl.so.3: cannot open shared object file` (the brew-glibc
+  loader does not trust the system lib path; LD_LIBRARY_PATH was empty).
+  Fix for every test invocation on this box:
+  `LD_LIBRARY_PATH=/home/linuxbrew/.linuxbrew/opt/openssl@3/lib` — openssl
+  only, brew glibc/llvm stay on RUNPATH, system tools remain unaffected.
+  No flake, no false green; frozen flow 160/240, body 372/173/48, Class285,
+  the 48-gap roster and observation total 2738 all unmoved. Throughput: +7
+  draws for one census/ledger/review/gate on the shared greenfield
+  scaffolding.

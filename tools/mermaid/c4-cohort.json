@@ -1,0 +1,669 @@
+{
+  "schema": "loom_mermaid_c4_cohort/v1",
+  "rfc": 31,
+  "phase": "c4-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_c4_impl.cpp",
+    "grammar": "C4{Context,Container,Component,Deployment,Dynamic}; typed element calls, Rel*/BiRel relations, brace blocks",
+    "theme_gate": "frontmatter theme/look/config or an in-body Update*Style/UpdateLayoutConfig statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "c4 fixtures with no Update*Style/UpdateLayoutConfig or frontmatter gate",
+    "roots": [
+      "c4"
+    ],
+    "draw_count": 23,
+    "styled_excluded_count": 9,
+    "styled_excluded": [
+      "c4/nightly-check/c4-4-should-render-a-simple-c4dynamic-diagram.mmd",
+      "c4/nightly-check/description-wrapping.mmd",
+      "c4/nightly-check/styling/update-relationship-style.mmd",
+      "c4/nightly-check/update-element-shape-override.mmd",
+      "c4/pr-check/c4-1-should-render-a-simple-c4context-diagram.mmd",
+      "c4/pr-check/c4-3-should-render-a-simple-c4component-diagram.mmd",
+      "c4/pr-check/update-element-style-colors.mmd",
+      "c4/visual-check/update-layout-config-2-shapes-per-row.mmd",
+      "c4/visual-check/update-layout-config-4-shapes-per-row.mmd"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, c4 renderer cohort, 2026-11-12, task a1ee3ba2e69a1f2c3)",
+    "date": "2026-11-12",
+    "verdict": "approved",
+    "note": "Initial REQUEST-CHANGES; re-reviewed to APPROVE after fixes. MINOR-1: the title now goes through the same protected emission path (row/width/Work guards) and a duplicate title fails closed. NIT-1/NIT-2: header comment corrected and depth/statement cap tests added. NIT-3: relation extra arguments are now strictly quoted or $attributes, matching the element path. NIT-4: comment syntax corrected to %%. NIT-5 python/C++ gate parity kept, guarded by the durable gtest. The reviewer's Python reference model reproduced the exact 23 draw / 9 gated partition across all 32 fixtures; a follow-up unified the row cap over the combined title plus statement output."
+  },
+  "counts": {
+    "total": 23,
+    "predicted_draw": 23,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 23
+  },
+  "rows": [
+    {
+      "path": "c4/nightly-check/boundaries/enterprise-boundary.mmd",
+      "family": "c4",
+      "sha256": "a2ae403f6646a98cf050f4c00ee84c6554ac686ae6bd0e4c1f6721d8cb82288f",
+      "manifest_sha256": "a2ae403f6646a98cf050f4c00ee84c6554ac686ae6bd0e4c1f6721d8cb82288f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/boundaries/generic-boundary.mmd",
+      "family": "c4",
+      "sha256": "689fdb8c1b7f6950f4ba01d583302ee6343ab9f3aca5513a15353880dc7dbe1c",
+      "manifest_sha256": "689fdb8c1b7f6950f4ba01d583302ee6343ab9f3aca5513a15353880dc7dbe1c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/boundaries/nested-boundaries.mmd",
+      "family": "c4",
+      "sha256": "1d672cab6f3f9d14938dddb148cb3d312422eadf8d1ee1c2035f8ce00cb17e08",
+      "manifest_sha256": "1d672cab6f3f9d14938dddb148cb3d312422eadf8d1ee1c2035f8ce00cb17e08",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/boundaries/system-boundary.mmd",
+      "family": "c4",
+      "sha256": "62bfc249e24e1950c87b4fafcd4797bd2e574a83da6e8d7dbf06cf888001604d",
+      "manifest_sha256": "62bfc249e24e1950c87b4fafcd4797bd2e574a83da6e8d7dbf06cf888001604d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/c4-5-should-render-a-simple-c4deployment-diagram.mmd",
+      "family": "c4",
+      "sha256": "90dbf5e8b97e68dcb0c2a975a09faa17b09bea5bb63d0d39d7bad0c8a251e1ee",
+      "manifest_sha256": "90dbf5e8b97e68dcb0c2a975a09faa17b09bea5bb63d0d39d7bad0c8a251e1ee",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/diagram-types/deployment-diagram.mmd",
+      "family": "c4",
+      "sha256": "677620407bfe53214d03438910795769305d6e618568228d2e752f9dec5853b8",
+      "manifest_sha256": "677620407bfe53214d03438910795769305d6e618568228d2e752f9dec5853b8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/diagram-types/deployment-node-aliases.mmd",
+      "family": "c4",
+      "sha256": "dce6975d095b1ab78994fac069eafea1c2ab04c58edd57e24f92638089139a93",
+      "manifest_sha256": "dce6975d095b1ab78994fac069eafea1c2ab04c58edd57e24f92638089139a93",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/elements/container-variants.mmd",
+      "family": "c4",
+      "sha256": "32755f0e130d66182896e9b7dc206fa602fddde782de7fd155559f94ac6440fe",
+      "manifest_sha256": "32755f0e130d66182896e9b7dc206fa602fddde782de7fd155559f94ac6440fe",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/elements/person-and-person-ext.mmd",
+      "family": "c4",
+      "sha256": "436a71a89f828ee8522ad8d0d8de5fdfa9a52cb13f845b7817eac12075b7f697",
+      "manifest_sha256": "436a71a89f828ee8522ad8d0d8de5fdfa9a52cb13f845b7817eac12075b7f697",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/elements/system-variants.mmd",
+      "family": "c4",
+      "sha256": "3e33384fe7d40d28070f0397960502d5fb3140d4d7ff143096226c8ed93985e8",
+      "manifest_sha256": "3e33384fe7d40d28070f0397960502d5fb3140d4d7ff143096226c8ed93985e8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/link-attribute-not-rendered.mmd",
+      "family": "c4",
+      "sha256": "f4b013c67de149c40943f3f757e8491fbb9ba0f194e4cbc67baa93988ff8f97d",
+      "manifest_sha256": "f4b013c67de149c40943f3f757e8491fbb9ba0f194e4cbc67baa93988ff8f97d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/relationships/bidirectional-relationship.mmd",
+      "family": "c4",
+      "sha256": "9fcc974f0ae400edb1e7f830818869679d5b190c9e900e75afa3eadbdc37939b",
+      "manifest_sha256": "9fcc974f0ae400edb1e7f830818869679d5b190c9e900e75afa3eadbdc37939b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/relationships/rel-back.mmd",
+      "family": "c4",
+      "sha256": "3d191875ec2b1d46eb0f651b21f36c54aff98cfdf6b3ea99d2f9718bd805e31a",
+      "manifest_sha256": "3d191875ec2b1d46eb0f651b21f36c54aff98cfdf6b3ea99d2f9718bd805e31a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/relationships/technology-and-description.mmd",
+      "family": "c4",
+      "sha256": "f846d3eb35b250fc08c33bc9d501d052b4042087b86ce28bae7ede50154e74b8",
+      "manifest_sha256": "f846d3eb35b250fc08c33bc9d501d052b4042087b86ce28bae7ede50154e74b8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/sprite-attribute-not-rendered.mmd",
+      "family": "c4",
+      "sha256": "38e665e1c837aafb63a7cd11c53d424cdf7c65ce0b5a0db543ef959d96710cf9",
+      "manifest_sha256": "38e665e1c837aafb63a7cd11c53d424cdf7c65ce0b5a0db543ef959d96710cf9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/nightly-check/tags-attribute-not-rendered.mmd",
+      "family": "c4",
+      "sha256": "dbb5333111864c2770ee8a941b19ce0b41c22434f4d6e65afb42fa6ca4b50cea",
+      "manifest_sha256": "dbb5333111864c2770ee8a941b19ce0b41c22434f4d6e65afb42fa6ca4b50cea",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/pr-check/c4-2-should-render-a-simple-c4container-diagram.mmd",
+      "family": "c4",
+      "sha256": "e3b1c2f1d546a7484ef47789f7469efcfe3c4ed8cfb1f5b1f6c82a6d87c2f2ca",
+      "manifest_sha256": "e3b1c2f1d546a7484ef47789f7469efcfe3c4ed8cfb1f5b1f6c82a6d87c2f2ca",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/pr-check/c4-6-should-render-c4context-diagram-with-componentqueue-ext.mmd",
+      "family": "c4",
+      "sha256": "bdb1f809ff7309036550b7164956dc8ecd973a0916a8c86e87b6ba6d7f216404",
+      "manifest_sha256": "bdb1f809ff7309036550b7164956dc8ecd973a0916a8c86e87b6ba6d7f216404",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/pr-check/c4-9-should-render-a-relationship-whose-endpoint-is-a-boundary.mmd",
+      "family": "c4",
+      "sha256": "cb3dcdf16505679a0ec31ab4410889b3e5583406f8d22cb9cd66ac3b5473523d",
+      "manifest_sha256": "cb3dcdf16505679a0ec31ab4410889b3e5583406f8d22cb9cd66ac3b5473523d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/pr-check/component-variants.mmd",
+      "family": "c4",
+      "sha256": "a729f646f13208a4dd3486589573c689e17ae57cf77c07d4b1270fe14274c2f0",
+      "manifest_sha256": "a729f646f13208a4dd3486589573c689e17ae57cf77c07d4b1270fe14274c2f0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/pr-check/container-boundary.mmd",
+      "family": "c4",
+      "sha256": "aa0726000d5d63273ec939a7d2446bfe8af45aaefb73f1e13a1a4463dfd87678",
+      "manifest_sha256": "aa0726000d5d63273ec939a7d2446bfe8af45aaefb73f1e13a1a4463dfd87678",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/pr-check/directional-relationships.mmd",
+      "family": "c4",
+      "sha256": "53704fccb9830d99202b5acaeadba2dd98a320447337ce1a4a1d0e22a21881ed",
+      "manifest_sha256": "53704fccb9830d99202b5acaeadba2dd98a320447337ce1a4a1d0e22a21881ed",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    },
+    {
+      "path": "c4/pr-check/dynamic-diagram.mmd",
+      "family": "c4",
+      "sha256": "2b7103a5bc94c7a67e63f3705971766d29607986493210d330142a20bf929e41",
+      "manifest_sha256": "2b7103a5bc94c7a67e63f3705971766d29607986493210d330142a20bf929e41",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "c4 renderer projects the typed element/relation model to a bounded native indented outline; no style/layout gate is present so the whole original draws"
+    }
+  ]
+}

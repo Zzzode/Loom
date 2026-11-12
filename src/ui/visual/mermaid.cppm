@@ -315,6 +315,7 @@ enum class MermaidProbeFamily : unsigned char {
     Mindmap,
     Journey,
     Timeline,
+    Gantt,
     Block
 };
 

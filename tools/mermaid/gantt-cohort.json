@@ -1,0 +1,1108 @@
+{
+  "schema": "loom_mermaid_gantt_cohort/v1",
+  "rfc": 31,
+  "phase": "gantt-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_gantt_impl.cpp",
+    "grammar": "gantt; dateFormat/axisFormat/tickInterval/excludes/todayMarker directives; section; task tags, ids, points, durations, after/until, milestone",
+    "theme_gate": "frontmatter theme/look or an in-body %%{init theme}%% directive keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "gantt fixtures with no theme/look gate and valid date shapes",
+    "roots": [
+      "gantt"
+    ],
+    "draw_count": 39,
+    "themed_excluded_count": 11,
+    "themed_excluded": [
+      "gantt/nightly-check/should-render-done-task-outside-text-readable-in-dark-mode-regression-7433.mmd",
+      "gantt/nightly-check/should-render-done-tasks-with-readable-text-in-dark-mode.mmd",
+      "gantt/pr-check/should-render-done-task-inside-text-readable-in-dark-mode.mmd",
+      "gantt/visual-check/dark-theme.mmd",
+      "gantt/visual-check/default-theme.mmd",
+      "gantt/visual-check/forest-theme.mmd",
+      "gantt/visual-check/neutral-theme.mmd",
+      "gantt/visual-check/redux-color-theme.mmd",
+      "gantt/visual-check/redux-dark-color-theme.mmd",
+      "gantt/visual-check/redux-dark-theme.mmd",
+      "gantt/visual-check/redux-theme.mmd"
+    ],
+    "fail_closed_count": 2,
+    "fail_closed": [
+      "gantt/nightly-check/should-fail-rendering-a-gantt-chart-for-issue-1060-with-invalid-date.mmd",
+      "gantt/nightly-check/should-handle-dates-with-year-typo-like-202-instead-of-2024-issue-5496.mmd"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, gantt renderer cohort, 2026-11-12, task a5f5a7ca0477aa5e0)",
+    "date": "2026-11-12",
+    "verdict": "approved",
+    "note": "APPROVE with zero MAJOR; one MINOR and four NITs all resolved before commit. M1: a zero-span milestone now transcribes as the milestone marker instead of 'end 0', with a span-text regression assertion. N1: leading-id cap checked before insertion so both id limits are eight. N2: after/until keywords matched case-insensitively via starts_keyword, with an UPPER-case regression. N3: section cap semantic documented in-code. N4: is_clock comment corrected to shape-only validation. The reviewer's independent parser reimplementation reproduced the exact 39 draw / 11 themed / 2 fail-closed partition."
+  },
+  "counts": {
+    "total": 39,
+    "predicted_draw": 39,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 39
+  },
+  "rows": [
+    {
+      "path": "gantt/nightly-check/handle-multiline-section-titles-with-different-line-breaks.mmd",
+      "family": "gantt",
+      "sha256": "66551afa970dece8fcc787d263d48e7fd0b35b97f875990f7f744e4d2716a373",
+      "manifest_sha256": "66551afa970dece8fcc787d263d48e7fd0b35b97f875990f7f744e4d2716a373",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-default-to-showing-today-marker.mmd",
+      "family": "gantt",
+      "sha256": "ea880baf1792603834dca93f57e5159fac0912c72a16f4bd3ccf2ba9c7b78370",
+      "manifest_sha256": "ea880baf1792603834dca93f57e5159fac0912c72a16f4bd3ccf2ba9c7b78370",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-handle-milliseconds.mmd",
+      "family": "gantt",
+      "sha256": "f2c9c5b541239ffc4fc3bf92d87bace089a65b618dd5c0dc401a187d4a85e8cc",
+      "manifest_sha256": "f2c9c5b541239ffc4fc3bf92d87bace089a65b618dd5c0dc401a187d4a85e8cc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-handle-multiple-dependencies-syntax-with-after-and-until.mmd",
+      "family": "gantt",
+      "sha256": "2defd2e6e7fd7d4e8ef285b3c81a9853ac423b043502aefd1c1dfcebaea1d879",
+      "manifest_sha256": "2defd2e6e7fd7d4e8ef285b3c81a9853ac423b043502aefd1c1dfcebaea1d879",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-handle-numeric-timestamps-with-dateformat-x-2.mmd",
+      "family": "gantt",
+      "sha256": "af45ed244881bbfc928cdf615f08a90ee8f65e7a80b38646cac8682777cd4c32",
+      "manifest_sha256": "af45ed244881bbfc928cdf615f08a90ee8f65e7a80b38646cac8682777cd4c32",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-handle-numeric-timestamps-with-dateformat-x.mmd",
+      "family": "gantt",
+      "sha256": "2a22f11c2c53097b86075a499caa948f01e29019f13fb7c76d7a85992807b248",
+      "manifest_sha256": "2a22f11c2c53097b86075a499caa948f01e29019f13fb7c76d7a85992807b248",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-handle-seconds-only-format-with-tickinterval-issue-5496.mmd",
+      "family": "gantt",
+      "sha256": "dfb240d9594adcf8255187d788a3e86b593189365b60ce42aaa3e0e256c8eed8",
+      "manifest_sha256": "dfb240d9594adcf8255187d788a3e86b593189365b60ce42aaa3e0e256c8eed8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-hide-today-marker.mmd",
+      "family": "gantt",
+      "sha256": "a3022e6822e9eb0eaa0ddfdb9c4f8bebd834568b0fe50672fcd8e5653d6fae01",
+      "manifest_sha256": "a3022e6822e9eb0eaa0ddfdb9c4f8bebd834568b0fe50672fcd8e5653d6fae01",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-a-gantt-diagram-excluding-friday-and-saturday-in-yyyy-mm-dd-hh-mm-ss-format.mmd",
+      "family": "gantt",
+      "sha256": "a923b1139c420356d280fcf9e08623324a6817944164fb47794dd4965112216a",
+      "manifest_sha256": "a923b1139c420356d280fcf9e08623324a6817944164fb47794dd4965112216a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-a-gantt-diagram-excluding-friday-and-saturday.mmd",
+      "family": "gantt",
+      "sha256": "1d062e96c5f0342d0ab2059b59178d3ce9023ffc04ff5483ce6192c45b76c82a",
+      "manifest_sha256": "1d062e96c5f0342d0ab2059b59178d3ce9023ffc04ff5483ce6192c45b76c82a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-a-gantt-diagram-excluding-saturday-and-sunday.mmd",
+      "family": "gantt",
+      "sha256": "cabee3d916eb5161e9b7f2f5a5766977ca3bf27f938321089dd92510fb647a2d",
+      "manifest_sha256": "cabee3d916eb5161e9b7f2f5a5766977ca3bf27f938321089dd92510fb647a2d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-a-gantt-diagram-with-tick-is-1-day-and-topaxis-is-true.mmd",
+      "family": "gantt",
+      "sha256": "947a067fec3a6aee843bdf3535ff05e7c8f053321cc723e1761c84834663d411",
+      "manifest_sha256": "947a067fec3a6aee843bdf3535ff05e7c8f053321cc723e1761c84834663d411",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-a-gantt-diagram-with-tick-is-1-day.mmd",
+      "family": "gantt",
+      "sha256": "a14a55c5f2bf5a70d7b3bb2dc1e5c88df02d3f08bc9b73cbf8880df1a098e0b9",
+      "manifest_sha256": "a14a55c5f2bf5a70d7b3bb2dc1e5c88df02d3f08bc9b73cbf8880df1a098e0b9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-a-gantt-diagram-with-tick-is-1-month.mmd",
+      "family": "gantt",
+      "sha256": "14d6e9878ea2e91027f48661aaa1b1d15b641655a808ba9d04bbbdfb30b50b25",
+      "manifest_sha256": "14d6e9878ea2e91027f48661aaa1b1d15b641655a808ba9d04bbbdfb30b50b25",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-a-gantt-diagram-with-tick-is-1-week.mmd",
+      "family": "gantt",
+      "sha256": "577077e75ce3003b40c61ced6d3126323b97a5308ae07c3881fe5e4fe9f2f4f6",
+      "manifest_sha256": "577077e75ce3003b40c61ced6d3126323b97a5308ae07c3881fe5e4fe9f2f4f6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-a-gantt-diagram-with-tick-is-15-minutes.mmd",
+      "family": "gantt",
+      "sha256": "2814ec4155ec5694a74ca5c888a0776ed5b40ce80dd2858aacdcd17766df14e6",
+      "manifest_sha256": "2814ec4155ec5694a74ca5c888a0776ed5b40ce80dd2858aacdcd17766df14e6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-a-gantt-diagram-with-tick-is-2-milliseconds.mmd",
+      "family": "gantt",
+      "sha256": "81cb1cc29c92cf5d90375d09a1cde6d57541ad4df88d1e76f1b7f3bc2432d11d",
+      "manifest_sha256": "81cb1cc29c92cf5d90375d09a1cde6d57541ad4df88d1e76f1b7f3bc2432d11d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-a-gantt-diagram-with-tick-is-2-seconds.mmd",
+      "family": "gantt",
+      "sha256": "8d5116603781ad756c2a382edab5878a3ac39e2b9ae406072f9fb36518f03697",
+      "manifest_sha256": "8d5116603781ad756c2a382edab5878a3ac39e2b9ae406072f9fb36518f03697",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-a-gantt-diagram-with-tick-is-6-hours.mmd",
+      "family": "gantt",
+      "sha256": "df75ee27dd796247235f1d490df1abcc84d1dfdd6988bcb98b3d976cea1bdc9e",
+      "manifest_sha256": "df75ee27dd796247235f1d490df1abcc84d1dfdd6988bcb98b3d976cea1bdc9e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-multi-line-excludes-issue-6270.mmd",
+      "family": "gantt",
+      "sha256": "76ca4fb47d7a379499b6bd2b5886e5dbe30c33f369e5a4a0e16520f359343a9f",
+      "manifest_sha256": "76ca4fb47d7a379499b6bd2b5886e5dbe30c33f369e5a4a0e16520f359343a9f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-only-the-day-when-using-dateformat-d.mmd",
+      "family": "gantt",
+      "sha256": "74de4fb1cbebad4e33723bcf149bddbf2eee9e8da4d0111a7da9c7dd7fbf9b7d",
+      "manifest_sha256": "74de4fb1cbebad4e33723bcf149bddbf2eee9e8da4d0111a7da9c7dd7fbf9b7d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-when-compact-is-true.mmd",
+      "family": "gantt",
+      "sha256": "164b5ecfa58534d398adf2b2ec9cf88f5f2b0ea33ec8753d4a04230b73b83572",
+      "manifest_sha256": "164b5ecfa58534d398adf2b2ec9cf88f5f2b0ea33ec8753d4a04230b73b83572",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-when-theres-a-hashtag-in-a-section-is-true.mmd",
+      "family": "gantt",
+      "sha256": "e8f94d95e1bbdba076ab967033172b7676d9c555d4b25fff36ba330e0c5b5dde",
+      "manifest_sha256": "e8f94d95e1bbdba076ab967033172b7676d9c555d4b25fff36ba330e0c5b5dde",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-when-theres-a-hashtag-in-the-task-data.mmd",
+      "family": "gantt",
+      "sha256": "657f76213cc5c4cca388e6336abcf3bd76c1a4890a03ceb31807eec946d95678",
+      "manifest_sha256": "657f76213cc5c4cca388e6336abcf3bd76c1a4890a03ceb31807eec946d95678",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-when-theres-a-hashtag-in-the-title.mmd",
+      "family": "gantt",
+      "sha256": "7250101083bbccdbecbc1ec9aa19ecd75d5a36bbf45359ffece49f96531a631e",
+      "manifest_sha256": "7250101083bbccdbecbc1ec9aa19ecd75d5a36bbf45359ffece49f96531a631e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-when-theres-a-semicolon-in-a-section-is-true.mmd",
+      "family": "gantt",
+      "sha256": "bae1a9e6a682675633704ffc07bf7c08a9cc70bb3efd6aa6be25cda307aed89a",
+      "manifest_sha256": "bae1a9e6a682675633704ffc07bf7c08a9cc70bb3efd6aa6be25cda307aed89a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-when-theres-a-semicolon-in-the-task-data.mmd",
+      "family": "gantt",
+      "sha256": "63e62817a45a516a28ebedee193bf815c42e71f135623c828902119b283e3a2d",
+      "manifest_sha256": "63e62817a45a516a28ebedee193bf815c42e71f135623c828902119b283e3a2d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-render-when-theres-a-semicolon-in-the-title.mmd",
+      "family": "gantt",
+      "sha256": "274e567cdcb6d1db7e75511c94d5401b92bc35a1723780ede016762208f1108d",
+      "manifest_sha256": "274e567cdcb6d1db7e75511c94d5401b92bc35a1723780ede016762208f1108d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/nightly-check/should-style-today-marker.mmd",
+      "family": "gantt",
+      "sha256": "b2d27747cdae271aa31a48816ffad9eed8e5afbe4f3b2f579727c9f31229523e",
+      "manifest_sha256": "b2d27747cdae271aa31a48816ffad9eed8e5afbe4f3b2f579727c9f31229523e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/pr-check/multiple-dependencies-syntax.mmd",
+      "family": "gantt",
+      "sha256": "611ea9fd6c42c315b3c5f21d64f6d4f2f22de5d1edfe80d27b48db9cad57c935",
+      "manifest_sha256": "611ea9fd6c42c315b3c5f21d64f6d4f2f22de5d1edfe80d27b48db9cad57c935",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/pr-check/should-render-a-gantt-chart-usemaxwidth-false.mmd",
+      "family": "gantt",
+      "sha256": "1dfd01acc15b885416fe9f9b7dd1dee75acdc663c9d66b7478e3510db0ac0738",
+      "manifest_sha256": "1dfd01acc15b885416fe9f9b7dd1dee75acdc663c9d66b7478e3510db0ac0738",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/pr-check/should-render-a-gantt-chart.mmd",
+      "family": "gantt",
+      "sha256": "3a12dccd6926abeeb17534f84cc782bfb3093eaa6598eb49a0e5a8a4fb08746d",
+      "manifest_sha256": "3a12dccd6926abeeb17534f84cc782bfb3093eaa6598eb49a0e5a8a4fb08746d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/pr-check/should-render-a-gantt-diagram-excluding-a-specific-date-in-yyyy-mm-dd-hh-mm-ss-format.mmd",
+      "family": "gantt",
+      "sha256": "e9da48dde79b691652db55ce493d2c06884b82815e573be9390b3048d35ef76b",
+      "manifest_sha256": "e9da48dde79b691652db55ce493d2c06884b82815e573be9390b3048d35ef76b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/pr-check/should-render-a-gantt-diagram-excluding-saturday-and-sunday-in-yyyy-mm-dd-hh-mm-ss-format.mmd",
+      "family": "gantt",
+      "sha256": "7f8849c69f46f4e757c6dd8155c91eee2494438cfb680d85daa9d360e744c664",
+      "manifest_sha256": "7f8849c69f46f4e757c6dd8155c91eee2494438cfb680d85daa9d360e744c664",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/pr-check/should-render-a-gantt-diagram-with-a-vert-tag.mmd",
+      "family": "gantt",
+      "sha256": "93f87d6d5a6244a8e08ddac2652c081276a5012498428b576974c8a15454de47",
+      "manifest_sha256": "93f87d6d5a6244a8e08ddac2652c081276a5012498428b576974c8a15454de47",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/pr-check/should-render-a-gantt-diagram-with-data-labels-at-the-top-when-topaxis-is-true.mmd",
+      "family": "gantt",
+      "sha256": "be061b6927cdc20635c4c2611e7f9706b58540ad27f8a37453c58ecff3047955",
+      "manifest_sha256": "be061b6927cdc20635c4c2611e7f9706b58540ad27f8a37453c58ecff3047955",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/pr-check/should-render-a-gantt-diagram-with-tick-is-1-week-with-the-day-starting-on-monday.mmd",
+      "family": "gantt",
+      "sha256": "78a97d8f458d74c35d82aa3b6efd47250e46eebe601ffc32218f472612c5a0a8",
+      "manifest_sha256": "78a97d8f458d74c35d82aa3b6efd47250e46eebe601ffc32218f472612c5a0a8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/pr-check/should-render-a-gantt-diagram-with-very-large-intervals-skipping-excludes-if-interval-5-years.mmd",
+      "family": "gantt",
+      "sha256": "6e3598336d50a562672ce4eb783b9e3053d1bf3f0417c293ec2e49a5ad51a6b5",
+      "manifest_sha256": "6e3598336d50a562672ce4eb783b9e3053d1bf3f0417c293ec2e49a5ad51a6b5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    },
+    {
+      "path": "gantt/pr-check/should-render-vertical-markers-without-creating-extra-rows-and-show-their-labels.mmd",
+      "family": "gantt",
+      "sha256": "37fbdcb540b44f5098d7a424c881583d22021c592cb4b4e7126735e7ccb4b9b0",
+      "manifest_sha256": "37fbdcb540b44f5098d7a424c881583d22021c592cb4b4e7126735e7ccb4b9b0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "gantt renderer projects title/section/task schedule tokens to a bounded native structural text table; no theme key is present so the whole original draws"
+    }
+  ]
+}

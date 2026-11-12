@@ -6194,6 +6194,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     bool journey = header == "journey";
     bool timeline = header == "timeline" || header == "timeline TD";
     bool gantt = header == "gantt";
+    bool treemap = header == "treemap" || header == "treemap-beta";
     bool block_input = header == "block" || header == "block-beta";
     if (header == "---") {
         has_frontmatter_peek = true;
@@ -6234,6 +6235,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             journey = line == "journey";
             timeline = line == "timeline" || line == "timeline TD";
             gantt = line == "gantt";
+            treemap = line == "treemap" || line == "treemap-beta";
             block_input = line == "block" || line == "block-beta";
             if (line.starts_with("classDiagram")) {
                 class_peek = class_prefix_header(line);
@@ -6296,6 +6298,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
                           : journey   ? MermaidProbeFamily::Journey
                           : timeline  ? MermaidProbeFamily::Timeline
                           : gantt     ? MermaidProbeFamily::Gantt
+                          : treemap   ? MermaidProbeFamily::Treemap
                                       : MermaidProbeFamily::Charts;
         return decision;
     }
@@ -6701,6 +6704,9 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             break;
         case detail::MermaidProbeFamily::Gantt:
             lines = detail::gantt_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::Treemap:
+            lines = detail::treemap_layout(source, work);
             break;
         case detail::MermaidProbeFamily::Charts:
             lines = detail::charts_layout(source, work);

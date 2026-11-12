@@ -1,0 +1,328 @@
+{
+  "schema": "loom_mermaid_treemap_cohort/v1",
+  "rfc": 31,
+  "phase": "treemap-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_treemap_impl.cpp",
+    "grammar": "treemap[-beta]; quoted containers and numeric leaves over 2-space indentation",
+    "theme_gate": "frontmatter theme/look/config or an in-body classDef/::: style keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "treemap fixtures with no classDef/::: style and no frontmatter config",
+    "roots": [
+      "treemap"
+    ],
+    "draw_count": 10,
+    "styled_excluded_count": 10,
+    "styled_excluded": [
+      "treemap/nightly-check/12-should-apply-classdef-fill-color-to-leaf-nodes.mmd",
+      "treemap/nightly-check/14-should-apply-classdef-color-to-text-labels.mmd",
+      "treemap/nightly-check/15-should-apply-multiple-classdef-properties-simultaneously.mmd",
+      "treemap/nightly-check/16-should-handle-classdef-on-nested-sections-and-leaves.mmd",
+      "treemap/pr-check/10-should-render-the-example-from-documentation.mmd",
+      "treemap/pr-check/13-should-apply-classdef-stroke-styles-to-sections.mmd",
+      "treemap/pr-check/19-should-render-labels-in-complex-treemap-with-many-nested-blocks.mmd",
+      "treemap/pr-check/3-should-render-a-treemap-with-styling-using-classdef.mmd",
+      "treemap/pr-check/7-should-handle-classdef-with-multiple-styles.mmd",
+      "treemap/pr-check/9-should-handle-a-complex-example-with-multiple-features.mmd"
+    ],
+    "config_excluded_count": 6,
+    "config_excluded": [
+      "treemap/nightly-check/8-should-handle-dollar-value-formatting-with-thousands-separator.mmd",
+      "treemap/nightly-check/8a-should-handle-percentage-formatting.mmd",
+      "treemap/nightly-check/8b-should-handle-decimal-formatting.mmd",
+      "treemap/nightly-check/8c-should-handle-dollar-sign-with-decimal-places.mmd",
+      "treemap/nightly-check/8f-should-handle-valueformat-set-via-directive-with-dollar-and-thousands-separator.mmd",
+      "treemap/pr-check/8d-should-handle-dollar-sign-with-thousands-separator-and-decimal-places.mmd"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, treemap renderer cohort, 2026-11-12, task a85ecf9e80f2a47e7)",
+    "date": "2026-11-12",
+    "verdict": "approved",
+    "note": "APPROVE with zero MAJOR; two MINORs resolved before commit. M1: a value node is now enforced as a leaf (a node nested deeper than an open leaf fails closed) with regression coverage for leaf-child rejection and valid siblings. M2: depth-32 and node-512 cap exhaustion now have direct fail-closed tests. The reviewer's independent Python reference model reproduced the exact 10 draw / 10 styled / 6 config partition across all 26 fixtures. Five NITs are intentional sibling-renderer parity (N1/N5) or over-rejection in the safe direction (N2), with N3/N4 harmless; kept as-is."
+  },
+  "counts": {
+    "total": 10,
+    "predicted_draw": 10,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 10
+  },
+  "rows": [
+    {
+      "path": "treemap/nightly-check/17-should-render-treemap-with-readable-text-on-dark-theme.mmd",
+      "family": "treemap",
+      "sha256": "d3767aa7643d2b368fa2adedc6a1a8011d10d96dbc02a5aa35d33dfef6c53048",
+      "manifest_sha256": "d3767aa7643d2b368fa2adedc6a1a8011d10d96dbc02a5aa35d33dfef6c53048",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "treemap renderer projects the quoted container/leaf hierarchy to a bounded native indented outline; no classDef/config gate is present so the whole original draws"
+    },
+    {
+      "path": "treemap/nightly-check/18-should-render-treemap-with-readable-text-on-neutral-theme.mmd",
+      "family": "treemap",
+      "sha256": "b4ae8cea0ba918039e529b755c10af1f35fa4823c4f5d3df511bfae15b563aea",
+      "manifest_sha256": "b4ae8cea0ba918039e529b755c10af1f35fa4823c4f5d3df511bfae15b563aea",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "treemap renderer projects the quoted container/leaf hierarchy to a bounded native indented outline; no classDef/config gate is present so the whole original draws"
+    },
+    {
+      "path": "treemap/nightly-check/2-should-render-a-hierarchical-treemap.mmd",
+      "family": "treemap",
+      "sha256": "5c319f2a29b775d3064943a0fd350f5ccabf2f5bfe95af10421863561ebd1ff4",
+      "manifest_sha256": "5c319f2a29b775d3064943a0fd350f5ccabf2f5bfe95af10421863561ebd1ff4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "treemap renderer projects the quoted container/leaf hierarchy to a bounded native indented outline; no classDef/config gate is present so the whole original draws"
+    },
+    {
+      "path": "treemap/nightly-check/4-should-handle-long-text-that-wraps.mmd",
+      "family": "treemap",
+      "sha256": "ad720a6dcb2450cce0fe913906fee3cc49fe13376940a2751329d775e9a523cb",
+      "manifest_sha256": "ad720a6dcb2450cce0fe913906fee3cc49fe13376940a2751329d775e9a523cb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "treemap renderer projects the quoted container/leaf hierarchy to a bounded native indented outline; no classDef/config gate is present so the whole original draws"
+    },
+    {
+      "path": "treemap/nightly-check/6-should-handle-multiple-levels-of-nesting.mmd",
+      "family": "treemap",
+      "sha256": "f840a5f4ecb449702e60ec49bb05a33869e2fc1c7992ec84d065cc98f871a08b",
+      "manifest_sha256": "f840a5f4ecb449702e60ec49bb05a33869e2fc1c7992ec84d065cc98f871a08b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "treemap renderer projects the quoted container/leaf hierarchy to a bounded native indented outline; no classDef/config gate is present so the whole original draws"
+    },
+    {
+      "path": "treemap/nightly-check/8e-should-handle-simple-thousands-separator.mmd",
+      "family": "treemap",
+      "sha256": "19f64470df2e465b21a6f9ea9fbb252984fc2adaf63182cadf5db8e44b769ed6",
+      "manifest_sha256": "19f64470df2e465b21a6f9ea9fbb252984fc2adaf63182cadf5db8e44b769ed6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "treemap renderer projects the quoted container/leaf hierarchy to a bounded native indented outline; no classDef/config gate is present so the whole original draws"
+    },
+    {
+      "path": "treemap/nightly-check/8g-should-handle-scientific-notation-format.mmd",
+      "family": "treemap",
+      "sha256": "e4ffc6a04734084c0a5919e49387e832f6390ee70b5b3ace12362c13a3fcde49",
+      "manifest_sha256": "e4ffc6a04734084c0a5919e49387e832f6390ee70b5b3ace12362c13a3fcde49",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "treemap renderer projects the quoted container/leaf hierarchy to a bounded native indented outline; no classDef/config gate is present so the whole original draws"
+    },
+    {
+      "path": "treemap/pr-check/1-should-render-a-basic-treemap.mmd",
+      "family": "treemap",
+      "sha256": "8515578e13f1adad7cf499e46a3d730837dbe1e8d4f3652552f44bfc341ded79",
+      "manifest_sha256": "8515578e13f1adad7cf499e46a3d730837dbe1e8d4f3652552f44bfc341ded79",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "treemap renderer projects the quoted container/leaf hierarchy to a bounded native indented outline; no classDef/config gate is present so the whole original draws"
+    },
+    {
+      "path": "treemap/pr-check/11-should-handle-comments.mmd",
+      "family": "treemap",
+      "sha256": "22b6e17da7699ea0099ee1f4fda4b03f55e6e7e6388dd5f47e84f080140a8e13",
+      "manifest_sha256": "22b6e17da7699ea0099ee1f4fda4b03f55e6e7e6388dd5f47e84f080140a8e13",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "treemap renderer projects the quoted container/leaf hierarchy to a bounded native indented outline; no classDef/config gate is present so the whole original draws"
+    },
+    {
+      "path": "treemap/pr-check/5-should-render-with-a-forest-theme.mmd",
+      "family": "treemap",
+      "sha256": "e3a522835f20a50e7688f6eebcc3117c1639d3fa3834d2c2aa821f886f1e811f",
+      "manifest_sha256": "e3a522835f20a50e7688f6eebcc3117c1639d3fa3834d2c2aa821f886f1e811f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "treemap renderer projects the quoted container/leaf hierarchy to a bounded native indented outline; no classDef/config gate is present so the whole original draws"
+    }
+  ]
+}

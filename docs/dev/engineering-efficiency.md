@@ -183,6 +183,17 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     indentation/tree grammar, write down the role invariants (which node kinds
     may have children) and test the impossible combination, even if the corpus
     never contains it.
+22. **Every output path must go through the same bounded emission guard; a
+    special-cased line that appends directly bypasses the row cap, width limit
+    and Work fee.** The c4 renderer pushed the title straight to the output
+    vector while statements used a guarded helper, so a long or duplicated
+    title could exceed the 240-cell/1024-row contract. The fix routes the title
+    through the identical guarded helper, rejects duplicates like the sibling
+    renderers, and counts the row cap over the combined output so two vectors
+    cannot each fill the cap. When adding a renderer, enumerate every place a
+    row reaches the output vector and confirm each one passes the single
+    cap/width/Work check — special input lines (title, header, footer) are the
+    usual offenders.
 
 ## Per-task efficiency retro (mandatory at every closure)
 
@@ -330,3 +341,27 @@ Attach a short efficiency section to each closure report, answering:
   unmoved. (5) Throughput: +10 draws for one design-free census/ledger/review/
   gate, reusing the journey/timeline/gantt scaffolding nearly verbatim. Rule
   21 above captures the leaf-role enforcement lesson.
+- **2026-11-12, c4 family renderer (23 whole draws, D-137, predating its
+  commit).** Second D-137 self-selected family; a closed-vocabulary
+  function-call grammar rather than an indentation tree. (1) The renderer-free
+  generator's hard drift guard again paid for itself: the manual census
+  predicted 24 draw / 8 gated, but the generator's frontmatter scan found a
+  ninth gate (`config: wrap: true` in description-wrapping.mmd) and refused to
+  emit the ledger until corrected to 23/9. Re-confirms rule 19 — let the
+  drift guard, not a hand count, own the partition. (2) Two real grammar gaps
+  were caught by the live-fixture partition test, not the synthetic cases: a
+  tight brace `){` (the parser only accepted `) {`) and a bare-identifier
+  element name (`Person(customer, Customer, ...)`). The corpus is the oracle;
+  hand-written happy paths miss spacing/quoting variants. (3) The independent
+  reviewer found a genuine invariant hole the corpus never triggers: the
+  title line bypassed the shared row-cap/width/Work emission guard and allowed
+  duplicates, unlike all three sibling renderers. Fixed by routing the title
+  through one guarded push helper and rejecting duplicates, then unifying the
+  row cap across the title+statement vectors so the cap cannot be filled twice.
+  Lesson captured as rule 22. (4) A REQUEST-CHANGES verdict was closed by
+  sending the exact diff back to the same reviewer for re-verification rather
+  than self-approving — the adversarial loop is only trustworthy if the same
+  reviewer confirms the fix. No flake, no false green; frozen flow 160/240,
+  body 372/173/48, Class285, the 48-gap roster and observation total 2738 all
+  unmoved. Throughput: +23 draws for one census/ledger/review/gate, reusing the
+  greenfield scaffolding.

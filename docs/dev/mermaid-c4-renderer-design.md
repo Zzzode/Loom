@@ -8,14 +8,15 @@ ceremony, no new RFC.
 ## 1. Corpus facts (measured, do not re-census)
 
 32 originals under `cases/c4/{nightly-check,pr-check,visual-check}/`.
-Every file has YAML frontmatter. Partition: **24 structural (draw) / 8
-style-gated (stay source)**. The gate is the presence of an
-`UpdateElementStyle`, `UpdateRelStyle` or `UpdateLayoutConfig` statement
-(a color/stroke/layout contract the terminal cannot express). A scan
-confirms the 24 draw files contain zero `classDef`/`:::`/theme/look/
-fill/color tokens. Brace blocks (`Boundary`/`Deployment_Node`/...`{ }`)
-are structural nesting, NOT a visual contract, and all 24 draw files
-have balanced braces.
+Every file has YAML frontmatter. Partition: **23 structural (draw) / 9
+gate-held (stay source)**. Eight carry an
+`UpdateElementStyle`/`UpdateRelStyle`/`UpdateLayoutConfig` statement (a
+color/stroke/layout contract the terminal cannot express); one more
+(`description-wrapping.mmd`) carries a frontmatter `config: wrap: true`
+layout key. A scan confirms the 23 draw files contain zero
+`classDef`/`:::`/theme/look/fill/color tokens and no gated frontmatter
+key. Brace blocks (`Boundary`/`Deployment_Node`/...`{ }`) are structural
+nesting, NOT a visual contract, and the draw files have balanced braces.
 
 Headers (5): `C4Context` (18), `C4Container` (6), `C4Deployment` (3),
 `C4Component` (3), `C4Dynamic` (2). No other first structural token.
@@ -96,7 +97,7 @@ Update*Style semantics. Revisiting any is a separate reviewed milestone.
 2. `MermaidProbeFamily::C4` + classifier header whitelist (the five C4*
    tokens, including after a frontmatter fence) + dispatch case.
 3. Renderer-free `tools/mermaid/generate_c4_cohort.py` +
-   `c4-cohort.json`: drift guard over 24 draw / 8 style, manifest sha
+   `c4-cohort.json`: drift guard over 23 draw / 9 gated, manifest sha
    pins, live-measured NARROW_DRAW, real review block (no placeholder).
 4. `tests/ui/test_mermaid_c4_cohort.cpp` CellCapture char-vector gate
    (never Screen::ToString): whole+body per-width states, style fixtures
@@ -115,8 +116,8 @@ Update*Style semantics. Revisiting any is a separate reviewed milestone.
 
 ## 7. Expected impact and risk
 
-Whole-original drawn should move 1044 -> 1068 (+24), fallback
-1101 -> 1077, errors stay 0, provided live measurement confirms all 24
+Whole-original drawn should move 1044 -> 1067 (+23), fallback
+1101 -> 1078, errors stay 0, provided live measurement confirms all 23
 structural fixtures draw (adjust the ledger partition from evidence if
 not; never bend a validator to hit the number). Main parser risk is the
 call-argument splitter respecting quoted commas and the brace-depth

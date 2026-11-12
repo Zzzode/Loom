@@ -30,6 +30,7 @@ are not whole-original errors).
 | After timeline family renderer (7 theme-free originals) | 2026-11-12 | fe3eb520 | 995 | 1150 | 0 |
 | After gantt family renderer (39 valid-date originals) | 2026-11-12 | 9e8d2950 | 1034 | 1111 | 0 |
 | After treemap family renderer (10 plain originals) | 2026-11-12 | 4deb2144 | 1044 | 1101 | 0 |
+| After c4 family renderer (23 structural originals) | 2026-11-12 | e70e8c34 | 1067 | 1078 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -47,7 +48,7 @@ disposition (fix or documented infeasibility).
 | swimlanes | 46 | 0 | renderer not started |
 | xychart | 46 | 2 | partial axes/art only |
 | agentflow | 38 | 0 | flowchart-syntax variant |
-| c4 | 32 | 0 | |
+| c4 | 9 | 23 | renderer added 2026-11-12; 8 Update*Style/UpdateLayoutConfig + 1 frontmatter config rows stay source (no color/layout contract) |
 | usecase | 32 | 0 | |
 | er-diagram | 31 | 13 | |
 | timeline | 23 | 7 | renderer added 2026-11-11; 23 themed rows stay source (no color contract) |
@@ -76,7 +77,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1101** | **1044** | |
+| **Total** | **1078** | **1067** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -587,3 +588,39 @@ when the body would draw.
   Full mermaid 1225/1225; ASan contact (8 treemap + adjacent gantt/timeline/
   journey tests) zero sanitizer. Serial gate `/tmp/g4probe/serial-treemap.log`
   (SERIAL_RC=0).
+- 2026-11-12 (c4 family renderer `e70e8c34`, local; D-137 second self-selected
+  family): fifth greenfield family, chosen over usecase because its
+  function-call grammar is a closed vocabulary and 23 originals are
+  source-backed. A new `mermaid_c4_impl.cpp` projects the C4 model
+  (C4Context/Container/Component/Deployment/Dynamic headers; 28 typed element
+  keywords across person/system/container/component/db/queue/boundary/
+  deployment-node; seven Rel*/BiRel relation keywords; brace-delimited
+  nesting) to a bounded native indented outline: elements render as
+  `keyword alias - Name [| tech | desc]`, relations as
+  `keyword from -> to: label (tech)`, with block depth driving indentation.
+  No box/arrow geometry, sprites or links; `$attributes` are prefix-validated
+  and omitted. 23 of 32 originals are structural (no Update*Style/
+  UpdateLayoutConfig statement and no gated frontmatter key) and now draw
+  whole-and-body; 9 stay source — eight color/stroke/layout style statements
+  and one frontmatter `config: wrap` layout key. The classifier adds
+  MermaidProbeFamily::C4 on the five exact headers (including after a
+  frontmatter fence) and a dispatch case; the matrix hook replaces run_case
+  observations 1:1 for the 23 ledger paths only (observation total stays
+  2738; the nine non-ledger c4 fixtures keep their default source
+  disposition). Independent read-only zero-build review a1ee3ba2e69a1f2c3
+  initially REQUEST-CHANGES, then APPROVE after fixes: MINOR-1 routed the
+  title through the same protected emission path with duplicate-title
+  rejection (a follow-up unified the row cap over the combined title plus
+  statement output); NIT-1/NIT-2 corrected the partition comment and added
+  depth/statement cap tests; NIT-3 made relation extra arguments strictly
+  quoted/`$` to match the element path; NIT-4 corrected comment syntax to
+  `%%`; NIT-5 gate parity kept under the durable gtest. The generator drift
+  guard caught a manual census error before commit (24/8 -> actual 23/9, the
+  extra gate being the frontmatter wrap config). Whole originals
+  1044 -> 1067 drawn / 1101 -> 1078 fallback / 0 error; c4 23/9; flow
+  160/240, body 372/173/48, the 48-gap roster and Class285 260/25/0 are
+  unmoved; debug/release OfficialMatrix JSON byte-identical (sha256
+  75d0d7ff119feb3fcb5cda783562dc6207dc176233591d5fca194031606bba2e).
+  Full mermaid 1232/1232; ASan contact (7 c4 + adjacent treemap/gantt/
+  timeline/journey tests) zero sanitizer. Serial gate
+  `/tmp/g4probe/serial-c4.log` (SERIAL_RC=0).

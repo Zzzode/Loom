@@ -38,6 +38,7 @@ are not whole-original errors).
 | After usecase family renderer (14 clean originals) | 2026-11-13 | 74506fba | 1126 | 1019 | 0 |
 | After tree-view family renderer (8 clean originals) | 2026-11-13 | 2620d828 | 1134 | 1011 | 0 |
 | After ishikawa family renderer (7 clean originals) | 2026-11-13 | b921654d | 1141 | 1004 | 0 |
+| After cynefin family renderer (7 clean originals) | 2026-11-13 | 3c73ca54 | 1148 | 997 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -76,7 +77,7 @@ disposition (fix or documented infeasibility).
 | railroad | 9 | 0 | |
 | block | 0 | 58 | complete (B0a/B6) |
 | sequence | 0 | 193 | complete |
-| cynefin | 12 | 0 | |
+| cynefin | 5 | 7 | renderer added 2026-11-13; 5 frontmatter config/theme/look rows stay source (no boundary-geometry/color contract); live census 7/5/0 from a candidate pool of 12 |
 | eventmodeling | 6 | 0 | |
 | packet | 6 | 0 | |
 | radar | 6 | 0 | |
@@ -84,7 +85,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1004** | **1141** | |
+| **Total** | **997** | **1148** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -918,3 +919,51 @@ when the body would draw.
   CapabilityReport.Class285 174.77s, Block58AdmissionJoin 23.43s,
   Er107AdmissionJoin 2.29s), RC=0, logged at
   `/tmp/g4probe/ishikawa/serial-ishikawa.log`.
+- 2026-11-13 (cynefin family renderer `3c73ca54`, local; D-187):
+  thirteenth greenfield family. A new `mermaid_cynefin_impl.cpp` projects
+  the cynefin-beta grammar — a strict two-space indented frame of the five
+  domain keywords (complex, complicated, clear, chaotic, confusion),
+  quoted items, title/accessibility directives and labeled domain
+  transitions — to a bounded native outline that validates each statement
+  and transcribes the line verbatim, preserving its source indentation.
+  No boundary-curve geometry, transition arrows or color is rendered. The
+  live source gives 7 clean / 5 frontmatter-gated / 0 body-gated (the
+  brief's 12 was the candidate pool, not a clean promise): the five gated
+  fixtures carry frontmatter config/theme/look keys (cynefin
+  seed/amplitude/width/height/showDomainDescriptions, a base theme with
+  per-domain themeVariables) the terminal cannot express, and there is no
+  classDef/:::/style/init statement anywhere in the family. Indentation
+  is a strict 0/2 grid; blank and whitespace-only lines are skipped. The
+  classifier adds MermaidProbeFamily::Cynefin on the exact `cynefin-beta`
+  header (including after a frontmatter fence) and a dispatch case; the
+  matrix hook replaces run_case observations 1:1 for the 7 ledger paths
+  (observation total stays 2738; the five gated fixtures keep their
+  default source disposition). Independent read-only zero-build
+  adversarial review task ad43d9261d381626d reached final APPROVE after one
+  re-review: the first pass returned REQUEST CHANGES on one MAJOR (a
+  frontmatter key with whitespace before the YAML mapping colon,
+  `config : 42`, bypassed the key gate because the key tail was not
+  trimmed — a fail-open). The fix trims the key after the colon cut in the
+  cynefin renderer; three RED-then-GREEN pins cover the spacing variants
+  and the re-review confirmed 21 spacing/near-lookalike probes and 300,000
+  fuzzed inputs with no fail-open, plus an independent 7/5/0 reproduction.
+  The same untrimmed-key pattern is inherited by twelve earlier greenfield
+  renderers (ishikawa, treeview, journey, kanban, gantt, timeline,
+  quadrant, venn, treemap, c4, architecture, usecase) with no live trigger;
+  it is recorded as a separate cross-family hardening follow-up and left
+  untouched here per the blast-radius rule. Whole
+  originals 1141 -> 1148 drawn / 1004 -> 997 fallback / 0 error;
+  cynefin 7/5; flow 160/240, body 372/173/48, the 48-gap roster and
+  Class285 260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  9f18a4dbbe3cdbcbec01adf2edb99418ebde975aa43d74589662b562e12d48e9;
+  release 27s, debug 242s). Full mermaid label suite 1287/1287 green
+  (the 1280 ishikawa-era count plus the seven cynefin cohort cases).
+  ASan contact across all thirteen greenfield family cohorts (96 tests:
+  cynefin/ishikawa/tree-view/usecase/kanban/architecture/quadrant/venn/c4/
+  treemap/gantt/timeline/journey) zero sanitizer reports, logged at
+  `/tmp/g4probe/cynefin/asan-contact.log`. Serial gate 4/4 green
+  (`-j1`, 397.0s wall: EveryWholeSourceIsObserved 203.49s,
+  CapabilityReport.Class285 168.39s, Block58AdmissionJoin 22.93s,
+  Er107AdmissionJoin 2.17s), RC=0, logged at
+  `/tmp/g4probe/cynefin/serial-cynefin.log`.

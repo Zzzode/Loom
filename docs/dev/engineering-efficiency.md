@@ -571,3 +571,39 @@ Attach a short efficiency section to each closure report, answering:
   Class285, the 48-gap roster and observation total 2738 all unmoved.
   Throughput: +7 draws for one census/ledger/review/gate on the shared
   greenfield scaffolding.
+- **2026-11-13, cynefin family renderer (7 whole draws, D-187,
+  predating its commit).** Thirteenth greenfield family: cynefin-beta is a
+  strict 0/2 two-space indented frame — five domain keywords, quoted items,
+  title/accTitle/accDescr directives and labeled domain transitions —
+  transcribed verbatim with indentation preserved. The live fence-tolerant
+  census gives 7 clean / 5 frontmatter-gated / 0 body from a candidate pool
+  of 12 (the five carry config/theme/look keys: seed, boundary amplitude,
+  width/height, showDomainDescriptions, per-domain themeVariables).
+  (1) Rule 18 bit again and the gate caught it before any commit: the
+  first ledger draft assumed all seven frames draw at 40 columns, but the
+  live CellCapture measurement showed only four do — the transition,
+  accessibility and self-loop fixtures have longest lines 50/74/45
+  columns, so the wrapped native frame coincides with the text surface and
+  stays source on the narrow track (the four narrow-draw frames top out at
+  23-28 columns). Width pins are measurements, never guesses. (2) The
+  independent review opened REQUEST CHANGES on one real MAJOR: YAML allows
+  whitespace before a mapping colon (`config : 42`), and the frontmatter
+  key scanner cut at the colon without trimming the key tail, so an
+  unrenderable visual contract could draw (fail-open). The one-line fix
+  trims the key after the cut; three RED-then-GREEN pins lock it. The
+  same untrimmed `substr(0, colon)` key pattern is inherited by twelve
+  earlier greenfield renderers with no live trigger — recorded as a
+  separate cross-family hardening follow-up, not widened into this
+  family's blast radius. (3) Two self-inflicted process slips, both
+  cheaply caught: a backgrounded `cmake --preset` inherited a cwd drifted
+  into build/debug/tests/ui and failed reading CMakePresets.json while the
+  task wrapper still reported exit 0 — always prefix an absolute `cd` and
+  verify the in-log RC, not the task exit code; and a misremembered gtest
+  filter (`MermaidOfficial.OfficialMatrix` instead of the actual
+  `MermaidCapabilityReport.OfficialMatrix`) ran zero tests and nearly led
+  to copying a stale matrix — confirm "1 test" actually ran before
+  trusting an output artifact. No new numbered rule; rules 18, 20 and 22
+  cover the renderer work. No frozen contract moved; flow 160/240, body
+  372/173/48, Class285, the 48-gap roster and observation total 2738 all
+  unmoved. Throughput: +7 draws for one census/ledger/review/gate on the
+  shared greenfield scaffolding.

@@ -459,3 +459,26 @@ Attach a short efficiency section to each closure report, answering:
   372/173/48, Class285, the 48-gap roster and observation total 2738 all
   unmoved. Throughput: +16 draws for one census/ledger/review/gate on the
   shared greenfield scaffolding.
+- **2026-11-13, kanban family renderer (11 whole draws, D-161 continuous
+  family after architecture).** Ninth greenfield family and the first
+  with a 100% clean corpus (11/11, zero gated fixtures); the simplest
+  grammar so far — a flat list of `id[Label]` cards with optional flat
+  `@{...}` annotations, no edges or nesting. (1) The wide-track renderer
+  passed on the first iteration; the only live correction was the
+  per-width geometry pin (three compact boards draw at 40 columns, eight
+  long-label/many-card boards stay source there), again measured rather
+  than assumed — rule 18. (2) A self-caught Occam violation: the first
+  draft copied the sibling wrap helper even though verbatim card
+  transcription never wraps, then added a dummy call to keep it
+  referenced. Dead code dressed up as used code; deleted the helper and
+  its constant and let the single guarded push plus the label byte cap
+  bound the width. Prefer deleting dead code to referencing it. (3) The
+  `@{...}` block required an explicit "flat, no nested brace" shape check
+  so a structural annotation is transcribed but a nested/object payload
+  fails closed; the final `tail.empty()` is the load-bearing guard that
+  rejects any trailing token after the card. No new rule needed; rules 18
+  and 22 cover the measurement and the single emission guard. No flake,
+  no false green; frozen flow 160/240, body 372/173/48, Class285, the
+  48-gap roster and observation total 2738 all unmoved. Throughput: +11
+  draws for one census/ledger/review/gate on the shared greenfield
+  scaffolding.

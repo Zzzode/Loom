@@ -34,6 +34,7 @@ are not whole-original errors).
 | After venn family renderer (11 clean originals) | 2026-11-13 | b53736d8 | 1078 | 1067 | 0 |
 | After quadrant family renderer (7 clean originals) | 2026-11-13 | fbb34e13 | 1085 | 1060 | 0 |
 | After architecture family renderer (16 clean originals) | 2026-11-13 | 86288941 | 1101 | 1044 | 0 |
+| After kanban family renderer (11 clean originals) | 2026-11-13 | d42baf8b | 1112 | 1033 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -65,7 +66,7 @@ disposition (fix or documented infeasibility).
 | tree-view | 15 | 0 | |
 | quadrant-chart | 7 | 7 | renderer added 2026-11-13; 5 %%{init}%% visual directives (axis position/sizing/theme colors) + 2 inline point-style rows stay source (no geometry/color contract) |
 | ishikawa | 13 | 0 | |
-| kanban | 11 | 0 | |
+| kanban | 0 | 11 | renderer added 2026-11-13; all eleven originals clean (description-only frontmatter; cards with optional @{...} structural metadata, no color contract) |
 | mindmap | 19 | 14 | |
 | venn | 10 | 11 | renderer added 2026-11-12; 7 frontmatter theme/look/config + 3 body style/classDef rows stay source (no circle/color contract) |
 | wardley | 10 | 0 | |
@@ -80,7 +81,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1044** | **1101** | |
+| **Total** | **1033** | **1112** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -745,3 +746,45 @@ when the body would draw.
   `/tmp/g4probe/architecture/serial-architecture.log` — the Config110
   whole-source, Class285, Block58 and ER107 admission tests run one at a
   time — 4/4 passed (SERIAL_RC=0, ~408s).
+- 2026-11-13 (kanban family renderer `d42baf8b`, local; D-161 continuous
+  family after architecture): ninth greenfield family. A new
+  `mermaid_kanban_impl.cpp` projects the kanban grammar — flat card
+  declarations `id[Label]` or a bare id, each with an optional flat
+  `@{ key: value }` annotation block (priority/assigned/ticket with
+  quoted or bare values) — to a bounded native outline that validates
+  every card and transcribes the accepted DSL lines verbatim. No board
+  or column geometry and no color is attempted. All eleven originals are
+  clean (description-only frontmatter; no %%{init}%%, classDef, ::: or
+  body style anywhere in the family) and now draw whole-and-body; there
+  is no gated subset. The `@{...}` annotation is structural card
+  metadata, not a color statement, so it is transcribed rather than
+  treated as a visual gate. The classifier adds
+  MermaidProbeFamily::Kanban on the exact `kanban` header (including
+  after a frontmatter fence) and a dispatch case; the matrix hook
+  replaces run_case observations 1:1 for the 11 ledger paths
+  (observation total stays 2738). Independent read-only zero-build
+  adversarial review a112dbeca598240ec APPROVE with zero MAJOR: it
+  independently reproduced the 11/0/0 partition over all 50 cards,
+  matched every manifest sha and the live narrow set, and probed every
+  malformed card shape with no fail-open. MINOR 1 (full visual-gate
+  branch tests), MINOR 2 (header-only frame and bare-CR cases) and the
+  NIT 5 empty-label/empty-annotation/nested-brace boundaries were
+  applied. MINOR 3 disclosed a cross-suite effect: two merman vendor
+  kanban inputs (one a label-less `id@{...}` card) flip from
+  Charts/source to native draw through the classifier;
+  MermaidTerminal.CompleteImportedInputBaseline still passes and no test
+  pins their disposition, so the flip is safe. Whole originals
+  1101 -> 1112 drawn / 1044 -> 1033 fallback / 0 error; kanban 11/0;
+  flow 160/240, body 372/173/48, the 48-gap roster and Class285
+  260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  a7c8530eaab56878df7764b327b6931cc27030617bc14b1bab10d434594561c5;
+  release 29s, debug 252s). Full mermaid label suite 1259/1259 green
+  (the 1252 architecture-era count plus the seven kanban cohort cases).
+  ASan contact across all nine greenfield family cohorts (68 tests:
+  kanban/architecture/quadrant/venn/c4/treemap/gantt/timeline/journey)
+  zero sanitizer reports, logged at
+  `/tmp/g4probe/kanban/asan-contact.log`. Serial gate
+  `/tmp/g4probe/kanban/serial-kanban.log` — the Config110 whole-source,
+  Class285, Block58 and ER107 admission tests run one at a time — 4/4
+  passed (SERIAL_RC=0, ~414s).

@@ -6205,6 +6205,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     bool architecture = header == "architecture-beta";
     bool kanban = header == "kanban";
     bool usecase = header == "usecase-beta";
+    bool treeview = header == "treeView-beta";
     bool block_input = header == "block" || header == "block-beta";
     if (header == "---") {
         has_frontmatter_peek = true;
@@ -6252,6 +6253,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             architecture = line == "architecture-beta";
             kanban = line == "kanban";
             usecase = line == "usecase-beta";
+            treeview = line == "treeView-beta";
             block_input = line == "block" || line == "block-beta";
             if (line.starts_with("classDiagram")) {
                 class_peek = class_prefix_header(line);
@@ -6321,6 +6323,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
                           : architecture ? MermaidProbeFamily::Architecture
                           : kanban      ? MermaidProbeFamily::Kanban
                           : usecase     ? MermaidProbeFamily::Usecase
+                          : treeview    ? MermaidProbeFamily::Treeview
                                       : MermaidProbeFamily::Charts;
         return decision;
     }
@@ -6747,6 +6750,9 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             break;
         case detail::MermaidProbeFamily::Usecase:
             lines = detail::usecase_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::Treeview:
+            lines = detail::treeview_layout(source, work);
             break;
         case detail::MermaidProbeFamily::Charts:
             lines = detail::charts_layout(source, work);

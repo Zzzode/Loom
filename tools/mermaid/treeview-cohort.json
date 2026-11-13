@@ -1,0 +1,265 @@
+{
+  "schema": "loom_mermaid_treeview_cohort/v1",
+  "rfc": 31,
+  "phase": "tree-view-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_treeview_impl.cpp",
+    "grammar": "treeView-beta; indented quoted/bare node labels with optional icon(...) and ## description suffixes",
+    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "tree-view fixtures with no frontmatter gate and no body style",
+    "roots": [
+      "tree-view"
+    ],
+    "draw_count": 8,
+    "frontmatter_gated_count": 5,
+    "frontmatter_gated": [
+      "tree-view/nightly-check/should-hide-default-icons-with-icon-none-and-icon.mmd",
+      "tree-view/nightly-check/should-resolve-unprefixed-icon-overrides-via-default-icon-pack.mmd",
+      "tree-view/pr-check/should-pick-file-icons-from-filename-and-extension-config-maps.mmd",
+      "tree-view/pr-check/should-render-bare-unquoted-labels-with-icons.mmd",
+      "tree-view/pr-check/should-render-with-custom-config-and-quoted-labels.mmd"
+    ],
+    "body_style_gated_count": 2,
+    "body_style_gated": [
+      "tree-view/nightly-check/should-render-combined-annotations.mmd",
+      "tree-view/pr-check/should-render-class-annotations-for-highlighting.mmd"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, tree-view renderer cohort, 2026-11-13, task ac919e19482fdb6ff)",
+    "date": "2026-11-13",
+    "verdict": "approved",
+    "note": "APPROVE with zero MAJOR. The reviewer independently confirmed the source-driven 8/5/2 partition (refuting the brief's older 9/4/2 census): the custom-config fixture closes its frontmatter with a trailing-whitespace fence and is correctly frontmatter-gated. It ported tree_body, the indent grid and validate_node and passed 22 boundary probes with no fail-open, and verified every output push uses the single guarded path. MINOR 1 (free text after a closing quoted label was over-accepted) was tightened so a quoted label may only be followed by icon(...)/## suffixes, with regression cases; MINOR 2 added the missing bare-CR test plus empty-label, double-icon, icon-after-description, empty-icon, no-space-## and indent 0/3/5 coverage, and direct look/style/init gate tests. NIT 1 (the shared classifier peek requires an exact fence) and NIT 2 (the combined header push, identical to the approved usecase pattern and bounded by the node cap plus the downstream 1024-row guard) are safe-direction inherited behavior and left unchanged to avoid touching a protected shared area; NIT 3 is harmless defense-in-depth."
+  },
+  "counts": {
+    "total": 8,
+    "predicted_draw": 8,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 8
+  },
+  "rows": [
+    {
+      "path": "tree-view/nightly-check/should-render-a-simple-treeview-diagram-with-quoted-labels.mmd",
+      "family": "tree-view",
+      "sha256": "70d96b252a2596a6070b842f11d24e8a66dbbc6d225a25803b8cbcc6cc684695",
+      "manifest_sha256": "70d96b252a2596a6070b842f11d24e8a66dbbc6d225a25803b8cbcc6cc684695",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "tree-view renderer projects the indented node tree to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "tree-view/nightly-check/should-render-icon-overrides.mmd",
+      "family": "tree-view",
+      "sha256": "ed5586dbfe36d4201286579368cd99912e91de5930c7bcf54242573574bc3f40",
+      "manifest_sha256": "ed5586dbfe36d4201286579368cd99912e91de5930c7bcf54242573574bc3f40",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "tree-view renderer projects the indented node tree to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "tree-view/pr-check/should-preserve-consecutive-spaces-and-unicode-in-labels.mmd",
+      "family": "tree-view",
+      "sha256": "811fb4a8c096fafbc5b38b66eb723f5447b750c8ec1730b56622e5b1c5875a7f",
+      "manifest_sha256": "811fb4a8c096fafbc5b38b66eb723f5447b750c8ec1730b56622e5b1c5875a7f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "tree-view renderer projects the indented node tree to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "tree-view/pr-check/should-render-a-complex-treeview-diagram-with-quoted-labels.mmd",
+      "family": "tree-view",
+      "sha256": "906a3dc74456f3f1a4907e4e663c2414bdbd2c9bb236563c752b8c7f903bb043",
+      "manifest_sha256": "906a3dc74456f3f1a4907e4e663c2414bdbd2c9bb236563c752b8c7f903bb043",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "tree-view renderer projects the indented node tree to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "tree-view/pr-check/should-render-descriptions.mmd",
+      "family": "tree-view",
+      "sha256": "7594f160b4fc7d649cbf4fb0fabd0e906ccf8dc9503b286c47055d912eb00919",
+      "manifest_sha256": "7594f160b4fc7d649cbf4fb0fabd0e906ccf8dc9503b286c47055d912eb00919",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "tree-view renderer projects the indented node tree to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "tree-view/pr-check/should-render-emoji-as-icons-with-the-default-icons-hidden.mmd",
+      "family": "tree-view",
+      "sha256": "3360ee694371b5fb3c4846b1417fda3e6a21b2518c2508a5bef46b7883215e30",
+      "manifest_sha256": "3360ee694371b5fb3c4846b1417fda3e6a21b2518c2508a5bef46b7883215e30",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "tree-view renderer projects the indented node tree to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "tree-view/pr-check/should-render-the-unknown-icon-fallback-for-unregistered-icons.mmd",
+      "family": "tree-view",
+      "sha256": "435327ca01324e3681c32a6e8db9a05678e892a6da78ecfd9b9fc3de726aa2d8",
+      "manifest_sha256": "435327ca01324e3681c32a6e8db9a05678e892a6da78ecfd9b9fc3de726aa2d8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "tree-view renderer projects the indented node tree to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "tree-view/pr-check/should-render-with-multiple-roots-and-quoted-labels.mmd",
+      "family": "tree-view",
+      "sha256": "37236950ce8e1f6989480ce04de75a15b1670dbaffa2554c3bca31310b230f2f",
+      "manifest_sha256": "37236950ce8e1f6989480ce04de75a15b1670dbaffa2554c3bca31310b230f2f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "tree-view renderer projects the indented node tree to a bounded native outline; no visual gate is present so it draws"
+    }
+  ]
+}

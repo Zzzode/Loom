@@ -35,6 +35,7 @@ are not whole-original errors).
 | After quadrant family renderer (7 clean originals) | 2026-11-13 | fbb34e13 | 1085 | 1060 | 0 |
 | After architecture family renderer (16 clean originals) | 2026-11-13 | 86288941 | 1101 | 1044 | 0 |
 | After kanban family renderer (11 clean originals) | 2026-11-13 | d42baf8b | 1112 | 1033 | 0 |
+| After usecase family renderer (14 clean originals) | 2026-11-13 | 74506fba | 1126 | 1019 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -53,7 +54,7 @@ disposition (fix or documented infeasibility).
 | xychart | 46 | 2 | partial axes/art only |
 | agentflow | 38 | 0 | flowchart-syntax variant |
 | c4 | 9 | 23 | renderer added 2026-11-12; 8 Update*Style/UpdateLayoutConfig + 1 frontmatter config rows stay source (no color/layout contract) |
-| usecase | 32 | 0 | |
+| usecase | 18 | 14 | renderer added 2026-11-13; 12 frontmatter theme/look/config + 6 body classDef/:::/style/init rows stay source (no placement/color contract) |
 | er-diagram | 31 | 13 | |
 | timeline | 23 | 7 | renderer added 2026-11-11; 23 themed rows stay source (no color contract) |
 | class-diagram | 25 | 260 | |
@@ -81,7 +82,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1033** | **1112** | |
+| **Total** | **1019** | **1126** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -788,3 +789,47 @@ when the body would draw.
   `/tmp/g4probe/kanban/serial-kanban.log` — the Config110 whole-source,
   Class285, Block58 and ER107 admission tests run one at a time — 4/4
   passed (SERIAL_RC=0, ~414s).
+- 2026-11-13 (usecase family renderer `74506fba`, local; D-176): tenth
+  greenfield family and the grammar-richest. A new
+  `mermaid_usecase_impl.cpp` projects the usecase-beta grammar — one
+  direction, actors, parenthesized/bracketed use cases and anonymous
+  quoted use cases, balanced systemBoundary/end containers, notes, the
+  full UML edge set (`-->`, `<--`, `--`, `--o`/`o--`, `--x`/`x--`,
+  `--|>`, `..> : include|extend`, labeled and multi-dash edges, named
+  edges with their own @{...} annotation), flat @{...} metadata and
+  `<<stereotype>>` / literal `&lt;..&gt;` suffixes — to a bounded native
+  outline. Physical line breaks inside a quoted label are joined into
+  one logical statement and transcribed verbatim; no placement, edge
+  routing or color is attempted. 14 of 32 originals are clean and now
+  draw whole-and-body; 18 stay source: twelve carry a frontmatter
+  theme/look/config key and six carry a body classDef/:::/style/init
+  visual statement (eight files contain ::: but two are already
+  frontmatter-gated). The classifier adds
+  MermaidProbeFamily::Usecase on the exact `usecase-beta` header
+  (including after a frontmatter fence) and a dispatch case; the matrix
+  hook replaces run_case observations 1:1 for the 14 ledger paths
+  (observation total stays 2738; the 18 gated fixtures keep their
+  default source disposition). Independent read-only zero-build
+  adversarial review a37954a81a81ed523 APPROVE with zero MAJOR: it
+  reproduced the exact 14/12/6 partition with a from-scratch splitter,
+  ported every validator and passed 60+ probes with no fail-open. MINOR
+  1 (a quote in a %% comment could swallow later statements) was fixed
+  by treating comment lines as inert outside an open quote, with a
+  regression; MINOR 2 added the corpus-safe semicolon reject and the
+  `..>` include/extend requirement (a single-connector count was
+  rejected because a labeled edge has two dash runs); an unreachable
+  quoted-first branch was deleted. Whole
+  originals 1112 -> 1126 drawn / 1033 -> 1019 fallback / 0 error;
+  usecase 14/18; flow 160/240, body 372/173/48, the 48-gap roster and
+  Class285 260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  c4ae6667e736392c6b9db61e65bed60340057078d303eed6c6eb6730d9345151;
+  release 30s, debug 253s). Full mermaid label suite 1266/1266 green
+  (the 1259 kanban-era count plus the seven usecase cohort cases).
+  ASan contact across all ten greenfield family cohorts (75 tests:
+  usecase/kanban/architecture/quadrant/venn/c4/treemap/gantt/timeline/
+  journey) zero sanitizer reports, logged at
+  `/tmp/g4probe/usecase/asan-contact.log`. Serial gate
+  `/tmp/g4probe/usecase/serial-usecase.log` — the Config110
+  whole-source, Class285, Block58 and ER107 admission tests run one at a
+  time — 4/4 passed (SERIAL_RC=0, ~399s).

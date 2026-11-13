@@ -204,6 +204,21 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     preserve a source token, copy the token (or use its measured length)
     instead of retyping its width, and give every emitted keyword a literal
     substring assertion in the cohort test, not just a draw/source boolean.
+24. **In a strip-then-whitelist validator, the final allow-set must still
+    contain the token class you validated in an earlier scan, and a
+    sub-validator must not assert on what follows its own construct.** The
+    usecase edge validator removed connector runs and validated every
+    identifier run in a first pass, then a final punctuation whitelist loop
+    rejected the same identifier letters it had just accepted — so every real
+    edge failed while the unit-level happy paths were never exercised. A
+    second defect had the `@{...}` sub-validator also constraining the
+    characters after its closing brace, rejecting a valid
+    `@{...} <<stereotype>>` adjacency. When validation is split into passes
+    or helpers, each stage owns only its own span; either re-derive the
+    allowed character set from one place or keep the previously validated
+    class in the final whitelist. The full-corpus CellCapture partition test
+    (not single-shape synthetic cases) exposed the first defect — keep it as
+    the oracle per rule 20.
 
 ## Per-task efficiency retro (mandatory at every closure)
 
@@ -481,4 +496,30 @@ Attach a short efficiency section to each closure report, answering:
   no false green; frozen flow 160/240, body 372/173/48, Class285, the
   48-gap roster and observation total 2738 all unmoved. Throughput: +11
   draws for one census/ledger/review/gate on the shared greenfield
+  scaffolding.
+- **2026-11-13, usecase family renderer (14 whole draws, D-176,
+  predating its commit).** Tenth greenfield family and by far the
+  grammar-richest (UML edges, boundaries, notes, quoted multiline
+  labels, named edges), so it needed a quote-aware logical-statement
+  joiner rather than the line-at-a-time sibling parser: physical line
+  breaks inside a double-quoted label are merged while the quote count
+  is odd, and an unclosed quote fails closed. Two real validator defects
+  surfaced only through the live CellCapture suite. (1) The edge
+  validator removed connector runs and validated every identifier in a
+  first scan, then a final whitelist loop rejected the same identifier
+  letters it had just accepted — a self-contradictory two-stage
+  validator that rejected every real edge. Captured as rule 24: a
+  strip-then-whitelist validator must keep the stripped token class in
+  its final allow-set. (2) The @{...} sub-validator also asserted what
+  could follow the closing brace, so a `@{...} &lt;&lt;Stereotype&gt;&gt;`
+  adjacency (fixture 09) was rejected; fixed by making the sub-validator
+  validate only the block and return the position past its brace,
+  leaving the suffix to the declaration loop (local closure). (3) The
+  partition again came from the source census, not the brief's count:
+  eight files contain ::: but two are also frontmatter-gated, giving the
+  true 14/12/6. Re-confirms rule 19. The live narrow census produced nine
+  40-column draws including the header-only frame — rule 18. No frozen
+  contract moved; flow 160/240, body 372/173/48, Class285, the 48-gap
+  roster and observation total 2738 all unmoved. Throughput: +14 draws
+  for one census/ledger/review/gate on the shared greenfield
   scaffolding.

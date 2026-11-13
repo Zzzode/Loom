@@ -747,3 +747,28 @@ Attach a short efficiency section to each closure report, answering:
   Class285, the 48-gap roster and observation total 2738 all unmoved.
   Throughput: +4 draws for one census/ledger/review/gate on the shared
   greenfield scaffolding.
+- **2026-11-14, eventmodeling family renderer (6 whole draws, D-196,
+  predating its commit).** Eighteenth greenfield family and the first whose
+  entire candidate pool is clean: 6 clean / 0 gated / 0 body, so the whole
+  family draws. The grammar uses a distinct column layout — top-level `tf`,
+  `data`, `{`, `}` at column 0 and data-block entries at indent 2 — rather
+  than the two-space statement grid of the recent families, which is why
+  the state machine tracks a separate block-open/expect-brace pair.
+  (1) The independent review again earned its keep: it opened REQUEST
+  CHANGES on two real MAJORs the happy paths missed. The dotted-name
+  validator checked each character but not the start of each segment, so
+  `1A`, `A.1B` and a digit-led data key drew even though the grammar only
+  allows identifier-led segments; and an empty data block drew because the
+  close brace was unconditional. Both are now closed with regression pins,
+  matching the radar family's per-segment and block-has-entry discipline.
+  The same pass tightened three MINORs (one inline block / one reference
+  per frame, single trailing comma, no orphan data header). A 680,000-case
+  differential confirmed every changed decision was tightening-only. (2)
+  Rule 18 held: all six frames draw at 40 columns only after a live probe
+  (longest line 37), not by assumption. (3) Rule 25 hygiene continued to
+  hold for builds, though a direct ctest still drifts the foreground cwd,
+  which is reset immediately afterward. No new numbered rule; rules 18, 20,
+  22 and 25 cover the work. No frozen contract moved; flow 160/240, body
+  372/173/48, Class285, the 48-gap roster and observation total 2738 all
+  unmoved. Throughput: +6 draws for one census/ledger/review/gate on the
+  shared greenfield scaffolding.

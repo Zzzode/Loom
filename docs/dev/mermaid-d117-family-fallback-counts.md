@@ -43,6 +43,7 @@ are not whole-original errors).
 | After railroad family renderer (8 clean originals) | 2026-11-13 | b02234b3 | 1162 | 983 | 0 |
 | After radar family renderer (3 clean originals) | 2026-11-14 | 893835da | 1165 | 980 | 0 |
 | After packet family renderer (4 clean originals) | 2026-11-14 | fd6e020b | 1169 | 976 | 0 |
+| After eventmodeling family renderer (6 clean originals) | 2026-11-14 | 7d4730bf | 1175 | 970 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -82,14 +83,14 @@ disposition (fix or documented infeasibility).
 | block | 0 | 58 | complete (B0a/B6) |
 | sequence | 0 | 193 | complete |
 | cynefin | 5 | 7 | renderer added 2026-11-13; 5 frontmatter config/theme/look rows stay source (no boundary-geometry/color contract); live census 7/5/0 from a candidate pool of 12 |
-| eventmodeling | 6 | 0 | |
+| eventmodeling | 0 | 6 | renderer added 2026-11-14; first whole-pool-clean family (6/0/0); column-0 frames/data blocks, dotted names, ->> relations; all bodies pure ASCII, no frontmatter gate in the family |
 | packet | 2 | 4 | renderer added 2026-11-14; packet/packet-beta alias, single-bit and ranged fields; 2 frontmatter config.packet rows stay source (no bit-cell/color contract); live census 4/2/0 from a candidate pool of 6; all bodies pure ASCII |
 | radar | 3 | 3 | renderer added 2026-11-14; 3 frontmatter config/theme/themeVariables rows stay source (no polygon/color contract); live census 3/3/0 from a candidate pool of 6; only non-ASCII bytes are in a gated frontmatter |
 | conf-and-directives | 3 | 1 | |
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **976** | **1169** | |
+| **Total** | **970** | **1175** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -1143,3 +1144,45 @@ when the body would draw.
   CapabilityReport.Class285 168.98s, Block58AdmissionJoin 22.77s,
   Er107AdmissionJoin 2.28s), RC=0, logged at
   `/tmp/g4probe/packet/serial-packet.log`.
+- 2026-11-14 (eventmodeling family renderer `7d4730bf`, local; D-196):
+  eighteenth greenfield family and the first whose whole candidate pool is
+  clean. A new `mermaid_eventmodeling_impl.cpp` projects the event-model
+  grammar — an ordered list of `tf` time frames with inline data,
+  data-block references and source relations, plus named data blocks — to a
+  bounded native outline that validates each statement shape and
+  transcribes the physical lines verbatim, preserving the column layout. No
+  event-stream geometry or color is rendered. The live source gives 6 clean
+  / 0 frontmatter-gated / 0 body-gated: the whole family draws. The only
+  non-ASCII bytes are em-dashes and arrows in frontmatter descriptions;
+  every body is pure ASCII. Top-level statements sit at column 0 and data
+  block entries at indent two, a distinct column layout. The classifier
+  gains MermaidProbeFamily::EventModeling on the exact eventmodeling
+  header (including after a frontmatter fence) and a dispatch case; the
+  matrix hook replaces run_case observations 1:1 for all six ledger paths
+  (observation total stays 2738). Independent read-only zero-build
+  adversarial review task a1616614c326e9b96 reached final APPROVE after one
+  re-review: the first pass returned REQUEST CHANGES on two MAJORs. M1
+  was a dotted-name validator that accepted a digit-led segment; it now
+  requires an identifier-start character on every segment. M2 was an empty
+  data block being drawn; a block now needs at least one indent-two entry
+  before it can close. Three MINORs were tightened in the same pass (one
+  inline block and one reference per frame, a single optional trailing
+  comma on data entries, and no orphan data header); across 680,000+
+  fuzz/mutation cases the change is tightening-only with zero new accepts.
+  Whole originals 1169 -> 1175 drawn / 976 -> 970 fallback / 0 error;
+  eventmodeling 6/0; flow 160/240, body 372/173/48, the 48-gap roster and
+  Class285 260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  ac473df5cc4b62a3ce466575812bf11db61641c2184536604c2c68f83d99a081;
+  release 27s, debug 242s). Full mermaid label suite 1321/1321 green
+  (the 1315 packet-era count plus the six eventmodeling cohort cases; the
+  family has no gated fixture, so its cohort carries six tests).
+  ASan contact across all eighteen greenfield family cohorts (130 tests:
+  eventmodeling/packet/radar/railroad/wardley/cynefin/ishikawa/tree-view/
+  usecase/kanban/architecture/quadrant/venn/c4/treemap/gantt/timeline/
+  journey) zero sanitizer reports, logged at
+  `/tmp/g4probe/eventmodeling/asan-contact.log`. Serial gate 4/4 green
+  (`-j1`, 399.5s wall: EveryWholeSourceIsObserved 205.06s,
+  CapabilityReport.Class285 169.19s, Block58AdmissionJoin 23.02s,
+  Er107AdmissionJoin 2.19s), RC=0, logged at
+  `/tmp/g4probe/eventmodeling/serial-em.log`.

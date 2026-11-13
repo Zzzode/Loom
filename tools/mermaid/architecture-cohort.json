@@ -1,0 +1,477 @@
+{
+  "schema": "loom_mermaid_architecture_cohort/v1",
+  "rfc": 31,
+  "phase": "architecture-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_architecture_impl.cpp",
+    "grammar": "architecture-beta; group/service/junction with optional icon/label and in-containment, L/R/T/B directed/undirected/labeled edges, align row/column",
+    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "architecture fixtures with no frontmatter gate and no body style statement",
+    "roots": [
+      "architecture"
+    ],
+    "draw_count": 16,
+    "frontmatter_gated_count": 4,
+    "frontmatter_gated": [
+      "architecture/pr-check/should-render-a-deterministic-layout-for-a-complex-deeply-nested-diagram.mmd",
+      "architecture/pr-check/should-render-a-deterministic-layout-with-an-explicit-seed-override.mmd",
+      "architecture/pr-check/should-render-with-randomize-true-without-errors.mmd",
+      "architecture/visual-check/should-render-a-linear-chain-with-an-increased-idealedgelengthmultiplier.mmd"
+    ],
+    "body_style_gated_count": 0,
+    "body_style_gated": []
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, architecture renderer cohort, 2026-11-13, task a5602134897c4359d)",
+    "date": "2026-11-13",
+    "verdict": "approved",
+    "note": "APPROVE with zero MAJOR. The reviewer independently reproduced the exact 16 draw / 4 frontmatter-gated / 0 body-gated partition, enumerated 18 body statement shapes (187 statements, zero false rejects on clean fixtures), ported the validators and ran 64 targeted probes, 22 final probes and 60000 fuzz cases with no fail-open or crash. MINOR 1 (source/target endpoint order, missing target port, empty edge label regression pins), MINOR 2 (icon-only declaration coverage) and the NIT 6 arrow-in-label case were applied in the cohort test. MINOR 3 (conservative classDef/::: prefix gating inherited from the quadrant renderer) only ever forces a safe source fallback, matches the approved sibling behavior and is deferred to a shared hardening batch; NIT 4 (whitespace tolerance) and NIT 5 (frontmatter block-scalar false-positive) are safe-direction, zero-corpus-impact and the Python/C++ gates stay identical."
+  },
+  "counts": {
+    "total": 16,
+    "predicted_draw": 16,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 16
+  },
+  "rows": [
+    {
+      "path": "architecture/nightly-check/should-align-siblings-in-a-row-when-their-edges-feed-a-common-downstream-node.mmd",
+      "family": "architecture",
+      "sha256": "1e7115d5669153fcd148ad4f8105c800583ba8b64d3220ae7a2510fbdcfa4288",
+      "manifest_sha256": "1e7115d5669153fcd148ad4f8105c800583ba8b64d3220ae7a2510fbdcfa4288",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/nightly-check/should-render-a-grid-via-combined-row-column-alignments.mmd",
+      "family": "architecture",
+      "sha256": "d491f51cec9dc61fe530da7fc453370cd233322d75f28995f3e41348d706db5d",
+      "manifest_sha256": "d491f51cec9dc61fe530da7fc453370cd233322d75f28995f3e41348d706db5d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/nightly-check/should-render-a-simple-architecture-diagram-with-titleandaccessibilities.mmd",
+      "family": "architecture",
+      "sha256": "87e244aeaacf73f680159f20dd828807c0a15053a36afe0e77e9c7d272d887aa",
+      "manifest_sha256": "87e244aeaacf73f680159f20dd828807c0a15053a36afe0e77e9c7d272d887aa",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/nightly-check/should-render-an-architecture-diagram-with-directional-arrows.mmd",
+      "family": "architecture",
+      "sha256": "d967d640300f1ef809525dbc0e0708d54b919e8f2e50e92b3a57d024beed45bf",
+      "manifest_sha256": "d967d640300f1ef809525dbc0e0708d54b919e8f2e50e92b3a57d024beed45bf",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/nightly-check/should-render-an-architecture-diagram-with-simple-junction-edges.mmd",
+      "family": "architecture",
+      "sha256": "28147e3fec29fe76364af8bc3352ee979e45ac653fa5d91983fa02156edb29ca",
+      "manifest_sha256": "28147e3fec29fe76364af8bc3352ee979e45ac653fa5d91983fa02156edb29ca",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/nightly-check/should-render-an-architecture-diagram-with-the-fallback-icon.mmd",
+      "family": "architecture",
+      "sha256": "2e07acb8582025874e759d0e07e735563826c957252e436b2731a5a2716b584c",
+      "manifest_sha256": "2e07acb8582025874e759d0e07e735563826c957252e436b2731a5a2716b584c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/nightly-check/should-render-edges-at-correct-length.mmd",
+      "family": "architecture",
+      "sha256": "41b2e6a87ce7bfddb52f6c0474574d7b241122c86382f7f4554fe0a693b3acdc",
+      "manifest_sha256": "41b2e6a87ce7bfddb52f6c0474574d7b241122c86382f7f4554fe0a693b3acdc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/nightly-check/should-stack-three-same-port-databases-in-a-column-without-overlap.mmd",
+      "family": "architecture",
+      "sha256": "19441a37e1c066050b83c1bf62234db351584d8ed587d16f099430ef1075b37b",
+      "manifest_sha256": "19441a37e1c066050b83c1bf62234db351584d8ed587d16f099430ef1075b37b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/pr-check/should-render-a-simple-architecture-diagram-with-groups.mmd",
+      "family": "architecture",
+      "sha256": "7e6ce912500f8a29c6abf021376ff40ca48062da66bc6a487d36420769427144",
+      "manifest_sha256": "7e6ce912500f8a29c6abf021376ff40ca48062da66bc6a487d36420769427144",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/pr-check/should-render-an-architecture-diagram-with-a-reasonable-height.mmd",
+      "family": "architecture",
+      "sha256": "7319f0e75b2e16865e1e71e86fd2c6d5e1a541fc664acafc3e1843fee0ce9414",
+      "manifest_sha256": "7319f0e75b2e16865e1e71e86fd2c6d5e1a541fc664acafc3e1843fee0ce9414",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/pr-check/should-render-an-architecture-diagram-with-complex-junction-edges.mmd",
+      "family": "architecture",
+      "sha256": "2c6a2560da49bb1086e9b3ddce60168b29782cbeeeefc2bd69be032343c53c35",
+      "manifest_sha256": "2c6a2560da49bb1086e9b3ddce60168b29782cbeeeefc2bd69be032343c53c35",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/pr-check/should-render-an-architecture-diagram-with-edge-labels.mmd",
+      "family": "architecture",
+      "sha256": "8ac37a0c6e4405b7ce17d97c8498f1416e1db3d5a75c63fda975c56c617768cd",
+      "manifest_sha256": "8ac37a0c6e4405b7ce17d97c8498f1416e1db3d5a75c63fda975c56c617768cd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/pr-check/should-render-an-architecture-diagram-with-group-edges.mmd",
+      "family": "architecture",
+      "sha256": "1c70de7d464e3c772586b0daf750c4b4c102eb0e101586767a48b8c5469704fe",
+      "manifest_sha256": "1c70de7d464e3c772586b0daf750c4b4c102eb0e101586767a48b8c5469704fe",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/pr-check/should-render-an-architecture-diagram-with-groups-within-groups.mmd",
+      "family": "architecture",
+      "sha256": "ade926bb6e57e176aa907d51639dce272287171b3f6a126014954718243bacf5",
+      "manifest_sha256": "ade926bb6e57e176aa907d51639dce272287171b3f6a126014954718243bacf5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/pr-check/should-render-an-architecture-diagram-with-split-directioning.mmd",
+      "family": "architecture",
+      "sha256": "a3d9d522c50bb49bc1daac3e3371a7735c574d73fa10e29c65f173b6e269625c",
+      "manifest_sha256": "a3d9d522c50bb49bc1daac3e3371a7735c574d73fa10e29c65f173b6e269625c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/visual-check/should-render-a-linear-chain-with-default-fcose-knobs.mmd",
+      "family": "architecture",
+      "sha256": "deac3d66c4d3fc15fafd31f77ca6ba45ce3687a88d0a1c5c248ed2c09ae1d464",
+      "manifest_sha256": "deac3d66c4d3fc15fafd31f77ca6ba45ce3687a88d0a1c5c248ed2c09ae1d464",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    }
+  ]
+}

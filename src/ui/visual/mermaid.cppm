@@ -320,6 +320,7 @@ enum class MermaidProbeFamily : unsigned char {
     C4,
     Venn,
     Quadrant,
+    Architecture,
     Block
 };
 

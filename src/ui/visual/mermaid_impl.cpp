@@ -6219,6 +6219,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     bool railroad = is_railroad_header(header);
     bool radar = header == "radar-beta";
     bool packet = is_packet_header(header);
+    bool eventmodeling = header == "eventmodeling";
     bool block_input = header == "block" || header == "block-beta";
     if (header == "---") {
         has_frontmatter_peek = true;
@@ -6273,6 +6274,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             railroad = is_railroad_header(line);
             radar = line == "radar-beta";
             packet = is_packet_header(line);
+            eventmodeling = line == "eventmodeling";
             block_input = line == "block" || line == "block-beta";
             if (line.starts_with("classDiagram")) {
                 class_peek = class_prefix_header(line);
@@ -6349,6 +6351,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
                           : railroad    ? MermaidProbeFamily::Railroad
                           : radar       ? MermaidProbeFamily::Radar
                           : packet      ? MermaidProbeFamily::Packet
+                          : eventmodeling ? MermaidProbeFamily::EventModeling
                                       : MermaidProbeFamily::Charts;
         return decision;
     }
@@ -6796,6 +6799,9 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             break;
         case detail::MermaidProbeFamily::Packet:
             lines = detail::packet_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::EventModeling:
+            lines = detail::eventmodeling_layout(source, work);
             break;
         case detail::MermaidProbeFamily::Charts:
             lines = detail::charts_layout(source, work);

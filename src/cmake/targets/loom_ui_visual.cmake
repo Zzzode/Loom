@@ -65,6 +65,7 @@ target_sources(loom_ui_visual PRIVATE
     ui/visual/mermaid_railroad_impl.cpp
     ui/visual/mermaid_radar_impl.cpp
     ui/visual/mermaid_packet_impl.cpp
+    ui/visual/mermaid_eventmodeling_impl.cpp
     ui/visual/mermaid_block_impl.cpp
     # Relations family split core + class/er/state/requirement implementation
     # units (RFC 0031 E3): single module loom.ui.visual.mermaid.

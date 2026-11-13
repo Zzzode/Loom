@@ -1,0 +1,202 @@
+{
+  "schema": "loom_mermaid_eventmodeling_cohort/v1",
+  "rfc": 31,
+  "phase": "eventmodeling-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_eventmodeling_impl.cpp",
+    "grammar": "eventmodeling; tf frames, relations, inline/ref data, data blocks",
+    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "eventmodeling fixtures with no frontmatter gate and no body style",
+    "roots": [
+      "eventmodeling"
+    ],
+    "draw_count": 6,
+    "frontmatter_gated_count": 0,
+    "frontmatter_gated": [],
+    "body_style_gated_count": 0,
+    "body_style_gated": []
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, eventmodeling renderer cohort, 2026-11-14, task a1616614c326e9b96)",
+    "date": "2026-11-14",
+    "verdict": "approved",
+    "note": "Final verdict APPROVE after one re-review. The first pass returned REQUEST CHANGES on two MAJORs, both fixed in this family's validator. M1: is_dotted_name did not constrain the first character of each segment, so digit-led names ('1', '1A', 'A.1B', '[[B.2]]', 'data 1', a digit-led data key) drew; it is now a per-segment state machine requiring an identifier-start character. M2: an empty data block ('data D { }') drew; a block now requires at least one indent-2 entry before its closing brace (block_has_entry). Three MINORs were tightened in the same pass: an inline data block and a [[reference]] are each allowed at most once while ->> relations may still chain; a data entry allows only one optional trailing comma (the radar-style position-aware rule, so 'k: v,,' fails); and a data header must be followed by its own brace rather than be overwritten by another header or frame. The re-review ran 680,000+ fuzz/mutation cases against a strict grammar oracle: the v1-to-v2 differential is tightening-only with zero new accepts, all six corpus fixtures still draw with verbatim output and pinned shas, and no invariant is violated. The retained NITs (no required space between a name and its suffix, trim-based whitespace tolerance, and the over-broad ':::' substring gate) are fail-safe inherited shapes shared with the approved siblings and are unchanged per the blast-radius rule. The trim-before-colon frontmatter gate and printable-ASCII literal hardening are confirmed."
+  },
+  "counts": {
+    "total": 6,
+    "predicted_draw": 6,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 6
+  },
+  "rows": [
+    {
+      "path": "eventmodeling/pr-check/state-change-pattern.mmd",
+      "family": "eventmodeling",
+      "sha256": "fa2b6486ce84af251e2f312c198df5ff780aebb6a8b3be6be627a0306426b0fa",
+      "manifest_sha256": "fa2b6486ce84af251e2f312c198df5ff780aebb6a8b3be6be627a0306426b0fa",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "eventmodeling renderer validates the frames and data blocks and transcribes them verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "eventmodeling/pr-check/state-view-pattern.mmd",
+      "family": "eventmodeling",
+      "sha256": "7800a71a9c47c3d194f75c4c3ba4294e6cbf8149e47b5be5e156c774652f21ce",
+      "manifest_sha256": "7800a71a9c47c3d194f75c4c3ba4294e6cbf8149e47b5be5e156c774652f21ce",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "eventmodeling renderer validates the frames and data blocks and transcribes them verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "eventmodeling/pr-check/translation-pattern.mmd",
+      "family": "eventmodeling",
+      "sha256": "8926d1151ed72eb129e53f91bdba8a26d7c58630a2f509e91f5e41fee1615dea",
+      "manifest_sha256": "8926d1151ed72eb129e53f91bdba8a26d7c58630a2f509e91f5e41fee1615dea",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "eventmodeling renderer validates the frames and data blocks and transcribes them verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "eventmodeling/pr-check/with-data-block-reference.mmd",
+      "family": "eventmodeling",
+      "sha256": "c3ec0e5a3666c6d246b61a62a90de866004007ab92ac1b623c605dc92dc79148",
+      "manifest_sha256": "c3ec0e5a3666c6d246b61a62a90de866004007ab92ac1b623c605dc92dc79148",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "eventmodeling renderer validates the frames and data blocks and transcribes them verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "eventmodeling/pr-check/with-multiple-source-relations.mmd",
+      "family": "eventmodeling",
+      "sha256": "3b64f9e62e878c73ee853dd348e5fea827577581bdd0049ac385801e21ddc161",
+      "manifest_sha256": "3b64f9e62e878c73ee853dd348e5fea827577581bdd0049ac385801e21ddc161",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "eventmodeling renderer validates the frames and data blocks and transcribes them verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "eventmodeling/pr-check/with-qualified-names.mmd",
+      "family": "eventmodeling",
+      "sha256": "d0b7d8d7333f77a5062ea809624ef0ea757ad2db418f504ee8643854c6f900e1",
+      "manifest_sha256": "d0b7d8d7333f77a5062ea809624ef0ea757ad2db418f504ee8643854c6f900e1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "eventmodeling renderer validates the frames and data blocks and transcribes them verbatim; no visual gate is present so it draws"
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "schema": "loom_mermaid_radar_cohort/v1",
+  "rfc": 31,
+  "phase": "radar-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_radar_impl.cpp",
+    "grammar": "radar-beta; axes, inline/braced curves, scalar directives",
+    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "radar fixtures with no frontmatter gate and no body style",
+    "roots": [
+      "radar"
+    ],
+    "draw_count": 3,
+    "frontmatter_gated_count": 3,
+    "frontmatter_gated": [
+      "radar/pr-check/should-handle-radar-diagram-with-radar-style-override.mmd",
+      "radar/pr-check/should-parse-radar-diagram-with-theme-override.mmd",
+      "radar/pr-check/should-render-radar-diagram-with-config-override.mmd"
+    ],
+    "body_style_gated_count": 0,
+    "body_style_gated": []
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, radar renderer cohort, 2026-11-14, task a78aba37d54c5d977)",
+    "date": "2026-11-14",
+    "verdict": "approved",
+    "note": "Final verdict APPROVE after one re-review. The first pass returned REQUEST CHANGES on one MAJOR and one MINOR, both in this family's validator. MAJOR: is_value_list treated any empty comma slot as skippable, so leading ('{,1}'), internal ('{1,,2}') and repeated ('{1,,}') commas drew even though only a single optional trailing comma is grammar-legal (the reviewer found 4,980 distinct fail-open shapes across 26,334 combinations); it now accepts an empty piece only as the final slot after a real element, with inline and block regression pins. MINOR: an empty multi-line curve block was accepted while an inline '{}' was rejected; a block must now contain at least one value line before its closing brace. The reviewer independently reproduced the 3/3/0 partition with two methods, ran 140 hand probes, the 26,334-case differential and 60,000 fuzzed inputs with no crash, hang or non-verbatim emission, and confirmed the trim-before-colon frontmatter gate and printable-ASCII literal hardening. The NITs (quoted YAML visual keys shared with three approved siblings, over-broad ':::' substring gate, the nominal row-count off-by-one re-gated downstream, and asymmetric body-gate prefixes) are fail-safe or faithful with no corpus sample and are unchanged per the blast-radius rule."
+  },
+  "counts": {
+    "total": 3,
+    "predicted_draw": 3,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 3
+  },
+  "rows": [
+    {
+      "path": "radar/nightly-check/complex-radar-diagram.mmd",
+      "family": "radar",
+      "sha256": "4a80f918578da582d1f937ac44a3b4d4fe907151739c639c8b1c836211487016",
+      "manifest_sha256": "4a80f918578da582d1f937ac44a3b4d4fe907151739c639c8b1c836211487016",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "radar renderer validates the axes, curves and scalar directives and transcribes them verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "radar/pr-check/should-render-a-radar-diagram-with-multiple-curves.mmd",
+      "family": "radar",
+      "sha256": "86f0f8347faadb38ae0e0fe37a22b09f1edad197d97e49df7c37e36fa85fd46a",
+      "manifest_sha256": "86f0f8347faadb38ae0e0fe37a22b09f1edad197d97e49df7c37e36fa85fd46a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "radar renderer validates the axes, curves and scalar directives and transcribes them verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "radar/pr-check/should-render-a-simple-radar-diagram.mmd",
+      "family": "radar",
+      "sha256": "0b4854266094cee11bfbd447790267ed235986a88e141d22f9dae8393e12b55a",
+      "manifest_sha256": "0b4854266094cee11bfbd447790267ed235986a88e141d22f9dae8393e12b55a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "radar renderer validates the axes, curves and scalar directives and transcribes them verbatim; no visual gate is present so it draws"
+    }
+  ]
+}

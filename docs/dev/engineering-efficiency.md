@@ -547,3 +547,27 @@ Attach a short efficiency section to each closure report, answering:
   moved; flow 160/240, body 372/173/48, Class285, the 48-gap roster and
   observation total 2738 all unmoved. Throughput: +8 draws for one
   census/ledger/review/gate on the shared greenfield scaffolding.
+- **2026-11-13, ishikawa family renderer (7 whole draws, D-187,
+  predating its commit).** Twelfth greenfield family and the simplest
+  grammar yet: ishikawa-beta is a relative-indentation tree whose nodes
+  are bare labels (the effect root at 2 spaces, then cause categories and
+  nested sub-causes), transcribed verbatim with source indentation
+  preserved. (1) The candidate count of 13 was never a clean-count
+  promise; the live, fence-tolerant census gives 7 clean / 6
+  frontmatter-gated / 0 body — the six themed/padded/usemaxwidth
+  fixtures carry theme/look/config keys the terminal cannot express.
+  Recorded per the milestone rule that census numbers are candidates and
+  the source decides (rule 19). (2) Unlike tree-view's strict 2+4k grid,
+  ishikawa indentation is relative — fixture 13 deliberately mixes
+  2/3/4/5/6/8/10/12/14-space indents — so the renderer only requires a
+  >=2-space indent and a bare-label character set rather than
+  reconstructing parent/child geometry it cannot draw anyway. The
+  distinction is asserted in the cohort test. (3) All seven clean trees
+  also draw at 40 columns on both tracks (rule 18 live measurement). A
+  self-caught test bug treated a skipped blank line as a rejected empty
+  node; the renderer skips whitespace-only lines by design, so the test
+  now asserts that behavior. No new rule; rules 18, 19 and 22 cover the
+  work. No frozen contract moved; flow 160/240, body 372/173/48,
+  Class285, the 48-gap roster and observation total 2738 all unmoved.
+  Throughput: +7 draws for one census/ledger/review/gate on the shared
+  greenfield scaffolding.

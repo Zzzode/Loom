@@ -37,6 +37,7 @@ are not whole-original errors).
 | After kanban family renderer (11 clean originals) | 2026-11-13 | d42baf8b | 1112 | 1033 | 0 |
 | After usecase family renderer (14 clean originals) | 2026-11-13 | 74506fba | 1126 | 1019 | 0 |
 | After tree-view family renderer (8 clean originals) | 2026-11-13 | 2620d828 | 1134 | 1011 | 0 |
+| After ishikawa family renderer (7 clean originals) | 2026-11-13 | b921654d | 1141 | 1004 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -67,7 +68,7 @@ disposition (fix or documented infeasibility).
 | state-diagram | 26 | 16 | |
 | tree-view | 7 | 8 | renderer added 2026-11-13; 5 frontmatter layout/icon-config + 2 body :::class rows stay source (no icon/color contract); live census 8/5/2 corrected an older 9/4/2 via a trailing-whitespace fence |
 | quadrant-chart | 7 | 7 | renderer added 2026-11-13; 5 %%{init}%% visual directives (axis position/sizing/theme colors) + 2 inline point-style rows stay source (no geometry/color contract) |
-| ishikawa | 13 | 0 | |
+| ishikawa | 6 | 7 | renderer added 2026-11-13; 6 frontmatter theme/look/config rows stay source (no fishbone geometry/color contract); live census 7/6/0 from a candidate pool of 13 |
 | kanban | 0 | 11 | renderer added 2026-11-13; all eleven originals clean (description-only frontmatter; cards with optional @{...} structural metadata, no color contract) |
 | mindmap | 19 | 14 | |
 | venn | 10 | 11 | renderer added 2026-11-12; 7 frontmatter theme/look/config + 3 body style/classDef rows stay source (no circle/color contract) |
@@ -83,7 +84,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1011** | **1134** | |
+| **Total** | **1004** | **1141** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -876,3 +877,44 @@ when the body would draw.
   `/tmp/g4probe/treeview/serial-treeview.log` — the Config110
   whole-source, Class285, Block58 and ER107 admission tests run one at a
   time — 4/4 passed (SERIAL_RC=0, ~398s).
+- 2026-11-13 (ishikawa family renderer `b921654d`, local; D-187):
+  twelfth greenfield family. A new `mermaid_ishikawa_impl.cpp` projects
+  the ishikawa-beta grammar — a relative-indentation tree whose nodes are
+  bare labels (an effect root followed by cause categories and nested
+  sub-causes, character set [A-Za-z0-9 _.-]) — to a bounded native outline
+  that validates each node and transcribes the line verbatim with its
+  source indentation preserved. No fishbone spine, branch geometry or
+  color is rendered. The live source gives 7 clean / 6 frontmatter-gated /
+  0 body-gated (the brief's 13 was a candidate count, not a clean
+  promise): the six gated fixtures carry frontmatter theme/look/config
+  keys (themes, handDrawn look, diagram padding, useMaxWidth) the
+  terminal cannot express, and there is no classDef/:::/style/init
+  statement anywhere in the family. Indentation is relative rather than a
+  fixed grid, so a node needs only a >=2-space indent; blank and
+  whitespace-only lines are skipped. The classifier adds
+  MermaidProbeFamily::Ishikawa on the exact `ishikawa-beta` header
+  (including after a frontmatter fence) and a dispatch case; the matrix
+  hook replaces run_case observations 1:1 for the 7 ledger paths
+  (observation total stays 2738; the six gated fixtures keep their
+  default source disposition). Independent read-only zero-build
+  adversarial review aa67aef2934adf864 APPROVE with zero MAJOR: it
+  independently reproduced the 7/6/0 partition, ported the renderer to
+  a simulator and passed 32 adversarial probes with no fail-open, and
+  confirmed the relative-indent design and the single guarded push. The
+  four MINOR test/comment items were applied (non-ASCII/emoji fail-closed
+  pins, header-only frame test, init/style gate coverage, indent-1
+  boundary). Whole originals 1134 -> 1141 drawn / 1011 -> 1004
+  fallback / 0 error; ishikawa 7/6; flow 160/240, body 372/173/48, the
+  48-gap roster and Class285 260/25/0 are unmoved; debug/release
+  OfficialMatrix JSON byte-identical (sha256
+  897aebab2c5dd8e30065354f540645d2b17bcf42ea15717f27a2a7cd9466a5d7;
+  release 27s, debug 243s). Full mermaid label suite 1280/1280 green
+  (the 1273 tree-view-era count plus the seven ishikawa cohort cases).
+  ASan contact across all twelve greenfield family cohorts (89 tests:
+  ishikawa/tree-view/usecase/kanban/architecture/quadrant/venn/c4/
+  treemap/gantt/timeline/journey) zero sanitizer reports, logged at
+  `/tmp/g4probe/ishikawa/asan-contact.log`. Serial gate 4/4 green
+  (`-j1`, 405.4s wall: EveryWholeSourceIsObserved 204.91s,
+  CapabilityReport.Class285 174.77s, Block58AdmissionJoin 23.43s,
+  Er107AdmissionJoin 2.29s), RC=0, logged at
+  `/tmp/g4probe/ishikawa/serial-ishikawa.log`.

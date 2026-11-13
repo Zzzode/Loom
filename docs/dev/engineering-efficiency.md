@@ -656,3 +656,37 @@ Attach a short efficiency section to each closure report, answering:
   48-gap roster and observation total 2738 all unmoved. Throughput: +6
   draws for one census/ledger/review/gate on the shared greenfield
   scaffolding.
+- **2026-11-13, railroad family renderer (8 whole draws, D-193,
+  predating its commit).** Fifteenth greenfield family and the first
+  multi-dialect grammar: four headers (IR nested calls plus ABNF/EBNF/PEG
+  textual notations) behind one enum, each validated by a dialect-specific
+  recursive-descent parser and transcribed verbatim. The live
+  fence-tolerant census gives 8 clean / 1 frontmatter theme-gated / 0 body
+  from a candidate pool of 9; the family's only non-ASCII byte is an
+  em-dash in one frontmatter description so every body is pure ASCII.
+  (1) A real fixture caught a real state-machine bug on the first run: the
+  multi-line IR rule's closing `) ;` line sits on column 0, and the
+  initial column-based rule boundary treated it as an illegal new rule and
+  rejected the whole fixture. The reliable boundary is the ';' terminator,
+  not the column — a column-0 line may either open a rule or close a
+  multi-line one, while an indented line is a continuation only inside an
+  open IR rule. Only the real-fixture CellCapture run exposed it; the
+  synthetic happy paths did not. (2) Rule 18 held again: the narrow-40
+  ledger was filled only from a live probe, which showed just the two
+  frames whose every line is <=40 columns draw narrow (2/8). (3) A C++
+  test-literal trap: `"\x7fb"` is one out-of-range hex escape because `\x`
+  consumes every following hex digit, not one byte — split adjacent
+  literals (`"\x7f" "b"`) to bound the escape; the compiler caught it, but
+  it cost a build round-trip. (4) Rule 25's cwd-drift failure recurred a
+  THIRD time even though the rule was codified during wardley: a
+  backgrounded matrix build again omitted the absolute `cd` and inherited
+  the ctest cwd, failing on CMakePresets.json. Codification alone did not
+  prevent it; the mechanical rule is now applied literally — every
+  backgrounded configure/build command starts with an absolute
+  `cd /home/zhangdi.zode/Develop/Loom &&`, and the in-log RC marker is the
+  only trusted status. No new numbered rule beyond 18/20/22/25; the parser
+  work is covered by 20 (every branch advances) and 22 (single guarded
+  push). No frozen contract moved; flow 160/240, body 372/173/48,
+  Class285, the 48-gap roster and observation total 2738 all unmoved.
+  Throughput: +8 draws for one census/ledger/review/gate on the shared
+  greenfield scaffolding.

@@ -40,6 +40,7 @@ are not whole-original errors).
 | After ishikawa family renderer (7 clean originals) | 2026-11-13 | b921654d | 1141 | 1004 | 0 |
 | After cynefin family renderer (7 clean originals) | 2026-11-13 | 3c73ca54 | 1148 | 997 | 0 |
 | After wardley family renderer (6 clean originals) | 2026-11-13 | ca676cb5 | 1154 | 991 | 0 |
+| After railroad family renderer (8 clean originals) | 2026-11-13 | b02234b3 | 1162 | 983 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -75,7 +76,7 @@ disposition (fix or documented infeasibility).
 | mindmap | 19 | 14 | |
 | venn | 10 | 11 | renderer added 2026-11-12; 7 frontmatter theme/look/config + 3 body style/classDef rows stay source (no circle/color contract) |
 | wardley | 4 | 6 | renderer added 2026-11-13; 4 frontmatter theme-test rows stay source (no map-canvas/color contract); live census 6/4/0 from a candidate pool of 10; the only non-ASCII byte in the family is inside one frontmatter description |
-| railroad | 9 | 0 | |
+| railroad | 1 | 8 | renderer added 2026-11-13; first multi-dialect family (railroad-beta IR + abnf/ebnf/peg-beta); 1 frontmatter theme row stays source (no track/color contract); live census 8/1/0 from a candidate pool of 9; only non-ASCII byte is in one frontmatter description |
 | block | 0 | 58 | complete (B0a/B6) |
 | sequence | 0 | 193 | complete |
 | cynefin | 5 | 7 | renderer added 2026-11-13; 5 frontmatter config/theme/look rows stay source (no boundary-geometry/color contract); live census 7/5/0 from a candidate pool of 12 |
@@ -86,7 +87,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **991** | **1154** | |
+| **Total** | **983** | **1162** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -1015,3 +1016,48 @@ when the body would draw.
   CapabilityReport.Class285 168.21s, Block58AdmissionJoin 22.97s,
   Er107AdmissionJoin 2.18s), RC=0, logged at
   `/tmp/g4probe/wardley/serial-wardley.log`.
+- 2026-11-13 (railroad family renderer `b02234b3`, local; D-193):
+  fifteenth greenfield family and the first multi-dialect grammar. A new
+  `mermaid_railroad_impl.cpp` handles the four corpus headers —
+  railroad-beta (IR nested function calls) and the railroad-abnf/ebnf/
+  peg-beta textual notations — by validating each grammar rule with a
+  dialect-specific recursive-descent parser and transcribing the physical
+  lines verbatim, preserving continuation indentation. No track geometry,
+  branch shapes or color is rendered. The live source gives 8 clean / 1
+  frontmatter-gated / 0 body-gated from a candidate pool of 9 (the single
+  gated ir-dark-theme carries a config theme key); the only non-ASCII byte
+  in the family is an em-dash inside one frontmatter description, so all
+  bodies are pure ASCII. The IR dialect parses a closed seven-function set
+  and buffers a multi-line rule until its ';' terminator; the three text
+  dialects share an expression parser parameterized by their operators and
+  reject operator crossing. A rule starts on column 0 and an indented
+  continuation is legal only inside an open IR rule. The classifier gains
+  MermaidProbeFamily::Railroad on the four exact headers (including after
+  a frontmatter fence) and a dispatch case; the matrix hook replaces
+  run_case observations 1:1 for the 8 ledger paths (observation total
+  stays 2738; the gated fixture keeps its default disposition).
+  Independent read-only zero-build adversarial review task
+  a1214613ac79ed6d6 APPROVE with zero MAJOR: it independently reproduced
+  the 8/1/0 partition across the four dialects, ported both parsers to a
+  simulator with an inverse oracle and ran about 158,000
+  fuzzed/mutation/random inputs plus cap boundary checks with no
+  fail-open, crash, hang, non-verbatim emission or quadratic blowup. Two
+  MINORs were applied: a quoted literal now requires printable ASCII
+  (C0 control bytes were previously invisible cells) with three
+  regression pins, and the ABNF repetition is documented as the RFC 5234
+  prefix form only (a postfix '*' stays fail-closed). Whole
+  originals 1154 -> 1162 drawn / 991 -> 983 fallback / 0 error;
+  railroad 8/1; flow 160/240, body 372/173/48, the 48-gap roster and
+  Class285 260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  e99eef2c4d3964600f112191b4f0cb0041e217bdd26589460d6ca0068d073b82;
+  release 28s, debug 242s). Full mermaid label suite 1301/1301 green
+  (the 1294 wardley-era count plus the seven railroad cohort cases).
+  ASan contact across all fifteen greenfield family cohorts (110 tests:
+  railroad/wardley/cynefin/ishikawa/tree-view/usecase/kanban/architecture/
+  quadrant/venn/c4/treemap/gantt/timeline/journey) zero sanitizer reports,
+  logged at `/tmp/g4probe/railroad/asan-contact.log`. Serial gate 4/4 green
+  (`-j1`, 398.4s wall: EveryWholeSourceIsObserved 204.26s,
+  CapabilityReport.Class285 168.74s, Block58AdmissionJoin 23.19s,
+  Er107AdmissionJoin 2.19s), RC=0, logged at
+  `/tmp/g4probe/railroad/serial-railroad.log`.

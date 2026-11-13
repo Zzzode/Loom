@@ -1,0 +1,151 @@
+{
+  "schema": "loom_mermaid_packet_cohort/v1",
+  "rfc": 31,
+  "phase": "packet-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_packet_impl.cpp",
+    "grammar": "packet/packet-beta; title, single-bit and ranged fields",
+    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "packet fixtures with no frontmatter gate and no body style",
+    "roots": [
+      "packet"
+    ],
+    "draw_count": 4,
+    "frontmatter_gated_count": 2,
+    "frontmatter_gated": [
+      "packet/pr-check/should-render-a-complex-packet-diagram-with-showbits-false.mmd",
+      "packet/pr-check/should-render-a-packet-diagram-with-descending-bit-order.mmd"
+    ],
+    "body_style_gated_count": 0,
+    "body_style_gated": []
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, packet renderer cohort, 2026-11-14, task a5c4e116b2dbc1841)",
+    "date": "2026-11-14",
+    "verdict": "approved",
+    "note": "APPROVE with zero MAJOR. The reviewer independently reproduced the 4/2/0 partition, ported the position/range and field validators to a simulator against a separate spec oracle, and ran 58 named attack vectors, 103 boundary cases and 900,000 fuzzed/mutation/random-byte inputs with zero accept/reject divergence, crash or non-verbatim emission. Every malformed position (non-numeric, signed, empty range side, extra dash, internal space), unquoted/empty/embedded-quote label and trailing token fails closed; C0/DEL/non-ASCII literals fail closed and punctuation inside a quoted label stays data. The family's only non-ASCII bytes are em-dashes inside the frontmatter descriptions of the two complex fixtures (one clean, one gated); every body is pure ASCII. The trim-before-colon frontmatter gate and the printable-ASCII literal hardening are confirmed. The NITs (a reconstructed header line keeps a CRLF carriage return that ftxui discards invisibly and which matches the approved railroad sibling, the over-broad ':::' substring gate, and accepting reversed/leading-zero ranges as shape-only, non-integer-parsing inputs) are fail-safe or faithful with no corpus sample and are unchanged per the blast-radius rule."
+  },
+  "counts": {
+    "total": 4,
+    "predicted_draw": 4,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 4
+  },
+  "rows": [
+    {
+      "path": "packet/pr-check/should-render-a-complex-packet-diagram.mmd",
+      "family": "packet",
+      "sha256": "aa034032882839245e448d4237e7b30ab0975cd1b253b02753d59c4698b59627",
+      "manifest_sha256": "aa034032882839245e448d4237e7b30ab0975cd1b253b02753d59c4698b59627",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "packet renderer validates the bit positions and labels and transcribes them verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "packet/pr-check/should-render-a-simple-packet-beta-diagram.mmd",
+      "family": "packet",
+      "sha256": "d6f17eac35f51786aea805ccd04c7c181884c27b6f8c5b81e6e4118a7aebdea4",
+      "manifest_sha256": "d6f17eac35f51786aea805ccd04c7c181884c27b6f8c5b81e6e4118a7aebdea4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "packet renderer validates the bit positions and labels and transcribes them verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "packet/pr-check/should-render-a-simple-packet-diagram-without-ranges.mmd",
+      "family": "packet",
+      "sha256": "dc78bf67942904efc474e3af55ac8815de58aa9449381f561537f197cd9fd139",
+      "manifest_sha256": "dc78bf67942904efc474e3af55ac8815de58aa9449381f561537f197cd9fd139",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "packet renderer validates the bit positions and labels and transcribes them verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "packet/pr-check/should-render-a-simple-packet-diagram.mmd",
+      "family": "packet",
+      "sha256": "1a3a01f3b46382938354354899d46d4c71b288578e876578ccc799b4f21e7b3e",
+      "manifest_sha256": "1a3a01f3b46382938354354899d46d4c71b288578e876578ccc799b4f21e7b3e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "packet renderer validates the bit positions and labels and transcribes them verbatim; no visual gate is present so it draws"
+    }
+  ]
+}

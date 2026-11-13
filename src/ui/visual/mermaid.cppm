@@ -329,6 +329,7 @@ enum class MermaidProbeFamily : unsigned char {
     Wardley,
     Railroad,
     Radar,
+    Packet,
     Block
 };
 

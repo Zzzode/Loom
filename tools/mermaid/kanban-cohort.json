@@ -1,0 +1,337 @@
+{
+  "schema": "loom_mermaid_kanban_cohort/v1",
+  "rfc": 31,
+  "phase": "kanban-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_kanban_impl.cpp",
+    "grammar": "kanban; id[Label] or bare id with optional @{ key: value }",
+    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "kanban fixtures with no frontmatter gate and no body style",
+    "roots": [
+      "kanban"
+    ],
+    "draw_count": 11,
+    "frontmatter_gated_count": 0,
+    "frontmatter_gated": [],
+    "body_style_gated_count": 0,
+    "body_style_gated": []
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, kanban renderer cohort, 2026-11-13, task a112dbeca598240ec)",
+    "date": "2026-11-13",
+    "verdict": "approved",
+    "note": "APPROVE with zero MAJOR. The reviewer independently reproduced the exact 11/0/0 partition (50 cards, three shapes: bare id, id+label, id+label+annotation), matched all manifest shas and the live narrow set (the three boards under 40 bytes), and probed every malformed card shape with no fail-open. MINOR 1 (full visual-gate branch tests), MINOR 2 (header-only frame and bare-CR cases) and the NIT 5 empty-label/empty-annotation/nested-brace boundaries were applied in the cohort test. MINOR 3 disclosed a cross-suite effect: two merman vendor kanban inputs (including a label-less id@{...} card) flip from Charts/source to native draw via the classifier; MermaidTerminal.CompleteImportedInputBaseline still passes and no test pins their disposition, so the flip is safe and is recorded here. The conservative classDef/::: prefix gate is inherited unchanged from the approved architecture/quadrant siblings and only forces a safe source fallback; remaining NITs are safe-direction whitespace/tolerance behavior with zero corpus impact."
+  },
+  "counts": {
+    "total": 11,
+    "predicted_draw": 11,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 11
+  },
+  "rows": [
+    {
+      "path": "kanban/nightly-check/7-should-handle-prioritization.mmd",
+      "family": "kanban",
+      "sha256": "d4434f5dc75b67b0e96c2d0077c9750e6e341de71f766efc01995d5ad82c2220",
+      "manifest_sha256": "d4434f5dc75b67b0e96c2d0077c9750e6e341de71f766efc01995d5ad82c2220",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "kanban renderer projects cards and their annotations to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "kanban/pr-check/1-should-render-a-kanban-with-a-single-section.mmd",
+      "family": "kanban",
+      "sha256": "61a95c6b98ce2aba9efcb5014e2081993cccce4c17c6148d48cf08884992f635",
+      "manifest_sha256": "61a95c6b98ce2aba9efcb5014e2081993cccce4c17c6148d48cf08884992f635",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "kanban renderer projects cards and their annotations to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "kanban/pr-check/10-full-example.mmd",
+      "family": "kanban",
+      "sha256": "059f3a587a846c99a0be89104891d4b1ce7a55e1283aff2633bbe4a0007d199b",
+      "manifest_sha256": "059f3a587a846c99a0be89104891d4b1ce7a55e1283aff2633bbe4a0007d199b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "kanban renderer projects cards and their annotations to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "kanban/pr-check/2-should-render-a-kanban-with-multiple-sections.mmd",
+      "family": "kanban",
+      "sha256": "cbbdd5ddbcf0c113dc280f9b72cc415e6dd2edf9ce679df3987ba33ddac24fde",
+      "manifest_sha256": "cbbdd5ddbcf0c113dc280f9b72cc415e6dd2edf9ce679df3987ba33ddac24fde",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "kanban renderer projects cards and their annotations to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "kanban/pr-check/3-should-render-a-kanban-with-a-single-wrapping-node.mmd",
+      "family": "kanban",
+      "sha256": "d42f3df1c8f6b305b4a0a38d2b4b1b8b530cef953cbf39b63595a1b0a77392de",
+      "manifest_sha256": "d42f3df1c8f6b305b4a0a38d2b4b1b8b530cef953cbf39b63595a1b0a77392de",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "kanban renderer projects cards and their annotations to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "kanban/pr-check/4-should-handle-the-height-of-a-section-with-a-wrapping-node-at-the-end.mmd",
+      "family": "kanban",
+      "sha256": "83f587eda5998bc9637917de4049124c080583a2e4563f643d6bfd7e404abbf8",
+      "manifest_sha256": "83f587eda5998bc9637917de4049124c080583a2e4563f643d6bfd7e404abbf8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "kanban renderer projects cards and their annotations to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "kanban/pr-check/5-should-handle-the-height-of-a-section-with-a-wrapping-node-at-the-top.mmd",
+      "family": "kanban",
+      "sha256": "f3e86b64df7f603bafdefbc5224905a7acd0a2e05bfb4e042b05bdac16636316",
+      "manifest_sha256": "f3e86b64df7f603bafdefbc5224905a7acd0a2e05bfb4e042b05bdac16636316",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "kanban renderer projects cards and their annotations to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "kanban/pr-check/6-should-handle-assignments.mmd",
+      "family": "kanban",
+      "sha256": "d1258267addc1fe213ac5e9657406717a5989285a75d9d2a98a328952fc2f4b4",
+      "manifest_sha256": "d1258267addc1fe213ac5e9657406717a5989285a75d9d2a98a328952fc2f4b4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "kanban renderer projects cards and their annotations to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "kanban/pr-check/6-should-handle-the-height-of-a-section-with-a-wrapping-node-in-the-middle.mmd",
+      "family": "kanban",
+      "sha256": "728037b50d4a0dff159764fd6b43d5f868ae93f8d56238dbf6153e937299b14f",
+      "manifest_sha256": "728037b50d4a0dff159764fd6b43d5f868ae93f8d56238dbf6153e937299b14f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "kanban renderer projects cards and their annotations to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "kanban/pr-check/7-should-handle-external-tickets.mmd",
+      "family": "kanban",
+      "sha256": "b8b3591458dfeb99eb2787c0febfdb8b366ade5caf733a41ed4cfa318deac7c5",
+      "manifest_sha256": "b8b3591458dfeb99eb2787c0febfdb8b366ade5caf733a41ed4cfa318deac7c5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "kanban renderer projects cards and their annotations to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "kanban/pr-check/8-should-handle-assignments-prioritization-and-tickets-ids-in-the-same-item.mmd",
+      "family": "kanban",
+      "sha256": "0a64338fe53820163609556ae6fb7db5b5ab3affee8d3837b824ea11eaf2cfaa",
+      "manifest_sha256": "0a64338fe53820163609556ae6fb7db5b5ab3affee8d3837b824ea11eaf2cfaa",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "kanban renderer projects cards and their annotations to a bounded native outline; no visual gate is present so it draws"
+    }
+  ]
+}

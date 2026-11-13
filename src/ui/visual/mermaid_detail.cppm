@@ -142,6 +142,7 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
 std::optional<std::vector<std::string>> venn_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> quadrant_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> architecture_layout(std::string_view source, Work& work);
+std::optional<std::vector<std::string>> kanban_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> sequence_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> charts_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source, Work& work,

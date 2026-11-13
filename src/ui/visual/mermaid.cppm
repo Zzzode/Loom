@@ -327,6 +327,7 @@ enum class MermaidProbeFamily : unsigned char {
     Ishikawa,
     Cynefin,
     Wardley,
+    Railroad,
     Block
 };
 

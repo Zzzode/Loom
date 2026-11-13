@@ -1,0 +1,258 @@
+{
+  "schema": "loom_mermaid_railroad_cohort/v1",
+  "rfc": 31,
+  "phase": "railroad-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_railroad_impl.cpp",
+    "grammar": "railroad-beta IR nested calls; railroad-abnf/ebnf/peg-beta textual notations",
+    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "railroad fixtures with no frontmatter gate and no body style",
+    "roots": [
+      "railroad"
+    ],
+    "draw_count": 8,
+    "frontmatter_gated_count": 1,
+    "frontmatter_gated": [
+      "railroad/pr-check/ir-dark-theme.mmd"
+    ],
+    "body_style_gated_count": 0,
+    "body_style_gated": []
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, railroad renderer cohort, 2026-11-13, task a1214613ac79ed6d6)",
+    "date": "2026-11-13",
+    "verdict": "approved",
+    "note": "APPROVE with zero MAJOR. The reviewer independently reproduced the 8/1/0 partition across the four dialects, ported both the IR recursive-descent parser and the three text expression parsers to a simulator with an inverse oracle, and ran 115 hand probes, 1,600 generated sources, about 158,000 fuzzed/mutation/random-byte inputs and cap boundary checks (256/257 rules, depth 64/65, 512/513 text bytes, source 65536, width 240/241, Work=0) with no fail-open, crash, hang, non-verbatim emission or quadratic blowup. Two MINORs were applied: (1) a quoted literal accepted C0 control bytes (NUL/ESC/VT) that the terminal renders as invisible cells, so parse_string now requires printable ASCII (0x20-0x7E) with three control regression pins; (2) the ABNF repetition is documented as the RFC 5234 prefix form '*(...)' only — a postfix '*' is an EBNF/PEG convention and stays fail-closed, matching the single ABNF fixture. The NITs (frontmatter-CRLF safe-direction fallback, the re-sliced header line, the nominal row-count off-by-one already re-gated downstream, and lenient-but-faithful parses such as empty IR args) are fail-closed or faithful with no corpus sample and match the approved siblings, so they are unchanged. The frontmatter key scanner trims before comparing, closing the cynefin-era 'config : 42' spacing bypass from the first draft."
+  },
+  "counts": {
+    "total": 8,
+    "predicted_draw": 8,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 8
+  },
+  "rows": [
+    {
+      "path": "railroad/pr-check/abnf-alternation-and-repetition.mmd",
+      "family": "railroad",
+      "sha256": "63fbbcab2f6c8c374b1660cf7e75710f394d9cd8058a6586579d5668d694db04",
+      "manifest_sha256": "63fbbcab2f6c8c374b1660cf7e75710f394d9cd8058a6586579d5668d694db04",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "railroad renderer validates the four dialect grammars and transcribes the rules verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "railroad/pr-check/ebnf-iso-14977-notation.mmd",
+      "family": "railroad",
+      "sha256": "e56806633cd0d635e1fc1897a21217e25aa9e59c16f5c32d0ef87d2cd4308373",
+      "manifest_sha256": "e56806633cd0d635e1fc1897a21217e25aa9e59c16f5c32d0ef87d2cd4308373",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "railroad renderer validates the four dialect grammars and transcribes the rules verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "railroad/pr-check/ebnf-sequences-and-choices.mmd",
+      "family": "railroad",
+      "sha256": "620c2b9d20b16ff57b26700eaf0dc81238408381aba96c0ec23b64e600b2bc4b",
+      "manifest_sha256": "620c2b9d20b16ff57b26700eaf0dc81238408381aba96c0ec23b64e600b2bc4b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "railroad renderer validates the four dialect grammars and transcribes the rules verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "railroad/pr-check/ir-a-simple-rule.mmd",
+      "family": "railroad",
+      "sha256": "159d83c334bc1bdda4d0757c9f7188ec14e181d1b04d28d9fe82051b3557ffab",
+      "manifest_sha256": "159d83c334bc1bdda4d0757c9f7188ec14e181d1b04d28d9fe82051b3557ffab",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "railroad renderer validates the four dialect grammars and transcribes the rules verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "railroad/pr-check/ir-multiple-rules-in-one-diagram.mmd",
+      "family": "railroad",
+      "sha256": "ab5cdff4afbf8154904b17d1e74e6b9e116542e04fc31d30731dec2577131b2c",
+      "manifest_sha256": "ab5cdff4afbf8154904b17d1e74e6b9e116542e04fc31d30731dec2577131b2c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "railroad renderer validates the four dialect grammars and transcribes the rules verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "railroad/pr-check/ir-optional-and-repetition-operators.mmd",
+      "family": "railroad",
+      "sha256": "585cf7c5a00c8131ae18b8fb3f468ac092df82da70d5d228fbd0448b23d86bdb",
+      "manifest_sha256": "585cf7c5a00c8131ae18b8fb3f468ac092df82da70d5d228fbd0448b23d86bdb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "railroad renderer validates the four dialect grammars and transcribes the rules verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "railroad/pr-check/ir-sequences-and-choices.mmd",
+      "family": "railroad",
+      "sha256": "7aeda7dc6f687824f124f63a5a4ecfcdccff1e2b96ca8898ef9d181e3f247a20",
+      "manifest_sha256": "7aeda7dc6f687824f124f63a5a4ecfcdccff1e2b96ca8898ef9d181e3f247a20",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "railroad renderer validates the four dialect grammars and transcribes the rules verbatim; no visual gate is present so it draws"
+    },
+    {
+      "path": "railroad/pr-check/peg-ordered-choice-and-suffixes.mmd",
+      "family": "railroad",
+      "sha256": "2d754db59fee4cfab4d9bfa81996aa6c205e8db0a693140cae1623241492f6f5",
+      "manifest_sha256": "2d754db59fee4cfab4d9bfa81996aa6c205e8db0a693140cae1623241492f6f5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "railroad renderer validates the four dialect grammars and transcribes the rules verbatim; no visual gate is present so it draws"
+    }
+  ]
+}

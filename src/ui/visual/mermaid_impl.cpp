@@ -6199,6 +6199,10 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
         return h == "C4Context" || h == "C4Container" || h == "C4Component" ||
                h == "C4Deployment" || h == "C4Dynamic";
     };
+    auto is_railroad_header = [](std::string_view h) {
+        return h == "railroad-beta" || h == "railroad-abnf-beta" ||
+               h == "railroad-ebnf-beta" || h == "railroad-peg-beta";
+    };
     bool c4 = is_c4_header(header);
     bool venn = header == "venn-beta";
     bool quadrant = header == "quadrantChart";
@@ -6209,6 +6213,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     bool ishikawa = header == "ishikawa-beta";
     bool cynefin = header == "cynefin-beta";
     bool wardley = header == "wardley-beta";
+    bool railroad = is_railroad_header(header);
     bool block_input = header == "block" || header == "block-beta";
     if (header == "---") {
         has_frontmatter_peek = true;
@@ -6260,6 +6265,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             ishikawa = line == "ishikawa-beta";
             cynefin = line == "cynefin-beta";
             wardley = line == "wardley-beta";
+            railroad = is_railroad_header(line);
             block_input = line == "block" || line == "block-beta";
             if (line.starts_with("classDiagram")) {
                 class_peek = class_prefix_header(line);
@@ -6333,6 +6339,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
                           : ishikawa    ? MermaidProbeFamily::Ishikawa
                           : cynefin     ? MermaidProbeFamily::Cynefin
                           : wardley     ? MermaidProbeFamily::Wardley
+                          : railroad    ? MermaidProbeFamily::Railroad
                                       : MermaidProbeFamily::Charts;
         return decision;
     }
@@ -6771,6 +6778,9 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             break;
         case detail::MermaidProbeFamily::Wardley:
             lines = detail::wardley_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::Railroad:
+            lines = detail::railroad_layout(source, work);
             break;
         case detail::MermaidProbeFamily::Charts:
             lines = detail::charts_layout(source, work);

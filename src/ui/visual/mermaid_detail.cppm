@@ -146,6 +146,7 @@ std::optional<std::vector<std::string>> kanban_layout(std::string_view source, W
 std::optional<std::vector<std::string>> usecase_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> treeview_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> ishikawa_layout(std::string_view source, Work& work);
+std::optional<std::vector<std::string>> cynefin_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> sequence_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> charts_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source, Work& work,

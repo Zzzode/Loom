@@ -325,6 +325,7 @@ enum class MermaidProbeFamily : unsigned char {
     Usecase,
     Treeview,
     Ishikawa,
+    Cynefin,
     Block
 };
 

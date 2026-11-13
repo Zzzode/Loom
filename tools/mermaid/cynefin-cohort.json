@@ -1,0 +1,235 @@
+{
+  "schema": "loom_mermaid_cynefin_cohort/v1",
+  "rfc": 31,
+  "phase": "cynefin-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_cynefin_impl.cpp",
+    "grammar": "cynefin-beta; two-space domains, quoted items, directives and labeled transitions",
+    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "cynefin fixtures with no frontmatter gate and no body style",
+    "roots": [
+      "cynefin"
+    ],
+    "draw_count": 7,
+    "frontmatter_gated_count": 5,
+    "frontmatter_gated": [
+      "cynefin/nightly-check/should-render-cynefin-with-straight-boundaries-when-amplitude-is-zero.mmd",
+      "cynefin/nightly-check/should-render-cynefin-without-domain-descriptions.mmd",
+      "cynefin/pr-check/should-render-cynefin-deterministically-with-an-explicit-seed-override.mmd",
+      "cynefin/pr-check/should-render-cynefin-with-config-override.mmd",
+      "cynefin/pr-check/should-render-cynefin-with-theme-override.mmd"
+    ],
+    "body_style_gated_count": 0,
+    "body_style_gated": []
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, cynefin renderer cohort, 2026-11-13, task ad43d9261d381626d)",
+    "date": "2026-11-13",
+    "verdict": "approved",
+    "note": "Final verdict APPROVE after one re-review. The first pass returned REQUEST CHANGES on a single MAJOR: a frontmatter key with whitespace before the mapping colon ('config : 42', legal YAML) bypassed the key-based visual gate because the key tail was not trimmed, so an unrenderable visual contract could draw. The fix trims the key after the colon cut in mermaid_cynefin_impl.cpp; three RED-then-GREEN regression pins cover config/look/theme spacing variants, and the re-review confirmed 21 spacing and near-lookalike variants all fail closed with zero generator/C++ semantic divergence. The same untrimmed-key pattern exists in the already-approved ishikawa/treeview siblings but has no live trigger; per the blast-radius rule it is left for a separate cross-family follow-up, not this change. The reviewer independently reproduced the exact 7/5/0 partition with two separate parsers, ported the validator to a simulator, ran 160 deterministic probes and 300,000 fuzzed inputs with no hang, no fail-open and no verbatim/order invariant break, matched all 30 gtest literals 30/30, and confirmed the single guarded push, the prefix-scoped 1:1 hook and the frozen contracts. The three NITs (indented header accepted, frontmatter-CRLF safe-direction fallback, space-only text transcribed) are fail-closed or faithful, have no corpus sample and match the approved siblings, so they are unchanged."
+  },
+  "counts": {
+    "total": 7,
+    "predicted_draw": 7,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 7
+  },
+  "rows": [
+    {
+      "path": "cynefin/pr-check/should-render-a-cynefin-diagram-with-transitions.mmd",
+      "family": "cynefin",
+      "sha256": "1ce1a43f0b664e9c46b859ebcbcecd8c194bfee4a24561d4af1989e0d225590b",
+      "manifest_sha256": "1ce1a43f0b664e9c46b859ebcbcecd8c194bfee4a24561d4af1989e0d225590b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "cynefin renderer projects the strict two-space domain/item frame to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "cynefin/pr-check/should-render-a-simple-cynefin-diagram-with-all-five-domains.mmd",
+      "family": "cynefin",
+      "sha256": "c52615a85f0d781b99c0a922ac787a2ff8dc687e0913b620dcb0851b9fcb5361",
+      "manifest_sha256": "c52615a85f0d781b99c0a922ac787a2ff8dc687e0913b620dcb0851b9fcb5361",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "cynefin renderer projects the strict two-space domain/item frame to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "cynefin/pr-check/should-render-an-empty-cynefin-framework.mmd",
+      "family": "cynefin",
+      "sha256": "f3492581a0bf549545ab70ecffc6139f17f911744228184b7400341509ab60e0",
+      "manifest_sha256": "f3492581a0bf549545ab70ecffc6139f17f911744228184b7400341509ab60e0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "cynefin renderer projects the strict two-space domain/item frame to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "cynefin/pr-check/should-render-cynefin-with-accessibility-directives.mmd",
+      "family": "cynefin",
+      "sha256": "0cdb076dd0e6332369793b486d54d5c30c3da8add1aff71b0bef88f54b64f4e2",
+      "manifest_sha256": "0cdb076dd0e6332369793b486d54d5c30c3da8add1aff71b0bef88f54b64f4e2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "cynefin renderer projects the strict two-space domain/item frame to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "cynefin/pr-check/should-render-cynefin-with-confusion-domain-items-without-overflow.mmd",
+      "family": "cynefin",
+      "sha256": "6a80b31e4ef67ed8c7fb2e33df970c5ba286cf32a00068269f125194c3aecd95",
+      "manifest_sha256": "6a80b31e4ef67ed8c7fb2e33df970c5ba286cf32a00068269f125194c3aecd95",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "cynefin renderer projects the strict two-space domain/item frame to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "cynefin/pr-check/should-render-cynefin-with-many-items-per-domain.mmd",
+      "family": "cynefin",
+      "sha256": "ef13fe18d309aed53f3741a1799e2428a4ee40303f62040692d4197352650b54",
+      "manifest_sha256": "ef13fe18d309aed53f3741a1799e2428a4ee40303f62040692d4197352650b54",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "cynefin renderer projects the strict two-space domain/item frame to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "cynefin/pr-check/should-render-cynefin-with-self-loop-transitions-silently-dropped.mmd",
+      "family": "cynefin",
+      "sha256": "05dbacdd63a5ee8e0c0fa1953cd06812a33372c2aa56944cf6cc046a5847f411",
+      "manifest_sha256": "05dbacdd63a5ee8e0c0fa1953cd06812a33372c2aa56944cf6cc046a5847f411",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "cynefin renderer projects the strict two-space domain/item frame to a bounded native outline; no visual gate is present so it draws"
+    }
+  ]
+}

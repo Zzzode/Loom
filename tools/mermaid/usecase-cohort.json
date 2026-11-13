@@ -1,0 +1,438 @@
+{
+  "schema": "loom_mermaid_usecase_cohort/v1",
+  "rfc": 31,
+  "phase": "usecase-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_usecase_impl.cpp",
+    "grammar": "usecase-beta; direction, actor, use cases, systemBoundary/end, notes, UML edges and @{...} metadata",
+    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "usecase fixtures with no frontmatter gate and no body style",
+    "roots": [
+      "usecase"
+    ],
+    "draw_count": 14,
+    "frontmatter_gated_count": 12,
+    "frontmatter_gated": [
+      "usecase/nightly-check/10-configuration-and-accessibility.mmd",
+      "usecase/nightly-check/themed-elements-redux-color-theme.mmd",
+      "usecase/nightly-check/themed-elements-redux-dark-color-theme.mmd",
+      "usecase/pr-check/complete-hand-drawn-rendering-contract.mmd",
+      "usecase/pr-check/palette-rotation-redux-color-theme.mmd",
+      "usecase/pr-check/palette-rotation-redux-dark-color-theme.mmd",
+      "usecase/pr-check/small-representative-visual-snapshot.mmd",
+      "usecase/pr-check/themed-elements-base-theme.mmd",
+      "usecase/pr-check/themed-elements-dark-theme.mmd",
+      "usecase/pr-check/themed-elements-default-theme.mmd",
+      "usecase/pr-check/themed-elements-forest-theme.mmd",
+      "usecase/pr-check/themed-elements-neutral-theme.mmd"
+    ],
+    "body_style_gated_count": 6,
+    "body_style_gated": [
+      "usecase/nightly-check/07-edge-styles-and-animation.mmd",
+      "usecase/nightly-check/08-json-table.mmd",
+      "usecase/nightly-check/12-boundary-contained-actors.mmd",
+      "usecase/nightly-check/14-element-styling-precedence.mmd",
+      "usecase/nightly-check/16-json-order-and-values.mmd",
+      "usecase/nightly-check/20-full-featured-order-system.mmd"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, usecase renderer cohort, 2026-11-13, task a37954a81a81ed523)",
+    "date": "2026-11-13",
+    "verdict": "approved",
+    "note": "APPROVE with zero MAJOR. The reviewer independently reproduced the exact 14/12/6 partition with a from-scratch frontmatter splitter (a ::: file also carrying frontmatter counts as frontmatter), ported every validator and ran 60+ adversarial probes with no fail-open across the 32 fixtures. MINOR 1 (a quote inside a %% comment could swallow later statements) was fixed by treating comment lines as inert while outside an open quote, with a regression test. MINOR 2 edge whitelist: the semicolon reject and the requirement that ..> carry : include/extend were applied (both proven corpus-safe); the proposed single-connector count was rejected because a labeled edge A -- \"label\" --> B legitimately has two dash runs, so a chained edge remains an accepted verbatim outline with no incorrect transcription. The unreachable quoted-first-token branch in validate_declaration (NIT) was deleted; anonymous quoted use cases are handled on the raw statement. The conservative classDef/::: prefix gate is inherited byte-identically from the approved architecture/kanban siblings and only forces a safe source fallback. Remaining NITs are zero-corpus-impact C++/Python whitespace tolerances guarded by the drift guard."
+  },
+  "counts": {
+    "total": 14,
+    "predicted_draw": 14,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 14
+  },
+  "rows": [
+    {
+      "path": "usecase/nightly-check/01-basic-use-cases.mmd",
+      "family": "usecase",
+      "sha256": "6654579942a4defa90c8aabb465cf1d0fa38a21fde7189824bf1291ddfb75e9d",
+      "manifest_sha256": "6654579942a4defa90c8aabb465cf1d0fa38a21fde7189824bf1291ddfb75e9d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/02-system-boundaries.mmd",
+      "family": "usecase",
+      "sha256": "2797e73a07aae40711cd3e108f135c1fef1232fc6285c3e1b3d646f1a4b657cb",
+      "manifest_sha256": "2797e73a07aae40711cd3e108f135c1fef1232fc6285c3e1b3d646f1a4b657cb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/03-actor-variants.mmd",
+      "family": "usecase",
+      "sha256": "c7bbb662f0ecacad6ed5b9da06a5d741bc6e08ad756f6e778b2d2763f5ebb496",
+      "manifest_sha256": "c7bbb662f0ecacad6ed5b9da06a5d741bc6e08ad756f6e778b2d2763f5ebb496",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/04-labels-and-notes.mmd",
+      "family": "usecase",
+      "sha256": "c1fed9681844a5a3343d4a1009d788d89eab59e2caec684a24ce72083b843276",
+      "manifest_sha256": "c1fed9681844a5a3343d4a1009d788d89eab59e2caec684a24ce72083b843276",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/05-association-markers.mmd",
+      "family": "usecase",
+      "sha256": "863c6ad95744b6f63578515a78623772b44eb2101af4eb47831cece5d9121053",
+      "manifest_sha256": "863c6ad95744b6f63578515a78623772b44eb2101af4eb47831cece5d9121053",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/06-uml-relationships.mmd",
+      "family": "usecase",
+      "sha256": "35540af431ef1fefb99040aa0ce75c487e4fa4db49a755c61cbfbd04fe37bcef",
+      "manifest_sha256": "35540af431ef1fefb99040aa0ce75c487e4fa4db49a755c61cbfbd04fe37bcef",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/09-business-and-stereotypes.mmd",
+      "family": "usecase",
+      "sha256": "a656de8a1484467a81c8e99e7c99670c3be2bf9143b9cceb70e1a87cfb8396a3",
+      "manifest_sha256": "a656de8a1484467a81c8e99e7c99670c3be2bf9143b9cceb70e1a87cfb8396a3",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/11-order-independent-refinement.mmd",
+      "family": "usecase",
+      "sha256": "450a0c4e235df6bdaf716440217dde21b1fe481dce76978376dfdd195c622290",
+      "manifest_sha256": "450a0c4e235df6bdaf716440217dde21b1fe481dce76978376dfdd195c622290",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/13-minimum-edge-lengths.mmd",
+      "family": "usecase",
+      "sha256": "d7b1ed80d5dd3e191ca601cf81809f95bf9eea31a9b51de0b7d8e5f631eb2374",
+      "manifest_sha256": "d7b1ed80d5dd3e191ca601cf81809f95bf9eea31a9b51de0b7d8e5f631eb2374",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/15-animation-variants.mmd",
+      "family": "usecase",
+      "sha256": "0738f637a967728135741a5a33e6d4640d068912066b528dd967a02727467a92",
+      "manifest_sha256": "0738f637a967728135741a5a33e6d4640d068912066b528dd967a02727467a92",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/17-direction-bottom-up.mmd",
+      "family": "usecase",
+      "sha256": "6c83ff06a61d38a60f3a7c221ed53991dd4cc870a65b628470251fe0ab036e1b",
+      "manifest_sha256": "6c83ff06a61d38a60f3a7c221ed53991dd4cc870a65b628470251fe0ab036e1b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/18-direction-right-to-left.mmd",
+      "family": "usecase",
+      "sha256": "28a9a267e95e4f510b67fa72292950da5d89c89911a3fea460204f4d123d581d",
+      "manifest_sha256": "28a9a267e95e4f510b67fa72292950da5d89c89911a3fea460204f4d123d581d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/nightly-check/19-association-label-semantics.mmd",
+      "family": "usecase",
+      "sha256": "6392fdc5b355182aa596c8a1bb6bdda04081e8aec6b10c7357348d6e8374feb5",
+      "manifest_sha256": "6392fdc5b355182aa596c8a1bb6bdda04081e8aec6b10c7357348d6e8374feb5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "usecase/pr-check/empty-diagram.mmd",
+      "family": "usecase",
+      "sha256": "f71915fd23160f7305fde55581a8b25f4bf0afc2e96db89c4ffd3db25edbb84b",
+      "manifest_sha256": "f71915fd23160f7305fde55581a8b25f4bf0afc2e96db89c4ffd3db25edbb84b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"
+    }
+  ]
+}

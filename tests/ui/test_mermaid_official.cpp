@@ -5751,6 +5751,34 @@ const JourneyCohortEntry* kanban_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0031 usecase-family renderer cohort: the fourteen clean (no frontmatter
+// gate and no body style statement) usecase-beta originals admitted by
+// mermaid_usecase_impl, with per-width states.
+const std::map<std::string, JourneyCohortEntry>& usecase_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/usecase-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "Usecase cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "Usecase cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* usecase_cohort_row(std::string_view path) {
+    const auto& rows = usecase_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0031 FS-1 reviewed cohort: flowchart originals with a one-key
 // htmlLabels frontmatter and Markdown node/edge labels. The ledger carries
 // separate per-state predictions for the original (whole source) and
@@ -9505,6 +9533,34 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.source_sha256 = fixture.get_string("sha256");
                     row.expected = "drawn";
                     row.reason = "RFC-0031 kanban reviewed renderer cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
+            // RFC 0031 usecase-family renderer: the fourteen clean usecase
+            // originals are governed by their reviewed cohort ledger; the
+            // per-row pixel gate is test_mermaid_usecase_cohort. The eighteen
+            // gated fixtures have no ledger row and keep their default source
+            // disposition.
+            if (class_path.is_str() &&
+                class_path.as_str().starts_with("usecase/")) {
+                if (const auto* cohort = usecase_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "usecase";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "RFC-0031 usecase reviewed renderer cohort";
                     const auto state_status = [](const std::string& state) {
                         return state == "drawn" ? "drawn" : "source_fallback";
                     };

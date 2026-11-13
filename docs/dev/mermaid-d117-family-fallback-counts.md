@@ -33,6 +33,7 @@ are not whole-original errors).
 | After c4 family renderer (23 structural originals) | 2026-11-12 | e70e8c34 | 1067 | 1078 | 0 |
 | After venn family renderer (11 clean originals) | 2026-11-13 | b53736d8 | 1078 | 1067 | 0 |
 | After quadrant family renderer (7 clean originals) | 2026-11-13 | fbb34e13 | 1085 | 1060 | 0 |
+| After architecture family renderer (16 clean originals) | 2026-11-13 | 86288941 | 1101 | 1044 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -56,7 +57,7 @@ disposition (fix or documented infeasibility).
 | timeline | 23 | 7 | renderer added 2026-11-11; 23 themed rows stay source (no color contract) |
 | class-diagram | 25 | 260 | |
 | treemap | 16 | 10 | renderer added 2026-11-12; 10 classDef/::: style + 6 frontmatter config rows stay source (no color/number-format contract) |
-| architecture | 20 | 0 | |
+| architecture | 4 | 16 | renderer added 2026-11-13; 4 frontmatter config layout knobs (randomize/seed/idealEdgeLengthMultiplier) stay source (no fcose layout contract) |
 | sankey | 18 | 0 | |
 | journey | 10 | 18 | renderer added 2026-11-11; 8 themed rows stay source (no color contract) |
 | pie | 17 | 7 | |
@@ -79,7 +80,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1060** | **1085** | |
+| **Total** | **1044** | **1101** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -700,3 +701,47 @@ when the body would draw.
   gate `/tmp/g4probe/quadrant/serial-quadrant.log` — the Config110
   whole-source, Class285, Block58 and ER107 admission tests run one at a
   time — 4/4 passed (SERIAL_RC=0, ~402s).
+- 2026-11-13 (architecture family renderer `86288941`, local; D-161
+  handoff-resumed family): eighth greenfield family. A new
+  `mermaid_architecture_impl.cpp` projects the architecture-beta
+  grammar — group/service/junction declarations with independently
+  optional (icon)/[label] parts and `in` containment, L/R/T/B port
+  edges in directed (`-->`), undirected (`--`) and labeled
+  (`-[Label]-`) forms including `{group}` boundary endpoints, and
+  `align row|column` directives — to a bounded native outline that
+  validates every statement and transcribes the accepted DSL lines
+  verbatim. No fcose layout, edge routing, icon or color is attempted.
+  16 of 20 originals are clean and now draw whole-and-body; 4 stay
+  source, all carrying a frontmatter `config:` layout knob
+  (randomize/seed/idealEdgeLengthMultiplier) the terminal cannot
+  express. There is no %%{init}%%, classDef/::: or body style anywhere
+  in the family. accTitle/accDescr accessibility metadata is accepted
+  but not emitted as a frame row. The classifier adds
+  MermaidProbeFamily::Architecture on the exact `architecture-beta`
+  header (including after a frontmatter fence) and a dispatch case; the
+  matrix hook replaces run_case observations 1:1 for the 16 ledger
+  paths only (observation total stays 2738; the four gated fixtures
+  keep their default source disposition). Independent read-only
+  zero-build adversarial review a5602134897c4359d APPROVE with zero
+  MAJOR: it independently reproduced the 16/4/0 partition, enumerated 18
+  statement shapes (187 statements, zero false rejects), ported the
+  validators and passed 64 + 22 probes and 60000 fuzz cases with no
+  fail-open. Its MINOR 1 (endpoint-order/missing-port/empty-label
+  regression pins), MINOR 2 (icon-only declaration coverage) and the
+  NIT 6 arrow-in-label case were applied; MINOR 3 (conservative
+  classDef/::: prefix gating inherited from quadrant) only forces a safe
+  source fallback and is deferred to a shared hardening batch. Whole
+  originals 1085 -> 1101 drawn / 1060 -> 1044 fallback / 0 error;
+  architecture 16/4; flow 160/240, body 372/173/48, the 48-gap roster
+  and Class285 260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  16ae106a867d557d6fb284d018e8a1d2c57fcc283beb731dac69d4696b531b02;
+  release 28s, debug 251s). Full mermaid label suite 1252/1252 green
+  (the 1245 quadrant-era count plus the seven architecture cohort
+  cases). ASan contact across all eight greenfield family cohorts (61
+  tests: architecture/quadrant/venn/c4/treemap/gantt/timeline/journey)
+  zero sanitizer reports, logged at
+  `/tmp/g4probe/architecture/asan-contact.log`. Serial gate
+  `/tmp/g4probe/architecture/serial-architecture.log` — the Config110
+  whole-source, Class285, Block58 and ER107 admission tests run one at a
+  time — 4/4 passed (SERIAL_RC=0, ~408s).

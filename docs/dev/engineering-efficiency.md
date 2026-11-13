@@ -431,3 +431,31 @@ Attach a short efficiency section to each closure report, answering:
   the 48-gap roster and observation total 2738 all unmoved. Throughput: +7
   draws for one census/ledger/review/gate on the shared greenfield
   scaffolding.
+- **2026-11-13, architecture family renderer (16 whole draws, D-161,
+  predating its commit).** Eighth greenfield family and the largest
+  single greenfield batch since gantt; a declarative node/edge DSL
+  (group/service/junction + compass-port edges), structurally a stricter
+  validator than the outline renderers because it transcribes accepted
+  DSL lines verbatim rather than rebuilding them. (1) Two parser defects
+  in the first iteration, both classes already on the register. The
+  declaration id was split on a space, but the corpus writes
+  `service vm1(server)[VM]` with no space between the id and the
+  brackets — every icon/label declaration was rejected until the id was
+  read as a leading identifier run up to the first `(`/`[`/space.
+  Re-confirms rule 19 (enumerate the real marker spellings before
+  writing the tokenizer) and rule 23 (never assume a hand-counted token
+  boundary; derive it from the actual character class). (2) The two edge
+  endpoints have OPPOSITE field order — source is `name:Port`, target is
+  `Port:name` — and one shared validator silently rejected every edge.
+  Splitting into source/target validators is an application of rule 21
+  (encode the role/order invariant explicitly and test both directions).
+  (3) The live narrow census again overrode the empty initial pin: ten of
+  the sixteen clean diagrams also draw at 40 columns on both tracks; the
+  six larger/deeply-nested ones stay source there, re-confirming rule 18
+  (measure every per-width pin from live renders, don't assume source).
+  (4) No new rule was needed; the verbatim-transcription design means
+  rule 23's keyword-substring hazard cannot recur because no DSL token is
+  reconstructed. No flake, no false green; frozen flow 160/240, body
+  372/173/48, Class285, the 48-gap roster and observation total 2738 all
+  unmoved. Throughput: +16 draws for one census/ledger/review/gate on the
+  shared greenfield scaffolding.

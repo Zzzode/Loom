@@ -39,6 +39,7 @@ are not whole-original errors).
 | After tree-view family renderer (8 clean originals) | 2026-11-13 | 2620d828 | 1134 | 1011 | 0 |
 | After ishikawa family renderer (7 clean originals) | 2026-11-13 | b921654d | 1141 | 1004 | 0 |
 | After cynefin family renderer (7 clean originals) | 2026-11-13 | 3c73ca54 | 1148 | 997 | 0 |
+| After wardley family renderer (6 clean originals) | 2026-11-13 | ca676cb5 | 1154 | 991 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -73,7 +74,7 @@ disposition (fix or documented infeasibility).
 | kanban | 0 | 11 | renderer added 2026-11-13; all eleven originals clean (description-only frontmatter; cards with optional @{...} structural metadata, no color contract) |
 | mindmap | 19 | 14 | |
 | venn | 10 | 11 | renderer added 2026-11-12; 7 frontmatter theme/look/config + 3 body style/classDef rows stay source (no circle/color contract) |
-| wardley | 10 | 0 | |
+| wardley | 4 | 6 | renderer added 2026-11-13; 4 frontmatter theme-test rows stay source (no map-canvas/color contract); live census 6/4/0 from a candidate pool of 10; the only non-ASCII byte in the family is inside one frontmatter description |
 | railroad | 9 | 0 | |
 | block | 0 | 58 | complete (B0a/B6) |
 | sequence | 0 | 193 | complete |
@@ -85,7 +86,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **997** | **1148** | |
+| **Total** | **991** | **1154** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -967,3 +968,50 @@ when the body would draw.
   CapabilityReport.Class285 168.39s, Block58AdmissionJoin 22.93s,
   Er107AdmissionJoin 2.17s), RC=0, logged at
   `/tmp/g4probe/cynefin/serial-cynefin.log`.
+- 2026-11-13 (wardley family renderer `ca676cb5`, local; D-187):
+  fourteenth greenfield family and the richest grammar so far. A new
+  `mermaid_wardley_impl.cpp` projects the wardley-beta map — a strict
+  two-space indented frame of anchors and components positioned by
+  normalized coordinates, value-chain and flow links, evolve/note/
+  annotation directives, an evolution-axis rename and pipeline blocks — to
+  a bounded native outline that validates each statement shape and
+  transcribes the line verbatim, preserving its source indentation. No map
+  canvas, coordinate geometry, link arrows or color is rendered. The live
+  source gives 6 clean / 4 frontmatter-gated / 0 body-gated (the brief's 10
+  was the candidate pool): the four gated fixtures are the theme-test maps
+  (base/dark/forest/neutral) and no body carries a
+  classDef/:::/style/init statement. Indentation is a strict 0/2 grid;
+  blank lines are skipped; pipeline blocks must balance, must not nest and
+  may contain only single-coordinate components. The classifier adds
+  MermaidProbeFamily::Wardley on the exact `wardley-beta` header
+  (including after a frontmatter fence) and a dispatch case; the matrix
+  hook replaces run_case observations 1:1 for the 6 ledger paths
+  (observation total stays 2738; the four gated fixtures keep their
+  default source disposition). Independent read-only zero-build
+  adversarial review task aef27af8b85e12728 APPROVE with zero MAJOR: it
+  independently reproduced the 6/4/0 partition with two separate parsers,
+  ported every validator to a simulator plus an inverse checker and ran
+  167 deterministic probes, about 800,000 fuzzed/mutation inputs and a
+  300,000+ visual-gate fuzz with no fail-open, and re-attacked the
+  `config : 42` spacing seam (this renderer trims the key from the first
+  draft). One MINOR was applied: size and the annotation grid used the
+  signed-integer pair and so accepted a negative value outside the
+  grammar (a leading minus is legal only for label offsets); they now use
+  an unsigned pair with two regression pins. The frontmatter key scanner
+  already trims before comparing, so the cynefin-era `config : 42`
+  spacing bypass is closed here from the start. Whole
+  originals 1148 -> 1154 drawn / 997 -> 991 fallback / 0 error;
+  wardley 6/4; flow 160/240, body 372/173/48, the 48-gap roster and
+  Class285 260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  cb47782c23819d3471c37ab086d22a6b078b8e54beceace46fc3965b611f3108;
+  release 27s, debug 241s). Full mermaid label suite 1294/1294 green
+  (the 1287 cynefin-era count plus the seven wardley cohort cases).
+  ASan contact across all fourteen greenfield family cohorts (103 tests:
+  wardley/cynefin/ishikawa/tree-view/usecase/kanban/architecture/quadrant/
+  venn/c4/treemap/gantt/timeline/journey) zero sanitizer reports, logged at
+  `/tmp/g4probe/wardley/asan-contact.log`. Serial gate 4/4 green
+  (`-j1`, 397.3s wall: EveryWholeSourceIsObserved 203.95s,
+  CapabilityReport.Class285 168.21s, Block58AdmissionJoin 22.97s,
+  Er107AdmissionJoin 2.18s), RC=0, logged at
+  `/tmp/g4probe/wardley/serial-wardley.log`.

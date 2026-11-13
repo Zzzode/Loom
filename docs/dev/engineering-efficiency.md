@@ -220,6 +220,21 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     (not single-shape synthetic cases) exposed the first defect — keep it as
     the oracle per rule 20.
 
+25. **A backgrounded `cmake --preset`/`ctest` inherits the shell's current
+    working directory, and a direct ctest run leaves it drifted inside
+    `build/<preset>/tests/ui`; a preset then fails reading
+    CMakePresets.json while the task wrapper still reports exit 0.** This
+    cost a wasted build round-trip in two consecutive families (cynefin and
+    wardley) because the wrapper's success was trusted instead of the
+    in-log RC marker. Prefix every build/configure command with an absolute
+    `cd /home/zhangdi.zode/Develop/Loom`, append an explicit in-log
+    `*_RC=$?` marker, and verify that marker (never the background-task exit
+    code) before treating the artifact as current. After any direct binary
+    or ctest run, reset the foreground cwd back to the repo root. The same
+    trap applies to gtest filter names: a misremembered filter runs zero
+    tests and still exits 0, so confirm the log says one test actually ran
+    before copying or trusting any output artifact.
+
 ## Per-task efficiency retro (mandatory at every closure)
 
 Attach a short efficiency section to each closure report, answering:
@@ -607,3 +622,37 @@ Attach a short efficiency section to each closure report, answering:
   372/173/48, Class285, the 48-gap roster and observation total 2738 all
   unmoved. Throughput: +7 draws for one census/ledger/review/gate on the
   shared greenfield scaffolding.
+- **2026-11-13, wardley family renderer (6 whole draws, D-187,
+  predating its commit).** Fourteenth greenfield family and the richest
+  grammar so far: wardley-beta is a strict 0/2 two-space map frame with
+  thirteen validated statement shapes (title/size, anchor/component with
+  float-pair coordinates and optional integer label offsets, single-float
+  components inside pipeline blocks, four link operators plus a
+  custom-labeled form with one-per-line semicolon continuations,
+  evolve/note/annotation/evolution/deaccelerator directives and balanced
+  non-nesting pipeline braces), transcribed verbatim with indentation
+  preserved. The live fence-tolerant census gives 6 clean / 4
+  frontmatter-gated (the theme-test maps) / 0 body from a candidate pool
+  of 10; fixture 6's only non-ASCII byte (an em-dash) lives in its
+  frontmatter description, so the body stays pure ASCII.
+  (1) Rule 18 held again: the narrow-40 ledger was left empty and
+  populated only from a live CellCapture probe, which showed just the two
+  compact frames (longest line 33 columns) draw narrow while the four
+  coordinate/note-heavy frames (lines up to 104 columns) stay source —
+  width pins remain measurements, never guesses. (2) The renderer was
+  written after the cynefin `config : 42` MAJOR, so its frontmatter key
+  scanner trims before comparing from the first draft; the independent
+  review was explicitly asked to re-attack that seam. (3) The background
+  preset cwd-drift failure from cynefin RECURRED here — a background
+  `cmake --preset` again inherited a cwd left inside build/debug/tests/ui
+  and failed reading CMakePresets.json while the task wrapper reported
+  exit 0. Because this is now a twice-repeated rework loop it is promoted
+  to numbered rule 25: prefix every build with an absolute `cd` to the
+  repo root, trust an explicit in-log RC marker rather than the task exit
+  code, reset the foreground cwd after any ctest run, and confirm a gtest
+  filter actually ran one test before trusting its output. Rules 18, 20
+  and 22 cover the renderer work; rule 25 covers the build hygiene. No
+  frozen contract moved; flow 160/240, body 372/173/48, Class285, the
+  48-gap roster and observation total 2738 all unmoved. Throughput: +6
+  draws for one census/ledger/review/gate on the shared greenfield
+  scaffolding.

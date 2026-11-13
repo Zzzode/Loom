@@ -324,6 +324,7 @@ enum class MermaidProbeFamily : unsigned char {
     Kanban,
     Usecase,
     Treeview,
+    Ishikawa,
     Block
 };
 

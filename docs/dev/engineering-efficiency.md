@@ -523,3 +523,27 @@ Attach a short efficiency section to each closure report, answering:
   roster and observation total 2738 all unmoved. Throughput: +14 draws
   for one census/ledger/review/gate on the shared greenfield
   scaffolding.
+- **2026-11-13, tree-view family renderer (8 whole draws, D-180,
+  predating its commit).** Eleventh greenfield family, an indentation
+  tree rather than a line/edge DSL: every node sits on a 2+4k space grid
+  and carries a quoted or bare label with optional icon(...) and ##
+  description suffixes, transcribed verbatim with source indentation
+  preserved. (1) The live source overrode the brief's census. One fixture
+  closes its frontmatter with a trailing-whitespace fence ("---      ");
+  an exact-"---" splitter treated it as clean, but it contains
+  config:/themeVariables and is a visual gate. The correct, source-driven
+  partition is 8 clean / 5 frontmatter / 2 body, not the brief's 9/4/2 —
+  recorded as a census difference per the milestone rule. Both the C++
+  fence scan and the Python generator now tolerate trailing spaces/tabs
+  on a closing fence (rule 19: enumerate the real marker spelling). (2)
+  A self-caught validator defect: the icon(...) branch consumed the whole
+  balanced parenthesized pair atomically but left a parens counter at 1,
+  so every suffixed node was rejected at the end-of-line check; fixed by
+  keeping the pair local to the branch and not touching the stray-paren
+  counter — another instance of rule 24 (a sub-validator owns only its
+  own span). (3) All eight clean trees are compact enough to also draw at
+  40 columns on both tracks (rule 18 live measurement). No new rule was
+  needed; rules 18, 19, 22 and 24 cover the work. No frozen contract
+  moved; flow 160/240, body 372/173/48, Class285, the 48-gap roster and
+  observation total 2738 all unmoved. Throughput: +8 draws for one
+  census/ledger/review/gate on the shared greenfield scaffolding.

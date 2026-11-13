@@ -36,6 +36,7 @@ are not whole-original errors).
 | After architecture family renderer (16 clean originals) | 2026-11-13 | 86288941 | 1101 | 1044 | 0 |
 | After kanban family renderer (11 clean originals) | 2026-11-13 | d42baf8b | 1112 | 1033 | 0 |
 | After usecase family renderer (14 clean originals) | 2026-11-13 | 74506fba | 1126 | 1019 | 0 |
+| After tree-view family renderer (8 clean originals) | 2026-11-13 | 2620d828 | 1134 | 1011 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -64,7 +65,7 @@ disposition (fix or documented infeasibility).
 | journey | 10 | 18 | renderer added 2026-11-11; 8 themed rows stay source (no color contract) |
 | pie | 17 | 7 | |
 | state-diagram | 26 | 16 | |
-| tree-view | 15 | 0 | |
+| tree-view | 7 | 8 | renderer added 2026-11-13; 5 frontmatter layout/icon-config + 2 body :::class rows stay source (no icon/color contract); live census 8/5/2 corrected an older 9/4/2 via a trailing-whitespace fence |
 | quadrant-chart | 7 | 7 | renderer added 2026-11-13; 5 %%{init}%% visual directives (axis position/sizing/theme colors) + 2 inline point-style rows stay source (no geometry/color contract) |
 | ishikawa | 13 | 0 | |
 | kanban | 0 | 11 | renderer added 2026-11-13; all eleven originals clean (description-only frontmatter; cards with optional @{...} structural metadata, no color contract) |
@@ -82,7 +83,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **1019** | **1126** | |
+| **Total** | **1011** | **1134** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -833,3 +834,45 @@ when the body would draw.
   `/tmp/g4probe/usecase/serial-usecase.log` — the Config110
   whole-source, Class285, Block58 and ER107 admission tests run one at a
   time — 4/4 passed (SERIAL_RC=0, ~399s).
+- 2026-11-13 (tree-view family renderer `2620d828`, local; D-180):
+  eleventh greenfield family. A new `mermaid_treeview_impl.cpp` projects
+  the treeView-beta grammar — an indentation tree on a 2+4k space grid
+  whose nodes are quoted or bare labels (paths, emoji, unicode,
+  consecutive spaces, trailing-slash directories) with optional
+  `icon(...)` and `## description` suffixes — to a bounded native outline
+  that validates the grid and suffix shapes and transcribes each node
+  line verbatim, preserving its source indentation. No icons, tree guide
+  lines or color are rendered. The live source gives 8 clean / 5
+  frontmatter-gated / 2 body-gated, correcting the brief's older 9/4/2
+  census: one fixture closes its frontmatter with a trailing-whitespace
+  fence ("---      ") and carries config/themeVariables, so it is a
+  frontmatter gate once the fence is parsed correctly; the two
+  body-gated fixtures use `:::highlight` class annotations. Both the C++
+  fence scan and the ledger generator tolerate trailing whitespace on a
+  closing fence. The classifier adds MermaidProbeFamily::Treeview on the
+  exact `treeView-beta` header (including after a frontmatter fence) and a
+  dispatch case; the matrix hook replaces run_case observations 1:1 for
+  the 8 ledger paths (observation total stays 2738; the seven gated
+  fixtures keep their default source disposition). Independent read-only
+  zero-build adversarial review ac919e19482fdb6ff APPROVE with zero
+  MAJOR: it independently confirmed the 8/5/2 partition (refuting the
+  brief's older 9/4/2 via the trailing-whitespace fence), ported every
+  validator and passed 22 boundary probes with no fail-open. MINOR 1
+  (free text after a closing quoted label) was tightened to suffix-only
+  and MINOR 2 added the bare-CR and node-suffix/indent/gate coverage.
+  The shared-classifier exact-fence peek and the combined-header push
+  are safe-direction inherited behavior left unchanged. Whole originals
+  1126 -> 1134 drawn / 1019 -> 1011 fallback / 0 error; tree-view 8/7;
+  flow 160/240, body 372/173/48, the 48-gap roster and Class285
+  260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  63dd65802a4cbd1f14f05f2560224f1e08ce03bcc3da3549b5b822e2804c6c94;
+  release 27s, debug 248s). Full mermaid label suite 1273/1273 green
+  (the 1266 usecase-era count plus the seven tree-view cohort cases).
+  ASan contact across all eleven greenfield family cohorts (82 tests:
+  tree-view/usecase/kanban/architecture/quadrant/venn/c4/treemap/gantt/
+  timeline/journey) zero sanitizer reports, logged at
+  `/tmp/g4probe/treeview/asan-contact.log`. Serial gate
+  `/tmp/g4probe/treeview/serial-treeview.log` — the Config110
+  whole-source, Class285, Block58 and ER107 admission tests run one at a
+  time — 4/4 passed (SERIAL_RC=0, ~398s).

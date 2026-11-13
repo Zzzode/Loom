@@ -42,6 +42,7 @@ are not whole-original errors).
 | After wardley family renderer (6 clean originals) | 2026-11-13 | ca676cb5 | 1154 | 991 | 0 |
 | After railroad family renderer (8 clean originals) | 2026-11-13 | b02234b3 | 1162 | 983 | 0 |
 | After radar family renderer (3 clean originals) | 2026-11-14 | 893835da | 1165 | 980 | 0 |
+| After packet family renderer (4 clean originals) | 2026-11-14 | fd6e020b | 1169 | 976 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -82,13 +83,13 @@ disposition (fix or documented infeasibility).
 | sequence | 0 | 193 | complete |
 | cynefin | 5 | 7 | renderer added 2026-11-13; 5 frontmatter config/theme/look rows stay source (no boundary-geometry/color contract); live census 7/5/0 from a candidate pool of 12 |
 | eventmodeling | 6 | 0 | |
-| packet | 6 | 0 | |
+| packet | 2 | 4 | renderer added 2026-11-14; packet/packet-beta alias, single-bit and ranged fields; 2 frontmatter config.packet rows stay source (no bit-cell/color contract); live census 4/2/0 from a candidate pool of 6; all bodies pure ASCII |
 | radar | 3 | 3 | renderer added 2026-11-14; 3 frontmatter config/theme/themeVariables rows stay source (no polygon/color contract); live census 3/3/0 from a candidate pool of 6; only non-ASCII bytes are in a gated frontmatter |
 | conf-and-directives | 3 | 1 | |
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **980** | **1165** | |
+| **Total** | **976** | **1169** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -1105,3 +1106,40 @@ when the body would draw.
   CapabilityReport.Class285 174.20s, Block58AdmissionJoin 24.12s,
   Er107AdmissionJoin 2.23s), RC=0, logged at
   `/tmp/g4probe/radar/serial-radar.log`.
+- 2026-11-14 (packet family renderer `fd6e020b`, local; D-196):
+  seventeenth greenfield family. A new `mermaid_packet_impl.cpp` handles
+  both the `packet` header and the `packet-beta` alias, projecting the
+  bit-field grammar — a title plus single-bit and ranged fields — to a
+  bounded native outline that validates each statement shape and
+  transcribes the physical lines verbatim, preserving the two-space
+  indentation. No bit-cell geometry or color is rendered. The live source
+  gives 4 clean / 2 frontmatter-gated / 0 body-gated from a candidate pool
+  of 6 (the two gated fixtures carry config.packet showBits/bitOrder/
+  bitsPerRow keys); the only non-ASCII bytes are em-dashes in two
+  frontmatter descriptions (one clean, one gated), so every body is pure
+  ASCII. The header sits at column 0 and every statement at exactly two
+  spaces. The classifier gains MermaidProbeFamily::Packet on the two exact
+  headers (including after a frontmatter fence) and a dispatch case; the
+  matrix hook replaces run_case observations 1:1 for the 4 ledger paths
+  (observation total stays 2738; the gated fixtures keep their default
+  disposition). Independent read-only zero-build adversarial review task
+  a5c4e116b2dbc1841 APPROVE with zero MAJOR: it independently reproduced
+  the 4/2/0 partition, ported the validators to a simulator against a
+  separate spec oracle and ran 58 attack vectors, 103 boundary cases and
+  900,000 fuzzed/mutation inputs with zero divergence, crash or
+  non-verbatim emission. Whole originals 1165 -> 1169 drawn / 980 -> 976
+  fallback / 0 error; packet 4/2; flow 160/240, body 372/173/48, the
+  48-gap roster and Class285 260/25/0 are unmoved; debug/release
+  OfficialMatrix JSON byte-identical (sha256
+  11d813cdb9299b639aa1ef76cab193dadafba464298090a4d5147c74d7c05dac;
+  release 28s, debug 246s). Full mermaid label suite 1315/1315 green
+  (the 1308 radar-era count plus the seven packet cohort cases).
+  ASan contact across all seventeen greenfield family cohorts (124 tests:
+  packet/radar/railroad/wardley/cynefin/ishikawa/tree-view/usecase/kanban/
+  architecture/quadrant/venn/c4/treemap/gantt/timeline/journey) zero
+  sanitizer reports, logged at
+  `/tmp/g4probe/packet/asan-contact.log`. Serial gate 4/4 green
+  (`-j1`, 403.0s wall: EveryWholeSourceIsObserved 208.92s,
+  CapabilityReport.Class285 168.98s, Block58AdmissionJoin 22.77s,
+  Er107AdmissionJoin 2.28s), RC=0, logged at
+  `/tmp/g4probe/packet/serial-packet.log`.

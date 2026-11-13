@@ -721,3 +721,29 @@ Attach a short efficiency section to each closure report, answering:
   372/173/48, Class285, the 48-gap roster and observation total 2738 all
   unmoved. Throughput: +3 draws for one census/ledger/review/gate on the
   shared greenfield scaffolding.
+- **2026-11-14, packet family renderer (4 whole draws, D-196,
+  predating its commit).** Seventeenth greenfield family and one of the
+  simplest grammars: two interchangeable headers (`packet` and
+  `packet-beta`), a strict two-space grid, and only two statement shapes —
+  a title and a field whose position is one uint or a uint-uint range,
+  followed by a colon and one quoted printable-ASCII label. No blocks, no
+  recursion. The live fence-tolerant census gives 4 clean / 2 frontmatter
+  config-gated / 0 body from a candidate pool of 6; every body is pure
+  ASCII (the family's em-dashes live in two frontmatter descriptions).
+  (1) The independent review approved with zero MAJOR on the first pass —
+  58 attack vectors, 103 boundary cases and 900,000 fuzzed/mutation inputs
+  against a separate spec oracle produced zero divergence. It also caught
+  an imprecision in my own recon note: I had said the non-ASCII byte was in
+  one clean fixture, but there are em-dashes in two frontmatters (one
+  clean, one gated); the substance (all bodies ASCII) was right and no
+  code changed, but the ledger/commit wording was corrected. (2) Rule 18
+  again refused to be guessed: the recon speculated narrow-40 might not be
+  all-four, but the live probe showed every clean frame draws narrow
+  because the longest line is 34 columns — width pins stay measured.
+  (3) Rule 25 hygiene held for the whole family; every backgrounded build
+  used an absolute `cd` and was trusted only via its in-log RC, with no
+  cwd-drift rework. No new numbered rule; rules 18, 20, 22 and 25 cover
+  the work. No frozen contract moved; flow 160/240, body 372/173/48,
+  Class285, the 48-gap roster and observation total 2738 all unmoved.
+  Throughput: +4 draws for one census/ledger/review/gate on the shared
+  greenfield scaffolding.

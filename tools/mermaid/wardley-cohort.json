@@ -1,0 +1,207 @@
+{
+  "schema": "loom_mermaid_wardley_cohort/v1",
+  "rfc": 31,
+  "phase": "wardley-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_wardley_impl.cpp",
+    "grammar": "wardley-beta; two-space anchored map frame, links, evolve/notes/annotations, evolution, pipelines",
+    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "wardley fixtures with no frontmatter gate and no body style",
+    "roots": [
+      "wardley"
+    ],
+    "draw_count": 6,
+    "frontmatter_gated_count": 4,
+    "frontmatter_gated": [
+      "wardley/pr-check/theme-test-base.mmd",
+      "wardley/pr-check/theme-test-dark.mmd",
+      "wardley/pr-check/theme-test-forest.mmd",
+      "wardley/pr-check/theme-test-neutral.mmd"
+    ],
+    "body_style_gated_count": 0,
+    "body_style_gated": []
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, wardley renderer cohort, 2026-11-13, task aef27af8b85e12728)",
+    "date": "2026-11-13",
+    "verdict": "approved",
+    "note": "APPROVE with zero MAJOR. The reviewer independently reproduced the exact 6/4/0 partition with two separate parsers, confirmed fixture 6's only non-ASCII byte is in its frontmatter description (the body is pure ASCII) and the narrow-40 set from line lengths. It ported every validator to a simulator plus an independent inverse checker and ran 167 deterministic probes, ~800,000 fuzzed and mutation inputs and a 300,000+ visual-gate fuzz with no fail-open, no hang and no verbatim/order invariant break, and explicitly re-attacked the frontmatter 'config : 42' spacing seam (this renderer trims the key from the first draft). One MINOR was applied: size and the annotation grid index used the signed-integer pair helper and so accepted a negative value, which is outside the grammar (a leading minus is legal only for label offsets); they now use an unsigned pair and two regression pins lock it. The NITs (quoted YAML visual keys, frontmatter-CRLF safe-direction fallback, the duplicated fence predicate) are shared safe-direction behavior with no corpus sample and are unchanged. The untrimmed frontmatter-key pattern in twelve earlier renderers remains a separate cross-family follow-up."
+  },
+  "counts": {
+    "total": 6,
+    "predicted_draw": 6,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 6
+  },
+  "rows": [
+    {
+      "path": "wardley/pr-check/1-should-render-tea-shop.mmd",
+      "family": "wardley",
+      "sha256": "85cef20adc3672a4b8714623d3b2c6c10ea81a586edddaa14a18ccda90351cac",
+      "manifest_sha256": "85cef20adc3672a4b8714623d3b2c6c10ea81a586edddaa14a18ccda90351cac",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "wardley renderer projects the strict two-space map frame to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "wardley/pr-check/2-should-render-data-evolution-stages.mmd",
+      "family": "wardley",
+      "sha256": "51aab1407c0d1f3d4093c351c081688427e2f3e3cb0b057d0c0c5dbead5db4e2",
+      "manifest_sha256": "51aab1407c0d1f3d4093c351c081688427e2f3e3cb0b057d0c0c5dbead5db4e2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "wardley renderer projects the strict two-space map frame to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "wardley/pr-check/3-should-render-pipelines.mmd",
+      "family": "wardley",
+      "sha256": "8f96c4d1d0c4bb2480ebadcc4a2ef18fa56f0d657f15317ad8085e48cbc5ed25",
+      "manifest_sha256": "8f96c4d1d0c4bb2480ebadcc4a2ef18fa56f0d657f15317ad8085e48cbc5ed25",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "wardley renderer projects the strict two-space map frame to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "wardley/pr-check/4-should-render-link-types-and-annotations.mmd",
+      "family": "wardley",
+      "sha256": "97acd60adab8e43cbe595582d3e4adb516f847a034e95b08cfeae0a7bd982da8",
+      "manifest_sha256": "97acd60adab8e43cbe595582d3e4adb516f847a034e95b08cfeae0a7bd982da8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "wardley renderer projects the strict two-space map frame to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "wardley/pr-check/5-should-render-custom-canvas-size.mmd",
+      "family": "wardley",
+      "sha256": "a67c7c3073414b6a1ecfdd926f1544c24603915f07517c7ea9c447da89d61c23",
+      "manifest_sha256": "a67c7c3073414b6a1ecfdd926f1544c24603915f07517c7ea9c447da89d61c23",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "wardley renderer projects the strict two-space map frame to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "wardley/pr-check/6-should-render-gpt-tokeniser-architecture.mmd",
+      "family": "wardley",
+      "sha256": "19cf85bf89f54af248bf72a706b3d8307b51eb7cefcad46274f1815211f04744",
+      "manifest_sha256": "19cf85bf89f54af248bf72a706b3d8307b51eb7cefcad46274f1815211f04744",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "wardley renderer projects the strict two-space map frame to a bounded native outline; no visual gate is present so it draws"
+    }
+  ]
+}

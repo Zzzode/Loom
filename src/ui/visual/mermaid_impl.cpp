@@ -6208,6 +6208,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     bool treeview = header == "treeView-beta";
     bool ishikawa = header == "ishikawa-beta";
     bool cynefin = header == "cynefin-beta";
+    bool wardley = header == "wardley-beta";
     bool block_input = header == "block" || header == "block-beta";
     if (header == "---") {
         has_frontmatter_peek = true;
@@ -6258,6 +6259,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             treeview = line == "treeView-beta";
             ishikawa = line == "ishikawa-beta";
             cynefin = line == "cynefin-beta";
+            wardley = line == "wardley-beta";
             block_input = line == "block" || line == "block-beta";
             if (line.starts_with("classDiagram")) {
                 class_peek = class_prefix_header(line);
@@ -6330,6 +6332,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
                           : treeview    ? MermaidProbeFamily::Treeview
                           : ishikawa    ? MermaidProbeFamily::Ishikawa
                           : cynefin     ? MermaidProbeFamily::Cynefin
+                          : wardley     ? MermaidProbeFamily::Wardley
                                       : MermaidProbeFamily::Charts;
         return decision;
     }
@@ -6765,6 +6768,9 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             break;
         case detail::MermaidProbeFamily::Cynefin:
             lines = detail::cynefin_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::Wardley:
+            lines = detail::wardley_layout(source, work);
             break;
         case detail::MermaidProbeFamily::Charts:
             lines = detail::charts_layout(source, work);

@@ -41,6 +41,7 @@ are not whole-original errors).
 | After cynefin family renderer (7 clean originals) | 2026-11-13 | 3c73ca54 | 1148 | 997 | 0 |
 | After wardley family renderer (6 clean originals) | 2026-11-13 | ca676cb5 | 1154 | 991 | 0 |
 | After railroad family renderer (8 clean originals) | 2026-11-13 | b02234b3 | 1162 | 983 | 0 |
+| After radar family renderer (3 clean originals) | 2026-11-14 | 893835da | 1165 | 980 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -82,12 +83,12 @@ disposition (fix or documented infeasibility).
 | cynefin | 5 | 7 | renderer added 2026-11-13; 5 frontmatter config/theme/look rows stay source (no boundary-geometry/color contract); live census 7/5/0 from a candidate pool of 12 |
 | eventmodeling | 6 | 0 | |
 | packet | 6 | 0 | |
-| radar | 6 | 0 | |
+| radar | 3 | 3 | renderer added 2026-11-14; 3 frontmatter config/theme/themeVariables rows stay source (no polygon/color contract); live census 3/3/0 from a candidate pool of 6; only non-ASCII bytes are in a gated frontmatter |
 | conf-and-directives | 3 | 1 | |
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **983** | **1162** | |
+| **Total** | **980** | **1165** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -1061,3 +1062,46 @@ when the body would draw.
   CapabilityReport.Class285 168.74s, Block58AdmissionJoin 23.19s,
   Er107AdmissionJoin 2.19s), RC=0, logged at
   `/tmp/g4probe/railroad/serial-railroad.log`.
+- 2026-11-14 (radar family renderer `893835da`, local; D-196):
+  sixteenth greenfield family. A new `mermaid_radar_impl.cpp` projects the
+  radar-beta grammar — axes with optional aliases, curves as inline
+  numeric arrays or braced named blocks, and scalar display directives —
+  to a bounded native outline that validates each statement shape and
+  transcribes the physical lines verbatim, preserving block and
+  statement indentation. No polygon geometry, radial scale or color is
+  rendered. The live source gives 3 clean / 3 frontmatter-gated / 0
+  body-gated from a candidate pool of 6 (the three gated fixtures carry
+  config/theme/themeVariables keys for radar colors and layout); the
+  family's only non-ASCII bytes live in a gated frontmatter, so all clean
+  bodies are pure ASCII. A header sits at column 0, a top-level statement
+  at exactly two spaces, and a curve block's value lines sit deeper while
+  its closing brace returns to two spaces. The classifier gains
+  MermaidProbeFamily::Radar on the exact radar-beta header (including
+  after a frontmatter fence) and a dispatch case; the matrix hook
+  replaces run_case observations 1:1 for the 3 ledger paths (observation
+  total stays 2738; the gated fixtures keep their default disposition).
+  Independent read-only zero-build adversarial review task
+  a78aba37d54c5d977 reached final APPROVE after one re-review: the first
+  pass returned REQUEST CHANGES on one MAJOR (the value-list parser
+  accepted an empty comma slot anywhere, so leading/internal/repeated
+  commas drew — 4,980 distinct fail-open shapes across 26,334
+  combinations) and one MINOR (an empty multi-line block was accepted
+  while an inline '{}' was rejected). Both are fixed: an empty slot is
+  legal only as the final piece after a real element, and a block must
+  contain a value line before it can close, each with regression pins.
+  Whole originals 1162 -> 1165 drawn / 983 -> 980 fallback / 0 error;
+  radar 3/3; flow 160/240, body 372/173/48, the 48-gap roster and
+  Class285 260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  1638604c3fe0908e3482dc1880e325bd37bc2d3b74f4a109f19f4013d0e00d47;
+  release 27s, debug 243s). Full mermaid label suite 1308/1308 green
+  (the 1301 railroad-era count plus the seven radar cohort cases).
+  ASan contact across all sixteen greenfield family cohorts (117 tests:
+  radar/railroad/wardley/cynefin/ishikawa/tree-view/usecase/kanban/
+  architecture/quadrant/venn/c4/treemap/gantt/timeline/journey) zero
+  sanitizer reports, logged at
+  `/tmp/g4probe/radar/asan-contact.log`. Serial gate 4/4 green
+  (`-j1`, 414.2s wall: EveryWholeSourceIsObserved 213.68s,
+  CapabilityReport.Class285 174.20s, Block58AdmissionJoin 24.12s,
+  Er107AdmissionJoin 2.23s), RC=0, logged at
+  `/tmp/g4probe/radar/serial-radar.log`.

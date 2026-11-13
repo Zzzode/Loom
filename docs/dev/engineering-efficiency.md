@@ -690,3 +690,34 @@ Attach a short efficiency section to each closure report, answering:
   Class285, the 48-gap roster and observation total 2738 all unmoved.
   Throughput: +8 draws for one census/ledger/review/gate on the shared
   greenfield scaffolding.
+- **2026-11-14, radar family renderer (3 whole draws, D-196,
+  predating its commit).** Sixteenth greenfield family, single header
+  radar-beta with a one-level curve block: axes (identifiers with
+  optional Id["label"] aliases), curves as inline numeric arrays or
+  braced named `ident uint`/uint lists, and a closed scalar whitelist,
+  all transcribed verbatim. The live fence-tolerant census gives 3 clean
+  / 3 frontmatter config/theme-gated / 0 body from a candidate pool of
+  6; the only non-ASCII bytes are in a gated frontmatter so every clean
+  body is pure ASCII.
+  (1) The independent review earned its keep again: it opened REQUEST
+  CHANGES on a real MAJOR the happy-path tests missed. The value-list
+  parser treated every empty comma slot as skippable, so `{1,,2}`,
+  `{,1}` and `{1,,}` all drew even though only one optional TRAILING
+  comma is grammar-legal — 4,980 distinct fail-open shapes across a
+  26,334-case differential. The fix makes an empty slot legal only as
+  the final piece after a real element; one coherent rule now covers
+  inline and block forms. The companion MINOR (an empty multi-line block
+  drew while inline `{}` failed) is closed by requiring at least one
+  value line before a block can close. Lesson: a "skip empty token"
+  branch must distinguish a single terminal trailing delimiter from an
+  empty slot anywhere in the sequence — position-aware, not blanket.
+  (2) Rule 18 held: the narrow-40 ledger was filled only from a live
+  probe, showing the two <=23-column smoke frames draw while the complex
+  frame with a 46-column line stays source (2/3). (3) Rule 25 hygiene
+  was applied mechanically this time — every backgrounded build started
+  with an absolute `cd` and was trusted only via its in-log RC marker,
+  so no cwd-drift rework recurred. No new numbered rule; rules 18, 20,
+  22 and 25 cover the work. No frozen contract moved; flow 160/240, body
+  372/173/48, Class285, the 48-gap roster and observation total 2738 all
+  unmoved. Throughput: +3 draws for one census/ledger/review/gate on the
+  shared greenfield scaffolding.

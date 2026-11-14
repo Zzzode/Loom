@@ -44,6 +44,7 @@ are not whole-original errors).
 | After radar family renderer (3 clean originals) | 2026-11-14 | 893835da | 1165 | 980 | 0 |
 | After packet family renderer (4 clean originals) | 2026-11-14 | fd6e020b | 1169 | 976 | 0 |
 | After eventmodeling family renderer (6 clean originals) | 2026-11-14 | 7d4730bf | 1175 | 970 | 0 |
+| After requirement style renderer (4 styled originals) | 2026-11-14 | 6c16fe94 | 1179 | 966 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -54,7 +55,7 @@ disposition (fix or documented infeasibility).
 | Family | Remaining fallback | Drawn | Notes |
 |---|---:|---:|---|
 | flowchart | 240 | 160 | active track; see breakdown below |
-| requirement | 160 | 12 | mostly unbuilt renderer surface |
+| requirement | 156 | 16 | renderer extended 2026-11-14; classDef/class/style/`:::` body statements now validated and rendered through the shared palette-role style seam (4 new draws); 156 frontmatter config/theme/title/indented-fence rows stay source (no theme/layout/color contract) |
 | git | 80 | 55 | |
 | state-diagram-v2 | 78 | 25 | |
 | gantt | 13 | 39 | renderer added 2026-11-12; 11 themed rows stay source (no color contract), 2 malformed-date fixtures fail closed |
@@ -90,7 +91,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **970** | **1175** | |
+| **Total** | **966** | **1179** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -1186,3 +1187,42 @@ when the body would draw.
   CapabilityReport.Class285 169.19s, Block58AdmissionJoin 23.02s,
   Er107AdmissionJoin 2.19s), RC=0, logged at
   `/tmp/g4probe/eventmodeling/serial-em.log`.
+- 2026-11-14 (requirement style renderer, local; D-204): the first extension
+  of an existing greenfield renderer rather than a new family TU. A
+  production-seam census (classify_mermaid + layout_succeeds, not text
+  matching) partitioned the 172 requirement originals into 12 already
+  native, 4 reachable, and 156 genuinely frontmatter-gated (config/theme/
+  title keys, an indented YAML fence, or a leading-blank theme fixture); the
+  19 residual styled fixtures all carry a config/theme gate, so the hard wall
+  has source evidence. The reachable four are description-only-frontmatter
+  sources whose bodies use the common Mermaid style vocabulary — classDef,
+  `class`, direct `style`, and the `name:::class` shorthand. The requirement
+  parser now validates every property (fill/stroke/color/stroke-width/
+  font-weight), a five-name corpus-bounded CSS named-color profile plus hex,
+  every class and node reference, and rejects unknown/malformed shapes as a
+  whole source (nothing is ignored). The styles project onto the shared
+  ClassDirectStyles seam already used by Class/ER/State: the hex color parser
+  and hue-role classifier were extracted into exported single-source helpers,
+  and ClassStyleProperties gained an append-only `bold` field the Class
+  grammar never sets, so those callers stay byte-identical. Independent
+  read-only adversarial review reached APPROVE after one re-review. Its MAJOR
+  found that font-weight bold was dropped at the effective-property merge and
+  the paint guard skipped bold-only nodes, so the legend claimed bold while
+  zero pixels were bold; both merge loops now propagate bold (normal can
+  override), the guard admits bold-only boxes, and a pixel-level
+  FontWeightReachesBoldPixels gate counts real terminal bold cells (336/120/
+  336/0 across the four corpus fixtures). Two MINORs closed trailing-comma
+  target lists and generator/envelope fidelity; a write-only verbatim field
+  was removed. Whole originals 1175 -> 1179 drawn / 970 -> 966 fallback / 0
+  error; requirement 16/156; flow 160/240, body 372/173/48, the 48-gap roster
+  and Class285 260/25/0 are unmoved, and the observation total stays 2738.
+  Debug/release OfficialMatrix JSON byte-identical (sha256
+  ee11f8bbe47ac1b155911b473ce4470d55487d2d36e0e895912f406f197afb7b). Full
+  mermaid label suite 1329/1329 green (the 1321 eventmodeling-era count plus
+  the eight requirement cohort cases). ASan: the requirement cohort 8/8 and
+  the full relations-semantics binary 256/256 (the shared style seam's
+  Class/ER/State contact) zero sanitizer reports, logged under
+  `/tmp/g4probe/requirement/`. Serial gate 4/4 green (`-j1`, release,
+  47.14s wall: EveryWholeSourceIsObserved 13.30s, CapabilityReport.Class285
+  8.79s, Block58AdmissionJoin 22.72s, Er107AdmissionJoin 2.16s), RC=0,
+  logged at `/tmp/g4probe/requirement/serial-em.log`.

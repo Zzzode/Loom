@@ -772,3 +772,37 @@ Attach a short efficiency section to each closure report, answering:
   372/173/48, Class285, the 48-gap roster and observation total 2738 all
   unmoved. Throughput: +6 draws for one census/ledger/review/gate on the
   shared greenfield scaffolding.
+- **2026-11-14, requirement style renderer (4 whole draws, D-204,
+  predating its commit).** First extension of an existing greenfield renderer
+  instead of a new family TU, and the first task whose need crossed into a
+  shared module (the Class/ER/State style seam). (1) A Python text census
+  produced 84 false "no-blocker" buckets because it cannot see parser
+  reachability; the trustworthy partition only came from a native probe
+  driven through the public testing seam (classify_mermaid + layout_succeeds)
+  with cumulative stage attribution. Rule 18 again: never census a parser's
+  accept set by grepping its input. The probe also corrected a recon guess —
+  lowercase `docref` was never a blocker because the field key match folds
+  case — and proved all 156 residuals carry a real config/theme gate, giving
+  source evidence for the hard wall instead of a guess. (2) The independent
+  review earned its keep with a MAJOR the char-vector cohort could not see:
+  font-weight reached the disclosure legend but never the pixels (the
+  effective-property merge dropped the new field and the paint guard skipped
+  bold-only nodes). CellCapture compares glyphs, not cell attributes, so a
+  style-semantic renderer needs explicit pixel-attribute assertions
+  (PixelAt().bold counts), not just char equality. The new
+  FontWeightReachesBoldPixels gate is the durable pin. (3) A stale-link near
+  miss: a full-matrix run used a binary linked before the MAJOR fix. The
+  disposition counts stayed valid because bold is pixel-only, but the
+  authoritative debug/release byte gate was re-run only after rebuilding the
+  matrix target and confirming its mtime post-dated the static library —
+  the existing "never trust a target-only matrix verdict" rule, applied
+  deliberately. (4) Shared-seam containment: the change was an append-only
+  ClassStyleProperties field the Class grammar never sets plus a single-
+  sourced extraction of the color helpers; the 256-test relations-semantics
+  binary (debug and ASan) and a byte-identical dual-preset matrix prove the
+  Class/ER/State callers are unchanged. No new numbered rule; rules 18, 20,
+  22 and 25 cover the work. No frozen contract moved; flow 160/240, body
+  372/173/48, Class285, the 48-gap roster and observation total 2738 all
+  unmoved. Throughput: +4 draws for one census/ledger/review/gate on the
+  shared scaffolding, with one shared-module change paid for by a full
+  caller regression rather than a new isolated TU.

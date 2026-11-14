@@ -154,6 +154,7 @@ std::optional<std::vector<std::string>> packet_layout(std::string_view source, W
 std::optional<std::vector<std::string>> eventmodeling_layout(std::string_view source,
                                                              Work& work);
 std::optional<std::vector<std::string>> agentflow_layout(std::string_view source, Work& work);
+std::optional<std::vector<std::string>> sankey_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> sequence_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> charts_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source, Work& work,

@@ -1,0 +1,84 @@
+{
+  "schema": "loom_mermaid_sankey_cohort/v1",
+  "rfc": 31,
+  "phase": "sankey-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_sankey_impl.cpp",
+    "grammar": "sankey-beta header; strict two-space indented CSV link rows source,target,value with printable free-text node labels and a bounded positive integer value",
+    "theme_gate": "a column-0 frontmatter fence carrying any top-level key besides description, or an indented/unclosed fence, keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "sankey fixtures without a config/theme frontmatter gate; only the description-only sankey-beta original is reachable",
+    "roots": [
+      "sankey"
+    ],
+    "family_total": 18,
+    "native_draw_count": 1,
+    "gated_count": 17,
+    "gated": [
+      "sankey/nightly-check/align-nodes-left.mmd",
+      "sankey/nightly-check/align-nodes-right.mmd",
+      "sankey/nightly-check/center-nodes.mmd",
+      "sankey/nightly-check/custom-node-colors.mmd",
+      "sankey/nightly-check/custom-node-width.mmd",
+      "sankey/nightly-check/default-node-width.mmd",
+      "sankey/nightly-check/fallback-colors-for-unspecified-nodes.mmd",
+      "sankey/nightly-check/justify-nodes.mmd",
+      "sankey/nightly-check/legacy-label-style-by-default.mmd",
+      "sankey/nightly-check/legacy-plain-labels.mmd",
+      "sankey/nightly-check/links-are-gradient.mmd",
+      "sankey/nightly-check/links-same-color-as-source-node.mmd",
+      "sankey/nightly-check/links-same-color-as-target-node.mmd",
+      "sankey/nightly-check/links-use-hex-color.mmd",
+      "sankey/nightly-check/outlined-labels.mmd",
+      "sankey/pr-check/should-render-complete-financial-flow-with-custom-colors.mmd",
+      "sankey/pr-check/should-render-labels-with-apple-style-outlined-text.mmd"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (general-purpose agent a397660, D-211 sankey renderer cohort, 2026-11-14; APPROVE on re-review)",
+    "date": "2026-11-14",
+    "verdict": "approved",
+    "note": "APPROVE after one re-review. First pass returned REQUEST CHANGES on one MAJOR and one MINOR, both resolved. MAJOR: an engine %%{init ...}%% directive was silently swallowed as a plain comment; the parser now rejects any line whose comment begins with %%{ while plain %% comments still pass, matching the agentflow/relations/packet/eventmodeling convention. MINOR: indented or non-exact column-0 --- fences are now gated in C++ exactly as the renderer-free generator classifies them (malformed fence). Two residual C++/Python divergences are reviewed as fail-safe NITs and documented in code: any non-exact line containing --- is gated (stricter than strip()==\"---\"), and any tab anywhere rejects (generator checks leading tabs only); both can only reject to fallback, never mis-draw, and both are unreachable on the pinned 18-fixture corpus. Independent probes through the public render_markdown seam measured the true partition 1 drawn / 17 config-gated / 0 error identically on debug, release -O2 and ASan+UBSan, with no 240/40-column width drift; the 17 gated fixtures are all plain sankey dialect carrying config.sankey layout/color contracts. A 40+ shape fail-closed battery (field counts, quotes, embedded commas, non-numeric/zero/negative/fractional/oversized values, empty labels, control bytes, odd indentation, unclosed fences, config/theme keys) behaves as intended; gas and bounds verified (512-link cap, 65536 source cap, value <= 999999999, monotonic Work spend). Neighboring family cohorts (agentflow 5/5, packet 7/7, probe 12/12) stay green; no shared module or established public contract changed."
+  },
+  "counts": {
+    "total": 1,
+    "predicted_draw": 1,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 1
+  },
+  "rows": [
+    {
+      "path": "sankey/pr-check/should-render-a-simple-example.mmd",
+      "family": "sankey",
+      "sha256": "7bed385f45c0a4be78513e4943031c5f2545f6fe4cfd7d0249eb12c5eb0f97ee",
+      "manifest_sha256": "7bed385f45c0a4be78513e4943031c5f2545f6fe4cfd7d0249eb12c5eb0f97ee",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "sankey-beta CSV link validated against the closed three-field grammar and transcribed as a bounded outline; no config/theme frontmatter gate is present so it draws"
+    }
+  ]
+}

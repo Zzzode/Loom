@@ -6222,6 +6222,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     bool eventmodeling = header == "eventmodeling";
     bool agentflow = header == "agentflow-beta" ||
                      header.starts_with("agentflow-beta ");
+    bool sankey = header == "sankey-beta";
     bool block_input = header == "block" || header == "block-beta";
     if (header == "---") {
         has_frontmatter_peek = true;
@@ -6279,6 +6280,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             eventmodeling = line == "eventmodeling";
             agentflow = line == "agentflow-beta" ||
                         line.starts_with("agentflow-beta ");
+            sankey = line == "sankey-beta";
             block_input = line == "block" || line == "block-beta";
             if (line.starts_with("classDiagram")) {
                 class_peek = class_prefix_header(line);
@@ -6357,6 +6359,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
                           : packet      ? MermaidProbeFamily::Packet
                           : eventmodeling ? MermaidProbeFamily::EventModeling
                           : agentflow   ? MermaidProbeFamily::Agentflow
+                          : sankey      ? MermaidProbeFamily::Sankey
                                       : MermaidProbeFamily::Charts;
         return decision;
     }
@@ -6810,6 +6813,9 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             break;
         case detail::MermaidProbeFamily::Agentflow:
             lines = detail::agentflow_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::Sankey:
+            lines = detail::sankey_layout(source, work);
             break;
         case detail::MermaidProbeFamily::Charts:
             lines = detail::charts_layout(source, work);

@@ -331,6 +331,7 @@ enum class MermaidProbeFamily : unsigned char {
     Radar,
     Packet,
     EventModeling,
+    Agentflow,
     Block
 };
 

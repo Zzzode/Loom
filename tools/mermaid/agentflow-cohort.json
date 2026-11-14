@@ -1,0 +1,782 @@
+{
+  "schema": "loom_mermaid_agentflow_cohort/v1",
+  "rfc": 31,
+  "phase": "agentflow-family-renderer",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_agentflow_impl.cpp",
+    "grammar": "agentflow-beta header; connector/flow/global declarations; id[\"label\"]/id(\"label\") nodes; @{ shape/view/value/params/returns/protocol/endpoint/token_required/connectorRef/instruction/model } metadata; -->, -.-, --x and labeled edges",
+    "theme_gate": "a column-0 frontmatter fence carrying any top-level key besides description, or an indented/unclosed fence, keeps the whole original on source fallback"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "agentflow fixtures without a config/theme/title frontmatter gate; all 27 native originals are cohort rows",
+    "roots": [
+      "agentflow"
+    ],
+    "family_total": 38,
+    "native_draw_count": 27,
+    "gated_count": 11,
+    "narrow_40_draw_count": 19,
+    "narrow_40_fallback_count": 8,
+    "gated": [
+      "agentflow/nightly-check/11-should-render-every-container-kind-with-the-dark-theme.mmd",
+      "agentflow/pr-check/11-should-render-every-container-kind-with-the-base-theme.mmd",
+      "agentflow/pr-check/11-should-render-every-container-kind-with-the-default-theme.mmd",
+      "agentflow/pr-check/should-render-every-container-kind.mmd",
+      "agentflow/pr-check/should-render-several-collapsed-containers.mmd",
+      "agentflow/visual-check/11-should-render-every-container-kind-with-the-forest-theme.mmd",
+      "agentflow/visual-check/11-should-render-every-container-kind-with-the-neutral-theme.mmd",
+      "agentflow/visual-check/15-support-triage-dark-theme.mmd",
+      "agentflow/visual-check/15-support-triage-default-theme.mmd",
+      "agentflow/visual-check/15-support-triage-redux-color-theme.mmd",
+      "agentflow/visual-check/15-support-triage-redux-dark-color-theme.mmd"
+    ]
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D-211 agentflow renderer cohort, 2026-11-14)",
+    "date": "2026-11-14",
+    "verdict": "approved",
+    "note": "APPROVE after one re-review. First pass returned REQUEST CHANGES on one MAJOR, six MINORs and five NITs, all resolved. MAJOR: duplicate metadata keys supplied across separate @{ } blocks were silently accepted because the seen-bitmask was block-local; AfElement now holds a persistent meta_seen mask so in-block and cross-block duplicates reject uniformly. MINORs: the C++ frontmatter gate and the renderer-free generator now mirror parse_envelope (no-colon column-0 line rejects, # comments exempt, key trimmed before comparison); an implicit dedent can no longer close a container without an explicit end; connector/flow require non-empty labels; edges may not terminate at a connector (only connectorRef binds it); metadata comma splitting is quote-aware and %%{init}%% directives reject instead of being skipped as comments; fail-closed coverage was expanded to 30+ cases; shape metadata is node-only so it is never stored and silently dropped on a container. NITs closed: no-trailing-newline fence boundary, a local kSourceLimit guard, a duplicate row cap removed, and a write-only order field deleted. Independent probes measured the true 27 drawn / 11 config-gated / 0 error partition (19 draw at 40 columns, 8 fall back), 39/39 adversarial cases behave as intended, ASan cohort 4/4 with zero reports, and neighboring families are unaffected."
+  },
+  "counts": {
+    "total": 27,
+    "predicted_draw": 27,
+    "predicted_blocked": 0,
+    "predicted_original_draw": 27
+  },
+  "rows": [
+    {
+      "path": "agentflow/nightly-check/10-should-keep-a-global-scoped-node-outside-the-flow-container.mmd",
+      "family": "agentflow",
+      "sha256": "4a80bc375c6ec830adb62b5fb3432bbfb3c45f56b97b693af71df06d660dd590",
+      "manifest_sha256": "4a80bc375c6ec830adb62b5fb3432bbfb3c45f56b97b693af71df06d660dd590",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/nightly-check/4b-should-render-the-input-value-pattern.mmd",
+      "family": "agentflow",
+      "sha256": "ba9e686d5dd1192b373ddd700959fae32608fa6d24110ab788475ba2c1cc6a1f",
+      "manifest_sha256": "ba9e686d5dd1192b373ddd700959fae32608fa6d24110ab788475ba2c1cc6a1f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/nightly-check/7a-should-render-a-connector-declaration-with-a-bound-tool.mmd",
+      "family": "agentflow",
+      "sha256": "002ef73c2b6c692e097ae38e21ffe3c2824e375b622be5658a907d0d9f1b2d81",
+      "manifest_sha256": "002ef73c2b6c692e097ae38e21ffe3c2824e375b622be5658a907d0d9f1b2d81",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/nightly-check/7b-should-render-multiple-connector-declarations.mmd",
+      "family": "agentflow",
+      "sha256": "5a1c07b858ac6bd86ea6816432bca1e3dc24aea8ebfc8e84bcb710ee11b9b111",
+      "manifest_sha256": "5a1c07b858ac6bd86ea6816432bca1e3dc24aea8ebfc8e84bcb710ee11b9b111",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/nightly-check/8-should-redirect-cross-boundary-edges-to-the-collapsed-parent.mmd",
+      "family": "agentflow",
+      "sha256": "6428f2c8f53550add2128829da7a39e4e8fdc51e839b7a113479bc43f849393d",
+      "manifest_sha256": "6428f2c8f53550add2128829da7a39e4e8fdc51e839b7a113479bc43f849393d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/nightly-check/9-should-treat-an-empty-metadata-block-as-a-no-op.mmd",
+      "family": "agentflow",
+      "sha256": "54c7bcd5ae02a3023ce58b6859b13c3e621d0c43baed904dec9c75dada04d02f",
+      "manifest_sha256": "54c7bcd5ae02a3023ce58b6859b13c3e621d0c43baed904dec9c75dada04d02f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/pr-check/1-should-render-nested-flow-containers.mmd",
+      "family": "agentflow",
+      "sha256": "bcf1ea55dd416b5b5b73733ce261bd4105fc759bdb1c1481174746569c916cf0",
+      "manifest_sha256": "bcf1ea55dd416b5b5b73733ce261bd4105fc759bdb1c1481174746569c916cf0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/pr-check/2-should-render-all-three-edge-types-plus-a-labeled-branch.mmd",
+      "family": "agentflow",
+      "sha256": "b0c0defe40f3b6f1a67add9af6f277e35977871ab14cab07326615776166f319",
+      "manifest_sha256": "b0c0defe40f3b6f1a67add9af6f277e35977871ab14cab07326615776166f319",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/pr-check/3-should-render-a-decision-with-labeled-branches.mmd",
+      "family": "agentflow",
+      "sha256": "0b1f5d541b948e14efbda5ad4dcc2bcd3255d2596bc1d30e0c0c86da3569ca15",
+      "manifest_sha256": "0b1f5d541b948e14efbda5ad4dcc2bcd3255d2596bc1d30e0c0c86da3569ca15",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/pr-check/4-should-render-collapsed-view.mmd",
+      "family": "agentflow",
+      "sha256": "88f2aa854b40592a5540fc998710c2d55a1286d75a92a130e50145d341c24eda",
+      "manifest_sha256": "88f2aa854b40592a5540fc998710c2d55a1286d75a92a130e50145d341c24eda",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/pr-check/5-should-render-the-v08-node-shapes.mmd",
+      "family": "agentflow",
+      "sha256": "2f41d8449ebe4e4abc711013a1a9534abea841bbe10a7f1708999c7872df246a",
+      "manifest_sha256": "2f41d8449ebe4e4abc711013a1a9534abea841bbe10a7f1708999c7872df246a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/pr-check/6-should-render-the-coffee-website-builder-diagram.mmd",
+      "family": "agentflow",
+      "sha256": "b56d0d19ee4f14bbdbd8206c9e2998a1ea40cd9f65dbf7f49b48cf677b191912",
+      "manifest_sha256": "b56d0d19ee4f14bbdbd8206c9e2998a1ea40cd9f65dbf7f49b48cf677b191912",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/01-basic-example.mmd",
+      "family": "agentflow",
+      "sha256": "59006578d35406984bb2763c65254b809ea744e734276c819efcfb2f9136c071",
+      "manifest_sha256": "59006578d35406984bb2763c65254b809ea744e734276c819efcfb2f9136c071",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/02-nodes-and-shapes.mmd",
+      "family": "agentflow",
+      "sha256": "fc27ae2f8490f6a860a55e9259d8e055ecf8ee0cbbdfb09019efe6e2c8aa25fc",
+      "manifest_sha256": "fc27ae2f8490f6a860a55e9259d8e055ecf8ee0cbbdfb09019efe6e2c8aa25fc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/03-edges.mmd",
+      "family": "agentflow",
+      "sha256": "adfb6173879504f90766f26e7fd5610aed56fb80539623071da88d041dcf38ca",
+      "manifest_sha256": "adfb6173879504f90766f26e7fd5610aed56fb80539623071da88d041dcf38ca",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/04-containers.mmd",
+      "family": "agentflow",
+      "sha256": "21b7ab1be42a404d32a9286eb8e6acf0055db0075c2e71c6e952b5bab17b6459",
+      "manifest_sha256": "21b7ab1be42a404d32a9286eb8e6acf0055db0075c2e71c6e952b5bab17b6459",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/05-the-global-block.mmd",
+      "family": "agentflow",
+      "sha256": "d0e1efdd3ab6d4f49b79e0b0573e7c604f172142b33b918523c5c69a8ba270e8",
+      "manifest_sha256": "d0e1efdd3ab6d4f49b79e0b0573e7c604f172142b33b918523c5c69a8ba270e8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/06-collapsing-a-container.mmd",
+      "family": "agentflow",
+      "sha256": "c02c64e654fcdb4542b66c0fcd91bc95ce88d0b4a3fec647204ce162cda8472b",
+      "manifest_sha256": "c02c64e654fcdb4542b66c0fcd91bc95ce88d0b4a3fec647204ce162cda8472b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/07-connectors.mmd",
+      "family": "agentflow",
+      "sha256": "dbc27530617ea1066aaac341507e6692fd15c1dfc24a0e4b774d336eb5350c4d",
+      "manifest_sha256": "dbc27530617ea1066aaac341507e6692fd15c1dfc24a0e4b774d336eb5350c4d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/08-a-worked-example.mmd",
+      "family": "agentflow",
+      "sha256": "0e15d039fbbeacd39e2c05875070997001cccf843979b9e112ccccda79b00608",
+      "manifest_sha256": "0e15d039fbbeacd39e2c05875070997001cccf843979b9e112ccccda79b00608",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/09-render-the-v08-node-shapes.mmd",
+      "family": "agentflow",
+      "sha256": "9d043844dda5a217ea61ad2b282526336f1f38e150586dfdc0d0bd496de2354b",
+      "manifest_sha256": "9d043844dda5a217ea61ad2b282526336f1f38e150586dfdc0d0bd496de2354b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/10-every-container-kind.mmd",
+      "family": "agentflow",
+      "sha256": "6d6a0b5ac3a2580cdc045ecb362847e6f57631dc0388ee03724c3fef31ca1cc8",
+      "manifest_sha256": "6d6a0b5ac3a2580cdc045ecb362847e6f57631dc0388ee03724c3fef31ca1cc8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/11-redirect-cross-boundary-edges-to-the-collapsed-parent.mmd",
+      "family": "agentflow",
+      "sha256": "27adb24ddb800d63528d3a214bb6f8f45944a68e64d581c23a3ce3133c046925",
+      "manifest_sha256": "27adb24ddb800d63528d3a214bb6f8f45944a68e64d581c23a3ce3133c046925",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/12-keep-a-global-scoped-node-outside-the-flow-container.mmd",
+      "family": "agentflow",
+      "sha256": "d5a176f4c0cc497eea8fffd4c2abeb6ab646161832f1b4394ce21f0cf6a131bf",
+      "manifest_sha256": "d5a176f4c0cc497eea8fffd4c2abeb6ab646161832f1b4394ce21f0cf6a131bf",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/13-render-the-input-value-pattern.mmd",
+      "family": "agentflow",
+      "sha256": "91b80add913a6a79a4d5e6dd6fc3f9bb45a1a838b2a27b819c1dfe68dd37704b",
+      "manifest_sha256": "91b80add913a6a79a4d5e6dd6fc3f9bb45a1a838b2a27b819c1dfe68dd37704b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/14-render-multiple-connector-declarations.mmd",
+      "family": "agentflow",
+      "sha256": "8233513090bfc31a3d95abd7847f28da37b56c3cd78ac9770f848522ec3d42dd",
+      "manifest_sha256": "8233513090bfc31a3d95abd7847f28da37b56c3cd78ac9770f848522ec3d42dd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    },
+    {
+      "path": "agentflow/visual-check/15-support-triage.mmd",
+      "family": "agentflow",
+      "sha256": "43b476dbc2def6ecc1a4e392871bdea21ae743e3b08532dcfd149ed8273ca39e",
+      "manifest_sha256": "43b476dbc2def6ecc1a4e392871bdea21ae743e3b08532dcfd149ed8273ca39e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "agentflow renderer validates declarations, metadata and edges against the closed grammar and transcribes a bounded outline; no config/theme frontmatter gate is present so it draws"
+    }
+  ]
+}

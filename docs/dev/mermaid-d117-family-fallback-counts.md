@@ -45,6 +45,7 @@ are not whole-original errors).
 | After packet family renderer (4 clean originals) | 2026-11-14 | fd6e020b | 1169 | 976 | 0 |
 | After eventmodeling family renderer (6 clean originals) | 2026-11-14 | 7d4730bf | 1175 | 970 | 0 |
 | After requirement style renderer (4 styled originals) | 2026-11-14 | 6c16fe94 | 1179 | 966 | 0 |
+| After agentflow family renderer (27 clean originals) | 2026-11-14 | local | 1206 | 939 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -61,7 +62,7 @@ disposition (fix or documented infeasibility).
 | gantt | 13 | 39 | renderer added 2026-11-12; 11 themed rows stay source (no color contract), 2 malformed-date fixtures fail closed |
 | swimlanes | 46 | 0 | renderer not started |
 | xychart | 46 | 2 | partial axes/art only |
-| agentflow | 38 | 0 | flowchart-syntax variant |
+| agentflow | 11 | 27 | renderer added 2026-11-14; full agentflow-beta grammar (flow/global/connector containers, @{ } metadata, four edge vocabularies, labeled branches) validated and projected as a bounded native outline, not a flowchart approximation; 11 config theme/look rows stay source (no color/layout contract); live census 27/11/0 from 38; 19 of 27 draw at 40 columns |
 | c4 | 9 | 23 | renderer added 2026-11-12; 8 Update*Style/UpdateLayoutConfig + 1 frontmatter config rows stay source (no color/layout contract) |
 | usecase | 18 | 14 | renderer added 2026-11-13; 12 frontmatter theme/look/config + 6 body classDef/:::/style/init rows stay source (no placement/color contract) |
 | er-diagram | 31 | 13 | |
@@ -91,7 +92,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **966** | **1179** | |
+| **Total** | **939** | **1206** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -1226,3 +1227,46 @@ when the body would draw.
   47.14s wall: EveryWholeSourceIsObserved 13.30s, CapabilityReport.Class285
   8.79s, Block58AdmissionJoin 22.72s, Er107AdmissionJoin 2.16s), RC=0,
   logged at `/tmp/g4probe/requirement/serial-em.log`.
+- 2026-11-14 (agentflow family renderer, local; D-211): nineteenth greenfield
+  family and the first flowchart-syntax-variant pool recovered with its own
+  grammar rather than an approximate flowchart draw. A production-seam census
+  (classify_mermaid + layout_succeeds, not text grep) partitioned the 38
+  agentflow-beta originals into 27 native and 11 genuinely config/theme-gated;
+  the new `mermaid_agentflow_impl.cpp` parses the real grammar — `flow`/
+  `global`/`connector` declarations under a strict two-space indent, node
+  `id["label"]`/`id("label")` targets, `@{ }` metadata over a closed key
+  vocabulary (the six v0.8 shapes, view/value/description/params/returns/
+  protocol/endpoint/token_required/connectorRef/instruction/model), and the
+  four edge forms `-->`, `-.-`, `--x` plus bare and pipe-quoted labels — and
+  projects a bounded native outline. Every edge endpoint and metadata owner
+  resolves to a declared element; an unrecognized shape/key/arrow/endpoint
+  rejects the whole source, so no attribute is silently ignored and no
+  invalid agentflow source is drawn as a generic flowchart. The classifier
+  gains MermaidProbeFamily::Agentflow on the exclusive `agentflow-beta`
+  header (including after a frontmatter fence) and a dispatch case; the
+  matrix hook replaces run_case observations 1:1 for all 27 ledger paths, so
+  the observation total stays 2738. Independent read-only adversarial review
+  reached final APPROVE after one re-review. The first pass returned REQUEST
+  CHANGES on one MAJOR, six MINORs and five NITs, all resolved. The MAJOR was
+  a duplicate metadata key supplied across separate `@{ }` blocks being
+  silently accepted because the seen-bitmask was block-local; an
+  AfElement-persistent `meta_seen` mask now rejects in-block and cross-block
+  duplicates uniformly. MINORs aligned the C++/Python frontmatter gate with
+  parse_envelope, required an explicit `end` (no implicit dedent container
+  close), mandated non-empty connector/flow labels, forbade edges terminating
+  at a connector, made metadata comma splitting quote-aware, turned
+  `%%{init}%%` into an explicit rejection, restricted `shape` to nodes, and
+  expanded fail-closed coverage past 30 cases. Whole originals 1179 -> 1206
+  drawn / 966 -> 939 fallback / 0 error; agentflow 27/11 (19 draw at 40
+  columns, 8 fall back); flow 160/240, body 372/173/48, the 48-gap roster and
+  Class285 260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  b6a1cd49b2ba23b9fb4c445154006f378763567a11bdcdfa167fc29db217fa1c;
+  release 63/63). Full mermaid label suite 1334/1334 green (the 1329
+  requirement-era count plus the five agentflow cohort cases). ASan cohort
+  5/5 (the owning contact surface) zero sanitizer reports, logged at
+  `/tmp/g4probe/agentflow/asan-contact.log`. Serial gate 4/4 green
+  (`-j1`, release, 47.93s wall: EveryWholeSourceIsObserved 13.29s,
+  CapabilityReport.Class285 8.86s, Block58AdmissionJoin 23.45s,
+  Er107AdmissionJoin 2.18s), RC=0, logged at
+  `/tmp/g4probe/agentflow/serial-em.log`.

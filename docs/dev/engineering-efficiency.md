@@ -806,3 +806,31 @@ Attach a short efficiency section to each closure report, answering:
   unmoved. Throughput: +4 draws for one census/ledger/review/gate on the
   shared scaffolding, with one shared-module change paid for by a full
   caller regression rather than a new isolated TU.
+- **2026-11-14, agentflow family renderer (27 whole draws, D-211,
+  predating its commit).** Nineteenth greenfield family and the largest
+  single-family draw since gantt, from a flowchart-syntax-variant pool that
+  could only be recovered by modeling its real grammar, not by routing it to
+  the flowchart renderer. (1) Rule 18 again defeated a text-only census:
+  grepping the 38 fixtures for feature keywords could not tell whether the
+  parser would accept each construct; the trustworthy 27-native/11-gated
+  partition only came from a per-fixture probe through the public
+  classify_mermaid + layout_succeeds seam, and the same probe drove every
+  parser iteration (frontmatter fence, dedent-vs-end, bracket endpoints,
+  arrow offset arithmetic) instead of guessing why a source rejected. (2) The
+  independent review caught a real MAJOR the happy-path fixtures never
+  trigger: metadata duplicate-key detection used a block-local bitmask, so
+  the same key across two `@{ }` blocks silently overwrote a shape and
+  emitted duplicate string rows. The durable fix is an element-persistent
+  key mask, which also made the quote-aware component splitter and the
+  node-only shape owner rule fall out of the same closed-vocabulary
+  discipline. (3) Two classes of edge-tokenizer defect recurred while
+  hand-rolling offsets (a substr length counted a bare id's whole line, and
+  a pipe-label offset double-counted the arrow prefix); each threw only on
+  synthetic inputs, which is why the per-feature mini-probe, not just the
+  corpus run, is the cheapest way to catch offset arithmetic. (4) No new
+  numbered rule; rules 18, 20, 22 and 25 cover the work, and rule 25's
+  absolute-cd/RC-marker discipline held across debug, release and ASan
+  trees with one writer per tree. No frozen contract moved; flow 160/240,
+  body 372/173/48, Class285, the 48-gap roster and observation total 2738
+  all unmoved. Throughput: +27 draws for one census/ledger/review/gate on
+  the shared scaffolding.

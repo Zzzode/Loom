@@ -47,6 +47,7 @@ are not whole-original errors).
 | After requirement style renderer (4 styled originals) | 2026-11-14 | 6c16fe94 | 1179 | 966 | 0 |
 | After agentflow family renderer (27 clean originals) | 2026-11-14 | local | 1206 | 939 | 0 |
 | After sankey family renderer (1 clean original) | 2026-11-14 | local | 1207 | 938 | 0 |
+| After D223 state reachable-semantics batch one (7 state originals) | 2026-11-14 | local | 1214 | 931 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -59,7 +60,7 @@ disposition (fix or documented infeasibility).
 | flowchart | 240 | 160 | active track; see breakdown below |
 | requirement | 156 | 16 | renderer extended 2026-11-14; classDef/class/style/`:::` body statements now validated and rendered through the shared palette-role style seam (4 new draws); 156 frontmatter config/theme/title/indented-fence rows stay source (no theme/layout/color contract) |
 | git | 80 | 55 | |
-| state-diagram-v2 | 78 | 25 | |
+| state-diagram-v2 | 74 | 29 | D223 batch one: +4 (HTML-entity fork/join, square choice, note tab break, edge `\n`/`#colon;`); remaining include 5 style/1 click/1 description-tab gates and geometry/concurrency debt |
 | gantt | 13 | 39 | renderer added 2026-11-12; 11 themed rows stay source (no color contract), 2 malformed-date fixtures fail closed |
 | swimlanes | 46 | 0 | hard wall, no renderer; re-confirmed 2026-11-14 through the production render_markdown seam (0 drawn / 46 fallback): every fixture is swimlane-beta (LR/TD 23 each) and carries a `config.flowchart.htmlLabels` + `useMaxWidth` visual/layout contract (46/46), 18 add theme/look and 5 carry body classDef/class/style; native text rendering cannot honor the lane geometry without silently dropping those contracts, so the whole family stays gated; unblock needs a real lane-geometry renderer |
 | xychart | 46 | 2 | partial axes/art only |
@@ -74,7 +75,7 @@ disposition (fix or documented infeasibility).
 | sankey | 17 | 1 | renderer added 2026-11-14; the single description-only `sankey-beta` original has its three-field CSV link rows (`source,target,value`) validated against a closed grammar (printable labels, no quotes/embedded commas/control bytes, bounded positive integer) and transcribed as a bounded native outline rather than an approximate flow graph; the 17 plain-`sankey` dialect originals all carry `config.sankey` layout/color contracts and stay source; live census 1/17/0 from 18, the reachable row draws at 40 columns |
 | journey | 10 | 18 | renderer added 2026-11-11; 8 themed rows stay source (no color contract) |
 | pie | 17 | 7 | |
-| state-diagram | 26 | 16 | |
+| state-diagram | 23 | 19 | D223 batch one: +3 (HTML-entity fork/join top-level and nested, edge literal `\n`); the v1 note twin stays gated by a real tab in its folded description (shared unicode_text contract), plus labels/composite/concurrency geometry debt |
 | tree-view | 7 | 8 | renderer added 2026-11-13; 5 frontmatter layout/icon-config + 2 body :::class rows stay source (no icon/color contract); live census 8/5/2 corrected an older 9/4/2 via a trailing-whitespace fence |
 | quadrant-chart | 7 | 7 | renderer added 2026-11-13; 5 %%{init}%% visual directives (axis position/sizing/theme colors) + 2 inline point-style rows stay source (no geometry/color contract) |
 | ishikawa | 6 | 7 | renderer added 2026-11-13; 6 frontmatter theme/look/config rows stay source (no fishbone geometry/color contract); live census 7/6/0 from a candidate pool of 13 |
@@ -93,7 +94,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **938** | **1207** | |
+| **Total** | **931** | **1214** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -1331,3 +1332,62 @@ when the body would draw.
   stays gated. Unblock condition: a native lane-geometry renderer that
   honors the htmlLabels/useMaxWidth/theme contracts. Evidence:
   `/tmp/g4probe/swimlanes/hard-wall-probe.log`.
+- 2026-11-14 (D223 state reachable-semantics batch one, local): first
+  in-family extension of the existing shared state/relations renderer rather
+  than a new greenfield family, recovering +7 whole originals (v1 +3, v2 +4).
+  A production-seam census (testing::layout_succeeds == thin forwarder to
+  layout_mermaid_content, plus render_markdown CellCapture; never text grep)
+  partitioned the 145 state originals (41 drawn / 104 fallback at start):
+  84 are genuine frontmatter visual gates (theme/look/layout/nested
+  state.useMaxWidth; 35 pure-FM plus 49 double-gated with a body debt), 1 is
+  a lone `info` directive that is not a state diagram, and 20 are body-
+  reachable. Of those 20, this batch closes the 7 whose grammar the text
+  surface can represent fully; the rest stay honestly gated (see below).
+  Three state-local, family-mutually-exclusive changes, all re-entering the
+  shared closed validators and adding no Work fee: (1) pseudo-state markers
+  `state F &lt;&lt;fork&gt;&gt;`/join now decode by reusing the existing PURE
+  class_encoded_annotation at a new State-only call site, and
+  `state C [[choice]]` is accepted as an alias of `<<choice>>`; unknown
+  decoded markers still fail closed, and the entity frame is byte-identical
+  to the raw-marker frame; (2) block notes canonicalize only the corpus
+  spelling `<br\t/>` -> `<br/>` before the shared decoder, any other tab
+  still rejected; (3) a new pure `state_transition_label` decodes only the
+  two corpus-attested edge-label escapes, literal `\n` -> the existing
+  `<br>` break and `#colon;` -> literal colon, then re-enters
+  relation_literal_label; a predecessor guard rejects nested introducers
+  (`\\n`, `##colon;`, `&#colon;`). `relation_literal_label` and
+  mermaid_cells_impl.cpp are untouched, so Class/ER/requirement schedules and
+  glyphs are unchanged (a transient +80 Work drift was caught against
+  MermaidClassStyleBaseline and removed by keeping the decoder fee-free).
+  The renderer-free e2b ledger generator retired the five now-native lexical
+  blockers (their durable regression guard moved into MermaidStateEnvelope
+  native gtests) and added one source-derived
+  state-envelope-description-tab detector mirroring the production folded-
+  description unicode_text rule; the ledger moved 40/21 -> 47 predicted-draw
+  /14 blocked and was re-approved by an independent adversarial agent after
+  one MINOR (the nested-introducer guard) was fixed and verified with 27
+  fail-closed probes. Independent review APPROVE; an overlay experiment
+  proved the only OfficialMatrix redness while verdict=pending was the
+  designed review gate. Gated, not silently approximated: 5 classDef/class/
+  style fixtures (4 representable but a D204-sized style subsystem deferred;
+  1 uses font-style:italic which FTXUI cannot represent - SemanticCellStyle
+  has only color/bold/underline), 1 `click` binding pinned whole-source by
+  the sha-reviewed state_bare_alias control (needs a reviewed Model
+  re-baseline, so reverted to keep the tree green), 1 v1 note whose folded
+  DESCRIPTION carries a real tab rejected by the shared unicode_text
+  validator, 2 labels-congestion and 2 composite long-label geometry limits
+  of the 240x1024 RelationLayout envelope, and 2 concurrency `--` fixtures
+  (no Region shape plus a frozen CompositeDividerStaysSource test). Whole
+  originals 1207 -> 1214 drawn / 938 -> 931 fallback / 0 error; state family
+  41 -> 48 drawn (state-diagram 16->19, state-diagram-v2 25->29), 97
+  fallback; flow 160/240, body 372/173/48, Class285 260/25/0, the 48-gap
+  roster (zero state rows) and the 2738 observation total are unmoved;
+  integrity_errors empty. debug/release OfficialMatrix JSON byte-identical
+  (sha256
+  f71f9da04345884b5a49cf760fe53fb46ebcccbe900b3b66b99830c344d33feb).
+  Full mermaid label suite 1345/1345 green (270.33s wall). ASan+UBSan
+  contact (e2b cohort 6/6 plus the 13 MermaidStateEnvelope tests) zero
+  sanitizer reports. Serial gates `-j1` release RC=0:
+  EveryWholeSourceIsObserved, CapabilityReport.Class285 (in
+  test_mermaid_relations_semantics, one non-vacuous test), Block58 30/30,
+  Er107 4/4. Evidence under `/tmp/g4probe/state/`.

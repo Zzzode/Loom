@@ -235,6 +235,27 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     tests and still exits 0, so confirm the log says one test actually ran
     before copying or trusting any output artifact.
 
+26. **A frozen closed-profile that flips from fallback to drawn can have
+    several independent root causes; and a throwaway census's absolute count
+    is not comparable to a doc baseline, only its same-probe transition set
+    is.** In D228 the StateScoped closed-profile failure survived the first
+    MAJOR fix (the inline `Node:::class` edge guard): a second, unrelated
+    mechanism — a state-local named `red` admitted in the direct color table
+    though no reachable fixture spells a direct `fill:red` — was what drew
+    the SHA-pinned `unknown_style` source. When a frozen gate stays red after
+    the obvious fix, extract the exact failing source's tokens and diff them
+    against the reachable fixtures' actual spellings before assuming one
+    patch covered it; each distinct admission path is a separate root cause.
+    Separately, a render seam probed at one capture height produced an
+    absolute drawn count offset by a constant from the living doc's
+    different-geometry census, which first read as a phantom extra draw. The
+    trustworthy signal was a same-probe HEAD-vs-working-tree run over the
+    whole family (stash, rebuild, re-probe, restore): the TRANSITION set was
+    exactly the four authorized fixtures with an empty regression set, while
+    either absolute number alone was misleading. Update the doc by applying
+    the measured delta to its own baseline, never by copying the probe's
+    absolute total.
+
 ## Per-task efficiency retro (mandatory at every closure)
 
 Attach a short efficiency section to each closure report, answering:
@@ -870,3 +891,40 @@ Attach a short efficiency section to each closure report, answering:
   46-fixture hard wall for one census/ledger/review/gate on the shared
   scaffolding; no frozen contract moved (flow 160/240, body 372/173/48,
   Class285, 48-gap roster, observation total 2738).
+
+- **2026-11-14, D228 state style group (uncommitted at retro; local commits
+  follow).** Outcome +4 whole draws (1214 -> 1218 / 931 -> 927), one italic
+  hard gate retained. (1) Gate wall-clock was dominated by the two full
+  OfficialMatrix runs (debug ~729s, release ~92s) and the 1007-test mermaid
+  label suite (374.49s); per rule 2 the release matrix carried the
+  byte-identity gate at ~1/8 the debug cost, and iteration used only targeted
+  StateStyles/frozen-gate filters. (2) One misleading signal, now rule 26: a
+  throwaway census reported an absolute drawn count one above the expected
+  delta because its fixed capture height differs from the doc's census
+  geometry. The durable fix was a same-probe HEAD-vs-working A/B over all 145
+  state originals (stash/rebuild/re-probe/restore), which isolated the
+  transition set to exactly the four authorized fixtures and an empty
+  regression set; the doc applies the measured +4 to its own baseline rather
+  than copying the probe total. (3) The independent re-review earned its cost
+  twice: the prior round's single "MAJOR" masked two independent root causes
+  — the inline `Node:::class` edge mis-label AND an over-broad state named-
+  color table that drew a SHA-pinned closed profile (`style A fill:red`).
+  Fixing only the first left the frozen gate red; the second needed a
+  corpus-attested context split (red only inside the border shorthand). An
+  upstream check — diffing the failing source's tokens against every
+  reachable fixture spelling before coding — would have caught the named-red
+  overreach in the original implementation instead of at review. (4) No
+  false green/red or flake: debug, release -O2 and ASan+UBSan agreed, the
+  dual-preset OfficialMatrix sha matched first comparison
+  (48ffcbc5fbbe23415e1ab9bef43c003d8f4e61456222fca261c7f99e3a0dfc6c), and the
+  only OfficialMatrix redness while verdict=pending was the designed review
+  gate (proven: 62/63 with the exact "must be independently approved"
+  message), which cleared on verdict flip with no code change. (5) Interface
+  fan-out was the known append-only kind in `mermaid_detail.cppm` (three
+  structs + four declarations, zero existing types changed); the style logic
+  is a body-only state TU so later edits stay inside the visual archive.
+  (6) New numbered rule 26 added (multiple independent frozen-gate root
+  causes; same-probe transition set over absolute census). The three build
+  trees kept one writer each; no frozen contract moved (flow 160/240, body
+  372/173/48, Class285 260/25/0, 48-gap roster zero state rows, observation
+  2738).

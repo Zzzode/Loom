@@ -48,6 +48,7 @@ are not whole-original errors).
 | After agentflow family renderer (27 clean originals) | 2026-11-14 | local | 1206 | 939 | 0 |
 | After sankey family renderer (1 clean original) | 2026-11-14 | local | 1207 | 938 | 0 |
 | After D223 state reachable-semantics batch one (7 state originals) | 2026-11-14 | local | 1214 | 931 | 0 |
+| After D228 state classDef/class/style group (4 representable state style originals) | 2026-11-14 | local | 1218 | 927 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -60,7 +61,7 @@ disposition (fix or documented infeasibility).
 | flowchart | 240 | 160 | active track; see breakdown below |
 | requirement | 156 | 16 | renderer extended 2026-11-14; classDef/class/style/`:::` body statements now validated and rendered through the shared palette-role style seam (4 new draws); 156 frontmatter config/theme/title/indented-fence rows stay source (no theme/layout/color contract) |
 | git | 80 | 55 | |
-| state-diagram-v2 | 74 | 29 | D223 batch one: +4 (HTML-entity fork/join, square choice, note tab break, edge `\n`/`#colon;`); remaining include 5 style/1 click/1 description-tab gates and geometry/concurrency debt |
+| state-diagram-v2 | 70 | 33 | D223 batch one: +4 (HTML-entity fork/join, square choice, note tab break, edge `\n`/`#colon;`); D228: +4 representable classDef/class/style originals (palette-role fill/stroke/color, border shorthand to stroke, bold to pixels); the 1 italic fixture, 1 click, 1 description-tab and the inline `Node:::class` edge form stay gated, plus geometry/concurrency debt |
 | gantt | 13 | 39 | renderer added 2026-11-12; 11 themed rows stay source (no color contract), 2 malformed-date fixtures fail closed |
 | swimlanes | 46 | 0 | hard wall, no renderer; re-confirmed 2026-11-14 through the production render_markdown seam (0 drawn / 46 fallback): every fixture is swimlane-beta (LR/TD 23 each) and carries a `config.flowchart.htmlLabels` + `useMaxWidth` visual/layout contract (46/46), 18 add theme/look and 5 carry body classDef/class/style; native text rendering cannot honor the lane geometry without silently dropping those contracts, so the whole family stays gated; unblock needs a real lane-geometry renderer |
 | xychart | 46 | 2 | partial axes/art only |
@@ -94,7 +95,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **931** | **1214** | |
+| **Total** | **927** | **1218** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -1391,3 +1392,49 @@ when the body would draw.
   EveryWholeSourceIsObserved, CapabilityReport.Class285 (in
   test_mermaid_relations_semantics, one non-vacuous test), Block58 30/30,
   Er107 4/4. Evidence under `/tmp/g4probe/state/`.
+
+## D228 state classDef/class/style group closure (2026-11-14)
+
+  Four of the five state style originals that D223 left gated now draw
+  natively through a state-owned classDef/class/style parser and resolver;
+  the fifth stays whole-source because its classDef sets
+  `font-style:italic`, which the terminal `SemanticCellStyle` cannot
+  represent (only color/bold/underline; FTXUI has no italic cell attribute).
+  State nodes are Rounded (including nested composite children), so the
+  state path resolves its own entities instead of the Box/top-level Class
+  seam; colors route through `source_style_role` palette roles (no hardcoded
+  RGB), the `border:<width> solid <color>` shorthand maps to stroke, and
+  `font-weight:bold` reaches the pixels. The e2b ledger moved 47/14 -> 51
+  predicted-draw / 10 blocked and was re-approved by an independent
+  adversarial agent (104 reviewer assertions plus a 27-assertion dual-seam
+  probe).
+
+  Two independent fail-closed root causes were fixed during review. (1)
+  Inline endpoint class syntax `Node:::class` on a state edge previously let
+  `identifier()` stop at the first ':' so `::class` became a literal edge
+  label and the dropped style mis-drew a must-stay-fallback source; a
+  State-only guard now rejects a `::`-prefixed remainder before the label
+  branch. (2) A state-local named `red` in the direct color table made the
+  SHA-pinned StateScoped `unknown_style` closed profile (`style A
+  fill:red`) draw; the named table is now split by context so direct
+  fill/stroke/color admits only the corpus-attested black/blue (+ shared
+  hex/white) and `red` is admitted only inside the border shorthand, its
+  sole reachable spelling (`border:1px solid red`). A same-probe HEAD vs
+  working-tree census over all 145 state originals proved the change set is
+  exactly the four authorized fixtures with zero regressions. A legend TAB
+  is now projected as the two-character `\t` (mirroring Class), and
+  malformed target lists (trailing/empty comma components) reject.
+
+  Whole originals 1214 -> 1218 drawn / 931 -> 927 fallback / 0 error; state
+  family 48 -> 52 drawn (state-diagram 19 unchanged, state-diagram-v2
+  29->33), 93 fallback; flow 160/240, body 372/173/48, Class285 260/25/0,
+  the 48-gap roster (zero state rows) and the 2738 observation total are
+  unmoved; integrity_errors empty. debug/release OfficialMatrix 63/63 each,
+  JSON byte-identical (sha256
+  48ffcbc5fbbe23415e1ab9bef43c003d8f4e61456222fca261c7f99e3a0dfc6c).
+  Full mermaid label suite 1007/1007 green (374.49s wall). ASan+UBSan
+  contact (e2b cohort 6/6 plus 17 state tests: MermaidStateStyles,
+  MermaidStateEnvelope, MermaidStateScopedDirection, State85) zero
+  sanitizer reports. Serial gates `-j1` release RC=0:
+  EveryWholeSourceIsObserved, CapabilityReport.Class285, Block58 9/9,
+  Er107 4/4. Evidence under `/tmp/d228_review/`.

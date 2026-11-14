@@ -33427,6 +33427,190 @@ TEST(MermaidStateEnvelope, TransitionLabelEscapesDecodeAndUnknownEscapesStaySour
         "stateDiagram-v2\n  [*] --> A\n  A --> B: x#colon;y\n"));
 }
 
+// D228: count cells carrying the terminal bold attribute, so a font-weight
+// disclosed only in the legend but never reaching pixels cannot pass.
+namespace d228 {
+std::size_t bold_cell_count(const std::string& source) {
+    auto element = loom::ui::render_markdown(fenced(source, "mermaid"));
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(240),
+                                        ftxui::Dimension::Fixed(120));
+    ftxui::Render(screen, element);
+    std::size_t bold = 0;
+    for (int y = 0; y < 120; ++y)
+        for (int x = 0; x < 240; ++x)
+            if (screen.PixelAt(x, y).bold) ++bold;
+    return bold;
+}
+}  // namespace d228
+
+// D228: a direct `style` statement projects fill/border/text-color onto a
+// state through palette roles and discloses the resolved profile.
+TEST(MermaidStateStyles, DirectStylePaintsAndDiscloses) {
+    const std::string source =
+        "stateDiagram-v2\n"
+        "  AState\n"
+        "  style AState fill:#636,border:1px solid red,color:white;\n";
+    ASSERT_TRUE(e2a_state::draws(source));
+    const auto frame = e2a_state::surface(source, "mermaid");
+    EXPECT_NE(frame.find("style AState"), std::string::npos);
+    // #636 is short hex #663366 (a purple tint), not monochrome; the border
+    // color red -> Red role; the white foreground -> Neutral. Border shorthand
+    // contributes a normal width (1px < the 4px bold threshold).
+    EXPECT_NE(frame.find("fill:Purple(surface tint)"), std::string::npos);
+    EXPECT_NE(frame.find("stroke:Red"), std::string::npos);
+    EXPECT_NE(frame.find("fg:Neutral"), std::string::npos);
+    EXPECT_NE(frame.find("width:normal"), std::string::npos);
+}
+
+// D228: a multi-target style reaches both a top-level state and a state
+// nested inside a composite (the shared paint is shape/owner agnostic).
+TEST(MermaidStateStyles, MultiTargetStyleReachesNestedState) {
+    const std::string source =
+        "stateDiagram\n"
+        "  state roundWithTitle {\n"
+        "  C: Black with white text\n"
+        "  }\n"
+        "  D: Black with white text\n"
+        "  style C,D stroke:#00f, fill:black, color:white\n";
+    ASSERT_TRUE(e2a_state::draws(source));
+    const auto frame = e2a_state::surface(source, "mermaid");
+    EXPECT_NE(frame.find("style C,D"), std::string::npos);
+    EXPECT_NE(frame.find("stroke:Blue(shared info)"), std::string::npos);
+    EXPECT_NE(frame.find("fill:Neutral"), std::string::npos);
+}
+
+// D228: classDef/class styling applies, and a direct style on the same state
+// overrides the class-based profile while the other state keeps the class.
+TEST(MermaidStateStyles, ClassAndDirectStylePrecedence) {
+    const std::string source =
+        "stateDiagram-v2\n"
+        "  AState: Should NOT be white\n"
+        "  BState\n"
+        "  classDef exampleStyleClass fill:#fff,color: blue;\n"
+        "  class AState,BState exampleStyleClass\n"
+        "  style AState fill:#636,border:1px solid red,color:white;\n";
+    ASSERT_TRUE(e2a_state::draws(source));
+    const auto frame = e2a_state::surface(source, "mermaid");
+    EXPECT_NE(frame.find("classDef exampleStyleClass"), std::string::npos);
+    EXPECT_NE(frame.find("style AState"), std::string::npos);
+    // Both the class profile and the overriding direct profile are disclosed.
+    EXPECT_NE(frame.find("fg:Blue(shared info)"), std::string::npos);
+    EXPECT_NE(frame.find("stroke:Red"), std::string::npos);
+}
+
+// D228: class-based bold reaches the pixels and coexists with the D223
+// edge-label escape on the same source.
+TEST(MermaidStateStyles, ClassBoldPaintsAndEscapesCoexist) {
+    const std::string source =
+        "stateDiagram-v2\n"
+        "  [*] --> A\n"
+        "  A --> B: test({ foo#colon; 'far' })\n"
+        "  B --> [*]\n"
+        "  classDef badBadEvent fill:#f00,color:white,font-weight:bold\n"
+        "  class B badBadEvent\n";
+    ASSERT_TRUE(e2a_state::draws(source));
+    const auto frame = e2a_state::surface(source, "mermaid");
+    EXPECT_NE(frame.find("foo: 'far'"), std::string::npos);
+    // The classDef profile is disclosed verbatim in the legend while the bold
+    // weight reaches the actual node pixels (the real styling contract).
+    EXPECT_NE(frame.find("classDef badBadEvent"), std::string::npos);
+    EXPECT_GT(d228::bold_cell_count(source), 0u);
+}
+
+// D228: unknown property/value/class/node, the shorthand `:::` form and any
+// unmodelable styling reject the whole source rather than drawing half-styled.
+TEST(MermaidStateStyles, MalformedStylesFailClosed) {
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style A bogus:1\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  classDef c fill:notacolor\n  class A c\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  class A missingClass\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style MissingNode fill:#f00\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  classDef c fill:#f00\n  A:::c\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style A fill:#f00 extra garbage\n"));
+    // A border shorthand needs width + solid + color; bare/incomplete spellings
+    // and non-solid styles are malformed rather than treated as a stroke.
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style A border:red\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style A border:1px dashed red\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style A border:solid red\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style A font-style:italic\n"));
+    // Named `red` is admitted only inside the border shorthand
+    // (`border:1px solid red`, the only red spelling the reachable fixtures
+    // use). A direct fill/stroke/color:red has no reachable fixture and is the
+    // exact shape of the frozen StateScoped `unknown_style` closed profile, so
+    // it must keep the whole source fallback rather than draw natively.
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style A fill:red\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style A stroke:red\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style A color:red\n"));
+    // The same red spelling still draws through the evidenced border path.
+    EXPECT_TRUE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style A border:1px solid red\n"));
+    // A trailing comma leaves an empty target component; both the direct-style
+    // and class-assignment target lists must reject it rather than drop it.
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  style A, fill:#f00\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  classDef c fill:#f00\n  class A, c\n"));
+    // Leading and internal empty components are malformed for the same reason.
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  A\n  B\n  style A,,B fill:#f00\n"));
+}
+
+// D228 MAJOR-2 regression: Mermaid inline endpoint class syntax (Node:::class)
+// on a state edge has no native representation yet. It must reject the whole
+// source instead of letting identifier() stop at the first ':' and the "::c"
+// remainder be decoded as a literal transition label (which would silently drop
+// the class and mis-draw a source the frozen gates expect to stay fallback).
+// Covers both frozen mmdflux shapes: `Idol --> Processing:::active` and
+// `[*] --> Inner:::highlight`.
+TEST(MermaidStateStyles, InlineEndpointClassOnEdgeFailsClosed) {
+    // Identifier to-endpoint, unspaced and spaced (identifier trims the rest).
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  classDef active fill:#f00\n  A --> B:::active\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  classDef active fill:#f00\n  A --> B ::: active\n"));
+    // Control start, identifier to-endpoint.
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  classDef highlight fill:#0f0\n  [*] --> Inner:::highlight\n"));
+    // Control to-endpoint carrying the suffix.
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  classDef c fill:#f00\n  A --> [*]:::c\n"));
+    // From-side inline class never reaches the edge operator loop (no operator
+    // starts with ':'), so it is rejected there; lock the invariant.
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  classDef c fill:#f00\n  A:::c --> B\n"));
+    // The guard is narrow: a legitimate single-colon transition label still draws.
+    EXPECT_TRUE(e2a_state::draws(
+        "stateDiagram-v2\n  [*] --> A\n  A --> B : done\n  B --> [*]\n"));
+}
+
+// D228 MINOR-1 regression: the classDef dispatch accepts a TAB after the
+// keyword, so its verbatim line can carry a real TAB (`classDef\tc ...`). The
+// legend is a terminal grid row, so that TAB must be projected as the
+// two-character "\t" escape (mirroring the Class family) rather than emitting
+// a raw control character into a rendered cell. The style/class statement
+// dispatch gates on a literal space, so this classDef path is the reachable
+// TAB-bearing legend source.
+TEST(MermaidStateStyles, LegendEscapesSourceTab) {
+    const std::string source =
+        "stateDiagram-v2\n  A\n  classDef\tc fill:#f00\n  class A c\n";
+    ASSERT_TRUE(e2a_state::draws(source));
+    const auto frame = e2a_state::surface(source, "mermaid");
+    EXPECT_EQ(frame.find('\t'), std::string::npos);
+    EXPECT_NE(frame.find("\\t"), std::string::npos);
+}
+
 }  // namespace
 
 }  // namespace

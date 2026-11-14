@@ -369,6 +369,25 @@ struct ClassDirectStyles {
     std::vector<std::string> legend;
 };
 
+// D228: state-owned direct-style ledger. State nodes are Rounded (including
+// nested composite children), so the state path parses and resolves its own
+// classDef/class/style statements instead of the Box/top-level Class seam.
+struct StateStyleDefinition {
+    std::string name;
+    std::string verbatim;
+    ClassStyleProperties properties;
+};
+struct StateStyleAssignment {
+    std::vector<std::string> targets;
+    std::string class_name;
+    std::string verbatim;
+};
+struct StateStyleDirect {
+    std::vector<std::string> targets;
+    std::string verbatim;
+    ClassStyleProperties properties;
+};
+
 struct RouteCandidate {
     int estimate = 0, cost = 0, index = 0;
 
@@ -744,6 +763,16 @@ std::optional<StateNoteBlock> state_note_block(std::string_view original, std::s
 // shared closed label validator, so no other escape is admitted. Pure like
 // relation_label (no Work fee) to keep the labeled-state schedule identical.
 std::optional<std::string> state_transition_label(std::string_view raw);
+// D228: bounded state classDef/class/style statement parsers.
+bool state_parse_classdef(std::string_view line, Work& work, StateStyleDefinition& out);
+bool state_parse_class_assignment(std::string_view line, Work& work, StateStyleAssignment& out);
+bool state_parse_direct_style(std::string_view line, Work& work, StateStyleDirect& out);
+// D228: resolve the state style ledger onto diagram.direct_styles (Rounded and
+// nested entities admitted); the family-agnostic paint path then renders it.
+bool build_state_direct_styles(
+    RelationDiagram& diagram, std::span<const StateStyleDefinition> definitions,
+    std::span<const StateStyleAssignment> assignments,
+    std::span<const StateStyleDirect> directs, Work& work);
 std::optional<RequirementDiagram> parse_requirement(std::string_view source, Work& work);
 std::optional<RelationDiagram> project_requirement(const RequirementDiagram& parsed, Work& work);
 

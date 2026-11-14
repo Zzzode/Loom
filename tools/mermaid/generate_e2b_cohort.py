@@ -19,8 +19,10 @@ debts; one sha-bound reviewed set (state-native-routing-debt) covers the
 labeled-edge composite/fan-out plans the bounded router cannot close,
 which no lexical detector can honestly predict. D223 retired five of the
 lexical detectors (the constructs are native now) and added one envelope
-description-tab detector; five fixed detectors plus the routing set remain.
-Any residual selected row aborts generation: zero unclassified rows. E2b pre-registers the
+description-tab detector; D228 retired the generic style-statement detector
+and added one narrow unrepresentable-italic detector. Five fixed detectors
+plus the routing set remain. Any residual selected row aborts generation:
+zero unclassified rows. E2b pre-registers the
 240-column admission only; narrow_40 is uniformly ``source`` and
 restored_240 must equal wide_240.
 
@@ -50,7 +52,7 @@ WHITELIST = {
 BLOCKER_VOCABULARY = [
     "state-non-state-body",
     "state-composite-divider",
-    "state-style-statement",
+    "state-unrepresentable-italic",
     "state-click-statement",
     "state-envelope-description-tab",
     "state-native-routing-debt",
@@ -67,11 +69,12 @@ WITNESS = {
         "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
         "A standalone '--' concurrency-region divider reaches edge parsing and is rejected.",
     ),
-    "state-style-statement": (
-        "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected "
-        "for state)",
-        "The source applies classDef/class/style styling, which the terminal state renderer "
-        "does not project; the statement is outside the accepted grammar/profile.",
+    "state-unrepresentable-italic": (
+        "src/ui/visual/mermaid_cells_impl.cpp SemanticCellStyle (no italic attribute)",
+        "A classDef sets font-style:italic, but the terminal cell style model has only "
+        "color/bold/underline and FTXUI has no italic attribute; admitting it would silently "
+        "drop the requested style, so the whole source stays fallback. D228 parses the other "
+        "state classDef/class/style properties (fill/stroke/color/border/bold) natively.",
     ),
     "state-click-statement": (
         "src/ui/visual/mermaid_relations_core_impl.cpp (no state click statement parse)",
@@ -189,9 +192,12 @@ def state_blocker(rel, source_sha256, body_lines):
     for line in (l.strip() for l in body_lines):
         if line.startswith("click") and (len(line) == 5 or line[5] in (" ", "\t")):
             return "state-click-statement"
-        if (line.startswith("classDef") or line.startswith("class ") or
-                line.startswith("style ")):
-            return "state-style-statement"
+    # D228: representable classDef/class/style (fill/stroke/color/border/
+    # font-weight) now parse and draw. The one property the terminal cannot
+    # model is font-style:italic, which still gates the whole source.
+    for line in (l.strip().lower() for l in body_lines):
+        if "font-style" in line and "italic" in line:
+            return "state-unrepresentable-italic"
     body = "\n".join(body_lines)
     # D223 retired detectors: [[choice]], &lt;&lt;fork/join&gt;&gt;, the stray-tab
     # <br\t/> break, literal \n and #colon; edge escapes are now parsed and
@@ -302,28 +308,32 @@ def build(repo_root):
                                  "D223 retired the choice/fork-join/br-tab/newline/"
                                  "html-entity detectors (now native, guarded by "
                                  "MermaidStateEnvelope gtests) and added the folded-"
-                                 "description-tab envelope detector.",
+                                 "description-tab envelope detector. D228 retired the "
+                                 "generic style-statement detector (representable "
+                                 "classDef/class/style now parse and draw, guarded by "
+                                 "MermaidStateStyles gtests), replacing it with a narrow "
+                                 "unrepresentable-italic detector.",
             "width_policy": "E2b pre-registers the 240-column admission; narrow_40 is "
                             "uniformly 'source'.",
         },
         "review": {
-            "reviewer_agent": "independent read-only adversarial review "
-                              "agent, D223 state reachable-semantics batch one "
-                              "(fresh general-purpose agent; full-diff audit, "
-                              "independent 61-row production-seam probe, "
-                              "byte-identity and 27 fail-closed probes)",
+            "reviewer_agent": "independent read-only adversarial re-review agent, D228 state "
+                              "style group (fresh general-purpose agent; full-diff audit, "
+                              "independent 104-assertion probes plus a rerun of the author's "
+                              "27-assertion dual-seam probe, 269/269 native suite, frozen "
+                              "invariant and 51/10 partition verification); the D223 approval "
+                              "covered only the 47/14 partition",
             "date": "2026-11-14",
             "verdict": "approved",
-            "note": "D223 moves seven rows to predicted-draw after the state "
-                    "parser learned HTML-entity fork/join, square choice, the "
-                    "block-note tab break, and edge \\n/#colon; escapes (the "
-                    "nested-introducer fail-closed review MINOR is fixed and "
-                    "guarded by MermaidStateEnvelope gtests); the v1 "
-                    "description-tab twin stays blocked by the shared "
-                    "unicode_text envelope contract. Approved 47/14 partition "
-                    "and five-frame pixel gate; frozen gates (flow 160/240, "
-                    "body 372/173/48, Class285 260/25/0, 48-gap roster, "
-                    "observation 2738) verified unchanged.",
+            "note": "D228 moves four more rows to predicted-draw by giving state its own "
+                    "classDef/class/style parser and resolver (Rounded and nested entities "
+                    "admitted, palette-role colors, border shorthand to stroke, bold to "
+                    "pixels); the fifth style fixture stays blocked because font-style:italic "
+                    "has no terminal cell attribute. Inline Node:::class edge syntax and a "
+                    "direct fill/stroke/color:red stay whole-source fallback (fail-closed), "
+                    "keeping the frozen State85 and StateScoped closed profiles byte-identical. "
+                    "The legacy D223 seven rows and all frozen gates remain unchanged. Approved "
+                    "51/10 partition and five-frame gate.",
         },
         "counts": {
             "total": total,

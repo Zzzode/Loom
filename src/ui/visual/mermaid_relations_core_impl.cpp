@@ -2041,6 +2041,11 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
                     alignof(std::vector<std::string_view>) + 64u))
         return {};
     std::vector<std::string_view> inactive_class_definitions;
+    // D228: state-owned direct-style ledger, collected on State-gated branches
+    // and resolved after the entities/edges exist.
+    std::vector<StateStyleDefinition> state_style_definitions;
+    std::vector<StateStyleAssignment> state_style_assignments;
+    std::vector<StateStyleDirect> state_style_directs;
     if (!work.spend(8u * sizeof(std::vector<StateTextRecord>) +
                     alignof(std::vector<StateTextRecord>) + 8u * sizeof(bool) + 64u))
         return {};
@@ -2597,6 +2602,36 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
             if (target < 0 || !add_member(target, line.substr(0, end + 2))) return {};
             continue;
         }
+        // D228: state owns its classDef/class/style grammar; the branches are
+        // mutually exclusive with the Class path below and fail closed on any
+        // property, color, class or target the bounded state profile rejects.
+        if (diagram.family == RelationFamily::State &&
+            line.size() > 8u && line.starts_with("classDef") &&
+            (line[8] == ' ' || line[8] == '\t')) {
+            StateStyleDefinition definition;
+            if (state_style_definitions.size() >= 64u ||
+                !state_parse_classdef(line, work, definition))
+                return {};
+            state_style_definitions.push_back(std::move(definition));
+            continue;
+        }
+        if (diagram.family == RelationFamily::State && line.starts_with("class ") &&
+            !line.starts_with("classDef")) {
+            StateStyleAssignment assignment;
+            if (state_style_assignments.size() >= 64u ||
+                !state_parse_class_assignment(line, work, assignment))
+                return {};
+            state_style_assignments.push_back(std::move(assignment));
+            continue;
+        }
+        if (diagram.family == RelationFamily::State && line.starts_with("style ")) {
+            StateStyleDirect direct;
+            if (state_style_directs.size() >= 64u ||
+                !state_parse_direct_style(line, work, direct))
+                return {};
+            state_style_directs.push_back(std::move(direct));
+            continue;
+        }
         if (diagram.family == RelationFamily::Class && line.starts_with("class ")) {
             const auto declaration = line;
             line = trim_relation(line.substr(6));
@@ -2918,6 +2953,13 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
                       : diagram.entity(*to, owner());
         if (edge.to < 0) return {};
         if (!rest.empty()) {
+            // Mermaid inline endpoint class syntax (Node:::class, also after
+            // [*]) has no state edge representation yet. identifier() trims the
+            // remainder, so the suffix always surfaces as a "::"-prefixed rest.
+            // Reject it before the label branch: otherwise "::c" would be
+            // decoded as a literal transition label and the dropped style would
+            // mis-draw a source that must stay whole-source fallback.
+            if (diagram.family == RelationFamily::State && rest.starts_with("::")) return {};
             if (rest.front() != ':') return {};
             const auto label =
                 diagram.family == RelationFamily::Class
@@ -2993,7 +3035,17 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
         }
         if (aggregate > kLabelLimit) return {};
     }
-    if (diagram.direct_styles &&
+    // D228: build the state style ledger before the family-specific resolve.
+    // State resolves its own Rounded/nested entities; the shared Class/ER/
+    // requirement seam keeps its Box/top-level contract untouched.
+    if (diagram.family == RelationFamily::State &&
+        (!state_style_definitions.empty() || !state_style_assignments.empty() ||
+         !state_style_directs.empty())) {
+        if (!build_state_direct_styles(diagram, state_style_definitions,
+                                       state_style_assignments, state_style_directs, work))
+            return {};
+    }
+    if (diagram.direct_styles && diagram.family != RelationFamily::State &&
         !resolve_class_direct_styles(diagram, work, inactive_class_definitions, original))
         return {};
     return diagram;
@@ -6077,12 +6129,12 @@ relations_layout(std::string_view source, Work& work, bool class_envelope, bool 
             return {};
         for (const auto& line : legend)
             result.push_back(line);
-        auto owned = extract_styled_rows(canvas, result, leading_rows, drawing_rows, work);
-        if (!owned) return {};
-        if (styles) *styles = std::move(*owned);
     }
     // RFC 0031 E2b: state non-terminal config disclosure footer. Config-free
     // state sources carry an empty vector and append nothing (byte-identical).
+    // The footer must be part of `result` BEFORE extract_styled_rows so the
+    // styled-row count matches the final row count; extract treats every row
+    // outside the drawing region (legend and footer alike) as an unstyled run.
     if (diagram->family == RelationFamily::State && !diagram->state_config_notices.empty()) {
         const auto& notices = diagram->state_config_notices;
         std::size_t bytes = 0u;
@@ -6097,6 +6149,11 @@ relations_layout(std::string_view source, Work& work, bool class_envelope, bool 
         result.emplace_back();
         for (const auto& line : notices)
             result.push_back(line);
+    }
+    if (diagram->direct_styles) {
+        auto owned = extract_styled_rows(canvas, result, leading_rows, drawing_rows, work);
+        if (!owned) return {};
+        if (styles) *styles = std::move(*owned);
     }
     return result;
 }

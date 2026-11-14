@@ -27,26 +27,26 @@
         "sandbox"
       ]
     },
-    "blocker_detection": "five fixed source-content detectors plus one path/SHA-bound reviewed routing-debt set; no generator-time rendering; residual rows abort. D223 retired the choice/fork-join/br-tab/newline/html-entity detectors (now native, guarded by MermaidStateEnvelope gtests) and added the folded-description-tab envelope detector.",
+    "blocker_detection": "five fixed source-content detectors plus one path/SHA-bound reviewed routing-debt set; no generator-time rendering; residual rows abort. D223 retired the choice/fork-join/br-tab/newline/html-entity detectors (now native, guarded by MermaidStateEnvelope gtests) and added the folded-description-tab envelope detector. D228 retired the generic style-statement detector (representable classDef/class/style now parse and draw, guarded by MermaidStateStyles gtests), replacing it with a narrow unrepresentable-italic detector.",
     "width_policy": "E2b pre-registers the 240-column admission; narrow_40 is uniformly 'source'."
   },
   "review": {
-    "reviewer_agent": "independent read-only adversarial review agent, D223 state reachable-semantics batch one (fresh general-purpose agent; full-diff audit, independent 61-row production-seam probe, byte-identity and 27 fail-closed probes)",
+    "reviewer_agent": "independent read-only adversarial re-review agent, D228 state style group (fresh general-purpose agent; full-diff audit, independent 104-assertion probes plus a rerun of the author's 27-assertion dual-seam probe, 269/269 native suite, frozen invariant and 51/10 partition verification); the D223 approval covered only the 47/14 partition",
     "date": "2026-11-14",
     "verdict": "approved",
-    "note": "D223 moves seven rows to predicted-draw after the state parser learned HTML-entity fork/join, square choice, the block-note tab break, and edge \\n/#colon; escapes (the nested-introducer fail-closed review MINOR is fixed and guarded by MermaidStateEnvelope gtests); the v1 description-tab twin stays blocked by the shared unicode_text envelope contract. Approved 47/14 partition and five-frame pixel gate; frozen gates (flow 160/240, body 372/173/48, Class285 260/25/0, 48-gap roster, observation 2738) verified unchanged."
+    "note": "D228 moves four more rows to predicted-draw by giving state its own classDef/class/style parser and resolver (Rounded and nested entities admitted, palette-role colors, border shorthand to stroke, bold to pixels); the fifth style fixture stays blocked because font-style:italic has no terminal cell attribute. Inline Node:::class edge syntax and a direct fill/stroke/color:red stay whole-source fallback (fail-closed), keeping the frozen State85 and StateScoped closed profiles byte-identical. The legacy D223 seven rows and all frozen gates remain unchanged. Approved 51/10 partition and five-frame gate."
   },
   "counts": {
     "total": 61,
     "state_v2": 38,
     "state_v1": 23,
-    "predicted_draw": 47,
-    "predicted_blocked": 14
+    "predicted_draw": 51,
+    "predicted_blocked": 10
   },
   "blocker_vocabulary": [
     "state-non-state-body",
     "state-composite-divider",
-    "state-style-statement",
+    "state-unrepresentable-italic",
     "state-click-statement",
     "state-envelope-description-tab",
     "state-native-routing-debt"
@@ -110,19 +110,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-style-statement",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
-        "detail": "The source applies classDef/class/style styling, which the terminal state renderer does not project; the statement is outside the accepted grammar/profile."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram-v2/nightly-check/should-let-styles-take-precedence-over-classes.mmd",
@@ -148,19 +143,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-style-statement",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
-        "detail": "The source applies classDef/class/style styling, which the terminal state renderer does not project; the statement is outside the accepted grammar/profile."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram-v2/nightly-check/v2-can-have-multiple-classes-applied-to-multiple-states.mmd",
@@ -193,10 +183,10 @@
         "restored_240": "source"
       },
       "blocker": {
-        "kind": "state-style-statement",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
-        "detail": "The source applies classDef/class/style styling, which the terminal state renderer does not project; the statement is outside the accepted grammar/profile."
+        "kind": "state-unrepresentable-italic",
+        "site": "src/ui/visual/mermaid_cells_impl.cpp SemanticCellStyle (no italic attribute)",
+        "evidence": "src/ui/visual/mermaid_cells_impl.cpp SemanticCellStyle (no italic attribute)",
+        "detail": "A classDef sets font-style:italic, but the terminal cell style model has only color/bold/underline and FTXUI has no italic attribute; admitting it would silently drop the requested style, so the whole source stays fallback. D228 parses the other state classDef/class/style properties (fill/stroke/color/border/bold) natively."
       },
       "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
     },
@@ -1072,19 +1062,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-style-statement",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
-        "detail": "The source applies classDef/class/style styling, which the terminal state renderer does not project; the statement is outside the accepted grammar/profile."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram-v2/pr-check/v2-a-compound-state-should-be-able-to-link-to-itself.mmd",
@@ -1314,19 +1299,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-style-statement",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (classDef/class/style not projected for state)",
-        "detail": "The source applies classDef/class/style styling, which the terminal state renderer does not project; the statement is outside the accepted grammar/profile."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram/nightly-check/should-group-all-state-elements-under-a-single-root-g-wrapper.mmd",

@@ -149,8 +149,8 @@ TEST(MermaidE2bCohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(counts.get_int("total"), 61);
     EXPECT_EQ(counts.get_int("state_v2"), 38);
     EXPECT_EQ(counts.get_int("state_v1"), 23);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 47);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 14);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 51);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 10);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -207,8 +207,8 @@ TEST(MermaidE2bCohort, EveryDrawRowDrawsWithFooterAndBlockedRowKeepsSourceAt240)
         }
         EXPECT_EQ(row.wide, is_drawn ? "drawn" : "source");
     }
-    EXPECT_EQ(drawn, 47);
-    EXPECT_EQ(blocked, 14);
+    EXPECT_EQ(drawn, 51);
+    EXPECT_EQ(blocked, 10);
 }
 
 TEST(MermaidE2bCohort, DescriptionIsNeverRendered) {

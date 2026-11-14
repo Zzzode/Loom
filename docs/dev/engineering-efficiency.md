@@ -256,6 +256,21 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     the measured delta to its own baseline, never by copying the probe's
     absolute total.
 
+27. **A gtest discovery failure does not just false-red a build — it can
+    silently shrink the registered test denominator, producing a misleading
+    "100% passed" that skipped whole binaries.** When the gtest_discover_tests
+    step cannot load `libssl.so.3` (the rule-5 trap), ninja reports a failure
+    but the binary is still built; ctest then simply has fewer tests
+    registered. In D235 the same tree reported 1007, then 1075, then the true
+    1357 mermaid tests depending solely on how many discovery steps had failed
+    — every run printed "100% passed", so the under-count was invisible
+    without comparing against `ctest -N`. Before quoting any full-suite
+    number, force complete discovery by building WITH the
+    `LD_LIBRARY_PATH` prefix (zero `error while loading` lines) and confirm
+    the denominator with `ctest -L mermaid -N | grep -c 'Test #'`; never
+    compare efficiency across two runs whose denominators differ. A partial
+    green is not a family-closure gate.
+
 ## Per-task efficiency retro (mandatory at every closure)
 
 Attach a short efficiency section to each closure report, answering:
@@ -928,3 +943,36 @@ Attach a short efficiency section to each closure report, answering:
   trees kept one writer each; no frozen contract moved (flow 160/240, body
   372/173/48, Class285 260/25/0, 48-gap roster zero state rows, observation
   2738).
+
+- **2026-11-14, D235 gitGraph empty quoted-tag group (uncommitted at retro;
+  local commits follow).** Outcome +3 whole draws (1218 -> 1221 / 927 ->
+  924), a complete group smaller than the nominal four (the mandate accepts a
+  complete sub-group). (1) Gate wall-clock was again dominated by the two
+  OfficialMatrix runs (debug ~732s, release ~90s) and the full mermaid label
+  suite (507.50s); release carried the byte-identity gate at ~1/8 the debug
+  cost per rule 2, and iteration used only targeted gitgraph/e2a filters.
+  (2) A self-inflicted rework: the first take_tag wiring inverted the success
+  predicate (`else if (!cursor.take_tag(...))`), which rejected every valid
+  tag; caught immediately by the native RED->GREEN run and corrected in all
+  three call sites — an upstream check of reading the full if/else chain
+  (does a successful helper advance the loop?) before building would have
+  caught it in one pass. (3) The independent review earned its cost on
+  completeness, not a hidden defect: it returned APPROVED with no MAJOR but
+  flagged two stale-doc findings (a companion cohort doc and the generator's
+  module docstring still describing the retired detector), both fixed in the
+  same pass; it also independently reproduced the whole-corpus A/B and
+  proved the lossless framing (empty string = zero glyphs = no dropped
+  content, frame-identical to an omitted tag). (4) New rule 27 from a real
+  denominator trap: gtest discovery failures silently un-register tests, so
+  the "full" suite read 1007 then 1075 then the true 1357 depending on
+  libssl discovery health, all reporting 100%; only `ctest -N` against a
+  fully-discovered build exposes the real count. (5) No false green/red or
+  flake once discovery was forced complete; debug, release -O2 and
+  ASan+UBSan agreed, the dual-preset OfficialMatrix sha matched first
+  comparison
+  (5bcc065116a3e69a64325ca786aa0eaaccd2ba04d7290b743371779f1ca7f5f7), and the
+  only red tests while the ledger verdict was pending were the two designed
+  review gates, which cleared on approval with no code change. (6) The change
+  is a body-only file-local Cursor helper (no interface unit, so no BMI
+  fan-out); no frozen contract moved (2145/2738, 48-gap roster, Class285
+  260/25/0, flow 160/240, body 372/173/48, E2b state 51/10).

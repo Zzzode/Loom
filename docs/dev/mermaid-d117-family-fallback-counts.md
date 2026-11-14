@@ -49,6 +49,7 @@ are not whole-original errors).
 | After sankey family renderer (1 clean original) | 2026-11-14 | local | 1207 | 938 | 0 |
 | After D223 state reachable-semantics batch one (7 state originals) | 2026-11-14 | local | 1214 | 931 | 0 |
 | After D228 state classDef/class/style group (4 representable state style originals) | 2026-11-14 | local | 1218 | 927 | 0 |
+| After D235 gitGraph empty quoted-tag group (3 representable git originals) | 2026-11-14 | local | 1221 | 924 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -60,7 +61,7 @@ disposition (fix or documented infeasibility).
 |---|---:|---:|---|
 | flowchart | 240 | 160 | active track; see breakdown below |
 | requirement | 156 | 16 | renderer extended 2026-11-14; classDef/class/style/`:::` body statements now validated and rendered through the shared palette-role style seam (4 new draws); 156 frontmatter config/theme/title/indented-fence rows stay source (no theme/layout/color contract) |
-| git | 80 | 55 | |
+| git | 77 | 58 | D235: +3 explicit empty quoted tag (`tag: ""`) cherry-pick originals; empty string decodes to no label (no glyphs, same frame as an omitted tag). Remaining 77 = 62 non-whitelisted theme/layout frontmatter + 9 `%%{init}%%` + 6 E2a git blockers (4 nine-branch canvas-overflow, 1 unprojected title, 1 multiline quoted branch label) |
 | state-diagram-v2 | 70 | 33 | D223 batch one: +4 (HTML-entity fork/join, square choice, note tab break, edge `\n`/`#colon;`); D228: +4 representable classDef/class/style originals (palette-role fill/stroke/color, border shorthand to stroke, bold to pixels); the 1 italic fixture, 1 click, 1 description-tab and the inline `Node:::class` edge form stay gated, plus geometry/concurrency debt |
 | gantt | 13 | 39 | renderer added 2026-11-12; 11 themed rows stay source (no color contract), 2 malformed-date fixtures fail closed |
 | swimlanes | 46 | 0 | hard wall, no renderer; re-confirmed 2026-11-14 through the production render_markdown seam (0 drawn / 46 fallback): every fixture is swimlane-beta (LR/TD 23 each) and carries a `config.flowchart.htmlLabels` + `useMaxWidth` visual/layout contract (46/46), 18 add theme/look and 5 carry body classDef/class/style; native text rendering cannot honor the lane geometry without silently dropping those contracts, so the whole family stays gated; unblock needs a real lane-geometry renderer |
@@ -95,7 +96,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **927** | **1218** | |
+| **Total** | **924** | **1221** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -1438,3 +1439,44 @@ when the body would draw.
   sanitizer reports. Serial gates `-j1` release RC=0:
   EveryWholeSourceIsObserved, CapabilityReport.Class285, Block58 9/9,
   Er107 4/4. Evidence under `/tmp/d228_review/`.
+
+## D235 gitGraph empty quoted-tag group closure (2026-11-14)
+
+  A same-semantic-family group of three config-free gitGraph originals whose
+  only blocker was an explicitly empty quoted tag (`cherry-pick id:"X"
+  tag: ""`). The empty string carries zero glyphs, so the change is lossless:
+  a new file-local `Cursor::take_tag` accepts the empty tag without pushing a
+  label or consuming a tag slot, and it projects identically to an omitted tag
+  (no `[]` bracket; the commit node and all parent edges are unchanged). The
+  non-empty tag path is behaviorally identical to the prior `quoted()` path —
+  same `git_label` validation, backslash rejection and per-commit 8-tag cap —
+  proven by the SHA-pinned MermaidGitGraph30 models and the 60/60 gitgraph
+  binary. All three tag call sites (commit/merge/cherry-pick) share the one
+  helper; malformed quotes, missing values and unknown fields still reject the
+  whole statement.
+
+  The E2a ledger retired the `gitgraph-empty-quoted-tag` detector (fixed
+  blockers five -> four, vocabulary seven -> six) and moved the three rows to
+  predicted-draw, 56/13 -> 59/10, re-approved by an independent adversarial
+  agent. A same-probe HEAD-vs-working census over all 135 git originals shows
+  the transition set is exactly these three fixtures with an empty regression
+  set; the git census absolute count matches the OfficialMatrix basis (no
+  capture-geometry offset for this family). Reachable-but-not-lossless
+  candidates were deliberately excluded: nine-branch canvas capacity (hard
+  wall), the single multiline quoted branch label (cross-line parser), the
+  unprojected gitGraph title (dropping it loses information), and next-line-
+  brace composite states (routing risk).
+
+  Whole originals 1218 -> 1221 drawn / 927 -> 924 fallback / 0 error; git
+  family 55 -> 58 drawn (77 fallback); flow 160/240, body 372/173/48,
+  Class285 260/25/0, the 48-gap roster and the 2738 observation total are
+  unmoved; integrity_errors empty. debug/release OfficialMatrix 63/63 each,
+  JSON byte-identical (sha256
+  5bcc065116a3e69a64325ca786aa0eaaccd2ba04d7290b743371779f1ca7f5f7).
+  Full mermaid label suite 1357/1357 green (507.50s wall; the complete gtest
+  discovery denominator — an earlier 1007/1075 count under-counted because
+  libssl discovery failures silently un-registered binaries, see efficiency
+  rule 27). ASan+UBSan contact (gitgraph 60/60 plus e2a 5/5) zero sanitizer
+  reports. Serial gates `-j1` release RC=0: EveryWholeSourceIsObserved,
+  CapabilityReport.Class285, Block58 9/9, Er107 4/4. Evidence under
+  `/tmp/d235_probe/`.

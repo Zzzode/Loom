@@ -33251,6 +33251,182 @@ TEST(MermaidStateEnvelope, CompositeDividerStaysSource) {
     EXPECT_FALSE(e2a_state::draws(source));
 }
 
+// D223: HTML-entity pseudo-state markers are the v1 corpus spelling of the
+// raw <<fork>>/<<join>> controls; the state parser must decode them through
+// the same closed vocabulary rather than rejecting the whole source. The
+// decoded frame must be byte-identical to the raw-marker form, and the
+// control ids keep the established label.clear() pseudo-state contract.
+TEST(MermaidStateEnvelope, EntityEncodedForkAndJoinControlsDraw) {
+    const std::string body = "  [*] --> fork_state\n"
+                             "  fork_state --> State2\n"
+                             "  fork_state --> State3\n"
+                             "  state join_state %MARKER%\n"
+                             "  State2 --> join_state\n"
+                             "  State3 --> join_state\n"
+                             "  join_state --> State4\n"
+                             "  State4 --> [*]\n";
+    const std::string entity_top =
+        "stateDiagram\n  state fork_state &lt;&lt;fork&gt;&gt;\n" +
+        std::string(body).replace(body.find("%MARKER%"), 8, "&lt;&lt;join&gt;&gt;");
+    const std::string raw_top =
+        "stateDiagram\n  state fork_state <<fork>>\n" +
+        std::string(body).replace(body.find("%MARKER%"), 8, "<<join>>");
+
+    ASSERT_TRUE(e2a_state::draws(entity_top));
+    ASSERT_TRUE(e2a_state::draws(raw_top));
+    // Decoding is a no-op on the rendered frame: entity and raw spellings
+    // project to the exact same native cells.
+    EXPECT_EQ(e2a_state::surface(entity_top, "mermaid"),
+              e2a_state::surface(raw_top, "mermaid"));
+    const auto frame = e2a_state::surface(entity_top, "mermaid");
+    EXPECT_NE(frame.find("State2"), std::string::npos);
+    EXPECT_NE(frame.find("State3"), std::string::npos);
+    // Pseudo-state controls render as bars, never as labeled nodes.
+    EXPECT_EQ(frame.find("fork_state"), std::string::npos);
+    EXPECT_EQ(frame.find("join_state"), std::string::npos);
+
+    const std::string nested = "stateDiagram\n"
+                               "  [*]-->TV\n"
+                               "  state TV {\n"
+                               "  state fork_state &lt;&lt;fork&gt;&gt;\n"
+                               "  [*] --> fork_state\n"
+                               "  fork_state --> State2\n"
+                               "  state join_state &lt;&lt;join&gt;&gt;\n"
+                               "  State2 --> join_state\n"
+                               "  join_state --> State4\n"
+                               "  State4 --> [*]\n"
+                               "  }\n";
+    EXPECT_TRUE(e2a_state::draws(nested));
+    EXPECT_NE(e2a_state::surface(nested, "mermaid").find("TV"),
+              std::string::npos);
+}
+
+// D223: v2 also admits the square-bracket choice spelling [[choice]] as an
+// alias of the established <<choice>> control.
+TEST(MermaidStateEnvelope, SquareBracketChoiceControlDraws) {
+    const std::string source = "stateDiagram-v2\n"
+                               "  [*] --> Off\n"
+                               "  Off --> On\n"
+                               "  state MyChoice [[choice]]\n"
+                               "  On --> MyChoice\n"
+                               "  MyChoice --> Washing\n"
+                               "  MyChoice --> Drying\n";
+    ASSERT_TRUE(e2a_state::draws(source));
+    EXPECT_NE(e2a_state::surface(source, "mermaid").find("MyChoice"),
+              std::string::npos);
+    // The raw angle-bracket spelling remains accepted (no regression).
+    EXPECT_TRUE(e2a_state::draws("stateDiagram-v2\n"
+                                 "  state C <<choice>>\n"
+                                 "  [*] --> C\n"
+                                 "  C --> A\n"));
+}
+
+// D223: unknown or malformed marker spellings still fail closed; decoding an
+// entity form must not widen the accepted pseudo-state vocabulary.
+TEST(MermaidStateEnvelope, UnknownEntityAndMarkerSpellingsStaySource) {
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram\n  state F &lt;&lt;bogus&gt;&gt;\n  [*] --> F\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram\n  state F &lt;&lt;fork&gt;\n  [*] --> F\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  state C [[bogus]]\n  [*] --> C\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  state C [[choice]\n  [*] --> C\n"));
+}
+
+// D223: the corpus-spelled tab-spaced line break `<br\t/>` inside a block
+// note is the same visual break as `<br/>`; both v1 and v2 must decode it and
+// draw the five note rows. A tab anywhere else in the note stays rejected.
+TEST(MermaidStateEnvelope, BlockNoteTabSpacedBreakDraws) {
+    for (const char* header : {"stateDiagram\n", "stateDiagram-v2\n"}) {
+        const std::string source =
+            std::string(header) + "  State1\n"
+                                  "  note right of State1\n"
+                                  "  Line1<br>Line2<br/>Line3<br />Line4<br\t/>Line5\n"
+                                  "  end note\n";
+        ASSERT_TRUE(e2a_state::draws(source)) << header;
+        const auto frame = e2a_state::surface(source, "mermaid");
+        EXPECT_NE(frame.find("Line1"), std::string::npos);
+        EXPECT_NE(frame.find("Line5"), std::string::npos);
+        // The raw tab must never reach the painted surface.
+        EXPECT_EQ(frame.find('\t'), std::string::npos);
+        EXPECT_EQ(frame.find("<br"), std::string::npos);
+    }
+    // A tab that is not part of the br spelling is not silently tolerated.
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  State1\n  note right of State1\n"
+        "  Line1\tLine2\n  end note\n"));
+}
+
+// D223: folded-description structure stays strict. A tab used as envelope
+// indentation is a malformed folded block; and a tab inside folded prose is
+// rejected by the shared unicode_text control-character contract (the
+// description validator, shared by every family), so a description-tab source
+// keeps whole-source fallback even when its body would parse. This pins the
+// shared gate rather than widening a cross-family validator.
+TEST(MermaidStateEnvelope, FoldedDescriptionTabsStaySource) {
+    // Tab as indentation: malformed folded envelope.
+    EXPECT_FALSE(e2a_state::draws(
+        "---\n"
+        "description: >-\n"
+        "\tindented with a tab\n"
+        "---\n"
+        "stateDiagram\n  State1\n"));
+    // Tab inside prose: shared unicode_text rejects control characters.
+    EXPECT_FALSE(e2a_state::draws(
+        "---\n"
+        "description: >-\n"
+        "  prose with a tab <br\t/> token inside the folded text\n"
+        "config:\n"
+        "  logLevel: 0\n"
+        "---\n"
+        "stateDiagram\n  State1\n"));
+}
+
+// D223: state transition labels admit the corpus-attested escapes `\n` (line
+// break) and `#colon;` (literal colon) through a state-local decoder, then
+// re-enter the shared closed label validator. Other backslashes/entities stay
+// rejected, so the accepted vocabulary does not widen.
+TEST(MermaidStateEnvelope, TransitionLabelEscapesDecodeAndUnknownEscapesStaySource) {
+    const std::string newline_label =
+        "stateDiagram-v2\n"
+        "  [*] --> S1\n"
+        "  S1 --> S4: long line using \\nshould work\n";
+    ASSERT_TRUE(e2a_state::draws(newline_label));
+    auto frame = e2a_state::surface(newline_label, "mermaid");
+    EXPECT_NE(frame.find("long line using"), std::string::npos);
+    EXPECT_NE(frame.find("should work"), std::string::npos);
+    // The literal backslash must never reach the painted surface.
+    EXPECT_EQ(frame.find('\\'), std::string::npos);
+
+    const std::string colon_label =
+        "stateDiagram-v2\n"
+        "  [*] --> 1\n"
+        "  1 --> 2: test({ foo#colon; 'far' })\n"
+        "  2 --> [*]\n";
+    ASSERT_TRUE(e2a_state::draws(colon_label));
+    frame = e2a_state::surface(colon_label, "mermaid");
+    EXPECT_NE(frame.find("foo: 'far'"), std::string::npos);
+    EXPECT_EQ(frame.find("#colon;"), std::string::npos);
+
+    // Unrecognized backslash and entity escapes still fail closed.
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  [*] --> A\n  A --> B: bad \\t escape\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  [*] --> A\n  A --> B: bad #hash; token\n"));
+    // D223 review MINOR: nested-introducer spellings must not let the suffix
+    // match consume the escape; the stray introducer keeps them rejected.
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  [*] --> A\n  A --> B: x##colon;y\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  [*] --> A\n  A --> B: x&#colon;y\n"));
+    EXPECT_FALSE(e2a_state::draws(
+        "stateDiagram-v2\n  [*] --> A\n  A --> B: a\\\\n still bad\n"));
+    // The single, corpus-attested spellings remain admitted.
+    EXPECT_TRUE(e2a_state::draws(
+        "stateDiagram-v2\n  [*] --> A\n  A --> B: x#colon;y\n"));
+}
+
 }  // namespace
 
 }  // namespace

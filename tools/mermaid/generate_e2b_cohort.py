@@ -17,8 +17,10 @@ Each selected row is pre-registered predicted-draw or predicted-blocked.
 Nine closed source-content blocker detectors classify the grammar/feature
 debts; one sha-bound reviewed set (state-native-routing-debt) covers the
 labeled-edge composite/fan-out plans the bounded router cannot close,
-which no lexical detector can honestly predict. Any residual selected
-row aborts generation: zero unclassified rows. E2b pre-registers the
+which no lexical detector can honestly predict. D223 retired five of the
+lexical detectors (the constructs are native now) and added one envelope
+description-tab detector; five fixed detectors plus the routing set remain.
+Any residual selected row aborts generation: zero unclassified rows. E2b pre-registers the
 240-column admission only; narrow_40 is uniformly ``source`` and
 restored_240 must equal wide_240.
 
@@ -29,7 +31,6 @@ import argparse
 import hashlib
 import json
 import pathlib
-import re
 import sys
 
 import yaml
@@ -51,11 +52,7 @@ BLOCKER_VOCABULARY = [
     "state-composite-divider",
     "state-style-statement",
     "state-click-statement",
-    "state-choice-double-bracket",
-    "state-fork-join-html-entity",
-    "state-label-br-tab-rejected",
-    "state-edge-literal-newline",
-    "state-edge-html-entity",
+    "state-envelope-description-tab",
     "state-native-routing-debt",
 ]
 
@@ -81,29 +78,12 @@ WITNESS = {
         "A click callback/tooltip statement has no terminal interaction layer and no state "
         "statement parser; it stays whole-source.",
     ),
-    "state-choice-double-bracket": (
-        "src/ui/visual/mermaid_relations_core_impl.cpp (state choice declaration)",
-        "The 'state X [[choice]]' double-bracket choice declaration is not parsed.",
-    ),
-    "state-fork-join-html-entity": (
-        "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder rejects '<'/'>')",
-        "The fork/join declaration is HTML-entity-encoded (&lt;&lt;fork&gt;&gt;); the terminal "
-        "label decoder passes the entities literally and the state form is not recognized.",
-    ),
-    "state-label-br-tab-rejected": (
-        "src/ui/visual/mermaid_relations_core_impl.cpp:37-50 (br decoder)",
-        "Only <br>, <br/>, <br /> are decoded to a line break; the stray-tab spelling "
-        "<br\\t/> hits the '<' rejection in the plain-label decoder.",
-    ),
-    "state-edge-literal-newline": (
-        "src/ui/visual/mermaid_relations_core_impl.cpp (edge label scan)",
-        "A literal backslash-n inside an edge label is not a decoded line break and the "
-        "label scan rejects the token.",
-    ),
-    "state-edge-html-entity": (
-        "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder)",
-        "An edge label carries an HTML entity escape (e.g. #colon; / &amp;); the terminal "
-        "decoder neither unescapes entities nor renders the quoted form, so it rejects.",
+    "state-envelope-description-tab": (
+        "src/ui/visual/mermaid_relations_core_impl.cpp (state folded-description validator) "
+        "and mermaid_cells_impl.cpp unicode_text",
+        "A real tab inside the folded frontmatter description is a control character the "
+        "shared unicode_text validator rejects; the whole envelope stays source even though "
+        "the body would parse.",
     ),
     "state-native-routing-debt": (
         "src/ui/visual/mermaid_relations_core_impl.cpp (relations_layout)",
@@ -140,6 +120,26 @@ def split_source(text):
 
 def body_has_init(body_lines):
     return any(line.lstrip().startswith("%%{") for line in body_lines)
+
+
+def folded_description_has_tab(frontmatter_lines):
+    """Mirror the state envelope's folded-description tab rejection.
+
+    Only the indented body of a `description: >-` block is inspected; a real
+    tab there is a control character the shared unicode_text validator
+    rejects, so the whole source stays fallback regardless of body grammar.
+    """
+    in_description = False
+    for line in frontmatter_lines:
+        if line.startswith("description:"):
+            in_description = True
+            continue
+        if in_description:
+            if line and not line.startswith(" "):
+                in_description = False  # next column-0 key
+            elif "\t" in line:
+                return True
+    return False
 
 
 def whitelist_config(frontmatter_lines):
@@ -193,16 +193,10 @@ def state_blocker(rel, source_sha256, body_lines):
                 line.startswith("style ")):
             return "state-style-statement"
     body = "\n".join(body_lines)
-    if "[[choice]]" in body:
-        return "state-choice-double-bracket"
-    if "&lt;&lt;" in body:
-        return "state-fork-join-html-entity"
-    if re.search(r"<br\t\s*/?>", body):
-        return "state-label-br-tab-rejected"
-    if re.search(r"\\n", body):
-        return "state-edge-literal-newline"
-    if re.search(r"-->.*(&[a-zA-Z]+;|#[a-zA-Z]+;)", body):
-        return "state-edge-html-entity"
+    # D223 retired detectors: [[choice]], &lt;&lt;fork/join&gt;&gt;, the stray-tab
+    # <br\t/> break, literal \n and #colon; edge escapes are now parsed and
+    # drawn by the state renderer; their durable regression guard lives in
+    # MermaidStateEnvelope native gtests, not in this renderer-free ledger.
     if rel in NATIVE_ROUTING_DEBT:
         if source_sha256 != NATIVE_ROUTING_DEBT[rel]:
             raise ValueError(
@@ -231,7 +225,10 @@ def collect_root(cases, root_rel):
         if not ok:
             continue
         source_sha = sha256_file(path)
-        kind = state_blocker(rel, source_sha, body)
+        if folded_description_has_tab(frontmatter):
+            kind = "state-envelope-description-tab"
+        else:
+            kind = state_blocker(rel, source_sha, body)
         rows.append({"path": rel, "leaves": leaves, "blocker": kind})
     return rows
 
@@ -299,22 +296,34 @@ def build(repo_root):
                     "exact values), no nested maps, no body init",
             "roots": ["state-diagram-v2", "state-diagram"],
             "whitelist": {k: sorted(v) for k, v in WHITELIST.items()},
-            "blocker_detection": "nine fixed source-content detectors plus one "
+            "blocker_detection": "five fixed source-content detectors plus one "
                                  "path/SHA-bound reviewed routing-debt set; no "
-                                 "generator-time rendering; residual rows abort",
+                                 "generator-time rendering; residual rows abort. "
+                                 "D223 retired the choice/fork-join/br-tab/newline/"
+                                 "html-entity detectors (now native, guarded by "
+                                 "MermaidStateEnvelope gtests) and added the folded-"
+                                 "description-tab envelope detector.",
             "width_policy": "E2b pre-registers the 240-column admission; narrow_40 is "
                             "uniformly 'source'.",
         },
         "review": {
-            "reviewer_agent": "independent read-only adversarial evidence "
-                              "review fork, D-066 F0 (76 read-only checks; "
-                              "selection re-derived, blocker labels and "
-                              "fixture/manifest hashes spot-verified)",
-            "date": "2026-11-05",
+            "reviewer_agent": "independent read-only adversarial review "
+                              "agent, D223 state reachable-semantics batch one "
+                              "(fresh general-purpose agent; full-diff audit, "
+                              "independent 61-row production-seam probe, "
+                              "byte-identity and 27 fail-closed probes)",
+            "date": "2026-11-14",
             "verdict": "approved",
-            "note": "Approval covers the ledger rows and the five-frame pixel "
-                    "gate only; upstream Chromium geometry truth for the 40 draw "
-                    "rows is a tracked follow-up before later state batches.",
+            "note": "D223 moves seven rows to predicted-draw after the state "
+                    "parser learned HTML-entity fork/join, square choice, the "
+                    "block-note tab break, and edge \\n/#colon; escapes (the "
+                    "nested-introducer fail-closed review MINOR is fixed and "
+                    "guarded by MermaidStateEnvelope gtests); the v1 "
+                    "description-tab twin stays blocked by the shared "
+                    "unicode_text envelope contract. Approved 47/14 partition "
+                    "and five-frame pixel gate; frozen gates (flow 160/240, "
+                    "body 372/173/48, Class285 260/25/0, 48-gap roster, "
+                    "observation 2738) verified unchanged.",
         },
         "counts": {
             "total": total,

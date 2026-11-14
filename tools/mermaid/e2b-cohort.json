@@ -27,32 +27,28 @@
         "sandbox"
       ]
     },
-    "blocker_detection": "nine fixed source-content detectors plus one path/SHA-bound reviewed routing-debt set; no generator-time rendering; residual rows abort",
+    "blocker_detection": "five fixed source-content detectors plus one path/SHA-bound reviewed routing-debt set; no generator-time rendering; residual rows abort. D223 retired the choice/fork-join/br-tab/newline/html-entity detectors (now native, guarded by MermaidStateEnvelope gtests) and added the folded-description-tab envelope detector.",
     "width_policy": "E2b pre-registers the 240-column admission; narrow_40 is uniformly 'source'."
   },
   "review": {
-    "reviewer_agent": "independent read-only adversarial evidence review fork, D-066 F0 (76 read-only checks; selection re-derived, blocker labels and fixture/manifest hashes spot-verified)",
-    "date": "2026-11-05",
+    "reviewer_agent": "independent read-only adversarial review agent, D223 state reachable-semantics batch one (fresh general-purpose agent; full-diff audit, independent 61-row production-seam probe, byte-identity and 27 fail-closed probes)",
+    "date": "2026-11-14",
     "verdict": "approved",
-    "note": "Approval covers the ledger rows and the five-frame pixel gate only; upstream Chromium geometry truth for the 40 draw rows is a tracked follow-up before later state batches."
+    "note": "D223 moves seven rows to predicted-draw after the state parser learned HTML-entity fork/join, square choice, the block-note tab break, and edge \\n/#colon; escapes (the nested-introducer fail-closed review MINOR is fixed and guarded by MermaidStateEnvelope gtests); the v1 description-tab twin stays blocked by the shared unicode_text envelope contract. Approved 47/14 partition and five-frame pixel gate; frozen gates (flow 160/240, body 372/173/48, Class285 260/25/0, 48-gap roster, observation 2738) verified unchanged."
   },
   "counts": {
     "total": 61,
     "state_v2": 38,
     "state_v1": 23,
-    "predicted_draw": 40,
-    "predicted_blocked": 21
+    "predicted_draw": 47,
+    "predicted_blocked": 14
   },
   "blocker_vocabulary": [
     "state-non-state-body",
     "state-composite-divider",
     "state-style-statement",
     "state-click-statement",
-    "state-choice-double-bracket",
-    "state-fork-join-html-entity",
-    "state-label-br-tab-rejected",
-    "state-edge-literal-newline",
-    "state-edge-html-entity",
+    "state-envelope-description-tab",
     "state-native-routing-debt"
   ],
   "rows": [
@@ -224,19 +220,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-choice-double-bracket",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (state choice declaration)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (state choice declaration)",
-        "detail": "The 'state X [[choice]]' double-bracket choice declaration is not parsed."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram-v2/nightly-check/v2-should-handle-different-rendering-directions-in-composite-states.mmd",
@@ -295,19 +286,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-label-br-tab-rejected",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp:37-50 (br decoder)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp:37-50 (br decoder)",
-        "detail": "Only <br>, <br/>, <br /> are decoded to a line break; the stray-tab spelling <br\\t/> hits the '<' rejection in the plain-label decoder."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram-v2/nightly-check/v2-should-handle-multiple-arrows-from-one-node-to-another.mmd",
@@ -669,19 +655,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-edge-html-entity",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder)",
-        "detail": "An edge label carries an HTML entity escape (e.g. #colon; / &amp;); the terminal decoder neither unescapes entities nor renders the quoted form, so it rejects."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram-v2/nightly-check/v2-should-render-a-state-with-a-note-together-with-another-state.mmd",
@@ -835,19 +816,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-edge-literal-newline",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (edge label scan)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (edge label scan)",
-        "detail": "A literal backslash-n inside an edge label is not a decoded line break and the label scan rejects the token."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram-v2/nightly-check/v2-should-render-forks-and-joins.mmd",
@@ -1416,10 +1392,10 @@
         "restored_240": "source"
       },
       "blocker": {
-        "kind": "state-label-br-tab-rejected",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp:37-50 (br decoder)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp:37-50 (br decoder)",
-        "detail": "Only <br>, <br/>, <br /> are decoded to a line break; the stray-tab spelling <br\\t/> hits the '<' rejection in the plain-label decoder."
+        "kind": "state-envelope-description-tab",
+        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (state folded-description validator) and mermaid_cells_impl.cpp unicode_text",
+        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (state folded-description validator) and mermaid_cells_impl.cpp unicode_text",
+        "detail": "A real tab inside the folded frontmatter description is a control character the shared unicode_text validator rejects; the whole envelope stays source even though the body would parse."
       },
       "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
     },
@@ -1744,19 +1720,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-edge-literal-newline",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (edge label scan)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (edge label scan)",
-        "detail": "A literal backslash-n inside an edge label is not a decoded line break and the label scan rejects the token."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram/nightly-check/simplest-composite-state.mmd",
@@ -2028,19 +1999,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-fork-join-html-entity",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder rejects '<'/'>')",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder rejects '<'/'>')",
-        "detail": "The fork/join declaration is HTML-entity-encoded (&lt;&lt;fork&gt;&gt;); the terminal label decoder passes the entities literally and the state form is not recognized."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram/pr-check/should-render-forks-in-composit-states.mmd",
@@ -2066,19 +2032,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-fork-join-html-entity",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder rejects '<'/'>')",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (plain-label decoder rejects '<'/'>')",
-        "detail": "The fork/join declaration is HTML-entity-encoded (&lt;&lt;fork&gt;&gt;); the terminal label decoder passes the entities literally and the state form is not recognized."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram/pr-check/should-render-multiple-composit-states.mmd",

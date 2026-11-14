@@ -739,6 +739,11 @@ bool state_source_lines(std::string_view source, bool& checked, Work& work);
 std::optional<std::string> state_description_label(std::string_view raw, Work& work);
 std::optional<StateNoteBlock> state_note_block(std::string_view original, std::size_t header,
                                                Work& work);
+// D223: state-local transition-label decoder for the finite corpus escapes
+// (`\n` -> line break, `#colon;` -> literal colon); the result re-enters the
+// shared closed label validator, so no other escape is admitted. Pure like
+// relation_label (no Work fee) to keep the labeled-state schedule identical.
+std::optional<std::string> state_transition_label(std::string_view raw);
 std::optional<RequirementDiagram> parse_requirement(std::string_view source, Work& work);
 std::optional<RelationDiagram> project_requirement(const RequirementDiagram& parsed, Work& work);
 

@@ -101,8 +101,58 @@ std::optional<StateNoteBlock> state_note_block(std::string_view original, std::s
         cursor = next + 1u;
     }
     if (joined.size() != total) return {};
+    // D223: Mermaid accepts a tab between `br` and the self-closing slash
+    // (`<br	/>`) as the same break the shared decoder knows as `<br/>`.
+    // Canonicalize only that single corpus-attested spelling in place (the
+    // string only shrinks, so the prepaid budget still holds); any other tab
+    // is not part of this token and keeps failing inside the label decoder.
+    for (std::size_t pos = 0;
+         (pos = joined.find("<br\t/>", pos)) != std::string_view::npos;
+         pos += 5)
+        joined.erase(pos + 3, 1);
     auto text = relation_literal_label(joined);
     if (!text) return {};
     return StateNoteBlock{std::move(*text), after};
+}
+
+std::optional<std::string> state_transition_label(std::string_view raw) {
+    auto value = trim_relation(raw);
+    if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
+        value = value.substr(1, value.size() - 2);
+    if (value.size() > kSourceLimit) return {};
+    // Only the two corpus-attested escapes are recognized. `\n` is rewritten
+    // to the `<br>` token the shared decoder already maps to a line break, so
+    // no new row-splitting path is introduced; `#colon;` becomes a literal
+    // colon. A backslash or `#`/`&` entity outside these spellings survives
+    // into relation_literal_label and fails its closed vocabulary there. This
+    // stays a pure validator (like relation_label it replaces on the state
+    // path) so it adds no Work fee and the existing labeled-state schedule is
+    // byte-identical.
+    std::string text;
+    text.reserve(value.size());
+    // An escape is consumed only at a token boundary: the two-char `\n` must
+    // not follow another backslash, and `#colon;` must not follow `#` or `&`,
+    // so nested spellings (`\\n`, `##colon;`, `&#colon;`) keep their literal
+    // introducer and fail the shared closed-vocabulary decoder below.
+    const auto predecessor_ok = [&](std::size_t pos, const char* forbidden) {
+        if (pos == 0) return true;
+        const char previous = value[pos - 1];
+        for (const char* p = forbidden; *p; ++p)
+            if (previous == *p) return false;
+        return true;
+    };
+    for (std::size_t at = 0; at < value.size();) {
+        if (value.substr(at).starts_with("\\n") && predecessor_ok(at, "\\")) {
+            text += "<br>";
+            at += 2;
+        } else if (value.substr(at).starts_with("#colon;") &&
+                   predecessor_ok(at, "#&")) {
+            text += ':';
+            at += 7;
+        } else {
+            text += value[at++];
+        }
+    }
+    return relation_literal_label(text);
 }
 }  // namespace loom::ui::mermaid::detail

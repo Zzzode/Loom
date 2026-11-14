@@ -2720,12 +2720,27 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
                 scopes.push_back(target);
                 continue;
             }
-            if (line == "<<choice>>")
+            // D223: the v1 corpus spells pseudo-state controls with HTML
+            // entities (`state F &lt;&lt;fork&gt;&gt;`). Reuse the pure, closed
+            // annotation decoder (its only other caller is Class); an unknown
+            // decoded token still falls through to the empty-line rejection,
+            // so the accepted pseudo-state vocabulary does not widen. `line`
+            // is a view into the source, so the decoded spelling needs its
+            // own iteration-scoped owning buffer.
+            std::string decoded_marker;
+            std::string_view marker = line;
+            if (line.starts_with("&lt;&lt;")) {
+                auto decoded = class_encoded_annotation(line, work);
+                if (!decoded) return {};
+                decoded_marker = std::move(*decoded);
+                marker = decoded_marker;
+            }
+            if (marker == "<<choice>>" || marker == "[[choice]]")
                 entity.shape = EntityShape::Choice;
-            else if (line == "<<fork>>") {
+            else if (marker == "<<fork>>") {
                 entity.shape = EntityShape::Fork;
                 entity.label.clear();
-            } else if (line == "<<join>>") {
+            } else if (marker == "<<join>>") {
                 entity.shape = EntityShape::Join;
                 entity.label.clear();
             } else if (!line.empty())
@@ -2907,7 +2922,9 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
             const auto label =
                 diagram.family == RelationFamily::Class
                     ? class_display_label(trim_relation(rest.substr(1)), work, &original)
-                    : relation_label(rest.substr(1));
+                    : diagram.family == RelationFamily::State
+                          ? state_transition_label(rest.substr(1))
+                          : relation_label(rest.substr(1));
             if (!label) return {};
             edge.label = *label;
         }

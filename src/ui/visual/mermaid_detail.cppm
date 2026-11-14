@@ -340,6 +340,10 @@ struct SourceStyleColor {
 struct ClassStyleProperties {
     std::optional<SourceStyleColor> fill, stroke, color;
     std::optional<double> width;
+    // Requirement D204: CSS font-weight, normalized to a terminal bold cell
+    // attribute. Append-only field: the Class/ER/State style grammar never
+    // sets it, so their painted cells and legend rows stay byte-identical.
+    std::optional<bool> bold;
     bool operator==(const ClassStyleProperties&) const = default;
 };
 
@@ -517,11 +521,35 @@ struct RequirementEnvelope {
     std::string raw_description, decoded_description;
 };
 
+// D204 requirement style statements. They are collected by the requirement
+// parser with the same strictness as the Class style grammar, then resolved
+// against the typed node ledger and projected onto the shared
+// ClassDirectStyles render seam inside project_requirement.
+struct RequirementStyleDefinition {
+    std::string name;  // classDef name; "default" is the implicit base class
+    std::string verbatim;  // logical source line, disclosed in the legend
+    ClassStyleProperties properties;
+};
+
+struct RequirementStyleAssignment {
+    std::string target;  // node logical name
+    std::vector<std::string> classes;  // classDef names, in application order
+};
+
+struct RequirementStyleDirect {
+    std::vector<std::string> targets;  // comma-separated node logical names
+    ClassStyleProperties properties;
+    std::string verbatim;
+};
+
 struct RequirementDiagram {
     RequirementEnvelope envelope;
     std::string direction = "TB";
     std::vector<RequirementNode> nodes;
     std::vector<RequirementEdge> edges;
+    std::vector<RequirementStyleDefinition> style_definitions;
+    std::vector<RequirementStyleAssignment> style_assignments;
+    std::vector<RequirementStyleDirect> style_directs;
 };
 
 struct EndpointPort {
@@ -537,6 +565,12 @@ struct RelationBox {
 
 bool source_style_properties(std::string_view raw, ClassStyleProperties& properties, Work& work);
 std::string_view source_style_role_name(SemanticColorRole role);
+// D204 shared color seam: hex-only CSS color parsing and the canonical RGB to
+// palette-role classification, extracted from the Class style TU so the
+// Requirement grammar can normalize CSS named colors through the exact same
+// hue boundaries. No UI RGB contract is added: callers still receive roles.
+std::optional<SourceStyleColor> source_style_color(std::string_view raw);
+SemanticColorRole source_style_role(int red, int green, int blue);
 bool class_direct_style(std::string_view line, std::string_view source, RelationDiagram& diagram,
                         Work& work);
 bool class_style_assignment(std::string_view statement, std::string_view source,

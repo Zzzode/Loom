@@ -15,7 +15,50 @@ std::string ascii_lower(std::string_view value) {
     return result;
 }
 
-std::optional<SourceStyleColor> source_color(std::string_view raw) {
+std::string_view role_name(SemanticColorRole role) {
+    switch (role) {
+    case SemanticColorRole::Red:
+        return "Red";
+    case SemanticColorRole::Orange:
+        return "Orange(shared warning)";
+    case SemanticColorRole::Yellow:
+        return "Yellow(shared warning)";
+    case SemanticColorRole::Green:
+        return "Green";
+    case SemanticColorRole::Cyan:
+        return "Cyan(shared info)";
+    case SemanticColorRole::Blue:
+        return "Blue(shared info)";
+    case SemanticColorRole::Purple:
+        return "Purple(surface tint)";
+    default:
+        return "Neutral";
+    }
+}
+
+}  // namespace
+
+SemanticColorRole source_style_role(int red, int green, int blue) {
+    // Integer channel ratios keep exact hue boundaries (for example #f96 at
+    // 20 degrees) from rounding into the previous semantic role.
+    const int high = std::max({red, green, blue}), low = std::min({red, green, blue});
+    const int delta = high - low, sum = high + low, denominator = 255 - std::abs(sum - 255);
+    if (delta == 0 || delta * 100 < 15 * denominator || sum < 51)
+        return SemanticColorRole::Neutral;
+    double hue = high == red     ? 60.0 * (green - blue) / delta
+                 : high == green ? 60.0 * (blue - red + 2 * delta) / delta
+                                 : 60.0 * (red - green + 4 * delta) / delta;
+    if (hue < 0.0) hue += 360.0;
+    return hue < 20.0 || hue >= 345.0  ? SemanticColorRole::Red
+           : hue < 45.0                ? SemanticColorRole::Orange
+           : hue < 70.0                ? SemanticColorRole::Yellow
+           : hue < 165.0               ? SemanticColorRole::Green
+           : hue < 195.0               ? SemanticColorRole::Cyan
+           : hue < 255.0               ? SemanticColorRole::Blue
+                                       : SemanticColorRole::Purple;
+}
+
+std::optional<SourceStyleColor> source_style_color(std::string_view raw) {
     const auto value = ascii_lower(raw);
     SourceStyleColor result;
     if (value == "white") {
@@ -48,46 +91,11 @@ std::optional<SourceStyleColor> source_color(std::string_view raw) {
     }
     for (std::size_t n = 0; n < 3u; ++n)
         result.rgb[n] = static_cast<unsigned char>(rgba[n]);
-    // Integer channel ratios keep exact hue boundaries (for example #f96 at
-    // 20 degrees) from rounding into the previous semantic role.
-    const int high = std::max({rgba[0], rgba[1], rgba[2]}),
-              low = std::min({rgba[0], rgba[1], rgba[2]});
-    const int delta = high - low, sum = high + low, denominator = 255 - std::abs(sum - 255);
-    if (delta == 0 || delta * 100 < 15 * denominator || sum < 51) return result;
-    double hue = high == rgba[0]   ? 60.0 * (rgba[1] - rgba[2]) / delta
-                 : high == rgba[1] ? 60.0 * (rgba[2] - rgba[0] + 2 * delta) / delta
-                                   : 60.0 * (rgba[0] - rgba[1] + 4 * delta) / delta;
-    if (hue < 0.0) hue += 360.0;
-    result.role = hue < 20.0 || hue >= 345.0 ? SemanticColorRole::Red
-                  : hue < 45.0               ? SemanticColorRole::Orange
-                  : hue < 70.0               ? SemanticColorRole::Yellow
-                  : hue < 165.0              ? SemanticColorRole::Green
-                  : hue < 195.0              ? SemanticColorRole::Cyan
-                  : hue < 255.0              ? SemanticColorRole::Blue
-                                             : SemanticColorRole::Purple;
+    result.role = source_style_role(rgba[0], rgba[1], rgba[2]);
     return result;
 }
 
-std::string_view role_name(SemanticColorRole role) {
-    switch (role) {
-    case SemanticColorRole::Red:
-        return "Red";
-    case SemanticColorRole::Orange:
-        return "Orange(shared warning)";
-    case SemanticColorRole::Yellow:
-        return "Yellow(shared warning)";
-    case SemanticColorRole::Green:
-        return "Green";
-    case SemanticColorRole::Cyan:
-        return "Cyan(shared info)";
-    case SemanticColorRole::Blue:
-        return "Blue(shared info)";
-    case SemanticColorRole::Purple:
-        return "Purple(surface tint)";
-    default:
-        return "Neutral";
-    }
-}
+namespace {
 
 bool checked_add(std::size_t& total, std::size_t value) {
     if (value > std::numeric_limits<std::size_t>::max() - total) return false;
@@ -128,7 +136,7 @@ bool parse_style_properties(std::string_view rest, ClassStyleProperties& propert
                 return false;
             properties.width = width;
         } else {
-            const auto color = source_color(value);
+            const auto color = source_style_color(value);
             if (!color || (bit != 1u && color->transparent)) return false;
             if (bit == 1u)
                 properties.fill = *color;
@@ -374,6 +382,7 @@ bool resolve_assigned_class_styles(RelationDiagram& diagram,
         if (properties.stroke) effective.stroke = properties.stroke;
         if (properties.color) effective.color = properties.color;
         if (properties.width) effective.width = properties.width;
+        if (properties.bold) effective.bold = properties.bold;
     }
     if (!work.spend(7u * 4u * sizeof(AssignedLegend) + 8u * 4u * sizeof(std::string) + 8192u))
         return false;
@@ -429,6 +438,7 @@ bool resolve_assigned_class_styles(RelationDiagram& diagram,
             append("fg", role_name(properties.color->role));
             if (effective.fill && !effective.fill->transparent) *text += "(not projected on fill)";
         }
+        if (properties.bold) append("font", *properties.bold ? "bold" : "normal");
         if (occurrences > 1u) {
             *text += " occurrences:";
             *text += std::to_string(occurrences);
@@ -485,6 +495,7 @@ bool resolve_class_direct_styles(RelationDiagram& diagram, Work& work,
         if (properties.stroke) effective.stroke = properties.stroke;
         if (properties.color) effective.color = properties.color;
         if (properties.width) effective.width = properties.width;
+        if (properties.bold) effective.bold = properties.bold;
     }
     for (std::size_t n = 0; n < styles.declarations.size(); ++n) {
         const auto& declaration = styles.declarations[n];
@@ -527,6 +538,7 @@ bool resolve_class_direct_styles(RelationDiagram& diagram, Work& work,
             append("fg", role_name(properties.color->role));
             if (effective.fill && !effective.fill->transparent) legend += "(not projected on fill)";
         }
+        if (properties.bold) append("font", *properties.bold ? "bold" : "normal");
         if (occurrences > 1u) {
             legend += " occurrences:";
             legend += std::to_string(occurrences);
@@ -550,7 +562,8 @@ bool paint_class_direct_styles(Canvas& canvas, const RelationDiagram& diagram,
     canvas.styles = std::make_unique<std::vector<SemanticCellStyle>>(count);
     for (std::size_t n = 0; n < diagram.direct_styles->effective.size(); ++n) {
         const auto& properties = diagram.direct_styles->effective[n];
-        if (!properties.fill && !properties.stroke && !properties.color && !properties.width)
+        if (!properties.fill && !properties.stroke && !properties.color && !properties.width &&
+            !properties.bold)
             continue;
         const auto& box = boxes[n];
         if (box.w <= 0 || box.h <= 0 || !canvas.inside({box.x, box.y}) ||
@@ -573,6 +586,9 @@ bool paint_class_direct_styles(Canvas& canvas, const RelationDiagram& diagram,
                     style.foreground = SemanticColorRole::Neutral;
                 else if (properties.color)
                     style.foreground = properties.color->role;
+                // Requirement D204: font-weight bolds every glyph of the box,
+                // including interior text, independently of border width.
+                if (properties.bold.value_or(false)) style.bold = true;
                 (*canvas.styles)[static_cast<std::size_t>(canvas.index(at))] = style;
             }
     }

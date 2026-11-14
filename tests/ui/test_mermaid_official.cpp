@@ -6003,6 +6003,37 @@ const JourneyCohortEntry* eventmodeling_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0031 D204 requirement-family style cohort: the four description-only
+// requirement originals whose bodies use classDef/class/style/::: statements,
+// admitted by the extended mermaid_requirement_impl, with per-width states.
+// Gated requirement fixtures have no ledger row and keep their default source
+// disposition; the eleven Requirement11 pins and the markdown pin own their
+// own hooks.
+const std::map<std::string, JourneyCohortEntry>& requirement_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/requirement-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "Requirement cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "Requirement cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* requirement_cohort_row(std::string_view path) {
+    const auto& rows = requirement_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0031 FS-1 reviewed cohort: flowchart originals with a one-key
 // htmlLabels frontmatter and Markdown node/edge labels. The ledger carries
 // separate per-state predictions for the original (whole source) and
@@ -10008,6 +10039,35 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.source_sha256 = fixture.get_string("sha256");
                     row.expected = "drawn";
                     row.reason = "RFC-0031 eventmodeling reviewed renderer cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
+            // RFC 0031 D204 requirement-family style renderer: the four
+            // description-only requirement originals with classDef/class/
+            // style/::: body statements are governed by their reviewed cohort
+            // ledger; the per-row pixel gate is test_mermaid_requirement_cohort.
+            // Gated requirement fixtures without a ledger row keep their
+            // default source disposition.
+            if (class_path.is_str() &&
+                class_path.as_str().starts_with("requirement/")) {
+                if (const auto* cohort = requirement_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "requirement";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "RFC-0031 D204 requirement reviewed renderer cohort";
                     const auto state_status = [](const std::string& state) {
                         return state == "drawn" ? "drawn" : "source_fallback";
                     };

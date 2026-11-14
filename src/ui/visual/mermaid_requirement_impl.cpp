@@ -20,6 +20,8 @@ struct PendingRequirementEdge {
 struct RequirementDeclaration {
     RequirementNode node;
     bool inline_empty = false;
+    // D204: class name attached through the `name:::class` declaration suffix.
+    std::optional<std::string> inline_class;
 };
 
 char requirement_fold(char value) {
@@ -392,6 +394,10 @@ bool requirement_field(RequirementNode& node, std::string_view line, Work& work)
     return false;
 }
 
+// Defined with the D204 requirement style grammar below; forward-declared so
+// declaration-header `:::` parsing can share the identifier profile.
+bool requirement_style_identifier(std::string_view value);
+
 std::optional<RequirementDeclaration> requirement_declaration(std::string_view line, Work& work) {
     const auto open = line.rfind('{');
     if (open == std::string_view::npos) return {};
@@ -404,16 +410,31 @@ std::optional<RequirementDeclaration> requirement_declaration(std::string_view l
           "physicalRequirement", "designConstraint", "requirement", "element"}) {
         const auto tail = requirement_keyword_tail(before, keyword);
         if (!tail) continue;
-        const auto name = requirement_string(*tail, work);
+        // D204: a declaration may carry one inline `name:::class` shorthand.
+        // The shorthand is restricted to bare identifiers, matching Mermaid's
+        // node-id grammar; quoted names cannot carry a class suffix.
+        auto name_text = *tail;
+        std::optional<std::string> inline_class;
+        if (const auto suffix = name_text.find(":::"); suffix != std::string_view::npos) {
+            if (name_text.find(":::", suffix + 3u) != std::string_view::npos) return {};
+            const auto class_name = trim_relation(name_text.substr(suffix + 3u));
+            name_text = trim_relation(name_text.substr(0, suffix));
+            if (!requirement_style_identifier(name_text) ||
+                !requirement_style_identifier(class_name))
+                return {};
+            inline_class = std::string(class_name);
+        }
+        const auto name = requirement_string(name_text, work);
         if (!name || !work.spend(before.size() + name->size() * 6u + 64u)) return {};
         if (requirement_equal(keyword, "element"))
-            return RequirementDeclaration{RequirementNode{ElementFields{std::move(*name), {}, {}}},
-                                          inline_empty};
+            return RequirementDeclaration{
+                RequirementNode{ElementFields{std::move(*name), {}, {}}}, inline_empty,
+                inline_class};
         const auto kind = requirement_kind(keyword);
         if (!kind) return {};
         return RequirementDeclaration{
             RequirementNode{RequirementFields{*kind, std::move(*name), {}, {}, {}, {}}},
-            inline_empty};
+            inline_empty, inline_class};
     }
     return {};
 }
@@ -465,6 +486,260 @@ std::optional<PendingRequirementEdge> requirement_relationship(std::string_view 
         return {};
     return PendingRequirementEdge{*kind, std::move(*source), std::move(*target), order};
 }
+
+// ---- D204: bounded requirement style grammar -----------------------------
+//
+// Requirement sources carry the common Mermaid style vocabulary: classDef
+// profiles, `class` assignments, direct `style` statements and the `:::`
+// shorthand. The text surface cannot paint source RGB, so every statement is
+// validated strictly and projected onto the shared ClassDirectStyles seam
+// (palette hue roles plus a disclosure legend). Unknown properties, colors,
+// classes or targets reject the whole source: nothing is silently ignored.
+
+// Per-vector statement caps. The shared ClassDirectStyles legend is the
+// tighter effective bound: resolve_class_direct_styles fails closed once
+// seven distinct legend rows would be emitted, so sources needing more than
+// seven distinct painted declarations fall back even below these caps.
+constexpr std::size_t kReqStyleLimit = 64u;
+constexpr std::size_t kReqClassPerAssignment = 8u;
+
+bool requirement_style_identifier(std::string_view value) {
+    if (value.empty() || value.size() > 64u) return false;
+    for (std::size_t n = 0; n < value.size(); ++n) {
+        const char c = value[n];
+        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_' ||
+              (n > 0u && c >= '0' && c <= '9')))
+            return false;
+    }
+    return true;
+}
+
+// Corpus-bounded CSS named-color profile. Only named colors exercised by the
+// pinned official requirement corpus are admitted; each canonical CSS Color 3
+// triple is classified through the same hue boundaries as hex inputs
+// (source_style_role), keeping the palette-role contract single-sourced.
+// Unknown names fail closed, matching the finite-profile convention used by
+// the other mermaid renderers. Extend only against new corpus evidence.
+struct RequirementNamedColor {
+    std::string_view name;
+    int red, green, blue;
+};
+
+constexpr std::array<RequirementNamedColor, 5> kRequirementNamedColors{{
+    {"blue", 0x00, 0x00, 0xFF},
+    {"lightblue", 0xAD, 0xD8, 0xE6},
+    {"pink", 0xFF, 0xC0, 0xCB},
+    {"green", 0x00, 0x80, 0x00},
+    {"grey", 0x80, 0x80, 0x80},
+}};
+
+std::optional<SourceStyleColor> requirement_style_color(std::string_view raw, Work& work) {
+    if (!work.spend(raw.size() * 8u + 128u)) return {};
+    if (requirement_equal(raw, "transparent")) {
+        SourceStyleColor transparent;
+        transparent.transparent = true;
+        return transparent;
+    }
+    if (raw.starts_with('#')) return source_style_color(raw);
+    for (const auto& entry : kRequirementNamedColors) {
+        if (!requirement_equal(raw, entry.name)) continue;
+        SourceStyleColor color;
+        color.rgb = {static_cast<unsigned char>(entry.red),
+                     static_cast<unsigned char>(entry.green),
+                     static_cast<unsigned char>(entry.blue)};
+        color.role = source_style_role(entry.red, entry.green, entry.blue);
+        return color;
+    }
+    return {};
+}
+
+bool requirement_style_properties(std::string_view rest, ClassStyleProperties& properties,
+                                  Work& work) {
+    if (!work.spend(rest.size() * 8u + 256u)) return false;
+    unsigned seen = 0u;
+    while (!rest.empty()) {
+        const auto separator = rest.find_first_of(",;");
+        const auto component = trim_relation(rest.substr(0, separator));
+        if (component.empty()) return false;
+        const auto colon = component.find(':');
+        if (colon == std::string_view::npos) return false;
+        const auto key = trim_relation(component.substr(0, colon));
+        const auto value = trim_relation(component.substr(colon + 1u));
+        if (value.empty()) return false;
+        const unsigned bit = requirement_equal(key, "fill")           ? 1u
+                             : requirement_equal(key, "stroke")       ? 2u
+                             : requirement_equal(key, "color")        ? 4u
+                             : requirement_equal(key, "stroke-width") ? 8u
+                             : requirement_equal(key, "font-weight")  ? 16u
+                                                                      : 0u;
+        if (!bit || (seen & bit)) return false;
+        seen |= bit;
+        if (bit == 8u) {
+            auto number = std::string_view(value);
+            // Case-insensitive unit, matching the Class style grammar's
+            // ascii-lower normalization.
+            if (number.size() >= 2u && requirement_equal(number.substr(number.size() - 2u), "px"))
+                number.remove_suffix(2u);
+            double width = 0.0;
+            const auto parsed =
+                std::from_chars(number.data(), number.data() + number.size(), width);
+            if (parsed.ec != std::errc{} || parsed.ptr != number.data() + number.size() ||
+                !std::isfinite(width) || width < 0.0 || width > 64.0)
+                return false;
+            properties.width = width;
+        } else if (bit == 16u) {
+            if (requirement_equal(value, "bold"))
+                properties.bold = true;
+            else if (requirement_equal(value, "normal"))
+                properties.bold = false;
+            else
+                return false;
+        } else {
+            const auto color = requirement_style_color(value, work);
+            if (!color || (bit != 1u && color->transparent)) return false;
+            if (bit == 1u)
+                properties.fill = *color;
+            else if (bit == 2u)
+                properties.stroke = *color;
+            else
+                properties.color = *color;
+        }
+        if (separator == std::string_view::npos) break;
+        rest = trim_relation(rest.substr(separator + 1u));
+    }
+    return seen != 0u;
+}
+
+bool requirement_keyword_boundary(std::string_view line, std::size_t prefix) {
+    return line.size() > prefix && (line[prefix] == ' ' || line[prefix] == '\t');
+}
+
+std::optional<RequirementStyleDefinition> requirement_classdef(std::string_view line,
+                                                               Work& work) {
+    auto rest = trim_relation(line.substr(8u));
+    const auto split = rest.find_first_of(" \t");
+    if (split == std::string_view::npos || split == 0u) return {};
+    const auto name = rest.substr(0, split);
+    if (!requirement_style_identifier(name)) return {};
+    RequirementStyleDefinition definition;
+    definition.name = std::string(name);
+    definition.verbatim = std::string(line);
+    if (!requirement_style_properties(trim_relation(rest.substr(split)), definition.properties,
+                                      work) ||
+        !work.spend(line.size() * 6u + sizeof(RequirementStyleDefinition) + 128u))
+        return {};
+    return definition;
+}
+
+std::optional<RequirementStyleAssignment> requirement_class_statement(std::string_view line,
+                                                                      Work& work) {
+    auto rest = trim_relation(line.substr(5u));
+    const auto split = rest.find_first_of(" \t");
+    if (split == std::string_view::npos || split == 0u) return {};
+    const auto target = rest.substr(0, split);
+    if (!requirement_style_identifier(target)) return {};
+    RequirementStyleAssignment assignment;
+    assignment.target = std::string(target);
+    auto classes = rest.substr(split);
+    while (!classes.empty()) {
+        const auto comma = classes.find(',');
+        const auto name = trim_relation(classes.substr(0, comma));
+        if (!requirement_style_identifier(name) || assignment.classes.size() >= kReqClassPerAssignment)
+            return {};
+        for (const auto& previous : assignment.classes)
+            if (previous == name) return {};
+        assignment.classes.emplace_back(name);
+        if (comma == std::string_view::npos) break;
+        classes = trim_relation(classes.substr(comma + 1u));
+        if (classes.empty()) return {};  // reject a trailing/empty comma segment
+    }
+    if (assignment.classes.empty() ||
+        !work.spend(line.size() * 6u + sizeof(RequirementStyleAssignment) + 128u))
+        return {};
+    return assignment;
+}
+
+std::optional<RequirementStyleDirect> requirement_style_statement(std::string_view line,
+                                                                   Work& work) {
+    auto rest = trim_relation(line.substr(5u));
+    const auto split = rest.find_first_of(" \t");
+    if (split == std::string_view::npos || split == 0u) return {};
+    RequirementStyleDirect direct;
+    direct.verbatim = std::string(line);
+    auto targets = rest.substr(0, split);
+    while (!targets.empty()) {
+        const auto comma = targets.find(',');
+        const auto name = trim_relation(targets.substr(0, comma));
+        if (!requirement_style_identifier(name) || direct.targets.size() >= kReqStyleLimit)
+            return {};
+        for (const auto& previous : direct.targets)
+            if (previous == name) return {};
+        direct.targets.emplace_back(name);
+        if (comma == std::string_view::npos) break;
+        targets = targets.substr(comma + 1u);
+        if (trim_relation(targets).empty()) return {};  // trailing/empty segment
+    }
+    if (direct.targets.empty() ||
+        !requirement_style_properties(trim_relation(rest.substr(split)), direct.properties, work) ||
+        !work.spend(line.size() * 6u + sizeof(RequirementStyleDirect) + 128u))
+        return {};
+    return direct;
+}
+
+std::optional<RequirementStyleAssignment> requirement_shorthand(std::string_view line,
+                                                                 Work& work) {
+    const auto pos = line.find(":::");
+    if (pos == std::string_view::npos || pos == 0u ||
+        line.find(":::", pos + 3u) != std::string_view::npos)
+        return {};
+    const auto target = trim_relation(line.substr(0, pos));
+    const auto class_name = trim_relation(line.substr(pos + 3u));
+    if (!requirement_style_identifier(target) || !requirement_style_identifier(class_name) ||
+        !work.spend(line.size() * 6u + sizeof(RequirementStyleAssignment) + 128u))
+        return {};
+    return RequirementStyleAssignment{std::string(target), {std::string(class_name)}};
+}
+
+bool requirement_node_named(const RequirementDiagram& diagram, std::string_view name, Work& work) {
+    // Mirror requirement_resolve precedence: Requirement before Element.
+    for (const auto desired : {RequirementRole::Requirement, RequirementRole::Element}) {
+        for (const auto& node : diagram.nodes) {
+            if (!work.spend(name.size() + 32u)) return false;
+            if (requirement_same_role_name(node, desired, name)) return true;
+        }
+    }
+    return false;
+}
+
+bool requirement_validate_styles(const RequirementDiagram& diagram, Work& work) {
+    if (diagram.style_definitions.size() > kReqStyleLimit ||
+        diagram.style_assignments.size() > kReqStyleLimit ||
+        diagram.style_directs.size() > kReqStyleLimit)
+        return false;
+    for (const auto& definition : diagram.style_definitions) {
+        if (!work.spend(definition.name.size() + 32u)) return false;
+        for (const auto& other : diagram.style_definitions)
+            if (&other != &definition && other.name == definition.name) return false;
+    }
+    const auto definition_known = [&](std::string_view name) {
+        for (const auto& definition : diagram.style_definitions)
+            if (definition.name == name) return true;
+        return false;
+    };
+    for (const auto& assignment : diagram.style_assignments) {
+        if (!work.spend(assignment.target.size() + 64u) ||
+            !requirement_node_named(diagram, assignment.target, work))
+            return false;
+        for (const auto& class_name : assignment.classes)
+            if (!definition_known(class_name)) return false;
+    }
+    for (const auto& direct : diagram.style_directs)
+        for (const auto& target : direct.targets)
+            if (!work.spend(target.size() + 32u) ||
+                !requirement_node_named(diagram, target, work))
+                return false;
+    return true;
+}
 }  // namespace
 
 std::optional<RequirementDiagram> parse_requirement(std::string_view source, Work& work) {
@@ -483,7 +758,7 @@ std::optional<RequirementDiagram> parse_requirement(std::string_view source, Wor
     if (!work.spend(2u * sizeof(std::vector<RequirementNode>) +
                     2u * sizeof(std::vector<RequirementEdge>) + sizeof(RequirementDiagram) + 128u))
         return {};
-    RequirementDiagram diagram{std::move(*envelope), "TB", {}, {}};
+    RequirementDiagram diagram{std::move(*envelope), "TB", {}, {}, {}, {}, {}};
     std::vector<PendingRequirementEdge> pending;
     if (!work.spend(sizeof(std::vector<PendingRequirementEdge>) + 128u)) return {};
     std::size_t at = 0, statement_order = 0;
@@ -516,6 +791,12 @@ std::optional<RequirementDiagram> parse_requirement(std::string_view source, Wor
             continue;  // greedy: last accepted line wins
         }
         if (auto declaration = requirement_declaration(line, work)) {
+            // Copy the logical name before the node variant is moved, so an
+            // inline class assignment never references a moved-from string.
+            const std::string declared_name =
+                std::holds_alternative<RequirementFields>(declaration->node)
+                    ? std::get<RequirementFields>(declaration->node).logical_name
+                    : std::get<ElementFields>(declaration->node).logical_name;
             auto node = std::move(declaration->node);
             bool closed = declaration->inline_empty;
             while (!closed) {
@@ -529,6 +810,40 @@ std::optional<RequirementDiagram> parse_requirement(std::string_view source, Wor
                 if (!requirement_field(node, field, work)) return {};
             }
             if (!requirement_append_node(diagram, std::move(node), work)) return {};
+            if (declaration->inline_class) {
+                if (diagram.style_assignments.size() >= kReqStyleLimit ||
+                    !work.spend(declared_name.size() + sizeof(RequirementStyleAssignment) + 128u))
+                    return {};
+                diagram.style_assignments.push_back(
+                    {declared_name, {std::move(*declaration->inline_class)}});
+            }
+            continue;
+        }
+        if (line.size() > 8u && line.starts_with("classDef") &&
+            requirement_keyword_boundary(line, 8u)) {
+            auto definition = requirement_classdef(line, work);
+            if (!definition || diagram.style_definitions.size() >= kReqStyleLimit) return {};
+            diagram.style_definitions.push_back(std::move(*definition));
+            continue;
+        }
+        if (line.size() > 5u && line.starts_with("class") &&
+            requirement_keyword_boundary(line, 5u)) {
+            auto assignment = requirement_class_statement(line, work);
+            if (!assignment || diagram.style_assignments.size() >= kReqStyleLimit) return {};
+            diagram.style_assignments.push_back(std::move(*assignment));
+            continue;
+        }
+        if (line.size() > 5u && line.starts_with("style") &&
+            requirement_keyword_boundary(line, 5u)) {
+            auto direct = requirement_style_statement(line, work);
+            if (!direct || diagram.style_directs.size() >= kReqStyleLimit) return {};
+            diagram.style_directs.push_back(std::move(*direct));
+            continue;
+        }
+        if (line.find(":::") != std::string_view::npos) {
+            auto assignment = requirement_shorthand(line, work);
+            if (!assignment || diagram.style_assignments.size() >= kReqStyleLimit) return {};
+            diagram.style_assignments.push_back(std::move(*assignment));
             continue;
         }
         auto edge = requirement_relationship(line, statement_order, work);
@@ -537,6 +852,7 @@ std::optional<RequirementDiagram> parse_requirement(std::string_view source, Wor
         ++statement_order;
     }
     if (!header || diagram.nodes.empty()) return {};
+    if (!requirement_validate_styles(diagram, work)) return {};
     for (const auto& edge : pending) {
         const auto source = requirement_resolve(diagram, edge.source, work);
         const auto target = requirement_resolve(diagram, edge.target, work);
@@ -588,6 +904,78 @@ std::optional<std::string> requirement_member_text(std::string_view key, std::st
         !work.spend((key.size() + value.size()) * 8u + sizeof(std::string) + 64u))
         return {};
     return std::string(key) + ": " + std::string(value);
+}
+
+std::string_view requirement_node_name(const RequirementNode& node) {
+    if (const auto* fields = std::get_if<RequirementFields>(&node)) return fields->logical_name;
+    return std::get<ElementFields>(node).logical_name;
+}
+
+// Project the validated requirement style ledger onto the shared
+// ClassDirectStyles seam. Cascade order mirrors Mermaid's stylesheet: the
+// implicit `default` classDef first on every node, then class assignments in
+// source order, then direct `style` statements last; the shared resolver does
+// the per-property merge, painting and legend disclosure.
+bool requirement_project_styles(const RequirementDiagram& parsed, RelationDiagram& result,
+                                const std::vector<int>& projected, Work& work) {
+    if (parsed.style_definitions.empty() && parsed.style_assignments.empty() &&
+        parsed.style_directs.empty())
+        return true;
+    const auto resolve_node = [&](std::string_view name) -> std::optional<std::size_t> {
+        for (const auto desired :
+             {RequirementRole::Requirement, RequirementRole::Element}) {
+            for (std::size_t at = 0; at < parsed.nodes.size(); ++at)
+                if (requirement_same_role_name(parsed.nodes[at], desired, name)) return at;
+        }
+        return std::nullopt;
+    };
+    const auto find_definition = [&](std::string_view name)
+        -> const RequirementStyleDefinition* {
+        for (const auto& definition : parsed.style_definitions)
+            if (definition.name == name) return &definition;
+        return nullptr;
+    };
+    if (!work.spend(64u * sizeof(ClassDirectStyle) + 4u * sizeof(ClassDirectStyles) + 256u))
+        return false;
+    auto styles = std::make_unique<ClassDirectStyles>();
+    styles->declarations.reserve(kReqStyleLimit);
+    const auto emit = [&](std::string_view node_name, std::string class_name,
+                          const std::string& verbatim,
+                          const ClassStyleProperties& properties) -> bool {
+        const auto node = resolve_node(node_name);
+        if (!node || *node >= projected.size()) return false;
+        const auto entity = static_cast<std::size_t>(projected[*node]);
+        if (entity >= result.entities.size()) return false;
+        if (styles->declarations.size() >= 128u ||
+            !work.spend(verbatim.size() * 8u + sizeof(ClassDirectStyle) + 64u))
+            return false;
+        styles->declarations.push_back(
+            ClassDirectStyle{result.entities[entity].id, verbatim, std::move(class_name), 0u,
+                             properties, -1});
+        return true;
+    };
+    if (const auto* default_definition = find_definition("default"))
+        for (const auto& node : parsed.nodes)
+            if (!emit(requirement_node_name(node), "default", default_definition->verbatim,
+                      default_definition->properties))
+                return false;
+    for (const auto& assignment : parsed.style_assignments) {
+        for (const auto& class_name : assignment.classes) {
+            const auto* definition = find_definition(class_name);
+            // The legend discloses the classDef profile statement plus its
+            // resolved palette roles; declaration.target carries the node for
+            // painting and class_name is printed in the legend's class field.
+            if (!definition ||
+                !emit(assignment.target, class_name, definition->verbatim, definition->properties))
+                return false;
+        }
+    }
+    for (const auto& direct : parsed.style_directs)
+        for (const auto& target : direct.targets)
+            if (!emit(target, "", direct.verbatim, direct.properties)) return false;
+    result.direct_styles = std::move(styles);
+    return resolve_class_direct_styles(result, work, std::span<const std::string_view>{},
+                                       parsed.envelope.body);
 }
 }  // namespace
 
@@ -679,6 +1067,7 @@ std::optional<RelationDiagram> project_requirement(const RequirementDiagram& par
         }
         if (!append_relationship(result.edges, std::move(projected_edge), work)) return {};
     }
+    if (!requirement_project_styles(parsed, result, projected, work)) return {};
     return result;
 }
 }  // namespace loom::ui::mermaid::detail

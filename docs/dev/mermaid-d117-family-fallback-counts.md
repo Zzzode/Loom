@@ -46,6 +46,7 @@ are not whole-original errors).
 | After eventmodeling family renderer (6 clean originals) | 2026-11-14 | 7d4730bf | 1175 | 970 | 0 |
 | After requirement style renderer (4 styled originals) | 2026-11-14 | 6c16fe94 | 1179 | 966 | 0 |
 | After agentflow family renderer (27 clean originals) | 2026-11-14 | local | 1206 | 939 | 0 |
+| After sankey family renderer (1 clean original) | 2026-11-14 | local | 1207 | 938 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -60,7 +61,7 @@ disposition (fix or documented infeasibility).
 | git | 80 | 55 | |
 | state-diagram-v2 | 78 | 25 | |
 | gantt | 13 | 39 | renderer added 2026-11-12; 11 themed rows stay source (no color contract), 2 malformed-date fixtures fail closed |
-| swimlanes | 46 | 0 | renderer not started |
+| swimlanes | 46 | 0 | hard wall, no renderer; re-confirmed 2026-11-14 through the production render_markdown seam (0 drawn / 46 fallback): every fixture is swimlane-beta (LR/TD 23 each) and carries a `config.flowchart.htmlLabels` + `useMaxWidth` visual/layout contract (46/46), 18 add theme/look and 5 carry body classDef/class/style; native text rendering cannot honor the lane geometry without silently dropping those contracts, so the whole family stays gated; unblock needs a real lane-geometry renderer |
 | xychart | 46 | 2 | partial axes/art only |
 | agentflow | 11 | 27 | renderer added 2026-11-14; full agentflow-beta grammar (flow/global/connector containers, @{ } metadata, four edge vocabularies, labeled branches) validated and projected as a bounded native outline, not a flowchart approximation; 11 config theme/look rows stay source (no color/layout contract); live census 27/11/0 from 38; 19 of 27 draw at 40 columns |
 | c4 | 9 | 23 | renderer added 2026-11-12; 8 Update*Style/UpdateLayoutConfig + 1 frontmatter config rows stay source (no color/layout contract) |
@@ -70,7 +71,7 @@ disposition (fix or documented infeasibility).
 | class-diagram | 25 | 260 | |
 | treemap | 16 | 10 | renderer added 2026-11-12; 10 classDef/::: style + 6 frontmatter config rows stay source (no color/number-format contract) |
 | architecture | 4 | 16 | renderer added 2026-11-13; 4 frontmatter config layout knobs (randomize/seed/idealEdgeLengthMultiplier) stay source (no fcose layout contract) |
-| sankey | 18 | 0 | |
+| sankey | 17 | 1 | renderer added 2026-11-14; the single description-only `sankey-beta` original has its three-field CSV link rows (`source,target,value`) validated against a closed grammar (printable labels, no quotes/embedded commas/control bytes, bounded positive integer) and transcribed as a bounded native outline rather than an approximate flow graph; the 17 plain-`sankey` dialect originals all carry `config.sankey` layout/color contracts and stay source; live census 1/17/0 from 18, the reachable row draws at 40 columns |
 | journey | 10 | 18 | renderer added 2026-11-11; 8 themed rows stay source (no color contract) |
 | pie | 17 | 7 | |
 | state-diagram | 26 | 16 | |
@@ -92,7 +93,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **939** | **1206** | |
+| **Total** | **938** | **1207** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -1270,3 +1271,63 @@ when the body would draw.
   CapabilityReport.Class285 8.86s, Block58AdmissionJoin 23.45s,
   Er107AdmissionJoin 2.18s), RC=0, logged at
   `/tmp/g4probe/agentflow/serial-em.log`.
+- 2026-11-14 (sankey family renderer, local; D-211): twentieth greenfield
+  family and the smallest single-family draw of the program (+1), closing a
+  pool whose other 17 originals are a genuine config-contract hard wall. A
+  production-seam census (render_markdown CellCapture, not text grep)
+  partitioned the 18 originals into 1 native and 17 gated; the new
+  `mermaid_sankey_impl.cpp` handles only the `sankey-beta` dialect — a
+  header followed by strict two-space indented three-field CSV link rows
+  (`source,target,value`) — validating printable free-text labels (no
+  quotes, embedded commas or control bytes) and a bounded positive integer
+  value (1..999,999,999, at most nine digits), capped at 512 links, and
+  transcribes each accepted row verbatim as `from -> to: value` rather than
+  drawing an approximate flow graph. Any malformed row, a `%%{init ...}%%`
+  directive, an unclosed/indented frontmatter fence, or any column-0
+  frontmatter key besides `description` rejects the whole source, so no
+  attribute is silently ignored. The 17 gated fixtures are all the plain
+  `sankey` dialect carrying `config.sankey` nodeWidth/labelStyle/colors/
+  useMaxWidth/layout contracts that a text surface cannot honor; they keep
+  their whole-source fallback. The classifier gains
+  MermaidProbeFamily::Sankey on the exclusive `sankey-beta` header
+  (including after a frontmatter fence) and a dispatch case; the matrix hook
+  replaces run_case observations 1:1 for the single ledger path, so the
+  observation total stays 2738. Independent read-only adversarial review
+  reached final APPROVE after one re-review. The first pass returned
+  REQUEST CHANGES on one MAJOR and one MINOR, both resolved. The MAJOR was
+  an engine `%%{init ...}%%` directive silently swallowed as a plain
+  comment; comment lines beginning `%%{` now reject outright while plain
+  `%%` comments still pass, matching the
+  agentflow/relations/packet/eventmodeling convention. The MINOR aligned
+  indented/non-exact `---` fence handling with the renderer-free
+  generator's malformed-fence classification. Two residual C++/Python
+  divergences were reviewed as fail-safe NITs and documented in code: any
+  non-exact line containing `---` is gated (stricter than
+  `strip()=="---"`), and any tab anywhere rejects (the generator checks
+  leading tabs only); both can only reject to fallback, never mis-draw, and
+  both are unreachable on the pinned corpus. Whole originals 1206 -> 1207
+  drawn / 939 -> 938 fallback / 0 error; sankey 1/17 (the one reachable row
+  draws at 40 columns); flow 160/240, body 372/173/48, the 48-gap roster
+  and Class285 260/25/0 are unmoved; debug/release OfficialMatrix JSON
+  byte-identical (sha256
+  5167f087f20c892429b89b0a7d7e4bc59a4eea96087edac8a824353976bb1d7f;
+  release 63/63). Full mermaid label suite 1339/1339 green (the 1334
+  agentflow-era count plus the five sankey cohort cases). ASan cohort 5/5
+  (the owning contact surface) zero sanitizer reports, logged at
+  `/tmp/g4probe/sankey/asan-contact.log`. Serial gate 4/4 green (`-j1`,
+  release, 47.29s wall: EveryWholeSourceIsObserved 13.22s,
+  CapabilityReport.Class285 8.85s, Block58AdmissionJoin 22.87s,
+  Er107AdmissionJoin 2.19s), RC=0, logged at
+  `/tmp/g4probe/sankey/serial-em.log`.
+- 2026-11-14 (swimlanes hard wall re-confirmed, local; D-211): no renderer
+  built. A fresh production-seam probe (the prior scratch evidence had been
+  cleaned) measured 0 drawn / 46 fallback over the whole pool: every
+  fixture is `swimlane-beta` (LR and TD, 23 each — an earlier text-only
+  census claiming a second `swimlane:` dialect was wrong) and 46/46 carry
+  both `config.flowchart.htmlLabels` and `useMaxWidth` visual/layout
+  contracts; 18 add theme/look and 5 carry body classDef/class/style
+  statements. A text renderer cannot model lane geometry without silently
+  dropping those contracts, which the D-211 rules forbid, so the family
+  stays gated. Unblock condition: a native lane-geometry renderer that
+  honors the htmlLabels/useMaxWidth/theme contracts. Evidence:
+  `/tmp/g4probe/swimlanes/hard-wall-probe.log`.

@@ -834,3 +834,39 @@ Attach a short efficiency section to each closure report, answering:
   body 372/173/48, Class285, the 48-gap roster and observation total 2738
   all unmoved. Throughput: +27 draws for one census/ledger/review/gate on
   the shared scaffolding.
+- **2026-11-14, sankey family renderer (1 whole draw, D-211,
+  predating its commit).** Twentieth greenfield family and the smallest
+  draw of the program: an 18-fixture pool where only one original is
+  reachable and the other 17 are a config-contract hard wall. (1) Rule 18
+  (measure, don't guess) produced a second recorded defeat for text
+  censuses: an earlier keyword census had claimed swimlanes split 41/5
+  across two header dialects; the production-seam re-probe showed 46/46
+  single-dialect `swimlane-beta`, every one carrying the same
+  htmlLabels + useMaxWidth double contract. The trustworthy 1-native/
+  17-gated sankey partition likewise came only from probing the public
+  render_markdown seam, and the renderer-free generator's hard drift guard
+  (18/1/17) makes any future corpus drift fail the ledger check instead of
+  silently re-bucketing. (2) The independent review again earned its cost
+  on a happy-path-invisible defect: an engine `%%{init ...}%%` directive
+  was being swallowed as a plain comment, which no fixture in the pinned
+  corpus contains. The one-line reject fix is text-level isomorphic with
+  four neighboring renderers, and the two residual C++/Python parser
+  divergences were accepted as fail-safe NITs with the discipline recorded
+  in code comments rather than patched to parity — reject-only differences
+  that are unreachable on the corpus do not justify grammar churn. (3) No
+  false green/red or flake occurred: debug, release -O2 and ASan+UBSan
+  agreed on the 1/17/0 partition, the dual-preset OfficialMatrix sha
+  matched on the first comparison
+  (5167f087f20c892429b89b0a7d7e4bc59a4eea96087edac8a824353976bb1d7f), and
+  the full 1339-test mermaid suite plus the `-j1` four-gate serial run
+  (47.29s wall) were green first pass. (4) Interface fan-out was the
+  unavoidable kind: one declaration added to the `mermaid_detail.cppm`
+  interface unit forces BMI recompiles of its importers exactly as every
+  prior family addition did; the renderer itself is a body-only
+  translation unit so later edits stay inside the visual archive. (5) No
+  new numbered rule; rules 18, 20, 22 and 25 again cover the work, and the
+  three build trees kept one writer each with absolute-cd/RC-marker logs
+  under `/tmp/g4probe/sankey/`. Throughput: +1 draw and a fully documented
+  46-fixture hard wall for one census/ledger/review/gate on the shared
+  scaffolding; no frozen contract moved (flow 160/240, body 372/173/48,
+  Class285, 48-gap roster, observation total 2738).

@@ -100,6 +100,28 @@ struct Cursor {
         return value;
     }
 
+    // Consume one `tag: "<label>"` field. An explicitly empty quoted tag
+    // (`tag: ""`) is valid Mermaid: the empty string carries no glyphs and
+    // decodes to no label, so it is accepted without consuming a tag slot and
+    // projects identically to an omitted tag. A missing/malformed quote or a
+    // backslash-bearing literal still fails, and a non-empty tag at the cap is
+    // rejected, matching the previous non-empty behavior.
+    bool take_tag(std::vector<std::string>& tags) {
+        if (!take("tag:")) return false;
+        space();
+        if (rest.size() < 2u || rest.front() != '"') return false;
+        const auto end = rest.find('"', 1u);
+        if (end == std::string_view::npos) return false;
+        const auto inner = rest.substr(1u, end - 1u);
+        if (inner.find('\\') != std::string_view::npos) return false;
+        rest.remove_prefix(end + 1u);
+        if (inner.empty()) return true;
+        auto value = git_label(inner);
+        if (!value || tags.size() == kGitTagLimit) return false;
+        tags.push_back(std::move(*value));
+        return true;
+    }
+
     std::optional<std::string> decimal() {
         space();
         std::size_t count = 0u;
@@ -187,10 +209,8 @@ bool parse_commit(GitGraph& graph, std::string_view line) {
             if (type) return false;
             type = parse_type(cursor);
             if (!type) return false;
-        } else if (cursor.take("tag:")) {
-            auto tag = cursor.quoted();
-            if (!tag || tags.size() == kGitTagLimit) return false;
-            tags.push_back(std::move(*tag));
+        } else if (cursor.take_tag(tags)) {
+            // A tag field was consumed (an empty quoted tag adds no label).
         } else {
             // The complete selected corpus has no message field. Keep an
             // unsupported message source intact rather than omit its text.
@@ -260,12 +280,11 @@ bool parse_merge(GitGraph& graph, std::string_view line) {
             if (type) return false;
             type = parse_type(cursor);
             if (!type) return false;
-        } else if (cursor.take("tag:")) {
-            auto tag = cursor.quoted();
-            if (!tag || tags.size() == kGitTagLimit) return false;
-            tags.push_back(std::move(*tag));
-        } else
+        } else if (cursor.take_tag(tags)) {
+            // A tag field was consumed (an empty quoted tag adds no label).
+        } else {
             return false;
+        }
     }
     const auto current = branch_index(graph, graph.current_branch);
     const auto merged = branch_index(graph, *source);
@@ -292,12 +311,11 @@ bool parse_cherry_pick(GitGraph& graph, std::string_view line) {
             if (parent) return false;
             parent = cursor.quoted();
             if (!parent) return false;
-        } else if (cursor.take("tag:")) {
-            auto tag = cursor.quoted();
-            if (!tag || tags.size() == kGitTagLimit) return false;
-            tags.push_back(std::move(*tag));
-        } else
+        } else if (cursor.take_tag(tags)) {
+            // A tag field was consumed (an empty quoted tag adds no label).
+        } else {
             return false;
+        }
     }
     if (!source_id) return false;
     const auto source = commit_index(graph, *source_id);

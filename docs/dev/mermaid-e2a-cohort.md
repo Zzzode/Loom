@@ -49,20 +49,27 @@ v2 94/4, v1 38/4).
 
 ## Blocker detection
 
-Six classes are fixed source-content detectors; the seventh, the
-**execution-attested reviewed set** (`gitgraph-native-parent-route-debt`),
-is currently empty (see the T1-A update below). Routing feasibility is not
-textually decidable, so any future addition is sha-bound to the pinned
-corpus and requires a new independent review row; the C++ cohort gate
-empirically enforces every outcome.
+Four classes are fixed source-content detectors; two more are
+**execution-attested reviewed sets** (`state-composite-brace-on-next-line`
+and the currently-empty `gitgraph-native-parent-route-debt`). Routing
+feasibility is not textually decidable, so any future reviewed-set addition is
+sha-bound to the pinned corpus and requires a new independent review row; the
+C++ cohort gate empirically enforces every outcome. D235 retired a fifth
+fixed detector, `gitgraph-empty-quoted-tag` (an explicit empty quoted tag now
+parses to no label and draws; see the D235 update below).
 
-- `gitgraph-empty-quoted-tag` — 3
+Current blockers (10 rows):
+
 - `gitgraph-canvas-dimension-overflow` — 4
 - `gitgraph-title-not-projected` — 1
 - `gitgraph-multiline-quoted-branch-label` — 1
 - `state-composite-divider` — 1
-- `state-composite-brace-on-next-line` — 3
+- `state-composite-brace-on-next-line` — 3 (execution-attested reviewed set)
 - `gitgraph-native-parent-route-debt` — 0 (retired by T1-A)
+
+Retired detector (3 rows, now predicted-draw):
+
+- `gitgraph-empty-quoted-tag` — was 3, retired by D235
 
 The two TB/BT nine-branch rows exceed the 240-column canvas (276 columns);
 the two LR nine-branch rows are 218 columns (inside the canvas) but remain
@@ -71,17 +78,27 @@ retry. All four are `gitgraph-canvas-dimension-overflow`.
 
 ## Predictions
 
-**56 predicted-draw (55 gitGraph, 1 stateDiagram-v2),
-13 predicted-blocked** after T1-A (E2a originally registered 42 draw / 27
-blocked). Width policy: 240
+**59 predicted-draw (58 gitGraph, 1 stateDiagram-v2),
+10 predicted-blocked** after D235 (E2a originally registered 42 draw / 27
+blocked; T1-A moved it to 56/13; D235 moved the three empty-tag rows to draw
+for 59/10). Width policy: 240
 only; `narrow_40` uniformly `source`; `restored_240` equals `wide_240`.
 
-## The 13 blocked rows
+## Blocked-row witnesses (10 current; the three empty-tag rows are D235-retired)
+
+The three `gitgraph-empty-quoted-tag` entries below are kept for provenance but
+are **predicted-draw since D235**, not blocked: an explicit `tag: ""` carries
+no glyphs and `Cursor::take_tag` decodes it to no label, identical to an
+omitted tag. The other ten entries remain current blockers and retain their
+original numbering.
 
 ### 1. `git/nightly-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag.mmd`
 
-- **predicted-blocked** — `gitgraph-empty-quoted-tag`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; src/ui/visual/mermaid_cells_impl.cpp:41-42` — parse_cherry_pick requires a non-empty quoted tag; tag: "" decodes to no label.
+- **predicted-draw since D235** — `gitgraph-empty-quoted-tag` retired
+- Now: `Cursor::take_tag` (src/ui/visual/mermaid_gitgraph_impl.cpp) accepts an
+  empty quoted tag without pushing a label or consuming a tag slot; guarded by
+  `MermaidGitGraphEmptyTag` native gtests. The empty string has zero glyphs, so
+  the frame is identical to an omitted tag and no `[]` bracket is emitted.
 
 ```mermaid-source
 ---
@@ -134,8 +151,9 @@ gitGraph
 
 ### 3. `git/nightly-check/27-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch.mmd`
 
-- **predicted-blocked** — `gitgraph-empty-quoted-tag`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; src/ui/visual/mermaid_cells_impl.cpp:41-42` — parse_cherry_pick requires a non-empty quoted tag; tag: "" decodes to no label.
+- **predicted-draw since D235** — `gitgraph-empty-quoted-tag` retired (TB
+  orientation; same `Cursor::take_tag` path and `MermaidGitGraphEmptyTag`
+  guard as row 1).
 
 ```mermaid-source
 ---
@@ -188,8 +206,9 @@ gitGraph TB:
 
 ### 5. `git/nightly-check/62-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch-bottom-to-top.mmd`
 
-- **predicted-blocked** — `gitgraph-empty-quoted-tag`
-- Witness: `src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; src/ui/visual/mermaid_cells_impl.cpp:41-42` — parse_cherry_pick requires a non-empty quoted tag; tag: "" decodes to no label.
+- **predicted-draw since D235** — `gitgraph-empty-quoted-tag` retired (BT
+  orientation; same `Cursor::take_tag` path and `MermaidGitGraphEmptyTag`
+  guard as row 1).
 
 ```mermaid-source
 ---
@@ -415,7 +434,7 @@ stateDiagram-v2
 | Path | Family | Metadata | Prediction | 240/40/restored | Blocker |
 |---|---|---|---|---|---|
 | `git/nightly-check/1-should-render-a-simple-gitgraph-with-commit-on-main-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
-| `git/nightly-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-empty-quoted-tag |
+| `git/nightly-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag.mmd` | gitGraph | description | predicted-draw (D235) | drawn/source/drawn | — (empty-tag retired) |
 | `git/nightly-check/11-should-render-a-simple-gitgraph-with-cherry-pick-commit.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/11-should-render-a-simple-gitgraph-with-two-cherry-pick-commit.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/12-should-render-commits-for-more-than-8-branches.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-canvas-dimension-overflow |
@@ -430,7 +449,7 @@ stateDiagram-v2
 | `git/nightly-check/21-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/25-should-render-a-simple-gitgraph-with-cherry-pick-commit-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/26-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
-| `git/nightly-check/27-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-empty-quoted-tag |
+| `git/nightly-check/27-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch.mmd` | gitGraph | description | predicted-draw (D235) | drawn/source/drawn | — (empty-tag retired) |
 | `git/nightly-check/28-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/29-should-render-commits-for-more-than-8-branches-vertical-branch.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-canvas-dimension-overflow |
 | `git/nightly-check/31-should-render-a-simple-gitgraph-with-a-title-vertical-branch.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
@@ -454,7 +473,7 @@ stateDiagram-v2
 | `git/nightly-check/6-should-render-a-simple-gitgraph-with-two-branches-and-merge-commit.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/60-should-render-a-simple-gitgraph-with-cherry-pick-commit-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/61-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
-| `git/nightly-check/62-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-empty-quoted-tag |
+| `git/nightly-check/62-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw (D235) | drawn/source/drawn | — (empty-tag retired) |
 | `git/nightly-check/63-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `git/nightly-check/64-should-render-commits-for-more-than-8-branches-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-blocked | source/source/source | gitgraph-canvas-dimension-overflow |
 | `git/nightly-check/65-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
@@ -503,13 +522,23 @@ stateDiagram-v2
   pristine master isolated on this host); the E6c mandatory-gap roster and
   its SHA pin are unchanged. The retired-set claim awaits independent
   ledger review like every earlier change to the reviewed set.
+- Round 4 (D235, 2026-11-14): independent adversarial re-review APPROVED the
+  empty-quoted-tag retirement. `Cursor::take_tag` accepts an explicit empty
+  quoted tag (`tag: ""`) which decodes to no label and projects identically
+  to an omitted tag (zero glyphs, no `[]` bracket, topology retained); the
+  non-empty tag path is byte-identical to the prior `quoted()` behavior,
+  proven by the SHA-pinned MermaidGitGraph30 models and a 60/60 gitgraph
+  binary. A same-probe HEAD-vs-working census over all 135 git originals
+  shows exactly the three empty-tag fixtures moving to drawn with an empty
+  regression set. Partition moves 56/13 -> 59/10; frozen gates (2145/2738,
+  48-gap roster, Class285, flow/body, the E2b state 51/10 ledger) unchanged.
 
 ## Graduation checklist
 
 - [x] Mechanical selection reproduces 64 git + 5 state v2, v1 = 0.
 - [x] Both families have at least one predicted-draw row.
 - [x] Every blocked row cites a non-envelope grammar/capacity witness.
-- [ ] Independent ledger review approved (recorded in JSON).
+- [x] Independent ledger review approved (recorded in JSON; D235 round 4).
 - [ ] Every predicted-draw row draws at 240; every blocked row keeps source.
 - [ ] Zero unclassified git/state originals.
 - [ ] Config/init rows keep whole source.

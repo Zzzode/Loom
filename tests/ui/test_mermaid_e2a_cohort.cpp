@@ -145,15 +145,15 @@ TEST(MermaidE2aCohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(counts.get_int("git"), 64);
     EXPECT_EQ(counts.get_int("state_v2"), 5);
     EXPECT_EQ(counts.get_int("state_v1_qualified"), 0);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 56);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 13);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 59);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 10);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
     root.get("blocker_vocabulary").iter([&](const JsonVal value) {
         vocabulary.emplace(value.as_str());
     });
-    EXPECT_EQ(vocabulary.size(), 7u);
+    EXPECT_EQ(vocabulary.size(), 6u);
     root.get("rows").iter([&](const JsonVal row) {
         if (row.get_string("prediction") == "predicted-blocked")
             EXPECT_TRUE(vocabulary.contains(row.get("blocker").get_string("kind")));
@@ -197,8 +197,8 @@ TEST(MermaidE2aCohort, EveryDrawRowDrawsAndEveryBlockedRowKeepsSourceAt240) {
         }
         EXPECT_EQ(row.wide, is_drawn ? "drawn" : "source");
     }
-    EXPECT_EQ(drawn, 56);
-    EXPECT_EQ(blocked, 13);
+    EXPECT_EQ(drawn, 59);
+    EXPECT_EQ(blocked, 10);
 }
 
 TEST(MermaidE2aCohort, DescriptionIsNeverRendered) {

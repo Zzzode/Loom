@@ -9,9 +9,12 @@ Selection (mechanical, byte-level, never derived from renderer output):
     - carries no ``%%{init...}%%`` directive in the body.
 
 Each selected row is pre-registered as predicted-draw or predicted-blocked.
-Five blocker classes come from fixed source-content detectors; two classes
+Four blocker classes come from fixed source-content detectors; two classes
 (native parent-route debt and State composite execution debt) are independently
-reviewed execution sets. State entries are bound to explicit path/SHA pairs;
+reviewed execution sets. D235 retired a fifth fixed detector,
+gitgraph-empty-quoted-tag: an explicit empty quoted tag now parses to no label
+and those three rows draw, guarded by the MermaidGitGraphEmptyTag native
+gtests. State entries are bound to explicit path/SHA pairs;
 new or changed next-line-brace sources require review. For GitGraph,
 parse_gitgraph accepts the body but plan_parent_routes cannot close an edge. That set is sha-bound to
 this pinned corpus and additions require a new review row. The original
@@ -43,7 +46,6 @@ SCHEMA = "loom_mermaid_e2a_cohort/v1"
 BLOCKER_VOCABULARY = [
     "gitgraph-title-not-projected",
     "gitgraph-multiline-quoted-branch-label",
-    "gitgraph-empty-quoted-tag",
     "gitgraph-canvas-dimension-overflow",
     "gitgraph-native-parent-route-debt",
     "state-composite-brace-on-next-line",
@@ -59,11 +61,6 @@ WITNESS = {
     "gitgraph-multiline-quoted-branch-label": (
         "src/ui/visual/mermaid_gitgraph_impl.cpp:55-64",
         "Cursor::quoted scans one physical line; a quoted label split across lines cannot close.",
-    ),
-    "gitgraph-empty-quoted-tag": (
-        "src/ui/visual/mermaid_gitgraph_impl.cpp:268-272; "
-        "src/ui/visual/mermaid_cells_impl.cpp:41-42",
-        "parse_cherry_pick requires a non-empty quoted tag; tag: \"\" decodes to no label.",
     ),
     "gitgraph-canvas-dimension-overflow": (
         "src/ui/visual/mermaid_gitgraph_impl.cpp:434-443 (checked_dimension); "
@@ -159,9 +156,10 @@ def git_blocker(rel, keys, body_lines):
         stripped = line.strip()
         if stripped.startswith("branch") and odd_quotes(line):
             return "gitgraph-multiline-quoted-branch-label"
-    for line in body_lines:
-        if re.search(r"tag:\s*\"\"", line):
-            return "gitgraph-empty-quoted-tag"
+    # D235: the explicit empty quoted tag (`tag: ""`) now parses natively via
+    # Cursor::take_tag (an empty string carries no glyphs and projects to no
+    # label, identical to an omitted tag), so the former empty-quoted-tag
+    # detector is retired; its regression guard is MermaidGitGraphEmptyTag.
     # The execution-attested reviewed set takes precedence over the textual
     # branch-count detector when non-empty (it is currently empty; see the
     # NATIVE_ROUTE_DEBT note). The two LR 9-branch rows therefore classify as
@@ -273,13 +271,24 @@ def build(repo_root):
         "selection": {
             "rule": "frontmatter original containing neither a top-level config key nor a body %%{init}%% directive",
             "roots": ["git", "state-diagram-v2", "state-diagram"],
-            "blocker_detection": "five fixed source-content detectors plus two execution-attested reviewed sets (native parent-route debt and path/SHA-bound State composite debt); no generator-time rendering; new execution-debt entries require independent review",
+            "blocker_detection": "four fixed source-content detectors plus two execution-attested reviewed sets (native parent-route debt and path/SHA-bound State composite debt); no generator-time rendering; new execution-debt entries require independent review. D235 retired the empty-quoted-tag detector (empty tag now parses to no label, guarded by MermaidGitGraphEmptyTag).",
             "width_policy": "E2a pre-registers the 240-column admission; narrow_40 is uniformly 'source'.",
         },
         "review": {
-            "reviewer_agent": "agent:rfc0031-e2a-ledger-review (two independent adversarial rounds)",
-            "date": "2026-10-24",
+            "reviewer_agent": "independent read-only adversarial D235 re-review "
+                              "(fresh general-purpose agent; full-diff audit, independent "
+                              "14-case dual-seam probe, own whole-corpus HEAD-vs-working A/B, "
+                              "frozen-invariant verification); prior agent:rfc0031-e2a-ledger-"
+                              "review covered the 56/13 partition",
+            "date": "2026-11-14",
             "verdict": "approved",
+            "note": "D235 retires the gitgraph-empty-quoted-tag detector: Cursor::take_tag "
+                    "now accepts an explicit empty quoted tag (tag: \"\") which carries no "
+                    "glyphs and projects to no label, identical to an omitted tag. Three "
+                    "gitGraph cherry-pick originals (two TB/LR orientations and a BT) move to "
+                    "predicted-draw, guarded by MermaidGitGraphEmptyTag native gtests. The "
+                    "other six blockers and all frozen gates remain unchanged. Approved "
+                    "59/10 partition.",
         },
         "counts": {
             "total": total,

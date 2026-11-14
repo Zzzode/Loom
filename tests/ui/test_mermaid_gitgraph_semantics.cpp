@@ -2154,4 +2154,87 @@ TEST(MermaidGitGraphEnvelope, AsciiProfileKeepsRawSemantics) {
     EXPECT_FALSE(element);
 }
 
+// D235: an explicitly empty quoted tag (`tag: ""`) is valid Mermaid and
+// decodes to no label — an empty string carries no glyphs, so it must not
+// reject the whole source nor emit an empty bracket. It is parsed distinctly
+// from an omitted tag but projects to the same frame.
+namespace {
+std::string gitgraph_slurp(const fs::path& path) {
+    std::ifstream input(path, std::ios::binary);
+    return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
+}
+
+// A valid sequence whose final cherry-pick field can be varied.
+constexpr std::string_view kCherryPickPreamble =
+    "gitGraph\n"
+    "  commit id:\"ZERO\"\n"
+    "  branch develop\n"
+    "  commit id:\"A\"\n"
+    "  checkout main\n"
+    "  commit id:\"ONE\"\n"
+    "  checkout develop\n";
+
+constexpr std::array<std::string_view, 3> kEmptyTagFixtures = {
+    "fixtures/mermaid_official/cases/git/nightly-check/"
+    "11-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag.mmd",
+    "fixtures/mermaid_official/cases/git/nightly-check/"
+    "27-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch.mmd",
+    "fixtures/mermaid_official/cases/git/nightly-check/"
+    "62-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch-bottom-to-top."
+    "mmd",
+};
+}  // namespace
+
+TEST(MermaidGitGraphEmptyTag, EmptyCherryPickTagDrawsAndProjectsNoLabel) {
+    const std::string source =
+        std::string{kCherryPickPreamble} + "  cherry-pick id:\"A\" tag: \"\"\n";
+    const auto text = render_text(source);
+    ASSERT_TRUE(native_drawn(text)) << text;
+    // The cherry-pick commit is present, but no empty bracket label is emitted.
+    EXPECT_NE(text.find("A-cherry"), std::string::npos);
+    EXPECT_EQ(text.find("[]"), std::string::npos);
+}
+
+TEST(MermaidGitGraphEmptyTag, EmptyTagAndOmittedTagProjectIdentically) {
+    const std::string empty =
+        std::string{kCherryPickPreamble} + "  cherry-pick id:\"A\" tag: \"\"\n";
+    const std::string omitted =
+        std::string{kCherryPickPreamble} + "  cherry-pick id:\"A\"\n";
+    const auto empty_text = render_text(empty);
+    const auto omitted_text = render_text(omitted);
+    ASSERT_TRUE(native_drawn(empty_text)) << empty_text;
+    ASSERT_TRUE(native_drawn(omitted_text)) << omitted_text;
+    EXPECT_EQ(empty_text, omitted_text);
+}
+
+TEST(MermaidGitGraphEmptyTag, EmptyTagIsAcceptedOnCommitAndMergeToo) {
+    const std::string commit_source =
+        "gitGraph\n  commit id:\"C1\" tag: \"\"\n  commit id:\"C2\"\n";
+    EXPECT_TRUE(native_drawn(render_text(commit_source)));
+    const std::string merge_source =
+        "gitGraph\n  commit id:\"M1\"\n  branch feature\n  commit id:\"F1\"\n"
+        "  checkout main\n  merge feature id:\"MG\" tag: \"\"\n";
+    EXPECT_TRUE(native_drawn(render_text(merge_source)));
+}
+
+TEST(MermaidGitGraphEmptyTag, ThreeOfficialFixturesDrawThroughPublicSeam) {
+    for (const auto rel : kEmptyTagFixtures) {
+        const auto text = render_text(gitgraph_slurp(kRoot / rel));
+        EXPECT_TRUE(native_drawn(text)) << rel;
+    }
+}
+
+TEST(MermaidGitGraphEmptyTag, MalformedTagSyntaxStillFailsClosed) {
+    // Unclosed quote, missing value, backslash content, unknown field: each
+    // rejects the whole statement rather than drawing a half-parsed graph.
+    EXPECT_FALSE(native_drawn(render_text(
+        std::string{kCherryPickPreamble} + "  cherry-pick id:\"A\" tag: \"\n")));
+    EXPECT_FALSE(native_drawn(render_text(
+        std::string{kCherryPickPreamble} + "  cherry-pick id:\"A\" tag:\n")));
+    EXPECT_FALSE(native_drawn(render_text(
+        std::string{kCherryPickPreamble} + "  cherry-pick id:\"A\" tag: \"a\\b\"\n")));
+    EXPECT_FALSE(native_drawn(render_text(
+        std::string{kCherryPickPreamble} + "  cherry-pick id:\"A\" bogus: 1\n")));
+}
+
 }  // namespace

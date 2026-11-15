@@ -266,6 +266,14 @@ gtest_discover_tests(test_mermaid_er107_semantics
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+# D248 ER107 emitter stage 1: byte-exact canonical contract differential lock.
+add_executable(test_mermaid_er107_emitter_contract test_mermaid_er107_emitter_contract.cpp)
+target_link_libraries(test_mermaid_er107_emitter_contract
+    PRIVATE loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_er107_emitter_contract
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
 # RFC 0030 ER107: independent source-derived projection primitives, no admission.
 add_executable(test_mermaid_er107_projection test_mermaid_er107_projection.cpp)
 target_link_libraries(test_mermaid_er107_projection

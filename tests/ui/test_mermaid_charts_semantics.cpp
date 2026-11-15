@@ -10567,7 +10567,7 @@ struct Pie7Supplement {
     Pie7SupplementModel model;
 };
 
-constexpr std::array<Pie7Supplement, 15> kPie7Supplementary{{
+constexpr std::array<Pie7Supplement, 14> kPie7Supplementary{{
     {"bare_inline_title", "pie title  Sports   in Sweden\n\"A\": 2\n\"B\": 1\n",
      "5cc900e5a4ffc7a0aa4c79716a84d521eca5d50eecae55af19344692c31e3f5f",
      Pie7SupplementKind::Positive, Pie7SupplementModel::Inline},
@@ -10630,11 +10630,14 @@ constexpr std::array<Pie7Supplement, 15> kPie7Supplementary{{
      "1\n\"B\": 2\n",
      "6d8e73fd8ee6c24b428198c9914086992afa1ec7f8ae3047f9596fab98478ec4",
      Pie7SupplementKind::ValidUnsupported, Pie7SupplementModel::Inline},
-    {"folded_description_xy_is_valid_unsupported",
-     "---\ndescription: >-\n  Pie-only metadata must not unlock an XY body.\n---\nxychart\nx-axis "
-     "[A, B]\nbar [1, 2]\n",
-     "cc814937d0090d850ece6f75939debe8920afbc63d90a5e9746671d206487015",
-     Pie7SupplementKind::ValidUnsupported, Pie7SupplementModel::Inline},
+    // D236: the former `folded_description_xy_is_valid_unsupported` control
+    // (a folded description-only envelope over an xychart body) left this
+    // pie-specific fixture. The description envelope is no longer pie-only: it
+    // now admits an XY body symmetrically (validated, discarded, never
+    // rendered), so that source is a positive XY case covered by
+    // MermaidXyDescriptionEnvelope. config/title/init and malformed envelopes
+    // still fail closed there, and the six ValidUnsupported controls below
+    // keep guarding the pie reject paths.
 }};
 
 Pie pie7_supplementary_model(Pie7SupplementModel profile) {
@@ -10797,7 +10800,7 @@ TEST(MermaidPie7, SupplementarySourceControlsCloseEnvelopeAndSubcellBoundaries) 
     EXPECT_EQ(mandatory_fallbacks, 0);
     EXPECT_EQ(legacy_complete, 1);
     EXPECT_EQ(malformed, 3);
-    EXPECT_EQ(unsupported, 7);
+    EXPECT_EQ(unsupported, 6);
     EXPECT_EQ(resources, 0);
     EXPECT_EQ(errors, 0);
 }
@@ -12141,6 +12144,73 @@ TEST(MermaidChartsReverseDomain3, ResourceBoundariesRunIndependentlyOfSyntheticD
     } catch (const std::exception& error) {
         ADD_FAILURE() << "Reverse3 independent resource controls: " << error.what();
     }
+}
+
+// RFC 0031 D236: a description-only (folded `>-`, no config/title/init)
+// frontmatter envelope is documentation-only and must admit an xychart body
+// exactly as if the envelope were absent — the description is validated and
+// discarded, never rendered.
+namespace {
+constexpr std::string_view kXyBody =
+    "xychart-beta\nx-axis [\"Q1\", \"Q2\", \"Q3\"]\ny-axis 0 --> 10\nbar [3, 6, 9]\n";
+
+Grid xy_capture(const std::string& source, int width = 240) {
+    return capture(loom::ui::render_markdown(fenced(source, "mermaid")), width, 256);
+}
+bool xy_is_fallback(const std::string& source) {
+    auto ordinary = loom::ui::render_markdown(fenced(source, "text"));
+    return same_source_surface(xy_capture(source), capture(ordinary, 240, 256));
+}
+}  // namespace
+
+TEST(MermaidXyDescriptionEnvelope, DescriptionOnlyXyChartDrawsAndHidesDescription) {
+    const std::string source =
+        "---\ndescription: >-\n  Secret quarterly bars, never rendered\n---\n" +
+        std::string{kXyBody};
+    EXPECT_FALSE(xy_is_fallback(source)) << "description-only xychart must draw natively";
+    EXPECT_EQ(xy_capture(source).text().find("Secret quarterly bars"), std::string::npos);
+}
+
+TEST(MermaidXyDescriptionEnvelope, EnvelopeIsLosslessAgainstBareBody) {
+    const std::string enveloped =
+        "---\ndescription: >-\n  Documentation only\n---\n" + std::string{kXyBody};
+    // The folded description changes nothing about the projected chart geometry.
+    EXPECT_TRUE(xy_capture(enveloped) == xy_capture(std::string{kXyBody}));
+}
+
+TEST(MermaidXyDescriptionEnvelope, DescriptionOnlyPieIsUnchanged) {
+    const std::string source =
+        "---\ndescription: >-\n  A documented pie\n---\npie\n\"A\" : 1\n\"B\" : 2\n";
+    EXPECT_FALSE(xy_is_fallback(source)) << "pie description envelope must keep drawing";
+}
+
+TEST(MermaidXyDescriptionEnvelope, ConfigTitleAndInitStillFailClosed) {
+    // A config key (no terminal contract) keeps the whole source.
+    const std::string with_config =
+        "---\ndescription: >-\n  d\nconfig:\n  xyChart:\n    width: 400\n---\n" +
+        std::string{kXyBody};
+    EXPECT_TRUE(xy_is_fallback(with_config));
+    // A title alongside the description is rejected (no title projection).
+    const std::string with_title =
+        "---\ndescription: >-\n  d\ntitle: quarterly\n---\n" + std::string{kXyBody};
+    EXPECT_TRUE(xy_is_fallback(with_title));
+    // A body init directive is still a hard gate.
+    const std::string with_init =
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {}}%%\n" +
+        std::string{kXyBody};
+    EXPECT_TRUE(xy_is_fallback(with_init));
+}
+
+TEST(MermaidXyDescriptionEnvelope, MalformedFoldedDescriptionFailsClosed) {
+    // Payload must be two-space indented, no tab, and use the folded `>-` header.
+    const std::string tab_payload =
+        "---\ndescription: >-\n\tbad tab indent\n---\n" + std::string{kXyBody};
+    EXPECT_TRUE(xy_is_fallback(tab_payload));
+    const std::string flat_header =
+        "---\ndescription: not folded\n---\n" + std::string{kXyBody};
+    EXPECT_TRUE(xy_is_fallback(flat_header));
+    const std::string empty_payload = "---\ndescription: >-\n---\n" + std::string{kXyBody};
+    EXPECT_TRUE(xy_is_fallback(empty_payload));
 }
 
 }  // namespace

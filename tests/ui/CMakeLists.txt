@@ -312,6 +312,13 @@ gtest_discover_tests(test_mermaid_e2b_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+add_executable(test_mermaid_e2c_xychart_cohort test_mermaid_e2c_xychart_cohort.cpp)
+target_link_libraries(test_mermaid_e2c_xychart_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_e2c_xychart_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
 add_executable(test_mermaid_fs1_cohort test_mermaid_fs1_cohort.cpp)
 target_link_libraries(test_mermaid_fs1_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)

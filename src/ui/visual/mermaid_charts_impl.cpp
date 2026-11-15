@@ -510,6 +510,28 @@ bool pie_config_frontmatter(const Envelope& envelope) {
     return config_seen && pie_seen && position_seen;
 }
 
+// RFC 0031 D236: a description-only frontmatter envelope carries no
+// chart-specific config, so it is family-agnostic; the body's first real
+// statement decides whether the source is a pie or an xychart. Mirrors the
+// body line splitter below (blank lines and `%%` comments are skipped).
+enum class ChartBodyFamily { None, Pie, Xy };
+ChartBodyFamily chart_body_family(std::string_view body) {
+    for (auto rest = body; !rest.empty();) {
+        const auto newline = rest.find('\n');
+        auto raw = rest.substr(0, newline == std::string_view::npos ? rest.size() : newline);
+        if (raw.ends_with('\r')) raw.remove_suffix(1);
+        const auto line = trim_chart(raw);
+        if (!line.empty() && !line.starts_with("%%")) {
+            if (line.starts_with("pie")) return ChartBodyFamily::Pie;
+            if (line.starts_with("xychart")) return ChartBodyFamily::Xy;
+            return ChartBodyFamily::None;
+        }
+        if (newline == std::string_view::npos) break;
+        rest = rest.substr(newline + 1);
+    }
+    return ChartBodyFamily::None;
+}
+
 std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view source,
                                                                 Chart& chart, Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
@@ -521,7 +543,8 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
         return {};
     const auto envelope = detail::parse_envelope(source, work);
     if (!envelope) return {};
-    enum class Profile { Plain, PieDescription, PieConfig, Xy } profile = Profile::Plain;
+    enum class Profile { Plain, PieDescription, PieConfig, Xy, XyDescription } profile =
+        Profile::Plain;
     if (envelope->has_frontmatter) {
         if (!envelope->init.empty()) return {};
         const bool pie_config =
@@ -530,7 +553,15 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
             });
         if (envelope->description) {
             if (pie_config || !pie_description_frontmatter(*envelope)) return {};
-            profile = Profile::PieDescription;
+            // D236: a description-only envelope documents but does not style the
+            // chart; admit it for both families, choosing the profile from the
+            // body's first statement so a config/title/init-free xychart is no
+            // longer rejected simply for carrying a folded description.
+            switch (chart_body_family(envelope->raw_body)) {
+                case ChartBodyFamily::Pie: profile = Profile::PieDescription; break;
+                case ChartBodyFamily::Xy: profile = Profile::XyDescription; break;
+                case ChartBodyFamily::None: return {};
+            }
         } else if (pie_config) {
             if (!pie_config_frontmatter(*envelope)) return {};
             profile = Profile::PieConfig;
@@ -568,7 +599,7 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
     if (lines.empty()) return {};
     if (profile == Profile::PieDescription || profile == Profile::PieConfig) {
         if (!lines.front().starts_with("pie")) return {};
-    } else if (profile == Profile::Xy) {
+    } else if (profile == Profile::Xy || profile == Profile::XyDescription) {
         if (!lines.front().starts_with("xychart")) return {};
     }
     return lines;

@@ -1,0 +1,443 @@
+{
+  "schema": "loom_mermaid_e2c_xychart_cohort/v1",
+  "rfc": 31,
+  "phase": "E2c",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "xychart frontmatter original with exactly one folded (>-) description key, no config/title/init, and an xychart body",
+    "roots": [
+      "xychart"
+    ],
+    "blocker_detection": "one SHA-bound reviewed body-capability set (four inline per-point quoted-label cases and one over-limit overlaid multi-series case); no generator-time rendering; corpus or source drift aborts.",
+    "width_policy": "E2c pre-registers the 240-column admission; narrow_40 is uniformly 'source'."
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial D236 review (fresh general-purpose agent; own source-derived selector and an independent gtest-predicate-equivalent render probe reproduced the 16-row set and the 11/5 partition with zero mismatches, plus a stash A/B proving no new over-admission); no prior E2c partition",
+    "date": "2026-11-15",
+    "verdict": "approved",
+    "note": "D236 extends the folded-description envelope from pie-only to family-agnostic so eleven description-only xychart originals draw; five SHA-bound rows stay whole-source on inline per-point label / over-limit series capability limits. Approved 11/5 partition."
+  },
+  "counts": {
+    "total": 16,
+    "predicted_draw": 11,
+    "predicted_blocked": 5
+  },
+  "blocker_vocabulary": [
+    "xychart-body-capability-debt"
+  ],
+  "rows": [
+    {
+      "path": "xychart/nightly-check/correct-distances-between-data-points.mmd",
+      "family": "xychart",
+      "sha256": "6ee5a780832077b48e70aae6ae9df9f44d01d3239e6179cacdef6487cd1ba182",
+      "manifest_sha256": "6ee5a780832077b48e70aae6ae9df9f44d01d3239e6179cacdef6487cd1ba182",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2c folded-description envelope admission; body completed by the renderer"
+    },
+    {
+      "path": "xychart/nightly-check/legends-for-named-plots.mmd",
+      "family": "xychart",
+      "sha256": "ab906e06d300e3410cde0b4df797eb38114a8b7e3bcf42b528f41b4b6b7ace73",
+      "manifest_sha256": "ab906e06d300e3410cde0b4df797eb38114a8b7e3bcf42b528f41b4b6b7ace73",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2c folded-description envelope admission; body completed by the renderer"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-a-chart-without-title.mmd",
+      "family": "xychart",
+      "sha256": "8faf17e7944d66c717357fb72947ab3e10b203eafc04fc2695ebefbe7ff30170",
+      "manifest_sha256": "8faf17e7944d66c717357fb72947ab3e10b203eafc04fc2695ebefbe7ff30170",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2c folded-description envelope admission; body completed by the renderer"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-a-horizontal-line-chart-with-point-labels.mmd",
+      "family": "xychart",
+      "sha256": "c39a0b63196992134d062cd6f35db724718d88a6f764a8792326c5ee77a28728",
+      "manifest_sha256": "c39a0b63196992134d062cd6f35db724718d88a6f764a8792326c5ee77a28728",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "xychart-body-capability-debt",
+        "site": "src/ui/visual/mermaid_charts_impl.cpp (bounded xychart renderer)",
+        "evidence": "c39a0b63196992134d062cd6f35db724718d88a6f764a8792326c5ee77a28728",
+        "detail": "inline per-point quoted labels in a series plus a body title; the terminal renderer has no per-point label projection."
+      },
+      "ledger_note": "SHA-bound reviewed capability set; envelope accepted but body not completable"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-a-line-chart-with-mixed-labels-some-points-labeled-some-not.mmd",
+      "family": "xychart",
+      "sha256": "5c4107714fc02154ef21650701bfb5a8d3b2b9fbd1076dfddbcaa797e511f6b1",
+      "manifest_sha256": "5c4107714fc02154ef21650701bfb5a8d3b2b9fbd1076dfddbcaa797e511f6b1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "xychart-body-capability-debt",
+        "site": "src/ui/visual/mermaid_charts_impl.cpp (bounded xychart renderer)",
+        "evidence": "5c4107714fc02154ef21650701bfb5a8d3b2b9fbd1076dfddbcaa797e511f6b1",
+        "detail": "sparse inline per-point quoted labels; the terminal renderer has no per-point label projection."
+      },
+      "ledger_note": "SHA-bound reviewed capability set; envelope accepted but body not completable"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-a-line-chart-with-point-labels.mmd",
+      "family": "xychart",
+      "sha256": "ae171482c4bec484f2ce09b90c9e701352726693880b45fce324292813dea0ef",
+      "manifest_sha256": "ae171482c4bec484f2ce09b90c9e701352726693880b45fce324292813dea0ef",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "xychart-body-capability-debt",
+        "site": "src/ui/visual/mermaid_charts_impl.cpp (bounded xychart renderer)",
+        "evidence": "ae171482c4bec484f2ce09b90c9e701352726693880b45fce324292813dea0ef",
+        "detail": "inline per-point quoted labels (line [v \"label\"]) and a body title; the terminal renderer has no per-point label projection."
+      },
+      "ledger_note": "SHA-bound reviewed capability set; envelope accepted but body not completable"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-multiple-lines-where-only-one-has-labels.mmd",
+      "family": "xychart",
+      "sha256": "8a9d16b33715e0c93f3d4108902564abaf303a78ff3206c268212b0cd7c43aed",
+      "manifest_sha256": "8a9d16b33715e0c93f3d4108902564abaf303a78ff3206c268212b0cd7c43aed",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "xychart-body-capability-debt",
+        "site": "src/ui/visual/mermaid_charts_impl.cpp (bounded xychart renderer)",
+        "evidence": "8a9d16b33715e0c93f3d4108902564abaf303a78ff3206c268212b0cd7c43aed",
+        "detail": "inline point labels on a multi-series plot; the terminal renderer has no per-point label projection."
+      },
+      "ledger_note": "SHA-bound reviewed capability set; envelope accepted but body not completable"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-the-simplest-possible-xy-beta-chart.mmd",
+      "family": "xychart",
+      "sha256": "aeca40923d2505de4386bf154c10fd4310d51d89f2082c52105f2eea1d0e963b",
+      "manifest_sha256": "aeca40923d2505de4386bf154c10fd4310d51d89f2082c52105f2eea1d0e963b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2c folded-description envelope admission; body completed by the renderer"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-the-simplest-possible-xy-chart.mmd",
+      "family": "xychart",
+      "sha256": "1313fe93719789eadfe14e84bed5659f065226e1b19daf3e36d812aa1f8c731a",
+      "manifest_sha256": "1313fe93719789eadfe14e84bed5659f065226e1b19daf3e36d812aa1f8c731a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2c folded-description envelope admission; body completed by the renderer"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-vertical-bar-chart-without-labels-by-default.mmd",
+      "family": "xychart",
+      "sha256": "f03a59e704b2d671d7d566b656b5a5ba119ffd41e607ad3ff744f59d044b0ae9",
+      "manifest_sha256": "f03a59e704b2d671d7d566b656b5a5ba119ffd41e607ad3ff744f59d044b0ae9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2c folded-description envelope admission; body completed by the renderer"
+    },
+    {
+      "path": "xychart/nightly-check/x-axis-title-not-required.mmd",
+      "family": "xychart",
+      "sha256": "39c8bff45913e8899c836c17ab79eb8ee6865745bab89e84f311428da0f5c0c4",
+      "manifest_sha256": "39c8bff45913e8899c836c17ab79eb8ee6865745bab89e84f311428da0f5c0c4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2c folded-description envelope admission; body completed by the renderer"
+    },
+    {
+      "path": "xychart/nightly-check/y-axis-title-not-required.mmd",
+      "family": "xychart",
+      "sha256": "26b7ad7ad49ce133513bb8a85cfc81c651fd06063d045da76d297a85d5f3cb5c",
+      "manifest_sha256": "26b7ad7ad49ce133513bb8a85cfc81c651fd06063d045da76d297a85d5f3cb5c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2c folded-description envelope admission; body completed by the renderer"
+    },
+    {
+      "path": "xychart/pr-check/decimals-and-negative-numbers-are-supported.mmd",
+      "family": "xychart",
+      "sha256": "78da38faa35eefb21d4c51e2b68e739ca1f49896a54fdb1d5dcdd8725edb44b7",
+      "manifest_sha256": "78da38faa35eefb21d4c51e2b68e739ca1f49896a54fdb1d5dcdd8725edb44b7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2c folded-description envelope admission; body completed by the renderer"
+    },
+    {
+      "path": "xychart/pr-check/multiple-plots-can-be-rendered.mmd",
+      "family": "xychart",
+      "sha256": "e89f2d0b4ee840beff6569ed8463d528f6e8b51db82d3d0c54d01e157bf67ce2",
+      "manifest_sha256": "e89f2d0b4ee840beff6569ed8463d528f6e8b51db82d3d0c54d01e157bf67ce2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-blocked",
+      "expected_states": {
+        "wide_240": "source",
+        "narrow_40": "source",
+        "restored_240": "source"
+      },
+      "blocker": {
+        "kind": "xychart-body-capability-debt",
+        "site": "src/ui/visual/mermaid_charts_impl.cpp (bounded xychart renderer)",
+        "evidence": "e89f2d0b4ee840beff6569ed8463d528f6e8b51db82d3d0c54d01e157bf67ce2",
+        "detail": "six overlaid line/bar series do not complete under the bounded multi-series renderer profile at the cohort capture geometry."
+      },
+      "ledger_note": "SHA-bound reviewed capability set; envelope accepted but body not completable"
+    },
+    {
+      "path": "xychart/pr-check/should-render-a-chart-without-y-axis-with-different-range.mmd",
+      "family": "xychart",
+      "sha256": "c36ea36eca0051864859a2bb4adad9468dd8ddc8e2e0dea163c88a729713e717",
+      "manifest_sha256": "c36ea36eca0051864859a2bb4adad9468dd8ddc8e2e0dea163c88a729713e717",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2c folded-description envelope admission; body completed by the renderer"
+    },
+    {
+      "path": "xychart/pr-check/should-render-a-complete-chart.mmd",
+      "family": "xychart",
+      "sha256": "74d449feb252701048d46910d472f57f47d3567ed8a356939350a67ea855b75a",
+      "manifest_sha256": "74d449feb252701048d46910d472f57f47d3567ed8a356939350a67ea855b75a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "has_config": false,
+      "has_init": false,
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "blocker": null,
+      "ledger_note": "E2c folded-description envelope admission; body completed by the renderer"
+    }
+  ]
+}

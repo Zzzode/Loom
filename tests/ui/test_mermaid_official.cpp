@@ -5498,6 +5498,29 @@ std::optional<bool> e2b_cohort_row(std::string_view path) {
     return found->second;
 }
 
+const std::map<std::string, bool>& e2c_cohort_map() {
+    static const std::map<std::string, bool> map = [] {
+        std::map<std::string, bool> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/e2c-xychart-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "E2c cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "E2c cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            rows.emplace(row.get_string("path"), row.get_string("prediction") == "predicted-draw");
+        });
+        return rows;
+    }();
+    return map;
+}
+
+std::optional<bool> e2c_cohort_row(std::string_view path) {
+    const auto& rows = e2c_cohort_map();
+    const auto found = rows.find(std::string(path));
+    if (found == rows.end()) return std::nullopt;
+    return found->second;
+}
+
 // RFC 0031 journey-family renderer cohort: the ten theme-free journey
 // originals admitted by mermaid_journey_impl, with their per-width states.
 struct JourneyCohortEntry {
@@ -10231,6 +10254,29 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.source_sha256 = fixture.get_string("sha256");
                     row.expected = drawn ? "drawn" : "source";
                     row.reason = "RFC-0031 E2b reviewed cohort";
+                    const char* wide = drawn ? "drawn" : "source_fallback";
+                    row.status = {wide, "source_fallback", wide};
+                    row.expected_states = {drawn ? "drawn" : "source", "source",
+                                           drawn ? "drawn" : "source"};
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+            // RFC 0031 E2c: xychart folded-description originals are governed
+            // by their own reviewed ledger; the per-row pixel gate is
+            // test_mermaid_e2c_xychart_cohort.
+            if (class_path.is_str()) {
+                const auto cohort = e2c_cohort_row(class_path.as_str());
+                if (cohort) {
+                    const bool drawn = *cohort;
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = (*fs::path(row.path).begin()).string();
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = drawn ? "drawn" : "source";
+                    row.reason = "RFC-0031 E2c reviewed cohort";
                     const char* wide = drawn ? "drawn" : "source_fallback";
                     row.status = {wide, "source_fallback", wide};
                     row.expected_states = {drawn ? "drawn" : "source", "source",

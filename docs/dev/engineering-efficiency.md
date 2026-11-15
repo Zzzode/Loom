@@ -271,6 +271,25 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     compare efficiency across two runs whose denominators differ. A partial
     green is not a family-closure gate.
 
+28. **A census probe must use the EXACT predicate of the gate it feeds, and a
+    dual-preset byte-identity mismatch after a source change is usually a
+    stale link, not a real divergence.** In D236 two throwaway probes used a
+    looser "rendered cells differ from the text control" test than the cohort
+    gtest's `drawn_native`, which also requires the frame to contain no raw
+    diagram keyword; the loose probe over-claimed rows as drawn that the gate
+    classifies as source, producing two wrong ledger partitions (9/7 then
+    13/3) before the gate-identical predicate gave the honest 11/5. When a
+    ledger's draw/block split is renderer-decided, derive it with a probe that
+    mirrors the production gate condition line for line, and treat any
+    disagreement as a probe defect, never as a reason to weaken the gate.
+    Separately, the first D236 debug/release OfficialMatrix byte comparison
+    failed because the release binary had not been relinked against the changed
+    `test_mermaid_official.cpp` (its matrix kept the prior sha); a forced
+    rebuild + re-run made the sha match with no code change. After editing a
+    test that writes a byte-pinned report, rebuild that exact target in BOTH
+    presets and re-run before comparing shas; a one-preset-old report sha is a
+    build-currency problem, not a renderer non-determinism.
+
 ## Per-task efficiency retro (mandatory at every closure)
 
 Attach a short efficiency section to each closure report, answering:
@@ -976,3 +995,35 @@ Attach a short efficiency section to each closure report, answering:
   is a body-only file-local Cursor helper (no interface unit, so no BMI
   fan-out); no frozen contract moved (2145/2738, 48-gap roster, Class285
   260/25/0, flow 160/240, body 372/173/48, E2b state 51/10).
+
+- **2026-11-15, D236 xychart folded-description envelope (uncommitted at
+  retro; local commits follow).** Outcome +11 whole draws (1221 -> 1232 /
+  924 -> 913), extending an existing envelope rather than writing a new
+  renderer. (1) Gate wall-clock again dominated by the two OfficialMatrix
+  runs (debug ~739s, release ~92s) and the full 1367-test label suite
+  (491.66s); release carried the byte gate at ~1/8 debug cost per rule 2,
+  iteration used only targeted chart/e2c filters. (2) Two self-inflicted
+  rework loops, both now rule 28: a census probe with a looser predicate than
+  the gtest gate (cell difference only, missing the "no raw diagram keyword
+  in frame" condition) over-claimed draws and produced two wrong ledger
+  partitions (9/7, then 13/3) before a gate-identical probe yielded the
+  honest 11/5 — the fix was to mirror the gate predicate line for line, not
+  to argue with it. (3) A first dual-preset byte-identity failure was a
+  stale release link (the changed test_mermaid_official.cpp had not been
+  relinked, so release kept the prior matrix sha); forced rebuild + re-run
+  matched immediately, no code change — recorded so a future one-preset-old
+  sha is read as build currency, not non-determinism. (4) The independent
+  review earned its cost by re-deriving the 16-row selection and 11/5
+  partition without reading the ledger row list and by a stash A/B proving
+  the only new admissions are description-only (two config-only drawers
+  pre-date D236); it returned APPROVED with one doc NIT (a stale "seven"/
+  "calibrated axis" narrative), fixed before the verdict flip. (5) No false
+  green/red or flake once discovery was complete: debug, release -O2 and
+  ASan+UBSan agreed, the dual-preset sha matched
+  (c906c74afddc02efa2bc311399ab6d337fb6dcf2318e6528e78d85067e09dc25), and
+  the only red tests while the ledger verdict was pending were the designed
+  review gates. (6) New numbered rule 28 added (gate-predicate-identical
+  census; stale-link byte mismatch). The production change is a body-only
+  file-local helper with no Work spend and no interface/BMI fan-out; no
+  frozen contract moved (2145/2738, 48-gap roster, Class285 260/25/0, flow
+  160/240, body 372/173/48, E2a 59/10, E2b 51/10 byte-identical).

@@ -50,6 +50,7 @@ are not whole-original errors).
 | After D223 state reachable-semantics batch one (7 state originals) | 2026-11-14 | local | 1214 | 931 | 0 |
 | After D228 state classDef/class/style group (4 representable state style originals) | 2026-11-14 | local | 1218 | 927 | 0 |
 | After D235 gitGraph empty quoted-tag group (3 representable git originals) | 2026-11-14 | local | 1221 | 924 | 0 |
+| After D236 xychart folded-description envelope group (11 representable xy originals) | 2026-11-15 | local | 1232 | 913 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -65,7 +66,7 @@ disposition (fix or documented infeasibility).
 | state-diagram-v2 | 70 | 33 | D223 batch one: +4 (HTML-entity fork/join, square choice, note tab break, edge `\n`/`#colon;`); D228: +4 representable classDef/class/style originals (palette-role fill/stroke/color, border shorthand to stroke, bold to pixels); the 1 italic fixture, 1 click, 1 description-tab and the inline `Node:::class` edge form stay gated, plus geometry/concurrency debt |
 | gantt | 13 | 39 | renderer added 2026-11-12; 11 themed rows stay source (no color contract), 2 malformed-date fixtures fail closed |
 | swimlanes | 46 | 0 | hard wall, no renderer; re-confirmed 2026-11-14 through the production render_markdown seam (0 drawn / 46 fallback): every fixture is swimlane-beta (LR/TD 23 each) and carries a `config.flowchart.htmlLabels` + `useMaxWidth` visual/layout contract (46/46), 18 add theme/look and 5 carry body classDef/class/style; native text rendering cannot honor the lane geometry without silently dropping those contracts, so the whole family stays gated; unblock needs a real lane-geometry renderer |
-| xychart | 46 | 2 | partial axes/art only |
+| xychart | 35 | 13 | D236: +11 folded-description envelope originals (description-only `>-` frontmatter now family-agnostic, not pie-only); 5 SHA-bound E2c rows stay source (4 inline per-point quoted labels, 1 over-limit multi-series), remaining are config/theme/title/init gates |
 | agentflow | 11 | 27 | renderer added 2026-11-14; full agentflow-beta grammar (flow/global/connector containers, @{ } metadata, four edge vocabularies, labeled branches) validated and projected as a bounded native outline, not a flowchart approximation; 11 config theme/look rows stay source (no color/layout contract); live census 27/11/0 from 38; 19 of 27 draw at 40 columns |
 | c4 | 9 | 23 | renderer added 2026-11-12; 8 Update*Style/UpdateLayoutConfig + 1 frontmatter config rows stay source (no color/layout contract) |
 | usecase | 18 | 14 | renderer added 2026-11-13; 12 frontmatter theme/look/config + 6 body classDef/:::/style/init rows stay source (no placement/color contract) |
@@ -96,7 +97,7 @@ disposition (fix or documented infeasibility).
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **924** | **1221** | |
+| **Total** | **913** | **1232** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 
@@ -1480,3 +1481,45 @@ when the body would draw.
   reports. Serial gates `-j1` release RC=0: EveryWholeSourceIsObserved,
   CapabilityReport.Class285, Block58 9/9, Er107 4/4. Evidence under
   `/tmp/d235_probe/`.
+
+## D236 xychart folded-description envelope closure (2026-11-15)
+
+  The folded-description frontmatter envelope (`---` / `description: >-` /
+  `---`, exactly one documentation-only key, no config/title/init) was
+  previously pie-only. D236 makes it family-agnostic: a file-local
+  `chart_body_family` picks the profile from the body's first real statement,
+  adding an `XyDescription` profile so an xychart body the bounded renderer
+  already completes now draws with the same envelope the pie family uses. The
+  description is validated and discarded, never rendered; an enveloped frame
+  is byte-identical to the bare body, and `chart.configured` only affects
+  empty-series/reversed-Y special cases, never a populated chart's geometry.
+  Config/title/init and malformed folded descriptions still fail closed.
+
+  A new renderer-free E2c ledger (`tools/mermaid/e2c-xychart-cohort.json`)
+  pre-registers the 16 description-only xychart originals with hard drift
+  guards: 11 predicted-draw and 5 predicted-blocked. The five blocked rows are
+  a SHA-bound reviewed capability set (four inline per-point quoted labels the
+  terminal model cannot project, one over-limit overlaid multi-series source);
+  it is SHA-bound rather than lexical because a horizontal xychart with the
+  same point-label spelling does complete, so renderer completeness is not
+  textually decidable. The partition was established with a probe using the
+  exact gtest predicate (CellCapture char+background difference with no raw
+  `xychart` token left in the frame); an earlier looser cell-only probe
+  over-claimed rows and was discarded (efficiency rule 26 reinforced). An
+  independent adversarial agent re-derived the 16-row set and the 11/5
+  partition with zero mismatches and proved via stash A/B that D236 newly
+  admits only description-only rows (the two config-only xychart drawers
+  pre-date D236 via the existing xy_visual_envelope path).
+
+  Whole originals 1221 -> 1232 drawn / 924 -> 913 fallback / 0 error; the
+  xychart family 2 -> 13 drawn (46 -> 35 fallback); flow 160/240, body
+  372/173/48, Class285 260/25/0, the 48-gap roster and the 2738 observation
+  total are unmoved, and the E2a 59/10 and E2b 51/10 ledgers are byte-
+  identical; integrity_errors empty. debug/release OfficialMatrix 63/63 each,
+  JSON byte-identical (sha256
+  c906c74afddc02efa2bc311399ab6d337fb6dcf2318e6528e78d85067e09dc25). Full
+  mermaid label suite 1367/1367 green under complete gtest discovery.
+  ASan+UBSan contact (e2c 5/5 plus charts 128/128) zero sanitizer reports.
+  Serial gates `-j1` release RC=0: EveryWholeSourceIsObserved,
+  CapabilityReport.Class285, Block58 9/9, Er107 4/4. Evidence under
+  `/tmp/d236_probe/`.

@@ -7,6 +7,7 @@ module loom.ui.visual.mermaid;
 
 import std;
 import :detail;
+import loom.serdes.json;
 
 namespace loom::ui::mermaid::detail {
 // UML and state diagrams share entity identity and orthogonal relationships;
@@ -3052,6 +3053,154 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
 }
 
 }  // namespace
+
+namespace {
+// D248 ER107 proposal emitter: map the production cardinality marker to the
+// closed ER whole-scene `card:*` vocabulary. ER relationships only ever carry
+// the four cardinality markers; anything else is a non-ER decoration and must
+// not be silently projected.
+const char* er_whole_scene_card(Marker marker) {
+    switch (marker) {
+        case Marker::One:
+            return "card:one";
+        case Marker::ZeroOne:
+            return "card:zero-one";
+        case Marker::ZeroMany:
+            return "card:zero-many";
+        case Marker::OneMany:
+            return "card:one-many";
+        default:
+            return nullptr;
+    }
+}
+}  // namespace
+
+// D248 test-only seam: parse an ER original through the production
+// parse->IR path and serialize its canonical whole_scene_model component. The
+// production renderer behavior is unchanged; this only exposes the typed model
+// the ER107 proposal emitter consumes. Returns nullopt for a non-ER source or
+// an unadmitted parse. Object keys are emitted in the alphabetical order the
+// ER107 canonical encoder expects; arrays keep source/declaration order.
+std::optional<std::string> er_whole_scene_json(std::string_view source, Work& work) {
+    namespace json = loom::utils::json;
+    auto diagram = parse_relations(source, work);
+    if (!diagram || diagram->family != RelationFamily::Er) return std::nullopt;
+
+    const auto owner_group_id = [&](int owner) -> std::string {
+        return owner < 0 ? std::string{} : diagram->entities[static_cast<std::size_t>(owner)].id;
+    };
+
+    json::JsonMutDoc doc;
+    auto root = doc.object();
+    root.set("direction", diagram->direction);
+
+    auto entities = root.make_arr();
+    auto groups = root.make_arr();
+    for (std::size_t index = 0; index < diagram->entities.size(); ++index) {
+        const auto& entity = diagram->entities[static_cast<std::size_t>(index)];
+        if (entity.shape == EntityShape::Group) {
+            auto group = groups.make_obj();
+            group.set("direction", "");  // in-group direction is non-terminal, never modeled
+            group.set("id", entity.id);
+            group.set("label", entity.label);
+            auto members = group.make_arr();
+            for (std::size_t member = 0; member < diagram->entities.size(); ++member) {
+                const auto& candidate = diagram->entities[member];
+                if (candidate.shape != EntityShape::Group && candidate.owner == static_cast<int>(index))
+                    members.append(members.make_str(candidate.id));
+            }
+            group.add("members", members);
+            group.set("parent", owner_group_id(entity.owner));
+            groups.append(group);
+            continue;
+        }
+
+        auto object = entities.make_obj();
+        auto headers = object.make_arr();
+        auto header_row = headers.make_arr();
+        header_row.append(header_row.make_str(entity.label));
+        headers.append(header_row);
+        object.add("headers", headers);
+        object.set("id", entity.id);
+        object.set("label", entity.label);
+        object.set("owner", owner_group_id(entity.owner));
+
+        auto rows = object.make_arr();
+        auto attributes = object.make_arr();
+        auto make_field = [&](const ErAttribute& attribute) {
+            auto field = attributes.make_obj();
+            field.set("comment", attribute.comment);
+            auto keys = field.make_arr();
+            for (const auto& key : attribute.keys) keys.append(keys.make_str(key));
+            field.add("keys", keys);
+            field.set("name", attribute.name);
+            field.set("type", attribute.type);
+            return field;
+        };
+        for (const auto& attribute : entity.er_attributes) {
+            // typed_er.attributes and row.source_fields are equal in content but
+            // are distinct JSON objects; build each as its own owned value.
+            attributes.append(make_field(attribute));
+
+            auto row = rows.make_obj();
+            auto alternatives = row.make_arr();
+            // The displayed alternative reconstructs the authored declaration:
+            // "type name [key...] [comment]", each token space-joined in order.
+            auto alternative = attribute.type + " " + attribute.name;
+            for (const auto& key : attribute.keys) alternative += " " + key;
+            if (!attribute.comment.empty()) alternative += " " + attribute.comment;
+            alternatives.append(alternatives.make_str(alternative));
+            row.add("alternatives", alternatives);
+            row.set("role", "attribute");
+            row.add("source_fields", make_field(attribute));
+            rows.append(row);
+        }
+        object.add("rows", rows);
+        object.set("shape", "box");
+        if (entity.er_attributes.empty()) {
+            object.add("typed_er", object.make_null());
+        } else {
+            auto typed = object.make_obj();
+            auto typed_attributes = typed.make_arr();
+            for (const auto& attribute : entity.er_attributes)
+                typed_attributes.append(make_field(attribute));
+            typed.add("attributes", typed_attributes);
+            auto header = typed.make_arr();
+            header.append(header.make_str(entity.label));
+            typed.add("header", header);
+            object.add("typed_er", typed);
+        }
+        entities.append(object);
+    }
+    root.add("entities", entities);
+    root.set("family", "er");
+    root.add("groups", groups);
+    root.add("notes", root.make_arr());  // ER originals carry no modeled notes
+
+    auto relations = root.make_arr();
+    for (std::size_t order = 0; order < diagram->edges.size(); ++order) {
+        const auto& edge = diagram->edges[static_cast<std::size_t>(order)];
+        const char* const start = er_whole_scene_card(edge.start);
+        const char* const end = er_whole_scene_card(edge.end);
+        if (!start || !end || edge.from < 0 || edge.to < 0 ||
+            static_cast<std::size_t>(edge.from) >= diagram->entities.size() ||
+            static_cast<std::size_t>(edge.to) >= diagram->entities.size())
+            return std::nullopt;
+        auto relation = relations.make_obj();
+        relation.set("end", end);
+        relation.set("label", edge.label);
+        relation.set("order", static_cast<int64_t>(order));
+        relation.set("source", diagram->entities[static_cast<std::size_t>(edge.from)].id);
+        relation.set("start", start);
+        relation.set("stroke", edge.dotted ? "dotted" : "solid");
+        relation.set("target", diagram->entities[static_cast<std::size_t>(edge.to)].id);
+        relations.append(relation);
+    }
+    root.add("relations", relations);
+
+    doc.set_root(root);
+    return doc.to_string();
+}
 
 int RelationBox::right() const {
     return x + w - 1;

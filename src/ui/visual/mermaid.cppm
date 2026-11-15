@@ -351,4 +351,9 @@ bool block_layout_succeeds(std::string_view source, Work& work);
 // Exact public-factory path, including dispatch and payload validation.
 bool layout_succeeds(std::string_view source, bool use_ascii, Work& work);
 
+// D248 ER107 emitter seam: production parse->IR serialization of an ER
+// original into its canonical whole_scene_model JSON. Test-only; returns
+// nullopt for a non-ER or unadmitted source.
+std::optional<std::string> er_whole_scene_json_for_testing(std::string_view source, Work& work);
+
 }  // namespace loom::ui::mermaid::testing

@@ -56,4 +56,8 @@ bool layout_succeeds(std::string_view source, bool use_ascii, Work& work) {
     return detail::layout_mermaid_content(source, use_ascii, work).has_value();
 }
 
+std::optional<std::string> er_whole_scene_json_for_testing(std::string_view source, Work& work) {
+    return detail::er_whole_scene_json(source, work);
+}
+
 }  // namespace loom::ui::mermaid::testing

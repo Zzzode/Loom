@@ -776,4 +776,9 @@ bool build_state_direct_styles(
 std::optional<RequirementDiagram> parse_requirement(std::string_view source, Work& work);
 std::optional<RelationDiagram> project_requirement(const RequirementDiagram& parsed, Work& work);
 
+// D248 ER107 proposal emitter seam: production parse->IR serialization of an ER
+// original into its canonical whole_scene_model JSON component. Test-only; no
+// renderer behavior depends on it. Nullopt for a non-ER or unadmitted source.
+std::optional<std::string> er_whole_scene_json(std::string_view source, Work& work);
+
 }  // namespace loom::ui::mermaid::detail

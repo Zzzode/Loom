@@ -24,6 +24,7 @@
 import std;
 import loom.serdes.json;
 import loom.crypto.crypto;
+import loom.ui.visual.mermaid.testing;
 
 #include "mermaid_er107_authority.hpp"
 
@@ -160,4 +161,34 @@ TEST(MermaidEr107EmitterContract, TypedAttributeAndBindingShapeIsStable) {
     });
     EXPECT_GT(typed, 0u);
     EXPECT_EQ(binding_checked, 107u);
+}
+
+// Stage 2: the production-driven seam must regenerate every pinned
+// whole_scene_model byte-for-byte. This is the differential RED->GREEN backbone
+// for the RelationDiagram->canonical serializer: parse each of the 107 accepted
+// ER originals through the real production parse->IR entry, serialize, re-encode
+// with the same canonical encoder the authority uses, and require byte-equal SHA.
+TEST(MermaidEr107EmitterContract, ProductionSeamReproducesAll107WholeSceneModels) {
+    const auto projection = load_projection();
+    const auto cases = projection.root().get("cases");
+    ASSERT_EQ(cases.size(), er107::kPins.size());
+    const fs::path cases_dir = kFixtures / "mermaid_official/cases";
+    std::size_t matched = 0;
+    for (std::size_t i = 0; i < er107::kPins.size(); ++i) {
+        SCOPED_TRACE(er107::kPins[i].path);
+        const auto raw = read_file(cases_dir / std::string(er107::kPins[i].path));
+        loom::ui::mermaid::testing::Work work;
+        const auto emitted =
+            loom::ui::mermaid::testing::er_whole_scene_json_for_testing(raw, work);
+        ASSERT_TRUE(emitted.has_value());
+        auto parsed = json::parse(*emitted);
+        ASSERT_TRUE(parsed.has_value());
+        rel::Work canonical_work;
+        const auto canonical =
+            rel::class481_canonical(parsed->root(), canonical_work);
+        EXPECT_EQ(loom::utils::crypto::sha256(canonical),
+                  cases.at(i).get_string("whole_scene_model_sha256"));
+        ++matched;
+    }
+    EXPECT_EQ(matched, 107u);
 }

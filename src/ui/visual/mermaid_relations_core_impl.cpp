@@ -3202,6 +3202,98 @@ std::optional<std::string> er_whole_scene_json(std::string_view source, Work& wo
     return doc.to_string();
 }
 
+namespace {
+// D248 ER107 source-proposal structural witnesses. These seven kinds depend
+// only on frontmatter/body byte spans and physical line tiling — no semantic
+// token taxonomy — so they are emitted directly from the raw original. The
+// slice SHA is intentionally left to the test oracle (which owns hashing and
+// canonicalization); the seam returns spans, lexemes, line ranges and byte
+// counts. `ordinal` is the position within this structural list; the global
+// witness ordinal is assigned only at final 31-kind assembly.
+struct StructuralSpan {
+    std::string kind;
+    std::size_t start, end;
+};
+
+// 1-based line containing byte index; mirrors the authority's
+// 1 + count('\n' before the byte) rule.
+int er_line_of(std::string_view source, std::size_t byte_index) {
+    int line = 1;
+    const std::size_t upto = std::min(byte_index, source.size());
+    for (std::size_t i = 0; i < upto; ++i)
+        if (source[i] == '\n') ++line;
+    return line;
+}
+
+// Mirror the ER cursor's private word() rule so the seam's header admittance
+// matches production take("erDiagram", /*boundary=*/true): a word byte
+// immediately after the header makes it a different token and must fail closed.
+bool er_word_byte(unsigned char c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+           (c >= '0' && c <= '9') || c == '_' || c >= 0x80;
+}
+}  // namespace
+
+std::optional<std::string> er_structural_witnesses_json(std::string_view source, Work& work) {
+    namespace json = loom::utils::json;
+    if (!work.spend(source.size() * 4u + 4096u)) return std::nullopt;
+    // Every ER107 original is a frontmatter document: "---\n ... \n---\n<body>".
+    if (source.size() < 8 || !source.starts_with("---\n")) return std::nullopt;
+    const auto close_marker = source.find("\n---\n", 3);
+    if (close_marker == std::string_view::npos) return std::nullopt;
+    const std::size_t close_start = close_marker + 1;
+    const std::size_t close_end = close_start + 3;  // the "---" token
+    const std::size_t body_start = close_end + 1;   // byte after the closing newline
+    if (body_start >= source.size() || source.substr(body_start, 9) != "erDiagram")
+        return std::nullopt;
+    // Word boundary exactly like take("erDiagram", boundary=true): a word
+    // byte right after the header is a different token, not an ER diagram.
+    const std::size_t after_header = body_start + 9;
+    if (after_header < source.size() &&
+        er_word_byte(static_cast<unsigned char>(source[after_header])))
+        return std::nullopt;
+    const std::size_t length = source.size();
+
+    std::vector<StructuralSpan> spans;
+    spans.reserve(6u + length);
+    spans.push_back({"complete_original_source", 0, length});
+    spans.push_back({"complete_frontmatter", 0, body_start});
+    spans.push_back({"complete_body_source", body_start, length});
+    spans.push_back({"frontmatter_open", 0, 3});
+    spans.push_back({"frontmatter_close", close_start, close_end});
+    // Physical lines tile the source: each segment ends on and keeps its '\n'
+    // (all ER107 originals are newline-terminated), cumulative byte offsets.
+    std::size_t line_start = 0;
+    for (std::size_t i = 0; i < length; ++i) {
+        if (source[i] == '\n') {
+            spans.push_back({"physical_line", line_start, i + 1});
+            line_start = i + 1;
+        }
+    }
+    if (line_start != length)  // a trailing line without a newline
+        spans.push_back({"physical_line", line_start, length});
+    spans.push_back({"diagram_header", body_start, body_start + 9});
+
+    json::JsonMutDoc doc;
+    auto array = doc.array();
+    for (std::size_t ordinal = 0; ordinal < spans.size(); ++ordinal) {
+        const auto& span = spans[ordinal];
+        const std::string lexeme(source.substr(span.start, span.end - span.start));
+        auto witness = array.make_obj();
+        witness.set("kind", span.kind);
+        witness.set("ordinal", static_cast<int64_t>(ordinal));
+        witness.set("source_byte_end", static_cast<int64_t>(span.end));
+        witness.set("source_byte_start", static_cast<int64_t>(span.start));
+        witness.set("source_lexeme", lexeme);
+        witness.set("source_line_end", er_line_of(source, span.end - 1));
+        witness.set("source_line_start", er_line_of(source, span.start));
+        witness.set("source_utf8_bytes", static_cast<int64_t>(span.end - span.start));
+        array.append(witness);
+    }
+    doc.set_root(array);
+    return doc.to_string();
+}
+
 int RelationBox::right() const {
     return x + w - 1;
 }

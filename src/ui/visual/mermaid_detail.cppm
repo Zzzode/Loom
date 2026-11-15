@@ -781,4 +781,9 @@ std::optional<RelationDiagram> project_requirement(const RequirementDiagram& par
 // renderer behavior depends on it. Nullopt for a non-ER or unadmitted source.
 std::optional<std::string> er_whole_scene_json(std::string_view source, Work& work);
 
+// D248 structural source witnesses (seven span/tiling kinds) for the ER107
+// source proposal, emitted from the raw original without semantic token
+// classification; slice SHAs are added by the test oracle. Test-only.
+std::optional<std::string> er_structural_witnesses_json(std::string_view source, Work& work);
+
 }  // namespace loom::ui::mermaid::detail

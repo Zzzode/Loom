@@ -60,4 +60,9 @@ std::optional<std::string> er_whole_scene_json_for_testing(std::string_view sour
     return detail::er_whole_scene_json(source, work);
 }
 
+std::optional<std::string> er_structural_witnesses_json_for_testing(std::string_view source,
+                                                                    Work& work) {
+    return detail::er_structural_witnesses_json(source, work);
+}
+
 }  // namespace loom::ui::mermaid::testing

@@ -356,4 +356,9 @@ bool layout_succeeds(std::string_view source, bool use_ascii, Work& work);
 // nullopt for a non-ER or unadmitted source.
 std::optional<std::string> er_whole_scene_json_for_testing(std::string_view source, Work& work);
 
+// D248 structural source witnesses (span/tiling kinds) for the ER107 source
+// proposal. Test-only; nullopt for a malformed/non-frontmatter source.
+std::optional<std::string> er_structural_witnesses_json_for_testing(std::string_view source,
+                                                                    Work& work);
+
 }  // namespace loom::ui::mermaid::testing

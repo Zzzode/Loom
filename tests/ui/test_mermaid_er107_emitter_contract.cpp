@@ -192,3 +192,135 @@ TEST(MermaidEr107EmitterContract, ProductionSeamReproducesAll107WholeSceneModels
     }
     EXPECT_EQ(matched, 107u);
 }
+
+// Stage 3: the structural-witness seam regenerates the seven span/tiling kinds
+// for all 107 ER originals. Global witness ordinal is intentionally out of
+// scope (it depends on the 24 semantic token kinds assembled later), so the
+// differential matches by (kind, byte start, byte end) and verifies every other
+// field, including sha256(lexeme) == the pinned slice hash. Offsets are UTF-8
+// BYTE offsets (string_view/size semantics), not Unicode code-point counts.
+namespace {
+const std::set<std::string> kStructuralKinds{
+    "complete_original_source", "complete_frontmatter", "complete_body_source",
+    "frontmatter_open", "frontmatter_close", "diagram_header", "physical_line"};
+
+JsonDoc load_source_proposal() {
+    auto doc = json::parse(read_file(kFixtures / std::string(er107::kFactsPath)));
+    EXPECT_TRUE(doc.has_value());
+    return std::move(*doc);
+}
+
+std::map<std::tuple<std::string, int64_t, int64_t>, JsonVal>
+structural_index(const JsonVal& witnesses) {
+    std::map<std::tuple<std::string, int64_t, int64_t>, JsonVal> index;
+    witnesses.iter([&](const JsonVal w) {
+        if (!kStructuralKinds.contains(w.get_string("kind"))) return;
+        index.emplace(std::tuple{w.get_string("kind"), w.get_int("source_byte_start"),
+                                 w.get_int("source_byte_end")},
+                      w);
+    });
+    return index;
+}
+}  // namespace
+
+TEST(MermaidEr107EmitterContract, StructuralWitnessSeamReproducesAll107ByteExact) {
+    const auto proposal = load_source_proposal();
+    const fs::path cases_dir = kFixtures / "mermaid_official/cases";
+    std::size_t full_match = 0;
+    proposal.root().get("cases").iter([&](const JsonVal source_case) {
+        const auto path = source_case.get_string("path");
+        const auto raw = read_file(cases_dir / std::string(path));
+        loom::ui::mermaid::testing::Work work;
+        const auto emitted_json =
+            loom::ui::mermaid::testing::er_structural_witnesses_json_for_testing(raw, work);
+        ASSERT_TRUE(emitted_json.has_value());
+        const auto emitted = json::parse(*emitted_json);
+        ASSERT_TRUE(emitted.has_value());
+        const auto pinned = structural_index(source_case.get("source_witnesses"));
+
+        std::size_t matched = 0;
+        emitted->root().iter([&](const JsonVal w) {
+            const auto key = std::tuple{w.get_string("kind"), w.get_int("source_byte_start"),
+                                        w.get_int("source_byte_end")};
+            const auto found = pinned.find(key);
+            ASSERT_NE(found, pinned.end()) << "unmatched structural witness " << std::get<0>(key)
+                                           << " in " << path;
+            const auto& p = found->second;
+            EXPECT_EQ(w.get_string("source_lexeme"), p.get_string("source_lexeme"));
+            EXPECT_EQ(w.get_int("source_line_start"), p.get_int("source_line_start"));
+            EXPECT_EQ(w.get_int("source_line_end"), p.get_int("source_line_end"));
+            EXPECT_EQ(w.get_int("source_utf8_bytes"), p.get_int("source_utf8_bytes"));
+            EXPECT_EQ(loom::utils::crypto::sha256(w.get_string("source_lexeme")),
+                      p.get_string("source_slice_sha256"));
+            ++matched;
+        });
+        // Every pinned structural witness of this case must be reproduced.
+        EXPECT_EQ(matched, pinned.size()) << path;
+        ++full_match;
+    });
+    EXPECT_EQ(full_match, 107u);
+}
+
+// Regression guard for the byte-vs-code-point distinction: an ER original with
+// multibyte UTF-8 (U+2192 arrow) has witness byte_end beyond its code-point
+// count but bounded by the real UTF-8 byte length. The seam must emit byte
+// offsets (string_view/size), never character indices.
+TEST(MermaidEr107EmitterContract, StructuralOffsetsAreUtf8BytesNotCodePoints) {
+    const auto proposal = load_source_proposal();
+    const fs::path cases_dir = kFixtures / "mermaid_official/cases";
+    constexpr std::string_view kMultibyteCase =
+        "er-diagram/visual-check/a-cyclical-er-diagram-handdrawn-look.mmd";
+    // Copy the PATH out while the by-value JsonVal handle is valid; holding the
+    // handle's address across the lambda would dangle and resolve another case.
+    std::string multibyte_path;
+    proposal.root().get("cases").iter([&](const JsonVal c) {
+        if (c.get_string("path") == kMultibyteCase)
+            multibyte_path = std::string(c.get_string("path"));
+    });
+    ASSERT_FALSE(multibyte_path.empty());
+    const auto raw = read_file(cases_dir / multibyte_path);
+    // The fixture carries three U+2192 arrows, each the 3-byte UTF-8 sequence
+    // E2 86 92. Counting code points as bytes that are not UTF-8 continuation
+    // bytes (10xxxxxx) is sign-agnostic and yields 196 code points vs 202
+    // bytes — the exact byte-vs-code-point trap character-indexed offsets hit.
+    EXPECT_NE(raw.find("\xE2\x86\x92"), std::string::npos);
+    std::size_t code_points = 0;
+    for (unsigned char b : raw)
+        if ((b & 0xC0) != 0x80) ++code_points;
+    EXPECT_LT(code_points, raw.size());
+
+    loom::ui::mermaid::testing::Work work;
+    const auto emitted_json =
+        loom::ui::mermaid::testing::er_structural_witnesses_json_for_testing(raw, work);
+    ASSERT_TRUE(emitted_json.has_value());
+    const auto emitted = json::parse(*emitted_json);
+    ASSERT_TRUE(emitted.has_value());
+    int64_t max_end = 0;
+    emitted->root().iter(
+        [&](const JsonVal w) { max_end = std::max(max_end, w.get_int("source_byte_end")); });
+    // The seam reaches the true UTF-8 byte length (202), never the 196
+    // code-point count: offsets are string_view/size byte offsets.
+    EXPECT_EQ(max_end, static_cast<int64_t>(raw.size()));
+}
+
+// Fail-closed coverage for the seam's own input validation. It is only fed
+// accepted ER107 originals, but must reject malformed frontmatter and any
+// header production take("erDiagram", boundary=true) rejects, rather than emit
+// witnesses for a non-ER source.
+TEST(MermaidEr107EmitterContract, StructuralSeamFailClosedOnMalformedAndNonErInput) {
+    loom::ui::mermaid::testing::Work work;
+    auto emit = [&](std::string_view src) {
+        return loom::ui::mermaid::testing::er_structural_witnesses_json_for_testing(src, work);
+    };
+    EXPECT_FALSE(emit("erDiagram\n").has_value());                     // no frontmatter
+    EXPECT_FALSE(emit("---\nfoo").has_value());                        // no closing fence
+    EXPECT_FALSE(emit("---\n---\nclassDiagram\n").has_value());        // wrong family
+    EXPECT_FALSE(emit("---\n---\nerDiagramX\n").has_value());          // ASCII word boundary
+    EXPECT_FALSE(emit("---\n---\nerDiagram\xC3\xA9\n").has_value());   // high byte is word()
+    // A normal header followed by a newline stays admitted and emits spans.
+    const auto ok = emit("---\n---\nerDiagram\n");
+    ASSERT_TRUE(ok.has_value());
+    const auto parsed = json::parse(*ok);
+    ASSERT_TRUE(parsed.has_value());
+    EXPECT_GT(parsed->root().size(), 0u);
+}

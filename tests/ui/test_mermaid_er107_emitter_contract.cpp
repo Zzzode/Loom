@@ -806,9 +806,13 @@ TEST(MermaidEr107EmitterContract, TerminalModelWrappingLawOnCraftedLongRoles) {
             "---\ndescription: wrap probe\n---\nerDiagram\nA ||--o{ B : \"" + role +
             "\"\n";
         loom::ui::mermaid::testing::Work work;
+        // The doc must outlive the caption view: JsonVal is a non-owning
+        // yyjson pointer, so keep the parsed JsonDoc inside the result; moving
+        // the doc transfers ownership without freeing its heap values.
         struct Out {
             bool seam_nullopt = false;
             bool parse_failed = false;
+            JsonDoc doc;
             JsonVal caption;
         } out;
         const auto probe_json =
@@ -817,12 +821,13 @@ TEST(MermaidEr107EmitterContract, TerminalModelWrappingLawOnCraftedLongRoles) {
             out.seam_nullopt = true;
             return out;
         }
-        const auto parsed = json::parse(*probe_json);
+        auto parsed = json::parse(*probe_json);
         if (!parsed) {
             out.parse_failed = true;
             return out;
         }
-        parsed->root().get("captions").iter([&](const JsonVal c) {
+        out.doc = std::move(*parsed);
+        out.doc.root().get("captions").iter([&](const JsonVal c) {
             if (c.get_string("handle") == "edge/0/role") out.caption = c;
         });
         return out;

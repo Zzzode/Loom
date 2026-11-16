@@ -80,3 +80,15 @@ from `/tmp/d237_probe/d237_backup/`; (4) run the full OfficialMatrix to
 confirm the six are admitted under the re-baselined authority with the
 deliberately-updated frozen sha. No new decision is required (D242 already
 authorized it); no production module beyond the ER-local parser is touched.
+
+> **Update 2026-11-17 (D293→D298) — this atomic re-baseline route is NO-GO.**
+> A real OfficialMatrix run with the parser admission applied showed the six
+> group-edge rows move `source_fallback → error` (error 0→6, gaps 48→54) with
+> **zero new drawn**, because whole-null ER originals require an ER107
+> owned-proof status that kPins structurally cannot grant them (their ER206
+> debt is `raw_entity_group_kind_collision`, not `active_config`). The blocker
+> is therefore an authority-path/geometry gap, not work sequencing. The
+> generator seams above remain valid and necessary; see
+> `docs/er107-group-edge-admission-nogo.md` for the full measured negative
+> result, exit criteria and the shelved-work location. Stage A
+> (`916b9dd9`, nested-group generator extension) is retained.

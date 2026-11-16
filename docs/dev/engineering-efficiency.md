@@ -1416,3 +1416,29 @@ Attach a short efficiency section to each closure report, answering:
   ASan suite "disappeared" mid-Class285 because the outer background-task
   harness ended, which was correctly treated as inconclusive and re-run
   isolated instead of being counted as a pass.
+- **2026-11-17, ER group-edge parser admission (D293→D298) — NO-GO, no
+  commit of production code.** A real OfficialMatrix run disproved the D237
+  "admit the grammar and six rows draw" hypothesis. Measured delta from
+  applying the two `parse_plain_er` hunks: drawn 1232→**1232 (zero gain)**,
+  source_fallback 913→907, **error 0→6**, mandatory_gaps 48→54, coverage
+  unchanged. Whole-null ER originals can only be `drawn` via the ER107
+  owned-proof branch (`test_mermaid_official.cpp:19134`); the six cannot join
+  kPins because their ER206 debt is `raw_entity_group_kind_collision`, not
+  `active_config`. Once they parse, they render differently from the text
+  control so the silent `source_fallback` downgrade no longer applies and the
+  default `error` status sticks (`er206_whole_null_unmet`, "never admission").
+  The independent cohort's char-surface gate (native grid != text grid) went
+  green on all 21 per-width states — a strictly weaker predicate than the
+  official whole-null proof+geometry policy, i.e. the precise false-green the
+  authority path exists to catch. **Rule (rework-avoidance): a renderer-free
+  or char-difference cohort gate never establishes OfficialMatrix admission
+  for a whole-null original; only an owned, geometry-ready proof does. Run the
+  real matrix once before building ledger/admission machinery on the
+  assumption that "parses ⇒ drawn".** Shelved via `git stash -u` plus a
+  GC-proof `/tmp/d295_shelved/` backup (patch, generator, ledger, pre/post
+  matrices); full negative result and exit criteria in
+  `docs/er107-group-edge-admission-nogo.md`. Stage A `916b9dd9` retained
+  (test-only group-tree/lexer capability, 107 byte-identical) as necessary but
+  not sufficient. Targeted gates stayed green throughout (emitter 21/21,
+  relations 269/269, source107 7/7); the only red was the matrix's own 48→54
+  count, which correctly refused the net-negative change.

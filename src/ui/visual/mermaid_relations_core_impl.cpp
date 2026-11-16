@@ -1376,7 +1376,9 @@ std::optional<RelationDiagram> parse_plain_er(std::string_view source, Work& wor
             const auto& existing = diagram.entities[n];
             if (!cursor.spend(id.size() + existing.id.size() + 2u * sizeof(int) + 8u)) return -1;
             if (existing.id == id)
-                return existing.shape == EntityShape::Group ? -1 : static_cast<int>(n);
+                // D293: an ER subgraph id is a valid relationship endpoint, so
+                // an existing Group is returned instead of rejecting it as -1.
+                return static_cast<int>(n);
         }
         if (diagram.entities.size() >= 64u ||
             !cursor.spend(id.size() *
@@ -1493,13 +1495,19 @@ std::optional<RelationDiagram> parse_plain_er(std::string_view source, Work& wor
             continue;
         }
         if (cursor.take("direction", true)) {
-            if (groups && groups->depth) return {};
+            // D293: a direction override nested inside an ER subgraph is
+            // consumed as a non-terminal directive rather than rejecting the
+            // whole source. Only the top-level direction sets diagram.direction
+            // — a semantic boundary, not a parsing convenience: the terminal ER
+            // layout owns its own fixed arrangement, so an in-group override
+            // carries no diagram-wide layout meaning and must not leak out.
+            const bool inner_group_direction = groups && groups->depth;
             const auto direction = cursor.name();
             if (!direction) return {};
             bool matched = false;
             for (const auto value : {"TB", "BT", "LR", "RL"})
                 if (er_ascii_equal(*direction, value)) {
-                    diagram.direction = value;
+                    if (!inner_group_direction) diagram.direction = value;
                     matched = true;
                     break;
                 }

@@ -29249,7 +29249,8 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
         item.set("complete_Model_sha256", literal.model_sha);
         const bool positive = literal.profile == "mandatory_complete_positive";
         bool captured = false, pub = false, source_bound = false, model_decoded = false,
-             good = false, strong_scene = false, closed_protocol = false;
+             good = false, strong_scene = false, closed_protocol = false,
+             geometry_classified = false;
         std::string_view phase = "five_public_captures_before_binding";
         auto fail = [&](std::string_view text) {
             if (errors.size() < 8u) errors.emplace_back(text.substr(0u, 128u));
@@ -29296,7 +29297,12 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
                     else
                         ++unsupported_observed;
                 } else {
+                    // D293: the two admitted-form literals now parse and reach
+                    // this strict ER206 geometry gate instead of closing as
+                    // unsupported. Their geometry shortfall is a counted,
+                    // report-only obligation (E6c), not an unexpected failure.
                     ++geometry;
+                    geometry_classified = true;
                     fail("ER subgraph closed source drew a partial scene or failed ordinary "
                          "recovery");
                 }
@@ -29500,7 +29506,11 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
         item.set("foreign_assertions_certified", 0);
         item.set("phase", phase);
         item.set("work_remaining", static_cast<std::int64_t>(work.left));
-        class35_errors(root, item, errors, observations);
+        // A classified closed-source geometry shortfall (the two D293
+        // admitted-form literals) is report-only per RFC 0031 E6c; every other
+        // iteration keeps terminal hard failures.
+        class35_errors(root, item, errors, observations,
+                       /*terminal_failures=*/!geometry_classified);
         records.append(item);
     }
     root.set("source_count", 16);
@@ -29538,13 +29548,64 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
     EXPECT_EQ(decoded, 5);
     EXPECT_EQ(strong, 5);
     EXPECT_EQ(malformed_closed, 4);
-    EXPECT_EQ(unsupported_observed, 7);
+    // D293 group-edge admission: the two literals exercising the admitted
+    // grammar — Group_business_endpoint (a subgraph id as an edge endpoint)
+    // and local_direction (an in-group direction override) — now parse instead
+    // of closing as unsupported. They reach the strict ER206 geometry gate and
+    // fail there, so unsupported drops 7->5 while geometry rises 0->2. The other
+    // five closed-source literals use still-unimplemented surfaces (classDef,
+    // styles, accessibility, entity/group kind collision) and stay unsupported.
+    EXPECT_EQ(unsupported_observed, 5);
     EXPECT_EQ(fallbacks, 0);
     EXPECT_EQ(resources, 0);
     EXPECT_EQ(protocol, 0);
-    EXPECT_EQ(geometry, 0);
+    EXPECT_EQ(geometry, 2);
     EXPECT_EQ(mutation, 0);
     EXPECT_EQ(observation, 0);
+}
+
+// RFC 0033 §7.0 pre-gate: the six group-edge originals must pass the
+// ER107-strength full-scene oracle (validate_impl on note13_capture Grids
+// against the production typed Model) before any owned-proof authority asset
+// is generated. This is the geometry go/no-go gate; the owned() cohort adds the
+// independent source leg, mutation census and binding on top of it later.
+TEST(MermaidErSubgraphSourceProfile, Rfc0033GroupEdgeFullFrameOracleAcceptsSix) {
+    namespace mtest = loom::ui::mermaid::testing;
+    const std::array<std::string, 6> kPaths{{
+        "er-diagram/nightly-check/should-render-relationships-between-subgraphs.mmd",
+        "er-diagram/nightly-check/should-render-subgraphs-with-direction-override.mmd",
+        "er-diagram/nightly-check/should-render-subgraphs-with-quoted-ids.mmd",
+        "er-diagram/pr-check/should-render-relationships-between-subgraph-and-entity.mmd",
+        "er-diagram/visual-check/nested-er-subgraphs-with-direction-override-default.mmd",
+        "er-diagram/visual-check/nested-er-subgraphs-with-direction-override-elk-layout.mmd"}};
+    const std::filesystem::path base =
+        std::filesystem::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases";
+    for (const auto& rel : kPaths) {
+        SCOPED_TRACE(rel);
+        std::ifstream in(base / rel, std::ios::binary);
+        const std::string raw((std::istreambuf_iterator<char>(in)),
+                              std::istreambuf_iterator<char>());
+        mtest::Work seam_work;
+        const auto whole = mtest::er_whole_scene_json_for_testing(raw, seam_work);
+        ASSERT_TRUE(whole.has_value()) << "production whole_scene must parse after admission";
+        const auto parsed = json::parse(*whole);
+        ASSERT_TRUE(parsed.has_value());
+        Work model_work{kEr206SceneLimit};
+        const auto model = er296_typed_model(parsed->root(), model_work);
+        EXPECT_FALSE(model.entities.empty());
+        EXPECT_FALSE(model.groups.empty());
+        Work cap_work{kEr206SceneLimit};
+        const auto frames = er206_observe(raw, cap_work);
+        Work geo_work{kEr206SceneLimit};
+        const auto errors =
+            validate_impl(frames.wide, model, geo_work, false, nullptr, false, nullptr,
+                          loom::test::mermaid_relations::kRelationsFollowingToken);
+        EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors.front());
+        Work outline_work{kEr206SceneLimit};
+        const auto boxes = outlines(frames.wide, outline_work);
+        EXPECT_GT(boxes.size(), model.groups.size())
+            << "at least one contour per group plus entity contours";
+    }
 }
 
 }  // namespace

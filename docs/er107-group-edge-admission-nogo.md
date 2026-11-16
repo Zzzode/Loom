@@ -146,3 +146,82 @@ and touches protected frozen assets (not a single atomic change):
   `mermaid_native` proposal JSONs and the ER206 prior were **never modified**
   (verified zero-diff); no production or protected file is changed in the
   retained tree.
+
+## 8. D301 follow-up — the geometry-gap hypothesis is falsified
+
+Milestone M-Next hypothesized that the deeper blocker was renderer geometry:
+that the two admitted grammar forms fail the strict ER206 whole-null geometry
+gate, so the six scenes could not earn an owned proof even if one were
+offered. Direct, production-faithful measurement **disproves** that
+hypothesis. There is no renderer geometry capability gap for these scenes.
+
+### Symptom investigated
+
+`MermaidErSubgraphSourceProfile` books the two admitted-form literals
+(`Group_business_endpoint`, `local_direction`) as geometry=2 after admission.
+The question was whether that reflects a real layout defect (broken group
+boxes, dropped edges, non-determinism, disturbed sentinel) or merely an
+obligation-classification mismatch.
+
+### Measurement (production-faithful path, not a char-difference probe)
+
+Using the same `er206_observe` normalized `note13_capture` grids and the same
+`following_row` predicate that `run_official_er206_case` uses (frame mapping
+verified equivalent to `official_er_capture`: mer240, mer40, mer240-restored
+vs the text controls), each of the six real fixtures satisfies every
+geometric component of the whole-null drawn condition
+`!wide && restored && a && b && c`:
+
+| fixture (short) | !wide | restored | a | b | c | drawn predicate |
+|---|---|---|---|---|---|---|
+| relationships-between-subgraphs | 1 | 1 | 1 | 1 | 1 | **1** |
+| subgraphs-direction-override | 1 | 1 | 1 | 1 | 1 | **1** |
+| subgraphs-quoted-ids | 1 | 1 | 1 | 1 | 1 | **1** |
+| subgraph-and-entity (pr-check) | 1 | 1 | 1 | 1 | 1 | **1** |
+| nested-direction-default | 1 | 1 | 1 | 1 | 1 | **1** |
+| nested-direction-elk-layout | 1 | 1 | 1 | 1 | 1 | **1** |
+
+(`narrow_source` is 1 for three rows and 0 for three; both are acceptable —
+the supplemental proof records `narrow_exact_ordinary` per row.) Work budget
+is not implicated: ~119–122M Work units remain at the gate, and rendered
+dimensions are within the 240×1040 bounds. Visual dumps confirm structurally
+complete scenes — group box containing the inner entity, a separate entity,
+an edge attached to the group box with both cardinality markers and the role
+label, and a clean independent sentinel row. Re-render determinism
+(`restored`) holds for every fixture.
+
+A first probe built on the independent cohort's raw ftxui `Screen` capture
+reported `a/b/c = 0`; that was a **false negative** caused by capture
+granularity (raw pixels can hold multi-char cells, while `following_row`
+requires single-char cells). The normalized `note13_capture` Grid used by the
+official path splits cells correctly and the predicate passes. This is a
+concrete instance of the rule already logged in §3: a renderer-free /
+char-difference gate does not establish official admission — and neither does
+it faithfully reproduce the official geometry predicate.
+
+### Why the SourceProfile "geometry=2" is not a geometry defect
+
+Those two literals carry the profile `valid_unimplemented_source_obligation`
+with an empty Model. The closed-source branch of the test *expects*
+whole-null unimplemented obligations to render as plain text (mermaid grid ==
+text grid). After admission they correctly produce art, so the equality no
+longer holds and the branch counts geometry — but the art itself is correct
+and passes the official drawn predicate. Driving that counter to zero would
+require **reclassifying** the literals as `mandatory_complete_positive` with
+complete Models (an authority/test-contract change), not changing the
+renderer. The other five `unsupported` literals exercise unrelated
+unimplemented surfaces (classDef, styles, accessibility, entity/group kind
+collision) and are outside rendering-geometry scope, so the literal
+"unsupported 7→0" target is not reachable by geometry work alone.
+
+### Conclusion and minimal viable change surface
+
+No production rendering or layout change is warranted: the geometry already
+reaches the target once the grammar parses. The sole remaining blocker is the
+authority-owned proof path described in §6 (resolve the ER206
+group-collision debt / selection predicate, or add a reviewed supplemental
+proof slot, plus the same-reviewed re-baseline of the ER206 prior and e6c gap
+roster). That is the RFC-level, protected-asset work this milestone was
+explicitly scoped to avoid. No layout architecture change is needed; the
+"minimal viable change" lives entirely in the authority layer, not in
+`RelationLayout`/`ErPaint`.

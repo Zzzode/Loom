@@ -1442,3 +1442,28 @@ Attach a short efficiency section to each closure report, answering:
   not sufficient. Targeted gates stayed green throughout (emitter 21/21,
   relations 269/269, source107 7/7); the only red was the matrix's own 48→54
   count, which correctly refused the net-negative change.
+- **2026-11-17, D301 geometry-gap investigation — hypothesis falsified, no
+  production change.** A second milestone hypothesized a renderer geometry
+  defect behind the same six rows. Production-faithful measurement (the same
+  `er206_observe`/`note13_capture` normalized Grids and `following_row` as
+  `run_official_er206_case`) showed all six satisfy
+  `!wide && restored && a && b && c` once the grammar parses — no layout work
+  is warranted; the only real blocker remains the authority owned-proof path.
+  **Rule (measurement fidelity): a raw `ftxui::Screen` pixel capture is NOT a
+  drop-in for the official geometry predicate — raw pixels can hold multi-char
+  cells while `following_row` requires single-char cells, which produced a
+  false `a/b/c=0` negative until the normalized `note13_capture` Grid was used.
+  Reuse the exact production capture+predicate when probing an official gate;
+  a hand-rolled capture proves only itself.** Targeted-loop cost stayed low:
+  each SourceProfile filter run ~0.28–0.36 s; the six-fixture faithful probe
+  ~0.01 s (all under the 820-byte bound; `Work{kEr206SceneLimit}` is required
+  — a default `Work` throws "Relation oracle work exhausted"). Baseline-restore
+  rebuild of the three touched targets took 35 s, zero warnings. **Harness
+  trap: an incremental multi-target build reported success while only
+  re-LINKING and silently skipping a stale object (the binary still held a
+  deleted TEMP test despite a newer source mtime); a forced single-target
+  rebuild corrected it. After reverting a test TU, verify via
+  `--gtest_list_tests`, not just a green run — a stale extra test that calls
+  SUCCEED() still passes.** No OfficialMatrix full run was needed (per the
+  milestone's targeted-only boundary); the D298 full-matrix evidence already
+  covers the end-to-end disposition.

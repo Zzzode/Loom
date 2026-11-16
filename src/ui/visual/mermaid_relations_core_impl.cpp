@@ -3709,9 +3709,21 @@ bool er_sem_body(std::string_view b, std::size_t body_start,
             i += 8;
             if (i >= n || (b[i] != ' ' && b[i] != '\t')) return false;
             i = er_sem_skip_inline(b, i);
-            const std::size_t id_start = i;
-            while (i < n && er_sem_name_byte(static_cast<unsigned char>(b[i]))) ++i;
-            if (i == id_start || er_sem_is_reserved_name(b, id_start, i)) return false;
+            // Reuse er_sem_read_name so a quoted multi-word group id is
+            // accepted; the subgraph_id witness keeps the quote-inclusive
+            // span (the record collector strips quotes for the id value).
+            std::size_t id_start, id_end;
+            if (!er_sem_read_name(b, i, id_start, id_end)) return false;
+            const bool quoted_id = b[id_start] == '"';
+            if (!quoted_id && er_sem_is_reserved_name(b, id_start, id_end))
+                return false;
+            // An empty quoted id (`subgraph ""`) has no visible label; the
+            // collector and production both reject it, so the witness seam must
+            // fail closed here too rather than emit an empty subgraph_id.
+            const std::size_t content_start = quoted_id ? id_start + 1 : id_start;
+            const std::size_t content_end = quoted_id ? id_end - 1 : id_end;
+            if (content_start == content_end) return false;
+            i = id_end;
             // Mirror the production frame cap before accepting the new group.
             if (subgraph_depth >= static_cast<int>(kGroupDepthLimit) ||
                 subgraph_count >= static_cast<int>(kGroupLimit))
@@ -4006,6 +4018,13 @@ struct SrcStatement {
 };
 struct SrcSubgraph {
     std::string id, title_before;
+    // Immediate enclosing group id; empty for a root-level group. This is a
+    // tree (parent links) rather than a flat list because ER permits nested
+    // subgraphs up to kGroupDepthLimit: a flat single-scope model cannot carry
+    // the parent chain and would mis-assign entity ownership to the outermost
+    // group instead of the innermost. Mirrors the production whole-scene
+    // groups[].parent / entity owner semantics.
+    std::string parent;
     int64_t header_witness = 0, id_witness = 0, end_witness = 0;
     std::vector<std::string> members;
 };
@@ -4309,12 +4328,44 @@ bool er_src_collect_body(std::string_view b, std::size_t body_start, std::size_t
         id_index.emplace(id, index);
         return index;
     };
-
+    // An endpoint naming a declared subgraph is a Group in production, not an
+    // entity, so it must never be inserted into the entity table. A quoted
+    // endpoint carries its quotes in the witness span, so compare on the
+    // unquoted content (which is how the subgraph id is stored).
+    const auto endpoint_unquoted = [&](std::string id) {
+        if (id.size() >= 2 && id.front() == '"' && id.back() == '"')
+            id = id.substr(1, id.size() - 2);
+        return id;
+    };
+    const auto is_group_endpoint = [&](const std::string& id) {
+        const std::string bare = endpoint_unquoted(id);
+        for (const auto& sg : data.subgraphs)
+            if (sg.id == bare) return true;
+        return false;
+    };
     std::size_t wli = 0;
     int64_t stmt_no = 0, rel_no = 0, global_attr = 0;
-    int subgraph_depth = 0, subgraph_count = 0;
-    std::string current_scope;
-    std::size_t active_subgraph = kErSemNpos;
+    int subgraph_count = 0;
+    // Open-group stack of indices into data.subgraphs, outermost first. The
+    // back is the innermost current scope; this replaces the former single
+    // current_scope so nested groups restore their parent on `end`.
+    std::vector<std::size_t> scope_stack;
+    const auto current_scope_id = [&]() -> std::string {
+        return scope_stack.empty()
+                   ? std::string{}
+                   : data.subgraphs[scope_stack.back()].id;
+    };
+    // Assign an entity to its innermost open group (first declaration wins,
+    // matching the former single-scope guard) and record direct membership.
+    const auto assign_ownership = [&](SrcEntity& entity, const std::string& entity_id) {
+        if (scope_stack.empty()) return;
+        const std::size_t inner = scope_stack.back();
+        if (entity.source_parent_subgraph.empty())
+            entity.source_parent_subgraph = data.subgraphs[inner].id;
+        auto& members = data.subgraphs[inner].members;
+        if (std::find(members.begin(), members.end(), entity_id) == members.end())
+            members.push_back(entity_id);
+    };
     std::size_t steps = 0;
     while (true) {
         if (++steps > 100000) return false;
@@ -4335,15 +4386,27 @@ bool er_src_collect_body(std::string_view b, std::size_t body_start, std::size_t
             if (!matched) return false;
             const int64_t stmt_wit = g(wli), val_wit = g(wli + 1);
             wli += 2;
-            data.declared_direction = value;
-            data.direction_statement_witness = stmt_wit;
-            data.direction_value_witness = val_wit;
+            // Only a top-level direction sets the diagram direction; an
+            // in-group override is a non-terminal directive recorded as a
+            // scoped direction statement. (The parallel record model accepts
+            // nested groups here; the production parser's matching admission
+            // ships separately in the atomic 107->113 re-baseline.)
+            const bool inner = !scope_stack.empty();
+            if (!inner) {
+                data.declared_direction = value;
+                data.direction_statement_witness = stmt_wit;
+                data.direction_value_witness = val_wit;
+            }
             SrcStatement s;
             s.kind = "direction";
             s.statement_ordinal = stmt_no++;
             s.witness = stmt_wit;
             s.value = value;
             s.value_witness = val_wit;
+            if (inner) {
+                s.has_scope = true;
+                s.scope_text = data.subgraphs[scope_stack.back()].id;
+            }
             data.statements.push_back(std::move(s));
             continue;
         }
@@ -4353,31 +4416,36 @@ bool er_src_collect_body(std::string_view b, std::size_t body_start, std::size_t
             i += 8;
             if (i >= n || (b[i] != ' ' && b[i] != '\t')) return false;
             i = er_sem_skip_inline(b, i);
-            const std::size_t id_start = i;
-            while (i < n && er_sem_name_byte(static_cast<unsigned char>(b[i]))) ++i;
-            if (i == id_start || er_sem_is_reserved_name(b, id_start, i)) return false;
-            if (subgraph_depth >= static_cast<int>(kGroupDepthLimit) ||
+            // Reuse the shared name lexer: a quoted multi-word group id keeps
+            // its quotes in the witness span while the record id uses the
+            // unquoted content (mirrors production ErCursor::quoted and the
+            // whole-scene id/label, which strip quotes).
+            std::size_t id_start, id_end;
+            if (!er_sem_read_name(b, i, id_start, id_end)) return false;
+            const bool quoted = b[id_start] == '"';
+            if (!quoted && er_sem_is_reserved_name(b, id_start, id_end)) return false;
+            const std::size_t content_start = quoted ? id_start + 1 : id_start;
+            const std::size_t content_end = quoted ? id_end - 1 : id_end;
+            if (content_start == content_end) return false;
+            i = id_end;
+            // Nesting up to the production 16-deep frame cap is represented by
+            // the scope stack rather than rejected.
+            if (scope_stack.size() >= static_cast<std::size_t>(kGroupDepthLimit) ||
                 subgraph_count >= static_cast<int>(kGroupLimit))
                 return false;
-            // This record model carries a single current scope and one
-            // source_parent_subgraph per entity, so a nested group cannot be
-            // represented faithfully. Production uses a 16-deep frame stack;
-            // reject nesting rather than emit wrong ownership (no ER107 case
-            // nests groups).
-            if (subgraph_depth >= 1) return false;
             const int64_t header_wit = g(wli), id_wit = g(wli + 1);
             wli += 2;
-            ++subgraph_depth;
             ++subgraph_count;
-            const std::string group_id = lex(id_start, i);
+            const std::string group_id = lex(content_start, content_end);
             SrcSubgraph sub;
             sub.id = group_id;
             sub.title_before = group_id;
+            sub.parent = current_scope_id();
             sub.header_witness = header_wit;
             sub.id_witness = id_wit;
             data.subgraphs.push_back(std::move(sub));
-            active_subgraph = data.subgraphs.size() - 1;
-            current_scope = group_id;
+            const std::size_t sub_index = data.subgraphs.size() - 1;
+            scope_stack.push_back(sub_index);
             SrcStatement s;
             s.kind = "subgraph_begin";
             s.statement_ordinal = stmt_no++;
@@ -4389,14 +4457,12 @@ bool er_src_collect_body(std::string_view b, std::size_t body_start, std::size_t
         // end
         if (b.size() - i >= 3 && er_sem_ascii_equal(b.substr(i, 3), "end") &&
             keyword_terminated(i + 3)) {
-            if (subgraph_depth == 0) return false;
-            --subgraph_depth;
+            if (scope_stack.empty()) return false;
+            const std::size_t closing = scope_stack.back();
             const int64_t end_wit = g(wli++);
-            const std::string group_id = current_scope;
-            if (active_subgraph != kErSemNpos)
-                data.subgraphs[active_subgraph].end_witness = end_wit;
-            active_subgraph = kErSemNpos;
-            current_scope.clear();
+            const std::string group_id = data.subgraphs[closing].id;
+            data.subgraphs[closing].end_witness = end_wit;
+            scope_stack.pop_back();
             i += 3;
             SrcStatement s;
             s.kind = "subgraph_end";
@@ -4543,14 +4609,7 @@ bool er_src_collect_body(std::string_view b, std::size_t body_start, std::size_t
             if (alias_start != kErSemNpos)
                 entity.alias_attempts.push_back(
                     {alias_value(alias_start, alias_end), alias_wit});
-            if (!current_scope.empty() && entity.source_parent_subgraph.empty()) {
-                entity.source_parent_subgraph = current_scope;
-                if (active_subgraph != kErSemNpos) {
-                    auto& members = data.subgraphs[active_subgraph].members;
-                    if (std::find(members.begin(), members.end(), entity_id) == members.end())
-                        members.push_back(entity_id);
-                }
-            }
+            assign_ownership(entity, entity_id);
             const int64_t local_base = static_cast<int64_t>(entity.attributes.size());
             for (std::size_t q = 0; q < built_attrs.size(); ++q) {
                 built_attrs[q].ordinal = local_base + static_cast<int64_t>(q);
@@ -4561,8 +4620,8 @@ bool er_src_collect_body(std::string_view b, std::size_t body_start, std::size_t
             s.statement_ordinal = stmt_no++;
             s.witness = decl_wit;
             s.entity = entity_id;
-            s.has_scope = !current_scope.empty();
-            s.scope_text = current_scope;
+            s.has_scope = !scope_stack.empty();
+            s.scope_text = current_scope_id();
             s.id_witness = id_wit;
             s.alias_witness = alias_wit;
             s.block_witness = block_wit;
@@ -4621,13 +4680,32 @@ bool er_src_collect_body(std::string_view b, std::size_t body_start, std::size_t
                           rcard_wit = g(wli + 5), ident_wit = g(wli + 6),
                           stmt_wit = g(wli + 7);
             wli += 8;
-            const std::string right_id = lex(right_start, right_end);
-            const std::size_t aidx =
-                find_or_insert(entity_id, a_wit, "relationship_reference");
-            const std::size_t bidx =
-                find_or_insert(right_id, b_wit, "relationship_reference");
+            const std::string right_id_raw = lex(right_start, right_end);
+            // Logical endpoint ids use unquoted content (the witness spans
+            // keep their quotes), so a quoted group id matches the stored
+            // subgraph id and the entity/db-id maps.
+            const auto unquote = [](std::string id) {
+                if (id.size() >= 2 && id.front() == '"' && id.back() == '"')
+                    id = id.substr(1, id.size() - 2);
+                return id;
+            };
+            const std::string right_id = unquote(right_id_raw);
+            const std::string left_id = unquote(entity_id);
+            // Group-id endpoints resolve to declared subgraphs and are not
+            // entity rows; only real entities enter the entity table and carry
+            // relationship-reference ordinals.
+            if (!is_group_endpoint(left_id)) {
+                const std::size_t aidx =
+                    find_or_insert(left_id, a_wit, "relationship_reference");
+                data.entities[aidx].relationship_reference_ordinals.push_back(rel_no);
+            }
+            if (!is_group_endpoint(right_id)) {
+                const std::size_t bidx =
+                    find_or_insert(right_id, b_wit, "relationship_reference");
+                data.entities[bidx].relationship_reference_ordinals.push_back(rel_no);
+            }
             SrcRelationship rel;
-            rel.entity_a = entity_id;
+            rel.entity_a = left_id;
             rel.entity_b = right_id;
             rel.ordinal = rel_no;
             rel.statement_ordinal = stmt_no;
@@ -4650,8 +4728,6 @@ bool er_src_collect_body(std::string_view b, std::size_t body_start, std::size_t
             rel.rel_type = rel_type;
             rel.pattern = pattern;
             data.relationships.push_back(std::move(rel));
-            data.entities[aidx].relationship_reference_ordinals.push_back(rel_no);
-            data.entities[bidx].relationship_reference_ordinals.push_back(rel_no);
             SrcStatement s;
             s.kind = "relationship";
             s.statement_ordinal = stmt_no++;
@@ -4673,26 +4749,34 @@ bool er_src_collect_body(std::string_view b, std::size_t body_start, std::size_t
         if (alias_start != kErSemNpos)
             entity.alias_attempts.push_back(
                 {alias_value(alias_start, alias_end), bare_alias_wit});
-        if (!current_scope.empty() && entity.source_parent_subgraph.empty()) {
-            entity.source_parent_subgraph = current_scope;
-            if (active_subgraph != kErSemNpos) {
-                auto& members = data.subgraphs[active_subgraph].members;
-                if (std::find(members.begin(), members.end(), entity_id) == members.end())
-                    members.push_back(entity_id);
-            }
-        }
+        assign_ownership(entity, entity_id);
         SrcStatement s;
         s.kind = "entity_declaration";
         s.statement_ordinal = stmt_no++;
         s.witness = bare_decl_wit;
         s.entity = entity_id;
-        s.has_scope = !current_scope.empty();
-        s.scope_text = current_scope;
+        s.has_scope = !scope_stack.empty();
+        s.scope_text = current_scope_id();
         s.id_witness = bare_id_wit;
         s.alias_witness = bare_alias_wit;
         data.statements.push_back(std::move(s));
     }
-    if (subgraph_depth != 0) return false;
+    if (!scope_stack.empty()) return false;
+    // Post-pass: an endpoint that named a subgraph before its declaration may
+    // have been inserted as an entity. Remove such group-named rows and
+    // renumber insertion order to stay dense (the terminal color index is the
+    // entity-array position). Real entities and their witness data are intact.
+    if (std::any_of(data.entities.begin(), data.entities.end(),
+                    [&](const SrcEntity& e) { return is_group_endpoint(e.id); })) {
+        std::vector<SrcEntity> kept;
+        kept.reserve(data.entities.size());
+        for (SrcEntity& e : data.entities) {
+            if (is_group_endpoint(e.id)) continue;
+            e.first_insert_order = static_cast<int64_t>(kept.size());
+            kept.push_back(std::move(e));
+        }
+        data.entities = std::move(kept);
+    }
     data.body_witness_count = static_cast<int64_t>(wli);
     return true;
 }
@@ -4760,6 +4844,10 @@ erjson::JsonMutDoc er_src_assemble(const SrcModelData& data, std::string_view so
 
     // entities
     std::map<std::string, std::string> db_id_by_id;
+    // A relationship endpoint that names a subgraph has no entity-<id>-<order>
+    // db id; the production whole-scene model addresses groups by their bare
+    // id, so map each group id to itself for the relationship db fields.
+    for (const auto& sg : data.subgraphs) db_id_by_id.emplace(sg.id, sg.id);
     {
         auto arr = root.make_arr();
         for (const auto& e : data.entities) {
@@ -4983,7 +5071,10 @@ erjson::JsonMutDoc er_src_assemble(const SrcModelData& data, std::string_view so
                 o.add("witness", o.make_num(st.witness));
             } else if (kind == "direction") {
                 o.add("kind", o.make_str("direction"));
-                o.add("scope", o.make_null());
+                if (st.has_scope)
+                    o.add("scope", o.make_str(st.scope_text));
+                else
+                    o.add("scope", o.make_null());
                 o.add("statement_ordinal", o.make_num(st.statement_ordinal));
                 o.add("value", o.make_str(st.value));
                 o.add("value_witness", o.make_num(st.value_witness));
@@ -5016,7 +5107,10 @@ erjson::JsonMutDoc er_src_assemble(const SrcModelData& data, std::string_view so
             for (const auto& m : sub.members) members.append(members.make_str(m));
             o.add("members", members);
             o.add("sanitized_source_title", o.make_null());
-            o.add("source_parent_subgraph", o.make_null());
+            if (sub.parent.empty())
+                o.add("source_parent_subgraph", o.make_null());
+            else
+                o.add("source_parent_subgraph", o.make_str(sub.parent));
             o.add("source_title_before_sanitize", o.make_str(sub.title_before));
             arr.append(o);
         }
@@ -5689,7 +5783,10 @@ std::optional<std::string> er_terminal_model_json(std::string_view source, Work&
         auto members = o.make_arr();
         for (const auto& m : g.members) members.append(members.make_str(m));
         o.add("members", members);
-        o.add("parent", o.make_null());
+        if (g.parent.empty())
+            o.add("parent", o.make_null());
+        else
+            o.add("parent", o.make_str(g.parent));
         auto grefs = o.make_arr();
         grefs.append(ref_for(g.header_witness));
         grefs.append(ref_for(g.id_witness));

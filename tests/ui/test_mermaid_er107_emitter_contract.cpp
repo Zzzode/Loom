@@ -514,9 +514,36 @@ TEST(MermaidEr107EmitterContract, SourceModelSeamFailClosedOnMalformedAndNonErIn
     // Unterminated quotes (the two D251 battery cases this seam must share).
     EXPECT_FALSE(emit("---\n---\nerDiagram\nA [\"unterminated\n").has_value());
     EXPECT_FALSE(emit("---\n---\nerDiagram\nCUSTOMER {\n\"unterminated\n").has_value());
-    // Nested subgraphs are outside this record model's single-scope envelope.
-    EXPECT_FALSE(
+    // Nested subgraphs are now represented by a parent-linked group tree, so a
+    // two-level group is admitted rather than rejected.
+    EXPECT_TRUE(
         emit("---\n---\nerDiagram\nsubgraph G\nsubgraph H\nB\nend\nend\n").has_value());
+    // A group deeper than the production 16-deep frame cap still fails closed.
+    {
+        std::string deep = "---\n---\nerDiagram\n";
+        for (int d = 0; d < 17; ++d) deep += "subgraph g" + std::to_string(d) + "\n";
+        deep += "B\n";
+        for (int d = 0; d < 17; ++d) deep += "end\n";
+        EXPECT_FALSE(emit(deep).has_value());
+    }
+    // Exactly 16 nested groups (the frame cap) is accepted; the 17th is the
+    // boundary that fails, locking the off-by-one against the production cap.
+    {
+        std::string at_cap = "---\n---\nerDiagram\n";
+        for (int d = 0; d < 16; ++d) at_cap += "subgraph g" + std::to_string(d) + "\n";
+        at_cap += "B\n";
+        for (int d = 0; d < 16; ++d) at_cap += "end\n";
+        EXPECT_TRUE(emit(at_cap).has_value());
+    }
+    // An empty quoted group id has no visible label and fails closed on both
+    // the witness lexer and the collector (mirrors production rejection).
+    EXPECT_FALSE(
+        emit("---\n---\nerDiagram\nsubgraph \"\"\nA\nend\n").has_value());
+    // A quoted multi-word group id is admitted; an unterminated quote closes.
+    EXPECT_TRUE(
+        emit("---\n---\nerDiagram\nsubgraph \"Customer Domain\"\nA\nend\n").has_value());
+    EXPECT_FALSE(
+        emit("---\n---\nerDiagram\nsubgraph \"unterminated\nA\nend\n").has_value());
     // A clean header-only envelope still yields a well-formed (empty) model.
     const auto ok = emit("---\n---\nerDiagram\n");
     ASSERT_TRUE(ok.has_value());
@@ -865,5 +892,213 @@ TEST(MermaidEr107EmitterContract, TerminalModelWrappingLawOnCraftedLongRoles) {
         EXPECT_EQ(rows.at(1).get_string("text"), "cccccccccccc");
         EXPECT_EQ(rows.at(1).get_string("joiner"), "");
         expect_rows_reconstruct(rows, cap.get_string("display"));
+    }
+}
+
+// D287 Stage A forward invariant: the parallel source-model generator now
+// admits the six SELECTED group-edge originals (nested subgraphs and quoted
+// group ids), and builds the same group tree / entity ownership the
+// production whole-scene model produces. This pins the source_model layer,
+// which is independent of the production parse_plain_er admission (that
+// admission ships in the later atomic 107->113 re-baseline); the terminal
+// seam embeds whole_scene and is therefore exercised only after the parser
+// gate lands. Expected values are production-semantics-traced (captured from
+// the production whole-scene output, not asserted against the parser itself).
+TEST(MermaidEr107EmitterContract, GroupEdgeSourceModelBuildsExpectedNestedTrees) {
+    struct ExpectGroup {
+        std::string id, parent;
+        std::vector<std::string> members;
+    };
+    struct ExpectEntity {
+        std::string id, owner;  // empty owner == JSON null
+    };
+    struct CaseExpect {
+        const char* rel;
+        std::vector<ExpectGroup> groups;
+        std::vector<ExpectEntity> entities;
+    };
+    const CaseExpect cases[] = {
+        {"er-diagram/nightly-check/should-render-relationships-between-subgraphs.mmd",
+         {{"customers", "", {"CUSTOMER"}}, {"orders", "", {"ORDER"}}},
+         {{"CUSTOMER", "customers"}, {"ORDER", "orders"}}},
+        {"er-diagram/nightly-check/should-render-subgraphs-with-direction-override.mmd",
+         {{"domain", "", {"CUSTOMER", "ORDER"}}},
+         {{"CUSTOMER", "domain"}, {"ORDER", "domain"}, {"PRODUCT", ""}}},
+        {"er-diagram/nightly-check/should-render-subgraphs-with-quoted-ids.mmd",
+         {{"Customer Domain", "", {"CUSTOMER"}}},
+         {{"CUSTOMER", "Customer Domain"}, {"ORDER", ""}}},
+        {"er-diagram/pr-check/should-render-relationships-between-subgraph-and-entity.mmd",
+         {{"customers", "", {"CUSTOMER"}}, {"orders", "", {"ORDER"}}},
+         {{"CUSTOMER", "customers"}, {"ORDER", "orders"}}},
+        {"er-diagram/visual-check/nested-er-subgraphs-with-direction-override-default.mmd",
+         {{"domain", "", {"CUSTOMER"}}, {"details", "domain", {"ORDER"}}},
+         {{"CUSTOMER", "domain"}, {"ORDER", "details"}, {"PRODUCT", ""}}},
+        {"er-diagram/visual-check/nested-er-subgraphs-with-direction-override-elk-layout.mmd",
+         {{"domain", "", {"CUSTOMER"}}, {"details", "domain", {"ORDER"}}},
+         {{"CUSTOMER", "domain"}, {"ORDER", "details"}, {"PRODUCT", ""}}}};
+
+    const fs::path cases_dir = kFixtures / "mermaid_official/cases";
+    for (const auto& expect : cases) {
+        const auto raw = read_file(cases_dir / expect.rel);
+        loom::ui::mermaid::testing::Work work;
+        const auto model_json =
+            loom::ui::mermaid::testing::er_source_model_json_for_testing(raw, work);
+        ASSERT_TRUE(model_json.has_value()) << expect.rel;
+        const auto model = json::parse(*model_json);
+        ASSERT_TRUE(model.has_value()) << expect.rel;
+        const auto groups = model->root().get("subgraphs");
+        const auto entities = model->root().get("entities");
+        ASSERT_EQ(groups.size(), expect.groups.size()) << expect.rel;
+        ASSERT_EQ(entities.size(), expect.entities.size()) << expect.rel;
+
+        for (const auto& eg : expect.groups) {
+            bool matched = false;
+            groups.iter([&](const JsonVal sg) {
+                if (sg.get_string("id") != eg.id) return;
+                matched = true;
+                const auto parent = sg.get("source_parent_subgraph");
+                if (eg.parent.empty())
+                    EXPECT_TRUE(parent.is_null()) << expect.rel << " " << eg.id;
+                else
+                    EXPECT_EQ(sg.get_string("source_parent_subgraph"), eg.parent)
+                        << expect.rel << " " << eg.id;
+                ASSERT_EQ(sg.get("members").size(), eg.members.size()) << expect.rel;
+                for (const auto& want : eg.members) {
+                    bool found = false;
+                    sg.get("members").iter([&](const JsonVal m) {
+                        if (m.as_str() == want) found = true;
+                    });
+                    EXPECT_TRUE(found) << expect.rel << " " << eg.id << " member " << want;
+                }
+            });
+            EXPECT_TRUE(matched) << expect.rel << " group " << eg.id;
+        }
+        for (const auto& ee : expect.entities) {
+            bool matched = false;
+            entities.iter([&](const JsonVal se) {
+                if (se.get_string("id") != ee.id) return;
+                matched = true;
+                const auto owner = se.get("source_parent_subgraph");
+                if (ee.owner.empty())
+                    EXPECT_TRUE(owner.is_null()) << expect.rel << " " << ee.id;
+                else
+                    EXPECT_EQ(se.get_string("source_parent_subgraph"), ee.owner)
+                        << expect.rel << " " << ee.id;
+            });
+            EXPECT_TRUE(matched) << expect.rel << " entity " << ee.id;
+        }
+        // The quoted group id is stored without its wrapping quotes.
+        if (std::string(expect.rel).find("quoted-ids") != std::string::npos) {
+            bool saw_quoted = false;
+            groups.iter([&](const JsonVal sg) {
+                if (sg.get_string("id") == "Customer Domain") saw_quoted = true;
+                EXPECT_EQ(sg.get_string("id").find('"'), std::string::npos) << expect.rel;
+            });
+            EXPECT_TRUE(saw_quoted) << expect.rel;
+        }
+    }
+}
+
+// D287 Stage A M1: a relationship endpoint may name a subgraph before that
+// subgraph is declared (a forward reference). At relationship time the group
+// is unknown so its name is tentatively inserted as an entity; the post-pass
+// must remove the group-named row, renumber first_insert_order densely, and
+// the relationship must still resolve through the db-id map (group -> bare
+// id, surviving entity -> renumbered db id).
+TEST(MermaidEr107EmitterContract, SourceModelForwardReferencedGroupEndpointDropsEntityRow) {
+    constexpr std::string_view kSrc =
+        "---\n---\nerDiagram\n"
+        "G ||--o{ B : has\n"
+        "subgraph G\n"
+        "A\n"
+        "end\n";
+    loom::ui::mermaid::testing::Work work;
+    const auto emitted =
+        loom::ui::mermaid::testing::er_source_model_json_for_testing(kSrc, work);
+    ASSERT_TRUE(emitted.has_value());
+    const auto model = json::parse(*emitted);
+    ASSERT_TRUE(model.has_value());
+
+    const auto entities = model->root().get("entities");
+    ASSERT_EQ(entities.size(), 2u);
+    // The forward-referenced group name survives only as a group, never as an
+    // entity row.
+    entities.iter([&](const JsonVal e) {
+        EXPECT_NE(e.get_string("id"), "G");
+    });
+    // Insertion order is dense 0..N-1 after the group row was removed. The
+    // relationship saw B first (order 0 after renumber); A was declared inside
+    // the group (order 1) and is owned by G.
+    const auto b = entities.at(0);
+    const auto a = entities.at(1);
+    EXPECT_EQ(b.get_string("id"), "B");
+    EXPECT_EQ(b.get_int("first_insert_order"), 0);
+    EXPECT_TRUE(b.get("source_parent_subgraph").is_null());
+    EXPECT_EQ(a.get_string("id"), "A");
+    EXPECT_EQ(a.get_int("first_insert_order"), 1);
+    EXPECT_EQ(a.get_string("source_parent_subgraph"), "G");
+
+    const auto groups = model->root().get("subgraphs");
+    ASSERT_EQ(groups.size(), 1u);
+    const auto g = groups.at(0);
+    EXPECT_EQ(g.get_string("id"), "G");
+    EXPECT_TRUE(g.get("source_parent_subgraph").is_null());
+    ASSERT_EQ(g.get("members").size(), 1u);
+    EXPECT_EQ(g.get("members").at(0).as_str(), "A");
+
+    const auto rels = model->root().get("relationships");
+    ASSERT_EQ(rels.size(), 1u);
+    const auto r = rels.at(0);
+    EXPECT_EQ(r.get_string("entityA"), "G");
+    EXPECT_EQ(r.get_string("entityB"), "B");
+    // The group endpoint resolves to its bare id; the surviving entity uses
+    // the renumbered (dense) db id, proving the map post-dates the cleanup.
+    EXPECT_EQ(r.get_string("source_db_entityA"), "G");
+    EXPECT_EQ(r.get_string("source_db_entityB"), "entity-B-0");
+}
+
+// D287 Stage A M3: the D251 witness lexer reads a subgraph id through the
+// shared er_sem_read_name helper, so a quoted multi-word group id keeps a
+// QUOTE-INCLUSIVE byte span (witnesses point at the real source bytes); the
+// record collector is the layer that strips quotes. Pin this over the six
+// SELECTED group-edge fixtures, with the quote-inclusive lexeme asserted
+// directly on the quoted-id case.
+TEST(MermaidEr107EmitterContract, SemanticLexerSubgraphIdSpanIsQuoteInclusive) {
+    const char* kGroupCases[] = {
+        "er-diagram/nightly-check/should-render-relationships-between-subgraphs.mmd",
+        "er-diagram/nightly-check/should-render-subgraphs-with-direction-override.mmd",
+        "er-diagram/nightly-check/should-render-subgraphs-with-quoted-ids.mmd",
+        "er-diagram/pr-check/should-render-relationships-between-subgraph-and-entity.mmd",
+        "er-diagram/visual-check/nested-er-subgraphs-with-direction-override-default.mmd",
+        "er-diagram/visual-check/nested-er-subgraphs-with-direction-override-elk-layout.mmd"};
+    const fs::path cases_dir = kFixtures / "mermaid_official/cases";
+    for (const char* rel : kGroupCases) {
+        const std::string raw = read_file(cases_dir / rel);
+        loom::ui::mermaid::testing::Work work;
+        const auto emitted =
+            loom::ui::mermaid::testing::er_semantic_witnesses_json_for_testing(raw, work);
+        ASSERT_TRUE(emitted.has_value()) << rel;
+        const auto witnesses = json::parse(*emitted);
+        ASSERT_TRUE(witnesses.has_value()) << rel;
+
+        std::size_t id_witnesses = 0;
+        witnesses->root().iter([&](const JsonVal w) {
+            if (w.get_string("kind") != "subgraph_id") return;
+            ++id_witnesses;
+            const auto start = static_cast<std::size_t>(w.get_int("source_byte_start"));
+            const auto end = static_cast<std::size_t>(w.get_int("source_byte_end"));
+            ASSERT_LE(end, raw.size()) << rel;
+            // The witness span slices the raw bytes byte-for-byte.
+            const std::string slice(raw.data() + start, end - start);
+            EXPECT_EQ(slice, w.get_string("source_lexeme")) << rel;
+            if (std::string(rel).find("quoted-ids") != std::string::npos) {
+                // The quoted id keeps its wrapping quotes in the witness layer;
+                // the bare unquoted content must NOT appear as the span.
+                EXPECT_EQ(slice, "\"Customer Domain\"") << rel;
+                EXPECT_EQ(w.get_string("source_lexeme"), "\"Customer Domain\"") << rel;
+                EXPECT_NE(w.get_string("source_lexeme"), "Customer Domain") << rel;
+            }
+        });
+        EXPECT_GT(id_witnesses, 0u) << rel;
     }
 }

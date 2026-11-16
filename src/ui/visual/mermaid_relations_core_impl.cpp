@@ -8,6 +8,7 @@ module loom.ui.visual.mermaid;
 import std;
 import :detail;
 import loom.serdes.json;
+import loom.crypto.crypto;
 
 namespace loom::ui::mermaid::detail {
 // UML and state diagrams share entity identity and orthogonal relationships;
@@ -3232,12 +3233,17 @@ bool er_word_byte(unsigned char c) {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
            (c >= '0' && c <= '9') || c == '_' || c >= 0x80;
 }
-}  // namespace
 
-std::optional<std::string> er_structural_witnesses_json(std::string_view source, Work& work) {
-    namespace json = loom::utils::json;
-    if (!work.spend(source.size() * 4u + 4096u)) return std::nullopt;
-    // Every ER107 original is a frontmatter document: "---\n ... \n---\n<body>".
+struct ErSourceEnvelope {
+    std::size_t close_start, close_end, body_start;
+};
+
+// Shared frontmatter/body admission for all three ER test seams. Every ER107
+// original is a frontmatter document "---\n ... \n---\n<body>" whose body begins
+// erDiagram with a production word boundary. Pure (no Work spend); each seam
+// applies its own budget before calling, so the admission rule lives in one
+// place rather than being copied per seam.
+std::optional<ErSourceEnvelope> er_source_admit_envelope(std::string_view source) {
     if (source.size() < 8 || !source.starts_with("---\n")) return std::nullopt;
     const auto close_marker = source.find("\n---\n", 3);
     if (close_marker == std::string_view::npos) return std::nullopt;
@@ -3246,12 +3252,22 @@ std::optional<std::string> er_structural_witnesses_json(std::string_view source,
     const std::size_t body_start = close_end + 1;   // byte after the closing newline
     if (body_start >= source.size() || source.substr(body_start, 9) != "erDiagram")
         return std::nullopt;
-    // Word boundary exactly like take("erDiagram", boundary=true): a word
-    // byte right after the header is a different token, not an ER diagram.
     const std::size_t after_header = body_start + 9;
     if (after_header < source.size() &&
         er_word_byte(static_cast<unsigned char>(source[after_header])))
         return std::nullopt;
+    return ErSourceEnvelope{close_start, close_end, body_start};
+}
+}  // namespace
+
+std::optional<std::string> er_structural_witnesses_json(std::string_view source, Work& work) {
+    namespace json = loom::utils::json;
+    if (!work.spend(source.size() * 4u + 4096u)) return std::nullopt;
+    const auto admitted = er_source_admit_envelope(source);
+    if (!admitted) return std::nullopt;
+    const std::size_t close_start = admitted->close_start;
+    const std::size_t close_end = admitted->close_end;
+    const std::size_t body_start = admitted->body_start;
     const std::size_t length = source.size();
 
     std::vector<StructuralSpan> spans;
@@ -3891,18 +3907,10 @@ bool er_sem_body(std::string_view b, std::size_t body_start,
 std::optional<std::string> er_semantic_witnesses_json(std::string_view source, Work& work) {
     namespace json = loom::utils::json;
     if (!work.spend(source.size() * 8u + 4096u)) return std::nullopt;
-    if (source.size() < 8 || !source.starts_with("---\n")) return std::nullopt;
-    const auto close_marker = source.find("\n---\n", 3);
-    if (close_marker == std::string_view::npos) return std::nullopt;
-    const std::size_t close_start = close_marker + 1;
-    const std::size_t close_end = close_start + 3;
-    const std::size_t body_start = close_end + 1;
-    if (body_start >= source.size() || source.substr(body_start, 9) != "erDiagram")
-        return std::nullopt;
-    const std::size_t after_header = body_start + 9;
-    if (after_header < source.size() &&
-        er_word_byte(static_cast<unsigned char>(source[after_header])))
-        return std::nullopt;
+    const auto admitted = er_source_admit_envelope(source);
+    if (!admitted) return std::nullopt;
+    const std::size_t close_start = admitted->close_start;
+    const std::size_t body_start = admitted->body_start;
 
     std::vector<ErSemanticSpan> spans;
     spans.reserve(32u + source.size() / 2u);
@@ -3929,6 +3937,1119 @@ std::optional<std::string> er_semantic_witnesses_json(std::string_view source, W
         array.append(witness);
     }
     doc.set_root(array);
+    return doc.to_string();
+}
+
+namespace {
+// D271 source_model producer. A parallel, record-building ER scan that shares
+// the D251 grammar primitives but keeps parse-order model records (statements,
+// a find-or-insert entity table, relationships, attributes, subgraphs and the
+// frontmatter metadata) instead of flat spans. It is test-only, reaches no
+// production path, and regenerates the 16-field source_model byte-for-byte.
+//
+// Global witness ordinal layout (catalog §2.4): five fixed structural spans,
+// P physical lines, then the M metadata semantic witnesses, then the
+// diagram_header, then the body semantic witnesses.
+//   g_meta(local) = base + local;  base = 5 + P
+//   g_header      = base + M
+//   g_body(local) = base + 1 + M + local
+struct SrcLeaf {
+    std::vector<std::string> path;
+    int64_t key_witness = 0, value_witness = 0;
+    bool is_boolean = false, boolean = false;
+    std::string text;
+};
+struct SrcNamespace {
+    std::vector<std::string> path;
+    int64_t key_witness = 0, mapping_witness = 0;
+};
+struct SrcAttribute {
+    std::string entity, type_literal, name_literal, comment_literal;
+    int64_t witness = 0, type_witness = 0, name_witness = 0;
+    int64_t key_witness = -1, comment_witness = -1;  // -1 renders as null
+    int64_t ordinal = 0, global_attribute_ordinal = 0, statement_ordinal = 0;
+    std::vector<std::string> declared_key_tokens;
+    bool comment_present = false;
+};
+struct SrcEntity {
+    std::string id;
+    int64_t first_insert_order = 0, first_reference_witness = 0;
+    const char* first_reference_kind = "entity_declaration";
+    std::vector<int64_t> declaration_statement_ordinals;
+    std::vector<int64_t> relationship_reference_ordinals;
+    std::vector<SrcAttribute> attributes;
+    struct AliasAttempt {
+        std::string value;
+        int64_t witness = 0;
+    };
+    std::vector<AliasAttempt> alias_attempts;
+    std::string source_parent_subgraph;  // empty renders JSON null
+};
+struct SrcRelationship {
+    std::string entity_a, entity_b, role_literal;
+    bool role_quoted = false;
+    int64_t ordinal = 0, statement_ordinal = 0, witness = 0;
+    int64_t entity_a_witness = 0, entity_b_witness = 0;
+    int64_t role_lexeme_witness = 0, role_content_witness = 0;
+    int64_t left_card_witness = 0, right_card_witness = 0, ident_witness = 0;
+    std::string left_enum, right_enum, rel_type, pattern;
+};
+struct SrcStatement {
+    const char* kind = "";
+    int64_t statement_ordinal = 0, witness = 0;
+    // kind-specific payload; unused fields stay at their defaults.
+    std::string entity, id, value, scope_text;
+    int64_t id_witness = -1, alias_witness = -1, block_witness = -1;
+    int64_t value_witness = -1, relationship_ordinal = -1;
+    std::vector<int64_t> attribute_ordinals;
+    bool has_scope = false;
+};
+struct SrcSubgraph {
+    std::string id, title_before;
+    int64_t header_witness = 0, id_witness = 0, end_witness = 0;
+    std::vector<std::string> members;
+};
+struct SrcModelData {
+    // metadata
+    bool has_description = false, description_folded = false;
+    char description_indicator = '>';  // '>' folded or '|' literal block
+    int64_t desc_key_witness = 0, desc_value_witness = 0;
+    std::string description_value;
+    int64_t config_key_witness = 0;
+    std::vector<SrcNamespace> namespaces;
+    std::vector<SrcLeaf> leaves;
+    // body
+    std::vector<SrcStatement> statements;
+    std::vector<SrcEntity> entities;
+    std::vector<SrcRelationship> relationships;
+    std::vector<SrcSubgraph> subgraphs;
+    std::string declared_direction;  // empty when no direction statement
+    int64_t direction_statement_witness = 0, direction_value_witness = 0;
+    int64_t header_global = 0;
+};
+
+// Cardinality lexeme -> source enum name (and the getData snake_case arrow).
+const char* er_src_card_enum(std::string_view lexeme) {
+    if (lexeme == "only one" || lexeme == "one" || lexeme == "||" || lexeme == "1")
+        return "ONLY_ONE";
+    if (lexeme == "one or zero" || lexeme == "zero or one" || lexeme == "o|" ||
+        lexeme == "|o")
+        return "ZERO_OR_ONE";
+    if (lexeme == "zero or more" || lexeme == "zero or many" || lexeme == "many(0)" ||
+        lexeme == "many" || lexeme == "0+" || lexeme == "o{" || lexeme == "}o")
+        return "ZERO_OR_MORE";
+    return "ONE_OR_MORE";  // one or more/many, many(1), 1+, |{, }|
+}
+
+const char* er_src_arrow(const char* card_enum) {
+    if (card_enum == std::string_view("ONLY_ONE")) return "only_one";
+    if (card_enum == std::string_view("ZERO_OR_ONE")) return "zero_or_one";
+    if (card_enum == std::string_view("ZERO_OR_MORE")) return "zero_or_more";
+    return "one_or_more";
+}
+
+// Identification lexeme -> (relType, getData pattern).
+void er_src_identification(std::string_view lexeme, const char*& rel_type,
+                           const char*& pattern) {
+    if (lexeme == "--" || lexeme == "to") {
+        rel_type = "IDENTIFYING";
+        pattern = "solid";
+    } else {
+        rel_type = "NON_IDENTIFYING";
+        pattern = "dashed";
+    }
+}
+
+bool er_src_yaml_bool(std::string_view token, bool& value) {
+    static constexpr std::string_view kTrue[] = {"true", "True", "TRUE"};
+    static constexpr std::string_view kFalse[] = {"false", "False", "FALSE"};
+    for (const auto t : kTrue)
+        if (token == t) {
+            value = true;
+            return true;
+        }
+    for (const auto t : kFalse)
+        if (token == t) {
+            value = false;
+            return true;
+        }
+    return false;
+}
+
+// Fixed config-leaf path -> semantic obligation effect (catalog §7).
+const char* er_src_obligation_effect(std::string_view dotted_path) {
+    if (dotted_path == "config.er.useMaxWidth")
+        return "Renderer passes conf.useMaxWidth into SVG viewport setup; this is not a "
+               "terminal width bound.";
+    if (dotted_path == "config.htmlLabels")
+        return "Authored HTML-label policy; raw label bytes and markdown labelType "
+               "retained. Do not drop label text or infer plain-text equivalence.";
+    if (dotted_path == "config.layout")
+        return "Renderer passes requested layout through getRegisteredLayoutAlgorithm; "
+               "terminal layout equivalence is not asserted.";
+    if (dotted_path == "config.look")
+        return "Renderer selects look-specific markers; handDrawn creates background nodes.";
+    return "Authored theme selection; ER per-entity colorIndex exists independently of "
+           "Block composite indexing. Exact theme normalization/style effects not "
+           "investigated here.";  // config.theme
+}
+}  // namespace
+
+namespace {
+// Collect the seven-field metadata model and return the metadata witness count
+// M (the number of local metadata semantic emits), so the body scanner can
+// compute global ordinals. Mirrors er_sem_metadata's line/folded grammar while
+// retaining YAML paths, styles and typed leaf values.
+int er_src_collect_metadata(std::string_view b, std::size_t close_start, std::size_t base,
+                            SrcModelData& data) {
+    std::vector<ErMetaLine> lines;
+    std::size_t pos = 3;
+    while (true) {
+        std::size_t nl = b.find('\n', pos);
+        if (nl == kErSemNpos || nl > close_start) nl = close_start;
+        const std::string_view raw = b.substr(pos, nl - pos);
+        const std::size_t stripped = raw.find_first_not_of(" \t");
+        const std::size_t indent = stripped == kErSemNpos ? raw.size() : stripped;
+        lines.push_back({pos, nl, static_cast<int>(indent), raw.substr(indent)});
+        pos = nl + 1;
+        if (nl == close_start) break;
+    }
+    std::vector<ErMetaEntry> entries;
+    for (std::size_t idx = 0; idx < lines.size(); ++idx) {
+        const auto& line = lines[idx];
+        if (line.text.empty() || line.text == "---") continue;
+        const std::size_t colon = line.text.find(':');
+        if (colon == kErSemNpos) continue;
+        const std::size_t key_start = line.line_start + static_cast<std::size_t>(line.indent);
+        const std::size_t key_end = key_start + colon;
+        std::size_t value_start = key_end + 1;
+        if (value_start < line.line_end && b[value_start] == ' ') ++value_start;
+        entries.push_back({idx, line.indent, key_start, key_end, value_start, line.line_end,
+                           line.text.substr(0, colon)});
+    }
+    std::vector<bool> folded(lines.size(), false);
+    for (const auto& entry : entries) {
+        if (entry.indent != 0 || entry.key != "description") continue;
+        if (entry.value_start >= entry.line_end ||
+            (b[entry.value_start] != '>' && b[entry.value_start] != '|'))
+            continue;
+        for (std::size_t j = entry.index + 1; j < lines.size(); ++j) {
+            const auto& next = lines[j];
+            if (next.indent <= entry.indent && !next.text.empty()) break;
+            folded[j] = true;
+        }
+    }
+    const ErMetaEntry* description = nullptr;
+    const ErMetaEntry* config = nullptr;
+    std::vector<const ErMetaEntry*> subtree;
+    for (const auto& entry : entries) {
+        if (folded[entry.index]) continue;
+        if (entry.indent == 0) {
+            if (entry.key == "description") description = &entry;
+            if (entry.key == "config") config = &entry;
+        } else {
+            subtree.push_back(&entry);
+        }
+    }
+
+    int mli = 0;
+    if (description != nullptr) {
+        data.has_description = true;
+        data.desc_key_witness = static_cast<int64_t>(base + static_cast<std::size_t>(mli++));
+        const bool is_folded = description->value_start < description->line_end &&
+                               (b[description->value_start] == '>' ||
+                                b[description->value_start] == '|');
+        if (is_folded) data.description_indicator =
+                           static_cast<char>(b[description->value_start]);
+        std::size_t scalar_end = description->line_end;
+        if (is_folded) {
+            scalar_end = description->line_end + 1;
+            for (std::size_t j = description->index + 1; j < lines.size(); ++j) {
+                const auto& next = lines[j];
+                if (next.indent <= description->indent && !next.text.empty()) break;
+                scalar_end = next.line_end + 1;
+            }
+        } else {
+            while (scalar_end > description->value_start && b[scalar_end - 1] == ' ')
+                --scalar_end;
+        }
+        data.desc_value_witness = static_cast<int64_t>(base + static_cast<std::size_t>(mli++));
+        data.description_folded = is_folded;
+        std::string_view scalar = b.substr(description->value_start, scalar_end - description->value_start);
+        if (is_folded) {
+            // Split into lines, drop the ">-"/"|" header, then chomp the single
+            // trailing empty segment left by the final newline, dedent each
+            // continuation and join with one ASCII space.
+            std::vector<std::string_view> lines;
+            std::size_t start = 0;
+            while (true) {
+                const std::size_t nl = scalar.find('\n', start);
+                lines.push_back(nl == kErSemNpos ? scalar.substr(start)
+                                                  : scalar.substr(start, nl - start));
+                if (nl == kErSemNpos) break;
+                start = nl + 1;
+            }
+            if (!lines.empty()) lines.erase(lines.begin());  // header
+            if (!lines.empty() && lines.back().empty()) lines.pop_back();  // chomp
+            std::string decoded;
+            for (const auto piece : lines) {
+                const std::size_t nonspace = piece.find_first_not_of(" \t");
+                if (!decoded.empty()) decoded += ' ';
+                if (nonspace != kErSemNpos) decoded += std::string(piece.substr(nonspace));
+            }
+            data.description_value = std::move(decoded);
+        } else {
+            data.description_value = std::string(scalar);
+        }
+    }
+    if (config != nullptr) {
+        data.config_key_witness = static_cast<int64_t>(base + static_cast<std::size_t>(mli++));
+    }
+
+    struct ContainerFrame {
+        int indent;
+        std::string key;
+        int64_t key_witness;
+        std::vector<std::string> full_path;
+    };
+    std::vector<ContainerFrame> stack;
+    std::set<int> seen_indents;
+    for (std::size_t k = 0; k < subtree.size(); ++k) {
+        const auto& entry = *subtree[k];
+        while (!stack.empty() && stack.back().indent >= entry.indent) stack.pop_back();
+        const bool container =
+            k + 1 < subtree.size() && subtree[k + 1]->indent > entry.indent;
+        std::vector<std::string> parent_path;
+        int64_t parent_key_witness = data.config_key_witness;
+        if (stack.empty()) {
+            parent_path = {"config"};
+        } else {
+            parent_path = stack.back().full_path;
+            parent_key_witness = stack.back().key_witness;
+        }
+        if (seen_indents.insert(entry.indent).second) {
+            const int64_t mapping_witness =
+                static_cast<int64_t>(base + static_cast<std::size_t>(mli++));
+            data.namespaces.push_back({parent_path, parent_key_witness, mapping_witness});
+        }
+        const int64_t entry_key_witness =
+            static_cast<int64_t>(base + static_cast<std::size_t>(mli++));
+        std::vector<std::string> entry_path = parent_path;
+        entry_path.push_back(std::string(entry.key));
+        if (!container) {
+            std::size_t end = entry.line_end;
+            while (end > entry.value_start && b[end - 1] == ' ') --end;
+            const int64_t value_witness =
+                static_cast<int64_t>(base + static_cast<std::size_t>(mli++));
+            const std::string token =
+                std::string(b.substr(entry.value_start, end - entry.value_start));
+            SrcLeaf leaf;
+            leaf.path = entry_path;
+            leaf.key_witness = entry_key_witness;
+            leaf.value_witness = value_witness;
+            bool bool_value = false;
+            if (er_src_yaml_bool(token, bool_value)) {
+                leaf.is_boolean = true;
+                leaf.boolean = bool_value;
+            } else {
+                leaf.text = token;
+            }
+            data.leaves.push_back(std::move(leaf));
+        }
+        stack.push_back({entry.indent, std::string(entry.key), entry_key_witness, entry_path});
+    }
+    return mli;
+}
+}  // namespace
+
+namespace {
+struct SrcAttrSpan {
+    std::size_t stmt_start, stmt_end, type_start, type_end, name_start, name_end;
+    std::size_t key_start, key_end, comment_start, comment_end;
+};
+
+// Mirror er_sem_body's grammar but retain model records and map the grouped
+// witness emission sequence onto global ordinals (body local `wli` -> global
+// body_ordinal_base + wli). Returns false on any malformed construct.
+bool er_src_collect_body(std::string_view b, std::size_t body_start, std::size_t base, int meta_count,
+                         SrcModelData& data) {
+    const std::size_t n = b.size();
+    const std::size_t body_ordinal_base = base + 1u + static_cast<std::size_t>(meta_count);
+    data.header_global = static_cast<int64_t>(base + static_cast<std::size_t>(meta_count));
+    auto g = [&](std::size_t wli) {
+        return static_cast<int64_t>(body_ordinal_base + wli);
+    };
+    auto lex = [&](std::size_t s, std::size_t e) { return std::string(b.substr(s, e - s)); };
+
+    std::size_t i = er_sem_skip_all(b, body_start);
+    if (b.size() - i < 9 || b.compare(i, 9, "erDiagram") != 0) return false;
+    i += 9;
+    if (er_sem_body_uses_unsupported_surface(b, i)) return false;
+    auto keyword_terminated = [&](std::size_t after) {
+        return after >= n || b[after] == ' ' || b[after] == '\t' ||
+               b[after] == '\r' || b[after] == '\n';
+    };
+
+    std::map<std::string, std::size_t> id_index;
+    auto find_or_insert = [&](const std::string& id, int64_t first_witness,
+                              const char* kind) -> std::size_t {
+        if (const auto found = id_index.find(id); found != id_index.end()) return found->second;
+        SrcEntity entity;
+        entity.id = id;
+        entity.first_insert_order = static_cast<int64_t>(data.entities.size());
+        entity.first_reference_witness = first_witness;
+        entity.first_reference_kind = kind;
+        data.entities.push_back(std::move(entity));
+        const std::size_t index = data.entities.size() - 1;
+        id_index.emplace(id, index);
+        return index;
+    };
+
+    std::size_t wli = 0;
+    int64_t stmt_no = 0, rel_no = 0, global_attr = 0;
+    int subgraph_depth = 0, subgraph_count = 0;
+    std::string current_scope;
+    std::size_t active_subgraph = kErSemNpos;
+    std::size_t steps = 0;
+    while (true) {
+        if (++steps > 100000) return false;
+        i = er_sem_skip_all(b, i);
+        if (i >= n) break;
+        // direction
+        if (b.size() - i >= 9 && er_sem_ascii_equal(b.substr(i, 9), "direction") &&
+            keyword_terminated(i + 9)) {
+            i += 9;
+            i = er_sem_skip_inline(b, i);
+            const std::size_t value_start = i;
+            while (i < n && er_sem_name_byte(static_cast<unsigned char>(b[i]))) ++i;
+            if (i == value_start) return false;
+            const std::string value = lex(value_start, i);
+            bool matched = false;
+            for (const auto d : {"TB", "BT", "LR", "RL"})
+                if (er_sem_ascii_equal(value, d)) matched = true;
+            if (!matched) return false;
+            const int64_t stmt_wit = g(wli), val_wit = g(wli + 1);
+            wli += 2;
+            data.declared_direction = value;
+            data.direction_statement_witness = stmt_wit;
+            data.direction_value_witness = val_wit;
+            SrcStatement s;
+            s.kind = "direction";
+            s.statement_ordinal = stmt_no++;
+            s.witness = stmt_wit;
+            s.value = value;
+            s.value_witness = val_wit;
+            data.statements.push_back(std::move(s));
+            continue;
+        }
+        // subgraph begin
+        if (b.size() - i >= 8 && er_sem_ascii_equal(b.substr(i, 8), "subgraph") &&
+            keyword_terminated(i + 8)) {
+            i += 8;
+            if (i >= n || (b[i] != ' ' && b[i] != '\t')) return false;
+            i = er_sem_skip_inline(b, i);
+            const std::size_t id_start = i;
+            while (i < n && er_sem_name_byte(static_cast<unsigned char>(b[i]))) ++i;
+            if (i == id_start || er_sem_is_reserved_name(b, id_start, i)) return false;
+            if (subgraph_depth >= static_cast<int>(kGroupDepthLimit) ||
+                subgraph_count >= static_cast<int>(kGroupLimit))
+                return false;
+            // This record model carries a single current scope and one
+            // source_parent_subgraph per entity, so a nested group cannot be
+            // represented faithfully. Production uses a 16-deep frame stack;
+            // reject nesting rather than emit wrong ownership (no ER107 case
+            // nests groups).
+            if (subgraph_depth >= 1) return false;
+            const int64_t header_wit = g(wli), id_wit = g(wli + 1);
+            wli += 2;
+            ++subgraph_depth;
+            ++subgraph_count;
+            const std::string group_id = lex(id_start, i);
+            SrcSubgraph sub;
+            sub.id = group_id;
+            sub.title_before = group_id;
+            sub.header_witness = header_wit;
+            sub.id_witness = id_wit;
+            data.subgraphs.push_back(std::move(sub));
+            active_subgraph = data.subgraphs.size() - 1;
+            current_scope = group_id;
+            SrcStatement s;
+            s.kind = "subgraph_begin";
+            s.statement_ordinal = stmt_no++;
+            s.witness = header_wit;
+            s.id = group_id;
+            data.statements.push_back(std::move(s));
+            continue;
+        }
+        // end
+        if (b.size() - i >= 3 && er_sem_ascii_equal(b.substr(i, 3), "end") &&
+            keyword_terminated(i + 3)) {
+            if (subgraph_depth == 0) return false;
+            --subgraph_depth;
+            const int64_t end_wit = g(wli++);
+            const std::string group_id = current_scope;
+            if (active_subgraph != kErSemNpos)
+                data.subgraphs[active_subgraph].end_witness = end_wit;
+            active_subgraph = kErSemNpos;
+            current_scope.clear();
+            i += 3;
+            SrcStatement s;
+            s.kind = "subgraph_end";
+            s.statement_ordinal = stmt_no++;
+            s.witness = end_wit;
+            s.id = group_id;
+            data.statements.push_back(std::move(s));
+            continue;
+        }
+        // leading name
+        std::size_t id_start, id_end;
+        if (!er_sem_read_name(b, i, id_start, id_end)) return false;
+        if (er_sem_is_reserved_name(b, id_start, id_end)) return false;
+        i = id_end;
+        std::size_t alias_start = kErSemNpos, alias_end = kErSemNpos;
+        std::size_t j = er_sem_skip_inline(b, i);
+        if (j < n && b[j] == '[') {
+            i = j + 1;
+            if (i < n && b[i] == '"') {
+                std::size_t k = i + 1;
+                while (k < n && b[k] != '"') ++k;
+                if (k >= n) return false;
+                alias_start = i;
+                alias_end = k + 1;
+                i = k + 1;
+            } else {
+                alias_start = i;
+                while (i < n && er_sem_name_byte(static_cast<unsigned char>(b[i]))) ++i;
+                alias_end = i;
+                if (i == alias_start || er_sem_is_reserved_name(b, alias_start, alias_end))
+                    return false;
+            }
+            i = er_sem_skip_inline(b, i);
+            if (i >= n || b[i] != ']') return false;
+            ++i;
+        }
+        const std::string entity_id = lex(id_start, id_end);
+        auto alias_value = [&](std::size_t s, std::size_t e) -> std::string {
+            if (b[s] == '"') return lex(s + 1, e - 1);
+            return lex(s, e);
+        };
+        // attribute block
+        j = er_sem_skip_inline(b, i);
+        if (j < n && b[j] == '{') {
+            i = j + 1;
+            std::vector<SrcAttrSpan> attrs;
+            while (true) {
+                i = er_sem_skip_all(b, i);
+                if (i >= n || b[i] == '}') break;
+                const std::size_t stmt_start = i;
+                const std::size_t type_end = er_sem_read_attr_token(b, i);
+                if (type_end == kErSemNpos) return false;
+                const std::size_t type_start = i;
+                i = type_end;
+                i = er_sem_skip_inline(b, i);
+                const std::size_t name_end = er_sem_read_attr_token(b, i);
+                if (name_end == kErSemNpos) return false;
+                const std::size_t name_start = i;
+                i = name_end;
+                i = er_sem_skip_inline(b, i);
+                std::size_t key_start = kErSemNpos, key_end = kErSemNpos;
+                std::size_t comment_start = kErSemNpos, comment_end = kErSemNpos;
+                if (i < n && b[i] != '\n' && b[i] != '\r' && b[i] != '}') {
+                    if (b[i] == '"') {
+                        std::size_t k = i + 1;
+                        while (k < n && b[k] != '"') ++k;
+                        if (k >= n) return false;
+                        comment_start = i;
+                        comment_end = k + 1;
+                        i = k + 1;
+                    } else {
+                        key_start = i;
+                        while (i < n && er_word_byte(static_cast<unsigned char>(b[i]))) ++i;
+                        key_end = i;
+                        i = er_sem_skip_inline(b, i);
+                        if (i < n && b[i] == '"') {
+                            std::size_t k = i + 1;
+                            while (k < n && b[k] != '"') ++k;
+                            if (k >= n) return false;
+                            comment_start = i;
+                            comment_end = k + 1;
+                            i = k + 1;
+                        }
+                    }
+                }
+                std::size_t stmt_end = i;
+                while (stmt_end > stmt_start &&
+                       (b[stmt_end - 1] == ' ' || b[stmt_end - 1] == '\t' ||
+                        b[stmt_end - 1] == '\n' || b[stmt_end - 1] == '\r'))
+                    --stmt_end;
+                attrs.push_back({stmt_start, stmt_end, type_start, type_end, name_start,
+                                  name_end, key_start, key_end, comment_start, comment_end});
+            }
+            if (i >= n || b[i] != '}') return false;
+            ++i;
+            // grouped witness emission
+            const int64_t id_wit = g(wli++);
+            const int64_t alias_wit =
+                alias_start == kErSemNpos ? -1 : g(wli++);
+            const int64_t block_wit = g(wli++);
+            std::vector<int64_t> attr_global_ordinals;
+            std::vector<SrcAttribute> built_attrs;
+            for (const auto& a : attrs) {
+                const int64_t attr_wit = g(wli++);
+                const int64_t type_wit = g(wli++);
+                const int64_t name_wit = g(wli++);
+                const int64_t key_wit = a.key_start == kErSemNpos ? -1 : g(wli++);
+                const int64_t comment_wit =
+                    a.comment_start == kErSemNpos ? -1 : g(wli++);
+                attr_global_ordinals.push_back(global_attr);
+                SrcAttribute sa;
+                sa.entity = entity_id;
+                sa.type_literal = lex(a.type_start, a.type_end);
+                sa.name_literal = lex(a.name_start, a.name_end);
+                sa.witness = attr_wit;
+                sa.type_witness = type_wit;
+                sa.name_witness = name_wit;
+                sa.key_witness = key_wit;
+                sa.comment_witness = comment_wit;
+                sa.statement_ordinal = stmt_no;
+                if (key_wit != -1) {
+                    const std::string keys = lex(a.key_start, a.key_end);
+                    std::size_t at = 0;
+                    while (true) {
+                        std::size_t comma = keys.find(',', at);
+                        sa.declared_key_tokens.push_back(
+                            keys.substr(at, comma == kErSemNpos ? std::string::npos : comma - at));
+                        if (comma == kErSemNpos) break;
+                        at = comma + 1;
+                    }
+                }
+                if (comment_wit != -1) {
+                    sa.comment_present = true;
+                    sa.comment_literal = lex(a.comment_start + 1, a.comment_end - 1);
+                }
+                sa.global_attribute_ordinal = global_attr++;
+                built_attrs.push_back(std::move(sa));
+            }
+            const int64_t decl_wit = g(wli++);
+            const std::size_t eidx =
+                find_or_insert(entity_id, id_wit, "entity_declaration");
+            auto& entity = data.entities[eidx];
+            entity.declaration_statement_ordinals.push_back(stmt_no);
+            if (alias_start != kErSemNpos)
+                entity.alias_attempts.push_back(
+                    {alias_value(alias_start, alias_end), alias_wit});
+            if (!current_scope.empty() && entity.source_parent_subgraph.empty()) {
+                entity.source_parent_subgraph = current_scope;
+                if (active_subgraph != kErSemNpos) {
+                    auto& members = data.subgraphs[active_subgraph].members;
+                    if (std::find(members.begin(), members.end(), entity_id) == members.end())
+                        members.push_back(entity_id);
+                }
+            }
+            const int64_t local_base = static_cast<int64_t>(entity.attributes.size());
+            for (std::size_t q = 0; q < built_attrs.size(); ++q) {
+                built_attrs[q].ordinal = local_base + static_cast<int64_t>(q);
+                entity.attributes.push_back(std::move(built_attrs[q]));
+            }
+            SrcStatement s;
+            s.kind = "entity_declaration";
+            s.statement_ordinal = stmt_no++;
+            s.witness = decl_wit;
+            s.entity = entity_id;
+            s.has_scope = !current_scope.empty();
+            s.scope_text = current_scope;
+            s.id_witness = id_wit;
+            s.alias_witness = alias_wit;
+            s.block_witness = block_wit;
+            s.attribute_ordinals = std::move(attr_global_ordinals);
+            data.statements.push_back(std::move(s));
+            continue;
+        }
+        // relationship
+        i = er_sem_skip_inline(b, i);
+        const std::size_t left_card_end = er_sem_match_choice(b, i, kErCardinality);
+        if (left_card_end != kErSemNpos) {
+            const std::size_t left_card_start = i;
+            i = left_card_end;
+            i = er_sem_skip_inline(b, i);
+            const std::size_t ident_start = i;
+            const std::size_t ident_end = er_sem_match_choice(b, i, kErIdentification);
+            if (ident_end == kErSemNpos) return false;
+            i = ident_end;
+            i = er_sem_skip_inline(b, i);
+            const std::size_t right_card_start = i;
+            const std::size_t right_card_end = er_sem_match_choice(b, i, kErCardinality);
+            if (right_card_end == kErSemNpos) return false;
+            i = right_card_end;
+            i = er_sem_skip_inline(b, i);
+            std::size_t right_start, right_end;
+            if (!er_sem_read_name(b, i, right_start, right_end)) return false;
+            if (er_sem_is_reserved_name(b, right_start, right_end)) return false;
+            i = right_end;
+            i = er_sem_skip_inline(b, i);
+            if (i >= n || b[i] != ':') return false;
+            ++i;
+            i = er_sem_skip_inline(b, i);
+            std::size_t role_start, role_end, content_start, content_end;
+            bool role_quoted = false;
+            if (i < n && b[i] == '"') {
+                std::size_t k = i + 1;
+                while (k < n && b[k] != '"') ++k;
+                if (k >= n) return false;
+                role_quoted = true;
+                role_start = i;
+                role_end = k + 1;
+                content_start = i + 1;
+                content_end = k;
+                i = k + 1;
+            } else {
+                role_start = i;
+                while (i < n && er_sem_name_byte(static_cast<unsigned char>(b[i]))) ++i;
+                role_end = i;
+                content_start = role_start;
+                content_end = role_end;
+                if (i == role_start || er_sem_is_reserved_name(b, role_start, role_end))
+                    return false;
+            }
+            const int64_t a_wit = g(wli), b_wit = g(wli + 1), rolelex_wit = g(wli + 2),
+                          rolecon_wit = g(wli + 3), lcard_wit = g(wli + 4),
+                          rcard_wit = g(wli + 5), ident_wit = g(wli + 6),
+                          stmt_wit = g(wli + 7);
+            wli += 8;
+            const std::string right_id = lex(right_start, right_end);
+            const std::size_t aidx =
+                find_or_insert(entity_id, a_wit, "relationship_reference");
+            const std::size_t bidx =
+                find_or_insert(right_id, b_wit, "relationship_reference");
+            SrcRelationship rel;
+            rel.entity_a = entity_id;
+            rel.entity_b = right_id;
+            rel.ordinal = rel_no;
+            rel.statement_ordinal = stmt_no;
+            rel.witness = stmt_wit;
+            rel.entity_a_witness = a_wit;
+            rel.entity_b_witness = b_wit;
+            rel.role_lexeme_witness = rolelex_wit;
+            rel.role_content_witness = rolecon_wit;
+            rel.left_card_witness = lcard_wit;
+            rel.right_card_witness = rcard_wit;
+            rel.ident_witness = ident_wit;
+            rel.role_quoted = role_quoted;
+            rel.role_literal = lex(content_start, content_end);
+            const std::string left_lex = lex(left_card_start, left_card_end);
+            const std::string right_lex = lex(right_card_start, right_card_end);
+            rel.left_enum = er_src_card_enum(left_lex);
+            rel.right_enum = er_src_card_enum(right_lex);
+            const char *rel_type, *pattern;
+            er_src_identification(lex(ident_start, ident_end), rel_type, pattern);
+            rel.rel_type = rel_type;
+            rel.pattern = pattern;
+            data.relationships.push_back(std::move(rel));
+            data.entities[aidx].relationship_reference_ordinals.push_back(rel_no);
+            data.entities[bidx].relationship_reference_ordinals.push_back(rel_no);
+            SrcStatement s;
+            s.kind = "relationship";
+            s.statement_ordinal = stmt_no++;
+            s.relationship_ordinal = rel_no;
+            s.witness = stmt_wit;
+            data.statements.push_back(std::move(s));
+            ++rel_no;
+            continue;
+        }
+        // bare entity
+        const int64_t bare_id_wit = g(wli++);
+        const int64_t bare_alias_wit =
+            alias_start == kErSemNpos ? -1 : g(wli++);
+        const int64_t bare_decl_wit = g(wli++);
+        const std::size_t eidx =
+            find_or_insert(entity_id, bare_id_wit, "entity_declaration");
+        auto& entity = data.entities[eidx];
+        entity.declaration_statement_ordinals.push_back(stmt_no);
+        if (alias_start != kErSemNpos)
+            entity.alias_attempts.push_back(
+                {alias_value(alias_start, alias_end), bare_alias_wit});
+        if (!current_scope.empty() && entity.source_parent_subgraph.empty()) {
+            entity.source_parent_subgraph = current_scope;
+            if (active_subgraph != kErSemNpos) {
+                auto& members = data.subgraphs[active_subgraph].members;
+                if (std::find(members.begin(), members.end(), entity_id) == members.end())
+                    members.push_back(entity_id);
+            }
+        }
+        SrcStatement s;
+        s.kind = "entity_declaration";
+        s.statement_ordinal = stmt_no++;
+        s.witness = bare_decl_wit;
+        s.entity = entity_id;
+        s.has_scope = !current_scope.empty();
+        s.scope_text = current_scope;
+        s.id_witness = bare_id_wit;
+        s.alias_witness = bare_alias_wit;
+        data.statements.push_back(std::move(s));
+    }
+    if (subgraph_depth != 0) return false;
+    return true;
+}
+}  // namespace
+
+namespace {
+namespace erjson = loom::utils::json;
+
+void er_src_add_int_or_null(erjson::JsonMutVal obj, std::string_view key, int64_t value) {
+    if (value < 0)
+        obj.add(key, obj.make_null());
+    else
+        obj.add(key, obj.make_num(value));
+}
+
+// Assemble the 16-field source_model. Object key order is irrelevant to the
+// canonical (sorted) hash; every array is emitted in its pinned parse order.
+erjson::JsonMutDoc er_src_assemble(const SrcModelData& data, std::string_view source,
+                                   std::size_t body_start) {
+    erjson::JsonMutDoc doc;
+    auto root = doc.object();
+    auto add_empty_array = [&](std::string_view key) { root.add(key, root.make_arr()); };
+
+    add_empty_array("authored_classDefs");
+    add_empty_array("authored_class_assignments");
+    add_empty_array("authored_style_statements");
+
+    // config_semantic_obligations (1:1 with ordered config leaves)
+    {
+        auto arr = root.make_arr();
+        for (const auto& leaf : data.leaves) {
+            std::string dotted;
+            for (std::size_t k = 0; k < leaf.path.size(); ++k) {
+                if (k) dotted += '.';
+                dotted += leaf.path[k];
+            }
+            auto o = arr.make_obj();
+            o.add("path", o.make_str(dotted));
+            o.add("source_semantic_effect", o.make_str(er_src_obligation_effect(dotted)));
+            o.add("source_value",
+                  leaf.is_boolean ? o.make_bool(leaf.boolean) : o.make_str(leaf.text));
+            o.add("terminal_disposition", o.make_str("UNKNOWN_NOT_ADMITTED"));
+            o.add("terminal_projection", o.make_null());
+            o.add("witness", o.make_num(leaf.value_witness));
+            arr.append(o);
+        }
+        root.add("config_semantic_obligations", arr);
+    }
+
+    // direction_declarations (direction statement minus the kind field)
+    {
+        auto arr = root.make_arr();
+        for (const auto& st : data.statements) {
+            if (std::string_view(st.kind) != "direction") continue;
+            auto o = arr.make_obj();
+            o.add("scope", o.make_null());
+            o.add("statement_ordinal", o.make_num(st.statement_ordinal));
+            o.add("value", o.make_str(st.value));
+            o.add("value_witness", o.make_num(st.value_witness));
+            o.add("witness", o.make_num(st.witness));
+            arr.append(o);
+        }
+        root.add("direction_declarations", arr);
+    }
+
+    // entities
+    std::map<std::string, std::string> db_id_by_id;
+    {
+        auto arr = root.make_arr();
+        for (const auto& e : data.entities) {
+            const std::string db_id =
+                "entity-" + e.id + "-" + std::to_string(e.first_insert_order);
+            db_id_by_id.emplace(e.id, db_id);
+            auto o = arr.make_obj();
+            auto aliases = o.make_arr();
+            for (const auto& a : e.alias_attempts) {
+                auto ao = aliases.make_obj();
+                ao.add("applied_by_first_nonempty_alias_rule", ao.make_bool(true));
+                ao.add("value", ao.make_str(a.value));
+                ao.add("witness", ao.make_num(a.witness));
+                aliases.append(ao);
+            }
+            o.add("alias_attempts", aliases);
+            auto attrs = o.make_arr();
+            for (const auto& a : e.attributes) {
+                auto ao = attrs.make_obj();
+                ao.add("comment_literal", ao.make_str(a.comment_literal));
+                ao.add("comment_present", ao.make_bool(a.comment_present));
+                er_src_add_int_or_null(ao, "comment_witness", a.comment_witness);
+                auto keys = ao.make_arr();
+                for (const auto& token : a.declared_key_tokens) keys.append(keys.make_str(token));
+                ao.add("declared_key_tokens", keys);
+                ao.add("entity", ao.make_str(a.entity));
+                ao.add("global_attribute_ordinal", ao.make_num(a.global_attribute_ordinal));
+                er_src_add_int_or_null(ao, "key_witness", a.key_witness);
+                ao.add("name_literal", ao.make_str(a.name_literal));
+                ao.add("name_witness", ao.make_num(a.name_witness));
+                ao.add("ordinal", ao.make_num(a.ordinal));
+                ao.add("statement_ordinal", ao.make_num(a.statement_ordinal));
+                ao.add("type_literal", ao.make_str(a.type_literal));
+                ao.add("type_witness", ao.make_num(a.type_witness));
+                ao.add("witness", ao.make_num(a.witness));
+                attrs.append(ao);
+            }
+            o.add("attributes", attrs);
+            o.add("authored_classes", o.make_arr());
+            o.add("authored_direct_styles", o.make_arr());
+            auto decls = o.make_arr();
+            for (const auto d : e.declaration_statement_ordinals) decls.append(decls.make_num(d));
+            o.add("declaration_statement_ordinals", decls);
+            o.add("first_insert_order", o.make_num(e.first_insert_order));
+            o.add("first_reference_kind", o.make_str(e.first_reference_kind));
+            o.add("first_reference_witness", o.make_num(e.first_reference_witness));
+            o.add("id", o.make_str(e.id));
+            auto refs = o.make_arr();
+            for (const auto r : e.relationship_reference_ordinals) refs.append(refs.make_num(r));
+            o.add("relationship_reference_ordinals", refs);
+            o.add("source_db_alias",
+                  o.make_str(e.alias_attempts.empty() ? "" : e.alias_attempts.front().value));
+            o.add("source_db_cssClasses", o.make_str("default"));
+            o.add("source_db_id", o.make_str(db_id));
+            o.add("source_db_label", o.make_str(e.id));
+            o.add("source_db_labelType", o.make_str("markdown"));
+            o.add("source_db_label_witness", o.make_num(e.first_reference_witness));
+            o.add("source_db_shape", o.make_str("erBox"));
+            o.add("source_getData_colorIndex", o.make_num(e.first_insert_order));
+            if (e.source_parent_subgraph.empty())
+                o.add("source_parent_subgraph", o.make_null());
+            else
+                o.add("source_parent_subgraph", o.make_str(e.source_parent_subgraph));
+            arr.append(o);
+        }
+        root.add("entities", arr);
+    }
+
+    // metadata
+    {
+        auto md = root.make_obj();
+        // authored_config: nest leaves by path with the "config" root stripped
+        {
+            auto cfg = md.make_obj();
+            for (const auto& leaf : data.leaves) {
+                erjson::JsonMutVal node = cfg;
+                for (std::size_t k = 1; k + 1 < leaf.path.size(); ++k)
+                    node = node.ensure_object(leaf.path[k]);
+                const std::string& final_key = leaf.path.back();
+                node.add(final_key,
+                         leaf.is_boolean ? node.make_bool(leaf.boolean) : node.make_str(leaf.text));
+            }
+            md.add("authored_config", cfg);
+        }
+        if (!data.has_description) {
+            md.add("description", md.make_null());
+        } else {
+            auto d = md.make_obj();
+            d.add("key_witness", d.make_num(data.desc_key_witness));
+            auto path = d.make_arr();
+            path.append(path.make_str("description"));
+            d.add("path", path);
+            d.add("source_value", d.make_str(data.description_value));
+            d.add("value_witness", d.make_num(data.desc_value_witness));
+            if (data.description_folded)
+                d.add("yaml_style",
+                      d.make_str(std::string(1, data.description_indicator)));
+            else
+                d.add("yaml_style", d.make_null());
+            d.add("yaml_tag", d.make_str("tag:yaml.org,2002:str"));
+            md.add("description", d);
+        }
+        md.add("effective_config", md.make_null());
+        md.add("init_directives", md.make_arr());
+        {
+            auto nsa = md.make_arr();
+            for (const auto& ns : data.namespaces) {
+                auto o = nsa.make_obj();
+                o.add("key_witness", o.make_num(ns.key_witness));
+                o.add("mapping_witness", o.make_num(ns.mapping_witness));
+                auto path = o.make_arr();
+                for (const auto& seg : ns.path) path.append(path.make_str(seg));
+                o.add("path", path);
+                nsa.append(o);
+            }
+            md.add("namespaces", nsa);
+        }
+        {
+            auto leaves = md.make_arr();
+            for (const auto& leaf : data.leaves) {
+                auto o = leaves.make_obj();
+                o.add("key_witness", o.make_num(leaf.key_witness));
+                auto path = o.make_arr();
+                for (const auto& seg : leaf.path) path.append(path.make_str(seg));
+                o.add("path", path);
+                o.add("source_value",
+                      leaf.is_boolean ? o.make_bool(leaf.boolean) : o.make_str(leaf.text));
+                o.add("value_witness", o.make_num(leaf.value_witness));
+                o.add("yaml_style", o.make_null());
+                o.add("yaml_tag",
+                      o.make_str(leaf.is_boolean ? "tag:yaml.org,2002:bool"
+                                                 : "tag:yaml.org,2002:str"));
+                leaves.append(o);
+            }
+            md.add("ordered_config_leaves", leaves);
+        }
+        md.add("title", md.make_null());
+        root.add("metadata", md);
+    }
+
+    // relationships
+    {
+        auto arr = root.make_arr();
+        for (const auto& r : data.relationships) {
+            auto o = arr.make_obj();
+            o.add("entityA", o.make_str(r.entity_a));
+            o.add("entityB", o.make_str(r.entity_b));
+            o.add("identification_witness", o.make_num(r.ident_witness));
+            o.add("left_cardinality_witness", o.make_num(r.left_card_witness));
+            o.add("ordinal", o.make_num(r.ordinal));
+            o.add("right_cardinality_witness", o.make_num(r.right_card_witness));
+            o.add("role_content_witness", o.make_num(r.role_content_witness));
+            o.add("role_lexeme_witness", o.make_num(r.role_lexeme_witness));
+            o.add("role_literal", o.make_str(r.role_literal));
+            o.add("role_quoted", o.make_bool(r.role_quoted));
+            o.add("source_db_entityA", o.make_str(db_id_by_id.at(r.entity_a)));
+            o.add("source_db_entityB", o.make_str(db_id_by_id.at(r.entity_b)));
+            o.add("source_entityA_witness", o.make_num(r.entity_a_witness));
+            o.add("source_entityB_witness", o.make_num(r.entity_b_witness));
+            o.add("source_getData_arrowTypeEnd", o.make_str(er_src_arrow(r.right_enum.c_str())));
+            o.add("source_getData_arrowTypeStart", o.make_str(er_src_arrow(r.left_enum.c_str())));
+            o.add("source_getData_labelType", o.make_str("markdown"));
+            o.add("source_getData_pattern", o.make_str(r.pattern));
+            o.add("source_left_cardinality", o.make_str(r.left_enum));
+            auto spec = o.make_obj();
+            spec.add("cardA", spec.make_str(r.right_enum));
+            spec.add("cardB", spec.make_str(r.left_enum));
+            spec.add("relType", spec.make_str(r.rel_type));
+            o.add("source_relSpec", spec);
+            o.add("source_right_cardinality", o.make_str(r.right_enum));
+            o.add("statement_ordinal", o.make_num(r.statement_ordinal));
+            o.add("terminal_role", o.make_null());
+            o.add("witness", o.make_num(r.witness));
+            arr.append(o);
+        }
+        root.add("relationships", arr);
+    }
+
+    root.add("review_status", root.make_str("UNREVIEWED"));
+    root.add("schema", root.make_str("er107_source_model/v1"));
+
+    // source_body
+    {
+        const std::string_view body = source.substr(body_start);
+        auto sb = root.make_obj();
+        sb.add("bytes", sb.make_num(static_cast<int64_t>(body.size())));
+        sb.add("header_witness", sb.make_num(data.header_global));
+        sb.add("sha256", sb.make_str(loom::utils::crypto::sha256(body)));
+        sb.add("witness", sb.make_num(2));
+        root.add("source_body", sb);
+    }
+
+    root.add("source_db_direction_under_fresh_instance",
+             root.make_str(data.declared_direction.empty() ? "TB" : data.declared_direction));
+
+    // statements (four shapes)
+    {
+        auto arr = root.make_arr();
+        for (const auto& st : data.statements) {
+            auto o = arr.make_obj();
+            const std::string_view kind = st.kind;
+            if (kind == "entity_declaration") {
+                er_src_add_int_or_null(o, "alias_witness", st.alias_witness);
+                er_src_add_int_or_null(o, "attribute_block_witness", st.block_witness);
+                auto ords = o.make_arr();
+                for (const auto x : st.attribute_ordinals) ords.append(ords.make_num(x));
+                o.add("attribute_ordinals", ords);
+                o.add("entity", o.make_str(st.entity));
+                o.add("id_witness", o.make_num(st.id_witness));
+                o.add("kind", o.make_str("entity_declaration"));
+                if (st.has_scope)
+                    o.add("scope", o.make_str(st.scope_text));
+                else
+                    o.add("scope", o.make_null());
+                o.add("statement_ordinal", o.make_num(st.statement_ordinal));
+                o.add("witness", o.make_num(st.witness));
+            } else if (kind == "relationship") {
+                o.add("kind", o.make_str("relationship"));
+                o.add("relationship_ordinal", o.make_num(st.relationship_ordinal));
+                o.add("statement_ordinal", o.make_num(st.statement_ordinal));
+                o.add("witness", o.make_num(st.witness));
+            } else if (kind == "direction") {
+                o.add("kind", o.make_str("direction"));
+                o.add("scope", o.make_null());
+                o.add("statement_ordinal", o.make_num(st.statement_ordinal));
+                o.add("value", o.make_str(st.value));
+                o.add("value_witness", o.make_num(st.value_witness));
+                o.add("witness", o.make_num(st.witness));
+            } else {  // subgraph_begin / subgraph_end
+                o.add("id", o.make_str(st.id));
+                o.add("kind", o.make_str(kind));
+                o.add("statement_ordinal", o.make_num(st.statement_ordinal));
+                o.add("witness", o.make_num(st.witness));
+            }
+            arr.append(o);
+        }
+        root.add("statements", arr);
+    }
+
+    // subgraphs
+    {
+        auto arr = root.make_arr();
+        for (const auto& sub : data.subgraphs) {
+            auto o = arr.make_obj();
+            o.add("authored_classes", o.make_arr());
+            o.add("authored_styles", o.make_arr());
+            o.add("direction_declarations", o.make_arr());
+            o.add("end_witness", o.make_num(sub.end_witness));
+            o.add("header_witness", o.make_num(sub.header_witness));
+            o.add("id", o.make_str(sub.id));
+            o.add("id_witness", o.make_num(sub.id_witness));
+            o.add("label_type_default", o.make_str("markdown"));
+            auto members = o.make_arr();
+            for (const auto& m : sub.members) members.append(members.make_str(m));
+            o.add("members", members);
+            o.add("sanitized_source_title", o.make_null());
+            o.add("source_parent_subgraph", o.make_null());
+            o.add("source_title_before_sanitize", o.make_str(sub.title_before));
+            arr.append(o);
+        }
+        root.add("subgraphs", arr);
+    }
+
+    root.add("terminal_model", root.make_null());
+    root.add("unparsed_statements", root.make_arr());
+    doc.set_root(root);
+    return doc;
+}
+}  // namespace
+
+// D271 test-only seam: regenerate the 16-field ER107 source_model. Reachable
+// only through the mermaid.testing facade; no production call path.
+std::optional<std::string> er_source_model_json(std::string_view source, Work& work) {
+    if (!work.spend(source.size() * 12u + 8192u)) return std::nullopt;
+    const auto admitted = er_source_admit_envelope(source);
+    if (!admitted) return std::nullopt;
+    // Physical-line tiling identical to the structural seam (incl. a trailing
+    // line without a newline), not a bare newline count.
+    std::size_t physical_lines = 0;
+    std::size_t line_start = 0;
+    for (std::size_t k = 0; k < source.size(); ++k) {
+        if (source[k] == '\n') {
+            ++physical_lines;
+            line_start = k + 1;
+        }
+    }
+    if (line_start != source.size()) ++physical_lines;
+    const std::size_t base = 5 + physical_lines;
+
+    SrcModelData data;
+    const int meta_count =
+        er_src_collect_metadata(source, admitted->close_start, base, data);
+    if (!er_src_collect_body(source, admitted->body_start, base, meta_count, data))
+        return std::nullopt;
+
+    erjson::JsonMutDoc doc = er_src_assemble(data, source, admitted->body_start);
     return doc.to_string();
 }
 

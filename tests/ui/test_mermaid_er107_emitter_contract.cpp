@@ -350,6 +350,8 @@ std::vector<JsonVal> semantic_pinned(const JsonVal& witnesses) {
     });
     return out;
 }
+
+constexpr std::size_t kSourceModelFields = 16;
 }  // namespace
 
 TEST(MermaidEr107EmitterContract, SemanticWitnessSeamReproducesAll107OrderedByteExact) {
@@ -431,4 +433,94 @@ TEST(MermaidEr107EmitterContract, SemanticSeamFailClosedOnMalformedAndNonErInput
     const auto parsed = json::parse(*ok);
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->root().size(), 0u);
+}
+
+// D271 stage: the parallel source_model record builder must regenerate the
+// frozen 16-field source_model for every ER107 original. The comparison is on
+// the canonical (sorted-key, compact) encoding, so object insertion order is
+// irrelevant while every array order is load-bearing; recomputing the digest
+// must equal the pinned source_model_sha256.
+TEST(MermaidEr107EmitterContract, SourceModelSeamReproducesAll107Canonical) {
+    const auto proposal = load_source_proposal();
+    const fs::path cases_dir = kFixtures / "mermaid_official/cases";
+    std::size_t full_match = 0;
+    std::size_t statements = 0, entities = 0, relationships = 0, attributes = 0;
+    std::size_t subgraphs = 0, directions = 0, obligations = 0;
+    proposal.root().get("cases").iter([&](JsonVal source_case) {
+        const auto path = source_case.get_string("path");
+        const auto raw = read_file(cases_dir / std::string(path));
+        loom::ui::mermaid::testing::Work work;
+        rel::Work canonical_work;
+        const auto emitted_json =
+            loom::ui::mermaid::testing::er_source_model_json_for_testing(raw, work);
+        ASSERT_TRUE(emitted_json.has_value()) << path;
+        const auto emitted = json::parse(*emitted_json);
+        ASSERT_TRUE(emitted.has_value()) << path;
+        ASSERT_EQ(emitted->root().size(), kSourceModelFields) << path;
+
+        const auto emitted_canon =
+            rel::class481_canonical(emitted->root(), canonical_work);
+        const auto pinned_canon =
+            rel::class481_canonical(source_case.get("source_model"), canonical_work);
+        EXPECT_EQ(emitted_canon, pinned_canon) << path;
+        EXPECT_EQ(loom::utils::crypto::sha256(emitted_canon),
+                  source_case.get_string("source_model_sha256"))
+            << path;
+
+        statements += emitted->root().get("statements").size();
+        entities += emitted->root().get("entities").size();
+        relationships += emitted->root().get("relationships").size();
+        subgraphs += emitted->root().get("subgraphs").size();
+        directions += emitted->root().get("direction_declarations").size();
+        obligations += emitted->root().get("config_semantic_obligations").size();
+        emitted->root().get("entities").iter([&](JsonVal entity) {
+            attributes += entity.get("attributes").size();
+        });
+        ++full_match;
+    });
+    EXPECT_EQ(full_match, 107u);
+    // Frozen roster tripwires (catalog §0).
+    EXPECT_EQ(statements, 391u);
+    EXPECT_EQ(entities, 362u);
+    EXPECT_EQ(relationships, 253u);
+    EXPECT_EQ(attributes, 287u);
+    EXPECT_EQ(subgraphs, 1u);
+    EXPECT_EQ(directions, 4u);
+    EXPECT_EQ(obligations, 181u);
+}
+
+// The source_model seam shares the D251 envelope and grammar admission, so the
+// same hostile inputs must fail closed rather than emit a partial model.
+TEST(MermaidEr107EmitterContract, SourceModelSeamFailClosedOnMalformedAndNonErInput) {
+    loom::ui::mermaid::testing::Work work;
+    auto emit = [&](std::string_view src) {
+        return loom::ui::mermaid::testing::er_source_model_json_for_testing(src, work);
+    };
+    EXPECT_FALSE(emit("erDiagram\n").has_value());
+    EXPECT_FALSE(emit("---\nfoo").has_value());
+    EXPECT_FALSE(emit("---\n---\nclassDiagram\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagramX\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\xC3\xA9\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nA []\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nsubgraph\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nA ||--o{ B :\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\ndirection XYZ\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\n%% a comment\nA\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nA `x`\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nsubgraph end\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nend\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nsubgraph G\nA\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nA\\\n").has_value());
+    // Unterminated quotes (the two D251 battery cases this seam must share).
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nA [\"unterminated\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nCUSTOMER {\n\"unterminated\n").has_value());
+    // Nested subgraphs are outside this record model's single-scope envelope.
+    EXPECT_FALSE(
+        emit("---\n---\nerDiagram\nsubgraph G\nsubgraph H\nB\nend\nend\n").has_value());
+    // A clean header-only envelope still yields a well-formed (empty) model.
+    const auto ok = emit("---\n---\nerDiagram\n");
+    ASSERT_TRUE(ok.has_value());
+    const auto parsed = json::parse(*ok);
+    ASSERT_TRUE(parsed.has_value());
+    EXPECT_EQ(parsed->root().size(), kSourceModelFields);
 }

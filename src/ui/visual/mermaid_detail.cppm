@@ -792,4 +792,11 @@ std::optional<std::string> er_structural_witnesses_json(std::string_view source,
 // byte offsets; slice SHAs are added by the test oracle. Test-only.
 std::optional<std::string> er_semantic_witnesses_json(std::string_view source, Work& work);
 
+// D271 ER107 source_model (the 16-field source-level model) regenerated from
+// the raw original by a parallel record builder sharing the D251 grammar
+// primitives. Reachable only through the testing facade; no production call
+// path, public contract or frozen-gate change. The top-level canonical SHA is
+// computed by the test oracle, not emitted here. Test-only.
+std::optional<std::string> er_source_model_json(std::string_view source, Work& work);
+
 }  // namespace loom::ui::mermaid::detail

@@ -4026,6 +4026,7 @@ struct SrcModelData {
     std::string declared_direction;  // empty when no direction statement
     int64_t direction_statement_witness = 0, direction_value_witness = 0;
     int64_t header_global = 0;
+    int64_t body_witness_count = 0;  // body semantic witnesses emitted (D275)
 };
 
 // Cardinality lexeme -> source enum name (and the getData snake_case arrow).
@@ -4688,6 +4689,7 @@ bool er_src_collect_body(std::string_view b, std::size_t body_start, std::size_t
         data.statements.push_back(std::move(s));
     }
     if (subgraph_depth != 0) return false;
+    data.body_witness_count = static_cast<int64_t>(wli);
     return true;
 }
 }  // namespace
@@ -5022,16 +5024,20 @@ erjson::JsonMutDoc er_src_assemble(const SrcModelData& data, std::string_view so
     doc.set_root(root);
     return doc;
 }
-}  // namespace
 
-// D271 test-only seam: regenerate the 16-field ER107 source_model. Reachable
-// only through the mermaid.testing facade; no production call path.
-std::optional<std::string> er_source_model_json(std::string_view source, Work& work) {
-    if (!work.spend(source.size() * 12u + 8192u)) return std::nullopt;
+// Shared collection stage for the source_model and source_binding seams:
+// admission, physical-line count and the full record build. No Work spend —
+// each seam owns its own budget. Returns nullopt on a malformed/non-ER source.
+struct ErSrcCollected {
+    ErSourceEnvelope envelope;
+    std::size_t physical_lines = 0;
+    int metadata_count = 0;
+    SrcModelData data;
+};
+
+std::optional<ErSrcCollected> er_src_collect_all(std::string_view source) {
     const auto admitted = er_source_admit_envelope(source);
     if (!admitted) return std::nullopt;
-    // Physical-line tiling identical to the structural seam (incl. a trailing
-    // line without a newline), not a bare newline count.
     std::size_t physical_lines = 0;
     std::size_t line_start = 0;
     for (std::size_t k = 0; k < source.size(); ++k) {
@@ -5042,14 +5048,189 @@ std::optional<std::string> er_source_model_json(std::string_view source, Work& w
     }
     if (line_start != source.size()) ++physical_lines;
     const std::size_t base = 5 + physical_lines;
-
-    SrcModelData data;
-    const int meta_count =
-        er_src_collect_metadata(source, admitted->close_start, base, data);
-    if (!er_src_collect_body(source, admitted->body_start, base, meta_count, data))
+    ErSrcCollected out;
+    out.envelope = *admitted;
+    out.physical_lines = physical_lines;
+    out.metadata_count =
+        er_src_collect_metadata(source, admitted->close_start, base, out.data);
+    if (!er_src_collect_body(source, admitted->body_start, base, out.metadata_count, out.data))
         return std::nullopt;
+    return out;
+}
+}  // namespace
 
-    erjson::JsonMutDoc doc = er_src_assemble(data, source, admitted->body_start);
+// D271 test-only seam: regenerate the 16-field ER107 source_model. Reachable
+// only through the mermaid.testing facade; no production call path.
+std::optional<std::string> er_source_model_json(std::string_view source, Work& work) {
+    if (!work.spend(source.size() * 12u + 8192u)) return std::nullopt;
+    const auto collected = er_src_collect_all(source);
+    if (!collected) return std::nullopt;
+    erjson::JsonMutDoc doc =
+        er_src_assemble(collected->data, source, collected->envelope.body_start);
+    return doc.to_string();
+}
+
+namespace {
+// Canonical JSON over the mutable JSON value graph: object keys sorted
+// bytewise, compact separators, UTF-8 passed through raw (ensure_ascii=false),
+// standard two-char escapes plus \u00xx for other control bytes. Mirrors the
+// fixture's canonical_encoding / the support Encoder; the 107 pinned digests
+// are the drift guard. The emitted models only use the six JSON value kinds
+// handled here, so the writer is void (no unknown-type path exists).
+void er_src_canonical_quote(std::string_view text, std::string& out) {
+    out += '"';
+    for (const unsigned char c : text) {
+        switch (c) {
+            case '"': out += "\\\""; break;
+            case '\\': out += "\\\\"; break;
+            case '\b': out += "\\b"; break;
+            case '\f': out += "\\f"; break;
+            case '\n': out += "\\n"; break;
+            case '\r': out += "\\r"; break;
+            case '\t': out += "\\t"; break;
+            default:
+                if (c < 0x20) {
+                    static constexpr char hex[] = "0123456789abcdef";
+                    out += "\\u00";
+                    out += hex[(c >> 4) & 0x0F];
+                    out += hex[c & 0x0F];
+                } else {
+                    out += static_cast<char>(c);  // high UTF-8 bytes pass raw
+                }
+        }
+    }
+    out += '"';
+}
+
+void er_src_canonical_append(erjson::JsonMutVal value, std::string& out) {
+    if (value.is_null()) {
+        out += "null";
+    } else if (value.is_bool()) {
+        out += value.as_bool() ? "true" : "false";
+    } else if (value.is_num()) {
+        // These models only ever author integer numerics (no doubles).
+        char buffer[32];
+        const auto result = std::to_chars(buffer, buffer + sizeof(buffer), value.as_int());
+        out.append(buffer, static_cast<std::size_t>(result.ptr - buffer));
+    } else if (value.is_str()) {
+        er_src_canonical_quote(value.as_str(), out);
+    } else if (value.is_arr()) {
+        out += '[';
+        bool first = true;
+        value.iter([&](const erjson::JsonMutVal child, std::size_t) {
+            if (!first) out += ',';
+            first = false;
+            er_src_canonical_append(child, out);
+        });
+        out += ']';
+    } else {  // object
+        struct Entry {
+            std::string key;
+            erjson::JsonMutVal value;
+        };
+        std::vector<Entry> entries;
+        value.iter_obj([&](erjson::JsonMutVal key, erjson::JsonMutVal child) {
+            entries.push_back({std::string(key.as_str()), child});
+        });
+        std::ranges::sort(entries, {}, &Entry::key);
+        out += '{';
+        bool first = true;
+        for (const auto& entry : entries) {
+            if (!first) out += ',';
+            first = false;
+            er_src_canonical_quote(entry.key, out);
+            out += ':';
+            er_src_canonical_append(entry.value, out);
+        }
+        out += '}';
+    }
+}
+
+std::string er_src_canonical(erjson::JsonMutVal value) {
+    std::string out;
+    er_src_canonical_append(value, out);
+    return out;
+}
+
+void er_src_add_optional_int(erjson::JsonMutVal obj, std::string_view key,
+                             const std::optional<int64_t>& value) {
+    obj.add(key, value ? obj.make_num(*value) : obj.make_null());
+}
+
+void er_src_add_optional_str(erjson::JsonMutVal obj, std::string_view key,
+                             const std::optional<std::string>& value) {
+    obj.add(key, value ? obj.make_str(*value) : obj.make_null());
+}
+
+erjson::JsonMutVal er_src_make_ref(erjson::JsonMutDoc& doc, std::string_view source,
+                                   std::size_t start, std::size_t end, int64_t witness) {
+    auto ref = doc.object();
+    ref.add("byte_end", ref.make_num(static_cast<int64_t>(end)));
+    ref.add("byte_start", ref.make_num(static_cast<int64_t>(start)));
+    ref.add("line_end", ref.make_num(er_line_of(source, std::max(start, end - 1))));
+    ref.add("line_start", ref.make_num(er_line_of(source, start)));
+    ref.add("slice_sha256",
+            ref.make_str(loom::utils::crypto::sha256(source.substr(start, end - start))));
+    ref.add("witness", ref.make_num(witness));
+    return ref;
+}
+}  // namespace
+
+// D275 test-only seam: regenerate the 20-field ER107 source_binding. The raw
+// byte refs and component digests are derived from the source and the built
+// model; manifest/prior provenance arrives explicitly. Reachable only through
+// the mermaid.testing facade; no fs/manifest/git/env access.
+std::optional<std::string> er_source_binding_json(std::string_view source, Work& work,
+                                                  const ErSourceProvenance& provenance) {
+    if (!work.spend(source.size() * 14u + 16384u)) return std::nullopt;
+    const auto collected = er_src_collect_all(source);
+    if (!collected) return std::nullopt;
+    const auto& env = collected->envelope;
+    erjson::JsonMutDoc model_doc = er_src_assemble(collected->data, source, env.body_start);
+    auto model_root = model_doc.root_mut();
+
+    const std::string metadata_sha =
+        loom::utils::crypto::sha256(er_src_canonical(model_root.get("metadata")));
+    const std::string obligations_sha = loom::utils::crypto::sha256(
+        er_src_canonical(model_root.get("config_semantic_obligations")));
+    const std::string body_sha =
+        loom::utils::crypto::sha256(source.substr(env.body_start));
+
+    erjson::JsonMutDoc doc;
+    auto root = doc.object();
+    root.add("body_ref", er_src_make_ref(doc, source, env.body_start, source.size(), 2));
+    root.add("config_obligations_sha256", root.make_str(obligations_sha));
+    root.add("frontmatter_ref", er_src_make_ref(doc, source, 0, env.body_start, 1));
+    root.add("full_source_ref", er_src_make_ref(doc, source, 0, source.size(), 0));
+    er_src_add_optional_int(root, "manifest_global_ordinal", provenance.manifest_global_ordinal);
+    er_src_add_optional_str(root, "manifest_record_sha256", provenance.manifest_record_sha256);
+    er_src_add_optional_int(root, "ordinal", provenance.ordinal);
+    er_src_add_optional_str(root, "path", provenance.path);
+    er_src_add_optional_str(root, "prior_ER206_case_canonical_sha256",
+                            provenance.prior_ER206_case_canonical_sha256);
+    er_src_add_optional_int(root, "prior_ER206_ordinal", provenance.prior_ER206_ordinal);
+    {
+        auto ordinals = root.make_arr();
+        const int64_t witness_count = 5 + static_cast<int64_t>(collected->physical_lines) +
+                                      collected->metadata_count + 1 +
+                                      collected->data.body_witness_count;
+        for (int64_t k = 0; k < witness_count; ++k) ordinals.append(ordinals.make_num(k));
+        root.add("source_all_witness_ordinals", ordinals);
+    }
+    er_src_add_optional_str(root, "source_asset_case_sha256", provenance.source_asset_case_sha256);
+    root.add("source_body_sha256", root.make_str(body_sha));
+    er_src_add_optional_int(root, "source_bytes", provenance.source_bytes);
+    er_src_add_optional_str(root, "source_git_blob", provenance.source_git_blob);
+    er_src_add_optional_str(root, "source_model_sha256", provenance.source_model_sha256);
+    er_src_add_optional_str(root, "source_sha256", provenance.source_sha256);
+    root.add("source_witness_count",
+             root.make_num(5 + static_cast<int64_t>(collected->physical_lines) +
+                           collected->metadata_count + 1 +
+                           collected->data.body_witness_count));
+    er_src_add_optional_str(root, "source_witnesses_sha256",
+                            provenance.source_witnesses_sha256);
+    root.add("metadata_sha256", root.make_str(metadata_sha));
+    doc.set_root(root);
     return doc.to_string();
 }
 

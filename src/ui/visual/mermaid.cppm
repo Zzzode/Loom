@@ -371,4 +371,31 @@ std::optional<std::string> er_semantic_witnesses_json_for_testing(std::string_vi
 // builder. Test-only; nullopt for a malformed/non-frontmatter source.
 std::optional<std::string> er_source_model_json_for_testing(std::string_view source, Work& work);
 
+// D275 provenance that exists nowhere in the raw ER original: manifest/prior
+// cross references and component digests. Every field is optional; the
+// source_binding seam emits explicit JSON null for an unset value and never
+// reads the manifest, git, the environment or the filesystem. Content-hash
+// fields are independently recomputed by the test oracle as tripwires.
+struct ErSourceProvenance {
+    std::optional<std::string> path;
+    std::optional<int64_t> ordinal;
+    std::optional<int64_t> manifest_global_ordinal;
+    std::optional<int64_t> source_bytes;
+    std::optional<std::string> source_sha256;
+    std::optional<std::string> source_git_blob;
+    std::optional<std::string> manifest_record_sha256;
+    std::optional<int64_t> prior_ER206_ordinal;
+    std::optional<std::string> prior_ER206_case_canonical_sha256;
+    std::optional<std::string> source_asset_case_sha256;
+    std::optional<std::string> source_model_sha256;
+    std::optional<std::string> source_witnesses_sha256;
+};
+
+// D275 ER107 source_binding (20 fields) joining the raw byte refs and
+// component digests with the supplied provenance. Test-only; nullopt for a
+// malformed/non-frontmatter source. Provenance fields absent from the struct
+// are emitted as JSON null.
+std::optional<std::string> er_source_binding_json_for_testing(std::string_view source, Work& work,
+                                                              const ErSourceProvenance& provenance);
+
 }  // namespace loom::ui::mermaid::testing

@@ -524,3 +524,166 @@ TEST(MermaidEr107EmitterContract, SourceModelSeamFailClosedOnMalformedAndNonErIn
     ASSERT_TRUE(parsed.has_value());
     EXPECT_EQ(parsed->root().size(), kSourceModelFields);
 }
+
+namespace {
+constexpr std::size_t kSourceBindingFields = 20;
+const std::set<std::string> kProvenanceBindingKeys{
+    "manifest_global_ordinal", "manifest_record_sha256", "ordinal", "path",
+    "prior_ER206_case_canonical_sha256", "prior_ER206_ordinal",
+    "source_asset_case_sha256", "source_bytes", "source_git_blob",
+    "source_model_sha256", "source_sha256", "source_witnesses_sha256"};
+}  // namespace
+
+// D275: the binding seam joins derived byte refs/digests with explicit
+// provenance and must reproduce every pinned source_binding canonically.
+TEST(MermaidEr107EmitterContract, SourceBindingSeamReproducesAll107Canonical) {
+    constexpr std::size_t kRefFields = 6;
+    const auto facts = load_source_proposal();
+    const auto projection = load_projection();
+    const fs::path cases_dir = kFixtures / "mermaid_official/cases";
+    std::map<std::string, JsonVal> fact_by_path;
+    facts.root().get("cases").iter([&](JsonVal c) {
+        fact_by_path.emplace(c.get_string("path"), c);
+    });
+    std::size_t full_match = 0;
+    projection.root().get("cases").iter([&](JsonVal terminal_case) {
+        const auto path = terminal_case.get_string("path");
+        const auto raw = read_file(cases_dir / std::string(path));
+        const JsonVal source_case = fact_by_path.at(path);
+        rel::Work canonical_work;
+
+        // Provenance supplied explicitly from the immutable source asset.
+        loom::ui::mermaid::testing::ErSourceProvenance provenance;
+        provenance.path = source_case.get_string("path");
+        provenance.ordinal = source_case.get_int("ordinal");
+        provenance.manifest_global_ordinal = source_case.get_int("manifest_global_ordinal");
+        provenance.source_bytes = source_case.get_int("source_bytes");
+        provenance.source_sha256 = source_case.get_string("source_sha256");
+        provenance.source_git_blob = source_case.get_string("source_git_blob");
+        provenance.manifest_record_sha256 = source_case.get_string("manifest_record_sha256");
+        provenance.prior_ER206_ordinal = source_case.get_int("prior_ER206_ordinal");
+        provenance.prior_ER206_case_canonical_sha256 =
+            source_case.get_string("prior_ER206_case_canonical_sha256");
+        provenance.source_model_sha256 = source_case.get_string("source_model_sha256");
+        provenance.source_witnesses_sha256 =
+            source_case.get_string("source_witnesses_sha256");
+        // asset-case digest is recomputed from content, not read from a pin.
+        provenance.source_asset_case_sha256 = sha_of(source_case);
+
+        // Content-lock tripwires: provenance must not silently decouple.
+        EXPECT_EQ(static_cast<int64_t>(raw.size()), *provenance.source_bytes) << path;
+        EXPECT_EQ(loom::utils::crypto::sha256(raw), *provenance.source_sha256) << path;
+        EXPECT_EQ(sha_of(source_case.get("source_model")),
+                  *provenance.source_model_sha256)
+            << path;
+        EXPECT_EQ(sha_of(source_case.get("source_witnesses")),
+                  *provenance.source_witnesses_sha256)
+            << path;
+        EXPECT_EQ(sha_of(source_case.get("manifest_record")),
+                  *provenance.manifest_record_sha256)
+            << path;
+
+        loom::ui::mermaid::testing::Work work;
+        const auto emitted_json =
+            loom::ui::mermaid::testing::er_source_binding_json_for_testing(raw, work, provenance);
+        ASSERT_TRUE(emitted_json.has_value()) << path;
+        const auto emitted = json::parse(*emitted_json);
+        ASSERT_TRUE(emitted.has_value()) << path;
+        ASSERT_EQ(emitted->root().size(), kSourceBindingFields) << path;
+
+        const JsonVal pinned = terminal_case.get("source_binding");
+        EXPECT_EQ(rel::class481_canonical(emitted->root(), canonical_work),
+                  rel::class481_canonical(pinned, canonical_work))
+            << path;
+        EXPECT_EQ(loom::utils::crypto::sha256(
+                      rel::class481_canonical(emitted->root(), canonical_work)),
+                  terminal_case.get_string("source_binding_sha256"))
+            << path;
+        // The three refs keep the fixed six-field shape.
+        for (const auto ref_key : {"full_source_ref", "frontmatter_ref", "body_ref"}) {
+            EXPECT_EQ(emitted->root().get(ref_key).size(), kRefFields) << path;
+        }
+        ++full_match;
+    });
+    EXPECT_EQ(full_match, 107u);
+}
+
+// With default-constructed provenance the 12 provenance fields are explicit
+// JSON null while all 8 derived fields still populate — no guessing or fs reads.
+TEST(MermaidEr107EmitterContract, SourceBindingSeamNullsAbsentProvenance) {
+    const auto facts = load_source_proposal();
+    const auto raw = read_file(kFixtures / "mermaid_official" / "cases" /
+                               std::string(facts.root().get("cases").at(0).get_string("path")));
+    loom::ui::mermaid::testing::Work work;
+    const loom::ui::mermaid::testing::ErSourceProvenance empty_provenance;
+    const auto emitted_json =
+        loom::ui::mermaid::testing::er_source_binding_json_for_testing(raw, work, empty_provenance);
+    ASSERT_TRUE(emitted_json.has_value());
+    const auto emitted = json::parse(*emitted_json);
+    ASSERT_TRUE(emitted.has_value());
+    ASSERT_EQ(emitted->root().size(), kSourceBindingFields);
+    std::size_t null_count = 0, populated_count = 0;
+    emitted->root().iter_obj([&](JsonVal key, JsonVal value) {
+        const std::string key_text(key.as_str());
+        if (kProvenanceBindingKeys.contains(key_text)) {
+            EXPECT_TRUE(value.is_null()) << key_text;
+            ++null_count;
+        } else {
+            EXPECT_FALSE(value.is_null()) << key_text;
+            ++populated_count;
+        }
+    });
+    EXPECT_EQ(null_count, 12u);
+    EXPECT_EQ(populated_count, 8u);
+}
+
+// Anti-silence for the canonical writer's object-key sort: a config section
+// whose leaves are authored out of alphabetical order still hashes like the
+// sorted-key support encoder. A writer that skipped sorting would fail here.
+TEST(MermaidEr107EmitterContract, SourceBindingCanonicalSortsOutOfOrderKeys) {
+    const std::string source =
+        "---\nconfig:\n  look: handDrawn\n  htmlLabels: false\n---\nerDiagram\nA\n";
+    loom::ui::mermaid::testing::Work work;
+    const loom::ui::mermaid::testing::ErSourceProvenance empty_provenance;
+    const auto binding_json =
+        loom::ui::mermaid::testing::er_source_binding_json_for_testing(source, work, empty_provenance);
+    ASSERT_TRUE(binding_json.has_value());
+    const auto model_json =
+        loom::ui::mermaid::testing::er_source_model_json_for_testing(source, work);
+    ASSERT_TRUE(model_json.has_value());
+    const auto binding = json::parse(*binding_json);
+    const auto model = json::parse(*model_json);
+    ASSERT_TRUE(binding.has_value() && model.has_value());
+    rel::Work canonical_work;
+    const std::string expected_metadata_sha =
+        loom::utils::crypto::sha256(
+            rel::class481_canonical(model->root().get("metadata"), canonical_work));
+    EXPECT_EQ(binding->root().get_string("metadata_sha256"), expected_metadata_sha);
+    const std::string expected_obligations_sha =
+        loom::utils::crypto::sha256(rel::class481_canonical(
+            model->root().get("config_semantic_obligations"), canonical_work));
+    EXPECT_EQ(binding->root().get_string("config_obligations_sha256"),
+              expected_obligations_sha);
+}
+
+// The binding seam shares envelope admission, so malformed/non-ER input fails
+// closed regardless of the provenance supplied.
+TEST(MermaidEr107EmitterContract, SourceBindingSeamFailClosedOnMalformedInput) {
+    loom::ui::mermaid::testing::Work work;
+    const loom::ui::mermaid::testing::ErSourceProvenance provenance;
+    auto emit = [&](std::string_view src) {
+        return loom::ui::mermaid::testing::er_source_binding_json_for_testing(src, work, provenance);
+    };
+    EXPECT_FALSE(emit("erDiagram\n").has_value());
+    EXPECT_FALSE(emit("---\nfoo").has_value());
+    EXPECT_FALSE(emit("---\n---\nclassDiagram\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagramX\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nend\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nsubgraph G\nA\n").has_value());
+    // An exhausted work budget fails closed before any collection runs.
+    loom::ui::mermaid::testing::Work zero_budget;
+    zero_budget.remaining = 0;
+    EXPECT_FALSE(loom::ui::mermaid::testing::er_source_binding_json_for_testing(
+                     "---\n---\nerDiagram\nA\n", zero_budget, provenance)
+                     .has_value());
+}

@@ -33,6 +33,7 @@ using loom::ui::mermaid::testing::EnvelopeEvent;
 using loom::ui::mermaid::testing::EnvelopeInit;
 using loom::ui::mermaid::testing::EnvelopeScalar;
 using loom::ui::mermaid::testing::EnvelopeScalarForm;
+using loom::ui::mermaid::testing::ErSourceProvenance;
 using loom::ui::mermaid::testing::FinalEmissionTrace;
 using loom::ui::mermaid::testing::FlowAsciiRows;
 using loom::ui::mermaid::testing::GitBranch;
@@ -798,5 +799,11 @@ std::optional<std::string> er_semantic_witnesses_json(std::string_view source, W
 // path, public contract or frozen-gate change. The top-level canonical SHA is
 // computed by the test oracle, not emitted here. Test-only.
 std::optional<std::string> er_source_model_json(std::string_view source, Work& work);
+
+// D275 ER107 source_binding (20 fields) joining raw byte refs and component
+// digests with caller-supplied provenance. The seam never reads manifest/git/
+// env/fs; absent provenance fields render as JSON null. Test-only.
+std::optional<std::string> er_source_binding_json(std::string_view source, Work& work,
+                                                  const ErSourceProvenance& provenance);
 
 }  // namespace loom::ui::mermaid::detail

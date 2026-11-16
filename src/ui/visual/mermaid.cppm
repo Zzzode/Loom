@@ -361,4 +361,10 @@ std::optional<std::string> er_whole_scene_json_for_testing(std::string_view sour
 std::optional<std::string> er_structural_witnesses_json_for_testing(std::string_view source,
                                                                     Work& work);
 
+// D251 semantic source witnesses (24 token kinds) for the ER107 source
+// proposal, from a parallel lexer independent of production ErCursor.
+// Test-only; nullopt for a malformed/non-frontmatter source.
+std::optional<std::string> er_semantic_witnesses_json_for_testing(std::string_view source,
+                                                                  Work& work);
+
 }  // namespace loom::ui::mermaid::testing

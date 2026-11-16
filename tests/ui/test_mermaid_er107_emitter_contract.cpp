@@ -324,3 +324,111 @@ TEST(MermaidEr107EmitterContract, StructuralSeamFailClosedOnMalformedAndNonErInp
     ASSERT_TRUE(parsed.has_value());
     EXPECT_GT(parsed->root().size(), 0u);
 }
+
+// D251 stage 4: the parallel semantic lexer regenerates the 24 semantic token
+// kinds for all 107 ER originals, independent of production ErCursor. The
+// differential is positional — the global 31-kind witness ordinal is assembled
+// only at final integration, so the seam numbers its own list from zero — and
+// compares every stored field at each position, including sha256(lexeme)
+// against the pinned slice hash. The 4222-witness roster is a frozen tripwire.
+namespace {
+const std::set<std::string> kSemanticKinds{
+    "attribute_comment_lexeme", "attribute_keys", "attribute_name",
+    "attribute_statement", "attribute_type", "direction_statement",
+    "direction_value", "entity_alias_lexeme", "entity_attribute_block",
+    "entity_declaration", "entity_id", "metadata_key", "metadata_namespace",
+    "metadata_scalar", "relationship_entity_reference",
+    "relationship_identification", "relationship_left_cardinality",
+    "relationship_right_cardinality", "relationship_role_content",
+    "relationship_role_lexeme", "relationship_statement", "subgraph_end",
+    "subgraph_header", "subgraph_id"};
+
+std::vector<JsonVal> semantic_pinned(const JsonVal& witnesses) {
+    std::vector<JsonVal> out;
+    witnesses.iter([&](const JsonVal w) {
+        if (kSemanticKinds.contains(w.get_string("kind"))) out.push_back(w);
+    });
+    return out;
+}
+}  // namespace
+
+TEST(MermaidEr107EmitterContract, SemanticWitnessSeamReproducesAll107OrderedByteExact) {
+    ASSERT_EQ(kSemanticKinds.size(), 24u);  // closed vocabulary tripwire
+    const auto proposal = load_source_proposal();
+    const fs::path cases_dir = kFixtures / "mermaid_official/cases";
+    std::size_t full_match = 0;
+    std::size_t total_witnesses = 0;
+    proposal.root().get("cases").iter([&](const JsonVal source_case) {
+        const auto path = source_case.get_string("path");
+        const auto raw = read_file(cases_dir / std::string(path));
+        loom::ui::mermaid::testing::Work work;
+        const auto emitted_json =
+            loom::ui::mermaid::testing::er_semantic_witnesses_json_for_testing(raw, work);
+        ASSERT_TRUE(emitted_json.has_value()) << path;
+        const auto emitted = json::parse(*emitted_json);
+        ASSERT_TRUE(emitted.has_value());
+        const auto pinned = semantic_pinned(source_case.get("source_witnesses"));
+        ASSERT_EQ(emitted->root().size(), pinned.size()) << path;
+        for (std::size_t i = 0; i < pinned.size(); ++i) {
+            SCOPED_TRACE(std::string(path) + "#" + std::to_string(i));
+            const auto w = emitted->root().at(i);
+            const auto& p = pinned[i];
+            ASSERT_EQ(w.get_string("kind"), p.get_string("kind"));
+            EXPECT_EQ(w.get_int("source_byte_start"), p.get_int("source_byte_start"));
+            EXPECT_EQ(w.get_int("source_byte_end"), p.get_int("source_byte_end"));
+            EXPECT_EQ(w.get_string("source_lexeme"), p.get_string("source_lexeme"));
+            EXPECT_EQ(w.get_int("source_line_start"), p.get_int("source_line_start"));
+            EXPECT_EQ(w.get_int("source_line_end"), p.get_int("source_line_end"));
+            EXPECT_EQ(w.get_int("source_utf8_bytes"), p.get_int("source_utf8_bytes"));
+            EXPECT_EQ(w.get_int("ordinal"), static_cast<int64_t>(i));
+            EXPECT_EQ(loom::utils::crypto::sha256(w.get_string("source_lexeme")),
+                      p.get_string("source_slice_sha256"));
+        }
+        total_witnesses += pinned.size();
+        ++full_match;
+    });
+    EXPECT_EQ(full_match, 107u);
+    EXPECT_EQ(total_witnesses, 4222u);
+}
+
+// The semantic seam shares the structural seam's envelope admission and must
+// fail closed on malformed frontmatter, a non-ER family, truncated body
+// constructs, and any construct the production grammar rejects, rather than
+// emit partial or zero-width witnesses. The last group pins the D251
+// adversarial-review parity cases (empty alias/role, bad direction enum,
+// unsupported comment/backtick surfaces).
+TEST(MermaidEr107EmitterContract, SemanticSeamFailClosedOnMalformedAndNonErInput) {
+    loom::ui::mermaid::testing::Work work;
+    auto emit = [&](std::string_view src) {
+        return loom::ui::mermaid::testing::er_semantic_witnesses_json_for_testing(src, work);
+    };
+    EXPECT_FALSE(emit("erDiagram\n").has_value());                    // no frontmatter
+    EXPECT_FALSE(emit("---\nfoo").has_value());                       // no closing fence
+    EXPECT_FALSE(emit("---\n---\nclassDiagram\n").has_value());       // wrong family
+    EXPECT_FALSE(emit("---\n---\nerDiagramX\n").has_value());         // ASCII word boundary
+    EXPECT_FALSE(emit("---\n---\nerDiagram\xC3\xA9\n").has_value());  // high byte is word()
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nA [\"unterminated\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nCUSTOMER {\n\"unterminated\n").has_value());
+    // Production parity: empty unquoted alias, subgraph without an id, empty
+    // unquoted role and a direction value outside the TB/BT/LR/RL enum.
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nA []\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nsubgraph\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nA ||--o{ B :\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\ndirection XYZ\n").has_value());
+    // Unsupported-but-present grammar surfaces fail closed, never half-parse.
+    EXPECT_FALSE(emit("---\n---\nerDiagram\n%% a comment\nA\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nA `x`\n").has_value());
+    // Subgraph frame parity: a reserved id, an end without an open frame, and
+    // an unclosed subgraph all fail production's group-frame validation.
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nsubgraph end\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nend\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nsubgraph G\nA\n").has_value());
+    // A backslash is rejected by every production quoted/name path.
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nA\\\n").has_value());
+    // A header alone is admitted but carries no semantic construct.
+    const auto ok = emit("---\n---\nerDiagram\n");
+    ASSERT_TRUE(ok.has_value());
+    const auto parsed = json::parse(*ok);
+    ASSERT_TRUE(parsed.has_value());
+    EXPECT_EQ(parsed->root().size(), 0u);
+}

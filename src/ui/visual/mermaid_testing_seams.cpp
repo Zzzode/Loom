@@ -65,4 +65,9 @@ std::optional<std::string> er_structural_witnesses_json_for_testing(std::string_
     return detail::er_structural_witnesses_json(source, work);
 }
 
+std::optional<std::string> er_semantic_witnesses_json_for_testing(std::string_view source,
+                                                                  Work& work) {
+    return detail::er_semantic_witnesses_json(source, work);
+}
+
 }  // namespace loom::ui::mermaid::testing

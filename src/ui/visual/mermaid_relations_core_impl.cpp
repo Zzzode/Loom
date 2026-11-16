@@ -3294,6 +3294,644 @@ std::optional<std::string> er_structural_witnesses_json(std::string_view source,
     return doc.to_string();
 }
 
+namespace {
+// D251 parallel semantic lexer for the 24 ER source-witness kinds. It runs
+// beside production ErCursor without touching it: the byte grammar
+// (name/attribute/cardinality/identity charsets and the production per-entry
+// marker boundary flags) is re-derived as standalone spans over the raw
+// original, over the bounded envelope of accepted ER107 originals — ASCII
+// whitespace, no `%%` comments, no backtick attribute words, no backslash and
+// no ECMAScript Unicode separators. Bodies outside that envelope fail closed,
+// as does any malformed construct, rather than emitting partial or divergent
+// witnesses. Every offset is a UTF-8 byte offset; line numbers use the same
+// 1 + count('\n' before) rule as the structural seam.
+//
+// Three production grammar details are deliberately not re-implemented; all
+// are empirically absent from the 107 bodies and are test-only surfaces:
+//   * quoted()/name() content validation inside quotes (an embedded CR/LF, a
+//     '%' byte, or outer whitespace that trim_relation would reject) — the
+//     envelope rejects backslash and every ER107 quote closes on its line;
+//   * er_cardinality's whole-tail lookahead that turns a terminal literal `1`
+//     into an entity token rather than a marker. The terminal shape reaches the
+//     bare-entity path here, so modeling the disambiguation would add a full
+//     tail scan without changing any accepted original's witnesses;
+//   * the 64-entity production cap (the subgraph depth/count caps ARE
+//     mirrored). The 100k-step guard still bounds total work, and no ER107
+//     original approaches either limit.
+constexpr std::size_t kErSemNpos = std::string_view::npos;
+
+struct ErSemanticSpan {
+    const char* kind;
+    std::size_t start, end;
+};
+
+// Production name() charset: word bytes plus '-', '.', '*'.
+bool er_sem_name_byte(unsigned char c) {
+    return er_word_byte(c) || c == '-' || c == '.' || c == '*';
+}
+
+std::size_t er_sem_skip_inline(std::string_view b, std::size_t i) {
+    while (i < b.size() && (b[i] == ' ' || b[i] == '\t')) ++i;
+    return i;
+}
+
+std::size_t er_sem_skip_all(std::string_view b, std::size_t i) {
+    while (i < b.size() &&
+           (b[i] == ' ' || b[i] == '\t' || b[i] == '\n' || b[i] == '\r'))
+        ++i;
+    return i;
+}
+
+// i at the first name byte; returns [start, end). A quoted name keeps its
+// quotes. False on EOF, an unterminated quote, or a zero-width name.
+bool er_sem_read_name(std::string_view b, std::size_t i, std::size_t& start,
+                      std::size_t& end) {
+    if (i >= b.size()) return false;
+    start = i;
+    if (b[i] == '"') {
+        std::size_t j = i + 1;
+        while (j < b.size() && b[j] != '"') ++j;
+        if (j >= b.size()) return false;
+        end = j + 1;
+        return true;
+    }
+    std::size_t j = i;
+    while (j < b.size() && er_sem_name_byte(static_cast<unsigned char>(b[j]))) ++j;
+    end = j;
+    return j > i;
+}
+
+// ASCII case-insensitive equality, mirroring production er_ascii_equal:
+// marker/keyword matching folds A-Z to a-z, while the recorded span keeps the
+// original source bytes (so emitted lexemes preserve authored case).
+bool er_sem_ascii_equal(std::string_view left, std::string_view right) {
+    if (left.size() != right.size()) return false;
+    for (std::size_t k = 0; k < left.size(); ++k) {
+        char a = left[k], d = right[k];
+        if (a >= 'A' && a <= 'Z') a = static_cast<char>(a - 'A' + 'a');
+        if (d >= 'A' && d <= 'Z') d = static_cast<char>(d - 'A' + 'a');
+        if (a != d) return false;
+    }
+    return true;
+}
+
+// Production ErCursor::name() rejects the unquoted reserved keywords even
+// though they are otherwise valid name bytes. A quoted name keeps its quotes
+// and is not subject to the reserved check.
+bool er_sem_is_reserved_name(std::string_view b, std::size_t start, std::size_t end) {
+    if (start >= end || b[start] == '"') return false;
+    const std::string_view name = b.substr(start, end - start);
+    for (const auto reserved :
+         {"erDiagram", "style", "classDef", "class", "subgraph", "end", "one", "many", "to"})
+        if (er_sem_ascii_equal(name, reserved)) return true;
+    return false;
+}
+
+// Marker choice with the production per-entry word-boundary flag, in the exact
+// table order of er_cardinality() and the relationship identification branch.
+// The flag cannot be inferred from the first byte: symbolic `o|`/`o{` start
+// with a word byte yet take boundary=false, and `1+`/`0+`/`many(0)`/`many(1)`
+// are boundary=false too. A boundary=true choice rejects a word byte directly
+// after the token; boundary=false choices have no such restriction.
+struct ErMarkerChoice {
+    std::string_view text;
+    bool boundary;
+};
+
+constexpr ErMarkerChoice kErCardinality[] = {
+    {"one or zero", true},  {"zero or one", true},  {"one or more", true},
+    {"one or many", true},  {"zero or more", true}, {"zero or many", true},
+    {"only one", true},     {"many(0)", false},     {"many(1)", false},
+    {"many", true},         {"one", true},          {"1+", false},
+    {"0+", false},          {"||", false},          {"o|", false},
+    {"|o", false},          {"o{", false},          {"}o", false},
+    {"|{", false},          {"}|", false},          {"1", true}};
+
+// Production identification order: solid `--`/`to`, then dotted `..`/`.-`/
+// `-.`/`optionally to`. Only the alphabetic forms take a word boundary.
+constexpr ErMarkerChoice kErIdentification[] = {
+    {"--", false},         {"to", true}, {"..", false}, {".-", false},
+    {"-.", false},         {"optionally to", true}};
+
+// Match a choice table at byte i using each entry's own boundary flag.
+// Returns the end offset or npos.
+std::size_t er_sem_match_choice(std::string_view b, std::size_t i,
+                                std::span<const ErMarkerChoice> choices) {
+    for (const auto& choice : choices) {
+        const std::string_view token = choice.text;
+        if (b.size() - i < token.size() ||
+            !er_sem_ascii_equal(b.substr(i, token.size()), token))
+            continue;
+        const std::size_t after = i + token.size();
+        if (choice.boundary && after < b.size() &&
+            er_word_byte(static_cast<unsigned char>(b[after])))
+            continue;
+        return after;
+    }
+    return kErSemNpos;
+}
+
+// Mirrors ErCursor::attribute_word plus the generic tilde branch. The first
+// byte must be an ASCII letter, '_', '*' or a high byte — production
+// attribute_word explicitly excludes ASCII digits, unlike the entity name()
+// rule. Continuation bytes are word bytes or one of "-[]().,*". A tilde
+// generic (e.g. "type~T~") needs a SECOND tilde before the line end and then
+// runs through the closing tilde to the next space; a lone tilde is not a
+// generic, so the token follows the normal rule and stops at the tilde.
+// Returns the end offset or npos.
+std::size_t er_sem_read_attr_token(std::string_view b, std::size_t i) {
+    if (i >= b.size()) return kErSemNpos;
+    const unsigned char first = static_cast<unsigned char>(b[i]);
+    const bool first_ok = (first >= 'a' && first <= 'z') ||
+                          (first >= 'A' && first <= 'Z') || first == '_' ||
+                          first == '*' || first >= 0x80;
+    if (!first_ok) return kErSemNpos;
+    std::size_t line_end = i;
+    while (line_end < b.size() && b[line_end] != '\n' && b[line_end] != '\r') ++line_end;
+    std::size_t first_tilde = kErSemNpos;
+    for (std::size_t k = i; k < line_end; ++k) {
+        if (b[k] == '~') {
+            first_tilde = k;
+            break;
+        }
+    }
+    if (first_tilde != kErSemNpos) {
+        std::size_t last_tilde = kErSemNpos;
+        for (std::size_t k = line_end; k-- > first_tilde + 1;) {
+            if (b[k] == '~') {
+                last_tilde = k;
+                break;
+            }
+        }
+        if (last_tilde != kErSemNpos) {  // two or more tildes: generic WORD
+            std::size_t end = last_tilde + 1;
+            while (end < line_end && b[end] != ' ' && b[end] != '\t') ++end;
+            return end;
+        }
+        // A lone tilde falls through to the normal rule, which stops at '~'.
+    }
+    std::size_t j = i + 1;
+    while (j < b.size()) {
+        const unsigned char c = static_cast<unsigned char>(b[j]);
+        if (!(er_word_byte(c) || c == '-' || c == '[' || c == ']' || c == '(' ||
+              c == ')' || c == ',' || c == '*'))
+            break;
+        ++j;
+    }
+    return j;
+}
+
+// Frontmatter metadata witnesses (metadata_key/metadata_scalar/
+// metadata_namespace). The region is source[3, close_start); its line split
+// keeps the trailing empty segment of a newline-terminated region so folded
+// block-scalar continuation handling matches the proposal byte-for-byte.
+struct ErMetaLine {
+    std::size_t line_start, line_end;
+    int indent;
+    std::string_view text;
+};
+
+struct ErMetaEntry {
+    std::size_t index;
+    int indent;
+    std::size_t key_start, key_end, value_start, line_end;
+    std::string_view key;
+};
+
+bool er_sem_metadata(std::string_view b, std::size_t close_start,
+                     std::vector<ErSemanticSpan>& out) {
+    std::vector<ErMetaLine> lines;
+    const std::size_t region_end = close_start;
+    std::size_t pos = 3;
+    while (true) {
+        std::size_t nl = b.find('\n', pos);
+        if (nl == kErSemNpos || nl > region_end) nl = region_end;
+        const std::string_view raw = b.substr(pos, nl - pos);
+        const std::size_t stripped = raw.find_first_not_of(" \t");
+        const std::size_t indent = stripped == kErSemNpos ? raw.size() : stripped;
+        lines.push_back({pos, nl, static_cast<int>(indent), raw.substr(indent)});
+        pos = nl + 1;
+        if (nl == region_end) break;
+    }
+
+    std::vector<ErMetaEntry> entries;
+    for (std::size_t idx = 0; idx < lines.size(); ++idx) {
+        const auto& line = lines[idx];
+        if (line.text.empty() || line.text == "---") continue;
+        const std::size_t colon = line.text.find(':');
+        if (colon == kErSemNpos) continue;
+        const std::size_t key_start = line.line_start + static_cast<std::size_t>(line.indent);
+        const std::size_t key_end = key_start + colon;
+        std::size_t value_start = key_end + 1;
+        if (value_start < line.line_end && b[value_start] == ' ') ++value_start;
+        entries.push_back({idx, line.indent, key_start, key_end, value_start, line.line_end,
+                           line.text.substr(0, colon)});
+    }
+
+    // A top-level folded (>-/|) description swallows every more-indented or
+    // blank line until its next sibling; those lines carry no entries.
+    std::vector<bool> folded(lines.size(), false);
+    for (const auto& entry : entries) {
+        if (entry.indent != 0 || entry.key != "description") continue;
+        if (entry.value_start >= entry.line_end ||
+            (b[entry.value_start] != '>' && b[entry.value_start] != '|'))
+            continue;
+        for (std::size_t j = entry.index + 1; j < lines.size(); ++j) {
+            const auto& next = lines[j];
+            if (next.indent <= entry.indent && !next.text.empty()) break;
+            folded[j] = true;
+        }
+    }
+
+    const ErMetaEntry* description = nullptr;
+    const ErMetaEntry* config = nullptr;
+    std::vector<const ErMetaEntry*> subtree;
+    for (const auto& entry : entries) {
+        if (folded[entry.index]) continue;
+        if (entry.indent == 0) {
+            if (entry.key == "description") description = &entry;
+            if (entry.key == "config") config = &entry;
+        } else {
+            subtree.push_back(&entry);
+        }
+    }
+
+    auto emit = [&](const char* kind, std::size_t s, std::size_t e) {
+        out.push_back({kind, s, e});
+    };
+    if (description != nullptr) {
+        emit("metadata_key", description->key_start, description->key_end);
+        if (description->value_start < description->line_end &&
+            (b[description->value_start] == '>' || b[description->value_start] == '|')) {
+            // Folded scalar: include the opening line's newline and every
+            // swallowed continuation line up to the next sibling.
+            std::size_t end = description->line_end + 1;
+            for (std::size_t j = description->index + 1; j < lines.size(); ++j) {
+                const auto& next = lines[j];
+                if (next.indent <= description->indent && !next.text.empty()) break;
+                end = next.line_end + 1;
+            }
+            emit("metadata_scalar", description->value_start, end);
+        } else {
+            std::size_t end = description->line_end;
+            while (end > description->value_start && b[end - 1] == ' ') --end;
+            emit("metadata_scalar", description->value_start, end);
+        }
+    }
+    if (config != nullptr) emit("metadata_key", config->key_start, config->key_end);
+
+    std::set<int> seen_indents;
+    for (std::size_t k = 0; k < subtree.size(); ++k) {
+        const auto& entry = *subtree[k];
+        const bool container =
+            k + 1 < subtree.size() && subtree[k + 1]->indent > entry.indent;
+        if (seen_indents.insert(entry.indent).second)
+            emit("metadata_namespace", entry.key_start, close_start);
+        emit("metadata_key", entry.key_start, entry.key_end);
+        if (!container) {
+            std::size_t end = entry.line_end;
+            while (end > entry.value_start && b[end - 1] == ' ') --end;
+            emit("metadata_scalar", entry.value_start, end);
+        }
+    }
+    return true;
+}
+
+// Accepted ER107 originals use only ASCII whitespace, carry no `%%` comments
+// and no backtick attribute words in the body. Those production grammar
+// surfaces are intentionally not re-implemented by this parallel witness
+// lexer; rather than emit partial/incorrect spans for them, reject the whole
+// body so the seam stays fail-closed. U+2192 and other non-space high bytes
+// are unaffected; only ECMAScript whitespace separators are treated as space.
+bool er_sem_body_uses_unsupported_surface(std::string_view b, std::size_t body_start) {
+    constexpr std::string_view kUnicodeSpaces[] = {
+        "\xc2\xa0", "\xe1\x9a\x80", "\xe2\x80\xa8", "\xe2\x80\xa9", "\xe2\x80\xaf",
+        "\xe2\x81\x9f", "\xe3\x80\x80", "\xef\xbb\xbf"};
+    for (std::size_t k = body_start; k < b.size(); ++k) {
+        const unsigned char c = static_cast<unsigned char>(b[k]);
+        // VT/FF/backtick; production quoted() universally rejects a backslash
+        // and it is not a name byte, so no valid ER body construct contains one.
+        if (c == 0x0B || c == 0x0C || c == '`' || c == '\\') return true;
+        if (c == '%' && k + 1 < b.size() && b[k + 1] == '%') return true;  // `%%` comment
+        for (const auto space : kUnicodeSpaces) {
+            if (b.size() - k >= space.size() && b.compare(k, space.size(), space) == 0)
+                return true;
+        }
+        // The U+2000..U+200A punctuation-space range (E2 80 80..8A) that
+        // er_metadata_space also treats as whitespace.
+        if (c == 0xE2 && k + 2 < b.size() &&
+            static_cast<unsigned char>(b[k + 1]) == 0x80 &&
+            static_cast<unsigned char>(b[k + 2]) >= 0x80 &&
+            static_cast<unsigned char>(b[k + 2]) <= 0x8A)
+            return true;
+    }
+    return false;
+}
+
+// erDiagram body witnesses: entities (id/alias/attribute block/declaration),
+// relationships (two references, role, both cardinalities, identification,
+// statement), subgraphs and direction. Emission order within each construct is
+// the proposal's fixed grouped order, not raw byte order.
+bool er_sem_body(std::string_view b, std::size_t body_start,
+                 std::vector<ErSemanticSpan>& out) {
+    auto emit = [&](const char* kind, std::size_t s, std::size_t e) {
+        out.push_back({kind, s, e});
+    };
+    const std::size_t n = b.size();
+    std::size_t i = er_sem_skip_all(b, body_start);
+    if (b.size() - i < 9 || b.compare(i, 9, "erDiagram") != 0) return false;
+    i += 9;
+    // Reject bodies using grammar surfaces this witness lexer does not model,
+    // instead of emitting spans that would not match production parse results.
+    if (er_sem_body_uses_unsupported_surface(b, i)) return false;
+
+    // True only for an ASCII whitespace byte or end-of-input, the terminator
+    // production er_presentation_keyword enforces after a reserved keyword.
+    auto keyword_terminated = [&](std::size_t after) {
+        return after >= n || b[after] == ' ' || b[after] == '\t' ||
+               b[after] == '\r' || b[after] == '\n';
+    };
+
+    struct AttrRecord {
+        std::size_t stmt_start, stmt_end, type_start, type_end, name_start, name_end;
+        std::size_t key_start, key_end, comment_start, comment_end;
+    };
+    std::size_t steps = 0;
+    int subgraph_depth = 0;  // production frames reject an end at depth 0
+    int subgraph_count = 0;  // production caps groups at kGroupLimit
+    while (true) {
+        if (++steps > 100000) return false;
+        i = er_sem_skip_all(b, i);
+        if (i >= n) break;
+        // direction <TB|BT|LR|RL>: production accepts only the four enum values.
+        if (b.size() - i >= 9 && er_sem_ascii_equal(b.substr(i, 9), "direction") &&
+            keyword_terminated(i + 9)) {
+            const std::size_t stmt_start = i;
+            i += 9;
+            i = er_sem_skip_inline(b, i);
+            const std::size_t value_start = i;
+            while (i < n && er_sem_name_byte(static_cast<unsigned char>(b[i]))) ++i;
+            if (i == value_start) return false;
+            const std::string_view value = b.substr(value_start, i - value_start);
+            bool matched = false;
+            for (const auto direction : {"TB", "BT", "LR", "RL"})
+                if (er_sem_ascii_equal(value, direction)) {
+                    matched = true;
+                    break;
+                }
+            if (!matched) return false;
+            emit("direction_statement", stmt_start, i);
+            emit("direction_value", value_start, i);
+            continue;
+        }
+        // subgraph <id>: the keyword is whitespace/EOF terminated like any
+        // presentation keyword, but er_group_header additionally demands a
+        // physical space/tab separator and a non-empty id on the same line.
+        if (b.size() - i >= 8 && er_sem_ascii_equal(b.substr(i, 8), "subgraph") &&
+            keyword_terminated(i + 8)) {
+            const std::size_t header_start = i;
+            i += 8;
+            if (i >= n || (b[i] != ' ' && b[i] != '\t')) return false;
+            i = er_sem_skip_inline(b, i);
+            const std::size_t id_start = i;
+            while (i < n && er_sem_name_byte(static_cast<unsigned char>(b[i]))) ++i;
+            if (i == id_start || er_sem_is_reserved_name(b, id_start, i)) return false;
+            // Mirror the production frame cap before accepting the new group.
+            if (subgraph_depth >= static_cast<int>(kGroupDepthLimit) ||
+                subgraph_count >= static_cast<int>(kGroupLimit))
+                return false;
+            ++subgraph_depth;
+            ++subgraph_count;
+            emit("subgraph_header", header_start, i);
+            emit("subgraph_id", id_start, i);
+            continue;
+        }
+        // end: a reserved keyword, only when whitespace/EOF terminated, and
+        // only to close an open subgraph — production rejects an end at depth 0.
+        if (b.size() - i >= 3 && er_sem_ascii_equal(b.substr(i, 3), "end") &&
+            keyword_terminated(i + 3)) {
+            if (subgraph_depth == 0) return false;
+            --subgraph_depth;
+            emit("subgraph_end", i, i + 3);
+            i += 3;
+            continue;
+        }
+        // Leading name: an entity id, or the left endpoint of a relationship.
+        std::size_t id_start, id_end;
+        if (!er_sem_read_name(b, i, id_start, id_end)) return false;
+        if (er_sem_is_reserved_name(b, id_start, id_end)) return false;
+        i = id_end;
+        // Optional alias: parsed here but emitted only on an entity path, after
+        // entity_id — a relationship's left name is an entity_reference.
+        std::size_t alias_start = kErSemNpos, alias_end = kErSemNpos;
+        std::size_t j = er_sem_skip_inline(b, i);
+        if (j < n && b[j] == '[') {
+            i = j + 1;
+            if (i < n && b[i] == '"') {
+                std::size_t k = i + 1;
+                while (k < n && b[k] != '"') ++k;
+                if (k >= n) return false;
+                alias_start = i;
+                alias_end = k + 1;
+                i = k + 1;
+            } else {
+                alias_start = i;
+                while (i < n && er_sem_name_byte(static_cast<unsigned char>(b[i]))) ++i;
+                alias_end = i;
+                // An empty unquoted alias (`A []`) or a reserved keyword is
+                // rejected by the production name() call inside the brackets.
+                if (i == alias_start || er_sem_is_reserved_name(b, alias_start, alias_end))
+                    return false;
+            }
+            i = er_sem_skip_inline(b, i);
+            if (i >= n || b[i] != ']') return false;
+            ++i;
+        }
+        // Attribute block -> an entity declaration.
+        j = er_sem_skip_inline(b, i);
+        if (j < n && b[j] == '{') {
+            const std::size_t block_start = j;
+            i = j + 1;
+            std::vector<AttrRecord> attributes;
+            while (true) {
+                i = er_sem_skip_all(b, i);
+                if (i >= n || b[i] == '}') break;
+                const std::size_t stmt_start = i;
+                const std::size_t type_end = er_sem_read_attr_token(b, i);
+                if (type_end == kErSemNpos) return false;
+                const std::size_t type_start = i;
+                i = type_end;
+                i = er_sem_skip_inline(b, i);
+                const std::size_t name_end = er_sem_read_attr_token(b, i);
+                if (name_end == kErSemNpos) return false;
+                const std::size_t name_start = i;
+                i = name_end;
+                i = er_sem_skip_inline(b, i);
+                std::size_t key_start = kErSemNpos, key_end = kErSemNpos;
+                std::size_t comment_start = kErSemNpos, comment_end = kErSemNpos;
+                if (i < n && b[i] != '\n' && b[i] != '\r' && b[i] != '}') {
+                    if (b[i] == '"') {
+                        std::size_t k = i + 1;
+                        while (k < n && b[k] != '"') ++k;
+                        if (k >= n) return false;
+                        comment_start = i;
+                        comment_end = k + 1;
+                        i = k + 1;
+                    } else {
+                        key_start = i;
+                        while (i < n && er_word_byte(static_cast<unsigned char>(b[i]))) ++i;
+                        key_end = i;
+                        i = er_sem_skip_inline(b, i);
+                        if (i < n && b[i] == '"') {
+                            std::size_t k = i + 1;
+                            while (k < n && b[k] != '"') ++k;
+                            if (k >= n) return false;
+                            comment_start = i;
+                            comment_end = k + 1;
+                            i = k + 1;
+                        }
+                    }
+                }
+                std::size_t stmt_end = i;
+                while (stmt_end > stmt_start &&
+                       (b[stmt_end - 1] == ' ' || b[stmt_end - 1] == '\t' ||
+                        b[stmt_end - 1] == '\n' || b[stmt_end - 1] == '\r'))
+                    --stmt_end;
+                attributes.push_back({stmt_start, stmt_end, type_start, type_end, name_start,
+                                       name_end, key_start, key_end, comment_start, comment_end});
+            }
+            if (i >= n || b[i] != '}') return false;
+            ++i;
+            const std::size_t block_end = i;
+            emit("entity_id", id_start, id_end);
+            if (alias_start != kErSemNpos) emit("entity_alias_lexeme", alias_start, alias_end);
+            emit("entity_attribute_block", block_start, block_end);
+            for (const auto& a : attributes) {
+                emit("attribute_statement", a.stmt_start, a.stmt_end);
+                emit("attribute_type", a.type_start, a.type_end);
+                emit("attribute_name", a.name_start, a.name_end);
+                if (a.key_start != kErSemNpos) emit("attribute_keys", a.key_start, a.key_end);
+                if (a.comment_start != kErSemNpos)
+                    emit("attribute_comment_lexeme", a.comment_start, a.comment_end);
+            }
+            emit("entity_declaration", id_start, block_end);
+            continue;
+        }
+        // Relationship: <card> <ident> <card> <right> : <role>
+        i = er_sem_skip_inline(b, i);
+        std::size_t left_card_end = er_sem_match_choice(b, i, kErCardinality);
+        if (left_card_end != kErSemNpos) {
+            const std::size_t left_card_start = i;
+            i = left_card_end;
+            i = er_sem_skip_inline(b, i);
+            const std::size_t ident_start = i;
+            const std::size_t ident_end = er_sem_match_choice(b, i, kErIdentification);
+            if (ident_end == kErSemNpos) return false;
+            i = ident_end;
+            i = er_sem_skip_inline(b, i);
+            const std::size_t right_card_start = i;
+            const std::size_t right_card_end = er_sem_match_choice(b, i, kErCardinality);
+            if (right_card_end == kErSemNpos) return false;
+            i = right_card_end;
+            i = er_sem_skip_inline(b, i);
+            std::size_t right_start, right_end;
+            if (!er_sem_read_name(b, i, right_start, right_end)) return false;
+            if (er_sem_is_reserved_name(b, right_start, right_end)) return false;
+            i = right_end;
+            i = er_sem_skip_inline(b, i);
+            if (i >= n || b[i] != ':') return false;
+            ++i;
+            i = er_sem_skip_inline(b, i);
+            std::size_t role_start, role_end, content_start, content_end;
+            if (i < n && b[i] == '"') {
+                std::size_t k = i + 1;
+                while (k < n && b[k] != '"') ++k;
+                if (k >= n) return false;
+                role_start = i;
+                role_end = k + 1;
+                content_start = i + 1;
+                content_end = k;
+                i = k + 1;
+            } else {
+                role_start = i;
+                while (i < n && er_sem_name_byte(static_cast<unsigned char>(b[i]))) ++i;
+                role_end = i;
+                content_start = role_start;
+                content_end = role_end;
+                // An empty unquoted role (`:` followed by a non-name byte) or
+                // a reserved keyword fails name(); only a quoted role may be empty.
+                if (i == role_start || er_sem_is_reserved_name(b, role_start, role_end))
+                    return false;
+            }
+            emit("relationship_entity_reference", id_start, id_end);
+            emit("relationship_entity_reference", right_start, right_end);
+            emit("relationship_role_lexeme", role_start, role_end);
+            emit("relationship_role_content", content_start, content_end);
+            emit("relationship_left_cardinality", left_card_start, left_card_end);
+            emit("relationship_right_cardinality", right_card_start, right_card_end);
+            emit("relationship_identification", ident_start, ident_end);
+            emit("relationship_statement", id_start, i);
+            continue;
+        }
+        // Bare entity.
+        emit("entity_id", id_start, id_end);
+        if (alias_start != kErSemNpos) emit("entity_alias_lexeme", alias_start, alias_end);
+        emit("entity_declaration", id_start, id_end);
+    }
+    // An unclosed subgraph fails production's final frame-depth check.
+    return subgraph_depth == 0;
+}
+}  // namespace
+
+// D251 test-only seam: the 24 semantic source-witness kinds for the ER107
+// proposal, emitted in the proposal's construct-grouped order with UTF-8 byte
+// offsets. Independent of production ErCursor; nullopt for a malformed or
+// non-ER frontmatter source. The slice SHA is checked by the test oracle, as
+// for the structural seam; the local ordinal is the position in this list.
+std::optional<std::string> er_semantic_witnesses_json(std::string_view source, Work& work) {
+    namespace json = loom::utils::json;
+    if (!work.spend(source.size() * 8u + 4096u)) return std::nullopt;
+    if (source.size() < 8 || !source.starts_with("---\n")) return std::nullopt;
+    const auto close_marker = source.find("\n---\n", 3);
+    if (close_marker == std::string_view::npos) return std::nullopt;
+    const std::size_t close_start = close_marker + 1;
+    const std::size_t close_end = close_start + 3;
+    const std::size_t body_start = close_end + 1;
+    if (body_start >= source.size() || source.substr(body_start, 9) != "erDiagram")
+        return std::nullopt;
+    const std::size_t after_header = body_start + 9;
+    if (after_header < source.size() &&
+        er_word_byte(static_cast<unsigned char>(source[after_header])))
+        return std::nullopt;
+
+    std::vector<ErSemanticSpan> spans;
+    spans.reserve(32u + source.size() / 2u);
+    if (!er_sem_metadata(source, close_start, spans)) return std::nullopt;
+    if (!er_sem_body(source, body_start, spans)) return std::nullopt;
+
+    json::JsonMutDoc doc;
+    auto array = doc.array();
+    for (std::size_t ordinal = 0; ordinal < spans.size(); ++ordinal) {
+        const auto& span = spans[ordinal];
+        const std::string lexeme(source.substr(span.start, span.end - span.start));
+        // A zero-width span (the single empty quoted role) keeps its start line;
+        // end-1 would otherwise name the byte before the span.
+        const std::size_t line_anchor = std::max(span.start, span.end - 1);
+        auto witness = array.make_obj();
+        witness.set("kind", span.kind);
+        witness.set("ordinal", static_cast<int64_t>(ordinal));
+        witness.set("source_byte_end", static_cast<int64_t>(span.end));
+        witness.set("source_byte_start", static_cast<int64_t>(span.start));
+        witness.set("source_lexeme", lexeme);
+        witness.set("source_line_end", er_line_of(source, line_anchor));
+        witness.set("source_line_start", er_line_of(source, span.start));
+        witness.set("source_utf8_bytes", static_cast<int64_t>(span.end - span.start));
+        array.append(witness);
+    }
+    doc.set_root(array);
+    return doc.to_string();
+}
+
 int RelationBox::right() const {
     return x + w - 1;
 }

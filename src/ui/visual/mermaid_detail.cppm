@@ -786,4 +786,10 @@ std::optional<std::string> er_whole_scene_json(std::string_view source, Work& wo
 // classification; slice SHAs are added by the test oracle. Test-only.
 std::optional<std::string> er_structural_witnesses_json(std::string_view source, Work& work);
 
+// D251 semantic source witnesses (the 24 token kinds) for the ER107 source
+// proposal, produced by a parallel lexer that leaves production ErCursor
+// untouched. Ordered in the proposal's construct-grouped sequence with UTF-8
+// byte offsets; slice SHAs are added by the test oracle. Test-only.
+std::optional<std::string> er_semantic_witnesses_json(std::string_view source, Work& work);
+
 }  // namespace loom::ui::mermaid::detail

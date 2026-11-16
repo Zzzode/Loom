@@ -290,6 +290,100 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     presets and re-run before comparing shas; a one-preset-old report sha is a
     build-currency problem, not a renderer non-determinism.
 
+29. **A cohort pixel gate, an independent review and a graduated family
+    semantics suite can ALL be green while the OfficialMatrix capability
+    report still rejects the change — check the family's frozen whole-null
+    authority BEFORE building, not after the cohort/review investment.** D237
+    admitted ER subgraph group-endpoint edges behind an ER-local parser change
+    and got a renderer-free cohort ledger (5/5), an APPROVED independent
+    adversarial review and a fully green `relations_semantics` (269/269 after
+    graduating two frozen obligations with framework-derived Models) — then
+    `MermaidCapabilityReport.OfficialMatrix` failed because every ER original
+    is enumerated through the frozen ER206 whole-null authority, whose
+    retained-null expectation the six new draws violate
+    (`...never admission`, errors 0->6, gap roster 48->54). ER has no cohort
+    dispatch escape (unlike E2a/E2b/E2c); the only legal draw path is the
+    ER107 supplemental whole-Model re-baseline (facts/contract/source-helper
+    triple SHA, `array<bool,107>`, dual `kPins`), a separately-authorized
+    milestone of the same class as the D-120 class-link block. Rule 12 says
+    check the frozen contract before building; rule 29 sharpens it: before
+    scoping ANY renderer-admission cohort, grep the matrix dispatch for a
+    family-specific retained-null authority (ER206/ER107, Class285, the E6c
+    roster) and classify the work up front as either an in-authority cohort
+    admission or a re-baseline milestone. A cohort gtest and an agent review
+    prove rendering fidelity, never authority compliance; the full
+    `MermaidCapabilityReport.OfficialMatrix` is the only gate that proves the
+    latter, so run it before treating a green cohort as shippable.
+30. **A byte-exact corpus differential proves equality to the frozen fixture,
+    not faithfulness to the production grammar — a reference model and its port
+    share the same blind spot, so cross-check every charset and boundary flag
+    against the production parser's own tables, and prove the diverging input is
+    corpus-absent before accepting a bounded-envelope reject.** D251's parallel
+    ER lexer matched all 107/107 originals (4222 witnesses, byte + sha256) yet
+    the independent review found a systematic marker-boundary divergence: the
+    throwaway Python reference inferred a word boundary from the token's first
+    byte, and the C++ port copied it, so symbolic markers that start with a word
+    byte (`o|`, `o{`) and the `boundary=false` textual forms (`1+`, `0+`,
+    `many(0/1)`) were over-constrained versus production's per-entry flag table.
+    The corpus cannot expose it because every marker is followed by a space;
+    the same class of corpus-invisible gap recurred for digit-leading
+    attributes, lone tildes, reserved names, subgraph frame depth and quoted-
+    content validation. The green 107-case gate was necessary but never
+    sufficient. Rules: (a) when porting a parser as a parallel witness, diff
+    your marker/keyword tables row-by-row against the production entry structs
+    (here `er_cardinality`'s `{text, marker, word}`), never re-derive a
+    boundary rule from token shape; (b) for every grammar surface you choose not
+    to model, first run a byte census proving it occurs zero times in the
+    corpus, then fail the whole input closed at an envelope guard rather than
+    emit a divergent span, and record it as a documented limitation; (c) keep a
+    throwaway cross-check reference in /tmp for fast rule iteration, but the
+    durable gate is the native gtest over the real compiled seam with sha256 —
+    and an independent adversarial review that reads production source, not the
+    reference, is what actually catches the shared blind spot.
+31. **For a large deterministic generator, write the leaf-level derivation
+    spec and the canonical-equality harness BEFORE production C++, and reuse an
+    admission helper at the third consumer instead of copying it.** D271's
+    16-field source_model producer (~1100 new lines) reached 107/107 canonical
+    byte-equality plus pinned sha256 on its FIRST full test run, with only two
+    trivial `-Werror` build iterations (an unused variable, a mis-scoped
+    anonymous namespace). The enabling work was upstream, not in the compiler
+    loop: a read-only subagent produced an 829-line /tmp catalog cross-checked
+    by independent `python3 -I` probes (marker/ordinal/YAML/ordering rules),
+    and the differential compared whole canonical strings + the content-
+    addressed digest rather than hand-asserting each leaf. Rules: (a) when a
+    third parallel seam needs the same input admission, extract one helper
+    immediately — the D271 envelope refactor was behavior-preserving and
+    covered by the two existing 107-case differentials, so de-duplication was
+    near-free; (b) make the fixture's own canonical hash the test oracle so a
+    single comparison covers every field and array order at once; (c) keep
+    roster counts (391/362/253/287/181) as explicit tripwires. Rule 30 still
+    applied at review: the nested-subgraph frame stack and literal-block `|`
+    style were corpus-absent divergences no differential could see, caught only
+    by reading production — closed with a fail-closed reject and an
+    indicator-preserving fix rather than golden data.
+32. **When a "producer" needs data the source cannot provide, make it an explicit
+    input rather than an impure read, and treat an apparently-sorted fixture as
+    a trap that needs an anti-silence test.** D275's source_binding has 12 of
+    20 fields that exist nowhere in the raw .mmd (manifest/prior cross-refs,
+    component digests). The correct seam is still pure:
+    `er_source_binding_json(source, work, const ErSourceProvenance&)` with every
+    provenance field std::optional, emitting explicit JSON null when unset and
+    never touching fs/manifest/git/env; content-hash fields are independently
+    recomputed by the gtest as tripwires. Two traps bit during the work:
+    (a) the build/ tree was wiped mid-session, so a ninja failure surfaced as
+    "build/debug is not a directory" rather than a compile error — distinguish a
+    missing build tree from a code break and reconfigure before debugging code;
+    (b) gtest discovery still failed on libssl after a clean tree, and a normal
+    build stopped mid-way leaving some targets unlinked — `cmake --build ... --
+    -k 0` keeps linking past the discovery failure so every binary exists for
+    direct LD_LIBRARY_PATH runs. The canonical writer's object-key sort was
+    invisible to the 107 differential because every frozen object is already in
+    alphabetical order; the durable guard is a synthetic out-of-order-key
+    source whose hash only matches when sorting actually happens (a no-sort
+    writer would pass all 107 yet fail this one test). Rule 30 again: the
+    unescaped-key and dead-bool-return defects were corpus-invisible, found by
+    reading the writer, not the differential.
+
 ## Per-task efficiency retro (mandatory at every closure)
 
 Attach a short efficiency section to each closure report, answering:
@@ -321,6 +415,29 @@ Attach a short efficiency section to each closure report, answering:
    192k-cell work for small graphs. Golden byte risk — gate strictly.
 5. **Split `mermaid_impl.cpp` / reduce BMI fan-out** — structural, schedule
    separately; reduces compile time, not run time.
+6. **Giant frozen gates cannot run under ASan inside a practical closure
+   window — a test-architecture defect, not an acceptable steady state
+   (logged 2026-11-16, D282/D284).** Two whole-source capability gates are
+   correct but pathological under AddressSanitizer+UBSan. Measured this round
+   on the 109 GiB host (so memory is ruled out — peak RSS stayed flat and
+   low): `MermaidCapabilityReport.Class285` takes **723.5 s** at **471 MiB**
+   peak (vs 8.85 s in release, ~82x) and the three
+   `MermaidOfficialConfig110Native.*` tests take **990.3 s** at **730 MiB**
+   peak (vs 13.4 s, ~74x); both PASS with zero sanitizer findings. A full
+   `ctest -L mermaid` ASan run is killed by the outer task-lifetime harness
+   when it reaches Class285 — not by an OOM or a sanitizer abort. A test that
+   cannot enter the sanitizer lane is structurally under-verified for memory
+   safety. Suggested disposition (separate milestone, do NOT do during a
+   feature closure): (a) split each monolithic gate into per-fixture/per-track
+   gtest cases so they parallelize and bound per-case time; (b) shrink or
+   shard the giant in-memory capture/observation structures; or (c) if a gate
+   is genuinely irreducible, mark it explicitly `ASAN_EXEMPT` in code with the
+   measured slowdown + the compensating release-serial/byte-matrix coverage
+   written next to the marker, rather than silently relying on "too slow to
+   run". Until then the D282 closure covers these gates via release `-j1`
+   serial runs plus the dual-preset byte-identical OfficialMatrix, both
+   executed fresh this round, and covers the changed ER surface (92 tests)
+   under ASan.
 
 ## Retro log
 
@@ -1027,3 +1144,275 @@ Attach a short efficiency section to each closure report, answering:
   file-local helper with no Work spend and no interface/BMI fan-out; no
   frozen contract moved (2145/2738, 48-gap roster, Class285 260/25/0, flow
   160/240, body 372/173/48, E2a 59/10, E2b 51/10 byte-identical).
+- **2026-11-15, D237 ER subgraph group-edge investigation (all production/test
+  code reverted; docs-only outcome).** Outcome: zero shipped draws; a clean
+  lossless 7-row ER group was found, fully implemented and proven at the
+  renderer/cohort/semantics layers, then correctly rejected by the frozen
+  OfficialMatrix ER206 whole-null authority and reverted rather than move a
+  frozen gate without authorization. (1) The selection work was sound and
+  cheap: cross-family CellCapture scans proved the frontmatter envelope seam is
+  exhausted (every remaining envelope-only row carries a non-droppable
+  config/color/layout contract; the three config-free exceptions are roster-
+  pinned or E2a-adjudicated), and the ER group-edge selector reproduced the
+  exact 7 paths over all 206 ER originals with zero missing/extra. (2) The
+  expensive rework was building the cohort ledger, the independent review and
+  the ER107-style mutation graduation (framework-derived complete Models,
+  model SHAs, exact exec/skip spans; 269/269 relations green) BEFORE learning
+  the family's matrix path enforces a retained-null authority that has no
+  cohort escape. Rule 29 (new) codifies the earlier, cheaper check. (3) A
+  second instance of the rule-27 pipe-mask trap: an early full
+  relations_semantics run was read as green through `| tail`, hiding the one
+  failing ER subgraph gate; the independent reviewer caught it by checking the
+  raw exit code. Always capture the binary's exit status directly. (4) The
+  blocking matrix failure is a correct fail-closed, not a bug: the error string
+  is the architectural invariant `OfficialER206 whole-null ... never admission`,
+  and the only legal route (ER107 supplemental whole-Model re-baseline) is a
+  separately-authorized milestone identical in shape to the D-120 class-link
+  block. The complete patch is preserved under /tmp/d237_probe/d237_backup/ for
+  that future milestone; all frozen gates and the 1232/913 counts are
+  byte-identical to HEAD (no production, test-target or contract change
+  remains in the tree).
+- **2026-11-15, D242 ER107 group-edge re-baseline authorization -> deep scope
+  (still docs-only; tree green at 9e4bb79b/1232-913).** TechLead D242 explicitly
+  authorized the local ER107 whole-Model re-baseline for the six group-edge
+  originals, so the work moved from "blocked pending authorization" to a
+  generator-feasibility question. Investigation proved the production
+  representation is sufficient (the ER-local parser already renders all six
+  losslessly; two canonical whole-scene models pass `validate_impl`); the real
+  wall is that the ER107 facts/proposal assets have NO in-repo producer and no
+  Model->canonical-JSON serializer — `bind_case` only re-derives facts to
+  validate, never emits, and git history has no generator. Each new case is a
+  byte-exact ~20KB terminal_model + ~1.9KB 20-field binding + 5 SHAs, validated
+  by opaque `require()`s (exact display reconstruction/joiner/byte offsets), so
+  a proposal EMITTER over the oracle's already-derived `Projection`/capture
+  structs is the missing, dedicated piece of tooling. Blast radius was measured
+  and is contained: per-case SHAs are content-local (existing 107 pins stay
+  valid); `shared_contract` (20KB) and `palette_source_and_projection` (7KB)
+  carry zero case references and stay byte-stable, as do presentation (fixed
+  17 upstream files), the contract doc and the source helper — so only 2 of the
+  9 pinned SHA constants move (kFactsSha, kProjectionSha), plus the dual
+  kPins 107->113, five hardcoded-107 sites, the 7 component_hashes/counts/
+  selection aggregates and verify_er107_admission.py's SELECTED/admission math/
+  BASELINE_MATRIX_SHA. No partial lands (parser alone = 6 matrix errors, roster
+  48->54), so the emitter + parser must be one atomic green change with an
+  independent B3 review. Re-confirmed no lighter in-contract cohort remains:
+  info(2) is a version-banner meta-directive with no projectable diagram,
+  zenuml(1) a single-file new grammar, katex(4) needs a math engine, all other
+  Part-B groups are visual/config contracts or the same frozen authorities.
+  Decision recorded for the next milestone rather than forcing a non-green or
+  expectation-only change (D242 forbids both); seed artifacts in
+  /tmp/d237_probe/d237_backup/.
+- **2026-11-16, D248/D251 stage-3 structural-witness seam (local, green; 69/69
+  subset incl OfficialMatrix).** Two self-inflicted rework loops, both recorded
+  so they do not recur. (1) **Byte-vs-code-point false defect.** A case was
+  briefly logged as a "stale offset" (`byte_end` 202 vs a reported 196-byte
+  source) and nearly written into the contract as a 106/107 golden exception.
+  The 196 was Python `len(str)` counting Unicode code points; the file is 202
+  UTF-8 **bytes** (three U+2192 arrows, `E2 86 92`, +6 bytes). Rule: when
+  validating byte offsets/lexemes, measure with byte-aware tools (`wc -c`,
+  `len(bytes)`, `.size()` on the byte string), never a decoded code-point
+  length; a pinned `byte_end == byte file size` is consistent by construction.
+  The production seam uses `string_view`/`size()` and matched 107/107 (2394
+  witnesses, zero tiling gaps) with no golden-fitting once the measurement
+  error was removed. (2) **Dangling by-value JSON handle in the test, not a
+  production bug.** Storing `&c` where `c` is the by-value `JsonVal` argument
+  of an `iter` lambda dangles after the lambda returns; the reused address
+  resolved a different (265-byte ASCII) case, which surfaced as an impossible
+  "no multibyte content" failure. Rule: copy the needed scalar (`std::string`
+  path) out while the handle is live; never hold a non-owning view/pointer to a
+  serdes handle across an iteration boundary. A standalone throwaway Python
+  re-derivation of the seven span rules in /tmp cross-checked all 2394
+  witnesses in seconds and was the fastest way to separate harness defects
+  from production correctness; the durable regression stays in the native
+  gtest (production seam + loom.crypto slice SHAs), per the no-text-matching
+  policy.
+- **2026-11-16, D251 parallel 24-kind ER semantic witness lexer (test-only
+  additive seam; no production change).** Outcome: 107/107 ordered byte-exact
+  differential (4222 semantic witnesses across 24 closed kinds, all nine fields
+  incl. recomputed sha256), debug+release 9/9, adjacent cluster 291/291, two
+  independent adversarial review rounds ending APPROVE; no frozen gate moved
+  (2145/2738, 48-gap roster, Class285 260/25/0, E2a 59/10, E2b 51/10, body
+  372/48, flow 160/240, ER107 stays 107, 0 matrix error). (1) Gate wall-clock:
+  the native contract binary is ~2.2 s and the throwaway Python reference
+  re-derives all 4222 spans in 0.09 s, so rule iteration stayed in the /tmp
+  reference and the C++ was ported once the grammar was pinned; the dominant
+  cost was the two review rounds and the first interface-edit BMI fan-out, not
+  test execution. (2) False green recurred (Rule 27): piping the build through
+  `tail` masked ninja's non-zero exit and a gtest-discovery libssl failure
+  looked like a compile break; durable fix was `set -o pipefail` + reading
+  `${pipestatus[1]}` and running the binary directly with the glibc/openssl
+  loader path rather than trusting the discovery step. A transient 0-byte
+  binary was a link/discovery race, confirmed on rebuild (1.3 MB ELF). (3)
+  Re-done work: an unconditional `entity_id` emit after `read_name` polluted
+  all 253 relationship left endpoints (93-case regression) and had to be made
+  entity-path-only; and the first-review marker-boundary table was re-derived
+  against production's per-entry flags. The upstream check that would have
+  caught both before review is a row-by-row diff against the production
+  `er_cardinality` entry struct and construct dispatch, not the corpus — now
+  Rule 30. (4) Fan-out behaved exactly as the build-layout note predicts:
+  touching the two `.cppm` interface files (mermaid.cppm, mermaid_detail.cppm)
+  forced a broad UI BMI recompile (~115 ninja steps on the first build); later
+  fixes were `.cpp` body edits and recompiled only the relations TU and its
+  dependents. (5) The Python-first derivation was measurably cheaper than
+  editing C++ blind: each grammar correction cycled in sub-second Python over
+  all 107 cases before any compile, and the C++ port reached byte-exact on the
+  first full differential once the reference was green; the durable regression
+  remains native gtest (real compiled seam + sha256), per the no-text-matching
+  policy. (6) New Rule 30 added (corpus-exact != grammar-faithful; shared
+  reference/port blind spot; bounded-envelope census + fail-closed). All
+  hostile-input divergences the reviews found were empirically zero-occurrence
+  in the 107 bodies, so every fix is corpus-invisible and the 4222 roster is
+  unchanged; remaining unmodeled surfaces (in-quote content validation,
+  terminal-`1` lookahead, 64-entity cap) are documented in the lexer header.
+- **2026-11-16, D271 ER source_model generator test seam (test-only; no
+  production change; commit 01688c3a local, not pushed).** Outcome: a parallel
+  record-building seam regenerates the 16-field source_model for all 107
+  originals; native differential passes canonical byte-equality AND the pinned
+  source_model_sha256 for every case, with roster tripwires 391 statements /
+  362 entities / 253 relationships / 287 attributes / 181 obligations /
+  1 subgraph / 4 directions. debug+release emitter binary 11/11, adjacent
+  cluster 291/291, two independent adversarial review rounds ending APPROVE;
+  frozen gates unmoved (2145/2738, 48-gap, Class285 260/25/0, ER107=107,
+  0 matrix error). (1) Gate wall-clock stayed small: the emitter binary is
+  ~2.6 s; the dominant cost was the read-only spec/catalog subagent and the two
+  reviews, not compile or test. (2) No false green/red: pipefail + direct
+  binary runs with the glibc/openssl loader path continued to side-step the
+  known gtest-discovery libssl failure; every ninja RC=1 was confirmed as the
+  discovery step with zero compile warnings. (3) Re-done work was minimal —
+  exactly two build iterations for trivial `-Werror` issues (unused
+  block_start; the public seam accidentally left inside an anonymous
+  namespace) and one logic correction caught before any green run (folded
+  description chomp dropped the trailing empty segment). The upstream check
+  that made this cheap was the /tmp derivation catalog + independent python
+  probes, now Rule 31. (4) Fan-out: the two `.cppm` edits again forced the
+  broad UI BMI recompile on first build; subsequent body-only edits recompiled
+  just the relations TU. (5) The shared er_source_admit_envelope extraction
+  de-duplicated the third copy of input admission with behavior proven
+  unchanged by the existing D248/D251 differentials (their tests stayed green).
+  (6) Rule 30 recurred at review: nested subgraph frame ownership and the
+  literal-block `|` YAML style are corpus-absent (0 occurrences), invisible to
+  the 107-case differential; closed with a depth>=2 fail-closed reject and an
+  indicator-preserving yaml_style fix, both corpus-invisible. New Rule 31
+  added (spec/canonical-harness first; shared admission at third consumer).
+  Remaining unmodeled corpus-absent surfaces documented in code.
+- **2026-11-16, D275 ER source_binding test seam (test-only; no production
+  change; commit 2f3329d0 local, not pushed).** Outcome: a pure seam
+  regenerates the 20-field source_binding for all 107 originals; 8 fields
+  (three byte refs with lines/raw sha, two component canonical digests, body
+  digest, witness count, dense ordinal list) derive from the source and 12
+  manifest/prior fields arrive on an explicit optional ErSourceProvenance with
+  null-on-unset. Native differential passes canonical byte-equality AND the
+  pinned source_binding_sha256 for every case, with a 12-null/8-populated
+  contract, an out-of-order-key canonical-sort anti-silence test, a
+  zero-budget fail-closed case and a malformed-input battery. debug+release
+  emitter binary 15/15, adjacent cluster 291/291, two adversarial review rounds
+  ending APPROVE with no residual findings; frozen gates unmoved (2145/2738,
+  48-gap, Class285 260/25/0, ER107=107, 0 matrix error). (1) Dominant cost was
+  the read-only spec/catalog subagent and the two reviews plus a full rebuild,
+  not test execution (emitter ~4 s). (2) False-red infrastructure, not code:
+  the build/ tree was deleted externally mid-session (a "not a directory"
+  error, not a compile failure) and after a clean reconfigure the gtest
+  discovery/libssl step stopped ninja before all targets linked; durable moves
+  are reconfigure-on-missing-tree and `-- -k 0` to finish linking, then run
+  binaries directly with the glibc/openssl loader path. (3) Re-done work was
+  small: three trivial API-mismatch build iterations (is_int/root()/const get
+  vs the actual JsonMutVal surface) and one test path missing the `cases/`
+  segment; the upstream check is to read the serdes JsonMutVal API before
+  writing the writer. (4) Fan-out: the exported ErSourceProvenance struct in
+  mermaid.cppm triggered the broad UI BMI recompile on the clean tree; later
+  body-only edits were cheap. (5) The D271 collection was de-duplicated into
+  er_src_collect_all shared by both seams with the D271 budget/behavior
+  unchanged and its 107/107 test guarding the move. (6) Rule 30/31 both
+  recurred: corpus-invisible canonical-writer defects (dead bool return,
+  unescaped object keys) and the no-sort-would-still-pass-107 trap were caught
+  by review and a synthetic anti-silence source, not the differential. New
+  Rule 32 added (explicit provenance inputs; anti-silence test for naturally
+  sorted fixtures; clean-tree/discovery recovery).
+
+- **2026-11-16, D279 ER terminal_model test seam (test-only; no production
+  change; local, not pushed).** Outcome: the sixth and largest seam
+  (`er_terminal_model_json`, ~700 additive lines) regenerates the 14-field
+  terminal_model for all 107 originals — 362 entity / 253 relationship / 1
+  group presentations, 1764 captions, 871 notices — byte-exact under canonical
+  JSON plus the pinned terminal_model_sha256. debug+release emitter 18/18,
+  adjacent relations_semantics 269/269 + er107_source107 7/7, production
+  test_mermaid_official 63/63 (run by the architecture reviewer), two
+  adversarial reviews APPROVE (one MINOR defensive-optional propagation fixed;
+  no BLOCKER/MAJOR). Frozen gates unmoved; pure additive diff, zero
+  deletions, no shared/contract change. (1) The decisive efficiency move was
+  building read-only `python3 -I` cross-validators for every law (ref witness
+  sequences, hue/role/token tables, wrap offsets, notice order/templates,
+  caption handle domain, scalar presentation fields) BEFORE the C++ rebuild
+  loop: the native differential then converged 214 failures -> 14 -> 0 in two
+  iterations, with only three real defects (a missing metadata key, an
+  alias-array shape, an aliased-entity label witness). Validate the spec in a
+  scratch interpreter; spend compiles only on confirmed code. (2) New trap — a
+  synthetic unit source must satisfy the FULL composed grammar, not just the
+  new seam's parallel lexer. The wrap test first used an empty-frontmatter
+  source that the seam's own collector accepted but the embedded
+  whole-scene seam's production `parse_relations` rejects (all real ER107
+  carry a description), surfacing as a confusing nullopt. Bisection across
+  whole_scene/source_model seams localized it; the fix was a realistic
+  `description:` frontmatter, not a code change. (3) Reuse held: whole_scene
+  embedded zero-touch via `JsonMutDoc::raw_json` deep-copy; collection,
+  ref-builder and canonical writer shared; closed hue/role/token tables
+  embedded equal to the production constexpr arrays rather than reading
+  runtime Palette RGB. (4) Rule 30 recurred twice: only 12 captions actually
+  wrap and none use a space joiner in the corpus, so the space-break branch
+  needed a synthetic >32-byte quoted role; and the alias label-witness
+  distinction (20/362 entities) is invisible unless aliased cases are probed
+  directly. (5) Post-auto-compaction the build stayed in-session rather than
+  handing off: the committed handoff spec doubled as the design record and
+  safety net, so no context was lost and no field was downgraded. (6) The
+  recurring gtest-discovery/libssl false-red was handled with the established
+  `-- -k 0` + direct-binary loader-path move; emitter test execution stays
+  ~1-4 s, so differential runs were never the bottleneck.
+
+- **2026-11-16, D282 ER107 family closure gates (test-only seam family; no
+  production change; local, not pushed).** The D248->D279 six-seam chain
+  passed its deferred full ceremony — full matrix, ASan+UBSan and the serial
+  three-family gate, each run once this round rather than inferred from the
+  layered evidence. (1) Full OfficialMatrix (2145 pinned originals x 5
+  frames): release 27.0 s and debug 241.5 s, both PASS, and the two report
+  JSONs are byte-identical, sha256
+  c906c74afddc02efa2bc311399ab6d337fb6dcf2318e6528e78d85067e09dc25 — the
+  same digest recorded at D236. Frozen ledger unmoved: whole-original @240
+  1232 drawn / 913 source_fallback / 0 error; body_diagnostic 372/173/48;
+  Class285 260/25/0; ER 175/31/0; integrity_errors empty; ER107 stays 107.
+  A test-only seam cannot move a renderer count, and the unchanged digest
+  proves it. (2) ASan+UBSan on the changed ER surface, 92 tests, zero
+  sanitizer findings: emitter_contract 18/18, er107_source107 7/7 and the
+  relations_semantics `MermaidEr*` filter 67/67. The two giant frozen gates
+  are excluded from the ASan lane with measured, not asserted, reasons (see
+  Open work #6): Class285 isolated ASan 723.5 s / 471 MiB peak and
+  Config110 990.3 s / 730 MiB peak, both PASS cleanly — duration blowup
+  (~74-82x), not OOM on a 109 GiB box and not a failure. They are instead
+  covered this round by fresh release `-j1` serial runs (Config110 3 tests
+  13.40 s, Class285 1 test 8.85 s, Block58 3 tests 0.48 s, Er107 3 tests
+  13.30 s; 10 tests, RC 0) plus the byte-identical dual-preset matrix. (3)
+  Targeted-loop timing, clean debug with no concurrent load: the new
+  TerminalModel 107-case canonical+sha differential 1013 ms; sibling
+  differentials source_binding 1081 ms, source_model 390 ms, whole_scene
+  252 ms, structural 363 ms, semantic 430 ms; the full 18-test emitter
+  binary 4957 ms; er107_source107 7 tests 112.9 s; relations_semantics 269
+  tests 660.5 s. (4) The ASan gate earned its keep and must not be replaced
+  by layered evidence: it caught a real heap-use-after-free that every
+  non-ASan build masked. The D279 wrap unit test's lambda returned a
+  non-owning `JsonVal caption` view into a local `JsonDoc parsed`; when the
+  lambda returned, the doc destructor freed the yyjson heap and the view
+  dangled. Under debug/release the freed cell happened not to be reused, so
+  the assertions read stale-but-intact bytes and the suite stayed green;
+  ASan reported the free/use pair immediately (yyjson default_free ->
+  unsafe_yyjson_is_obj in the test body). The fix keeps the JsonDoc alive
+  inside the result struct (move the doc; the view is valid for the doc's
+  lifetime), after which emitter_contract is 18/18 clean under ASan and
+  re-verified 18/18 in both presets. Lesson: a view/handle returned past its
+  owning document's scope is a false-green class only a sanitizer reliably
+  exposes — do not treat "passes in debug and release" as memory-safe. (5)
+  Two harness traps this round, neither a code defect: `export
+  LD_LIBRARY_PATH` with the Homebrew glibc prefix poisoned sibling system
+  utilities (`date`/`basename`/`tail` failed with a GLIBC_PRIVATE lookup), so
+  the prefix must stay per-command rather than exported; and an early full
+  ASan suite "disappeared" mid-Class285 because the outer background-task
+  harness ended, which was correctly treated as inconclusive and re-run
+  isolated instead of being counted as a pass.

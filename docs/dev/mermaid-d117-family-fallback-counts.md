@@ -221,6 +221,68 @@ when the body would draw.
   The other two fixtures stay out independently: the htmlLabels=false
   sibling and the edge-labels row (whose body genuinely falls back on
   cross-boundary labeled group edges).
+- **ER subgraph group-edge (7 originals, investigated 2026-11-15, no code
+  shipped; BLOCKED on the frozen ER206 whole-null authority):** the renderer
+  already projects subgraph containers, nested groups, quoted titles and
+  top-level `direction`. The remaining clean same-semantic body group is seven
+  originals whose relationship endpoint is a subgraph id (plain or quoted),
+  four also carrying an in-group `direction` override. A minimal, ER-local
+  parser change (`parse_plain_er` only; State/Class unreachable) admits both:
+  a group id becomes a valid edge endpoint and an in-group `direction` is
+  consumed as a non-terminal directive. An independent adversarial review
+  confirmed lossless rendering (group box, nested boxes, group-attached edge,
+  cardinality markers and role label all preserved; 6 whole originals draw at
+  240, the 7th handDrawn nested variant body-only behind the pre-existing
+  envelope double-parse Work ceiling) and the full `relations_semantics`
+  suite (269/269) after graduating two `MermaidErSubgraphSourceProfile`
+  obligations with framework-derived complete Models. **But the
+  `MermaidCapabilityReport.OfficialMatrix` gate then fails:** every ER
+  original is enumerated through the frozen ER206 whole-null authority, and
+  the six newly-drawing rows violate its retained-null expectation
+  (`OfficialER206 whole-null art/ordinary/restore unmet; never admission`),
+  booking 6 new errors (the frozen roster moves 48 -> 54). There is no
+  cohort-style escape for ER — the only legal draw path is the ER107
+  supplemental whole-Model flow, which re-baselines the facts/contract/
+  source-helper triple SHA, the `array<bool,107>` capture set and the dual
+  `kPins` tables (a separate milestone, same shape as the D-120 class
+  link/callback block). Do NOT ship the parser admission until that
+  re-baseline is explicitly authorized; the full patch set is preserved under
+  `/tmp/d237_probe/d237_backup/`. Counts unchanged (still 1232/913).
+  - **D242 (2026-11-15) authorized the local ER107 re-baseline; deep scoping
+    then identified the true blocker as MISSING GENERATOR TOOLING, not the
+    production representation (which already renders correctly).** The ER107
+    facts/projection assets (`er107_complete_source_proposal.v1.json` 3.7 MB,
+    `er107_terminal_projection_proposal.v1.json` 2.9 MB) are immutable,
+    content-addressed, byte-exact proposals with no checked-in producer and no
+    Model->canonical-JSON serializer (only `parse_model` JSON->Model exists;
+    `bind_case` re-derives captions/display facts from source purely to
+    VALIDATE, never to emit). Git history has never contained an ER107
+    proposal generator. Each new case needs a ~20 KB `terminal_model`
+    (whole_scene_model + entity/group/relationship presentations + captions
+    with byte offsets + `serialized_body_coordinates` + notices) and a
+    ~1.9 KB 20-field `source_binding`, plus 5 per-pin SHAs. The required
+    edit surface is fully enumerated: dual `kPins<107>` in
+    `mermaid_er107_source.hpp:47` and `mermaid_er107_authority.hpp:43`
+    -> `<113>`; hardcoded 107 at `test_mermaid_official.cpp:9204/9250/9272/
+    9302/9596` and the `bind_case` root-count require; global pinned constants
+    `kFactsSha/kProjectionSha/kPresentationSha/kContractSnapshotSha/
+    kSourceHelperSha/kSharedSha/kPaletteSha/kPresentationCanonicalSha/
+    kContractBasisSha`; the 7 `component_hashes` plus `counts`/`selection`
+    aggregates; `verify_er107_admission.py` SELECTED 107->113 plus its
+    BASE/FINAL/62 admission math and `BASELINE_MATRIX_SHA`. Blast radius is
+    contained: per-case model/binding/scene SHAs are content-local, so the
+    existing 107 pins stay byte-valid; only the new 6 pins, the global
+    aggregates, the three file-level asset SHAs, the count constants and the
+    matrix byte-gate sha move; the 17-entry upstream presentation evidence is
+    a fixed global set and needs no new git attribution. No partial can land:
+    the parser change alone yields 6 matrix errors / roster 48->54, so the
+    emitter milestone must land atomically with the parser admission. Executing
+    it means building a proposal emitter that serializes the oracle's already
+    -derived `Projection`/capture structures into the exact canonical schema,
+    then an independent B3-style review - a dedicated generator milestone, not
+    a parser batch. The two validated canonical whole-scene models + SHAs
+    (group-endpoint `c4118d15...`, in-group-direction `75d7fcdb...`) and the
+    full patch in `/tmp/d237_probe/d237_backup/` are the seed artifacts.
 
 ## Closure log
 
@@ -1523,3 +1585,125 @@ when the body would draw.
   Serial gates `-j1` release RC=0: EveryWholeSourceIsObserved,
   CapabilityReport.Class285, Block58 9/9, Er107 4/4. Evidence under
   `/tmp/d236_probe/`.
+
+  - **D246 (2026-11-15/16) build authorization + executable emitter recipe
+    (still docs-only; no safe partial green slice exists).** D246 authorized
+    building the canonical proposal emitter and atomic delivery. Deep schema
+    survey reduced it to a fully-specified deterministic generator (no
+    irreducible human content): whole_scene_model is uniform across all 107 —
+    entity fixed 7 keys `{headers,id,label,owner,rows,shape,typed_er}`
+    (`typed_er` null or `{attributes:[{comment,keys,name,type}],header:[...]}`,
+    shape always "box"), group fixed 5 keys `{direction,id,label,members,
+    parent}` with group `direction` ALWAYS the empty string (confirms in-group
+    direction is non-terminal and never enters the model — the D237 semantics),
+    relation fixed 7 keys `{end,label,order,source,start,stroke,target}`,
+    notes always empty. Closed enums: start/end markers ∈
+    {card:one, card:zero-one, card:one-many, card:zero-many}, stroke ∈
+    {solid,dotted}, top direction ∈ {TB,BT,LR,RL}. Config semantic prose is a
+    FIXED 5-entry `(path,effect)` vocabulary (layout/theme/htmlLabels/
+    er.useMaxWidth/look) reused by path, not authored per case. Global hashes
+    are fully code-specified by `component_preimage()` (authority.hpp:1323);
+    per-case SHAs content-local. REMAINING GAP that makes this one atomic
+    milestone with no incremental green commit: only a JSON->Model
+    `parse_model` (oracle:343) exists — there is NO source->RelationDiagram->
+    canonical-JSON serializer and no exposed test entry returning the internal
+    RelationDiagram (`render_with_work` yields Element only). Build sequence:
+    (1) add an ER-owning test-support emitter driven by real production
+    parse->IR->layout (`observe()` already supplies the 15 production frames;
+    reuse `cell_bytes`/`canonical`/`hash`), first a Model->whole_scene_model
+    canonical serializer differentially proven byte-identical against the 107
+    pinned whole_scene_models; (2) extend to source_binding (20 fields;
+    byte-offset witnesses via the same lexeme slicing bind_case validates;
+    config obligations from the 5-string vocab; prior refs from ER206
+    ordinals) and terminal_model (presentations/captions with byte offsets/
+    serialized_body_coordinates derived from the captured frames); (3) emit
+    the 6 new cases, recompute the 7 component_hashes/counts/selection and the
+    two moving file SHAs; (4) atomic rewiring — dual kPins 107->113
+    (source.hpp:47, authority.hpp:43), the five hardcoded-107 sites
+    (official.cpp:9204/9250/9272/9302/9596) + bind_case:1270 root-count
+    require, verify_er107_admission.py SELECTED/BASE/FINAL/62/
+    BASELINE_MATRIX_SHA — together with the parser patch and cohort from
+    /tmp/d237_probe/d237_backup/; (5) B3 independent review + full matrix/
+    serial/ASan/byte gates. Stages 1-3 cannot be gate-verified until 4 lands,
+    so no partial commit is meaningful; the differential-against-107 harness
+    in stage 1 is the correctness backbone.
+
+  - **D248/D251 execution update (2026-11-16): stages 1-3 SHIPPED as local
+    commits.** d22c5786 (emitter canonical-contract gtest, 4 tests),
+    9427a9dd (production-driven whole_scene serializer seam, 107/107
+    byte-exact), and the stage-3 structural-witness seam
+    (`er_structural_witnesses_json`, 7 kinds). Stage-3 differential result:
+    **107/107 byte-exact, 2394 structural witnesses reproduced, zero
+    physical_line tiling gaps**, including a UTF-8 byte-vs-code-point
+    regression guard.
+    Stage-3 B1 source-witness analysis (exact evidence): each ER case carries
+    ~53 witnesses across **31 kinds** (largest = physical_line, 1752 across
+    the corpus; then relationship/attribute/entity/metadata token kinds). The
+    validator `witness_slices` only re-checks slices, never derives them, and
+    is invoked solely on `er::kPins.front()` in test_mermaid_er107_semantics
+    — there is no whole-107 offset validation in the green suite, so an
+    emitter must build the offset-tracking lexer itself. physical_line rule:
+    split full_source on '\n' keeping the newline, cumulative **byte** offsets,
+    1-based lines; these tile the source for **all 107/107** cases.
+    CORRECTION to an earlier (wrong) analysis: the
+    `a-cyclical-er-diagram-handdrawn-look` case was briefly reported as a
+    "stale offset" exception (`byte_end` 202 against a supposed 196-byte
+    source). That was a **byte-vs-code-point measurement error**, not a frozen
+    artifact. The file is **202 UTF-8 bytes but 196 Unicode code points**: it
+    contains three U+2192 arrows (`→`), each encoded `E2 86 92` (3 bytes for
+    1 code point), adding exactly 6 bytes. Python `len(str)`=196 counts code
+    points; `wc -c` / `len(bytes)`=202 counts bytes. The pinned
+    `byte_end=202` equals the true byte size and is internally consistent;
+    the lexemes and slice SHAs are current. The production seam uses
+    `string_view`/`size()` (inherently byte-based) and matches all 107 with no
+    golden-fitting. A separate test-only defect was found and fixed while
+    proving this: storing the address of the by-value `JsonVal` handle passed
+    to an `iter` lambda dangles after the lambda returns and resolved a
+    different (265-byte ASCII) case; the test now copies the path string out
+    while the handle is live. Remaining stage-3+ work after the 7 mechanical
+    structural kinds (complete_*/frontmatter fences/diagram_header/
+    physical_line): 24 semantic token kinds needing a parallel offset-tracking
+    ER lexer, plus source_model (16 fields, 5-word config obligation vocab,
+    uncertainty/debt arrays), then terminal_model frame-derived
+    presentations/captions/serialized_body_coordinates. This is a multi-hour
+    subsystem with no independent green state before the atomic 113-case
+    landing, so it is the next dedicated execution window rather than a
+    partial that would sit unverified against a frozen artifact.
+
+## D279 terminal_model seam + D282 family closure (2026-11-16)
+
+  The D248->D279 ER107 test-seam chain is complete; its sixth and final seam
+  (`er_terminal_model_json`) regenerates the 14-field terminal_model for all
+  107 originals byte-for-byte (canonical JSON plus terminal_model_sha256)
+  from the raw source with no production render/layout/palette dependency.
+  This is test-only work, so the production rendering partition does not
+  move: whole-original @240 stays **1232 drawn / 913 fallback / 0 error**,
+  body_diagnostic 372/173/**48**, Class285 260/25/0, ER 175/31/0, ER107=107,
+  integrity_errors empty. The dual-preset OfficialMatrix this round produced
+  the byte-identical report sha256
+  `c906c74afddc02efa2bc311399ab6d337fb6dcf2318e6528e78d85067e09dc25`
+  (same as D236), which is the direct proof of zero production drift.
+
+  Closure gates, all executed fresh this round: full OfficialMatrix
+  release 27.0 s / debug 241.5 s (byte-identical); ASan+UBSan clean on the
+  ER surface (92 tests: emitter 18, er107_source107 7, relations `MermaidEr*`
+  67), with one real test-side heap-use-after-free caught and fixed; release
+  `-j1` serial gates Config110/Class285/Block58/Er107 all RC 0 (10 tests).
+  The two giant gates (Class285, Config110) cannot run under ASan in a
+  practical window (723.5 s and 990.3 s isolated, low/flat RSS — duration,
+  not OOM); this is logged as a separate test-architecture item in
+  engineering-efficiency.md Open work #6.
+
+  **107->113 re-baseline status change.** The D242 blocker was "no checked-in
+  ER107 proposal generator." That tooling now exists: the six seams together
+  emit whole_scene_model, structural/semantic witnesses, source_model,
+  source_binding and terminal_model in the exact canonical schema, each
+  guarded by 107-case sha256 differentials. What remains for the atomic
+  107->113 milestone is therefore no longer generator construction but the
+  atomic re-baseline execution itself — the ER-local `parse_plain_er`
+  admission (group-id edge endpoints + in-group direction), six new case
+  pins and global aggregates/asset SHAs (dual `kPins<107>`->`<113>`, the
+  `array<bool,107>` capture set, file-level SHAs, matrix byte-gate sha),
+  landing together because the parser change alone books 6 matrix errors
+  (roster 48->54). Seed artifacts and the full patch remain under
+  `/tmp/d237_probe/d237_backup/`.

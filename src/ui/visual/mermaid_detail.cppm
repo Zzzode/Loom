@@ -806,4 +806,11 @@ std::optional<std::string> er_source_model_json(std::string_view source, Work& w
 std::optional<std::string> er_source_binding_json(std::string_view source, Work& work,
                                                   const ErSourceProvenance& provenance);
 
+// D279 ER107 terminal_model (14 fields) regenerated from the raw original by a
+// pure parallel producer. Hues/roles/tokens are closed tables, widths are
+// character counts and the only coordinate key is a constant null, so no
+// production layout/palette return value is consumed. Reachable only through
+// the testing facade; no production call path or frozen-gate change. Test-only.
+std::optional<std::string> er_terminal_model_json(std::string_view source, Work& work);
+
 }  // namespace loom::ui::mermaid::detail

@@ -687,3 +687,178 @@ TEST(MermaidEr107EmitterContract, SourceBindingSeamFailClosedOnMalformedInput) {
                      "---\n---\nerDiagram\nA\n", zero_budget, provenance)
                      .has_value());
 }
+
+namespace {
+constexpr std::size_t kTerminalModelFields = 14;
+
+// Reconstruct a caption/notice display string from its wrapped rows and verify
+// the recorded byte offsets: each row's [start,end) spans its text and the
+// consumed end adds the joiner, so text+joiner concatenation must equal the
+// display exactly.
+void expect_rows_reconstruct(const JsonVal& rows, const std::string& display) {
+    std::size_t at = 0;
+    std::string rebuilt;
+    rows.iter([&](const JsonVal row) {
+        EXPECT_EQ(row.get_int("display_byte_start"), static_cast<int64_t>(at));
+        at += static_cast<std::size_t>(row.get_string("text").size());
+        EXPECT_EQ(row.get_int("display_byte_end"), static_cast<int64_t>(at));
+        rebuilt += row.get_string("text");
+        at += static_cast<std::size_t>(row.get_string("joiner").size());
+        EXPECT_EQ(row.get_int("consumed_byte_end"), static_cast<int64_t>(at));
+        rebuilt += row.get_string("joiner");
+    });
+    EXPECT_EQ(at, display.size());
+    EXPECT_EQ(rebuilt, display);
+}
+}  // namespace
+
+// D279: the terminal_model seam regenerates all 107 pinned presentation models
+// canonically, including the pinned terminal_model_sha256, while consuming no
+// production layout/palette output.
+TEST(MermaidEr107EmitterContract, TerminalModelSeamReproducesAll107Canonical) {
+    const auto projection = load_projection();
+    const fs::path cases_dir = kFixtures / "mermaid_official/cases";
+    std::size_t full_match = 0;
+    std::size_t entities = 0, relationships = 0, groups = 0;
+    std::size_t captions = 0, notices = 0, typed = 0;
+    projection.root().get("cases").iter([&](const JsonVal terminal_case) {
+        const auto path = terminal_case.get_string("path");
+        const auto raw = read_file(cases_dir / std::string(path));
+        loom::ui::mermaid::testing::Work work;
+        rel::Work canonical_work;
+        const auto emitted_json =
+            loom::ui::mermaid::testing::er_terminal_model_json_for_testing(raw, work);
+        ASSERT_TRUE(emitted_json.has_value()) << path;
+        const auto emitted = json::parse(*emitted_json);
+        ASSERT_TRUE(emitted.has_value()) << path;
+        ASSERT_EQ(emitted->root().size(), kTerminalModelFields) << path;
+
+        const JsonVal pinned = terminal_case.get("terminal_model");
+        EXPECT_EQ(rel::class481_canonical(emitted->root(), canonical_work),
+                  rel::class481_canonical(pinned, canonical_work))
+            << path;
+        EXPECT_EQ(
+            loom::utils::crypto::sha256(
+                rel::class481_canonical(emitted->root(), canonical_work)),
+            terminal_case.get_string("terminal_model_sha256"))
+            << path;
+
+        // The only coordinate key is a schema-typed constant null.
+        EXPECT_TRUE(emitted->root().get("serialized_body_coordinates").is_null()) << path;
+        entities += emitted->root().get("entity_presentations").size();
+        relationships += emitted->root().get("relationship_presentations").size();
+        groups += emitted->root().get("group_presentations").size();
+        captions += emitted->root().get("captions").size();
+        notices += emitted->root().get("notices").size();
+        emitted->root().get("entity_presentations").iter([&](const JsonVal e) {
+            typed += e.get("typed_attributes").size();
+        });
+        // Wrap reconstruction invariant over every caption and notice rowset.
+        emitted->root().get("captions").iter([&](const JsonVal c) {
+            expect_rows_reconstruct(c.get("rows"), c.get_string("display"));
+        });
+        emitted->root().get("notices").iter([&](const JsonVal n) {
+            expect_rows_reconstruct(n.get("rows"), n.get_string("text"));
+        });
+        ++full_match;
+    });
+    EXPECT_EQ(full_match, 107u);
+    // Frozen roster tripwires (catalog §0).
+    EXPECT_EQ(entities, 362u);
+    EXPECT_EQ(relationships, 253u);
+    EXPECT_EQ(groups, 1u);
+    EXPECT_EQ(captions, 1764u);
+    EXPECT_EQ(notices, 871u);
+    EXPECT_EQ(typed, 287u);
+}
+
+// The terminal seam shares envelope admission, so hostile inputs fail closed;
+// an exhausted budget is rejected before any collection runs.
+TEST(MermaidEr107EmitterContract, TerminalModelSeamFailClosedOnMalformedInput) {
+    loom::ui::mermaid::testing::Work work;
+    auto emit = [&](std::string_view src) {
+        return loom::ui::mermaid::testing::er_terminal_model_json_for_testing(src, work);
+    };
+    EXPECT_FALSE(emit("erDiagram\n").has_value());
+    EXPECT_FALSE(emit("---\nfoo").has_value());
+    EXPECT_FALSE(emit("---\n---\nclassDiagram\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagramX\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nend\n").has_value());
+    EXPECT_FALSE(emit("---\n---\nerDiagram\nsubgraph G\nA\n").has_value());
+    loom::ui::mermaid::testing::Work zero_budget;
+    zero_budget.remaining = 0;
+    EXPECT_FALSE(loom::ui::mermaid::testing::er_terminal_model_json_for_testing(
+                     "---\n---\nerDiagram\nA\n", zero_budget)
+                     .has_value());
+}
+
+// Rule 30: the corpus mostly fits one row, so the 32-cell wrap is exercised
+// directly through the seam on crafted >32-byte edge roles — one hard break
+// (no in-window space) and one space break (last space at a positive offset).
+TEST(MermaidEr107EmitterContract, TerminalModelWrappingLawOnCraftedLongRoles) {
+    // Multi-word/long ER roles are valid grammar only when quoted (the body
+    // lexer reads an unquoted role up to the first space), matching how the
+    // ER107 originals encode spaced edge roles. The source carries a
+    // description frontmatter like every ER107 original: the production parser
+    // that backs whole_scene_model rejects an empty frontmatter.
+    const auto edge_caption = [&](const std::string& role) {
+        const std::string source =
+            "---\ndescription: wrap probe\n---\nerDiagram\nA ||--o{ B : \"" + role +
+            "\"\n";
+        loom::ui::mermaid::testing::Work work;
+        struct Out {
+            bool seam_nullopt = false;
+            bool parse_failed = false;
+            JsonVal caption;
+        } out;
+        const auto probe_json =
+            loom::ui::mermaid::testing::er_terminal_model_json_for_testing(source, work);
+        if (!probe_json) {
+            out.seam_nullopt = true;
+            return out;
+        }
+        const auto parsed = json::parse(*probe_json);
+        if (!parsed) {
+            out.parse_failed = true;
+            return out;
+        }
+        parsed->root().get("captions").iter([&](const JsonVal c) {
+            if (c.get_string("handle") == "edge/0/role") out.caption = c;
+        });
+        return out;
+    };
+
+    // 34-byte token: hard split after 32, empty joiners.
+    {
+        const auto out = edge_caption("abcdefghijklmnopqrstuvwxyz01234567");
+        ASSERT_FALSE(out.seam_nullopt) << "seam returned nullopt";
+        ASSERT_FALSE(out.parse_failed) << "JSON parse failed";
+        const auto cap = out.caption;
+        ASSERT_TRUE(cap.valid());
+        const auto rows = cap.get("rows");
+        ASSERT_EQ(rows.size(), 2u);
+        EXPECT_EQ(rows.at(0).get_string("text"), "abcdefghijklmnopqrstuvwxyz012345");
+        EXPECT_EQ(rows.at(0).get_string("joiner"), "");
+        EXPECT_EQ(rows.at(0).get_int("display_byte_end"), 32);
+        EXPECT_EQ(rows.at(1).get_string("text"), "67");
+        EXPECT_EQ(rows.at(1).get_string("joiner"), "");
+        expect_rows_reconstruct(rows, cap.get_string("display"));
+    }
+    // 34-byte spaced role: break at the last in-window space (offset 21), one
+    // consumed space joiner.
+    {
+        const auto out = edge_caption("aaaaaaaaaa bbbbbbbbbb cccccccccccc");
+        ASSERT_FALSE(out.seam_nullopt) << "seam returned nullopt";
+        ASSERT_FALSE(out.parse_failed) << "JSON parse failed";
+        const auto cap = out.caption;
+        ASSERT_TRUE(cap.valid());
+        const auto rows = cap.get("rows");
+        ASSERT_EQ(rows.size(), 2u);
+        EXPECT_EQ(rows.at(0).get_string("text"), "aaaaaaaaaa bbbbbbbbbb");
+        EXPECT_EQ(rows.at(0).get_string("joiner"), " ");
+        EXPECT_EQ(rows.at(0).get_int("consumed_byte_end"), 22);
+        EXPECT_EQ(rows.at(1).get_string("text"), "cccccccccccc");
+        EXPECT_EQ(rows.at(1).get_string("joiner"), "");
+        expect_rows_reconstruct(rows, cap.get_string("display"));
+    }
+}

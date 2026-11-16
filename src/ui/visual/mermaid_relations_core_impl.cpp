@@ -4014,6 +4014,8 @@ struct SrcModelData {
     bool has_description = false, description_folded = false;
     char description_indicator = '>';  // '>' folded or '|' literal block
     int64_t desc_key_witness = 0, desc_value_witness = 0;
+    // Byte span of the decoded description value (D279 terminal_model source_ref).
+    int64_t desc_value_start = 0, desc_value_end = 0;
     std::string description_value;
     int64_t config_key_witness = 0;
     std::vector<SrcNamespace> namespaces;
@@ -4175,6 +4177,8 @@ int er_src_collect_metadata(std::string_view b, std::size_t close_start, std::si
                 --scalar_end;
         }
         data.desc_value_witness = static_cast<int64_t>(base + static_cast<std::size_t>(mli++));
+        data.desc_value_start = static_cast<int64_t>(description->value_start);
+        data.desc_value_end = static_cast<int64_t>(scalar_end);
         data.description_folded = is_folded;
         std::string_view scalar = b.substr(description->value_start, scalar_end - description->value_start);
         if (is_folded) {
@@ -5230,6 +5234,709 @@ std::optional<std::string> er_source_binding_json(std::string_view source, Work&
     er_src_add_optional_str(root, "source_witnesses_sha256",
                             provenance.source_witnesses_sha256);
     root.add("metadata_sha256", root.make_str(metadata_sha));
+    doc.set_root(root);
+    return doc.to_string();
+}
+
+namespace {
+// D279 ER107 terminal_model producer. A pure parallel seam that regenerates the
+// 14-field terminal model from the raw source plus the already-built source
+// record collection. It consumes no production layout/palette return value:
+// hues/roles/tokens are closed constexpr tables, widths are character counts,
+// and the only coordinate key is a schema-typed constant null. Reachable only
+// through the mermaid.testing facade; production ErCursor/parse_plain_er and
+// every render path are untouched.
+
+struct ErTermRow {
+    std::string text, joiner;
+};
+
+// 32-cell wrap, byte-identical to the test authority wrap(): while more than 32
+// bytes remain, break at the last U+0020 space at a positive offset <=32
+// (consuming that space as a one-space joiner), else hard-break at 32 with an
+// empty joiner; the trailing segment is its own row. An empty value yields one
+// empty row.
+std::vector<ErTermRow> er_term_wrap(std::string_view value) {
+    std::vector<ErTermRow> out;
+    std::size_t at = 0;
+    while (value.size() - at > 32) {
+        std::size_t space = std::string_view::npos;
+        for (std::size_t i = 1; i <= 32; ++i)
+            if (value[at + i] == ' ') space = at + i;
+        const std::size_t end = space == std::string_view::npos ? at + 32 : space;
+        out.push_back({std::string(value.substr(at, end - at)),
+                       space == std::string_view::npos ? std::string{} : std::string{" "}});
+        at = end + (space == std::string_view::npos ? 0 : 1);
+    }
+    out.push_back({std::string(value.substr(at)), std::string{}});
+    return out;
+}
+
+// Append the five-key wrapped-row objects (text/joiner plus display/consumed
+// byte offsets) for a display string.
+void er_term_append_rows(erjson::JsonMutVal array, std::string_view display) {
+    std::size_t at = 0;
+    for (const auto& row : er_term_wrap(display)) {
+        const std::size_t start = at;
+        at += row.text.size();
+        const std::size_t text_end = at;
+        at += row.joiner.size();
+        auto o = array.make_obj();
+        o.add("consumed_byte_end", o.make_num(static_cast<int64_t>(at)));
+        o.add("display_byte_end", o.make_num(static_cast<int64_t>(text_end)));
+        o.add("display_byte_start", o.make_num(static_cast<int64_t>(start)));
+        o.add("joiner", o.make_str(row.joiner));
+        o.add("text", o.make_str(row.text));
+        array.append(o);
+    }
+}
+
+std::vector<std::string> er_term_wrap_texts(std::string_view value) {
+    std::vector<std::string> out;
+    for (const auto& row : er_term_wrap(value)) out.push_back(row.text);
+    return out;
+}
+
+// generic `type~T~` -> `type<T>`; a plain type literal passes through. Mirrors
+// the authority generic_display transform (the corpus only carries valid
+// whole-token generics, so the well-formedness guard is defensive).
+std::string er_term_generic(std::string_view raw) {
+    const auto a = raw.find('~');
+    if (a == std::string_view::npos) return std::string(raw);
+    const auto b = raw.find('~', a + 1);
+    if (b == std::string_view::npos || b + 1 != raw.size()) return std::string(raw);
+    return std::string(raw.substr(0, a)) + "<" + std::string(raw.substr(a + 1, b - a - 1)) + ">";
+}
+
+// Strip outer horizontal ASCII whitespace (space/tab/CR); all-whitespace -> "".
+std::string er_term_role_display(std::string_view raw) {
+    const auto a = raw.find_first_not_of(" \t\r");
+    if (a == std::string_view::npos) return {};
+    return std::string(raw.substr(a, raw.find_last_not_of(" \t\r") - a + 1));
+}
+
+const char* er_term_marker(std::string_view card) {
+    if (card == "ONLY_ONE") return "card:one";
+    if (card == "ZERO_OR_ONE") return "card:zero-one";
+    if (card == "ZERO_OR_MORE") return "card:zero-many";
+    return "card:one-many";  // ONE_OR_MORE
+}
+
+int er_term_hue_role(std::string_view hue) {
+    if (hue == "Neutral") return 1;
+    if (hue == "Red") return 2;
+    if (hue == "Orange" || hue == "Yellow") return 3;
+    if (hue == "Green") return 4;
+    if (hue == "Cyan" || hue == "Blue") return 5;
+    return 6;  // Purple
+}
+
+const char* er_term_border_token(int role) {
+    switch (role) {
+        case 2: return "danger";
+        case 3: return "warning";
+        case 4: return "success";
+        case 5: return "info";
+        case 6: return "accent_purple";
+        default: return "text";  // role 1
+    }
+}
+
+const char* er_term_fill_token(int role) {
+    switch (role) {
+        case 2: return "danger_tint_bg";
+        case 3: return "warning_tint_bg";
+        case 4: return "success_tint_bg";
+        case 5: return "info_tint_bg";
+        case 6: return "surface_tint_4";
+        default: return "surface_tint_2";  // role 1
+    }
+}
+
+// Closed 12-slot hue tables, byte-equal to the production ER constexpr arrays
+// (mermaid_er_impl.cpp borders/fills). The dark categorical theme has no fill
+// array, so its fill hue is always Neutral.
+constexpr std::string_view kErTermBorderHues[12] = {
+    "Purple", "Cyan", "Orange", "Cyan", "Green", "Purple",
+    "Red", "Yellow", "Blue", "Green", "Blue", "Red"};
+constexpr std::string_view kErTermFillHues[12] = {
+    "Purple", "Cyan", "Orange", "Cyan", "Green", "Blue",
+    "Red", "Yellow", "Blue", "Green", "Blue", "Red"};
+
+std::string er_term_join_keys(const std::vector<std::string>& tokens) {
+    std::string out;
+    for (std::size_t i = 0; i < tokens.size(); ++i) {
+        if (i) out += ',';
+        out += tokens[i];
+    }
+    return out;
+}
+
+// Global witness ordinal -> byte [start,end). Reuses the same structural/
+// semantic lexer primitives as the committed witness seams and the global
+// ordinal layout: five fixed spans, P physical lines, M metadata witnesses,
+// one diagram header, then the body witnesses. Returns nullopt if either
+// semantic scan rejects the (already admitted) source, so a future grammar
+// drift surfaces as fail-closed rather than an undersized span table.
+std::optional<std::vector<std::pair<std::size_t, std::size_t>>>
+er_term_witness_spans(std::string_view source, const ErSourceEnvelope& env,
+                      std::size_t physical_lines, int metadata_count, int body_count) {
+    const std::size_t base = 5 + physical_lines;
+    const std::size_t total = base + static_cast<std::size_t>(metadata_count) + 1 +
+                              static_cast<std::size_t>(body_count);
+    std::vector<std::pair<std::size_t, std::size_t>> spans(total);
+    spans[0] = {0, source.size()};
+    spans[1] = {0, env.body_start};
+    spans[2] = {env.body_start, source.size()};
+    spans[3] = {0, 3};
+    spans[4] = {env.close_start, env.close_end};
+    std::size_t line_start = 0;
+    std::size_t ordinal = 5;
+    for (std::size_t k = 0; k < source.size(); ++k) {
+        if (source[k] == '\n') {
+            spans[ordinal++] = {line_start, k + 1};
+            line_start = k + 1;
+        }
+    }
+    if (line_start != source.size()) spans[ordinal++] = {line_start, source.size()};
+
+    std::vector<ErSemanticSpan> meta;
+    if (!er_sem_metadata(source, env.close_start, meta)) return std::nullopt;
+    std::vector<ErSemanticSpan> body;
+    if (!er_sem_body(source, env.body_start, body)) return std::nullopt;
+    for (std::size_t local = 0; local < meta.size(); ++local)
+        spans[base + local] = {meta[local].start, meta[local].end};
+    spans[base + static_cast<std::size_t>(metadata_count)] = {env.body_start,
+                                                              env.body_start + 9};
+    const std::size_t body_base = base + static_cast<std::size_t>(metadata_count) + 1;
+    for (std::size_t local = 0; local < body.size(); ++local)
+        spans[body_base + local] = {body[local].start, body[local].end};
+    return spans;
+}
+}  // namespace
+
+// D279 test-only seam: regenerate the 14-field ER107 terminal_model. Pure
+// source->JSON with Work metering; the whole_scene component is the byte-exact
+// output of the committed whole-scene seam. Nullopt for a malformed/non-ER
+// source or an exhausted budget.
+std::optional<std::string> er_terminal_model_json(std::string_view source, Work& work) {
+    if (!work.spend(source.size() * 20u + 49152u)) return std::nullopt;
+    const auto collected = er_src_collect_all(source);
+    if (!collected) return std::nullopt;
+    const auto& env = collected->envelope;
+    const SrcModelData& data = collected->data;
+
+    const auto whole_scene = er_whole_scene_json(source, work);
+    if (!whole_scene) return std::nullopt;
+
+    const auto spans = er_term_witness_spans(source, env, collected->physical_lines,
+                                             collected->metadata_count,
+                                             static_cast<int>(data.body_witness_count));
+    if (!spans) return std::nullopt;
+    erjson::JsonMutDoc doc;
+    auto root = doc.object();
+    auto ref_for = [&](int64_t witness) {
+        const auto idx = static_cast<std::size_t>(witness);
+        return er_src_make_ref(doc, source, (*spans)[idx].first, (*spans)[idx].second, witness);
+    };
+
+    // Effective fresh-owner theme/look: authored config leaf else the pinned
+    // ER diagram default.
+    const auto leaf_text = [&](std::string_view key) -> const std::string* {
+        for (const auto& leaf : data.leaves)
+            if (leaf.path.size() == 2 && leaf.path[0] == "config" && leaf.path[1] == key)
+                return &leaf.text;
+        return nullptr;
+    };
+    const auto has_config = [&](std::string_view key) {
+        for (const auto& leaf : data.leaves)
+            if (leaf.path.size() == 2 && leaf.path[0] == "config" && leaf.path[1] == key)
+                return true;
+        return false;
+    };
+    bool has_er = false;
+    for (const auto& leaf : data.leaves)
+        if (leaf.path.size() == 3 && leaf.path[0] == "config" && leaf.path[1] == "er")
+            has_er = true;
+    const std::string* const theme_text = leaf_text("theme");
+    const std::string* const look_text = leaf_text("look");
+    const std::string theme = theme_text ? *theme_text : "redux-color";
+    const std::string look = look_text ? *look_text : "neo";
+    const bool categorical = theme == "redux-color" || theme == "redux-dark-color";
+    const bool dark = theme == "redux-dark-color";
+    const int stroke_width = (look == "handDrawn" || theme == "neo-dark") ? 1 : 2;
+
+    const auto entity_label = [&](const SrcEntity& e) -> std::string {
+        for (const auto& a : e.alias_attempts)
+            if (!a.value.empty()) return a.value;
+        return e.id;
+    };
+    // Witness backing the displayed header label: the first non-empty alias
+    // attempt when one applies, otherwise the entity's first id/reference
+    // witness. The id witness is always retained separately (first ref slot).
+    const auto entity_label_witness = [&](const SrcEntity& e) -> int64_t {
+        for (const auto& a : e.alias_attempts)
+            if (!a.value.empty()) return a.witness;
+        return e.first_reference_witness;
+    };
+
+    // ---- entity_presentations (24 fields) ----
+    auto entity_arr = root.make_arr();
+    for (std::size_t i = 0; i < data.entities.size(); ++i) {
+        const SrcEntity& e = data.entities[i];
+        const std::string label = entity_label(e);
+        const int color_index = static_cast<int>(i);
+        const bool has_owner = !e.source_parent_subgraph.empty();
+        auto o = entity_arr.make_obj();
+
+        auto aliases = o.make_arr();
+        for (const auto& a : e.alias_attempts) {
+            auto ao = aliases.make_obj();
+            ao.add("applied_by_first_nonempty_alias_rule", ao.make_bool(true));
+            ao.add("value", ao.make_str(a.value));
+            ao.add("witness", ao.make_num(a.witness));
+            aliases.append(ao);
+        }
+        o.add("alias_attempts", aliases);
+
+        std::vector<int> heights;
+        bool col_name = false, col_keys = false, col_comment = false;
+        std::size_t width_type = 0, width_name = 0, width_keys = 0, width_comment = 0;
+        auto typed = o.make_arr();
+        for (const SrcAttribute& a : e.attributes) {
+            const std::string type_disp = er_term_generic(a.type_literal);
+            const std::string keys_disp = er_term_join_keys(a.declared_key_tokens);
+            const std::string& name_disp = a.name_literal;
+            const std::string& comment_disp = a.comment_literal;
+            if (!name_disp.empty()) col_name = true;
+            if (!keys_disp.empty()) col_keys = true;
+            if (!comment_disp.empty()) col_comment = true;
+            width_type = std::max(width_type, type_disp.size());
+            width_name = std::max(width_name, name_disp.size());
+            width_keys = std::max(width_keys, keys_disp.size());
+            width_comment = std::max(width_comment, comment_disp.size());
+            heights.push_back(static_cast<int>(std::max(
+                {er_term_wrap(type_disp).size(), er_term_wrap(name_disp).size(),
+                 er_term_wrap(keys_disp).size(), er_term_wrap(comment_disp).size()})));
+
+            auto at = typed.make_obj();
+            auto fields = at.make_obj();
+            fields.add("comment", fields.make_str(comment_disp));
+            auto keys_arr = fields.make_arr();
+            for (const auto& token : a.declared_key_tokens)
+                keys_arr.append(keys_arr.make_str(token));
+            fields.add("keys", keys_arr);
+            fields.add("name", fields.make_str(name_disp));
+            fields.add("type", fields.make_str(type_disp));
+            at.add("display_fields", fields);
+
+            auto rows = at.make_obj();
+            auto r_comment = rows.make_arr();
+            for (const auto& t : er_term_wrap_texts(comment_disp))
+                r_comment.append(r_comment.make_str(t));
+            rows.add("comment", r_comment);
+            auto r_keys = rows.make_arr();
+            for (const auto& t : er_term_wrap_texts(keys_disp)) r_keys.append(r_keys.make_str(t));
+            rows.add("keys", r_keys);
+            auto r_name = rows.make_arr();
+            for (const auto& t : er_term_wrap_texts(name_disp)) r_name.append(r_name.make_str(t));
+            rows.add("name", r_name);
+            auto r_type = rows.make_arr();
+            for (const auto& t : er_term_wrap_texts(type_disp)) r_type.append(r_type.make_str(t));
+            rows.add("type", r_type);
+            at.add("field_rows", rows);
+
+            at.add("ordinal", at.make_num(a.ordinal));
+            at.add("raw_type", at.make_str(a.type_literal));
+            at.add("source_attribute_ordinal", at.make_num(a.global_attribute_ordinal));
+            auto arefs = at.make_arr();
+            arefs.append(ref_for(a.witness));
+            arefs.append(ref_for(a.type_witness));
+            arefs.append(ref_for(a.name_witness));
+            if (a.key_witness >= 0) arefs.append(ref_for(a.key_witness));
+            if (a.comment_witness >= 0) arefs.append(ref_for(a.comment_witness));
+            at.add("source_refs", arefs);
+            typed.append(at);
+        }
+        o.add("typed_attributes", typed);
+
+        auto heights_arr = o.make_arr();
+        for (int h : heights) heights_arr.append(heights_arr.make_num(h));
+        o.add("attribute_row_heights", heights_arr);
+        o.add("bold", o.make_bool(false));
+        o.add("border_background_token",
+              o.make_str(has_owner ? "surface_tint_4" : "surface_tint_2"));
+
+        std::string border_hue = "Neutral", fill_hue = "Neutral";
+        int border_role = 1, fill_role = 1;
+        if (categorical) {
+            const int slot = color_index % 12;
+            border_hue = std::string(kErTermBorderHues[slot]);
+            fill_hue = dark ? "Neutral" : std::string(kErTermFillHues[slot]);
+            border_role = er_term_hue_role(border_hue);
+            fill_role = er_term_hue_role(fill_hue);
+        }
+        o.add("border_hue", o.make_str(border_hue));
+        o.add("border_role", o.make_num(border_role));
+        o.add("border_token", o.make_str(er_term_border_token(border_role)));
+        if (categorical)
+            o.add("categorical_slot", o.make_num(color_index % 12));
+        else
+            o.add("categorical_slot", o.make_null());
+        o.add("fill_hue", o.make_str(fill_hue));
+        o.add("fill_role", o.make_num(fill_role));
+        o.add("fill_token", o.make_str(er_term_fill_token(fill_role)));
+        auto header = o.make_arr();
+        for (const auto& t : er_term_wrap_texts(label)) header.append(header.make_str(t));
+        o.add("header_rows", header);
+        o.add("id", o.make_str(e.id));
+        o.add("internal_rail_background", o.make_str("owning_entity_fill"));
+
+        auto widths = o.make_obj();
+        if (!e.attributes.empty()) {
+            // type is always present when the entity has a typed table.
+            widths.add("type", widths.make_num(static_cast<int64_t>(width_type)));
+            if (col_name) widths.add("name", widths.make_num(static_cast<int64_t>(width_name)));
+            if (col_keys) widths.add("keys", widths.make_num(static_cast<int64_t>(width_keys)));
+            if (col_comment)
+                widths.add("comment", widths.make_num(static_cast<int64_t>(width_comment)));
+        }
+        o.add("minimum_field_content_widths", widths);
+
+        if (has_owner)
+            o.add("owner", o.make_str(e.source_parent_subgraph));
+        else
+            o.add("owner", o.make_null());
+        o.add("source_color_index", o.make_num(color_index));
+        o.add("source_insert_order", o.make_num(e.first_insert_order));
+        auto erefs = o.make_arr();
+        erefs.append(ref_for(e.first_reference_witness));
+        erefs.append(ref_for(entity_label_witness(e)));
+        o.add("source_refs", erefs);
+        o.add("source_stroke_width_px", o.make_num(stroke_width));
+
+        auto columns = o.make_arr();
+        if (!e.attributes.empty()) {
+            columns.append(columns.make_str("type"));
+            if (col_name) columns.append(columns.make_str("name"));
+            if (col_keys) columns.append(columns.make_str("keys"));
+            if (col_comment) columns.append(columns.make_str("comment"));
+        }
+        o.add("table_columns", columns);
+        o.add("text_background", o.make_str("owning_entity_fill"));
+        o.add("text_foreground_token", o.make_str("text"));
+        entity_arr.append(o);
+    }
+    root.add("entity_presentations", entity_arr);
+
+    // ---- relationship_presentations (18 fields) ----
+    auto rel_arr = root.make_arr();
+    for (std::size_t i = 0; i < data.relationships.size(); ++i) {
+        const SrcRelationship& r = data.relationships[i];
+        const std::string display = er_term_role_display(r.role_literal);
+        const bool blank = display.empty();
+        auto o = rel_arr.make_obj();
+        o.add("blank_role", o.make_bool(blank));
+        o.add("border_contact", o.make_str("PRESERVE_ENTITY_BORDER_ROLE"));
+        auto cap_rows = o.make_arr();
+        if (!blank)
+            for (const auto& t : er_term_wrap_texts(display)) cap_rows.append(cap_rows.make_str(t));
+        o.add("caption_rows", cap_rows);
+        o.add("display_role", o.make_str(display));
+        o.add("end", o.make_str(er_term_marker(r.right_enum)));
+        o.add("external_background",
+              o.make_str("containing_group_surface_or_root_surface"));
+        o.add("external_foreground_token", o.make_str("text"));
+        o.add("label_background_token", o.make_str("surface_tint_2"));
+        o.add("label_clearance",
+              o.make_str("OWNED_U0020_NEUTRAL_PADDING_WITH_MATCHED_SAME_RELATIONSHIP_"
+                         "SHAFT_CONTACTS"));
+        o.add("order", o.make_num(static_cast<int64_t>(i)));
+        o.add("raw_role", o.make_str(r.role_literal));
+        o.add("source", o.make_str(r.entity_a));
+        o.add("source_cardA_right", o.make_str(r.right_enum));
+        o.add("source_cardB_left", o.make_str(r.left_enum));
+        auto rrefs = o.make_arr();
+        rrefs.append(ref_for(r.witness));
+        rrefs.append(ref_for(r.entity_a_witness));
+        rrefs.append(ref_for(r.entity_b_witness));
+        rrefs.append(ref_for(r.left_card_witness));
+        rrefs.append(ref_for(r.right_card_witness));
+        rrefs.append(ref_for(r.ident_witness));
+        rrefs.append(ref_for(r.role_content_witness));
+        o.add("source_refs", rrefs);
+        o.add("start", o.make_str(er_term_marker(r.left_enum)));
+        o.add("stroke", o.make_str(r.pattern == "solid" ? "solid" : "dotted"));
+        o.add("target", o.make_str(r.entity_b));
+        rel_arr.append(o);
+    }
+    root.add("relationship_presentations", rel_arr);
+
+    // ---- group_presentations (12 fields) ----
+    auto group_arr = root.make_arr();
+    for (const SrcSubgraph& g : data.subgraphs) {
+        auto o = group_arr.make_obj();
+        o.add("bold", o.make_bool(false));
+        o.add("border_background", o.make_str("parent_surface"));
+        o.add("border_foreground_token", o.make_str("text"));
+        o.add("caption_background_token", o.make_str("surface_tint_4"));
+        o.add("consumes_categorical_index", o.make_bool(false));
+        auto hdr = o.make_arr();
+        for (const auto& t : er_term_wrap_texts(g.title_before)) hdr.append(hdr.make_str(t));
+        o.add("header_rows", hdr);
+        o.add("id", o.make_str(g.id));
+        o.add("interior_background_token", o.make_str("surface_tint_4"));
+        auto members = o.make_arr();
+        for (const auto& m : g.members) members.append(members.make_str(m));
+        o.add("members", members);
+        o.add("parent", o.make_null());
+        auto grefs = o.make_arr();
+        grefs.append(ref_for(g.header_witness));
+        grefs.append(ref_for(g.id_witness));
+        grefs.append(ref_for(g.end_witness));
+        o.add("source_refs", grefs);
+        o.add("source_stroke_width_px", o.make_num(stroke_width));
+        group_arr.append(o);
+    }
+    root.add("group_presentations", group_arr);
+
+    // ---- captions (6 fields): entity block, group block, edge block ----
+    auto cap_arr = root.make_arr();
+    auto add_caption = [&](std::string handle, std::string raw, std::string display,
+                           const char* rule, std::vector<int64_t> witnesses) {
+        auto o = cap_arr.make_obj();
+        o.add("display", o.make_str(display));
+        o.add("handle", o.make_str(handle));
+        o.add("raw", o.make_str(raw));
+        auto rows = o.make_arr();
+        er_term_append_rows(rows, display);
+        o.add("rows", rows);
+        o.add("rule", o.make_str(rule));
+        auto refs = o.make_arr();
+        for (const int64_t w : witnesses) refs.append(ref_for(w));
+        o.add("source_refs", refs);
+        cap_arr.append(o);
+    };
+    for (std::size_t i = 0; i < data.entities.size(); ++i) {
+        const SrcEntity& e = data.entities[i];
+        const std::string label = entity_label(e);
+        add_caption("entity/" + e.id + "/header", label, label,
+                    "FIRST_NONEMPTY_ALIAS_ELSE_ID", {entity_label_witness(e)});
+        for (const SrcAttribute& a : e.attributes) {
+            const std::string stem =
+                "entity/" + e.id + "/attribute/" + std::to_string(a.ordinal) + "/";
+            const std::string type_disp = er_term_generic(a.type_literal);
+            const std::string keys_disp = er_term_join_keys(a.declared_key_tokens);
+            const bool is_generic = a.type_literal.find('~') != std::string_view::npos;
+            add_caption(stem + "type", a.type_literal, type_disp,
+                        is_generic ? "BALANCED_TILDE_GENERIC_THEN_ESCAPED_TEXT"
+                                   : "ASCII_LITERAL_NO_INVENTED_KEYS",
+                        {a.type_witness});
+            add_caption(stem + "name", a.name_literal, a.name_literal,
+                        "ASCII_LITERAL_NO_INVENTED_KEYS", {a.name_witness});
+            std::vector<int64_t> key_refs;
+            if (a.key_witness >= 0) key_refs.push_back(a.key_witness);
+            add_caption(stem + "keys", keys_disp, keys_disp,
+                        "ASCII_LITERAL_NO_INVENTED_KEYS", key_refs);
+            std::vector<int64_t> comment_refs;
+            if (a.comment_witness >= 0) comment_refs.push_back(a.comment_witness);
+            add_caption(stem + "comment", a.comment_literal, a.comment_literal,
+                        "ASCII_LITERAL_NO_INVENTED_KEYS", comment_refs);
+        }
+    }
+    for (const SrcSubgraph& g : data.subgraphs)
+        add_caption("group/" + g.id + "/header", g.title_before, g.title_before,
+                    "SAFE_ASCII_GROUP_TITLE_PROPOSED_IDENTITY_SANITIZATION",
+                    {g.header_witness});
+    for (std::size_t i = 0; i < data.relationships.size(); ++i) {
+        const SrcRelationship& r = data.relationships[i];
+        add_caption("edge/" + std::to_string(i) + "/role", r.role_literal,
+                    er_term_role_display(r.role_literal),
+                    "OUTER_ASCII_HORIZONTAL_SPACE_REMOVED_BLANK_HAS_NO_WORDS",
+                    {r.role_content_witness, r.role_lexeme_witness});
+    }
+    root.add("captions", cap_arr);
+
+    // ---- notices (6 fields), fixed emission order ----
+    auto notice_arr = root.make_arr();
+    int64_t notice_ordinal = 0;
+    auto add_notice = [&](const char* kind, std::string text,
+                          std::vector<int64_t> witnesses) {
+        auto o = notice_arr.make_obj();
+        o.add("kind", o.make_str(kind));
+        o.add("ordinal", o.make_num(notice_ordinal++));
+        auto rows = o.make_arr();
+        er_term_append_rows(rows, text);
+        o.add("rows", rows);
+        auto refs = o.make_arr();
+        for (const int64_t w : witnesses) refs.append(ref_for(w));
+        o.add("source_refs", refs);
+        auto style = o.make_obj();
+        style.add("background", style.make_str("inherited"));
+        style.add("bold", style.make_bool(false));
+        style.add("foreground_token", style.make_str("text"));
+        o.add("style", style);
+        o.add("text", o.make_str(text));
+        notice_arr.append(o);
+    };
+    add_notice("profile", "ER native projection v1", {});
+    for (const SrcLeaf& leaf : data.leaves) {
+        std::string dotted;
+        for (std::size_t k = 0; k < leaf.path.size(); ++k) {
+            if (k) dotted += '.';
+            dotted += leaf.path[k];
+        }
+        std::string value_text;
+        if (leaf.is_boolean)
+            value_text = leaf.boolean ? "true" : "false";
+        else
+            er_src_canonical_quote(leaf.text, value_text);
+        add_notice("authored_config", dotted + "=" + value_text,
+                   {leaf.key_witness, leaf.value_witness});
+    }
+    add_notice("effective_defaults", "effective theme=" + theme + "; look=" + look, {});
+    add_notice("look_adaptation",
+               "look=" + look + " -> native orthogonal; roughness/relief not reproduced", {});
+    if (has_config("layout"))
+        add_notice("layout_adaptation", "layout=elk -> native directed routing", {});
+    if (has_config("htmlLabels"))
+        add_notice("html_labels_adaptation",
+                   "htmlLabels=false -> native Markdown subset", {});
+    if (has_er)
+        add_notice("svg_viewport_adaptation",
+                   "er.useMaxWidth=false -> SVG viewport only; native width fallback unchanged",
+                   {});
+    add_notice("foreign_theme_debt",
+               "theme RGB/font/CSS -> terminal roles; foreign assertions pending", {});
+    if (categorical) {
+        for (std::size_t i = 0; i < data.entities.size(); ++i) {
+            const SrcEntity& e = data.entities[i];
+            const int slot = static_cast<int>(i) % 12;
+            const std::string b_hue(kErTermBorderHues[slot]);
+            const std::string f_hue = dark ? "Neutral" : std::string(kErTermFillHues[slot]);
+            add_notice("categorical_slot",
+                       "entity " + e.id + " slot=" + std::to_string(slot) + " border=" + b_hue +
+                           " fill=" + f_hue,
+                       {e.first_reference_witness, entity_label_witness(e)});
+        }
+    }
+    for (std::size_t i = 0; i < data.relationships.size(); ++i) {
+        const SrcRelationship& r = data.relationships[i];
+        if (!er_term_role_display(r.role_literal).empty()) continue;
+        std::string quoted;
+        er_src_canonical_quote(r.role_literal, quoted);
+        add_notice("blank_role",
+                   "edge " + std::to_string(i) + " raw-role=" + quoted +
+                       " -> no visible words",
+                   {r.witness, r.entity_a_witness, r.entity_b_witness, r.left_card_witness,
+                    r.right_card_witness, r.ident_witness, r.role_content_witness});
+    }
+    root.add("notices", notice_arr);
+
+    // ---- metadata (7 keys) ----
+    auto md = root.make_obj();
+    {
+        auto cfg = md.make_obj();
+        for (const SrcLeaf& leaf : data.leaves) {
+            erjson::JsonMutVal node = cfg;
+            for (std::size_t k = 1; k + 1 < leaf.path.size(); ++k)
+                node = node.ensure_object(leaf.path[k]);
+            node.add(leaf.path.back(),
+                     leaf.is_boolean ? node.make_bool(leaf.boolean) : node.make_str(leaf.text));
+        }
+        md.add("authored_config", cfg);
+    }
+    {
+        // ordered_config_leaves: exact copy of the source metadata leaves.
+        auto leaves = md.make_arr();
+        for (const SrcLeaf& leaf : data.leaves) {
+            auto o = leaves.make_obj();
+            o.add("key_witness", o.make_num(leaf.key_witness));
+            auto path = o.make_arr();
+            for (const auto& seg : leaf.path) path.append(path.make_str(seg));
+            o.add("path", path);
+            o.add("source_value",
+                  leaf.is_boolean ? o.make_bool(leaf.boolean) : o.make_str(leaf.text));
+            o.add("value_witness", o.make_num(leaf.value_witness));
+            o.add("yaml_style", o.make_null());
+            o.add("yaml_tag",
+                  o.make_str(leaf.is_boolean ? "tag:yaml.org,2002:bool"
+                                             : "tag:yaml.org,2002:str"));
+            leaves.append(o);
+        }
+        md.add("ordered_config_leaves", leaves);
+    }
+    {
+        auto obligations = md.make_arr();
+        for (const SrcLeaf& leaf : data.leaves) {
+            std::string dotted;
+            for (std::size_t k = 0; k < leaf.path.size(); ++k) {
+                if (k) dotted += '.';
+                dotted += leaf.path[k];
+            }
+            auto o = obligations.make_obj();
+            o.add("disposition",
+                  o.make_str("PROPOSED_EXPLICIT_LOSSY_TERMINAL_ADAPTATION"));
+            o.add("foreign_semantics", o.make_str(er_src_obligation_effect(dotted)));
+            o.add("path", o.make_str(dotted));
+            o.add("source_ref", ref_for(leaf.value_witness));
+            o.add("source_value",
+                  leaf.is_boolean ? o.make_bool(leaf.boolean) : o.make_str(leaf.text));
+            obligations.append(o);
+        }
+        md.add("config_obligations", obligations);
+    }
+    if (data.has_description) {
+        auto d = md.make_obj();
+        d.add("key_witness", d.make_num(data.desc_key_witness));
+        auto path = d.make_arr();
+        path.append(path.make_str("description"));
+        d.add("path", path);
+        d.add("source_ref",
+              er_src_make_ref(doc, source,
+                              static_cast<std::size_t>(data.desc_value_start),
+                              static_cast<std::size_t>(data.desc_value_end),
+                              data.desc_value_witness));
+        d.add("source_value", d.make_str(data.description_value));
+        d.add("value_witness", d.make_num(data.desc_value_witness));
+        d.add("visible", d.make_bool(false));
+        if (data.description_folded)
+            d.add("yaml_style", d.make_str(std::string(1, data.description_indicator)));
+        else
+            d.add("yaml_style", d.make_null());
+        d.add("yaml_tag", d.make_str("tag:yaml.org,2002:str"));
+        md.add("description", d);
+    } else {
+        md.add("description", md.make_null());
+    }
+    md.add("proposed_fresh_owner_effective", [&] {
+        auto eff = md.make_obj();
+        eff.add("categorical", eff.make_bool(categorical));
+        eff.add("host_initialize_reproduced", eff.make_bool(false));
+        eff.add("look", eff.make_str(look));
+        eff.add("look_origin",
+                eff.make_str(look_text ? "authored" : "pinned_ER_diagram_default"));
+        eff.add("theme", eff.make_str(theme));
+        eff.add("theme_origin",
+                eff.make_str(theme_text ? "authored" : "pinned_ER_diagram_default"));
+        return eff;
+    }());
+    md.add("source_effective_config_remains_unknown", md.make_null());
+    md.add("title", md.make_null());
+    root.add("metadata", md);
+
+    // ---- constant top-level fields ----
+    root.add("drawing_credit", root.make_num(0));
+    root.add("foreign_assertions_pending", root.make_bool(true));
+    root.add("geometry_constraints_ref",
+             root.make_str("er107_independent_geometry_constraints/v1"));
+    root.add("review_status", root.make_str("UNREVIEWED"));
+    root.add("schema", root.make_str("er107_terminal_model/v1"));
+    root.add("serialized_body_coordinates", root.make_null());
+    root.add("style_constraints_ref",
+             root.make_str("er107_complete_style_plane_constraints/v1"));
+    root.add("whole_scene_model", doc.raw_json(*whole_scene));
+
     doc.set_root(root);
     return doc.to_string();
 }

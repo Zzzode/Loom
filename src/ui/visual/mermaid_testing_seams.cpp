@@ -79,4 +79,8 @@ std::optional<std::string> er_source_binding_json_for_testing(std::string_view s
     return detail::er_source_binding_json(source, work, provenance);
 }
 
+std::optional<std::string> er_terminal_model_json_for_testing(std::string_view source, Work& work) {
+    return detail::er_terminal_model_json(source, work);
+}
+
 }  // namespace loom::ui::mermaid::testing

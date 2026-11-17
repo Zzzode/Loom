@@ -159,10 +159,19 @@ MUTATION_BASELINE = {
 AGGREGATE_SEMANTIC = 96
 AGGREGATE_PHYSICAL = 6
 
-# Deliberately empty pending the independent review receipt. A string status
-# alone cannot approve subsequently edited helper bytes, so the gate fails
-# closed until this map names both helpers with their reviewed sha256.
-REVIEWED_HELPER_SHA: dict[str, str] = {}
+# Independent review receipt (TechLead D-319 milestone closure). Populated only
+# after two fresh-context, read-only adversarial reviews each returned APPROVE:
+# one over the source leg (source helper + this verifier + proposal artifact),
+# one over the official/matrix leg (official helper + run_official_er206_case
+# wiring + tampered-byte negatives). Both independently re-derived every digest,
+# attempted concrete bypasses, confirmed zero src/ production references, and
+# matched these shas against the committed HEAD blobs. Editing either helper
+# after this receipt changes its on-disk sha and fails authority_gate until a
+# new reviewed receipt lands; a string status alone can never re-approve bytes.
+REVIEWED_HELPER_SHA: dict[str, str] = {
+    SOURCE_HELPER: "2778b1fb896b8562f5fceadb0c27b8c516fedac6908adc4dbdd8a3b0d87766fc",
+    OFFICIAL_HELPER: "e229d44962f9b01ba67bfb13d1d7ede1d9d63ef16003cfeca0737c70e1c138ec",
+}
 HELPERS = (SOURCE_HELPER, OFFICIAL_HELPER)
 
 
@@ -441,16 +450,35 @@ class GroupEdgeControls(unittest.TestCase):
             with self.assertRaises(ValueError):
                 verify_proof_identity(bad)
 
-    def test_empty_reviewed_helper_map_fails_closed(self):
-        # The shipped map is empty; the gate must raise until an independent
-        # review receipt populates it with both helper hashes.
-        self.assertEqual(REVIEWED_HELPER_SHA, {})
-        with self.assertRaisesRegex(ValueError, "reviewed helper"):
-            authority_gate()
-        # The on-disk helper hashes are well-formed; only the missing receipt
-        # blocks the gate, so a future review has concrete bytes to pin.
+    def test_helper_authority_gate_fail_closed_and_receipt_accepts(self):
+        from unittest.mock import patch
+        # Fail-closed is a permanent property of an empty/partial map, proven by
+        # temporarily clearing the now-populated receipt rather than assuming the
+        # shipped map stays empty (the post-review map names both helpers).
+        with patch.dict(REVIEWED_HELPER_SHA, {}, clear=True):
+            with self.assertRaisesRegex(ValueError, "reviewed helper"):
+                authority_gate()
+        with patch.dict(REVIEWED_HELPER_SHA,
+                        {SOURCE_HELPER: REVIEWED_HELPER_SHA[SOURCE_HELPER]},
+                        clear=True):
+            with self.assertRaisesRegex(ValueError, "reviewed helper"):
+                authority_gate()  # a partial receipt is still insufficient
+        # The shipped receipt names exactly both helpers, each a 64-hex sha, and
+        # the gate accepts it because the on-disk bytes still match.
+        self.assertEqual(set(REVIEWED_HELPER_SHA), set(HELPERS))
         for helper in HELPERS:
-            self.assertEqual(len(sha(file_bytes(ROOT / helper, 524288))), 64)
+            self.assertEqual(len(REVIEWED_HELPER_SHA[helper]), 64)
+            self.assertEqual(sha(file_bytes(ROOT / helper, 524288)),
+                             REVIEWED_HELPER_SHA[helper])
+        authority_gate()  # receipt matches the committed bytes: no raise
+
+    def test_wrong_receipt_sha_is_rejected(self):
+        from unittest.mock import patch
+        forged = dict(REVIEWED_HELPER_SHA)
+        forged[SOURCE_HELPER] = "0" * 64
+        with patch.dict(REVIEWED_HELPER_SHA, forged, clear=True):
+            with self.assertRaisesRegex(ValueError, "reviewed helper"):
+                authority_gate()
 
 
 def main():
@@ -462,8 +490,8 @@ def main():
         return 0 if unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful() else 1
     verify_read_only()
     print("Read-only verified ER group-edge cohort: six owned proofs, four-part cohort "
-          "assertion, ten protected files byte-identical; helper authority fails closed "
-          "pending independent review.")
+          "assertion, ten protected files byte-identical; both helper shas match the "
+          "independent review receipt.")
     return 0
 
 

@@ -274,6 +274,15 @@ gtest_discover_tests(test_mermaid_er107_emitter_contract
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+# RFC 0033 slice 2 phase 1: six-case group-edge proposal record generator and
+# the hermetic self-check that re-derives every embedded digest.
+add_executable(test_mermaid_er_groupedge_proposal test_mermaid_er_groupedge_proposal.cpp)
+target_link_libraries(test_mermaid_er_groupedge_proposal
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_er_groupedge_proposal
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
 # RFC 0030 ER107: independent source-derived projection primitives, no admission.
 add_executable(test_mermaid_er107_projection test_mermaid_er107_projection.cpp)
 target_link_libraries(test_mermaid_er107_projection

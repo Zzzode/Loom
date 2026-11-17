@@ -283,6 +283,15 @@ gtest_discover_tests(test_mermaid_er_groupedge_proposal
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+# RFC 0033 slice 2 phase 2: owned-proof support headers, six-case ownership and
+# the tampered-byte negative gate.
+add_executable(test_mermaid_er_groupedge_owned test_mermaid_er_groupedge_owned.cpp)
+target_link_libraries(test_mermaid_er_groupedge_owned
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_er_groupedge_owned
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
 # RFC 0030 ER107: independent source-derived projection primitives, no admission.
 add_executable(test_mermaid_er107_projection test_mermaid_er107_projection.cpp)
 target_link_libraries(test_mermaid_er107_projection

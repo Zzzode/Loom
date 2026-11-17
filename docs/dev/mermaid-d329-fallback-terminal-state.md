@@ -46,9 +46,9 @@ Measured causality rollup:
 | Causality | Rows | Share | Meaning |
 |---|---:|---:|---|
 | foreign-engine | 377 | 41.6% | neo/handDrawn look, ELK/dagre layout, HTML labels, icon fonts — external visual/layout engines the native orthogonal projection cannot byte-faithfully reproduce |
-| family-residual | 266 | 29.3% | bounded to one family's projection surface; no shared cross-family debt isolated |
+| family-scoped-debt | 266 | 29.3% | unimplemented subset of one family's surface; no cross-family construct isolated, yet the same family renderer draws other rows (so not permanent/foreign) — cannot be closed as one compact cohort |
 | permanent | 143 | 15.8% | interactivity (click), dynamic timing (animation), sandbox security — no static terminal equivalent exists |
-| debt | 105 | 11.6% | parser/projection gaps that could in principle be built |
+| debt | 105 | 11.6% | parser/projection gaps for an isolated cross-family construct, in principle buildable |
 | debt-candidate | 16 | 1.8% | a narrow suspected debt |
 
 Two structural walls dominate.
@@ -119,13 +119,15 @@ explainability and stability", delivered by three mechanisms, all enforced by
 tests:
 
 1. **Reproducible attribution.** Every fallback maps to exactly one of 44
-   categories with a deterministic predicate over the immutable fixture bytes.
-   `fallback_attribution.py --self-test` re-classifies every path from live
-   bytes and proves counts reconcile with no unclassified state.
-2. **Explicit, locked declarations.** Permanent and foreign-engine fallbacks
-   are named with reasons instead of being treated as unfinished work; the
-   causality labels and the measured sufficiency table make the distinction
-   auditable.
+   categories with a deterministic predicate over the immutable fixture bytes,
+   and every one of the 44 categories carries a causality label (the
+   `--self-test` asserts the causality and category key sets are identical, so
+   no category can ever ship un-attributed). It re-classifies every path from
+   live bytes and proves counts reconcile with no unclassified state.
+2. **Explicit, locked declarations.** All six causality values — permanent,
+   foreign-engine, family-scoped-debt, debt, debt-candidate — are named with
+   reasons instead of being treated as unfinished work; the labels and the
+   measured sufficiency table make closeable-vs-structural auditable.
 3. **No silent drift.** `--matrix <fresh OfficialMatrix>` fails (non-zero exit)
    on any unregistered fallback path, any reclassified path, or any count
    change. Verified by constructing each violation against a temp matrix:

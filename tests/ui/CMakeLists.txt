@@ -231,6 +231,16 @@ add_test(NAME MermaidErGroupEdgeAdmission.RejectsUnreviewedOrDriftedCohort
 set_tests_properties(MermaidErGroupEdgeAdmission.RejectsUnreviewedOrDriftedCohort
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# TechLead D-325: reproducible whole-source fallback attribution. Hermetic
+# self-test proves every fallback re-classifies from the live fixture bytes and
+# the 907-row roster stays total/count-stable; the live --matrix drift gate runs
+# at closure and rejects any unregistered or reclassified fallback.
+add_test(NAME MermaidFallbackAttribution.RosterIsReproducibleAndTotal
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/fallback_attribution.py" --self-test)
+set_tests_properties(MermaidFallbackAttribution.RosterIsReproducibleAndTotal
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # RFC 0030 Flow400 Extra7: metadata-only post-CTest admission join.
 add_test(NAME MermaidFlow400Extra7AdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
     COMMAND "${LOOM_UI_LINT_PYTHON}" -I

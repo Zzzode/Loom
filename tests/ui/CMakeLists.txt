@@ -300,6 +300,17 @@ gtest_discover_tests(test_mermaid_er_groupedge_owned
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+# RFC 0033 section 1.4: the relabeled D295 char-difference gate retained ONLY as
+# a non-authoritative renderer regression smoke. It is never referenced by
+# run_official_er206_case or any proof path; the owned cohort headers are the
+# sole matrix authority for these paths.
+add_executable(test_mermaid_er_group_edge_cohort test_mermaid_er_group_edge_cohort.cpp)
+target_link_libraries(test_mermaid_er_group_edge_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_er_group_edge_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
 # RFC 0030 ER107: independent source-derived projection primitives, no admission.
 add_executable(test_mermaid_er107_projection test_mermaid_er107_projection.cpp)
 target_link_libraries(test_mermaid_er107_projection

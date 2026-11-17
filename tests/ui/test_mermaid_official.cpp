@@ -30,6 +30,7 @@ import loom.ui.foundation.design_tokens;
 #include "mermaid_default_config_authority.hpp"
 #include "mermaid_er107_official.hpp"
 #include "mermaid_er206_authority.hpp"
+#include "mermaid_er_groupedge_official.hpp"
 #include "mermaid_flow400_authority.hpp"
 #include "mermaid_flow400_config21_authority.hpp"
 #include "mermaid_flow400_linkprofile3_authority.hpp"
@@ -2841,6 +2842,9 @@ struct Observation {
 namespace official_er107 = loom::test::mermaid_er107::official;
 namespace er107 = loom::test::mermaid_er107;
 constexpr auto kOfficialEr107Contract = official_er107::kContract;
+namespace official_groupedge = loom::test::mermaid_er_groupedge::official;
+namespace groupedge = loom::test::mermaid_er_groupedge;
+constexpr auto kOfficialGroupEdgeContract = official_groupedge::kContract;
 constexpr std::string_view kOfficialEr107MatrixEvidence = "mermaid-official-er107-matrix.jsonl";
 
 bool official_er107_owned(const Observation& row) {
@@ -5053,7 +5057,8 @@ struct OfficialErCounts {
 Observation run_official_er206_case(JsonVal, std::size_t, std::size_t,
                                     const relations_oracle::Er206Documents&, std::array<bool, 206>&,
                                     relations_oracle::Work&, std::ostream&, std::size_t,
-                                    std::size_t, JsonVal er107_local_proof = JsonVal{});
+                                    std::size_t, JsonVal er107_local_proof = JsonVal{},
+                                    JsonVal groupedge_local_proof = JsonVal{});
 
 Observation official_er206_legacy_view(const Observation& row) {
     require(row.raw_active_schema == kOfficialEr107Contract &&
@@ -9598,6 +9603,15 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                                             std::string(kOfficialEr107MatrixEvidence),
                                         std::ios::binary);
         require(er107_diagnostics.good(), "ER107 Matrix independent diagnostic output");
+        // RFC 0033 parallel six-case group-edge cohort authority.
+        official_groupedge::Documents groupedge_documents;
+        std::array<bool, groupedge::kCohortSize> groupedge_selected{};
+        std::ofstream groupedge_diagnostics(
+            fs::path(LOOM_MERMAID_REPORT_DIR) /
+                std::string(official_groupedge::kEvidence),
+            std::ios::binary);
+        require(groupedge_diagnostics.good(),
+                "ERGroupEdge Matrix independent diagnostic output");
         official_block58::Documents block_documents;
         std::array<bool, 58> block_consumed{};
         std::ofstream block_diagnostics(fs::path(LOOM_MERMAID_REPORT_DIR) /
@@ -10341,6 +10355,41 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     observations.push_back(std::move(row));
                     continue;
                 }
+                // RFC 0033 parallel group-edge cohort. Reached only when the
+                // ER107 selector returned nullopt; the constexpr disjointness
+                // in the support header guarantees no path matches both.
+                if (const auto ge_selected = groupedge::select(
+                        class_path.as_str(), fixture.get_string("sha256"))) {
+                    require(!groupedge_selected[*ge_selected],
+                            "ERGroupEdge Matrix source selected twice");
+                    groupedge_selected[*ge_selected] = true;
+                    const auto ge_observed = official_groupedge::run(
+                        groupedge_documents, *ge_selected, groupedge_diagnostics);
+                    const auto ge_proof = json::parse(ge_observed.proof);
+                    require(ge_proof.has_value(), "ERGroupEdge Matrix actual owned proof JSON");
+                    require(official_groupedge::owned(ge_proof->root()) == ge_observed.ready,
+                            "ERGroupEdge Matrix actual local verdict disagreement");
+                    relations_oracle::Work ge_work{relations_oracle::kEr206SceneLimit};
+                    // An absent/not-ready proof is passed as JsonVal{}; the
+                    // in-function two-layer contract then fails closed onto the
+                    // normal whole-null path and books the explicit error.
+                    auto ge_row = run_official_er206_case(
+                        fixture, i, official_er_ordinal++, *official_er_documents,
+                        official_er_consumed, ge_work, official_er_diagnostics,
+                        observations.size(), observations.capacity(), JsonVal{},
+                        ge_observed.ready ? ge_proof->root() : JsonVal{});
+                    ge_row.raw_source_constraints = ge_observed.proof;
+                    ge_row.raw_active_schema = kOfficialGroupEdgeContract;
+                    ge_row.role_case_index = *ge_selected;
+                    ge_row.expected = "pending";
+                    ge_row.reason = "RFC 0033 group-edge complete original locally verified; "
+                                    "independent formal join pending";
+                    ge_row.decision_reasons.fill(ge_row.reason);
+                    if (!ge_observed.ready)
+                        ge_row.errors.push_back(ge_proof->root().get_string("error"));
+                    observations.push_back(std::move(ge_row));
+                    continue;
+                }
                 relations_oracle::Work er_work{relations_oracle::kEr206SceneLimit};
                 observations.push_back(run_official_er206_case(
                     fixture, i, official_er_ordinal++, *official_er_documents, official_er_consumed,
@@ -11071,6 +11120,11 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         er107_diagnostics.flush();
         require(er107_diagnostics.good(), "ER107 Matrix all actual frame evidence flushed");
         er107_documents.finish(er107_captured);
+        require(std::ranges::all_of(groupedge_selected, [](bool selected) { return selected; }),
+                "ERGroupEdge Matrix exactly six selected originals consumed");
+        groupedge_diagnostics.flush();
+        require(groupedge_diagnostics.good(),
+                "ERGroupEdge Matrix all actual frame evidence flushed");
         er107_aggregate_validated = true;
         EXPECT_EQ(std::ranges::count_if(observations,
                                         [](const Observation& row) {
@@ -19033,7 +19087,8 @@ Observation run_official_er206_case(JsonVal fixture, std::size_t global, std::si
                                     const relations_oracle::Er206Documents& docs,
                                     std::array<bool, 206>& consumed, relations_oracle::Work& work,
                                     std::ostream& diagnostics, std::size_t size,
-                                    std::size_t capacity, JsonVal er107_local_proof) {
+                                    std::size_t capacity, JsonVal er107_local_proof,
+                                    JsonVal groupedge_local_proof) {
     using namespace relations_oracle;
     work.spend(kOfficialEr206ReportReserve + 8u * sizeof(Observation) +
                8u * sizeof(OfficialErProgress) + 8u * sizeof(OfficialErFrames) + 16384u +
@@ -19149,6 +19204,35 @@ Observation run_official_er206_case(JsonVal fixture, std::size_t global, std::si
                         "OfficialER206 supplemental ER107 actual wide/narrow/restored agreement");
                 row.status = {"drawn", p.narrow_ordinary ? "source_fallback" : "drawn", "drawn"};
                 data.set("supplemental_local_contract", kOfficialEr107Contract);
+                data.set("supplemental_formal_admission", false);
+            } else if (groupedge_local_proof.is_obj()) {
+                // RFC 0033 parallel owned-proof slot for the six group-edge
+                // originals. Structurally exclusive with ER107 (the support
+                // header's constexpr disjointness and the matrix if/continue
+                // guarantee a path resolves in at most one cohort). The frozen
+                // ER206 Model stays null/pending. Two independent safety layers,
+                // mirroring the ER107 branch: a call-site owned() alone is
+                // insufficient.
+                // Layer 1: live four-tuple identity re-binding against the
+                // row's re-read-from-disk values, so a stale or swapped proof
+                // cannot match.
+                require(official_groupedge::owned(groupedge_local_proof) &&
+                            groupedge_local_proof.get_string("path") == row.path &&
+                            groupedge_local_proof.get_string("source_sha256") ==
+                                row.source_sha256 &&
+                            groupedge_local_proof.get_int("prior_ER206_ordinal") ==
+                                static_cast<int64_t>(ordinal) &&
+                            groupedge_local_proof.get_int("manifest_global_ordinal") ==
+                                static_cast<int64_t>(global),
+                        "OfficialER206 supplemental group-edge exact owned source proof");
+                // Layer 2: live geometry re-validation on the just-captured
+                // frames and the width/narrow XOR against the proof flag.
+                require(!wide && p.restored && a && b && c &&
+                            p.narrow_ordinary ==
+                                groupedge_local_proof.get("narrow_exact_ordinary").as_bool(),
+                        "OfficialER206 supplemental group-edge actual wide/narrow/restored agreement");
+                row.status = {"drawn", p.narrow_ordinary ? "source_fallback" : "drawn", "drawn"};
+                data.set("supplemental_local_contract", kOfficialGroupEdgeContract);
                 data.set("supplemental_formal_admission", false);
             } else {
                 if (wide && a) row.status[0] = "source_fallback";
@@ -20667,6 +20751,45 @@ TEST(MermaidOfficialEr206, RichSixWholeScenesAndForgedBindings) {
                 v.set("whole_source_admitted", false);
             },
             "OfficialER206 mutation proof conflicts with failure flags");
+    }
+}
+
+// RFC 0033 slice 2 phase 4 targeted gate: drive the real
+// run_official_er206_case in-function two-layer contract over the six
+// group-edge originals with an owned group-edge proof. This is a focused
+// six-case check, not the full OfficialMatrix (which runs once at closure); it
+// proves the supplemental slot turns the six whole-null rows to drawn through
+// the same identity re-binding and live geometry re-validation as ER107.
+TEST(MermaidOfficialEr206, GroupEdgeOwnedProofsDrawThroughSupplementalSlot) {
+    using namespace relations_oracle;
+    Work setup;
+    const auto docs = er206_document(setup);
+    official_groupedge::Documents groupedge_documents;
+    std::array<bool, 206> consumed{};
+    for (std::size_t i = 0; i < groupedge::kCohortSize; ++i) {
+        const auto& pin = groupedge::kPins[i];
+        SCOPED_TRACE(std::string(pin.path));
+        std::ostringstream groupedge_diagnostics;
+        const auto observed =
+            official_groupedge::run(groupedge_documents, i, groupedge_diagnostics);
+        ASSERT_TRUE(observed.ready) << "owned group-edge proof must be ready";
+        const auto proof = json::parse(observed.proof);
+        ASSERT_TRUE(proof.has_value());
+        ASSERT_TRUE(official_groupedge::owned(proof->root()));
+        Work work{kEr206SceneLimit};
+        std::ostringstream evidence;
+        const auto fixture = docs.manifest.root().get("fixtures").at(
+            static_cast<std::size_t>(pin.global));
+        const auto row = run_official_er206_case(
+            fixture, static_cast<std::size_t>(pin.global),
+            static_cast<std::size_t>(pin.prior_ordinal), docs, consumed, work, evidence,
+            0u, 0u, JsonVal{}, proof->root());
+        ASSERT_TRUE(row.errors.empty())
+            << (row.errors.empty() ? "" : row.errors.front());
+        EXPECT_EQ(row.status[0], "drawn") << pin.path;
+        EXPECT_EQ(row.status[2], "drawn") << pin.path;
+        const bool narrow = proof->root().get("narrow_exact_ordinary").as_bool();
+        EXPECT_EQ(row.status[1], narrow ? "source_fallback" : "drawn") << pin.path;
     }
 }
 

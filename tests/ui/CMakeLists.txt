@@ -223,6 +223,14 @@ add_test(NAME MermaidEr107AdmissionJoin.RejectsUnreviewedIncompleteOrBorrowedVer
 set_tests_properties(MermaidEr107AdmissionJoin.RejectsUnreviewedIncompleteOrBorrowedVerdicts
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# RFC 0033 ER group-edge: six-case owned-proof cohort, four-part cohort
+# assertion, protected-file drift and fail-closed helper review controls.
+add_test(NAME MermaidErGroupEdgeAdmission.RejectsUnreviewedOrDriftedCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/verify_er_groupedge_admission.py" --self-test)
+set_tests_properties(MermaidErGroupEdgeAdmission.RejectsUnreviewedOrDriftedCohort
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # RFC 0030 Flow400 Extra7: metadata-only post-CTest admission join.
 add_test(NAME MermaidFlow400Extra7AdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
     COMMAND "${LOOM_UI_LINT_PYTHON}" -I

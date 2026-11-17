@@ -195,7 +195,8 @@ def fixture_source(rel_path: str) -> str:
 
 
 def emit_roster(matrix_path: Path) -> dict:
-    rows = fallback_rows(load_matrix(matrix_path))
+    all_originals = load_matrix(matrix_path)
+    rows = fallback_rows(all_originals)
     by_category: dict[str, list[str]] = {}
     for row in rows:
         rel = row["fixture"]
@@ -204,24 +205,54 @@ def emit_roster(matrix_path: Path) -> dict:
     for paths in by_category.values():
         paths.sort()
     counts = {cat: len(paths) for cat, paths in by_category.items()}
+    # Measured predicate sufficiency over ALL originals. A category is a
+    # proven sufficient blocker only when no drawn original matches it; a high
+    # drawn co-count means the construct is a primary suspect that co-occurs
+    # with the real cause, not itself enough to force fallback. This keeps the
+    # causality labels auditable instead of over-claiming every debt as closeable.
+    sufficiency = {}
+    for det in DETECTORS:
+        matched = [r for r in all_originals
+                   if detector_matches(det, fixture_source(r["fixture"]))]
+        drawn = sum(1 for r in matched
+                    if r.get("observed", {}).get(WIDE_STATE) == "drawn")
+        fallback = sum(1 for r in matched
+                       if r.get("observed", {}).get(WIDE_STATE) == FALLBACK)
+        sufficiency[det.category] = {
+            "originals_matching_predicate": len(matched),
+            "drawn_among_matches": drawn,
+            "fallback_among_matches": fallback,
+            "sufficient_blocker": drawn == 0 and fallback > 0,
+        }
+    # Only sufficient blockers are defensible compact-cohort candidates; surface
+    # them explicitly so the next push starts from proven, not co-occurring debt.
+    compact_candidates = sorted(
+        (cat for cat, stat in sufficiency.items() if stat["sufficient_blocker"]),
+        key=lambda c: -counts.get(c, 0))
     return {
         "schema": "loom_mermaid_fallback_roster/v1",
         "description": "Reproducible whole-source fallback attribution. Every "
                        "source_fallback original maps to exactly one category; "
                        "family_residual:* means no shared cross-family debt was "
                        "isolated at the D-325 census. Regenerate with "
-                       "fallback_attribution.py --emit, do not hand-edit.",
+                       "fallback_attribution.py --emit, do not hand-edit. The "
+                       "predicate_sufficiency table records, from measured drawn/"
+                       "fallback co-occurrence, whether each debt is a proven "
+                       "sufficient blocker or only a co-occurring primary suspect.",
         "total_fallback": len(rows),
         "category_counts": dict(sorted(counts.items())),
         "causality": {d.category: d.causality for d in DETECTORS},
+        "predicate_sufficiency": dict(sorted(sufficiency.items())),
+        "proven_compact_cohort_candidates": compact_candidates,
         "detector_order": [d.category for d in DETECTORS],
         "optional_gains": [
             {
-                "category": "special_link_markers",
-                "note": "narrowest observed debt; a future compact owned cohort "
-                        "may close it like RFC 0033 group-edge. Recorded per "
-                        "TechLead D-325, not actioned during registry landing.",
-            }
+                "category": cat,
+                "note": "proven sufficient blocker (zero drawn co-occurrence); a "
+                        "future compact owned cohort may close it like RFC 0033 "
+                        "group-edge. Recorded per TechLead D-325/D-327, not "
+                        "actioned during registry landing.",
+            } for cat in compact_candidates
         ],
         "paths_by_category": dict(sorted(by_category.items())),
     }
@@ -254,8 +285,25 @@ def self_test(roster_path: Path) -> None:
         if cat.startswith("family_residual:"):
             continue
         need(cat in roster["causality"], f"missing causality label for {cat}")
+    # Sufficiency table is internally consistent and the compact-candidate list
+    # matches both the table and the recorded optional gains.
+    suff = roster["predicate_sufficiency"]
+    for cat, stat in suff.items():
+        need(stat["drawn_among_matches"] + stat["fallback_among_matches"]
+             == stat["originals_matching_predicate"],
+             f"sufficiency counts do not reconcile for {cat}")
+        need(stat["sufficient_blocker"] ==
+             (stat["drawn_among_matches"] == 0 and stat["fallback_among_matches"] > 0),
+             f"sufficient_blocker flag inconsistent with co-occurrence for {cat}")
+    compact = roster["proven_compact_cohort_candidates"]
+    need(sorted(compact) == sorted(stat for stat, s in suff.items()
+                                   if s["sufficient_blocker"]),
+         "compact cohort candidates disagree with sufficiency table")
+    need({g["category"] for g in roster["optional_gains"]} == set(compact),
+         "optional_gains must equal the proven compact cohort candidates")
     print(f"fallback roster self-test OK: {total} fallback rows, "
-          f"{len(counts)} categories, zero unclassified, classification reproducible")
+          f"{len(counts)} categories, zero unclassified, classification reproducible; "
+          f"proven sufficient blockers = {sorted(compact)}")
 
 
 def drift_check(matrix_path: Path, roster_path: Path) -> None:

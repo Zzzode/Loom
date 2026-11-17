@@ -186,14 +186,29 @@
     "dagre_layout_tuning",
     "multiline_label"
   ],
+  "corpus_isolation_findings": [
+    {
+      "category": "linkstyle_directive",
+      "experiment": "for each of the 12 fallback fixtures in this category, removed every linkStyle statement and re-rendered; separately verified on a minimal body that linkStyle alone is a sufficient blocker (with=fallback, without=drawn).",
+      "rows_unblocked_by_removal": 0,
+      "rows_total": 12,
+      "dominant_co_blockers": [
+        "frontmatter config (securityLevel/htmlLabels)",
+        "look=handDrawn",
+        "dagre layout tuning",
+        "subgraph/classDef"
+      ],
+      "conclusion": "sufficient in isolation but never the sole blocker in the frozen corpus; implementing a linkStyle parser alone yields 0 additional drawn rows and requires a production parser change, so it is deferred, not actioned as an optional gain."
+    }
+  ],
   "optional_gains": [
     {
       "category": "click_interactive_callback",
-      "note": "proven sufficient blocker (zero drawn co-occurrence); a future compact owned cohort may close it like RFC 0033 group-edge. Recorded per TechLead D-325/D-327, not actioned during registry landing."
+      "note": "proven sufficient blocker (zero drawn co-occurrence); a future compact owned cohort may close it like RFC 0033 group-edge. Recorded per TechLead D-325/D-327, not actioned during registry landing. Cross-check corpus_isolation_findings for real-corpus closeability."
     },
     {
       "category": "linkstyle_directive",
-      "note": "proven sufficient blocker (zero drawn co-occurrence); a future compact owned cohort may close it like RFC 0033 group-edge. Recorded per TechLead D-325/D-327, not actioned during registry landing."
+      "note": "proven sufficient blocker (zero drawn co-occurrence); a future compact owned cohort may close it like RFC 0033 group-edge. Recorded per TechLead D-325/D-327, not actioned during registry landing. Cross-check corpus_isolation_findings for real-corpus closeability."
     }
   ],
   "paths_by_category": {

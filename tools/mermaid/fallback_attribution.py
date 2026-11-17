@@ -245,13 +245,39 @@ def emit_roster(matrix_path: Path) -> dict:
         "predicate_sufficiency": dict(sorted(sufficiency.items())),
         "proven_compact_cohort_candidates": compact_candidates,
         "detector_order": [d.category for d in DETECTORS],
+        # Human-reviewed isolation experiments (TechLead D-329). A predicate can
+        # be a sufficient blocker on a minimal synthetic body yet never be the
+        # sole blocker in the frozen corpus because every real fixture also
+        # carries a stronger co-blocker. Such a construct has zero independently
+        # closeable rows and is not a viable compact owned cohort.
+        "corpus_isolation_findings": [
+            {
+                "category": "linkstyle_directive",
+                "experiment": "for each of the 12 fallback fixtures in this "
+                              "category, removed every linkStyle statement and "
+                              "re-rendered; separately verified on a minimal body "
+                              "that linkStyle alone is a sufficient blocker "
+                              "(with=fallback, without=drawn).",
+                "rows_unblocked_by_removal": 0,
+                "rows_total": 12,
+                "dominant_co_blockers": [
+                    "frontmatter config (securityLevel/htmlLabels)",
+                    "look=handDrawn", "dagre layout tuning", "subgraph/classDef"],
+                "conclusion": "sufficient in isolation but never the sole "
+                              "blocker in the frozen corpus; implementing a "
+                              "linkStyle parser alone yields 0 additional drawn "
+                              "rows and requires a production parser change, so it "
+                              "is deferred, not actioned as an optional gain.",
+            }
+        ],
         "optional_gains": [
             {
                 "category": cat,
                 "note": "proven sufficient blocker (zero drawn co-occurrence); a "
                         "future compact owned cohort may close it like RFC 0033 "
                         "group-edge. Recorded per TechLead D-325/D-327, not "
-                        "actioned during registry landing.",
+                        "actioned during registry landing. Cross-check "
+                        "corpus_isolation_findings for real-corpus closeability.",
             } for cat in compact_candidates
         ],
         "paths_by_category": dict(sorted(by_category.items())),
@@ -301,6 +327,19 @@ def self_test(roster_path: Path) -> None:
          "compact cohort candidates disagree with sufficiency table")
     need({g["category"] for g in roster["optional_gains"]} == set(compact),
          "optional_gains must equal the proven compact cohort candidates")
+    # Corpus-isolation findings must reference real categories and reconcile their
+    # row totals with the category counts; a zero-unblocked finding is the audit
+    # evidence that a sufficient-in-isolation construct has no real-corpus gain.
+    for finding in roster["corpus_isolation_findings"]:
+        cat = finding["category"]
+        need(cat in counts, f"isolation finding references unknown category {cat}")
+        need(finding["rows_total"] == counts[cat],
+             f"isolation rows_total != category count for {cat}")
+        need(0 <= finding["rows_unblocked_by_removal"] <= finding["rows_total"],
+             f"isolation unblocked count out of range for {cat}")
+        need(bool(finding["dominant_co_blockers"]) or
+             finding["rows_unblocked_by_removal"] > 0,
+             f"isolation finding lacks a conclusion basis for {cat}")
     print(f"fallback roster self-test OK: {total} fallback rows, "
           f"{len(counts)} categories, zero unclassified, classification reproducible; "
           f"proven sufficient blockers = {sorted(compact)}")

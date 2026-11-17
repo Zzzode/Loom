@@ -5088,6 +5088,40 @@ Observation official_er206_legacy_view(const Observation& row) {
     return legacy;
 }
 
+// RFC 0033 counterpart of the ER107 legacy view for the six group-edge rows.
+// The matrix row carries the supplemental group-edge proof, but the ER206
+// summary must count the underlying whole-null ER206 original (null Model,
+// still pending under the frozen ER206 contract). Restore the retained ER206
+// closed proof and map the cohort index back to the ER206 prior ordinal.
+Observation official_groupedge_legacy_view(const Observation& row) {
+    require(row.raw_active_schema == kOfficialGroupEdgeContract &&
+                row.role_case_index < groupedge::kPins.size(),
+            "ERGroupEdge requires retained ER206 source identity");
+    const auto authority = json::parse(row.raw_source_authority);
+    require(authority.has_value() &&
+                authority->root().get_string("proposal_sha256") == groupedge::kProposalSha &&
+                authority->root().get("retained_ER206").is_obj(),
+            "ERGroupEdge requires retained ER206 closed proof");
+    Observation legacy;
+    legacy.path = row.path;
+    legacy.track = row.track;
+    legacy.type = row.type;
+    legacy.source_sha256 = row.source_sha256;
+    legacy.status = row.status;
+    legacy.errors = row.errors;
+    legacy.projection_baseline = row.projection_baseline;
+    legacy.raw_active_schema = kOfficialEr206Contract;
+    legacy.raw_source_authority = kOfficialEr206Authority;
+    legacy.role_case_index =
+        static_cast<std::size_t>(groupedge::kPins[row.role_case_index].prior_ordinal);
+    legacy.raw_source_constraints =
+        projection_canonical(authority->root().get("retained_ER206"));
+    require(legacy.role_case_index < relations_oracle::kEr206Pins.size() &&
+                relations_oracle::kEr206Pins[legacy.role_case_index].model_bytes == 0,
+            "ERGroupEdge supplements only source-bound ER206 null Models");
+    return legacy;
+}
+
 void official_er_accumulate_owned(JsonVal, const Observation&, OfficialErCounts&,
                                   const relations_oracle::Er206Documents&);
 OfficialErCounts official_er_counts(const std::vector<Observation>&,
@@ -7947,10 +7981,13 @@ void emit_report(const std::vector<Observation>& rows,
             entry.add("Requirement_markdown1_native_whole_source", provenance);
         }
         if (row.raw_active_schema == kOfficialEr206Contract ||
-            row.raw_active_schema == kOfficialEr107Contract) {
+            row.raw_active_schema == kOfficialEr107Contract ||
+            row.raw_active_schema == kOfficialGroupEdgeContract) {
             std::optional<Observation> retained;
             if (row.raw_active_schema == kOfficialEr107Contract)
                 retained.emplace(official_er206_legacy_view(row));
+            else if (row.raw_active_schema == kOfficialGroupEdgeContract)
+                retained.emplace(official_groupedge_legacy_view(row));
             const auto& er_row = retained ? *retained : row;
             const auto metadata = json::parse(er_row.raw_source_constraints);
             require(metadata.has_value(), "OfficialER206 provenance JSON");
@@ -8422,7 +8459,8 @@ void emit_report(const std::vector<Observation>& rows,
                 row.raw_active_schema == kMindmap10Contract ||
                 row.raw_active_schema == kShapes4Contract ||
                 row.raw_active_schema == kBlock58Contract ||
-                row.raw_active_schema == kOfficialEr107Contract)
+                row.raw_active_schema == kOfficialEr107Contract ||
+                row.raw_active_schema == kOfficialGroupEdgeContract)
                 continue;
             if (row.status[0] == "drawn") ++originals_drawn;
         }
@@ -10378,6 +10416,20 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                         official_er_consumed, ge_work, official_er_diagnostics,
                         observations.size(), observations.capacity(), JsonVal{},
                         ge_observed.ready ? ge_proof->root() : JsonVal{});
+                    // Preserve the frozen ER206 closed proof (the row is still a
+                    // whole-null ER206 original with a null Model) before
+                    // attaching the supplemental group-edge proof, exactly as the
+                    // ER107 path retains its ER206 legacy. The summary re-reads
+                    // this retained proof through the group-edge legacy view.
+                    const auto ge_legacy = json::parse(ge_row.raw_source_constraints);
+                    require(ge_legacy.has_value(), "ERGroupEdge retained ER206 proof JSON");
+                    json::JsonMutDoc ge_authority;
+                    auto ge_retained = ge_authority.object();
+                    ge_retained.set("proposal_sha256", groupedge::kProposalSha);
+                    ge_retained.add("retained_ER206",
+                                    ge_authority.copy_val(ge_legacy->root()));
+                    ge_authority.set_root(ge_retained);
+                    ge_row.raw_source_authority = ge_authority.to_string();
                     ge_row.raw_source_constraints = ge_observed.proof;
                     ge_row.raw_active_schema = kOfficialGroupEdgeContract;
                     ge_row.role_case_index = *ge_selected;
@@ -19429,11 +19481,14 @@ OfficialErCounts official_er_counts(const std::vector<Observation>& rows,
     std::array<bool, 206> seen{};
     for (const auto& row : rows) {
         if (row.raw_active_schema != kOfficialEr206Contract &&
-            row.raw_active_schema != kOfficialEr107Contract)
+            row.raw_active_schema != kOfficialEr107Contract &&
+            row.raw_active_schema != kOfficialGroupEdgeContract)
             continue;
         std::optional<Observation> retained;
         if (row.raw_active_schema == kOfficialEr107Contract)
             retained.emplace(official_er206_legacy_view(row));
+        else if (row.raw_active_schema == kOfficialGroupEdgeContract)
+            retained.emplace(official_groupedge_legacy_view(row));
         const auto& er_row = retained ? *retained : row;
         require(er_row.role_case_index < seen.size() && !seen[er_row.role_case_index],
                 "OfficialER206 duplicate or unknown original consumption");

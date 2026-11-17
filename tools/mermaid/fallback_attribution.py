@@ -62,9 +62,27 @@ class Detector:
     category: str
     pattern: str  # human-readable predicate description
     reason: str
-    causality: str  # permanent | foreign-engine | debt | debt-candidate | family-residual
+    # permanent: no static-terminal equivalent can exist (interactivity,
+    #   dynamic timing, sandbox security);
+    # foreign-engine: needs an external layout/visual engine the native
+    #   orthogonal projection cannot byte-faithfully reproduce without
+    #   weakening the no-mis-draw invariant;
+    # debt: a parser/projection gap for a construct that could in principle be
+    #   built, isolated by a cross-family detector;
+    # debt-candidate: a narrow debt that may admit a compact owned cohort;
+    # family-scoped-debt: a fallback no cross-family detector isolated; the
+    #   family renderer demonstrably draws OTHER rows of the same family, so it
+    #   is an unimplemented subset of that family's surface, not a permanent or
+    #   foreign-engine limit. It is distinct from "debt" because no shared
+    #   construct was isolated, so it cannot be closed as one compact cohort.
+    causality: str
     regex: str | None = None
     fn: str | None = None  # named custom detector key
+
+
+# Causality value assigned to every family_residual:* category. Kept as a
+# constant so the self-test can prove all 44 categories carry exactly one label.
+FAMILY_RESIDUAL_CAUSALITY = "family-scoped-debt"
 
 
 # Ordered detectors. First match wins; order is part of the contract and is
@@ -241,7 +259,16 @@ def emit_roster(matrix_path: Path) -> dict:
                        "sufficient blocker or only a co-occurring primary suspect.",
         "total_fallback": len(rows),
         "category_counts": dict(sorted(counts.items())),
-        "causality": {d.category: d.causality for d in DETECTORS},
+        # Every category, including family_residual:*, must carry a causality
+        # label. The detector categories use their reviewed labels; the residual
+        # buckets are all family-scoped implementation debt (the same family
+        # renderer draws other rows, so this is an unimplemented subset, not a
+        # permanent or foreign-engine limit).
+        "causality": {
+            **{d.category: d.causality for d in DETECTORS},
+            **{cat: FAMILY_RESIDUAL_CAUSALITY
+               for cat in counts if cat.startswith("family_residual:")},
+        },
         "predicate_sufficiency": dict(sorted(sufficiency.items())),
         "proven_compact_cohort_candidates": compact_candidates,
         "detector_order": [d.category for d in DETECTORS],
@@ -306,11 +333,24 @@ def self_test(roster_path: Path) -> None:
     recomputed = {cat: len(p) for cat, p in paths_by_category.items()}
     need(recomputed == counts, "category_counts do not match path list lengths")
     need(sum(counts.values()) == total, "category count sum != roster total")
-    # Causality labels cover every non-residual category.
-    for cat in counts:
+    # Causality completeness: the label key set must equal the category key set
+    # exactly. A category without a label (or a label with no category) fails,
+    # so a future detector can never silently produce un-attributed fallback.
+    # This replaces an earlier check that explicitly skipped family_residual:*,
+    # which let 28 categories / 266 rows ship without a causality label.
+    count_keys = set(counts)
+    causality_keys = set(roster["causality"])
+    need(causality_keys == count_keys,
+         "causality key set must equal category_counts key set; "
+         f"missing labels: {sorted(count_keys - causality_keys)}, "
+         f"orphan labels: {sorted(causality_keys - count_keys)}")
+    valid = {"permanent", "foreign-engine", "debt", "debt-candidate",
+             FAMILY_RESIDUAL_CAUSALITY}
+    for cat, label in roster["causality"].items():
+        need(label in valid, f"unknown causality label {label!r} for {cat}")
         if cat.startswith("family_residual:"):
-            continue
-        need(cat in roster["causality"], f"missing causality label for {cat}")
+            need(label == FAMILY_RESIDUAL_CAUSALITY,
+                 f"residual category {cat} must carry {FAMILY_RESIDUAL_CAUSALITY}")
     # Sufficiency table is internally consistent and the compact-candidate list
     # matches both the table and the recorded optional gains.
     suff = roster["predicate_sufficiency"]
@@ -341,7 +381,8 @@ def self_test(roster_path: Path) -> None:
              finding["rows_unblocked_by_removal"] > 0,
              f"isolation finding lacks a conclusion basis for {cat}")
     print(f"fallback roster self-test OK: {total} fallback rows, "
-          f"{len(counts)} categories, zero unclassified, classification reproducible; "
+          f"{len(counts)} categories, causality labels on {len(causality_keys)}/{len(counts)} "
+          f"categories, zero unclassified, classification reproducible; "
           f"proven sufficient blockers = {sorted(compact)}")
 
 

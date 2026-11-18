@@ -29012,6 +29012,31 @@ constexpr ErSubgraphKindCount kErSubgraphSkip4[]{
     {"incident_entity_needs_coherent_graph_removal", 2},
     {"no_third_entity", 1},
     {"root_group_has_no_parent_to_erase", 1}};
+// RFC0033-T1: the two admitted-form literals graduated from the report-only
+// transition to mandatory_complete_positive. Their mutation censuses were
+// measured from the live er206_mutations oracle over the production Model,
+// with orphan_ink the single shared physical negative in each set.
+constexpr ErSubgraphKindCount kErSubgraphExec5[]{
+    {"complete_header", 2},          {"end_cardinality", 1},
+    {"group_caption", 1},            {"group_membership", 1},
+    {"isolated_entity_erasure", 1},  {"orphan_ink", 1},
+    {"relation_erasure", 1},         {"relation_label", 1},
+    {"start_cardinality", 1},        {"stroke", 1},
+    {"third_endpoint", 1}};
+constexpr ErSubgraphKindCount kErSubgraphSkip5[]{
+    {"incident_entity_needs_coherent_graph_removal", 1},
+    {"root_entity_has_no_membership_to_erase", 1},
+    {"root_group_has_no_parent_to_erase", 1}};
+constexpr ErSubgraphKindCount kErSubgraphExec6[]{
+    {"complete_header", 2},     {"end_cardinality", 1},
+    {"group_caption", 1},       {"group_membership", 2},
+    {"orphan_ink", 1},          {"relation_erasure", 1},
+    {"relation_label", 1},      {"start_cardinality", 1},
+    {"stroke", 1}};
+constexpr ErSubgraphKindCount kErSubgraphSkip6[]{
+    {"incident_entity_needs_coherent_graph_removal", 2},
+    {"no_third_entity", 1},
+    {"root_group_has_no_parent_to_erase", 1}};
 constexpr std::array<ErSubgraphLiteral, 16> kErSubgraphLiterals{{
     {"nested_first_closed_claim", R"ERSG(erDiagram
 subgraph G
@@ -29137,12 +29162,12 @@ end
 G ||--|| B : links
 )ERSG",
      "1a31b5ea60292d25aff0bd2e4f24a1737e086792732934e8f92ed4b9c40b7983",
-     R"ERSG()ERSG",
-     "",
-     "valid_unimplemented_source_obligation",
-     {},
-     {},
-     0},
+     R"ERSG({"direction":"TB","entities":[{"headers":[["A"]],"id":"A","label":"A","owner":"G","rows":[],"shape":"box","typed_er":null},{"headers":[["B"]],"id":"B","label":"B","owner":"","rows":[],"shape":"box","typed_er":null}],"family":"er","groups":[{"direction":"","id":"G","label":"G","members":["A"],"parent":""}],"notes":[],"relations":[{"end":"card:one","label":"links","order":0,"source":"G","start":"card:one","stroke":"solid","target":"B"}]})ERSG",
+     "d4851e7e1e75322e1eabad7859e8f3ae16af529ca2192ef31e731665a3da59e9",
+     "mandatory_complete_positive",
+     kErSubgraphExec5,
+     kErSubgraphSkip5,
+     11},
     {"local_direction",
      R"ERSG(erDiagram
 direction LR
@@ -29152,12 +29177,12 @@ A ||--|| B : links
 end
 )ERSG",
      "563d989a985432695a90c171cc8a6b8f1b9659ae0a2799b3e8621c6198a786cb",
-     R"ERSG()ERSG",
-     "",
-     "valid_unimplemented_source_obligation",
-     {},
-     {},
-     0},
+     R"ERSG({"direction":"LR","entities":[{"headers":[["A"]],"id":"A","label":"A","owner":"G","rows":[],"shape":"box","typed_er":null},{"headers":[["B"]],"id":"B","label":"B","owner":"G","rows":[],"shape":"box","typed_er":null}],"family":"er","groups":[{"direction":"","id":"G","label":"G","members":["A","B"],"parent":""}],"notes":[],"relations":[{"end":"card:one","label":"links","order":0,"source":"A","start":"card:one","stroke":"solid","target":"B"}]})ERSG",
+     "911535a157015bcb102cb7f43ff9e1c220d0232f03fbe9e6b1bf21fd99ec9ee4",
+     "mandatory_complete_positive",
+     kErSubgraphExec6,
+     kErSubgraphSkip6,
+     10},
     {"in_group_styles",
      R"ERSG(erDiagram
 subgraph G
@@ -29249,8 +29274,7 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
         item.set("complete_Model_sha256", literal.model_sha);
         const bool positive = literal.profile == "mandatory_complete_positive";
         bool captured = false, pub = false, source_bound = false, model_decoded = false,
-             good = false, strong_scene = false, closed_protocol = false,
-             geometry_classified = false;
+             good = false, strong_scene = false, closed_protocol = false;
         std::string_view phase = "five_public_captures_before_binding";
         auto fail = [&](std::string_view text) {
             if (errors.size() < 8u) errors.emplace_back(text.substr(0u, 128u));
@@ -29297,12 +29321,12 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
                     else
                         ++unsupported_observed;
                 } else {
-                    // D293: the two admitted-form literals now parse and reach
-                    // this strict ER206 geometry gate instead of closing as
-                    // unsupported. Their geometry shortfall is a counted,
-                    // report-only obligation (E6c), not an unexpected failure.
+                    // RFC0033-T1: the two admitted-form literals graduated to
+                    // mandatory_complete_positive, so every remaining
+                    // closed-source literal (five unsupported obligations, four
+                    // malformed controls) must keep whole ordinary output. A
+                    // partial draw here is a terminal regression again.
                     ++geometry;
-                    geometry_classified = true;
                     fail("ER subgraph closed source drew a partial scene or failed ordinary "
                          "recovery");
                 }
@@ -29506,17 +29530,16 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
         item.set("foreign_assertions_certified", 0);
         item.set("phase", phase);
         item.set("work_remaining", static_cast<std::int64_t>(work.left));
-        // A classified closed-source geometry shortfall (the two D293
-        // admitted-form literals) is report-only per RFC 0031 E6c; every other
-        // iteration keeps terminal hard failures.
-        class35_errors(root, item, errors, observations,
-                       /*terminal_failures=*/!geometry_classified);
+        // RFC0033-T1 closed the report-only transition: the two admitted-form
+        // literals are mandatory positives, so every iteration is back to
+        // terminal hard failures under the default class35_errors contract.
+        class35_errors(root, item, errors, observations);
         records.append(item);
     }
     root.set("source_count", 16);
-    root.set("mandatory_positive_sources", 5);
+    root.set("mandatory_positive_sources", 7);
     root.set("malformed_source_controls", 4);
-    root.set("valid_unimplemented_obligations", 7);
+    root.set("valid_unimplemented_obligations", 5);
     root.set("five_captures_complete", observed);
     root.set("all_five_frames_published", published);
     root.set("complete_source_bindings", bound);
@@ -29533,7 +29556,9 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
     root.set("public_scene_limit", static_cast<std::int64_t>(kEr206SceneLimit));
     root.set("old_default8M_unchanged", true);
     root.set("production1M_unchanged", true);
-    root.set("original_seven_Models_unchanged", true);
+    // RFC0033-T1: the two admitted-form literals moved to complete positives;
+    // only the five remaining closed obligations still carry no Model.
+    root.set("remaining_five_closed_obligations_have_no_Model", true);
     root.set("formal_admissions", 0);
     root.set("foreign_assertions_certified", 0);
     root.set("sizeof_Pixel", static_cast<std::int64_t>(sizeof(ftxui::Pixel)));
@@ -29545,21 +29570,23 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
     EXPECT_EQ(observed, 16);
     EXPECT_EQ(published, 16);
     EXPECT_EQ(bound, 16);
-    EXPECT_EQ(decoded, 5);
-    EXPECT_EQ(strong, 5);
+    EXPECT_EQ(decoded, 7);
+    EXPECT_EQ(strong, 7);
     EXPECT_EQ(malformed_closed, 4);
-    // D293 group-edge admission: the two literals exercising the admitted
-    // grammar — Group_business_endpoint (a subgraph id as an edge endpoint)
-    // and local_direction (an in-group direction override) — now parse instead
-    // of closing as unsupported. They reach the strict ER206 geometry gate and
-    // fail there, so unsupported drops 7->5 while geometry rises 0->2. The other
-    // five closed-source literals use still-unimplemented surfaces (classDef,
-    // styles, accessibility, entity/group kind collision) and stay unsupported.
+    // RFC0033-T1 complete: the two admitted-grammar literals
+    // (Group_business_endpoint — a subgraph id as an edge endpoint — and
+    // local_direction — an in-group direction override) are reclassified to
+    // mandatory_complete_positive with production-derived complete Models,
+    // three-width geometry and the full mutation census. The report-only
+    // 7->5 / 0->2 transition therefore exits: unsupported stays at five and
+    // the closed-source geometry counter returns to zero. The other five
+    // closed-source literals use still-unimplemented surfaces (classDef,
+    // styles, accessibility, entity/group kind collision) and stay terminal.
     EXPECT_EQ(unsupported_observed, 5);
     EXPECT_EQ(fallbacks, 0);
     EXPECT_EQ(resources, 0);
     EXPECT_EQ(protocol, 0);
-    EXPECT_EQ(geometry, 2);
+    EXPECT_EQ(geometry, 0);
     EXPECT_EQ(mutation, 0);
     EXPECT_EQ(observation, 0);
 }

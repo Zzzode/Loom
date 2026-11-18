@@ -29635,6 +29635,87 @@ TEST(MermaidErSubgraphSourceProfile, Rfc0033GroupEdgeFullFrameOracleAcceptsSix) 
     }
 }
 
+// NIT-1 (RFC 0033 independent review): normalize only the two non-semantic
+// representation drifts between a current production whole-scene Model and a
+// pinned literal Model authored earlier, then return the canonical scene:
+//   1. drop the projection-only typed_er field on every entity (the current
+//      encoder adds it; older literal Models predate it);
+//   2. order the groups array by id, because a group is identified by its id
+//      plus parent/members, never by its array position.
+// Entity/relation order and every other key are still compared exactly, so a
+// real semantic difference breaks the canonical string equality.
+std::string er_subgraph_normalized_scene(std::string_view model_text) {
+    // Pass 1: drop the projection-only typed_er field, then freeze to an
+    // immutable document so the canonical helper can read it.
+    json::JsonMutDoc strip_doc;
+    auto strip_root = strip_doc.raw_json(model_text);
+    strip_doc.set_root(strip_root);
+    auto strip_entities = strip_root.get("entities");
+    for (std::size_t i = 0; i < strip_entities.size(); ++i)
+        static_cast<void>(strip_entities.at(i).remove("typed_er"));
+    auto flat = json::parse(strip_doc.to_string());
+    class481_require(flat.has_value(), "ER subgraph scene typed_er strip reparse");
+
+    // Pass 2: deep-copy into a mutable document and rebuild the groups array
+    // ordered by id. A group is identified by id plus parent/members, not by
+    // array position, so the order is normalized while every group field is
+    // still compared exactly.
+    json::JsonMutDoc out;
+    auto root = out.copy_val(flat->root());
+    out.set_root(root);
+    const auto flat_groups = flat->root().get("groups");
+    std::vector<std::size_t> order(flat_groups.size());
+    std::iota(order.begin(), order.end(), std::size_t{0});
+    std::ranges::sort(order, [&](std::size_t a, std::size_t b) {
+        return flat_groups.at(a).get_string("id") < flat_groups.at(b).get_string("id");
+    });
+    auto sorted_groups = root.make_arr();
+    for (const std::size_t index : order)
+        sorted_groups.append(out.copy_val(flat_groups.at(index)));
+    static_cast<void>(root.remove("groups"));
+    root.add("groups", sorted_groups);
+
+    auto reparsed = json::parse(out.to_string());
+    class481_require(reparsed.has_value(), "ER subgraph scene normalization reparse");
+    Work work;
+    return class481_canonical(reparsed->root(), work);
+}
+
+// Direct production-seam equality for all sixteen subgraph literals. The other
+// tests reach er_whole_scene_json_for_testing only through the indirect
+// render + validate + census path; this test pins the seam output itself.
+// Seven mandatory positives parse, and their normalized canonical scene equals
+// the embedded authoritative Model; the five valid-unimplemented and four
+// malformed literals are rejected by parse_relations and therefore must return
+// nullopt rather than a Model.
+TEST(MermaidErSubgraphSourceProfile, WholeSceneSeamDirectlyMatchesAllSixteenLiterals) {
+    namespace mtest = loom::ui::mermaid::testing;
+    int positive = 0, closed = 0;
+    for (const auto& literal : kErSubgraphLiterals) {
+        SCOPED_TRACE(std::string(literal.name));
+        mtest::Work seam_work;
+        const auto scene =
+            mtest::er_whole_scene_json_for_testing(literal.source, seam_work);
+        if (literal.profile != "mandatory_complete_positive") {
+            EXPECT_FALSE(scene.has_value())
+                << "closed-source literal must not produce a whole-scene Model";
+            ++closed;
+            continue;
+        }
+        ASSERT_TRUE(scene.has_value());
+        ++positive;
+        EXPECT_EQ(er_subgraph_normalized_scene(*scene),
+                  er_subgraph_normalized_scene(literal.model_json));
+        // The untouched seam output is itself already canonical.
+        auto seam_doc = json::parse(*scene);
+        ASSERT_TRUE(seam_doc.has_value());
+        Work seam_canon_work;
+        EXPECT_EQ(class481_canonical(seam_doc->root(), seam_canon_work), *scene);
+    }
+    EXPECT_EQ(positive, 7);
+    EXPECT_EQ(closed, 9);
+}
+
 }  // namespace
 
 namespace {

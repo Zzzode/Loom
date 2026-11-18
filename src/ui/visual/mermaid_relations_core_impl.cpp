@@ -7597,7 +7597,7 @@ bool RouteSearch::free(Point p) const {
         for (const auto point : *compound_reservations) {
             if (!work.spend() || point == p) return false;
         }
-    return work.remaining != 0;
+    return work.available() != 0;
 }
 
 bool RouteSearch::step(Point from, Point to) const {
@@ -8265,7 +8265,7 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
                           layout.boxes[static_cast<std::size_t>(edge.from)], edge.start, search);
     auto to = ports_for(diagram.entities[static_cast<std::size_t>(edge.to)],
                         layout.boxes[static_cast<std::size_t>(edge.to)], edge.end, search);
-    if (er_paint && canvas.work.remaining == 0u) return false;
+    if (er_paint && canvas.work.available() == 0u) return false;
     if (retry_storage && edge.endpoint_texts) {
         // Endpoint captions require horizontal normals. Removing impossible
         // candidates preserves the order of every usable pair and bounds the
@@ -8956,6 +8956,13 @@ relations_layout(std::string_view source, Work& work, bool class_envelope, bool 
     // default writes, nested matrices and index relocations precede the ctor.
     if (diagram->family == RelationFamily::Er) {
         if (!work.spend(4u * sizeof(bool) + 4u * sizeof(std::size_t) + 32u)) return {};
+        // RFC 0034 Phase 1: an ER source whose reviewed frontmatter activated
+        // the projection builds the ErPaint style plane, whose cell-scaled
+        // fees can exceed the single 1M layout Work for the deepest nested
+        // group-edge fixtures. Enable the bounded supplemental layout pool for
+        // that branch only; default Work objects and every non-presentation
+        // path keep the historical single-balance behaviour.
+        if (diagram->er_presentation) work.enable_envelope(kErEnvelopeLayoutAllowance);
         bool grouped = false;
         for (const auto& entity : diagram->entities) {
             if (!work.spend(sizeof(EntityShape) + 8u)) return {};

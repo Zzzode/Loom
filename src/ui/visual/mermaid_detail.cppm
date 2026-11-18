@@ -43,6 +43,7 @@ using loom::ui::mermaid::testing::GitGraph;
 using loom::ui::mermaid::testing::GitType;
 using loom::ui::mermaid::testing::kWorkLimit;
 using loom::ui::mermaid::testing::kErElementWorkLimit;
+using loom::ui::mermaid::testing::kErEnvelopeLayoutAllowance;
 using loom::ui::mermaid::testing::kBlockElementWorkLimit;
 using loom::ui::mermaid::testing::kBlockPayloadWorkLimit;
 using loom::ui::mermaid::testing::MermaidProbeDecision;

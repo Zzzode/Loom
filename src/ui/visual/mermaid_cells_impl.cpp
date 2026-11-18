@@ -69,11 +69,35 @@ std::optional<std::string> validated_plain_label(std::string_view text) {
 namespace loom::ui::mermaid::testing {
 
 bool Work::spend(std::size_t count) {
-    if (count > remaining) {
+    // Inactive (every historical caller): the exact original single-balance
+    // semantics, including the clamp-to-zero on refusal.
+    if (!envelope_enabled) {
+        if (count > remaining) {
+            remaining = 0;
+            return false;
+        }
+        remaining -= count;
+        return true;
+    }
+    // RFC 0034 split routing. Debit the primary first; if it cannot cover the
+    // whole fee, drain its residual and take only the remainder from the
+    // supplemental pool. This reproduces one combined pool of
+    // kWorkLimit + kErEnvelopeLayoutAllowance regardless of where the boundary
+    // falls, so the effective ceiling is uniform across fixtures.
+    if (count <= remaining) {
+        remaining -= count;
+        return true;
+    }
+    const std::size_t residual = remaining;  // primary contribution
+    const std::size_t rest = count - residual;
+    if (rest > supplemental_remaining) {
+        // Both pools drained: fail closed without over-drawing.
         remaining = 0;
+        supplemental_remaining = 0;
         return false;
     }
-    remaining -= count;
+    remaining = 0;
+    supplemental_remaining -= rest;
     return true;
 }
 

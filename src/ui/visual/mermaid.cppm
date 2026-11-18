@@ -144,8 +144,58 @@ inline constexpr std::size_t kBlockPayloadWorkLimit =
 // bookkeeping 69,337,088 + Element fees 134,021,632.
 static_assert(kBlockPayloadWorkLimit == 224'107'664u);
 
+// RFC 0034 Phase 1: bounded supplemental layout Work for the active-ER
+// envelope path. The legacy ER text-grid renderer never builds an ErPaint
+// style plane; an ER source whose frontmatter activates the reviewed
+// projection (e.g. look: handDrawn) does, and the deepest nested group-edge
+// fixture (ER206 ordinal 198) needs 1,290,694 layout Work against the 1M
+// kWorkLimit primary — a 290,694 shortfall. This allowance is drawn ONLY by
+// a Work explicitly enabled for that path; every default Work is unchanged.
+//
+// Derived from the same 240x1024 canvas contract as the ElementWork meter. The
+// active path's supplemental, post-primary cost is bounded by:
+//   * ErPaint plane prepay 10/cell and finish entry 8/cell (18/cell);
+//   * ErPaint::finish body-cell prepay 8/cell over the painted bounding box;
+//   * per-cell put fees (10/cell) and the finish emission composite.
+// The bound below is a conservative whole-canvas envelope sized to admit the
+// measured fixture class while staying far below a second full kWorkLimit; it
+// is never tuned to one fixture and is pinned here so any change is explicit.
+constexpr std::size_t er_envelope_layout_allowance(std::size_t width,
+                                                   std::size_t height) {
+    const std::size_t cells = width * height;
+    // plane prepay + finish entry/body + an order-of-magnitude per-put headroom
+    // over the painted plane, all expressed as whole-canvas cell multiples.
+    return cells * (18u + 8u + 96u) + 4096u;
+}
+inline constexpr std::size_t kErEnvelopeLayoutAllowance =
+    er_envelope_layout_allowance(240u, 1024u);
+// cells 245,760 * 122 + 4,096.
+static_assert(kErEnvelopeLayoutAllowance == 29'986'816u);
+
 struct Work {
     std::size_t remaining = kWorkLimit;
+    // RFC 0034: optional supplemental pool, inactive unless enable_envelope()
+    // is called. Appended after `remaining` so every existing single-argument
+    // aggregate initializer (Work{budget}) stays valid. When inactive the
+    // struct behaves exactly as the historical single-balance meter.
+    std::size_t supplemental_remaining = 0;
+    bool envelope_enabled = false;
+
+    // Turn this Work into the two-pool active-ER envelope meter. Idempotent;
+    // only relations_layout on an ER diagram with an er_presentation calls it.
+    void enable_envelope(std::size_t allowance) {
+        envelope_enabled = true;
+        supplemental_remaining = allowance;
+    }
+
+    // Combined solvency: the primary balance plus the supplemental pool when
+    // the envelope meter is active, identical to `remaining` otherwise. Direct
+    // remaining==0 predicates on the active ER routing path must read this,
+    // never `remaining`, so they do not fire while the supplemental is funded.
+    [[nodiscard]] std::size_t available() const noexcept {
+        return envelope_enabled ? remaining + supplemental_remaining : remaining;
+    }
+
     bool spend(std::size_t count = 1);
 };
 

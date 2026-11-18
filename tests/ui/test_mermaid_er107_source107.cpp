@@ -841,7 +841,14 @@ TEST(MermaidEr107ElementWork, All107PublicRendersExposeExactAndOneShortElementBu
             EXPECT_FALSE(short_one.has_value()) << pin.path;
             EXPECT_GT(injected.element_failed, 0u) << pin.path;
         }
-        // Exact and one-short layout Work reject independently of ElementWork.
+        // Exact layout Work drains the primary to zero. RFC 0034 Phase 1 makes
+        // every reviewed ER projection use the two-pool envelope meter, so a
+        // one-unit primary shortfall now succeeds with the supplemental pool
+        // funding exactly one unit, rather than rejecting. ElementWork retains
+        // its own independent exact/one-short fail-closed above; the layout
+        // combined-ceiling fail-closed (beyond primary + supplemental) is pinned
+        // in the MermaidEnvelopeWork meter tests. Non-presentation families keep
+        // the historical single-pool budget rejection.
         {
             mt::Work exact{layout_used};
             EXPECT_TRUE(
@@ -850,9 +857,14 @@ TEST(MermaidEr107ElementWork, All107PublicRendersExposeExactAndOneShortElementBu
                 << pin.path;
             EXPECT_EQ(exact.remaining, 0u) << pin.path;
             mt::Work short_one{layout_used - 1u};
-            EXPECT_FALSE(
+            EXPECT_TRUE(
                 mt::render_mermaid_with_work(source, fallback(), false, short_one, nullptr)
                     .has_value())
+                << pin.path;
+            EXPECT_EQ(short_one.remaining, 0u) << pin.path;
+            EXPECT_TRUE(short_one.envelope_enabled) << pin.path;
+            EXPECT_EQ(short_one.supplemental_remaining,
+                      mt::kErEnvelopeLayoutAllowance - 1u)
                 << pin.path;
         }
         // Cache miss then hit rebuilds fresh Elements: ElementWork is charged

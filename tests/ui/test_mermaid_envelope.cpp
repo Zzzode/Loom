@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 
 import std;
+import loom.serdes.json;
 import loom.ui.visual.markdown;
 import loom.ui.visual.mermaid.testing;
 
@@ -675,4 +676,289 @@ TEST(MermaidEnvelope, ErThemeCssBlockRendersDirectly) {
     ftxui::Render(screen, *element);
     const auto text = screen.ToString();
     EXPECT_EQ(text.find("erDiagram"), std::string::npos) << text;
+}
+
+// RFC 0034 Phase 1: the active-ER supplemental layout Work meter. These are
+// pure meter tests (no rendering) pinning the split-routing and fail-closed
+// semantics that bound the bounded envelope allowance.
+namespace {
+using loom::ui::mermaid::testing::kErEnvelopeLayoutAllowance;
+using loom::ui::mermaid::testing::kWorkLimit;
+using loom::ui::mermaid::testing::Work;
+}  // namespace
+
+TEST(MermaidEnvelopeWork, DefaultOffKeepsLegacySingleBalanceClamp) {
+    Work work;  // inactive supplemental
+    EXPECT_FALSE(work.envelope_enabled);
+    EXPECT_EQ(work.available(), kWorkLimit);
+    EXPECT_TRUE(work.spend(kWorkLimit));
+    EXPECT_EQ(work.remaining, 0u);
+    EXPECT_EQ(work.available(), 0u);
+    // Legacy clamp-to-zero on refusal, no supplemental draw.
+    EXPECT_FALSE(work.spend(1));
+    EXPECT_EQ(work.remaining, 0u);
+    EXPECT_EQ(work.supplemental_remaining, 0u);
+}
+
+TEST(MermaidEnvelopeWork, SplitRoutingDrainsPrimaryThenSupplemental) {
+    Work work;
+    work.enable_envelope(kErEnvelopeLayoutAllowance);
+    // Spend the primary down to a small residual.
+    ASSERT_TRUE(work.spend(kWorkLimit - 10u));
+    EXPECT_EQ(work.remaining, 10u);
+    EXPECT_EQ(work.available(), 10u + kErEnvelopeLayoutAllowance);
+    // A fee larger than the residual splits: primary -> 0, only the remainder
+    // comes from the supplemental pool.
+    EXPECT_TRUE(work.spend(25u));
+    EXPECT_EQ(work.remaining, 0u);
+    EXPECT_EQ(work.supplemental_remaining, kErEnvelopeLayoutAllowance - 15u);
+}
+
+TEST(MermaidEnvelopeWork, CombinedCeilingExactAndOneUnitShortFailClosed) {
+    const std::size_t combined = kWorkLimit + kErEnvelopeLayoutAllowance;
+    Work exact;
+    exact.enable_envelope(kErEnvelopeLayoutAllowance);
+    EXPECT_TRUE(exact.spend(combined));  // exact combined ceiling
+    EXPECT_EQ(exact.available(), 0u);
+    EXPECT_FALSE(exact.spend(1));       // one more fails closed
+    EXPECT_EQ(exact.remaining, 0u);
+    EXPECT_EQ(exact.supplemental_remaining, 0u);
+
+    Work short_meter;
+    short_meter.enable_envelope(kErEnvelopeLayoutAllowance);
+    // Full primary + full supplemental: requesting one beyond the combined
+    // ceiling must refuse and drain both pools fail-closed.
+    EXPECT_FALSE(short_meter.spend(combined + 1u));
+    EXPECT_EQ(short_meter.available(), 0u);
+}
+
+TEST(MermaidEnvelopeWork, BoundaryPositionIndependentOfFeeDecomposition) {
+    const std::size_t combined = kWorkLimit + kErEnvelopeLayoutAllowance;
+    // Decomposition A: one large fee that crosses the primary boundary.
+    Work a;
+    a.enable_envelope(kErEnvelopeLayoutAllowance);
+    ASSERT_TRUE(a.spend(kWorkLimit + 50u));
+    EXPECT_EQ(a.remaining, 0u);
+    EXPECT_EQ(a.supplemental_remaining, kErEnvelopeLayoutAllowance - 50u);
+    EXPECT_TRUE(a.spend(kErEnvelopeLayoutAllowance - 50u));
+    EXPECT_EQ(a.available(), 0u);
+
+    // Decomposition B: the same total as many unit fees, each tiny.
+    Work b;
+    b.enable_envelope(kErEnvelopeLayoutAllowance);
+    for (std::size_t i = 0; i < combined; ++i)
+        ASSERT_TRUE(b.spend(1)) << "at unit " << i;
+    EXPECT_EQ(b.available(), 0u);
+    EXPECT_FALSE(b.spend(1));
+}
+
+// RFC 0034 Phase 1 (design §3.2): sweep every ER fixture whose frontmatter
+// reaches an active projection (the 97 look-envelope originals) with a fresh
+// DEFAULT production Work (primary kWorkLimit; the supplemental stays inactive
+// until relations_layout auto-enables it), and prove ordinal 198 is the UNIQUE
+// row whose cost exceeds the bare 1M primary. We do not suppress the
+// supplemental pool to re-probe the old single-pool threshold; we observe the
+// two-pool accounting directly. The supplemental is debited only inside the
+// spend() branch where a fee cannot fit the primary balance, so a non-full
+// supplemental after a successful draw is an exact witness that the primary
+// reached zero (bare minimum > kWorkLimit), while a byte-identical full
+// allowance proves the 1M pool alone covered the row — runtime conservation
+// evidence requiring no test-only production switch.
+TEST(MermaidEnvelopeWork, SupplementalAllowanceIsDrawnByOnlyOrdinal198) {
+    namespace mtest = loom::ui::mermaid::testing;
+    const auto root = std::filesystem::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official";
+    std::ifstream manifest_in(root / "manifest.json", std::ios::binary);
+    ASSERT_TRUE(manifest_in);
+    const std::string manifest_bytes((std::istreambuf_iterator<char>(manifest_in)),
+                                     std::istreambuf_iterator<char>());
+    auto manifest_doc = loom::utils::json::parse(manifest_bytes);
+    ASSERT_TRUE(manifest_doc.has_value());
+    const auto fixtures = manifest_doc->root().get("fixtures");
+
+    const std::string sole_crosser_path =
+        "er-diagram/visual-check/"
+        "nested-er-subgraphs-with-direction-override-handdrawn-look.mmd";
+
+    std::size_t scanned = 0, drawable = 0, construct_rejected = 0, over_cap = 0;
+    std::size_t crosser_allowance_used = 0;
+    std::string sole_crosser;
+    for (std::size_t i = 0; i < fixtures.size(); ++i) {
+        const auto record = fixtures.at(i);
+        const auto rel = record.get_string("path");
+        if (!rel.starts_with("er-diagram/") ||
+            (rel.find("handdrawn-look") == std::string_view::npos &&
+             rel.find("-neo") == std::string_view::npos))
+            continue;
+        ++scanned;
+        std::ifstream in(root / "cases" / rel, std::ios::binary);
+        ASSERT_TRUE(in) << rel;
+        const std::string source((std::istreambuf_iterator<char>(in)),
+                                 std::istreambuf_iterator<char>());
+
+        Work work;  // default production meter; supplemental activates on layout
+        const auto rows = mtest::class_relations_rows(source, work, false);
+        if (!rows.has_value()) {
+            // A construct/authority gate (classDef/style/unicode presentation
+            // contracts) refuses independent of budget; the allowance cannot
+            // change this outcome, so it is not counted as a budget result.
+            ++construct_rejected;
+            continue;
+        }
+        ++drawable;
+
+        if (work.envelope_enabled &&
+            work.supplemental_remaining < kErEnvelopeLayoutAllowance) {
+            // The primary 1M was exhausted and the allowance funded the overshoot.
+            ++over_cap;
+            sole_crosser = rel;
+            crosser_allowance_used =
+                kErEnvelopeLayoutAllowance - work.supplemental_remaining;
+            EXPECT_EQ(work.remaining, 0u) << rel;
+        } else {
+            // Isolation: every other admitted row leaves the supplemental pool
+            // byte-identical to its post-enable value (the full allowance when
+            // enabled, else the inactive zero), proving the 1M primary alone
+            // paid its whole cost.
+            EXPECT_EQ(work.supplemental_remaining,
+                      work.envelope_enabled ? kErEnvelopeLayoutAllowance : 0u)
+                << rel;
+        }
+    }
+
+    // 97 look-envelope ER fixtures = 87 drawable (86 within the bare 1M cap plus
+    // the now-admitted ordinal 198) + 10 construct-gated fallbacks. Before the
+    // allowance this split was 86/11; exactly one budget-gated row moved.
+    EXPECT_EQ(scanned, 97u);
+    EXPECT_EQ(construct_rejected, 10u);
+    EXPECT_EQ(drawable, 87u);
+    EXPECT_EQ(over_cap, 1u)
+        << "exactly one drawable ER look-envelope fixture exceeds the bare 1M primary";
+    EXPECT_EQ(sole_crosser, sole_crosser_path);
+    // The single overshoot fits well inside the bounded allowance: the fail-closed
+    // ceiling is kWorkLimit + kErEnvelopeLayoutAllowance, never unbounded. The
+    // exact draw is pinned as a deterministic budget lock: ordinal 198 exhausts
+    // the bare 1M primary and draws 289,582 from the supplemental (a total layout
+    // cost of 1,289,582), under 1% of the 29,986,816 allowance.
+    EXPECT_GT(crosser_allowance_used, 0u);
+    EXPECT_LT(crosser_allowance_used, kErEnvelopeLayoutAllowance);
+    EXPECT_EQ(crosser_allowance_used, 289'582u);
+}
+
+namespace {
+// Load the ordinal-198 handDrawn whole source: the unique row whose bare layout
+// cost (1,289,582) crosses the 1M production primary.
+std::string rfc0034_handdrawn_source() {
+    const auto path =
+        std::filesystem::path(LOOM_TESTS_DIR) /
+        "fixtures/mermaid_official/cases/er-diagram/visual-check/"
+        "nested-er-subgraphs-with-direction-override-handdrawn-look.mmd";
+    std::ifstream in(path, std::ios::binary);
+    if (!in) return {};
+    return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+}
+
+// Finish an Element into a fixed terminal grid for byte-for-byte comparison.
+std::string rfc0034_grid(ftxui::Element element) {
+    auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(240),
+                                        ftxui::Dimension::Fixed(80));
+    ftxui::Render(screen, std::move(element));
+    return screen.ToString();
+}
+}  // namespace
+
+// RFC 0034 Phase 1 (design §2.3, finding N-1): the supplemental pool is pure
+// budget, never a routing input. The admitted row is rendered with the same
+// total ceiling but the primary/supplemental exhaustion boundary placed at
+// different fee positions; the emitted wide grid must be byte-identical whether
+// the primary alone pays or the allowance funds a large overshoot.
+TEST(MermaidEnvelopeWork, GeometryInvariantAcrossPrimaryExhaustionBoundary) {
+    namespace mtest = loom::ui::mermaid::testing;
+    const std::string source = rfc0034_handdrawn_source();
+    ASSERT_FALSE(source.empty());
+
+    const auto layout = [&](std::size_t primary) {
+        Work work;
+        work.remaining = primary;  // supplemental auto-enabled at layout entry
+        auto rows = mtest::class_relations_rows(source, work, false);
+        return std::pair{std::move(rows), std::move(work)};
+    };
+
+    // Production split: the 1M primary exhausts and the allowance funds 289,582.
+    auto production = layout(kWorkLimit);
+    ASSERT_TRUE(production.first.has_value());
+    ASSERT_FALSE(production.first->empty());
+    EXPECT_EQ(production.second.remaining, 0u);
+    EXPECT_LT(production.second.supplemental_remaining, kErEnvelopeLayoutAllowance);
+
+    // Boundary moved earlier: a smaller primary still clears the pre-enable
+    // parse costs but forces a strictly larger supplemental draw, crossing the
+    // pool boundary at different fee positions. Geometry must not move.
+    for (const std::size_t primary : {700'000u, 900'000u}) {
+        auto moved = layout(primary);
+        ASSERT_TRUE(moved.first.has_value()) << "primary=" << primary;
+        EXPECT_EQ(moved.second.remaining, 0u) << "primary=" << primary;
+        EXPECT_LT(moved.second.supplemental_remaining, kErEnvelopeLayoutAllowance)
+            << "primary=" << primary;
+        EXPECT_EQ(*moved.first, *production.first) << "primary=" << primary;
+    }
+
+    // Boundary never crossed: a primary that alone covers the 1,289,582 total
+    // leaves the supplemental byte-identical to its full post-enable value, yet
+    // emits the same grid — proof the meter only gates, never routes.
+    for (const std::size_t primary : {1'300'000u, 2'000'000u}) {
+        auto solo = layout(primary);
+        ASSERT_TRUE(solo.first.has_value()) << "primary=" << primary;
+        EXPECT_EQ(solo.second.supplemental_remaining, kErEnvelopeLayoutAllowance)
+            << "primary=" << primary;
+        EXPECT_EQ(*solo.first, *production.first) << "primary=" << primary;
+    }
+}
+
+// RFC 0034 Phase 1 (design §3.2.1, finding N-4): the production LayoutRowsCache
+// reproduces the admitted row identically on a miss and a hit. On the miss the
+// two-pool meter lays out: the primary saturates at 1,000,000 and the 289,582
+// overshoot is supplemental, invisible to Work.remaining (so measured layout
+// work means "primary Work consumed", not total). On the hit the cache
+// re-debits that cached primary-only amount against a fresh flag-off meter and
+// finishes the retained rows; the rendered terminal grid is byte-identical.
+TEST(MermaidEnvelopeWork, LayoutCacheMissHitParityForAdmittedRow) {
+    namespace mtest = loom::ui::mermaid::testing;
+    const std::string source = rfc0034_handdrawn_source();
+    ASSERT_FALSE(source.empty());
+    auto fallback = ftxui::text("RFC0034_FALLBACK");
+
+    loom::ui::mermaid::LayoutRowsCache cache(8, 4 * 1024 * 1024);
+
+    mtest::Work miss_work;
+    mtest::FinalEmissionTrace miss_trace;
+    auto miss_element =
+        mtest::CacheBudgetAccess::render(cache, source, false, fallback, miss_work, &miss_trace);
+    ASSERT_TRUE(miss_element.has_value());
+    EXPECT_EQ(cache.misses(), 1u);
+    EXPECT_EQ(cache.hits(), 0u);
+    // Primary-only observation: the primary 1M is fully consumed even though the
+    // supplemental separately funded the overshoot; remaining cannot see it.
+    EXPECT_EQ(miss_work.remaining, 0u);
+
+    mtest::Work hit_work;
+    mtest::FinalEmissionTrace hit_trace;
+    auto hit_element =
+        mtest::CacheBudgetAccess::render(cache, source, false, fallback, hit_work, &hit_trace);
+    ASSERT_TRUE(hit_element.has_value());
+    EXPECT_EQ(cache.misses(), 1u);
+    EXPECT_EQ(cache.hits(), 1u);
+    // The fresh flag-off hit meter re-debits exactly the cached primary-only
+    // measured layout work and likewise lands at a zero primary balance.
+    EXPECT_EQ(hit_work.remaining, 0u);
+
+    // Full-finish rendered grid is byte-identical across the cache boundary.
+    EXPECT_EQ(rfc0034_grid(*hit_element), rfc0034_grid(*miss_element));
+
+    // The retained layout rows also match an independent, uncached layout.
+    auto cached_rows = cache.get_or_layout(source, false);
+    ASSERT_TRUE(cached_rows.has_value());
+    mtest::Work direct_work;
+    auto direct_rows = mtest::class_relations_rows(source, direct_work, false);
+    ASSERT_TRUE(direct_rows.has_value());
+    EXPECT_EQ(*cached_rows, *direct_rows);
 }

@@ -47,8 +47,20 @@ TEST(MermaidER107Runtime, CompleteOriginalsUseSameFactoryOneMillionBudget) {
         EXPECT_TRUE(mt::layout_succeeds(source, false, exact)) << pin.path;
         EXPECT_EQ(exact.remaining, 0u) << pin.path;
         ASSERT_GT(used, 0u);
+        // RFC 0034 Phase 1: every ER107 original carries a reviewed projection
+        // profile, so relations_layout enables the two-pool envelope meter. A
+        // primary one unit short no longer rejects: the bounded supplemental
+        // pool funds exactly that one unit while the primary still drains to
+        // zero. The combined-ceiling fail-closed boundary (one unit beyond the
+        // total pool) is pinned separately in
+        // MermaidEnvelopeWork.CombinedCeilingExactAndOneUnitShortFailClosed;
+        // non-presentation ER keeps the single-pool zero-budget rejection.
         mt::Work short_one{used - 1u};
-        EXPECT_FALSE(mt::layout_succeeds(source, false, short_one)) << pin.path;
+        EXPECT_TRUE(mt::layout_succeeds(source, false, short_one)) << pin.path;
+        EXPECT_EQ(short_one.remaining, 0u) << pin.path;
+        EXPECT_TRUE(short_one.envelope_enabled) << pin.path;
+        EXPECT_EQ(short_one.supplemental_remaining, mt::kErEnvelopeLayoutAllowance - 1u)
+            << pin.path;
     }
     std::cout << "ER107_FACTORY_SUMMARY success=" << successes << " max=" << maximum << '\n';
     EXPECT_EQ(successes, 107u);

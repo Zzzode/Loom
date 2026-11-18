@@ -29736,6 +29736,30 @@ TEST(MermaidErSubgraphSourceProfile, WholeSceneSeamDirectlyMatchesAllSixteenLite
     EXPECT_EQ(closed, 9);
 }
 
+// RFC 0034 Phase 1 (red-first): with the production 1M layout Work the whole
+// handDrawn nested group-edge source must reach a native element once the
+// bounded active-ER envelope allowance exists. Before the capability this
+// returns nullopt (plain-text fallback) because the layout Work is exhausted.
+TEST(MermaidErSubgraphSourceProfile, Rfc0034WholeHandDrawnSourceDrawsAtProductionWorkLimit) {
+    namespace mtest = loom::ui::mermaid::testing;
+    const std::filesystem::path path =
+        std::filesystem::path(LOOM_TESTS_DIR) /
+        "fixtures/mermaid_official/cases/er-diagram/visual-check/"
+        "nested-er-subgraphs-with-direction-override-handdrawn-look.mmd";
+    std::ifstream in(path, std::ios::binary);
+    const std::string full((std::istreambuf_iterator<char>(in)),
+                           std::istreambuf_iterator<char>());
+    ASSERT_FALSE(full.empty());
+
+    // A default Work is exactly the production kWorkLimit = 1,000,000 pool.
+    mtest::Work work;
+    auto fallback = loom::ui::render_markdown(fenced(full, "text"));
+    const auto native =
+        mtest::render_mermaid_with_work(full, std::move(fallback), false, work);
+    EXPECT_TRUE(native.has_value())
+        << "whole handDrawn source must draw natively under the bounded envelope allowance";
+}
+
 }  // namespace
 
 namespace {

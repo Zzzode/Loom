@@ -321,6 +321,16 @@ gtest_discover_tests(test_mermaid_er_group_edge_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+# RFC 0034 phase 2 increment 1: one-row ER198 cohort source identity, fail-closed
+# selector, dual-cohort path disjointness and the unique two-debt prior pin.
+# Test-only; the owned() proof gate lands with the proposal/support header.
+add_executable(test_mermaid_er198_source test_mermaid_er198_source.cpp)
+target_link_libraries(test_mermaid_er198_source
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_er198_source
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
 # RFC 0030 ER107: independent source-derived projection primitives, no admission.
 add_executable(test_mermaid_er107_projection test_mermaid_er107_projection.cpp)
 target_link_libraries(test_mermaid_er107_projection

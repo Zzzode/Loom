@@ -29251,6 +29251,26 @@ end
      0},
 }};
 
+// NIT-2: the report's profile counters are derived from the literal table
+// itself rather than restated as literals, so adding or reclassifying an entry
+// cannot leave the published counts out of sync with the actual artifacts.
+constexpr std::size_t er_subgraph_profile_count(std::string_view profile) {
+    std::size_t count = 0;
+    for (const auto& literal : kErSubgraphLiterals)
+        if (literal.profile == profile) ++count;
+    return count;
+}
+constexpr int kErSubgraphLiteralTotal = static_cast<int>(kErSubgraphLiterals.size());
+constexpr int kErSubgraphPositiveCount =
+    static_cast<int>(er_subgraph_profile_count("mandatory_complete_positive"));
+constexpr int kErSubgraphMalformedCount =
+    static_cast<int>(er_subgraph_profile_count("malformed_source"));
+constexpr int kErSubgraphObligationCount =
+    static_cast<int>(er_subgraph_profile_count("valid_unimplemented_source_obligation"));
+static_assert(kErSubgraphPositiveCount + kErSubgraphMalformedCount +
+                      kErSubgraphObligationCount == kErSubgraphLiteralTotal,
+              "the three profiles must partition every subgraph literal");
+
 TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecovery) {
     Work setup;
     setup.spend(131072u + 8u * sizeof(json::JsonMutDoc) + 32u * sizeof(std::string) + 8192u);
@@ -29536,10 +29556,10 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
         class35_errors(root, item, errors, observations);
         records.append(item);
     }
-    root.set("source_count", 16);
-    root.set("mandatory_positive_sources", 7);
-    root.set("malformed_source_controls", 4);
-    root.set("valid_unimplemented_obligations", 5);
+    root.set("source_count", kErSubgraphLiteralTotal);
+    root.set("mandatory_positive_sources", kErSubgraphPositiveCount);
+    root.set("malformed_source_controls", kErSubgraphMalformedCount);
+    root.set("valid_unimplemented_obligations", kErSubgraphObligationCount);
     root.set("five_captures_complete", observed);
     root.set("all_five_frames_published", published);
     root.set("complete_source_bindings", bound);
@@ -29567,12 +29587,12 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
     root.add("cases", records);
     report.set_root(root);
     state85_write("mermaid-er-subgraph-sixteen-source-controls.json", report);
-    EXPECT_EQ(observed, 16);
-    EXPECT_EQ(published, 16);
-    EXPECT_EQ(bound, 16);
-    EXPECT_EQ(decoded, 7);
-    EXPECT_EQ(strong, 7);
-    EXPECT_EQ(malformed_closed, 4);
+    EXPECT_EQ(observed, kErSubgraphLiteralTotal);
+    EXPECT_EQ(published, kErSubgraphLiteralTotal);
+    EXPECT_EQ(bound, kErSubgraphLiteralTotal);
+    EXPECT_EQ(decoded, kErSubgraphPositiveCount);
+    EXPECT_EQ(strong, kErSubgraphPositiveCount);
+    EXPECT_EQ(malformed_closed, kErSubgraphMalformedCount);
     // RFC0033-T1 complete: the two admitted-grammar literals
     // (Group_business_endpoint — a subgraph id as an edge endpoint — and
     // local_direction — an in-group direction override) are reclassified to
@@ -29582,7 +29602,7 @@ TEST(MermaidErSubgraphSourceProfile, CompleteOwnershipTitlesTypedMembersAndRecov
     // the closed-source geometry counter returns to zero. The other five
     // closed-source literals use still-unimplemented surfaces (classDef,
     // styles, accessibility, entity/group kind collision) and stay terminal.
-    EXPECT_EQ(unsupported_observed, 5);
+    EXPECT_EQ(unsupported_observed, kErSubgraphObligationCount);
     EXPECT_EQ(fallbacks, 0);
     EXPECT_EQ(resources, 0);
     EXPECT_EQ(protocol, 0);

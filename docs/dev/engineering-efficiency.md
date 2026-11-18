@@ -1467,3 +1467,28 @@ Attach a short efficiency section to each closure report, answering:
   SUCCEED() still passes.** No OfficialMatrix full run was needed (per the
   milestone's targeted-only boundary); the D298 full-matrix evidence already
   covers the end-to-end disposition.
+- **2026-11-18, RFC 0034 Phase 1 bounded layout-Work allowance (D-363, parked
+  interim-red, uncommitted).** Layered gates held cost down: meter/sweep/N-1/
+  N-4 iteration used single-target debug builds and the ~0.7 s
+  `MermaidEnvelopeWork` suite; the dual-preset byte gate needed only four
+  OfficialMatrix runs total (one clean + one Phase-1 per preset), captured via
+  a stash cycle rather than repeated full runs, and the release binary
+  (~27 s) carried the census work. Dominant wall-clock was the one debug
+  OfficialMatrix (~240 s) and the 661 s relations_semantics serial binary.
+  **Rework loop worth recording: the §3.2 sweep was first written as a
+  single-pool binary-search of the minimum budget, but `relations_layout`
+  auto-enables the supplemental pool, so every measured `Work` became two-pool
+  and the unique-1M-crosser signal read 0 — a measurement that could not
+  observe its own target. The fix was to stop suppressing the pool and instead
+  observe pool accounting directly (a non-full `supplemental_remaining` after a
+  successful draw is an exact primary-exhaustion witness), which needed zero
+  test-only production switches. Rule: when the code under test owns the meter
+  mode, observe the resulting ledger rather than trying to force the legacy
+  mode. Second finding: the design's interim-red list named only the matrix
+  gap, but the full-suite run surfaced two more frozen single-pool
+  one-short-layout tests (er107_runtime, er107_source107) across all 107
+  pins; running the whole 93-binary mermaid suite once (parallel `-P4`,
+  ~10 min) to enumerate the complete red set was cheaper and safer than
+  assuming the design's list was exhaustive. No false green/flake; the only
+  reds are deterministic meter-state/ledger gates traced to one mechanism.
+  `-Werror` clean both presets; no BMI/module-edge change (graph_check PASS).

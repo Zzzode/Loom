@@ -1,9 +1,9 @@
 ---
 rfc: 34
 title: Whole-source admission of the handDrawn nested group-edge ER original (ER206 ordinal 198)
-status: provisional
+status: accepted
 owners: "@Zzzode"
-reviewers: []
+reviewers: ["agent:a360f1f39bbddbbf0 independent design review r1 — REQUEST-CHANGES (1 MAJOR + 3 MINOR + 3 NIT, all prose-only, closed)", "agent:a19d5b125b909dd84 independent design review r2 — APPROVE-to-accept (all seven r1 findings verified CLOSED, two cosmetic NITs folded in)"]
 created: 2026-11-18
 last-reviewed: 2026-11-18
 supersedes: ""
@@ -106,9 +106,18 @@ an assumption (see Open questions).
   that remains a separately-scheduled RFC.
 - Reproducing handDrawn roughness/relief, neo styling, or any foreign-engine
   visual effect; native orthogonal output is the only promised art.
-- Admitting the other ten handDrawn ER fallbacks whose reasons are distinct
-  (unicode text, classDef/style statements); those have their own unadmitted
-  constructs and are out of scope.
+- Admitting the other ten handDrawn ER fallbacks; measured against the frozen
+  prior they form three distinct construct classes, each with its own
+  unadmitted surface, and all stay out of scope: (i) rich header/attribute
+  exact-projection-contract rows, (ii) active entity presentation via
+  classDef/style application (`active_entity_presentation` /
+  `active_class_definition_or_application` debts), and (iii) the rich
+  relation-label/line-break exact-projection row (ordinal 200, which carries
+  only that debt). The partition is by dominant construct: ordinals 67 and 70
+  straddle (i) and (iii) but are grouped under (i) because they also carry the
+  rich header/attribute debts; every one of the ten rows is covered by at
+  least one class. This list is the observed partition of the current ten and
+  is not a claim that no other construct exists.
 - Changing the ER206 prior, the ER107 `array<Pin,107>`, its three proposals, or
   the 48-row mandatory gap roster.
 - Any change to the formal `original_drawing_coverage.drawn_at_240` semantics;
@@ -123,6 +132,14 @@ authority was missing), row 198 cannot use an owned proof alone: the in-function
 geometry re-validation would fail because the whole source currently emits no
 native art. The RFC therefore has a strict ordering — the render capability
 must exist and be measured before any proof is curated.
+
+Dependency direction: every production change stays inside the existing
+`loom.ui.visual.mermaid` area (the Work/envelope fee and meter logic in
+`mermaid_er_impl.cpp`, `mermaid_relations_core_impl.cpp`, `mermaid_impl.cpp`
+and `mermaid.cppm`); no new module, no moved module and no cross-area edge is
+introduced, so the module graph DAG and the named-directory SCC set are
+untouched by construction. All authority work is test-only. A Tarjan check at
+the implementable gate must confirm no upward edge was added.
 
 ```
 production render/Work capability (src/)  ──▶  whole source draws natively
@@ -159,7 +176,18 @@ historical FS-1b label is retained only as prior context, not assumed correct.
   overhead that genuinely cannot be reused, grant the active-projection
   envelope path a bounded, separately-metered allowance sized to this
   fixture class, with an explicit cap and fail-closed behaviour beyond it.
-  This is preferred over raising the global 1M limit (see Alternatives).
+  This is not a new mechanism: the codebase already separates Work by phase —
+  the 1M layout meter `kWorkLimit = 1'000'000` (`mermaid.cppm:94`) is distinct
+  from the active-ER finish meter `kErElementWorkLimit = 102'564'352`
+  (`mermaid.cppm:99`), Block emission owns a dedicated `payload_work` under
+  `kBlockPayloadWorkLimit`, and `FinalEmissionTrace` (`mermaid.cppm:180-182`)
+  is the existing injection point for a caller-supplied finish meter. Route B
+  reuses that proven fail-closed meter shape rather than inventing one. This
+  is preferred over raising the global 1M limit (see Alternatives): the matrix
+  byte-gate embeds per-row `initial_budget` / `remaining` /
+  `phase_remaining`, so a global change would desynchronise frozen output for
+  every row, whereas a new isolated meter leaves the existing balances
+  untouched.
 
 Both routes are production changes and therefore require the implementable
 gate and PRR; neither may silently increase cost for the 2,737 other rows.
@@ -179,6 +207,17 @@ cohorts, with a compile-time disjointness assertion. The ER206 prior row 198
 is never edited; a legacy view keeps it formally pending, mirroring
 `dd3e1b47`.
 
+The one-row verifier must carry the same mechanical, non-narrative cohort
+discipline as the RFC 0033 four-part assertion, all bound by path plus sha:
+(i) ordinal 198 is the UNIQUE prior row carrying the exact two-debt set
+`{active_config, raw_entity_group_kind_collision…}` (measured: exactly one of
+206), pinned by its fixture path and source sha c4891928…; (ii) a compile-time
+disjointness `static_assert` against both the 107 ER107 pins and the six RFC
+0033 pins (the existing pattern is `mermaid_er_groupedge_source.hpp:154-161`);
+(iii) the verifier asserts the old BLOCKED-set entry is retired by this cohort
+rather than merely orphaned; (iv) the new proposal/contract use a new id so
+the six-case `PROPOSAL_SHA` and empty-intersection assertions stay valid.
+
 ### Protected-area analysis
 
 - **ER206 prior (`...config62.v1.json`, sha `76d54ecb…`, protected).** Row 198
@@ -197,6 +236,26 @@ is never edited; a legacy view keeps it formally pending, mirroring
   an expected, separately-reviewed registry update performed in the same
   closing change, verified by `fallback_attribution.py --matrix`; it must never
   be hand-edited to force a green gate.
+
+### RFC 0033 artifacts that already pin row 198's exclusion (change-surface decision)
+
+Row 198 is sha-pinned as *excluded* by several RFC 0033 assets using the exact
+`er-envelope-double-parse-work-ceiling` blocker this RFC retires. None is one
+of the ten byte-immutable protected files, but each encodes reviewed semantics
+that would otherwise drift silently; the closing change must handle all of them.
+
+| Artifact | How it pins 198 | Decision in this RFC |
+|---|---|---|
+| `tools/mermaid/verify_er_groupedge_admission.py` | `BLOCKED` dict (`blocker_kind` work-ceiling, sha c4891928…), `LOOSE_SUPERSET` ending in 198, four-part assertion (iii); ctest-wired; also `PROPOSAL_SHA` pins the six-case artifact | Retain the prior/debt assertions (the prior is unchanged and 198 stays absent from the six-case proposal). In the closing change, update the `BLOCKED`/blocker comment to cross-reference RFC 0034 and record that the exclusion is retired by the new cohort, and extend the verifier to assert the BLOCKED-set retirement rather than leave a stale "permanent ceiling" claim. |
+| `tests/ui/test_mermaid_er_groupedge_proposal.cpp` | emits `excluded_work_ceiling` with the "exhausts the ER scene Work budget before layout" reason and the handDrawn sha | Update the reason text/cross-reference in the same closing change so it no longer asserts a current exhaustion; the emitted six-case proposal must otherwise stay byte-identical (see new-file rule below). |
+| `tools/mermaid/er-group-edge-cohort.json` | non-authoritative D295 ledger: `prediction: "predicted-blocked"`, expected states source/source/source, naming the source site | Regenerate or mark the row superseded in the closing change; this ledger is not ctest-wired and is explicitly non-authoritative. |
+| `docs/dev/mermaid-failure-inventory.json`, `docs/dev/mermaid-unsuccessful-cases.md` | narrative/ledger documentation of the fallback | Update or add a supersession note at closure so future audits do not read an obsolete Work-ceiling reason. |
+| New one-row cohort (to be created) | — | MUST be a new proposal file with a new contract id, never an edit to the six-case `er_groupedge_complete_proposal.v1.json`; amending that file would trip the verifier's four-part empty-intersection assertion and its `PROPOSAL_SHA` pin. |
+
+The hard gates stay green throughout because they bind immutable prior facts
+and the unchanged six-case proposal; what is actively maintained here is the
+reviewed *exclusion narrative*, which is the string-coupling drift class called
+out in `AGENTS.md`.
 - **Production Work/envelope code (`src/ui/visual/`, not protected but high
   blast radius).** The only non-test surface touched. Gated on the dual-preset
   full OfficialMatrix remaining byte-identical for all rows except 198.
@@ -204,13 +263,24 @@ is never edited; a legacy view keeps it formally pending, mirroring
 ### String/shape couplings that can break silently
 
 - The `look` leaf values are string-matched (`"handDrawn"`, `"neo"`) in
-  `mermaid_er_impl.cpp`; any route that touches config handling must keep those
-  spellings and the bit-mask (`512` for look) intact.
+  `mermaid_er_impl.cpp:42-45`; any route that touches config handling must keep
+  those spellings and the bit-mask (`512` for look at `:43,:265`) intact. The
+  same values are consumed outside the config parser at
+  `mermaid_relations_core_impl.cpp:5566-5569` (stroke-width selection) and
+  `:5904` (the fidelity notice), so a spelling change is a multi-site coupling.
+- Frontmatter-format asymmetry: the `%%{init:}` JSON envelope calls
+  `er_json_config` with `projection` defaulting false
+  (`mermaid_er_impl.cpp:174` vs the YAML path's `true` at `:260`), so the
+  bit-512 look leaf is reachable ONLY through YAML frontmatter. Any Route A/B
+  change must preserve this asymmetry rather than quietly enabling look leaves
+  on the init-directive path.
 - The matrix provenance and count functions recognize contracts by string id;
   a new contract id must be added to the count/provenance/coverage-skip paths
-  in lockstep (the omission that required the `dd3e1b47` follow-up).
+  in lockstep (the omission that required the `dd3e1b47` follow-up; lockstep
+  sites at `test_mermaid_official.cpp:7983-7998, 8452-8464, 10372/10434`).
 - The fixture is identified by path plus sha; the cohort assertion must bind
-  both, never the path alone.
+  both, never the path alone, and re-bind the live four-tuple at
+  `test_mermaid_official.cpp:19271-19279`.
 
 ## Phases and graduation criteria
 
@@ -223,6 +293,19 @@ Required before this leaves provisional; each phase is independently revertible.
 | 2 | One-row owned proof | new proposal + support header + verifier, test-only | proposed | Dual-track `owned()` passes with live witness checks; tampered-byte and not-ready negatives fail closed; disjointness static_assert holds |
 | 3 | Matrix wiring | additive parameter/branch + legacy view, test-only | proposed | Row 198 drawn wide/restored with measured narrow disposition; zero errors; routing exclusive with both existing cohorts |
 | 4 | Registry reconciliation and closing matrix | fallback registry 907 -> 906 update | proposed | Single full OfficialMatrix: drawn 1238 -> 1239, fallback 907 -> 906, error 0, gaps 48, formal drawn_at_240 1053; `--matrix` drift gate green; protected ten-file loop unchanged |
+
+**Expected interim red state (phases 1-3).** Once phase 1 makes the whole
+source emit native art but no proof is wired yet, `run_official_er206_case`
+can no longer take the whole-null downgrade; the row stays `error` and books
+`er206_whole_null_unmet`, which also fails the hard `gap_diff.ok()` /
+`EXPECT_EQ(observed_gap_rows.size(), 48)` gate
+(`test_mermaid_official.cpp:11474-11477`). Therefore the full OfficialMatrix is
+expected to be RED by one row from the end of phase 1 until the phase-3 proof
+is attached. During that window only targeted tests are green; exactly one
+full matrix is run, at the phase-4 closure, mirroring the discipline in
+`0033-slice2-implementation.md` §4.1. A red interim matrix must never be
+misread as a regression, and the tree must never be left at a red gate across
+a commit boundary without an explicit documented reason.
 
 ## Production Readiness Review
 
@@ -316,9 +399,14 @@ protocol changes.
 | Route A (parse reuse) or Route B (bounded envelope allowance) — which is the smallest change that holds byte-identity? | @Zzzode | Phase 0 evidence + design review |
 | What is row 198's correct narrow_40 disposition (exact-ordinary vs full-geometry source_fallback)? | @Zzzode | Measured in phase 3 from live frames, never assumed |
 | Does drawing row 198 require touching any of the ten RFC 0033 protected files? (Expected answer: no.) | @Zzzode | Phase 2-3 file audit |
+| Are all five RFC 0033 exclusion-pinning artifacts (verifier, six-case proposal test, D295 ledger, two docs) reconciled in the closing change without editing the six-case proposal bytes or any protected file? | @Zzzode | Phase 2-4 change-surface audit (see "RFC 0033 artifacts" table) |
 
 ## Implementation History
 
 | Date | Phase | Event | Commit / PR | Evidence (metrics, test totals) |
 |---|---|---|---|---|
-| 2026-11-18 | — | RFC opened (provisional); feasibility probe measured parse-success vs render-fallback, then removed | — | see Motivation/Evidence table |
+| 2026-11-18 | — | RFC opened (provisional); feasibility probe measured parse-success vs render-fallback, then removed | d214e039 | see Motivation/Evidence table |
+| 2026-11-18 | — | Independent design review r1 (agent a360f1f39bbddbbf0): REQUEST-CHANGES, 1 MAJOR (RFC 0033 exclusion-pin change-surface omitted) + 3 MINOR + 3 NIT, all prose-only; all six measured claims independently verified | — | reviewer ledger; no code change |
+| 2026-11-18 | — | r1 findings addressed in prose: exclusion-pin decision table, interim red-matrix statement, three-class Non-Goal, two-meter Route B precedent, extra look/init couplings, dependency-direction statement, four-part one-row verifier discipline | (uncommitted revision) | r1 finding list |
+| 2026-11-18 | — | Independent design review r2 (agent a19d5b125b909dd84): APPROVE-to-accept; all seven r1 findings verified CLOSED against code/data, two cosmetic NITs (citation line, 67/70 partition wording) folded in; all checkable measured claims exact, RFC lint-clean | (this revision) | r2 verdict; not implementable until phase-0 meter evidence + PRR |
+| 2026-11-18 | — | Stage transition provisional -> accepted on the r2 design-review gate; held below implementable pending phase 0 and the production-readiness review | (this revision) | rfc skill §1/§3.1 |

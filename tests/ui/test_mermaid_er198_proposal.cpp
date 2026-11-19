@@ -3,12 +3,13 @@
 // embedded digest from the immutable fixture bytes.
 //
 // Two modes, one binary (mirrors the RFC 0033 group-edge generator):
-//   * default (CTest): hermetic in-memory generation. Every D248-D279 test-only
-//     ER seam is driven over the single ordinal-198 fixture and every embedded
-//     sha256 is re-derived from the reparsed proposal tree; no source-tree
-//     writes. The checked-in proposal must exist and be byte-identical to the
-//     freshly generated document (a hard regeneration tripwire, red until the
-//     artifact is recorded).
+//   * default (CTest): hermetic in-memory generation. Every D248-D275
+//     source-leg ER seam and the D248 whole-scene production leg are driven
+//     over the single ordinal-198 fixture and every embedded sha256 is
+//     re-derived from the reparsed proposal tree; no source-tree writes. The
+//     checked-in proposal must exist and be byte-identical to the freshly
+//     generated document (a hard regeneration tripwire, red until the artifact
+//     is recorded).
 //   * LOOM_RFC0034_RECORD_OUTPUT=<path>: additionally writes the pretty,
 //     byte-stable proposal JSON there. The checked-in artifact is only ever
 //     produced by an explicit record run; CTest itself never writes it.
@@ -16,9 +17,9 @@
 // The independent source leg never calls a production parser: source_model,
 // source_witnesses and source_binding come exclusively from the parallel
 // er_*_for_testing seams. whole_scene_model is the production parse leg that
-// the field-by-field cross-check validates. A NEW contract/schema id is used so
-// the RFC 0033 six-case proposal, its PROPOSAL_SHA and its empty-intersection
-// assertions are untouched.
+// the later field-by-field cross-check validates. A NEW contract/schema id is
+// used so the RFC 0033 six-case proposal, its PROPOSAL_SHA and its
+// empty-intersection assertions are untouched.
 #include <gtest/gtest.h>
 
 #include <cstdlib>
@@ -481,6 +482,14 @@ TEST(MermaidEr198Proposal, RecordsOneRowProposalAndReDerivesEveryDigest) {
               stored_hashes.get_string("source_bindings_sha256"));
     EXPECT_EQ(sha_of(pre_reparse.root().get("manifest_records")),
               stored_hashes.get_string("manifest_records_sha256"));
+    // Re-derive the two construction-only byte digests as well, so no embedded
+    // hash is trusted by construction alone (the independent review minor).
+    EXPECT_EQ(sha_bytes(read_file(kManifestPath)),
+              reproot.get("upstream").get_string("manifest_sha256"));
+    EXPECT_EQ(reproot.get("cases").at(0).get_string("source_sha256"),
+              reproot.get("selection")
+                  .get("retired_work_ceiling_exclusion")
+                  .get_string("source_sha256"));
     EXPECT_EQ(reproot.get_string("contract"), kContract);
     EXPECT_EQ(reproot.get_string("schema"), kSchema);
 

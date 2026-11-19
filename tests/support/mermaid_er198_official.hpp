@@ -222,8 +222,13 @@ inline rel::Grid diagram_subgrid(const rel::Grid& frame, std::string_view raw,
     need(notice_text.has_value(), "source: ER198 projection notice seam");
     const auto parsed = json::parse(*notice_text);
     need(parsed.has_value(), "source: ER198 notice seam JSON");
-    const auto notice_rows = parsed->root().get("notice_rows");
+    const auto root = parsed->root();
+    const auto notice_rows = root.get("notice_rows");
     boundary.notice_count = static_cast<std::size_t>(notice_rows.size());
+    // The projection flag and the populated notice block must agree, so the
+    // seam's has_projection field is actually consumed rather than decorative.
+    need(root.get("has_projection").as_bool() == (boundary.notice_count > 0),
+         "source: ER198 projection flag/notice block consistency");
     if (boundary.notice_count == 0) {
         boundary.footer_start = frame.height;
         return frame;
@@ -239,6 +244,8 @@ inline rel::Grid diagram_subgrid(const rel::Grid& frame, std::string_view raw,
         }
     need(footer_start >= 0, "source: ER198 rendered footer start not found");
     // Bind every footer row to the production notice set, in order.
+    need(footer_start + static_cast<int>(boundary.notice_count) <= frame.height,
+         "source: ER198 footer extent within frame bounds");
     for (std::size_t i = 0; i < boundary.notice_count; ++i)
         need(row_content(frame, footer_start + static_cast<int>(i)) ==
                  notice_rows.at(i).as_str(),
@@ -267,6 +274,7 @@ inline Result run(const Documents& documents, std::size_t index, std::ostream& d
         geometry_work{rel::kEr206SceneLimit}, mutation_work{rel::kEr206SceneLimit};
     std::string error, phase = "capture";
     std::vector<std::string> executed, skipped;
+    FooterBoundary boundary{};
     try {
         const auto& pin = source::kPins[index];
         const auto raw =
@@ -319,7 +327,6 @@ inline Result run(const Documents& documents, std::size_t index, std::ostream& d
         const bool c = rel::following_row(f[2], geometry_work, kSentinel).has_value();
         // Strict full-claim geometry runs over the diagram-only subgrid; the
         // projection notice footer is separately bound to the production seam.
-        FooterBoundary boundary{};
         const auto wide_sub = diagram_subgrid(f[0], raw, boundary);
         const auto geo_errors =
             rel::validate_impl(wide_sub, model, geometry_work, false, nullptr, false, nullptr,
@@ -368,9 +375,6 @@ inline Result run(const Documents& documents, std::size_t index, std::ostream& d
         need(has_nested == static_cast<bool>(changes.executed.count("group_parent")),
              "protocol: ER198 group_parent control matches nested group tree");
         need(result.semantic > 0, "protocol: ER198 meaningful semantic negatives");
-        record.set("projection_notice_count",
-                   static_cast<int64_t>(boundary.notice_count));
-        record.set("diagram_footer_start_row", static_cast<int64_t>(boundary.footer_start));
         phase = "complete";
         result.ready = true;
     } catch (const std::bad_alloc&) {
@@ -400,6 +404,10 @@ inline Result run(const Documents& documents, std::size_t index, std::ostream& d
         value.set("physical_mutations_rejected", static_cast<int64_t>(result.physical));
         value.set("verification_resource_exhausted", result.resource);
         value.set("phase", phase);
+        value.set("projection_notice_count",
+                  static_cast<int64_t>(boundary.notice_count));
+        value.set("diagram_footer_start_row",
+                  static_cast<int64_t>(boundary.footer_start));
         auto done = value.make_arr();
         for (const auto& id : executed) done.append(value.make_str(id));
         value.add("mutations_executed", done);
@@ -441,6 +449,7 @@ inline bool owned(json::JsonVal proof) {
         "narrow_geometry_good", "uncached_cached_five_planes_equal", "cache_hit_observed",
         "width", "height", "body_width", "body_height", "semantic_mutations_rejected",
         "physical_mutations_rejected", "verification_resource_exhausted", "phase",
+        "projection_notice_count", "diagram_footer_start_row",
         "mutations_executed", "mutations_inapplicable", "error"};
     proof.iter_obj([&](json::JsonVal key, json::JsonVal) {
         need(parsed->root().has(key.as_str()) || runtime.contains(std::string(key.as_str())),
@@ -458,6 +467,11 @@ inline bool owned(json::JsonVal proof) {
     }
     need(!proof.has("error") && !yes("verification_resource_exhausted"),
          "source: ER198 good proof has no error/resource");
+    // A ready projected ER198 proof must carry the bound production footer; a
+    // silently vanished notice block must not pass as owned.
+    need(proof.get("projection_notice_count").is_int() &&
+             proof.get_int("projection_notice_count") >= 1,
+         "source: ER198 ready proof carries the projection footer");
     need(proof.get("captures").is_int() && proof.get_int("captures") == 15,
          "source: ER198 fifteen actual public frames");
     for (const auto key : {"captures_before_binding", "bound_after_captures",
@@ -500,7 +514,7 @@ inline bool owned(json::JsonVal proof) {
              "source: ER198 unique skipped control in closed vocabulary");
     }
     need(ids.contains("relation_label") && ids.contains("start_cardinality") &&
-             ids.contains("end_cardinality"),
+             ids.contains("end_cardinality") && ids.contains("group_caption"),
          "source: ER198 cohort-defining controls present");
     return true;
 }

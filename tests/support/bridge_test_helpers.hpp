@@ -584,7 +584,14 @@ private:
     void handle_client(int fd) {
         auto request = read_request(fd);
         if (!request) return;
-        {
+        // Record only Bridge API requests (the /v1 and /bridge namespaces). A
+        // host port scanner can probe the ephemeral localhost port with a root
+        // "GET /" between SUT calls (observed from the persona devbox tunnel
+        // agent); such a probe is not a Bridge API request and must not inflate
+        // the exact-count ledgers the tests assert. It still receives the 404
+        // response below and is merely excluded from this API ledger.
+        if (request->path.rfind("/v1/", 0) == 0 ||
+            request->path.rfind("/bridge/", 0) == 0) {
             std::lock_guard lock(mutex_);
             requests_.push_back(*request);
         }

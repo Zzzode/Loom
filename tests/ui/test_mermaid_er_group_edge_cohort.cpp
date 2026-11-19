@@ -3,13 +3,16 @@
 // This is the shelved D295 char-difference cohort gate, relabeled and retained
 // purely as a renderer regression smoke. It compares a char-only CellCapture
 // surface against a text-control fence at the same width and pins the seven-row
-// D295 selection (six draw candidates plus the sha-bound handDrawn Work-ceiling
-// row). It is explicitly NOT a matrix authority:
+// D295 selection: seven draw candidates, one of which (the sha-bound handDrawn
+// row) carries only a retired-blocker audit record now that RFC 0034 funds its
+// layout. It is explicitly NOT a matrix authority:
 //   * it is never referenced by run_official_er206_case or any supplemental
 //     proof path, and
-//   * the sole matrix authority for these six paths is the independently
-//     reviewed owned-proof cohort in mermaid_er_groupedge_official.hpp plus
-//     tools/mermaid/verify_er_groupedge_admission.py.
+//   * the matrix authority is the independently reviewed owned-proof cohorts:
+//     mermaid_er_groupedge_official.hpp plus
+//     tools/mermaid/verify_er_groupedge_admission.py for six paths, and the
+//     RFC 0034 one-row ER198 owned proof (mermaid_er198_official.hpp) for the
+//     handDrawn path.
 // NO-GO §3 already classifies this char gate as unfit for drawn authority. Do
 // not wire it into admission; a renderer change that moves a char cell is a
 // smoke signal, never proof that unreviewed render output earns a draw.
@@ -102,24 +105,39 @@ TEST(MermaidErGroupEdgeCohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_er_group_edge_cohort/v1");
     const auto counts = root.get("counts");
     EXPECT_EQ(counts.get_int("total"), 7);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 6);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 1);
+    // RFC 0034 retired the single handDrawn Work-ceiling exclusion: all seven
+    // whole sources now draw; the historical ceiling survives only as a
+    // retired-blocker audit record (one row), never as a live prediction.
+    EXPECT_EQ(counts.get_int("predicted_draw"), 7);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 0);
+    EXPECT_EQ(counts.get_int("retired_work_ceiling"), 1);
     // The D295 char cohort never earned drawn authority (the D298 NO-GO): its
     // review verdict is intentionally "pending". This smoke only pins the
     // selection/count facts and the blocker vocabulary; matrix authority lives
-    // in the separate RFC 0033 owned-proof cohort, never in this ledger.
+    // in the separate RFC 0033/0034 owned-proof cohorts, never in this ledger.
     EXPECT_EQ(root.get("review").get_string("verdict"), "pending");
 
     std::set<std::string> vocabulary;
     root.get("blocker_vocabulary").iter(
         [&](JsonVal value) { vocabulary.emplace(value.as_str()); });
     EXPECT_EQ(vocabulary.size(), 1u);
+    std::set<std::string> retired_vocabulary;
+    root.get("retired_blocker_vocabulary").iter(
+        [&](JsonVal value) { retired_vocabulary.emplace(value.as_str()); });
+    int retired_rows = 0;
     root.get("rows").iter([&](const JsonVal row) {
-        if (row.get_string("prediction") == "predicted-blocked")
-            EXPECT_TRUE(vocabulary.contains(row.get("blocker").get_string("kind")));
-        else
-            EXPECT_TRUE(row.get("blocker").is_null());
+        // No row is predicted-blocked any more, so every live blocker is null.
+        EXPECT_NE(row.get_string("prediction"), "predicted-blocked");
+        EXPECT_TRUE(row.get("blocker").is_null());
+        if (row.has("retired_blocker") && !row.get("retired_blocker").is_null()) {
+            ++retired_rows;
+            const auto retired = row.get("retired_blocker");
+            EXPECT_TRUE(vocabulary.contains(retired.get_string("kind")));
+            EXPECT_TRUE(retired_vocabulary.contains(retired.get_string("kind")));
+            EXPECT_EQ(retired.get_string("retired_by"), "RFC 0034");
+        }
     });
+    EXPECT_EQ(retired_rows, 1);
 }
 
 TEST(MermaidErGroupEdgeCohort, RowsPinFixtureBytesAndPriorStatus) {
@@ -175,8 +193,10 @@ TEST(MermaidErGroupEdgeCohort, WholeAndBodyTracksMatchLedgerAtEveryWidth) {
             EXPECT_TRUE(whole_live[0]) << "registered draw kept whole source at 240: " << rel;
         }
     });
-    EXPECT_EQ(drawn, 6);
-    EXPECT_EQ(blocked, 1);
+    // RFC 0034: the former handDrawn Work-ceiling row now draws, so all seven
+    // are registered draws and none remains predicted-blocked.
+    EXPECT_EQ(drawn, 7);
+    EXPECT_EQ(blocked, 0);
 }
 
 // Fail-closed guards: admitting valid group endpoints and in-group direction

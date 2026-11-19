@@ -34,19 +34,26 @@ Selection (mechanical, byte-level, never derived from renderer output):
   resolves to a declared subgraph id. The selector is renderer-free and
   reproduces exactly seven originals.
 
-Two outcomes, both renderer-free:
-  predicted-draw      - six rows whose whole original completes through the
-                        bounded ER renderer at 240 columns once group endpoints
-                        are admitted.
-  predicted-blocked   - one SHA-pinned row (the handDrawn nested-direction
-                        variant) whose BODY draws, but whose whole original
-                        stays source on the pre-existing envelope double-parse
-                        Work ceiling (the same FS-1b mechanism that already
-                        gates complex frontmatter rows): its envelope adds a
-                        ``look`` event on top of the most complex body in the
-                        group, so the second whole-source parse exhausts the
-                        scene budget before layout. It is path/SHA bound
-                        because "whole source fits the scene budget" is not
+One live outcome, renderer-free:
+  predicted-draw      - all seven rows whose whole original completes through
+                        the bounded ER renderer at 240 columns once group
+                        endpoints are admitted. RFC 0034 retired the former
+                        handDrawn Work-ceiling exclusion (see below), so no row
+                        is predicted-blocked any more and every live ``blocker``
+                        is null.
+
+Historical retired blocker (audit only, never a live exclusion):
+  retired-blocker      - one SHA-pinned row (the handDrawn nested-direction
+                        variant) used to stay whole-source on the envelope
+                        double-parse Work ceiling: its envelope adds a ``look``
+                        event on top of the most complex body in the group, so
+                        the second whole-source parse exhausted the scene
+                        budget before layout. RFC 0034's bounded two-pool
+                        layout Work allowance (kErEnvelopeLayoutAllowance) now
+                        funds that over-budget active-ER layout, so the row
+                        draws; the ceiling survives only as the row's
+                        ``retired_blocker`` record (retired_by "RFC 0034"). It
+                        stays path/SHA bound because the budget fit is not
                         textually decidable; any addition or source change
                         fails this generator and needs a new independent review.
 
@@ -75,8 +82,13 @@ ROOT_REL = "er-diagram"
 # Hard drift guards. A corpus change that alters the selected population or a
 # pinned source makes the generator abort instead of silently re-bucketing.
 EXPECTED_TOTAL = 7
-EXPECTED_BLOCKED = 1
-EXPECTED_DRAW = 6
+# RFC 0034 retired the single handDrawn Work-ceiling exclusion: the bounded
+# two-pool layout Work allowance lets that whole source draw, so no row is
+# predicted-blocked any more. The historical ceiling is retained as an explicit
+# retired-blocker audit record (one row), never as a live exclusion.
+EXPECTED_BLOCKED = 0
+EXPECTED_DRAW = 7
+EXPECTED_RETIRED = 1
 
 # A relationship cardinality marker, covering solid (--) and dotted (..) ER
 # spellings. Only used to tell relationship lines from other statements.
@@ -146,18 +158,22 @@ def collect(repo_root: pathlib.Path):
     return selected
 
 
-# SHA-bound reviewed whole-source ceiling. The body is admitted and draws, but
-# the whole original (frontmatter ``look: handDrawn`` plus the most complex
-# nested body in the group) exhausts the scene Work budget on the second
-# envelope parse, so it must keep whole-source fallback. Pinned like the E2c
-# capability set because budget fit is not textually decidable.
-BLOCKED_CAPABILITY_SET = {
+# Historical SHA-bound whole-source ceiling, RETIRED by RFC 0034. The body
+# always drew; the whole original (frontmatter ``look: handDrawn`` plus the
+# most complex nested body) used to exhaust the scene Work budget on the second
+# envelope parse. RFC 0034's bounded two-pool layout Work allowance
+# (kErEnvelopeLayoutAllowance) funds the over-budget layout, so the whole source
+# now draws. The ceiling fact is retained here only as a retired-blocker audit
+# record on the row; it is no longer a live exclusion and never re-buckets the
+# prediction (the row is predicted-draw).
+RETIRED_BLOCKER_CAPABILITY_SET = {
     "er-diagram/visual-check/nested-er-subgraphs-with-direction-override-handdrawn-look.mmd": (
         "er-envelope-double-parse-work-ceiling",
         "body completes after the D293 group-endpoint admission, but the whole original "
         "adds a look:handDrawn envelope event on top of the deepest nested body, and the "
         "second whole-source parse exhausts the ER scene Work budget before layout "
-        "(pre-existing FS-1b double-parse ceiling); whole source stays fail-closed.",
+        "(pre-existing FS-1b double-parse ceiling). Retired by RFC 0034: the bounded "
+        "two-pool layout Work allowance now funds this over-budget active-ER layout.",
     ),
 }
 
@@ -181,28 +197,32 @@ def build(repo_root: pathlib.Path):
             f"ER group-edge selected population drifted: expected {EXPECTED_TOTAL}, "
             f"got {len(selected)}; re-scope the ledger and obtain a new independent review")
 
-    blocked_paths = set(BLOCKED_CAPABILITY_SET)
-    found_blocked = {rel for rel in selected if rel in blocked_paths}
-    if found_blocked != blocked_paths:
-        missing = sorted(blocked_paths - set(selected))
-        raise ValueError(f"ER group-edge capability set mismatch; missing={missing}")
+    retired_paths = set(RETIRED_BLOCKER_CAPABILITY_SET)
+    found_retired = {rel for rel in selected if rel in retired_paths}
+    if found_retired != retired_paths:
+        missing = sorted(retired_paths - set(selected))
+        raise ValueError(f"ER group-edge retired capability set mismatch; missing={missing}")
 
     rows = []
-    counts = {"total": 0, "predicted_draw": 0, "predicted_blocked": 0}
+    counts = {"total": 0, "predicted_draw": 0, "predicted_blocked": 0,
+              "retired_work_ceiling": 0}
     for rel in selected:
         source_sha = sha256_file(cases / rel)
-        blocked = rel in blocked_paths
-        if blocked:
-            pinned_kind, detail = BLOCKED_CAPABILITY_SET[rel]
+        retired = rel in retired_paths
+        retired_kind, retired_detail = (
+            RETIRED_BLOCKER_CAPABILITY_SET[rel] if retired else (None, None))
         if source_sha != manifest_rows[rel]["sha256"]:
             raise ValueError(f"sha drift for {rel}")
         narrow_whole = "drawn" if rel in NARROW_DRAW_WHOLE else "source"
-        whole_wide = "source" if blocked else "drawn"
-        # The blocked row's body still completes at 240; every other body draws.
+        # RFC 0034: every selected whole source now draws at 240 (the retired
+        # handDrawn row included); narrow stays source for that row as measured.
+        whole_wide = "drawn"
         body_wide = "drawn"
         body_narrow = narrow_whole
         counts["total"] += 1
-        counts["predicted_blocked" if blocked else "predicted_draw"] += 1
+        counts["predicted_draw"] += 1
+        if retired:
+            counts["retired_work_ceiling"] += 1
         rows.append({
             "path": rel,
             "family": "er-diagram",
@@ -211,7 +231,7 @@ def build(repo_root: pathlib.Path):
             "prior_status": manifest_rows[rel]["raw"],
             "has_config": False,
             "has_init": False,
-            "prediction": "predicted-blocked" if blocked else "predicted-draw",
+            "prediction": "predicted-draw",
             "expected_states": {
                 "wide_240": whole_wide,
                 "narrow_40": narrow_whole,
@@ -222,23 +242,27 @@ def build(repo_root: pathlib.Path):
                 "narrow_40": body_narrow,
                 "restored_240": body_wide,
             },
-            "blocker": (
+            "blocker": None,
+            "retired_blocker": (
                 {
-                    "kind": pinned_kind,
+                    "kind": retired_kind,
+                    "retired_by": "RFC 0034",
                     "site": "src/ui/visual/mermaid_relations_core_impl.cpp (ER envelope double-parse Work budget)",
                     "evidence": source_sha,
-                    "detail": detail,
+                    "detail": retired_detail,
                 }
-                if blocked else None),
+                if retired else None),
             "ledger_note": (
                 "ER subgraph id admitted as a relationship endpoint; in-group direction "
                 "consumed as a non-terminal directive"
-                if not blocked else
-                "SHA-bound reviewed whole-source Work ceiling; body admitted and draws at 240"),
+                if not retired else
+                "RFC 0034 retired the SHA-bound whole-source Work ceiling; the whole source "
+                "now draws through the bounded two-pool layout Work allowance (narrow stays source)"),
         })
 
     if (counts["predicted_blocked"] != EXPECTED_BLOCKED or
-            counts["predicted_draw"] != EXPECTED_DRAW):
+            counts["predicted_draw"] != EXPECTED_DRAW or
+            counts["retired_work_ceiling"] != EXPECTED_RETIRED):
         raise ValueError(f"ER group-edge partition drift: {counts}")
 
     return {
@@ -254,9 +278,10 @@ def build(repo_root: pathlib.Path):
             "rule": "ER originals declaring a subgraph and carrying a relationship whose "
                     "endpoint resolves to a declared subgraph id",
             "roots": [ROOT_REL],
-            "blocker_detection": "one SHA-bound reviewed whole-source envelope Work-ceiling "
-                                 "row (handDrawn nested-direction variant); no generator-time "
-                                 "rendering; corpus or source drift aborts.",
+            "blocker_detection": "the single historical handDrawn envelope Work-ceiling "
+                                 "row (nested-direction variant) is RETIRED by RFC 0034 (bounded "
+                                 "two-pool layout Work); no live exclusion remains and there is "
+                                 "no generator-time rendering; corpus or source drift aborts.",
             "width_policy": "wide_240 and restored_240 are pre-registered; narrow_40 is measured "
                             "per row (three simple group-edge rows draw at 40, the rest stay source).",
         },
@@ -270,14 +295,17 @@ def build(repo_root: pathlib.Path):
             "date": "2026-11-17",
             "verdict": "pending",
             "note": "Finalized by the D295 independent review; see the cohort gate test and the "
-                    "Stage B-D closure report. Six rows draw losslessly at 240; one SHA-bound "
-                    "handDrawn nested variant stays whole-source on the pre-existing envelope "
-                    "double-parse Work ceiling while its body draws. The two production edits are "
-                    "ER-local to parse_plain_er; denominator 2145 unchanged (rows only move "
-                    "source->drawn).",
+                    "Stage B-D closure report. Six rows draw losslessly at 240. The seventh, a "
+                    "SHA-bound handDrawn nested variant, formerly stayed whole-source on the "
+                    "envelope double-parse Work ceiling while its body drew; RFC 0034 retired "
+                    "that ceiling via the bounded two-pool layout Work allowance, so all seven "
+                    "whole sources now draw (narrow stays source for the handDrawn row). This "
+                    "ledger stays a non-authoritative char smoke; matrix authority is the owned "
+                    "proof cohorts.",
         },
         "counts": counts,
         "blocker_vocabulary": [BLOCKER_KIND],
+        "retired_blocker_vocabulary": [BLOCKER_KIND],
         "rows": rows,
     }
 

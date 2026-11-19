@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 907,
+  "total_fallback": 906,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -41,7 +41,7 @@
     "icon_font_glyphs": 29,
     "linkstyle_directive": 12,
     "look_classic_other": 9,
-    "look_handdrawn": 71,
+    "look_handdrawn": 70,
     "look_neo": 160,
     "multiline_label": 7,
     "securitylevel_directive": 34,
@@ -157,8 +157,8 @@
     },
     "look_handdrawn": {
       "originals_matching_predicate": 206,
-      "drawn_among_matches": 97,
-      "fallback_among_matches": 109,
+      "drawn_among_matches": 98,
+      "fallback_among_matches": 108,
       "sufficient_blocker": false
     },
     "look_neo": {
@@ -187,8 +187,8 @@
     },
     "subgraph_nesting": {
       "originals_matching_predicate": 195,
-      "drawn_among_matches": 68,
-      "fallback_among_matches": 127,
+      "drawn_among_matches": 69,
+      "fallback_among_matches": 126,
       "sufficient_blocker": false
     }
   },
@@ -917,7 +917,6 @@
       "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-handdrawn-look.mmd",
       "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-without-htmllabels-handdrawn-look.mmd",
       "er-diagram/visual-check/entities-with-styles-applied-from-the-default-class-and-other-styles-handdrawn-look.mmd",
-      "er-diagram/visual-check/nested-er-subgraphs-with-direction-override-handdrawn-look.mmd",
       "er-diagram/visual-check/relationship-labels-with-line-breaks-handdrawn-look.mmd",
       "flowchart/nightly-check/handdrawn/apply-default-class-to-all-nodes-which-do-not-have-another-class-assigned-htmllabels-disabled.mmd",
       "flowchart/nightly-check/handdrawn/apply-default-class-to-all-nodes-which-do-not-have-another-class-assigned-htmllabels-enabled.mmd",

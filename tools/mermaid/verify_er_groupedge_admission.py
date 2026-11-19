@@ -35,6 +35,10 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 
 PROPOSAL = "tests/fixtures/mermaid_native/er_groupedge_complete_proposal.v1.json"
+# RFC 0034 one-row cohort that retires the ordinal-198 work-ceiling exclusion.
+ER198_PROPOSAL = "tests/fixtures/mermaid_native/er198_handdrawn_complete_proposal.v1.json"
+ER198_CONTRACT = "ER198/complete-original/v1"
+ER198_PROPOSAL_SHA = "4e2ba98698265da17c5f85c2230bf2fe16fa71fd3ad73d1aeff1d2e48d8ade11"
 PRIOR = "tests/fixtures/mermaid_native/er206_native_whole_source_authority.config62.v1.json"
 MANIFEST = "tests/fixtures/mermaid_official/manifest.json"
 CASES_ROOT = "tests/fixtures/mermaid_official/cases"
@@ -73,9 +77,12 @@ PROTECTED = [
      "3c0135fd91ce21d6a961d10c695123ac7e1c9b89477572d9941703c52ab1a0b0", 11591),
 ]
 
-# The reviewed Work-ceiling exclusion. Ordinal 198 carries two debts and stays
-# source_fallback; its exclusion cannot be text-decided, so it is path+sha
-# bound with the Work-ceiling reason (four-part assertion, part iii).
+# The historical reviewed Work-ceiling exclusion. Ordinal 198 carries two debts;
+# its exclusion could not be text-decided, so it is path+sha bound with the
+# Work-ceiling reason. RFC 0034 RETIRED this exclusion (bounded two-pool layout
+# Work); the constants below stay frozen to pin the prior facts, and
+# assert_er198_retirement proves the exclusion is retired by the new one-row
+# cohort rather than merely deleted.
 BLOCKED = {
     "prior_ordinal": 198,
     "path": "er-diagram/visual-check/"
@@ -230,7 +237,10 @@ def four_part_cohort_assertion(prior, proposal, manifest):
     need([c["prior_ER206_ordinal"] for c in proposal["cases"]] == EXACT_COHORT,
          "four-part (ii): proposal prior ordinals match exact cohort order")
 
-    # (iii) ordinal 198 exclusion pinned by reviewed path+sha and Work reason.
+    # (iii) ordinal 198 identity is pinned by reviewed path+sha and the two-debt
+    # set, and it stays absent from the six-case owned proposal. The historical
+    # Work-ceiling exclusion itself is retired by the separate RFC 0034 cohort;
+    # assert_er198_retirement() proves that retirement below.
     blocked = cases[BLOCKED["prior_ordinal"]]
     need(blocked["fixture"] == BLOCKED["path"],
          "four-part (iii): blocked path identity")
@@ -241,7 +251,7 @@ def four_part_cohort_assertion(prior, proposal, manifest):
     need(debt_kinds(blocked) == set(BLOCKED["debt_kinds"]),
          "four-part (iii): blocked row carries the two-debt set")
     need(BLOCKED["path"] not in proposal_paths,
-         "four-part (iii): Work-ceiling row absent from the owned proposal")
+         "four-part (iii): Work-ceiling row absent from the six-case proposal")
 
     # (iv) exact-six and the ER107 active_config set have empty intersection.
     active_config = [c["ordinal"] for c in whole_null
@@ -251,6 +261,46 @@ def four_part_cohort_assertion(prior, proposal, manifest):
     need(set(exact).isdisjoint(active_config),
          "four-part (iv): group-edge and ER107 cohorts are disjoint")
     return exact
+
+
+def assert_er198_retirement(prior, six_case_proposal, manifest):
+    """RFC 0034: prove the ordinal-198 work-ceiling exclusion is retired by a
+    real one-row cohort, not orphaned or silently deleted. The six-case
+    proposal stays byte-identical and continues to exclude 198."""
+    er198 = load(ER198_PROPOSAL)
+    need(sha(file_bytes(ROOT / ER198_PROPOSAL)) == ER198_PROPOSAL_SHA,
+         "ER198 retirement proposal artifact sha")
+    need(er198["contract"] == ER198_CONTRACT, "ER198 distinct contract id")
+    need(er198["contract"] != CONTRACT,
+         "ER198 contract is distinct from the six-case contract")
+    er198_cases = er198["cases"]
+    need(len(er198_cases) == 1, "ER198 retirement proposal is one-row")
+    row = er198_cases[0]
+    need(row["path"] == BLOCKED["path"], "ER198 retirement binds the blocked path")
+    need(row["source_sha256"] == BLOCKED["source_sha256"],
+         "ER198 retirement binds the blocked source sha")
+    need(row["prior_ER206_ordinal"] == BLOCKED["prior_ordinal"],
+         "ER198 retirement binds prior ordinal 198")
+    # The retained ER206 prior still carries the two-debt, null-Model identity.
+    blocked = prior["cases"][BLOCKED["prior_ordinal"]]
+    need(blocked["whole_model"] is None, "ER198 prior row stays whole-null")
+    need(debt_kinds(blocked) == set(BLOCKED["debt_kinds"]),
+         "ER198 prior row keeps the two-debt set")
+    # The six-case proposal and the ER198 cohort remain mutually exclusive.
+    six_paths = {c["path"] for c in six_case_proposal["cases"]}
+    need(BLOCKED["path"] not in six_paths,
+         "198 stays absent from the six-case proposal (empty intersection)")
+    # The retirement record names the same blocker kind and attributes RFC 0034.
+    retired = er198["selection"]["retired_work_ceiling_exclusion"]
+    need(retired["retired_blocker_kind"] == BLOCKED["blocker_kind"],
+         "ER198 retirement names the historical blocker kind")
+    need(retired["retired_by"] == "RFC 0034", "ER198 retirement attribution")
+    need(retired["source_sha256"] == BLOCKED["source_sha256"],
+         "ER198 retirement record sha-bound")
+    # The manifest fixture identity is unchanged.
+    fixture = next(f for f in manifest["fixtures"] if f["path"] == BLOCKED["path"])
+    need(fixture["sha256"] == BLOCKED["source_sha256"],
+         "ER198 retirement matches the immutable manifest fixture")
 
 
 def verify_live_witnesses(case, raw: bytes):
@@ -371,6 +421,7 @@ def verify_read_only():
     need(proposal["contract"] == CONTRACT, "proposal contract id")
     protected_files_unchanged()
     four_part_cohort_assertion(prior, proposal, manifest)
+    assert_er198_retirement(prior, proposal, manifest)
     for case in proposal["cases"]:
         raw = file_bytes(ROOT / CASES_ROOT / case["path"])
         verify_case(case, raw)
@@ -402,6 +453,11 @@ class GroupEdgeControls(unittest.TestCase):
                   if c["whole_model"] is None and debt_kinds(c) == {ACTIVE_CONFIG}]
         self.assertEqual(len(active), ER107_COHORT_SIZE)
         self.assertTrue(set(exact).isdisjoint(active))
+
+    def test_er198_work_ceiling_exclusion_is_retired(self):
+        # RFC 0034: the historical ordinal-198 exclusion is retired by a real
+        # one-row cohort while the six-case proposal and protected prior hold.
+        assert_er198_retirement(self.prior, self.proposal, self.manifest)
 
     def test_protected_ten_files_byte_identical(self):
         protected_files_unchanged()
@@ -490,8 +546,8 @@ def main():
         return 0 if unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful() else 1
     verify_read_only()
     print("Read-only verified ER group-edge cohort: six owned proofs, four-part cohort "
-          "assertion, ten protected files byte-identical; both helper shas match the "
-          "independent review receipt.")
+          "assertion, RFC 0034 ER198 work-ceiling retirement assertion, ten protected files "
+          "byte-identical; both helper shas match the independent review receipt.")
     return 0
 
 

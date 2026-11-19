@@ -331,6 +331,15 @@ gtest_discover_tests(test_mermaid_er198_source
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+# RFC 0034 phase 2 increment 2a: one-row ER198 complete-proposal record-mode
+# generator and the hermetic digest self-check / regeneration tripwire.
+add_executable(test_mermaid_er198_proposal test_mermaid_er198_proposal.cpp)
+target_link_libraries(test_mermaid_er198_proposal
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_er198_proposal
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
 # RFC 0030 ER107: independent source-derived projection primitives, no admission.
 add_executable(test_mermaid_er107_projection test_mermaid_er107_projection.cpp)
 target_link_libraries(test_mermaid_er107_projection

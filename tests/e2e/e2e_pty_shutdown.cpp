@@ -3447,6 +3447,59 @@ void expect_statuses(const Terminal& terminal, const std::vector<std::string>& e
                                     "; received " + describe_statuses(actual));
 }
 
+// OSC 7501 is a level-sampled channel: ProgramStatusReporter emits a state only
+// at Start/Flush/Finish delivery boundaries and dedupes identical reports, so a
+// transient level entered and left between two boundaries (the sub-second
+// "working" resumption after a question is answered, observed as "Worked for
+// 0s") is coalesced and never gets its own report. The question recovery gate
+// therefore must not demand an OSC frame for that specific working level. It
+// still asserts the full contract:
+//   * the exact deterministic prefix through blocked:question (the same vector
+//     the earlier permission/question gates already validated), and
+//   * only "working" levels may follow it, zero or more (coalescing allows
+//     zero), until the first "done" that proves the model turn recovered;
+//   * any blocked/idle/error interleaving before that done, or a missing
+//     question/done, fails.
+// Unknown fields/states/kinds are still hard-rejected inside status_reports.
+bool question_recovery_reported(std::string_view output,
+                                const std::vector<std::string>& blocked_prefix) {
+    const auto reports = status_reports(output);
+    if (reports.size() < blocked_prefix.size()) return false;
+    if (!std::equal(blocked_prefix.begin(), blocked_prefix.end(), reports.begin())) return false;
+    bool saw_done = false;
+    for (auto it = reports.begin() + static_cast<std::ptrdiff_t>(blocked_prefix.size());
+         it != reports.end(); ++it) {
+        if (*it == "done") {
+            saw_done = true;
+            break;
+        }
+        if (*it != "working") return false;
+    }
+    return saw_done;
+}
+
+// Full two-turn question walk (the answered question turn plus the follow-up
+// REPL turn). Same level-sampling contract, but now both recovery milestones
+// must be present: after the exact blocked:question prefix, exactly two "done"
+// levels, with only transient "working"/"idle" levels between them. Any blocked,
+// error or unknown level in the tail fails, so a real regression is still red.
+bool question_two_turn_walk_ok(std::string_view output,
+                                const std::vector<std::string>& blocked_prefix) {
+    const auto reports = status_reports(output);
+    if (reports.size() < blocked_prefix.size()) return false;
+    if (!std::equal(blocked_prefix.begin(), blocked_prefix.end(), reports.begin())) return false;
+    int dones = 0;
+    for (auto it = reports.begin() + static_cast<std::ptrdiff_t>(blocked_prefix.size());
+         it != reports.end(); ++it) {
+        if (*it == "done") {
+            ++dones;
+            continue;
+        }
+        if (*it != "working" && *it != "idle") return false;
+    }
+    return dones == 2;
+}
+
 // Find one complete tool-result object, rather than accepting answer text
 // merely echoed inside the preceding assistant tool-use input.
 std::string status_question_result(const std::string& request) {
@@ -3866,11 +3919,9 @@ void run_question_session(const std::string& binary, const std::string& scenario
     std::ofstream(artifacts / (label + "-edited.raw"), std::ios::binary) << terminal.latest_frame();
     const bool cancelled = scenario == "question-cancel";
     terminal.input(cancelled ? "\x1b" : "\r");
-    auto completed = blocked;
-    completed.insert(completed.end(), {"working", "done"});
     require(terminal.wait([&] {
         return terminal.idle_response_visible("PTY question complete") &&
-               status_reports(terminal.output) == completed;
+               question_recovery_reported(terminal.output, blocked);
     }),
             "question decision did not resolve and recover the model turn");
     auto bodies = server.request_bodies();
@@ -3887,10 +3938,9 @@ void run_question_session(const std::string& binary, const std::string& scenario
     // A new real prompt must start empty: none of the dialog's edits or
     // navigation bytes may have entered the underlying REPL input buffer.
     terminal.input("PTY question follow-up\r");
-    completed.insert(completed.end(), {"idle", "working", "done"});
     require(terminal.wait([&] {
         return terminal.idle_response_visible("PTY question follow-up complete") &&
-               status_reports(terminal.output) == completed;
+               question_two_turn_walk_ok(terminal.output, blocked);
     }),
             "REPL could not continue cleanly after the question");
     bodies = server.request_bodies();
@@ -3901,11 +3951,14 @@ void run_question_session(const std::string& binary, const std::string& scenario
             "question answer/edit keys leaked into the real REPL prompt");
     terminal.input("\x04");
     terminal.verify_exit(0);
-    expect_statuses(terminal, completed);
+    const auto final_reports = status_reports(terminal.output);
+    require(question_two_turn_walk_ok(terminal.output, blocked),
+            "OSC 7501 question walk lost a recovery milestone or emitted an illegal level: " +
+                describe_statuses(final_reports));
     std::ofstream(artifacts / (label + "-session.raw"), std::ios::binary) << terminal.output;
     std::ofstream(artifacts / (label + "-result.txt"))
         << "initial columns=" << columns << "\nexact tool result=" << result
-        << "\nstatus=" << describe_statuses(completed)
+        << "\nstatus=" << describe_statuses(final_reports)
         << "\nfollow-up prompt exact; termios restored\n";
 }
 

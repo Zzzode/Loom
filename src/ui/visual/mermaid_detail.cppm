@@ -814,4 +814,8 @@ std::optional<std::string> er_source_binding_json(std::string_view source, Work&
 // the testing facade; no production call path or frozen-gate change. Test-only.
 std::optional<std::string> er_terminal_model_json(std::string_view source, Work& work);
 
+// RFC 0034: authoritative ER projection notice rows as JSON, backing the
+// er_projection_notices_json_for_testing facade seam. Test-only.
+std::optional<std::string> er_projection_notices_json(std::string_view source, Work& work);
+
 }  // namespace loom::ui::mermaid::detail

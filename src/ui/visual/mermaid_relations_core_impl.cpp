@@ -3211,6 +3211,36 @@ std::optional<std::string> er_whole_scene_json(std::string_view source, Work& wo
     return doc.to_string();
 }
 
+// RFC 0034 test seam: expose the authoritative projection notice rows for an
+// ER source. A reviewed projection appends these notices below the diagram in
+// the rendered grid (see finish()), but they are not part of the typed
+// whole_scene_model; ownership tests use this boundary to validate the diagram
+// subgrid separately from the footer. Read-only; no production behaviour
+// changes and nothing is rendered here.
+std::optional<std::string> er_projection_notices_json(std::string_view source, Work& work) {
+    namespace json = loom::utils::json;
+    auto diagram = parse_relations(source, work);
+    if (!diagram || diagram->family != RelationFamily::Er) return std::nullopt;
+    json::JsonMutDoc doc;
+    auto root = doc.object();
+    root.set("has_projection", static_cast<bool>(diagram->er_presentation));
+    auto rows = root.make_arr();
+    std::size_t count = 0;
+    // A non-projection ER source legitimately renders no footer; report an empty
+    // block rather than nullopt so callers can use one boundary formula. Only a
+    // budget exhaustion while building the notices fails the seam.
+    if (diagram->er_presentation) {
+        const auto notices = er_projection_notices(*diagram, work);
+        if (!notices) return std::nullopt;
+        for (const auto& notice : *notices) rows.append(rows.make_str(notice));
+        count = notices->size();
+    }
+    root.add("notice_rows", rows);
+    root.set("notice_count", static_cast<int64_t>(count));
+    doc.set_root(root);
+    return doc.to_string();
+}
+
 namespace {
 // D248 ER107 source-proposal structural witnesses. These seven kinds depend
 // only on frontmatter/body byte spans and physical line tiling — no semantic

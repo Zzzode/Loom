@@ -454,4 +454,12 @@ std::optional<std::string> er_source_binding_json_for_testing(std::string_view s
 // nullopt for a malformed/non-frontmatter source or an exhausted budget.
 std::optional<std::string> er_terminal_model_json_for_testing(std::string_view source, Work& work);
 
+// RFC 0034 projection notice rows for an ER source. Returns the authoritative
+// notice block the renderer appends below a projected ER diagram (empty for a
+// non-projection source), so ownership tests can locate the diagram/footer
+// boundary without matching string literals. Read-only; test-only; nullopt for
+// a malformed/non-ER source or an exhausted budget.
+std::optional<std::string> er_projection_notices_json_for_testing(std::string_view source,
+                                                                  Work& work);
+
 }  // namespace loom::ui::mermaid::testing

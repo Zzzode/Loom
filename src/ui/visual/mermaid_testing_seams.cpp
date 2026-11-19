@@ -83,4 +83,9 @@ std::optional<std::string> er_terminal_model_json_for_testing(std::string_view s
     return detail::er_terminal_model_json(source, work);
 }
 
+std::optional<std::string> er_projection_notices_json_for_testing(std::string_view source,
+                                                                  Work& work) {
+    return detail::er_projection_notices_json(source, work);
+}
+
 }  // namespace loom::ui::mermaid::testing

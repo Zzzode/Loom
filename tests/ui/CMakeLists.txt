@@ -340,6 +340,17 @@ gtest_discover_tests(test_mermaid_er198_proposal
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+# RFC 0034 phase 2 increment 2b: the one-row ER198 owned-proof run()/owned()
+# gate with tampered-byte and not-ready fail-closed negatives. Footer-aware
+# geometry uses the er_projection_notices test seam to separate the diagram
+# from the projection notice block.
+add_executable(test_mermaid_er198_owned test_mermaid_er198_owned.cpp)
+target_link_libraries(test_mermaid_er198_owned
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_er198_owned
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
 # RFC 0030 ER107: independent source-derived projection primitives, no admission.
 add_executable(test_mermaid_er107_projection test_mermaid_er107_projection.cpp)
 target_link_libraries(test_mermaid_er107_projection

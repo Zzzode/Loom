@@ -15708,6 +15708,18 @@
     },
     {
       "fixture": "er-diagram/visual-check/nested-er-subgraphs-with-direction-override-handdrawn-look.mmd",
+      "rfc0034_supersession": {
+        "retired_by": "RFC 0034",
+        "retired_blocker_kind": "er-envelope-double-parse-work-ceiling",
+        "mechanism": "bounded two-pool layout Work allowance (kErEnvelopeLayoutAllowance)",
+        "current_observed": {
+          "wide_240": "drawn",
+          "narrow_40": "source_fallback",
+          "restored_240": "drawn"
+        },
+        "owned_proposal": "tests/fixtures/mermaid_native/er198_handdrawn_complete_proposal.v1.json",
+        "note": "Historical snapshot below retained; the whole source now draws at wide/restored 240 while the ER206 Model stays formally pending null until the independent formal join."
+      },
       "source_sha256": "c48919288f56b2cb5bae9050ff75afa41faca478d0d77c0f6cc442e86465954b",
       "family": "er-diagram",
       "wide_240_outcome": "source_fallback",

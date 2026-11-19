@@ -1,13 +1,13 @@
 ---
 rfc: 34
 title: Whole-source admission of the handDrawn nested group-edge ER original (ER206 ordinal 198)
-status: accepted
+status: implemented
 owners: "@Zzzode"
-reviewers: ["agent:a360f1f39bbddbbf0 independent design review r1 — REQUEST-CHANGES (1 MAJOR + 3 MINOR + 3 NIT, all prose-only, closed)", "agent:a19d5b125b909dd84 independent design review r2 — APPROVE-to-accept (all seven r1 findings verified CLOSED, two cosmetic NITs folded in)"]
+reviewers: ["agent:a360f1f39bbddbbf0 independent design review r1 — REQUEST-CHANGES (1 MAJOR + 3 MINOR + 3 NIT, all prose-only, closed)", "agent:a19d5b125b909dd84 independent design review r2 — APPROVE-to-accept (all seven r1 findings verified CLOSED, two cosmetic NITs folded in)", "phase 2a/2b/3 independent fresh-context adversarial reviews — all APPROVE (findings closed in follow-up commits)"]
 created: 2026-11-18
-last-reviewed: 2026-11-18
+last-reviewed: 2026-11-19
 supersedes: ""
-tracking: ""
+tracking: local
 ---
 
 # RFC 0034 — Whole-source admission of the handDrawn nested group-edge ER original (ER206 ordinal 198)
@@ -309,12 +309,21 @@ a commit boundary without an explicit documented reason.
 
 ## Production Readiness Review
 
-To be completed in full at the implementable gate. Headline items already
-known: the production Work change needs a before/after dual-preset byte gate
-over the entire matrix (not just targeted tests); the new meter must be
-fail-closed with a hard cap; session traces and settings are unaffected because
-the change is confined to ER mermaid rendering; no persisted data or wire
-protocol changes.
+Completed at the implemented gate (2026-11-19). Every item is measured, not
+asserted from intent.
+
+| # | Readiness item | Verdict | Evidence |
+|---|---|---|---|
+| 1 | Bounded, fail-closed meter with a hard cap; no unbounded growth | PASS | `kErEnvelopeLayoutAllowance` is a formula-derived `static_assert`-pinned constant; inactive Work is byte-identical; split routing fail-closed; combined ceiling = primary + allowance |
+| 2 | Before/after dual-preset full-matrix byte gate over the entire matrix | PASS | clean sha 31549cf8 → phase-1/3 sha 483b8da4 / ee743515; debug and release emit byte-identical matrices (same sha); only ordinal-198 case fields change across all 2738 cases |
+| 3 | Zero change to the other 2737 rows and to the protected assets | PASS | per-case matrix diff isolated to case 198; the ten protected files are byte/sha-identical (closure sha loop); ER107 107/107 and the six-case RFC 0033 proposal/PROPOSAL_SHA are untouched |
+| 4 | No persisted data, wire protocol, settings, or session-trace change | PASS | change is confined to ER mermaid layout Work and additive test seams/assets; `Work` carries no persisted field; no settings/session code touched |
+| 5 | Owned proof is fail-closed and cannot be forged or silently admitted | PASS | `owned()` re-derives metadata pins, enforces a closed field set, 15 captures, narrow XOR, closed mutation vocabulary, footer presence; tampered-byte (7 mutations) and not-ready negatives reject; matrix passes `JsonVal{}` on not-ready so it fails closed onto the error path |
+| 6 | Structural exclusivity of the three supplemental cohorts | PASS | compile-time `static_assert` disjointness of ER198 vs ER107 (107) and group-edge (6); matrix if/else-if/continue ordering; runtime select() sha binding and an exactly-one consumed assertion |
+| 7 | Fallback registry reconciled only through the attribution tool | PASS | `fallback_attribution.py --emit` regenerated 907→906 (look_handdrawn 71→70); self-test and live `--matrix` drift gate both OK; no hand edit |
+| 8 | No new module/import edge; build graph unchanged | PASS | `graph_check.py --target-ui9` OK; the only production-surface additions are one in-module test seam and one Work field/method on the existing mermaid module |
+| 9 | Determinism across presets and reruns; no timestamp/random/pointer-derived output | PASS | all proposal/proof/matrix artifacts are content-hash driven; dual-preset byte identity measured; durable gtest XML evidence persisted under /tmp/d373-er198-* |
+| 10 | Reversibility and no permanently-red terminal state | PASS | phase 1 alone reverts the render behavior while test-only phases stay harmless; every phase landed green; the only interim gates were tracked and closed before the implemented transition |
 
 ## Rollout and rollback
 
@@ -410,3 +419,9 @@ protocol changes.
 | 2026-11-18 | — | r1 findings addressed in prose: exclusion-pin decision table, interim red-matrix statement, three-class Non-Goal, two-meter Route B precedent, extra look/init couplings, dependency-direction statement, four-part one-row verifier discipline | (uncommitted revision) | r1 finding list |
 | 2026-11-18 | — | Independent design review r2 (agent a19d5b125b909dd84): APPROVE-to-accept; all seven r1 findings verified CLOSED against code/data, two cosmetic NITs (citation line, 67/70 partition wording) folded in; all checkable measured claims exact, RFC lint-clean | (this revision) | r2 verdict; not implementable until phase-0 meter evidence + PRR |
 | 2026-11-18 | — | Stage transition provisional -> accepted on the r2 design-review gate; held below implementable pending phase 0 and the production-readiness review | (this revision) | rfc skill §1/§3.1 |
+| 2026-11-18 | 1 | Bounded two-pool layout Work allowance (kErEnvelopeLayoutAllowance) shipped; ordinal 198 whole source draws; dual-preset matrix byte-identical, other 2737 rows unchanged | 27103a53, dd7320cf | four-matrix sha 31549cf8(clean)->483b8da4(phase1); budget 1,289,582 supplemental; closure doc `docs/rfcs/0034-phase1-closure.md` |
+| 2026-11-19 | 2 (incr 1) | One-row ER198 cohort identity/selector + dual-cohort (ER107 + group-edge) compile-time disjointness; unique two-debt prior pin (verifier assertion i) | 1ad1e6b5 | gtest 4/4 both presets; evidence /tmp/d373-er198; adversarial review APPROVE |
+| 2026-11-19 | 2 (incr 2a) | One-row complete proposal generator + checked-in artifact; all component digests re-derived, regeneration tripwire | 27b3dbcf, 5f6c32fa | gtest 1/1 both presets; proposal sha 4e2ba986; 70 witnesses; review APPROVE (489 assertions) |
+| 2026-11-19 | 2 (incr 2b) | er_projection_notices test seam + footer-aware owned() gate (diagram-only subgrid claim, footer bound to production notices); ready/tampered/not-ready | 232f80cc, e78ba1fe, 9521670d | gtest 3/3 both presets; seam +47/0 additive; review APPROVE |
+| 2026-11-19 | 3 | ER198 owned proof wired into OfficialMatrix via a third exclusive supplemental slot + retained ER206 legacy view | 551e7ce6 | OfficialMatrix 1/1 both presets byte-identical sha ee743515; original ALL drawn 1239 / fallback 906 / error 0; gaps 48; review APPROVE |
+| 2026-11-19 | 4 | Closing reconciliation: cohort ledger regenerated (1 retired blocker, 7 draw), verifier BLOCKED-retirement assertion, fallback roster regenerated 907→906 via attribution tool, inventory/doc supersession notes | (this change) | cohort gtest 5/5; verifier self-test 9/9; roster self-test + drift gate OK; look_handdrawn 71→70; ten protected files byte-identical; rfc_lint clean |

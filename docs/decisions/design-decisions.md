@@ -142,6 +142,40 @@ caches clear at their existing document/session reset boundaries
 (`StreamingMarkdown::reset()`, `reset_virtual_renderer_state()`), so a new
 stream or `/clear`/`/resume` can never serve a prior document's rows.
 
+**ER handDrawn whole-source admission and the two-pool Work meter (RFC
+0034).** The deepest nested group-edge ER fixture (ER206 ordinal 198, a
+`look: handDrawn` envelope source) measures 1,290,694 layout Work against the
+1,000,000 `kWorkLimit` primary; rather than raising the global cap, `Work`
+gains an optional supplemental pool (`supplemental_remaining` +
+`envelope_enabled`, appended so every existing `Work{budget}` initializer
+stays valid). A meter is byte-identical to the historical single-balance
+meter until `enable_envelope()` is called, and exactly one production site
+calls it — `relations_layout` on an ER diagram carrying an `er_presentation`
+(`mermaid_relations_core_impl.cpp`). The allowance
+`kErEnvelopeLayoutAllowance` is derived from the same 240×1024 canvas
+contract as ElementWork (`cells * 122 + 4096`), `static_assert`-pinned at
+29,986,816, and deliberately sized to a whole-canvas envelope class, never
+tuned to the one fixture. `spend()` uses split routing — primary first, then
+only the residual fee from the supplemental — so the effective ceiling is one
+uniform pool, and draining both fails closed (no over-draw). Active-path
+solvency checks must read `available()`, not `remaining == 0`. The admitted
+source draws at wide/restored 240 but stays whole-source fallback at narrow
+40 (width XOR); nothing else in the 2,738-case matrix changes, enforced by a
+dual-preset full-matrix byte gate. Admission evidence is an owned proof, not
+a textual guess: the matrix supplemental proof slot requires a sha-pinned
+proposal artifact plus a fail-closed `owned()` gate (metadata pins, closed
+field/mutation vocabularies, 15 captures, narrow XOR, footer presence); a
+not-ready proof is passed as `JsonVal{}` and lands on the error path, so the
+gate can never silently admit. The rendered grid includes a production
+projection-notice footer that is not part of the typed whole-scene model; the
+test-only `diagram_subgrid`/`er_projection_notices` seam binds that boundary
+data-drivenly rather than hardcoding row literals. The ER107 authority bytes
+are immutable and the legacy matrix view keeps the null-Model ER206 identity,
+so bound/pending counts hold while the supplemental owned view draws 198; the
+fallback roster may move (907→906, look_handdrawn 71→70) only through
+`tools/mermaid/fallback_attribution.py --emit/--matrix`, never by hand. No
+persisted data, wire protocol, settings, or session-trace surface changes.
+
 **Server model capacities (RFC 0029).** The configured service's
 `data[].context_length` is read once per runtime root, before native tool policy
 snapshots. An exact endpoint/wire/credential-bound immutable snapshot is reused;

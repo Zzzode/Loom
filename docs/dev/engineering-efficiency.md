@@ -1492,3 +1492,38 @@ Attach a short efficiency section to each closure report, answering:
   assuming the design's list was exhaustive. No false green/flake; the only
   reds are deterministic meter-state/ledger gates traced to one mechanism.
   `-Werror` clean both presets; no BMI/module-edge change (graph_check PASS).
+- **2026-11-19, RFC 0034 Phase 4 closing full-suite gate — two environmental
+  flakes, neither a Loom regression, both proven by isolation.**
+  (1) **Host port-scanner contaminates exact-count localhost tests (new
+  root cause; not CPU load).** `BridgeDaemon.ConsecutivePollFailuresUse…`
+  failed deterministically 4/4 in debug and 3/3 in release with 33 recorded
+  requests vs the expected 32, always at ~12 s. The DaemonServer constructor
+  starts no thread, so there is no in-process background poller; the client
+  issues exactly 8 polls × 4 HTTP retries = 32 connections. `strace -f
+  trace=connect,accept4,recvfrom` showed 32 client `connect()` calls but 33
+  server-side requests: the extra one is a foreign `GET / HTTP/1.1` with
+  `User-Agent: persona-ports` / `Host: localhost:<ephemeral>`. Source: the
+  `persona-link`/`persona-node` devbox tunnel agent under
+  `~/.persona-devbox-cn/`, which sweeps every localhost listener and probes
+  it; the single-threaded bridge mock (`tests/support/bridge_test_helpers.hpp`)
+  pushes every inbound request into `requests_` before routing, so a probe
+  landing in the test's ~12 s window inflates the exact-size assertion. Rule:
+  when an exact-request-count test over an ephemeral port is off by exactly
+  one with no code path that could emit it, suspect a host scanner before the
+  product — confirm with `strace recvfrom` and read the foreign User-Agent.
+  Do not "fix" the assertion; it is an environment collision, and the other
+  12/13 bridge tests pass.
+  (2) **E2E_Pty question/selection cluster under sustained load.** At load
+  average 16–20 on the 56-core shared box (3 logged-in users), 7 of 95 PTY
+  tests timed out — the `E2E_Pty_Question_*` and one Selection/ProgramStatus
+  case, all gated by the harness's fixed 10 s wall-clock `terminal.wait()` for
+  a full question→tool-result→second-model-turn sequence; 88 sibling PTY tests
+  in the same binary passed, and `question-default` flipped pass/fail across
+  reruns (non-deterministic). `McpStdio.WatchdogKillsSilentChild` failed once
+  under parallel load and passed on every isolated rerun. This is the same
+  class as the documented ServerMain/Config110 flakes (rule 8); record the load
+  average and re-run the binary directly with `LOOM_BINARY` set (bare
+  invocation returns the ctest `SKIP_RETURN_CODE 125`, not a failure).
+  Practical note: do not run other test binaries concurrently with a full
+  ctest on this box — parallel release runs during the matrix window added to
+  the scheduling pressure that starves the PTY child's 10 s deadline.

@@ -31,6 +31,7 @@ import loom.ui.foundation.design_tokens;
 #include "mermaid_er107_official.hpp"
 #include "mermaid_er206_authority.hpp"
 #include "mermaid_er_groupedge_official.hpp"
+#include "mermaid_er198_official.hpp"
 #include "mermaid_flow400_authority.hpp"
 #include "mermaid_flow400_config21_authority.hpp"
 #include "mermaid_flow400_linkprofile3_authority.hpp"
@@ -2845,6 +2846,9 @@ constexpr auto kOfficialEr107Contract = official_er107::kContract;
 namespace official_groupedge = loom::test::mermaid_er_groupedge::official;
 namespace groupedge = loom::test::mermaid_er_groupedge;
 constexpr auto kOfficialGroupEdgeContract = official_groupedge::kContract;
+namespace official_er198 = loom::test::mermaid_er198::official;
+namespace er198 = loom::test::mermaid_er198;
+constexpr auto kOfficialEr198Contract = official_er198::kContract;
 constexpr std::string_view kOfficialEr107MatrixEvidence = "mermaid-official-er107-matrix.jsonl";
 
 bool official_er107_owned(const Observation& row) {
@@ -5058,7 +5062,8 @@ Observation run_official_er206_case(JsonVal, std::size_t, std::size_t,
                                     const relations_oracle::Er206Documents&, std::array<bool, 206>&,
                                     relations_oracle::Work&, std::ostream&, std::size_t,
                                     std::size_t, JsonVal er107_local_proof = JsonVal{},
-                                    JsonVal groupedge_local_proof = JsonVal{});
+                                    JsonVal groupedge_local_proof = JsonVal{},
+                                    JsonVal er198_local_proof = JsonVal{});
 
 Observation official_er206_legacy_view(const Observation& row) {
     require(row.raw_active_schema == kOfficialEr107Contract &&
@@ -5119,6 +5124,35 @@ Observation official_groupedge_legacy_view(const Observation& row) {
     require(legacy.role_case_index < relations_oracle::kEr206Pins.size() &&
                 relations_oracle::kEr206Pins[legacy.role_case_index].model_bytes == 0,
             "ERGroupEdge supplements only source-bound ER206 null Models");
+    return legacy;
+}
+
+Observation official_er198_legacy_view(const Observation& row) {
+    require(row.raw_active_schema == kOfficialEr198Contract &&
+                row.role_case_index < er198::kPins.size(),
+            "ER198 requires retained ER206 source identity");
+    const auto authority = json::parse(row.raw_source_authority);
+    require(authority.has_value() &&
+                authority->root().get_string("proposal_sha256") == er198::kProposalSha &&
+                authority->root().get("retained_ER206").is_obj(),
+            "ER198 requires retained ER206 closed proof");
+    Observation legacy;
+    legacy.path = row.path;
+    legacy.track = row.track;
+    legacy.type = row.type;
+    legacy.source_sha256 = row.source_sha256;
+    legacy.status = row.status;
+    legacy.errors = row.errors;
+    legacy.projection_baseline = row.projection_baseline;
+    legacy.raw_active_schema = kOfficialEr206Contract;
+    legacy.raw_source_authority = kOfficialEr206Authority;
+    legacy.role_case_index =
+        static_cast<std::size_t>(er198::kPins[row.role_case_index].prior_ordinal);
+    legacy.raw_source_constraints =
+        projection_canonical(authority->root().get("retained_ER206"));
+    require(legacy.role_case_index < relations_oracle::kEr206Pins.size() &&
+                relations_oracle::kEr206Pins[legacy.role_case_index].model_bytes == 0,
+            "ER198 supplements only source-bound ER206 null Models");
     return legacy;
 }
 
@@ -7982,12 +8016,15 @@ void emit_report(const std::vector<Observation>& rows,
         }
         if (row.raw_active_schema == kOfficialEr206Contract ||
             row.raw_active_schema == kOfficialEr107Contract ||
-            row.raw_active_schema == kOfficialGroupEdgeContract) {
+            row.raw_active_schema == kOfficialGroupEdgeContract ||
+            row.raw_active_schema == kOfficialEr198Contract) {
             std::optional<Observation> retained;
             if (row.raw_active_schema == kOfficialEr107Contract)
                 retained.emplace(official_er206_legacy_view(row));
             else if (row.raw_active_schema == kOfficialGroupEdgeContract)
                 retained.emplace(official_groupedge_legacy_view(row));
+            else if (row.raw_active_schema == kOfficialEr198Contract)
+                retained.emplace(official_er198_legacy_view(row));
             const auto& er_row = retained ? *retained : row;
             const auto metadata = json::parse(er_row.raw_source_constraints);
             require(metadata.has_value(), "OfficialER206 provenance JSON");
@@ -8460,7 +8497,8 @@ void emit_report(const std::vector<Observation>& rows,
                 row.raw_active_schema == kShapes4Contract ||
                 row.raw_active_schema == kBlock58Contract ||
                 row.raw_active_schema == kOfficialEr107Contract ||
-                row.raw_active_schema == kOfficialGroupEdgeContract)
+                row.raw_active_schema == kOfficialGroupEdgeContract ||
+                row.raw_active_schema == kOfficialEr198Contract)
                 continue;
             if (row.status[0] == "drawn") ++originals_drawn;
         }
@@ -9650,6 +9688,14 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             std::ios::binary);
         require(groupedge_diagnostics.good(),
                 "ERGroupEdge Matrix independent diagnostic output");
+        // RFC 0034 parallel one-row ER198 (ordinal 198 handDrawn) cohort.
+        official_er198::Documents er198_documents;
+        std::array<bool, er198::kCohortSize> er198_selected{};
+        std::ofstream er198_diagnostics(
+            fs::path(LOOM_MERMAID_REPORT_DIR) / std::string(official_er198::kEvidence),
+            std::ios::binary);
+        require(er198_diagnostics.good(),
+                "ER198 Matrix independent diagnostic output");
         official_block58::Documents block_documents;
         std::array<bool, 58> block_consumed{};
         std::ofstream block_diagnostics(fs::path(LOOM_MERMAID_REPORT_DIR) /
@@ -10442,6 +10488,54 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     observations.push_back(std::move(ge_row));
                     continue;
                 }
+                // RFC 0034 parallel one-row ER198 cohort. Reached only when
+                // both the ER107 and group-edge selectors returned nullopt;
+                // the compile-time path disjointness guarantees no overlap.
+                if (const auto e198_selected = er198::select(
+                        class_path.as_str(), fixture.get_string("sha256"))) {
+                    require(!er198_selected[*e198_selected],
+                            "ER198 Matrix source selected twice");
+                    er198_selected[*e198_selected] = true;
+                    const auto e198_observed = official_er198::run(
+                        er198_documents, *e198_selected, er198_diagnostics);
+                    const auto e198_proof = json::parse(e198_observed.proof);
+                    require(e198_proof.has_value(), "ER198 Matrix actual owned proof JSON");
+                    require(official_er198::owned(e198_proof->root()) == e198_observed.ready,
+                            "ER198 Matrix actual local verdict disagreement");
+                    relations_oracle::Work e198_work{relations_oracle::kEr206SceneLimit};
+                    // An absent/not-ready proof is passed as JsonVal{}; the
+                    // in-function two-layer contract then fails closed onto the
+                    // normal whole-null path and books the explicit error.
+                    auto e198_row = run_official_er206_case(
+                        fixture, i, official_er_ordinal++, *official_er_documents,
+                        official_er_consumed, e198_work, official_er_diagnostics,
+                        observations.size(), observations.capacity(), JsonVal{}, JsonVal{},
+                        e198_observed.ready ? e198_proof->root() : JsonVal{});
+                    // Preserve the frozen ER206 closed proof (the row stays a
+                    // whole-null ER206 original with a null Model) before
+                    // attaching the supplemental ER198 proof, mirroring the
+                    // ER107/group-edge retained-legacy shape.
+                    const auto e198_legacy = json::parse(e198_row.raw_source_constraints);
+                    require(e198_legacy.has_value(), "ER198 retained ER206 proof JSON");
+                    json::JsonMutDoc e198_authority;
+                    auto e198_retained = e198_authority.object();
+                    e198_retained.set("proposal_sha256", er198::kProposalSha);
+                    e198_retained.add("retained_ER206",
+                                      e198_authority.copy_val(e198_legacy->root()));
+                    e198_authority.set_root(e198_retained);
+                    e198_row.raw_source_authority = e198_authority.to_string();
+                    e198_row.raw_source_constraints = e198_observed.proof;
+                    e198_row.raw_active_schema = kOfficialEr198Contract;
+                    e198_row.role_case_index = *e198_selected;
+                    e198_row.expected = "pending";
+                    e198_row.reason = "RFC 0034 ER198 handDrawn complete original locally verified; "
+                                      "independent formal join pending";
+                    e198_row.decision_reasons.fill(e198_row.reason);
+                    if (!e198_observed.ready)
+                        e198_row.errors.push_back(e198_proof->root().get_string("error"));
+                    observations.push_back(std::move(e198_row));
+                    continue;
+                }
                 relations_oracle::Work er_work{relations_oracle::kEr206SceneLimit};
                 observations.push_back(run_official_er206_case(
                     fixture, i, official_er_ordinal++, *official_er_documents, official_er_consumed,
@@ -11177,6 +11271,11 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         groupedge_diagnostics.flush();
         require(groupedge_diagnostics.good(),
                 "ERGroupEdge Matrix all actual frame evidence flushed");
+        require(std::ranges::all_of(er198_selected, [](bool selected) { return selected; }),
+                "ER198 Matrix exactly one selected original consumed");
+        er198_diagnostics.flush();
+        require(er198_diagnostics.good(),
+                "ER198 Matrix all actual frame evidence flushed");
         er107_aggregate_validated = true;
         EXPECT_EQ(std::ranges::count_if(observations,
                                         [](const Observation& row) {
@@ -19140,7 +19239,8 @@ Observation run_official_er206_case(JsonVal fixture, std::size_t global, std::si
                                     std::array<bool, 206>& consumed, relations_oracle::Work& work,
                                     std::ostream& diagnostics, std::size_t size,
                                     std::size_t capacity, JsonVal er107_local_proof,
-                                    JsonVal groupedge_local_proof) {
+                                    JsonVal groupedge_local_proof,
+                                    JsonVal er198_local_proof) {
     using namespace relations_oracle;
     work.spend(kOfficialEr206ReportReserve + 8u * sizeof(Observation) +
                8u * sizeof(OfficialErProgress) + 8u * sizeof(OfficialErFrames) + 16384u +
@@ -19285,6 +19385,33 @@ Observation run_official_er206_case(JsonVal fixture, std::size_t global, std::si
                         "OfficialER206 supplemental group-edge actual wide/narrow/restored agreement");
                 row.status = {"drawn", p.narrow_ordinary ? "source_fallback" : "drawn", "drawn"};
                 data.set("supplemental_local_contract", kOfficialGroupEdgeContract);
+                data.set("supplemental_formal_admission", false);
+            } else if (er198_local_proof.is_obj()) {
+                // RFC 0034 parallel one-row owned-proof slot for ordinal 198
+                // (the handDrawn projected nested group-edge original).
+                // Structurally exclusive with both ER107 and the RFC 0033
+                // group-edge cohort (compile-time path disjointness plus the
+                // matrix if/continue); the frozen ER206 Model stays null.
+                // Layer 1: live four-tuple identity re-binding.
+                require(official_er198::owned(er198_local_proof) &&
+                            er198_local_proof.get_string("path") == row.path &&
+                            er198_local_proof.get_string("source_sha256") ==
+                                row.source_sha256 &&
+                            er198_local_proof.get_int("prior_ER206_ordinal") ==
+                                static_cast<int64_t>(ordinal) &&
+                            er198_local_proof.get_int("manifest_global_ordinal") ==
+                                static_cast<int64_t>(global),
+                        "OfficialER206 supplemental ER198 exact owned source proof");
+                // Layer 2: live geometry re-validation and the width/narrow XOR.
+                // The projection notice footer is separately bound inside the
+                // ER198 owned run(); a/b/c here are the sentinel-aware
+                // following-row contract over the full frames.
+                require(!wide && p.restored && a && b && c &&
+                            p.narrow_ordinary ==
+                                er198_local_proof.get("narrow_exact_ordinary").as_bool(),
+                        "OfficialER206 supplemental ER198 actual wide/narrow/restored agreement");
+                row.status = {"drawn", p.narrow_ordinary ? "source_fallback" : "drawn", "drawn"};
+                data.set("supplemental_local_contract", kOfficialEr198Contract);
                 data.set("supplemental_formal_admission", false);
             } else {
                 if (wide && a) row.status[0] = "source_fallback";
@@ -19482,13 +19609,16 @@ OfficialErCounts official_er_counts(const std::vector<Observation>& rows,
     for (const auto& row : rows) {
         if (row.raw_active_schema != kOfficialEr206Contract &&
             row.raw_active_schema != kOfficialEr107Contract &&
-            row.raw_active_schema != kOfficialGroupEdgeContract)
+            row.raw_active_schema != kOfficialGroupEdgeContract &&
+            row.raw_active_schema != kOfficialEr198Contract)
             continue;
         std::optional<Observation> retained;
         if (row.raw_active_schema == kOfficialEr107Contract)
             retained.emplace(official_er206_legacy_view(row));
         else if (row.raw_active_schema == kOfficialGroupEdgeContract)
             retained.emplace(official_groupedge_legacy_view(row));
+        else if (row.raw_active_schema == kOfficialEr198Contract)
+            retained.emplace(official_er198_legacy_view(row));
         const auto& er_row = retained ? *retained : row;
         require(er_row.role_case_index < seen.size() && !seen[er_row.role_case_index],
                 "OfficialER206 duplicate or unknown original consumption");

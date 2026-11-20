@@ -3735,6 +3735,20 @@ void run_status_case(const std::string& binary, const std::string& scenario, con
     if (budget)
         expected.insert(expected.end(),
                         {"blocked:permission", "working", "blocked:question", "working"});
+    // For osc7501-question the post-question transient working can be coalesced
+    // by the level-sampled OSC channel, so the settled vector is the observed
+    // one rather than the idealized `expected`. Snapshot it once settlement is
+    // proven; the later redraw/control checks then require it to stay identical.
+    std::vector<std::string> question_settled;
+    std::vector<std::string> question_blocked_prefix;
+    if (question) {
+        question_blocked_prefix = expected;  // ends ...blocked:question, working
+        while (!question_blocked_prefix.empty() &&
+               question_blocked_prefix.back() != "blocked:question")
+            question_blocked_prefix.pop_back();
+        require(!question_blocked_prefix.empty(),
+                "osc7501-question expected vector lost its blocked:question milestone");
+    }
     if (cancel) {
         require(terminal.wait([&] {
             return server.parked.load() == 1 &&
@@ -3757,12 +3771,24 @@ void run_status_case(const std::string& binary, const std::string& scenario, con
                 "stopped model error did not report error");
     } else {
         if (!disabled) expected.push_back("done");
+        // osc7501-question finishes with a sub-second working resumption after
+        // blocked:question. OSC 7501 is level-sampled, so that transient working
+        // level can be coalesced straight to done without its own report; an
+        // exact-vector wait would then time out even though the turn completed.
+        // Assert the same level-sampling contract (exact blocked:question prefix
+        // plus a mandatory done) for that one scenario; every other status
+        // scenario keeps the strict vector equality.
+        const auto status_settled = [&](std::string_view output) {
+            return question ? question_recovery_reported(output, question_blocked_prefix)
+                            : status_reports(output) == expected;
+        };
         require(terminal.wait([&] {
             return terminal.idle_response_visible(budget ? "PTY round-budget complete"
                                                          : "PTY status complete") &&
-                   status_reports(terminal.output) == expected;
+                   status_settled(terminal.output);
         }),
                 "whole operation did not finish with the expected terminal status");
+        if (question) question_settled = status_reports(terminal.output);
     }
     const auto bodies = server.request_bodies();
     require(!bodies.empty(), "status fixture saw no real model request");
@@ -3793,10 +3819,25 @@ void run_status_case(const std::string& binary, const std::string& scenario, con
     terminal.input(std::string(status_probe) + "\x1b]7501;?:states=invalid\x1b\\"
                                                "\x1b[<35;74;23M\x1b[<32;74;23M\x1b[<34;74;23M");
     settle_terminal(terminal, 100ms);
-    expect_statuses(terminal, expected);
+    // Non-question scenarios keep the strict vector. For question, the
+    // coalesced vector must remain byte-stable (so synthetic redraws, malformed
+    // replies and mouse motion can neither add nor drop a report) and still
+    // satisfy the level-sampling contract with its mandatory done milestone.
+    const auto expect_final_statuses = [&] {
+        if (!question) {
+            expect_statuses(terminal, expected);
+            return;
+        }
+        const auto now_status = status_reports(terminal.output);
+        require(now_status == question_settled,
+                "OSC 7501 question reports changed after a synthetic redraw/control input");
+        require(question_recovery_reported(terminal.output, question_blocked_prefix),
+                "OSC 7501 question walk lost its blocked:question/done milestone");
+    };
+    expect_final_statuses();
     terminal.input("\x04");
     terminal.verify_exit(0);
-    expect_statuses(terminal, expected);
+    expect_final_statuses();
     require(occurrences(terminal.output, std::string(status_probe)) == 1,
             "OSC 7501 sent more than one capability probe");
     std::ofstream(root / "status-result.txt")

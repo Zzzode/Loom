@@ -1527,3 +1527,24 @@ Attach a short efficiency section to each closure report, answering:
   Practical note: do not run other test binaries concurrently with a full
   ctest on this box — parallel release runs during the matrix window added to
   the scheduling pressure that starves the PTY child's 10 s deadline.
+- **2026-11-21, D-395 F0 — three rework-loop rules from one milestone.**
+  (1) **`ctest` from the repository root is a silent false green.** Running
+  `ctest -R '<test>'` from the repo root prints "No tests were found!!!" and
+  exits 0, so a census command that never executed reads as a pass and the
+  unchanged artifact looks like "no delta". Rule: always run `ctest` from the
+  preset build directory (or pass `--test-dir build/<preset>`), and treat
+  "No tests were found" as a failure signal, not a no-op. Confirm a census
+  run by the artifact mtime/sha changing, not by the exit code alone.
+  (2) **An admission widening without its matching promoted-row ledger is a
+  renderer-only mandatory-gap drift.** The first F0 gate draft also accepted
+  a nested `config.flowchart.htmlLabels`; the one corpus row carrying it
+  then drew while its manifest expectation stayed `source`, producing one
+  `error` row and gaps 48→49. Rule: every gate widening lands in the same
+  change as the exact promoted-row ledger (cohort entry or manifest), and
+  the matrix is re-run before attributing any census delta.
+  (3) **Committed data ledgers must be reproducible by their own tool.**
+  The independent review's r2 caught that adding `selection.superseded_note`
+  by hand made `generate_requirement_cohort.py --check` fail; adding the
+  same key to the generator restored reproducibility. Rule: when annotating
+  a tool-generated ledger, update the generator in the same commit and run
+  its `--check`.

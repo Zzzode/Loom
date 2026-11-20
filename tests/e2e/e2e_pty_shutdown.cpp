@@ -1136,6 +1136,33 @@ printf '\nPTY-SHELL-RECEIVED\n'
         return false;
     }
 
+    // Event-driven render quiescence. Under load, batched wheel/scroll events
+    // flush across several frames after the input returns, so acting on the
+    // first "complete" frame can race a still-pending redraw that shifts the
+    // code rows. Wait until the PTY output stops growing for a run of polls:
+    // every poll is a blocking read on the master fd (a 20 ms backstop only),
+    // so this returns as soon as the app goes quiet rather than sleeping a fixed
+    // time. The deadline is only an upper bound; a healthy run settles in a few
+    // polls.
+    bool wait_render_idle(int quiet_polls = 3, std::chrono::seconds cap = 5s) {
+        const auto deadline = Clock::now() + cap;
+        std::size_t last_size = output.size();
+        int quiet = 0;
+        while (Clock::now() < deadline) {
+            pump();
+            if (exited_) return false;
+            if (output.size() == last_size) {
+                if (++quiet >= quiet_polls) return true;
+            } else {
+                quiet = 0;
+                last_size = output.size();
+            }
+            pollfd descriptor{master_, POLLIN, 0};
+            ::poll(&descriptor, 1, 20);
+        }
+        return false;
+    }
+
     bool installed() const {
         return output.find("\x1b[?1049h") != std::string::npos &&
                output.find("\x1b[?25") != std::string::npos;
@@ -2843,6 +2870,12 @@ void run_selection_case(const std::string& binary, const std::string& scenario,
                 wheel(false);
             }
         }
+        // All wheel events have been sent, but under load their redraws can
+        // still be flushing across frames and shift the code rows (the observed
+        // transient user-message echo). Let the PTY output go quiet before
+        // sampling coordinates so the click is resolved against the same grid
+        // Loom is currently showing. Event-driven; no fixed sleep.
+        require(terminal.wait_render_idle(), "selection view did not settle after scrolling");
         baseline = decode_frame(terminal.latest_frame());
         auto start = baseline.find(reverse ? tail : head);
         if (reverse) start.first += code ? 21 : 3;

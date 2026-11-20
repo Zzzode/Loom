@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Strict metadata-only ER107 join: frozen688 -> prospective795/2145.
+"""Strict metadata-only ER107 join: program identity 688 -> 795; current
+matrix generation baseline 1053 -> 1160 prospective (D-393 refresh).
 
 Reads compact independently owned verdicts only; never opens frame artifacts.
 Default is read-only. --write is gated by independently reviewed exact helper
@@ -34,6 +35,15 @@ need, closed, count = BLOCK.need, BLOCK.closed, BLOCK.count
 encoded, digest, sha = BLOCK.encoded, BLOCK.digest, BLOCK.sha
 file_bytes, load, parse, pinned, fresh = BLOCK.file_bytes, BLOCK.load, BLOCK.parse, BLOCK.pinned, BLOCK.fresh
 BASE, FINAL, ORIGINALS, DIAGNOSTICS, SELECTED = 688, 795, 2145, 593, 107
+# D-393 generation refresh: BASE/FINAL above are the ER107 program identity the
+# compact worker verdicts still publish (base_admitted_originals=688 and the
+# prospective post-join marker 795). They must stay aligned with
+# tests/ui/test_mermaid_official.cpp and never drift with other programs.
+# The whole-matrix formal baseline did move 688 -> 1053 through other reviewed
+# admissions, so only matrix_check's whole-matrix coverage assertions use the
+# current generation (a join would take it to 1160). Never conflate the two.
+MATRIX_FORMAL_BASELINE = 1053
+MATRIX_FORMAL_JOINED = 1160
 SUMMARY, JOIN = "ER107_native_whole_source", "ER107_dual_consumer_join"
 MARKER = "mermaid-er107-dual-admission.json"
 CONTRACT = "ER107/complete-original/v1"
@@ -55,10 +65,15 @@ MANIFEST_SHA = BLOCK.MANIFEST_SHA
 LOCK_SHA = "edbf30ae159e9e9b2bb3ff6a16f74ff0a75df18fb45520627425810c99aa71f1"
 SOURCE_HELPER_SHA = "1593280ffaf27f9b9115a898557734693f58b181b81c64067ff9c399ed3cae46"
 UPSTREAM = "1fb7869866dd619168d840291c9c54b4f129758b"
-# Frozen before any ER107 matrix integration. Excludes only107 original rows,
-# retaining all688 drawing rows, all593 body rows and every other original.
-BASELINE_MATRIX_SHA = "ef0f12e6703ae1a30c6d0f533735d5908ea73b03040b03509fa72db90ce64997"
-RETAINED_ROWS_SHA = "08b9a546ba4dc6b2ab30da52e233c39effed5292f1f1410009b23a52347f8ee3"
+# D-393 generation refresh. The prior pins below were born against matrix
+# ef0f12e6... (commit cf34725a, 2026-10-28) and can no longer match any current
+# matrix after reviewed RFC0033/RFC0034 and family admissions. They are
+# recomputed with the unchanged predicates in matrix_check against the current
+# certified matrix ee743515... (D-391 recertification). Audit trail:
+#   previous BASELINE_MATRIX_SHA = ef0f12e6703ae1a30c6d0f533735d5908ea73b03040b03509fa72db90ce64997
+#   previous RETAINED_ROWS_SHA   = 08b9a546ba4dc6b2ab30da52e233c39effed5292f1f1410009b23a52347f8ee3
+BASELINE_MATRIX_SHA = "ee743515f2e2a68b8595328ed2d101f73430a344e75056707a3e3a59d8dd2ab1"
+RETAINED_ROWS_SHA = "8b13df1f12f02079c9aa29007c098a43a123beb60878a00516ecb9c314e5282f"
 HELPERS = ("tests/support/mermaid_er107_source.hpp", "tests/support/mermaid_er107_authority.hpp",
            "tests/support/mermaid_er107_official.hpp", "tests/support/mermaid_relations_oracle.hpp")
 # Deliberately closed pending Main's independent B3 review receipt. A string
@@ -348,7 +363,8 @@ SUMMARY_KEYS = {"selected", "local_ready", "admitted", "join_required", "base_ad
                 "source_facts_sha256", "terminal_facts_sha256", "foreign_assertions_certified", "native_report_input", "prerequisite_join"}
 ROW_KEYS = {"contract", "source_case_ordinal", "actual_color_cells_file", "local_ready", "admitted", "join_required",
             "foreign_assertions_certified", "native_report_input", "original_manifest_expectation", "original_foreign_obligations", "actual"}
-PRIOR_SELECTED_DEBTS_SHA = "251ac00f32bea5f1e1ece33d7fb0a1f53adf1026cd30b90593251bcbbf96ef2f"
+PRIOR_SELECTED_DEBTS_SHA = "ed8528115209315cde760a8a59803e336f169ee30c2d050ccdc11ee73d881e6c"
+# previous value (cf34725a generation): 251ac00f32bea5f1e1ece33d7fb0a1f53adf1026cd30b90593251bcbbf96ef2f
 
 
 def matrix_check(matrix, official, source, manifest):
@@ -365,11 +381,11 @@ def matrix_check(matrix, official, source, manifest):
     for f in manifest["fixtures"]:
         need(index[f["path"]]["source_sha256"] == f["sha256"], "all original raw SHA bindings")
     retained = [r for r in rows if not (r["track"] == "original" and r["fixture"] in paths)]
-    need(digest(retained) == RETAINED_ROWS_SHA, "all688 drawing/593 body/unrelated source/error rows frozen")
+    need(digest(retained) == RETAINED_ROWS_SHA, "all retained non-selected/body/source/error rows frozen")
     old = [{"path": r["fixture"], "ER_native_whole_source": r["ER_native_whole_source"]} for r in originals if r["fixture"] in paths]
     need(digest(old) == PRIOR_SELECTED_DEBTS_SHA, "selected107 frozen ER206 metadata/foreign debts remain exact")
-    identity(matrix["original_drawing_coverage"], {"drawn_at_240": BASE, "pinned_original_files": ORIGINALS,
-        "original_files_executed": ORIGINALS, "percent_of_pinned_original_files": 100.0 * BASE / ORIGINALS}, "formal688 baseline")
+    identity(matrix["original_drawing_coverage"], {"drawn_at_240": MATRIX_FORMAL_BASELINE, "pinned_original_files": ORIGINALS,
+        "original_files_executed": ORIGINALS, "percent_of_pinned_original_files": 100.0 * MATRIX_FORMAL_BASELINE / ORIGINALS}, "current-generation formal baseline")
     summary = matrix[SUMMARY];closed(summary, SUMMARY_KEYS, "closed unjoined ER107 summary")
     identity(summary, {"selected": SELECTED, "local_ready": SELECTED, "admitted": 0,
         "join_required": True, "base_admitted_originals": BASE, "source_facts_sha256": SOURCE_SHA,
@@ -416,8 +432,8 @@ def patch_matrix(text, source, marker):
             updates[("cases", i, SUMMARY, "join_required")] = False
     need(len(updates) == 2 * SELECTED, "only107 complete-original rows eligible")
     updates.update({(SUMMARY, "admitted"): SELECTED, (SUMMARY, "join_required"): False,
-        ("original_drawing_coverage", "drawn_at_240"): FINAL,
-        ("original_drawing_coverage", "percent_of_pinned_original_files"): 100.0 * FINAL / ORIGINALS})
+        ("original_drawing_coverage", "drawn_at_240"): MATRIX_FORMAL_JOINED,
+        ("original_drawing_coverage", "percent_of_pinned_original_files"): 100.0 * MATRIX_FORMAL_JOINED / ORIGINALS})
     need(JOIN not in before, "never duplicate joined107 metadata")
     edits = [(spans[p][0], spans[p][1], json.dumps(v)) for p, v in updates.items()]
     last = max(b for p, (_, b) in spans.items() if len(p) == 1)
@@ -609,8 +625,8 @@ def synthetic_matrix(source, manifest, official):
     paths = {f["path"] for f in source};facts = {f["path"]: f for f in source}
     actuals = {r["path"]: r for r in official["cases"]}
     matrix = {"manifest_sha256": MANIFEST_SHA, "integrity_errors": [], "cases": [],
-        "original_drawing_coverage": {"drawn_at_240": BASE, "pinned_original_files": ORIGINALS,
-            "original_files_executed": ORIGINALS, "percent_of_pinned_original_files": 100.0 * BASE / ORIGINALS},
+        "original_drawing_coverage": {"drawn_at_240": MATRIX_FORMAL_BASELINE, "pinned_original_files": ORIGINALS,
+            "original_files_executed": ORIGINALS, "percent_of_pinned_original_files": 100.0 * MATRIX_FORMAL_BASELINE / ORIGINALS},
         SUMMARY: {"selected": SELECTED, "local_ready": SELECTED, "admitted": 0, "join_required": True,
             "base_admitted_originals": BASE, "source_facts_sha256": SOURCE_SHA, "terminal_facts_sha256": TERMINAL_SHA,
             "foreign_assertions_certified": 0, "native_report_input": False, "prerequisite_join": BLOCK.SUMMARY}}
@@ -778,7 +794,8 @@ class JoinControls(unittest.TestCase):
             raw = json.dumps(matrix, ensure_ascii=False, indent=2)
             result = patch_matrix(raw, self.source, marker_for(self.source));joined = parse(result)
             self.assertEqual(joined[SUMMARY]["admitted"], 107)
-            self.assertEqual(joined["original_drawing_coverage"]["drawn_at_240"], 795)
+            self.assertEqual(joined["original_drawing_coverage"]["drawn_at_240"],
+                             MATRIX_FORMAL_JOINED)
             self.assertEqual(len(joined["cases"]), 2738)
             with self.assertRaises(ValueError):
                 patch_matrix(result, self.source, marker_for(self.source))

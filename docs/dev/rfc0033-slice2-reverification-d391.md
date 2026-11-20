@@ -55,3 +55,12 @@ NIT-1/NIT-2 均按收口文档 §8.3 指定路径执行：普通测试维护、�
 
 - 本任务零代码 diff：NIT-1/NIT-2 早已在树中，今日只做证据复验；新增物仅本文档（docs-only）。
 - 因代码树相对 D-390 全量零失败收口（`555f89c1`，4606 = 4581 通过 + 25 运行期 SKIP + 0 失败 + 2 编译期 DISABLED）只多了一个 markdown docs commit，被测代码字节相同，重复全量 ctest 不产生新信息；本任务按工程效率规则以针对性门 + 任务 1 的 246s 全量 OfficialMatrix 作为收口证据。十保护文件经验证器逐字确认 byte-identical，无 src/、wire、持久化或契约变更。
+
+## 6. RFC 0033 距总目标还差什么（D-392 任务 3 追加）
+
+完整证据与机械对账见 `docs/dev/er107-join-reactivation-feasibility-d392.md` §9；摘要：
+
+1. **RFC 0033 自身范围已完全闭合，无未登记的同类 whole-null 缺口。** ER 全部 138 个 whole-null pending 行去向可闭合：107 ER107（休眠 join）+ 6 RFC 0033 + 1 RFC 0034（均已 drawn）+ 24 冻结 fallback（138−114=24，实测行数吻合），24 行的 blocker 在 fallback roster 中全部有名分类。
+2. **observed 1239 与 formal 1053 的 186 行差额精确对账**：114 个 ER `expected=pending` 补充绘制（107+7）+ 72 个程序合约零信用绘制（Block58 58 + Mindmap10 10 + MindmapShapes4 4，均 `admitted=0/join_required=true`）；1125−72=1053 与 formal 指标闭合。
+3. **§8.2 之外新登记的关联缺口**：Block58（58）/Mindmap10（10）/MindmapShapes4（4）的 72 行零信用绘制——unjoined 是其 verifier 断言的设计稳态而非故障，但三个 verifier 构成 Shapes4/Mindmap10 → Block58 → ER107 前置链，链上完整矩阵路径仍钉 630/688 时代基线，是 ER107 重启的隐式前置债务；建议纳入同一个 formal-admission 重启 RFC 族统一排序。
+4. **范围外的已知冻结缺口**：906 整源 fallback（44 类，roster 锁定）、48 强制 gap、body 轨道 173 fallback + 48 设计 error；无捷径，逐族走 owned-proof 程序。

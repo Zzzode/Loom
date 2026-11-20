@@ -54,6 +54,19 @@ public:
         server_.new_task_queue = [] { return new httplib::ThreadPool(2); };
         server_.Get(R"(/.*)", [this, metadata = std::move(metadata)](
                                   const httplib::Request& request, httplib::Response& response) {
+            // Count only model metadata endpoint traffic. The engine derives the
+            // metadata path by replacing the messages endpoint's trailing
+            // "messages" with "models", so every real metadata GET ends in
+            // "/models" (including tenant-prefixed base URLs). A host port
+            // scanner can probe the ephemeral localhost port with a root
+            // "GET /" (observed User-Agent persona-ports) during the test
+            // window; it is not a metadata request and must not inflate the
+            // exact-count metadata_requests_/methods_ ledgers. It still gets a
+            // 404 below and is merely excluded from the API ledgers.
+            if (!request.path.ends_with("/models")) {
+                response.status = 404;
+                return;
+            }
             {
                 std::lock_guard lock(mutex_);
                 metadata_requests_.push_back(TransportRequest{

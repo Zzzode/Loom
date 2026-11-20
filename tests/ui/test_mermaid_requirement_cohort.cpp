@@ -2,8 +2,11 @@
 // enforces tools/mermaid/requirement-cohort.json against the live renderer
 // and the pinned manifest. The four description-only-frontmatter requirement
 // originals whose bodies use classDef/class/style/::: statements render
-// natively through the shared ClassDirectStyles seam; every config/theme
-// gated requirement original keeps its whole-source fallback.
+// natively through the shared ClassDirectStyles seam. The D-204 counts are a
+// frozen snapshot: D-066 F0 (D-395) additionally admits eight inert-config
+// rows governed by requirement-f0-cohort.json, so the live partition is
+// 172 total / 24 native / 148 gated; every theme/look/visual-config row keeps
+// its whole-source fallback.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -95,6 +98,27 @@ std::string body_of(const std::string& source) {
     const auto close = source.find("\n---\n", 4);
     return close == std::string_view::npos ? source : source.substr(close + 5);
 }
+// D-066 F0: per-line trailing-space trim plus trailing blank-row strip, so a
+// diagram frame can be compared with its config-free twin's frame.
+std::vector<std::string> trimmed_lines(const CellCapture& capture, int width) {
+    if (capture.chars.size() !=
+        static_cast<std::size_t>(width) * static_cast<std::size_t>(kHeight))
+        return {};
+    std::vector<std::string> lines;
+    lines.reserve(static_cast<std::size_t>(kHeight));
+    for (int y = 0; y < kHeight; ++y) {
+        std::string line;
+        line.reserve(static_cast<std::size_t>(width));
+        for (int x = 0; x < width; ++x)
+            line += capture.chars[static_cast<std::size_t>(y) * static_cast<std::size_t>(width) +
+                                   static_cast<std::size_t>(x)];
+        while (!line.empty() && line.back() == ' ') line.pop_back();
+        lines.push_back(std::move(line));
+    }
+    while (!lines.empty() && lines.back().empty()) lines.pop_back();
+    return lines;
+}
+
 }  // namespace
 
 TEST(MermaidRequirementCohort, LedgerSchemaReviewCountsAndManifest) {
@@ -330,4 +354,113 @@ TEST(MermaidRequirementCohort, ExistingCleanFixturesStillDraw) {
         EXPECT_TRUE(draws(source, kWide)) << rel;
         EXPECT_TRUE(draws(source, kNarrow)) << rel;
     }
+}
+
+// D-066 F0 inert-config cohort. Each row carries description +
+// config{htmlLabels:false} over a body whose config-free -default twin already
+// draws; the projected frame must equal the twin's frame plus the bounded
+// disclosure footer. This is the inertness proof: the accepted key changes
+// nothing but disclosure.
+TEST(MermaidRequirementCohort, F0InertConfigCohortMatchesTwins) {
+    const fs::path ledger_path =
+        fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/requirement-f0-cohort.json";
+    const auto ledger = parse_doc(ledger_path);
+    const auto& root = ledger.root();
+    EXPECT_EQ(root.get_string("schema"), "loom_mermaid_requirement_f0_cohort/v1");
+    EXPECT_EQ(root.get("selection").get_int("row_count"), 8);
+    EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
+    int checked = 0;
+    root.get("rows").iter([&](JsonVal row) {
+        const auto rel = row.get_string("path");
+        const auto twin_rel = row.get_string("twin");
+        const auto source = read_file(kCases / rel);
+        const auto twin = read_file(kCases / twin_rel);
+        ASSERT_TRUE(draws(twin, kWide)) << twin_rel << " (config-free twin must draw)";
+        ASSERT_TRUE(draws(source, kWide)) << rel;
+        auto got = trimmed_lines(capture(source, "mermaid", kWide), kWide);
+        auto expected = trimmed_lines(capture(twin, "mermaid", kWide), kWide);
+        // The fenced-markdown wrapper appends the sentinel line; the
+        // requirement footer is projected inside the diagram, before it.
+        ASSERT_FALSE(expected.empty()) << rel;
+        ASSERT_EQ(expected.back(), "EM_SENTINEL") << rel;
+        expected.pop_back();
+        const bool tail_blank = !expected.empty() && expected.back().empty();
+        if (tail_blank) expected.pop_back();
+        expected.emplace_back();
+        expected.emplace_back("Requirement native projection v1");
+        expected.emplace_back("config.htmlLabels=false -> native text labels; not applied");
+        if (tail_blank) expected.emplace_back();
+        expected.emplace_back("EM_SENTINEL");
+        ASSERT_EQ(got.size(), expected.size()) << rel;
+        for (std::size_t line = 0; line < got.size(); ++line) {
+            ASSERT_EQ(got[line], expected[line])
+                << rel << " line " << line << "\nGOT: " << got[line]
+                << "\nEXP: " << expected[line];
+        }
+        const auto states = load_states(row.get("expected_states"));
+        EXPECT_EQ(draws(source, kWide), states[0] == "drawn") << rel << " wide";
+        EXPECT_EQ(draws(source, kNarrow), states[1] == "drawn") << rel << " narrow";
+        EXPECT_EQ(draws(source, kWide), states[2] == "drawn") << rel << " restored";
+        ++checked;
+    });
+    EXPECT_EQ(checked, 8);
+}
+
+// D-066 F0 boundary: only the documented inert leaves are admitted; every
+// visual/semantic key, every invalid value and an empty config block keep the
+// whole source on fallback.
+TEST(MermaidRequirementCohort, F0InertBoundaryKeepsVisualKeysClosed) {
+    const std::string body =
+        "requirementDiagram\n"
+        "requirement test_req {\n"
+        "id: 1\ntext: the test text.\nrisk: high\nverifymethod: test\n}\n"
+        "element test_entity {\ntype: simulation\n}\n"
+        "test_entity - satisfies -> test_req\n";
+    const auto with = [&](std::string_view config) {
+        return "---\ndescription: inert boundary probe\nconfig:\n" + std::string(config) +
+               "---\n" + body;
+    };
+    EXPECT_TRUE(draws(with("  htmlLabels: false\n"), kWide));
+    EXPECT_TRUE(draws(with("  htmlLabels: true\n"), kWide));
+    EXPECT_TRUE(draws(with("  logLevel: 2\n"), kWide));
+    EXPECT_TRUE(draws(with("  fontFamily: courier\n"), kWide));
+    // A namespaced flowchart.* key is outside this family whitelist.
+    EXPECT_FALSE(draws(with("  flowchart:\n    htmlLabels: false\n"), kWide));
+    // Visual/semantic keys and unsupported values stay whole-source.
+    EXPECT_FALSE(draws(with("  theme: dark\n"), kWide));
+    EXPECT_FALSE(draws(with("  look: handDrawn\n"), kWide));
+    EXPECT_FALSE(draws(with("  layout: elk\n"), kWide));
+    EXPECT_FALSE(draws(with("  securityLevel: strict\n"), kWide));
+    EXPECT_FALSE(draws(with("  flowchart:\n    curve: linear\n"), kWide));
+    EXPECT_FALSE(draws(with("  logLevel: 7\n"), kWide));
+    EXPECT_FALSE(draws(with("  logLevel: info\n"), kWide));
+    EXPECT_FALSE(draws(with("  fontFamily: arial\n"), kWide));
+    EXPECT_FALSE(draws(with("  htmlLabels: maybe\n"), kWide));
+    EXPECT_FALSE(draws(with("  theme: dark\n  htmlLabels: false\n"), kWide));
+    EXPECT_FALSE(draws("---\ndescription: empty config probe\nconfig:\n---\n" + body, kWide));
+    // Duplicates, deeper nesting, extra indentation, tabs, CRLF and a second
+    // config block all stay whole-source.
+    EXPECT_FALSE(draws(with("  htmlLabels: false\n  htmlLabels: true\n"), kWide));
+    EXPECT_FALSE(draws(with("    htmlLabels: false\n"), kWide));
+    EXPECT_FALSE(draws(with("  a:\n    b:\n      htmlLabels: false\n"), kWide));
+    EXPECT_FALSE(draws(with("  flowchart:\n    htmlLabels: false\n  logLevel: 2\n"), kWide));
+    EXPECT_FALSE(draws(with("  htmlLabels: false\nconfig:\n  logLevel: 2\n"), kWide));
+    EXPECT_FALSE(draws(
+        "---\ndescription: tab probe\nconfig:\n\thtmlLabels: false\n---\n" + body, kWide));
+    EXPECT_FALSE(draws("---\r\ndescription: crlf probe\r\nconfig:\r\n  htmlLabels: false\r\n"
+                       "---\r\n" + body,
+                       kWide));
+    // A trailing YAML comment on an inert leaf is accepted like State E2b.
+    EXPECT_TRUE(draws(with("  htmlLabels: false # note\n"), kWide));
+    // The deferred corpus row stays whole-source (no config-free twin).
+    EXPECT_FALSE(draws(read_file(kCases /
+                                 "requirement/nightly-check/"
+                                 "edge-labels-correctly-when-flowchart-htmllabels-is-false-default.mmd"),
+                       kWide));
+    // The footer text is part of the published contract, not just presence.
+    const auto footer = capture(with("  logLevel: 2\n  fontFamily: courier\n"), "mermaid", kWide);
+    EXPECT_NE(footer.text.find("Requirement native projection v1"), std::string::npos);
+    EXPECT_NE(footer.text.find("config.logLevel=2 -> logger only; not applied"), std::string::npos);
+    EXPECT_NE(footer.text.find("config.fontFamily=\"courier\" -> terminal font; not applied"),
+              std::string::npos);
 }

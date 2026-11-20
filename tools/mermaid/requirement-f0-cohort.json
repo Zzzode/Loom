@@ -1,0 +1,105 @@
+{
+  "schema": "loom_mermaid_requirement_f0_cohort/v1",
+  "program": "D-066 F0 inert-key value widening (plan section 3.0: RFC-exempt scoped conformance fix on an established renderer)",
+  "renderer": {
+    "module": "src/ui/visual/mermaid_requirement_impl.cpp",
+    "admission": "a description frontmatter may coexist with a config subtree carrying only inert leaves: htmlLabels (bool), logLevel 0-2, fontFamily courier. Every visual/semantic key, any namespaced key (for example a config.flowchart.* subtree), an invalid value, a duplicate or an empty config block keeps the whole source on fallback.",
+    "footer": "accepted leaves are disclosed in a bounded footer whose first line is 'Requirement native projection v1'; the diagram frame must be identical to the config-free twin's frame"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "requirement fallback rows whose frontmatter is description + config{htmlLabels:false} only and whose config-free -default twin renders natively; twins may differ only in non-semantic body indentation",
+    "row_count": 8,
+    "deferred": [
+      {
+        "path": "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-default.mmd",
+        "reason": "no config-free twin exists, so inertness cannot be proven by frame equality; stays whole-source until it receives its own reviewed frame"
+      }
+    ],
+    "narrow_note": "the disclosure footer makes the projected row exceed the narrow exact-ordinary budget, so narrow_40 stays source_fallback for all eight rows even where the config-free twin draws at 40 columns; the census records the measured disposition, not the twin's"
+  },
+  "review": {
+    "reviewer_agent": "agent:ab8ac804d34779aeb independent fresh-context adversarial review (r1 REQUEST-CHANGES: 2 MAJOR/4 MINOR/5 NIT, all addressed; r2 verified every r1 finding resolved, one remaining MINOR — D-204 generator --check reproducibility — fixed; APPROVE in substance)",
+    "date": "2026-11-21",
+    "verdict": "approved",
+    "note": "r1 dispositions: M1 ledger TEMP approval replaced by this block; M2 fallback roster regenerated only via fallback_attribution --emit (906->898, drift + self-test green); m1 notice byte copy charged; m2 D-204 mirror annotated as frozen snapshot (generator docstring, ledger superseded_note, test header); m3 trailing YAML comment stripped like State E2b; m4 negative coverage extended (duplicate leaf, indent-4, deeper nesting, namespace+leaf, second config, tab, CRLF, deferred fixture, footer text); NITs fixed (comment, linkage/size guard, real moves). Coordinator evidence: requirement cohort 10/10, state E2b 6/6, envelope 35/35, OfficialMatrix drawn 1247 / fallback 898 / error 0 / gaps 48, formal 1061, dual-preset byte gate and ctest closure recorded in the D-395 closure doc."
+  },
+  "rows": [
+    {
+      "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-without-htmllabels-default.mmd",
+      "twin": "requirement/nightly-check/a-not-so-simple-requirement-diagram-default.mmd",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-without-htmllabels-default.mmd",
+      "twin": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-without-htmllabels-default.mmd",
+      "twin": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-default.mmd",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-without-htmllabels-default.mmd",
+      "twin": "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-without-htmllabels-default.mmd",
+      "twin": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-default.mmd",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-without-htmllabels-default.mmd",
+      "twin": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-default.mmd",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-without-htmllabels-default.mmd",
+      "twin": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-default.mmd",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-without-htmllabels-default.mmd",
+      "twin": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-default.mmd",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

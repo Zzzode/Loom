@@ -9160,13 +9160,19 @@ relations_layout(std::string_view source, Work& work, bool class_envelope, bool 
         for (const auto& line : legend)
             result.push_back(line);
     }
-    // RFC 0031 E2b: state non-terminal config disclosure footer. Config-free
-    // state sources carry an empty vector and append nothing (byte-identical).
-    // The footer must be part of `result` BEFORE extract_styled_rows so the
-    // styled-row count matches the final row count; extract treats every row
-    // outside the drawing region (legend and footer alike) as an unstyled run.
-    if (diagram->family == RelationFamily::State && !diagram->state_config_notices.empty()) {
-        const auto& notices = diagram->state_config_notices;
+    // RFC 0031 E2b / D-066 F0: non-terminal config disclosure footer for the
+    // state and requirement families. Config-free sources carry an empty
+    // vector and append nothing (byte-identical). The footer must be part of
+    // `result` BEFORE extract_styled_rows so the styled-row count matches the
+    // final row count; extract treats every row outside the drawing region
+    // (legend and footer alike) as an unstyled run.
+    const std::vector<std::string>* config_notices = nullptr;
+    if (diagram->family == RelationFamily::State)
+        config_notices = &diagram->state_config_notices;
+    else if (diagram->family == RelationFamily::Requirement)
+        config_notices = &diagram->requirement_config_notices;
+    if (config_notices && !config_notices->empty()) {
+        const auto& notices = *config_notices;
         std::size_t bytes = 0u;
         for (const auto& line : notices) {
             if (line.size() > kStateNoticeLineLimit) return {};

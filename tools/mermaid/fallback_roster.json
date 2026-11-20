@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 906,
+  "total_fallback": 898,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -37,7 +37,7 @@
     "family_residual:xychart": 35,
     "family_residual:zenuml": 1,
     "git_cherry_pick": 18,
-    "htmllabels_false": 52,
+    "htmllabels_false": 44,
     "icon_font_glyphs": 29,
     "linkstyle_directive": 12,
     "look_classic_other": 9,
@@ -97,8 +97,8 @@
   "predicate_sufficiency": {
     "classdef_styling": {
       "originals_matching_predicate": 147,
-      "drawn_among_matches": 20,
-      "fallback_among_matches": 127,
+      "drawn_among_matches": 23,
+      "fallback_among_matches": 124,
       "sufficient_blocker": false
     },
     "click_interactive_callback": {
@@ -133,8 +133,8 @@
     },
     "htmllabels_false": {
       "originals_matching_predicate": 220,
-      "drawn_among_matches": 97,
-      "fallback_among_matches": 123,
+      "drawn_among_matches": 105,
+      "fallback_among_matches": 115,
       "sufficient_blocker": false
     },
     "icon_font_glyphs": {
@@ -813,15 +813,7 @@
       "flowchart/visual-check/should-render-subgraphs-with-title-margins-set-lr-and-htmllabels-set-to-false.mmd",
       "flowchart/visual-check/stadium-tall-labels.mmd",
       "mindmap/pr-check/6-should-centre-svg-text-labels-in-all-node-shapes-issue-8387.mmd",
-      "requirement/nightly-check/a-not-so-simple-requirement-diagram-without-htmllabels-default.mmd",
-      "requirement/nightly-check/a-simple-requirement-diagram-without-htmllabels-default.mmd",
       "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-default.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-without-htmllabels-default.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-markdown-text-without-htmllabels-default.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-without-htmllabels-default.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-without-htmllabels-default.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-without-htmllabels-default.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-without-htmllabels-default.mmd",
       "swimlanes/nightly-check/8-query-process-2.mmd",
       "swimlanes/nightly-check/classdef-and-class-statements.mmd",
       "swimlanes/nightly-check/coloured-lanes-redux-color-theme.mmd",

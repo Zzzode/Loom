@@ -179,7 +179,8 @@
       "requirement/pr-check/should-render-a-basic-requirement-diagram-with-relationship-in-classic-look-and-default-theme.mmd",
       "requirement/visual-check/with-a-theme-default.mmd",
       "requirement/visual-check/with-a-title-default.mmd"
-    ]
+    ],
+    "superseded_note": "Frozen D-204 snapshot: the 172/16/156 counts and the gated list predate D-066 F0. Since D-395 the live envelope admits description + config{htmlLabels|logLevel 0-2|fontFamily courier}; the eight htmlLabels rows listed in gated are governed by tools/mermaid/requirement-f0-cohort.json, and the live partition is 172 total / 24 native / 148 gated."
   },
   "review": {
     "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D204 requirement style renderer cohort, 2026-11-14)",

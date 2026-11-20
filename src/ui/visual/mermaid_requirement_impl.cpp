@@ -230,16 +230,86 @@ std::string_view requirement_relation_text(RequirementRelation value) {
     return {};
 }
 
+// D-066 F0: accepted non-terminal leaves are disclosed through the same
+// bounded footer channel the state family uses; the line cap mirrors E2b.
+constexpr std::size_t kRequirementNoticeLineLimit = 96u;
+
+std::string requirement_inert_scalar(std::string_view raw, Work& work) {
+    auto value = er_strip_comment(raw);
+    const auto first = value.find_first_not_of(' ');
+    const auto last = value.find_last_not_of(' ');
+    value = first == std::string_view::npos ? std::string_view{}
+                                            : value.substr(first, last - first + 1u);
+    if (!work.spend(value.size() + 1u)) return {};
+    if (value.size() >= 2u &&
+        ((value.front() == '"' && value.back() == '"') ||
+         (value.front() == '\'' && value.back() == '\'')))
+        value = value.substr(1u, value.size() - 2u);
+    return std::string(value);
+}
+
 std::optional<RequirementEnvelope> requirement_envelope(std::string_view source, Work& work) {
     if (source.size() > kSourceLimit || source.find('\r') != std::string_view::npos ||
         !source.starts_with("---\n") || !work.spend(source.size() * 2u + 96u))
         return {};
     const auto envelope = detail::parse_envelope(source, work);
     if (!envelope || !envelope->has_frontmatter || !envelope->description) return {};
+    // D-066 F0: a description may coexist with a config subtree that carries
+    // only non-terminal (inert) leaves. Any visual/semantic key keeps the
+    // whole source on fallback; an empty config block stays rejected.
+    bool config_seen = false;
+    enum : unsigned { Log = 1u, Font = 2u, Html = 4u };
+    unsigned fields = 0u;
+    std::string log_value, html_value;
     for (const auto& event : envelope->events) {
         if (event.blank || event.comment) continue;
-        if (event.top_level && event.path != "description") return {};
-        if (!event.top_level) return {};
+        if (event.top_level) {
+            if (event.path == "description") continue;
+            if (event.path == "config" && !config_seen) {
+                config_seen = true;
+                continue;
+            }
+            return {};
+        }
+        if (!config_seen) return {};
+        auto text = requirement_inert_scalar(event.value, work);
+        const auto mark = [&](unsigned bit) -> bool {
+            if (fields & bit) return false;
+            fields |= bit;
+            return true;
+        };
+        if (event.namespace_entry) return {};
+        if (event.path == "logLevel" && event.indent == 2) {
+            if (!mark(Log) || (text != "0" && text != "1" && text != "2")) return {};
+            log_value = std::move(text);
+        } else if (event.path == "fontFamily" && event.indent == 2) {
+            if (!mark(Font) || text != "courier") return {};
+        } else if (event.path == "htmlLabels" && event.indent == 2) {
+            if (!mark(Html) || (text != "false" && text != "true")) return {};
+            html_value = std::move(text);
+        } else {
+            return {};
+        }
+    }
+    if (config_seen && fields == 0u) return {};
+    std::vector<std::string> notices;
+    if (fields != 0u) {
+        const auto push = [&](std::string line) -> bool {
+            if (line.size() > kRequirementNoticeLineLimit ||
+                !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+                return false;
+            notices.push_back(std::move(line));
+            return true;
+        };
+        if (!push("Requirement native projection v1")) return {};
+        if ((fields & Log) && !push("config.logLevel=" + log_value + " -> logger only; not applied"))
+            return {};
+        if ((fields & Font) &&
+            !push("config.fontFamily=\"courier\" -> terminal font; not applied"))
+            return {};
+        if ((fields & Html) &&
+            !push("config.htmlLabels=" + html_value + " -> native text labels; not applied"))
+            return {};
     }
     const auto& description = *envelope->description;
     std::string raw(envelope->raw_frontmatter), decoded;
@@ -271,7 +341,8 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
         return {};
     }
     if (!envelope->raw_body.starts_with("requirementDiagram")) return {};
-    return RequirementEnvelope{envelope->raw_body, std::move(raw), std::move(decoded)};
+    return RequirementEnvelope{envelope->raw_body, std::move(raw), std::move(decoded),
+                               std::move(notices)};
 }
 
 bool requirement_same_role_name(const RequirementNode& node, RequirementRole role,
@@ -753,7 +824,7 @@ std::optional<RequirementDiagram> parse_requirement(std::string_view source, Wor
     } else {
         if (!requirement_bare_header(source) || !work.spend(sizeof(RequirementEnvelope) + 64u))
             return {};
-        envelope = RequirementEnvelope{source, {}, {}};
+        envelope = RequirementEnvelope{source, {}, {}, {}};
     }
     if (!work.spend(2u * sizeof(std::vector<RequirementNode>) +
                     2u * sizeof(std::vector<RequirementEdge>) + sizeof(RequirementDiagram) + 128u))
@@ -1068,6 +1139,14 @@ std::optional<RelationDiagram> project_requirement(const RequirementDiagram& par
         if (!append_relationship(result.edges, std::move(projected_edge), work)) return {};
     }
     if (!requirement_project_styles(parsed, result, projected, work)) return {};
+    if (!parsed.envelope.config_notices.empty()) {
+        std::size_t notice_bytes = 0u;
+        for (const auto& line : parsed.envelope.config_notices) notice_bytes += line.size();
+        if (!work.spend(parsed.envelope.config_notices.size() * (sizeof(std::string) + 32u) +
+                        notice_bytes + 64u))
+            return {};
+        result.requirement_config_notices = parsed.envelope.config_notices;
+    }
     return result;
 }
 }  // namespace loom::ui::mermaid::detail

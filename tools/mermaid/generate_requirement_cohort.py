@@ -9,11 +9,20 @@ projects the result onto the shared ClassDirectStyles seam (palette hue
 roles plus a disclosure legend). Body style statements therefore no longer
 block native rendering.
 
-The remaining gate is frontmatter-only, mirroring requirement_envelope:
+The remaining gate is frontmatter-only, mirroring the pre-D-395
+requirement_envelope:
   * a strict column-0 `---` fence whose YAML block carries any top-level key
     besides `description` (config/theme/title/...) stays on whole-source
     fallback;
   * an indented or unclosed fence is malformed and fails closed.
+
+D-066 F0 (D-395) supersedes this classifier for eight inert-config rows: the
+live envelope now also accepts `config:` carrying only htmlLabels (bool),
+logLevel 0-2 or fontFamily courier, and those eight rows are governed by
+tools/mermaid/requirement-f0-cohort.json. The 172/16/156 partition and the
+`gated` list emitted here are therefore the frozen D-204 snapshot, not the
+live partition (172/24/148); regenerating without an F0-aware classifier would
+re-gate the eight rows.
 
 Renderer-free; the durable gtest enforces every state live. Drift guards pin
 the family partition (172 total / 16 native / 156 gated) and the four-row
@@ -226,6 +235,13 @@ def build(repo_root):
             "pre_existing_native_clean_count": _NATIVE_DRAW - _COHORT_ROWS,
             "style_cohort_count": _COHORT_ROWS,
             "gated": sorted(gated),
+            "superseded_note": (
+                "Frozen D-204 snapshot: the 172/16/156 counts and the gated list "
+                "predate D-066 F0. Since D-395 the live envelope admits "
+                "description + config{htmlLabels|logLevel 0-2|fontFamily courier}; "
+                "the eight htmlLabels rows listed in gated are governed by "
+                "tools/mermaid/requirement-f0-cohort.json, and the live partition "
+                "is 172 total / 24 native / 148 gated."),
         },
         "review": build_review(repo_root),
         "counts": {

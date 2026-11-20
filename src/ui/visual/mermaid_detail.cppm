@@ -437,6 +437,9 @@ struct RelationDiagram {
     // RFC 0031 E2b: accepted non-terminal frontmatter leaves on state
     // sources, projected to the user as a bounded disclosure footer.
     std::vector<std::string> state_config_notices;
+    // D-066 F0: the same disclosure channel for accepted non-terminal
+    // requirement frontmatter leaves (htmlLabels, logLevel 0-2, fontFamily).
+    std::vector<std::string> requirement_config_notices;
     std::unique_ptr<ClassDirectStyles> direct_styles;
     std::optional<std::string_view> state_direction(int owner, Work& work) const;
     std::optional<std::size_t> state_text_index(int target, Work& work) const;
@@ -543,6 +546,9 @@ struct RequirementEnvelope {
     // Both physical and decoded forms are kept through typed parse.  They are
     // inert metadata, never a title or text substituted into a box.
     std::string raw_description, decoded_description;
+    // D-066 F0: accepted non-terminal config leaves, projected as a bounded
+    // disclosure footer. Empty for config-free sources (byte-identical path).
+    std::vector<std::string> config_notices;
 };
 
 // D204 requirement style statements. They are collected by the requirement

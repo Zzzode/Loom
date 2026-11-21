@@ -47,4 +47,9 @@ theme 含 base/dark/forest/neutral）、er 5（ER107 冻结权威）、pie 5（�
 - 行集：本轮的判定只用了 `build/release/tests/ui/mermaid-official-matrix.json`
   （`9d925815…`）与 fixture 源码解析，未重新渲染；上一轮 D-402 的渲染探针日志
   `/tmp/reach_probe_d402.log` 仍是 strip-draw 判定的来源（family 行完全一致）。
-- 31 行的完整路径与值分布写在 RFC 0040 的 cohort 表，并由新账本的整组摘要钉死。
+- 31 行的完整路径与取值分布分别落在**新账本**（逐行路径 + 字面量页脚）与其整组摘要中；
+  RFC 0040 只有聚合与取值表，不含逐行路径表。
+- **可达性证据（非门禁）**：`/tmp/reach_probe_d402.log` 中这 31 行均为 `full=0 strip=1`；
+  同一日志中 timeline 7 行、journey 4 行、gantt 2 行为 `strip=0`（body `%%{init}%%`
+  主题指令 / 畸形日期）。该日志是临时产物；逐行结论由新门禁的 twin 证明承担，探针本身
+  不再作为门禁证据。

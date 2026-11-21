@@ -241,6 +241,15 @@ add_test(NAME MermaidFallbackAttribution.RosterIsReproducibleAndTotal
 set_tests_properties(MermaidFallbackAttribution.RosterIsReproducibleAndTotal
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# RFC 0039: the reviewed gitGraph cohort pin is a generator constant; this
+# hermetic check fails if the ledger drifts from it or was hand-edited.
+add_test(NAME MermaidGit0039Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_git_0039_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidGit0039Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # RFC 0030 Flow400 Extra7: metadata-only post-CTest admission join.
 add_test(NAME MermaidFlow400Extra7AdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
     COMMAND "${LOOM_UI_LINT_PYTHON}" -I
@@ -1018,6 +1027,13 @@ add_executable(test_mermaid_requirement_0037_cohort test_mermaid_requirement_003
 target_link_libraries(test_mermaid_requirement_0037_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_requirement_0037_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+add_executable(test_mermaid_gitgraph_0039_cohort test_mermaid_gitgraph_0039_cohort.cpp)
+target_link_libraries(test_mermaid_gitgraph_0039_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_gitgraph_0039_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

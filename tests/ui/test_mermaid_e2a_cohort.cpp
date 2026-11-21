@@ -31,6 +31,7 @@ const fs::path kManifest = kTestsDir / "fixtures/mermaid_official/manifest.json"
 const fs::path kLedger = kTestsDir / "../tools/mermaid/e2a-cohort.json";
 const fs::path kE2bLedger = kTestsDir / "../tools/mermaid/e2b-cohort.json";
 const fs::path kRfc0038Ledger = kTestsDir / "../tools/mermaid/state-0038-cohort.json";
+const fs::path kRfc0039Ledger = kTestsDir / "../tools/mermaid/git-0039-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -262,6 +263,16 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     rfc0038->root().get("rows").iter([&](const JsonVal row) {
         cohort.insert(row.get_string("path"));
     });
+    // RFC 0039 adds the reviewed gitGraph look/theme cohort; the per-row gate is
+    // test_mermaid_gitgraph_0039_cohort. Track the config/init-bearing git rows
+    // it removes so the skipped set can be pinned to the ledger below.
+    auto rfc0039 = json::parse(read_file(kRfc0039Ledger));
+    ASSERT_TRUE(rfc0039.has_value()) << "RFC 0039 cohort ledger must parse";
+    std::set<std::string> git_admitted;
+    rfc0039->root().get("rows").iter(
+        [&](const JsonVal row) { git_admitted.insert(row.get_string("path")); });
+    cohort.insert(git_admitted.begin(), git_admitted.end());
+    std::set<std::string> git_skipped;
     static constexpr const char* kRoots[] = {"git", "state-diagram", "state-diagram-v2"};
     int checked = 0;
     for (const char* root_name : kRoots) {
@@ -269,9 +280,13 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
              it != fs::recursive_directory_iterator(); ++it) {
             if (!it->is_regular_file() || it->path().extension() != ".mmd") continue;
             const auto rel = fs::relative(it->path(), kCases).generic_string();
-            if (cohort.contains(rel)) continue;
             const auto source = read_file(it->path());
             if (!source.starts_with("---\n") || !has_config_or_init(source)) continue;
+            if (cohort.contains(rel)) {
+                if (std::string_view(root_name) == "git" && git_admitted.contains(rel))
+                    git_skipped.insert(rel);
+                continue;
+            }
             // Out-of-E2a-scope frontmatter rows must not be admitted by the
             // routing correction; they keep the same source surface as text.
             EXPECT_TRUE(same_source_surface(capture_cells(source, "mermaid"),
@@ -281,4 +296,9 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
         }
     }
     EXPECT_GT(checked, 100);
+    // Under-listing fails here (an admitted row that really changes surface is
+    // scanned again); over-listing a missing or non-config-bearing path fails
+    // the local set equality above, and an admitted-without-drawing row fails
+    // test_mermaid_gitgraph_0039_cohort.
+    EXPECT_EQ(git_skipped, git_admitted);
 }

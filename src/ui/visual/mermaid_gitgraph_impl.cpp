@@ -945,19 +945,83 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
 
 // RFC 0031 E2a: gitGraph admits a description-only frontmatter envelope.
 // The description is documentation-only: validated and discarded, never
-// rendered. A top-level config key, any body init directive, or any title
-// (gitGraph has no title projection) keeps the whole source.
-std::optional<std::string_view> git_frontmatter_body(std::string_view source, Work& work) {
+// rendered. RFC 0039 adds a `config:` block whose only admitted leaves are the
+// closed `look` table ({neo}) and the closed `theme` palette table; both are
+// validated and disclosed through a footer below the art, never read by the
+// renderer. A namespaced `config.gitGraph.*` subtree, an empty config block,
+// any body init directive, any title (gitGraph has no title projection) or any
+// other key keeps the whole source.
+constexpr std::size_t kGitNoticeLineLimit = 96u;
+
+struct GitEnvelope {
+    std::string_view body;
+    std::vector<std::string> config_notices;
+};
+
+// Mirrors state_scalar_text exactly: parse_envelope already trimmed the value.
+std::string git_inert_scalar(std::string_view raw, Work& work) {
+    auto value = er_strip_comment(raw);
+    if (!work.spend(value.size() + 1u)) return {};
+    if (value.size() >= 2u &&
+        ((value.front() == '"' && value.back() == '"') ||
+         (value.front() == '\'' && value.back() == '\'')))
+        value = value.substr(1u, value.size() - 2u);
+    return std::string(value);
+}
+
+bool git_notice_line(std::vector<std::string>& notices, std::string_view line, Work& work) {
+    if (line.size() > kGitNoticeLineLimit ||
+        !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+        return false;
+    notices.emplace_back(line);
+    return true;
+}
+
+std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) {
     const auto envelope = detail::parse_envelope(source, work);
     if (!envelope || !envelope->has_frontmatter || !envelope->init.empty()) return {};
-    bool description_seen = false;
+    bool description_seen = false, config_seen = false;
+    enum : unsigned { Look = 1u, Theme = 2u };
+    unsigned fields = 0u;
+    std::string look_value, theme_value;
     for (const auto& event : envelope->events) {
         if (event.blank || event.comment) continue;
-        if (!event.top_level) return {};
-        if (event.path == "config") return {};
-        if (event.path == "title") return {};
-        if (event.path != "description") return {};
-        description_seen = true;
+        if (event.top_level) {
+            if (event.path == "description") {
+                if (description_seen) return {};
+                description_seen = true;
+                continue;
+            }
+            if (event.path == "config") {
+                if (config_seen) return {};
+                config_seen = true;
+                continue;
+            }
+            return {};
+        }
+        // RFC 0039 config subtree: indent-2 scalar leaves only, no namespaced
+        // key, no nested map; unknown keys fail closed.
+        if (!config_seen || event.indent != 2 || event.path.find('.') != std::string_view::npos)
+            return {};
+        const auto mark = [&](unsigned bit) -> bool {
+            if (fields & bit) return false;
+            fields |= bit;
+            return true;
+        };
+        const auto scalar = git_inert_scalar(event.value, work);
+        if (event.path == "look") {
+            if (!mark(Look) || scalar != "neo") return {};
+            look_value = scalar;
+        } else if (event.path == "theme") {
+            if (!mark(Theme) ||
+                (scalar != "neo" && scalar != "neo-dark" && scalar != "redux" &&
+                 scalar != "redux-dark" && scalar != "redux-color" &&
+                 scalar != "redux-dark-color"))
+                return {};
+            theme_value = scalar;
+        } else {
+            return {};
+        }
     }
     if (!description_seen || !envelope->description) return {};
     const auto& description = *envelope->description;
@@ -975,20 +1039,57 @@ std::optional<std::string_view> git_frontmatter_body(std::string_view source, Wo
         payload = true;
     }
     if (!payload) return {};
-    return envelope->raw_body;
+    // An empty config block was whole-source before RFC 0039 and stays so.
+    if (config_seen && fields == 0u) return {};
+    GitEnvelope result{envelope->raw_body, {}};
+    if (fields != 0u) {
+        if (!git_notice_line(result.config_notices, "GitGraph native projection v1", work))
+            return {};
+        if ((fields & Look) && !git_notice_line(result.config_notices,
+                                                "config.look=neo -> source node style; not applied",
+                                                work))
+            return {};
+        if ((fields & Theme) &&
+            !git_notice_line(result.config_notices,
+                             "config.theme=" + theme_value +
+                                 " -> colour palette; not applied",
+                             work))
+            return {};
+    }
+    return result;
 }
 
 std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source, Work& work,
                                                         bool use_ascii) {
     std::string_view body = source;
+    std::vector<std::string> notices;
     if (!use_ascii && source.starts_with("---")) {
-        const auto admitted = git_frontmatter_body(source, work);
+        const auto admitted = git_frontmatter(source, work);
         if (!admitted) return {};
-        body = *admitted;
+        body = admitted->body;
+        notices = std::move(admitted->config_notices);
     }
     const auto graph = detail::parse_gitgraph(body, work);
     if (!graph) return {};
-    return layout_gitgraph(*graph, work, use_ascii);
+    auto lines = layout_gitgraph(*graph, work, use_ascii);
+    if (!lines) return {};
+    // RFC 0039: the bounded disclosure footer is part of the returned art
+    // (blank separator, then the header and one line per accepted leaf) so the
+    // height guard and Work budget match the state and flow paths.
+    if (!use_ascii && !notices.empty()) {
+        std::size_t bytes = 0u;
+        for (const auto& line : notices) {
+            if (line.size() > kGitNoticeLineLimit) return {};
+            bytes += line.size();
+        }
+        if (lines->size() + 1u + notices.size() > static_cast<std::size_t>(kHeightLimit) ||
+            !work.spend((1u + notices.size()) * (4u * sizeof(std::string) + 256u) + bytes * 2u +
+                        256u))
+            return {};
+        lines->emplace_back();
+        for (const auto& line : notices) lines->push_back(line);
+    }
+    return lines;
 }
 
 }  // namespace loom::ui::mermaid::detail

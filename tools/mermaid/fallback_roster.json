@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 726,
+  "total_fallback": 714,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -36,13 +36,13 @@
     "family_residual:wardley": 4,
     "family_residual:xychart": 11,
     "family_residual:zenuml": 1,
-    "git_cherry_pick": 18,
+    "git_cherry_pick": 12,
     "htmllabels_false": 44,
     "icon_font_glyphs": 29,
     "linkstyle_directive": 12,
     "look_classic_other": 6,
     "look_handdrawn": 45,
-    "look_neo": 48,
+    "look_neo": 42,
     "multiline_label": 7,
     "securitylevel_directive": 34,
     "special_link_markers": 16,
@@ -127,8 +127,8 @@
     },
     "git_cherry_pick": {
       "originals_matching_predicate": 33,
-      "drawn_among_matches": 15,
-      "fallback_among_matches": 18,
+      "drawn_among_matches": 21,
+      "fallback_among_matches": 12,
       "sufficient_blocker": false
     },
     "htmllabels_false": {
@@ -163,8 +163,8 @@
     },
     "look_neo": {
       "originals_matching_predicate": 349,
-      "drawn_among_matches": 240,
-      "fallback_among_matches": 109,
+      "drawn_among_matches": 252,
+      "fallback_among_matches": 97,
       "sufficient_blocker": false
     },
     "multiline_label": {
@@ -743,12 +743,6 @@
       "zenuml/pr-check/basic-zen-uml-diagram.mmd"
     ],
     "git_cherry_pick": [
-      "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-neo-dark-theme.mmd",
-      "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-neo-theme.mmd",
-      "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-redux-color-theme.mmd",
-      "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-redux-dark-color-theme.mmd",
-      "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-redux-dark-theme.mmd",
-      "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-redux-theme.mmd",
       "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-neo-dark-theme.mmd",
       "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-neo-theme.mmd",
       "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-redux-color-theme.mmd",
@@ -909,12 +903,6 @@
       "venn/pr-check/15-should-render-a-three-set-venn-with-handdrawn-look-and-title.mmd"
     ],
     "look_neo": [
-      "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-neo-dark-theme.mmd",
-      "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-neo-theme.mmd",
-      "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-redux-color-theme.mmd",
-      "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-redux-dark-color-theme.mmd",
-      "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-redux-dark-theme.mmd",
-      "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-redux-theme.mmd",
       "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-neo-dark-theme.mmd",
       "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-neo-theme.mmd",
       "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-redux-color-theme.mmd",

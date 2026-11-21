@@ -1,0 +1,1043 @@
+{
+  "schema": "loom_mermaid_git_0039_cohort/v1",
+  "rfc": 39,
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "gitGraph fallback row whose frontmatter is a folded description envelope whose config block carries only the closed look ({neo}) and theme (six palettes) tables",
+    "roots": [
+      "git"
+    ],
+    "phase": "P1-look-theme",
+    "cohort_pin": "reviewed literal path set (render-defined 12/18 split); one atomic phase admitting both leaves",
+    "cohort_digest": "46d27e97f208ebf508716a1c942a2ae3eec7090572568d70e97cc7d7c31225c5",
+    "twin_rule": "the frame must equal the synthesized config-free twin's frame plus the recorded footer delta, line by line; both sides are rendered through the same sentinel-bearing wrapper",
+    "corpus_twins": "none: no drawn git fixture is body-equivalent to a cohort row, so all 12 rows use the config-free twin",
+    "exclusions": "44 namespaced config.gitGraph.* rows (semantics debt) and 6 theme rows whose bodies exceed the branch/route density stay fallback",
+    "width_policy": "wide_240 admission only; narrow_40 stays 'source'."
+  },
+  "review": {
+    "phases": {
+      "P1-look-theme": {
+        "reviewer_agent": "agent:ab81d8d24feb6dc37 rfc0039-p1-final-review (independent adversarial code review; APPROVE; ran the generator --check, the 5-test gate and the E2a negative, re-derived the 135/18/44 counts, and verified the closed tables, every rejection class, the footer shape against the state/flow paths, the footer-string identity across production/generator/ledger/gate, the drawn-row oracle's sensitivity, and zero changes outside the four files plus three new ones)",
+        "date": "2026-11-22",
+        "verdict": "approved",
+        "note": "The review's two MAJOR items are the post-approval completion steps (record this approval, regenerate, run the matrix, then `--emit` the roster); they are carried out immediately after. Two LOW items applied test-only: the generator now mirrors the renderer's comment-strip/dequote scalar normalization, and a hermetic ctest runs the generator `--check` so the reviewed cohort pin is enforced automatically. Two NITs applied: the E2a negative comment now describes the local over-listing guard, and `git_inert_scalar` matches `state_scalar_text` exactly."
+      }
+    },
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 12,
+    "predicted_draw": 12,
+    "family": 135,
+    "shape_class": 18,
+    "namespaced": 44
+  },
+  "excluded": [
+    {
+      "path": "git/nightly-check/1-should-render-a-simple-gitgraph-with-commit-on-main-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/10-should-render-a-simple-gitgraph-with-horizontal-labels.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/11-should-render-a-simple-gitgraph-with-cherry-pick-commit.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/11-should-render-a-simple-gitgraph-with-two-cherry-pick-commit.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/12-should-render-commits-for-more-than-8-branches.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/13-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/1433-should-render-a-simple-gitgraph-with-a-title.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/15-should-render-a-simple-gitgraph-with-commit-on-main-branch-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/16-should-render-a-simple-gitgraph-with-commit-on-main-branch-with-id-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/18-should-render-a-simple-gitgraph-with-tags-committypes-on-main-branch-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/19-should-render-a-simple-gitgraph-with-two-branches-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/2-should-render-a-simple-gitgraph-with-commit-on-main-branch-with-id.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/20-should-render-a-simple-gitgraph-with-two-branches-and-merge-commit-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/21-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/24-should-render-a-simple-gitgraph-with-horizontal-labels-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/25-should-render-a-simple-gitgraph-with-cherry-pick-commit-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/26-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/27-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/28-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/29-should-render-commits-for-more-than-8-branches-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/31-should-render-a-simple-gitgraph-with-a-title-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/32-should-render-a-simple-gitgraph-overlapping-commits-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/33-should-render-a-simple-gitgraph-overlapping-commits.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/34-should-render-a-simple-gitgraph-with-two-branches-from-same-commit.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/35-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/36-should-render-gitgraph-with-branch-that-is-not-used-immediately.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/37-should-render-gitgraph-with-branch-that-is-not-used-immediately-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/38-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/39-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/4-should-render-a-simple-gitgraph-with-tags-committypes-on-main-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/40-should-render-a-simple-gitgraph-with-cherry-pick-merge-commit.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/41-should-render-default-gitgraph-with-parallelcommits-set-to-false.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/42-should-render-gitgraph-with-parallel-commits.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/43-should-render-gitgraph-with-parallel-commits-vertical-branch.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/44-should-render-gitgraph-with-unconnected-branches-and-no-parallel-commits.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/45-should-render-gitgraph-with-unconnected-branches-and-parallel-commits.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/46-should-render-gitgraph-with-merge-back-and-merge-forward.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/46-should-render-gitgraph-with-unconnected-branches-and-parallel-commits-vertical-branch.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/48-should-render-gitgraph-with-merge-on-a-new-branch-vertical-branch.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/49-should-render-gitgraph-with-merge-on-a-new-branch-vertical-branch.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/5-should-render-a-simple-gitgraph-with-two-branches.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/50-should-render-a-simple-gitgraph-with-commit-on-main-branch-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/51-should-render-a-simple-gitgraph-with-commit-on-main-branch-with-id-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/53-should-render-a-simple-gitgraph-with-tags-committypes-on-main-branch-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/54-should-render-a-simple-gitgraph-with-two-branches-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/55-should-render-a-simple-gitgraph-with-two-branches-and-merge-commit-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/56-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/57-should-render-a-simple-gitgraph-with-more-than-8-branches-overriding-variables-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/58-should-render-a-simple-gitgraph-with-rotated-labels-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/6-should-render-a-simple-gitgraph-with-two-branches-and-merge-commit.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/60-should-render-a-simple-gitgraph-with-cherry-pick-commit-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/61-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/62-should-render-a-gitgraph-with-cherry-pick-commit-with-no-tag-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/63-should-render-a-simple-gitgraph-with-two-cherry-pick-commit-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/64-should-render-commits-for-more-than-8-branches-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/65-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/66-should-render-a-simple-gitgraph-with-a-title-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/68-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/69-should-render-gitgraph-with-branch-that-is-not-used-immediately-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/7-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/70-should-render-gitgraph-with-branch-and-sub-branch-neither-of-which-used-immediately-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/71-should-render-gitgraph-with-parallel-commits-vertical-branch-bottom-to-top.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/72-should-render-gitgraph-with-unconnected-branches-and-parallel-commits-vertical-branch-bottom-to-top.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/73-should-render-a-simple-gitgraph-with-three-branches-and-tagged-merge-commit-using-switch-instead-of-checkout.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/74-should-render-commits-for-more-than-8-branches-using-switch-instead-of-checkout.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/75-should-render-a-gitgraph-with-multiple-tags-on-a-merge-commit-on-bottom-to-top-orientation.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/76-should-render-a-bt-gitgraph-with-branch-ordering-and-merge-from-right-branch-regression-6593.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/76-should-render-a-gitgraph-with-multiple-tags-on-a-merge-commit-on-left-to-right-orientation.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/77-should-render-a-bt-gitgraph-with-three-branches-and-multiple-merges-regression-6593.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/77-should-show-branch-lines-when-showbranches-is-true-default.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/78-should-hide-branch-lines-when-showbranches-is-false.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/78-should-render-a-bt-gitgraph-with-cherry-pick-regression-6593.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/79-should-render-a-bt-gitgraph-with-two-cherry-picks-regression-6593.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/79-should-show-commit-labels-when-showcommitlabel-is-true-default.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/8-should-render-a-simple-gitgraph-with-more-than-8-branches-overriding-variables.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/80-should-hide-commit-labels-when-showcommitlabel-is-false.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/81-should-show-both-branches-and-commit-labels-when-both-directives-are-true-default.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/82-should-hide-both-branches-and-commit-labels-when-both-directives-are-false.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/83-should-show-branch-lines-with-merge-commits-when-showbranches-is-true.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/84-should-hide-branch-lines-with-merge-commits-when-showbranches-is-false.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/85-should-show-commit-labels-with-tags-when-showcommitlabel-is-true.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/86-should-hide-commit-labels-with-tags-when-showcommitlabel-is-false.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/87-should-show-branches-with-tb-orientation-when-showbranches-is-true.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/88-should-hide-branches-with-tb-orientation-when-showbranches-is-false.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/89-should-show-commit-labels-with-bt-orientation-when-showcommitlabel-is-true.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/9-should-render-a-simple-gitgraph-with-rotated-labels.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/nightly-check/90-should-hide-commit-labels-with-bt-orientation-when-showcommitlabel-is-false.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/91-should-render-with-rotatecommitlabel-set-to-true.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/92-should-render-with-rotatecommitlabel-set-to-false.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/93-should-render-with-parallelcommits-set-to-true.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/94-should-render-with-parallelcommits-set-to-false.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/95-should-render-with-custom-mainbranchname.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/96-should-render-with-custom-mainbranchorder.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/nightly-check/97-should-render-branch-labels-with-multi-line-text-aligned-with-background-in-lr-layout.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/pr-check/11-should-render-a-gitgraph-with-cherry-pick-commit-with-custom-tag.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/pr-check/17-should-render-a-simple-gitgraph-with-different-committypes-on-main-branch-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/pr-check/22-should-render-a-simple-gitgraph-with-more-than-8-branches-overriding-variables-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/pr-check/23-should-render-a-simple-gitgraph-with-rotated-labels-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/pr-check/3-should-render-a-simple-gitgraph-with-different-committypes-on-main-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/pr-check/30-should-render-a-simple-gitgraph-with-three-branches-custom-merge-commit-id-tag-type-vertical-branch.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/pr-check/47-should-render-gitgraph-with-merge-back-and-merge-forward-vertical-branch.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/pr-check/52-should-render-a-simple-gitgraph-with-different-committypes-on-main-branch-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/pr-check/59-should-render-a-simple-gitgraph-with-horizontal-labels-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/pr-check/67-should-render-a-simple-gitgraph-overlapping-commits-vertical-branch-bottom-to-top.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder or another config shape"
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-neo-dark-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-neo-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-redux-color-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-redux-dark-color-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-redux-dark-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-redux-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-neo-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body branch/route density"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-neo-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body branch/route density"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-redux-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body branch/route density"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-redux-dark-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body branch/route density"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-redux-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body branch/route density"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-redux-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body branch/route density"
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-neo-dark-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-neo-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-redux-color-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-redux-dark-color-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-redux-dark-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-redux-theme.mmd",
+      "class": "namespaced config.gitGraph.*",
+      "reason": "semantic gitGraph settings stay closed"
+    }
+  ],
+  "rows": [
+    {
+      "path": "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-neo-dark-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "aed717169c403e3b1263600b4e8daa22758c47dffdf3abf75fd96cd8be35a830",
+      "manifest_sha256": "aed717169c403e3b1263600b4e8daa22758c47dffdf3abf75fd96cd8be35a830",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-neo-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "d471a99ee199040261b38117f2daa7354ebd8c78d6e75b92798563cee5850056",
+      "manifest_sha256": "d471a99ee199040261b38117f2daa7354ebd8c78d6e75b92798563cee5850056",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-redux-color-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "8ab522b70252d0530375820d4a40d045d83e9c3df4823a25fe1aa59fce7b7c9f",
+      "manifest_sha256": "8ab522b70252d0530375820d4a40d045d83e9c3df4823a25fe1aa59fce7b7c9f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-redux-dark-color-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "8c441424ecbe715262bedbd86e35d642140f3668b0343efa8d0830c8a5c06ec5",
+      "manifest_sha256": "8c441424ecbe715262bedbd86e35d642140f3668b0343efa8d0830c8a5c06ec5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-redux-dark-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "a34ad737192262fdb819a215210d9e4f698988af50e532c75a5c7d628b26ba33",
+      "manifest_sha256": "a34ad737192262fdb819a215210d9e4f698988af50e532c75a5c7d628b26ba33",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "git/visual-check/all-commit-types-id-tag-and-merge-override-attributes-with-cherry-pick-tag-lr-neo-look-redux-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "12120b532a8f9565a627c59aa45fa6f7a3226a0fb6dbc3237c91cb5732822a80",
+      "manifest_sha256": "12120b532a8f9565a627c59aa45fa6f7a3226a0fb6dbc3237c91cb5732822a80",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-neo-dark-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "ee56f1e234f2af4dd0d57a6ce07301a41df8b73ad1032ec7f3ca3905cb8ce7e8",
+      "manifest_sha256": "ee56f1e234f2af4dd0d57a6ce07301a41df8b73ad1032ec7f3ca3905cb8ce7e8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-neo-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "b4c3128bb1ed6dc3e6c72965eb26405a19d317fe9e62d285539fba7ee433c541",
+      "manifest_sha256": "b4c3128bb1ed6dc3e6c72965eb26405a19d317fe9e62d285539fba7ee433c541",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-redux-color-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "bf5bada85ceeea9f9a365a804136970c54516c4cbf5d826fad67db0d3e64e97f",
+      "manifest_sha256": "bf5bada85ceeea9f9a365a804136970c54516c4cbf5d826fad67db0d3e64e97f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-redux-dark-color-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "8e66fdbedbd9435bf5023434a71174132806b8e6e0f6a14edefd09439cd6f2e8",
+      "manifest_sha256": "8e66fdbedbd9435bf5023434a71174132806b8e6e0f6a14edefd09439cd6f2e8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-redux-dark-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "c6f71565a887c05b9848ce9f11816448bcd821a3f511d395ce9de16018b14fa1",
+      "manifest_sha256": "c6f71565a887c05b9848ce9f11816448bcd821a3f511d395ce9de16018b14fa1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "git/visual-check/showbranches-false-and-showcommitlabel-false-hiding-branch-lines-and-commit-labels-lr-neo-look-redux-theme.mmd",
+      "family": "git",
+      "phase": "P1-look-theme",
+      "sha256": "1f04f07b652e48d22a48246ec712b65f7cb087849cfd9db89445c87e8aa0d72d",
+      "manifest_sha256": "1f04f07b652e48d22a48246ec712b65f7cb087849cfd9db89445c87e8aa0d72d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0039 gitGraph look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    }
+  ]
+}

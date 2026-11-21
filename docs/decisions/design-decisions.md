@@ -4364,3 +4364,42 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   (`kManifestSha256` and its duplicate pins stay byte-immutable) and never by
   editing the E2b ledger. Both leaves land in one atomic phase because every
   `look` row also carries `theme`; rollback is one revert.
+## gitGraph look and theme admission (RFC 0039)
+
+- **Envelope:** the gitGraph description envelope (RFC 0031 E2a) may
+  additionally carry a `config:` block whose only admitted leaves are a closed
+  `look` table (`neo`) and a closed `theme` palette table (`neo`, `neo-dark`,
+  `redux`, `redux-dark`, `redux-color`, `redux-dark-color`). Both are
+  corpus-bounded: all 30 git look/theme rows carry `look: neo`, and the six
+  palettes are exactly the corpus. A namespaced `config.gitGraph.*` subtree
+  (`mainBranchName`, `parallelCommits`, `showBranches`, `showCommitLabel`, …)
+  stays closed — those change branch naming, label visibility and commit
+  ordering, i.e. semantics, not inert style tables.
+- **Disclosure footer:** `GitGraph native projection v1` plus one line per
+  accepted leaf, appended below the art with a blank separator, in the fixed
+  order `look` then `theme`. The header is capitalised like the three existing
+  family headers and deliberately not spelled `gitGraph`: three consumers
+  (`test_mermaid_e2a_cohort.cpp`, `test_mermaid_gitgraph_semantics.cpp`,
+  `tests/e2e/e2e_pty_shutdown.cpp`) use `find("gitGraph") == npos` as their
+  native-drawn mnemonic, so a lowercase header would read as a fallback.
+  Composition, the 96-byte line cap, the emission budget and the
+  `art + 1 + n <= kHeightLimit` guard mirror the state and flow paths.
+- **Inertness proof:** the renderer never reads `look` or `theme`. The proof is
+  a per-row twin gate (frame equals the config-free twin plus the recorded
+  footer delta) for the 12 promoted rows, plus a drawn-row frame-identity
+  oracle: every git row the E2a ledger already draws must render
+  cell-identically with and without its frontmatter, so a footer or blank
+  separator emitted merely because a frontmatter is present is a hard failure.
+  No drawn git fixture is body-equivalent to a cohort row, so all 12 rows use
+  the synthesized config-free twin.
+- **The 12-row cohort is render-defined:** the family's non-namespaced
+  look/theme shape class has 18 rows; six exceed the body branch/route density
+  and do not draw even with the frontmatter stripped. The cohort is therefore a
+  reviewed literal path set pinned in `generate_git_0039_cohort.py` with one
+  whole-cohort digest; the generator asserts only source-derivable counts
+  (family 135, cohort 12, shape class 18, namespaced 44) and a hermetic ctest
+  runs its `--check`.
+- **Promotion and rollback:** rows are promoted through the sibling ledger
+  `tools/mermaid/git-0039-cohort.json`, never through the pinned manifest and
+  never by editing the E2a ledger. Both leaves land in one atomic phase;
+  rollback is one revert.

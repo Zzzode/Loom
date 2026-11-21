@@ -441,6 +441,36 @@ Attach a short efficiency section to each closure report, answering:
 
 ## Retro log
 
+- **2026-11-22, RFC 0039 gitGraph family (`66d0c942`).** +12 whole draws in one
+  atomic phase; census 1419/726 → 1431/714, formal 1233 → 1245, gaps 48,
+  dual-preset byte-identical at `9d925815`; the full debug ctest was green on
+  one complete run (4631/4631, CTEST_EXIT=0, 268 s). No rework loop after the
+  design gate. What to keep:
+  1. *Specify the regression oracle before the code, not after.* The gate's
+     fifth test began as an unverifiable "E2a byte-identity"; the PRR showed a
+     cell-surface comparison cannot see a lone trailing blank row and required
+     a full untrimmed surface equality between each drawn row and the same
+     source with its frontmatter stripped. Cost of catching it in review: one
+     round. Cost of shipping the original: the exact regression the RFC exists
+     to prevent would have passed green.
+  2. *A "native-drawn" mnemonic is a cross-module contract.* Three gates use
+     `find("gitGraph") == npos`; a lowercase footer header would have made 12
+     promoted rows read as fallbacks in any gate reusing it. Rule: before
+     emitting a new user-visible footer string, grep the tree for existing
+     substring predicates over the same text.
+  3. *Automate the reviewed pin.* The cohort digest lives in the generator as a
+     reviewed constant; until this phase it was enforced only by a manual
+     `--check`. A hermetic `add_test` running `--check` closes that gap for
+     free (`MermaidGit0039Cohort.GeneratorIsReproducible`). Follow-up debt: the
+     0037 and 0038 generators still rely on the manual step.
+  4. *Probe predicates must match the census predicate.* The D-402 probe's
+     first version compared `Screen::ToString()` (foreground colours included)
+     and reported 318 fallback rows as "drawn"; the matrix compares character +
+     background. Rule: reuse the matrix predicate (cell surface) for any
+     "does it draw" measurement.
+  5. *Release-primary again:* release matrix 27 s vs debug 239 s for a
+     byte-identical artifact; the mermaid label ran once in debug (1444 tests,
+     3530 s) and the full suite once at closure.
 - **2026-11-22, RFC 0038 state look/theme family (`648d7035`).** +28 whole
   draws in one atomic phase; census 1391/754 → 1419/726, formal 1205 → 1233,
   gaps 48, dual-preset byte-identical at `59cf7de8`. The phase ran front-to-back

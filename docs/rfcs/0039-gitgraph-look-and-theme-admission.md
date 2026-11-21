@@ -1,7 +1,7 @@
 ---
 rfc: 39
 title: gitGraph look and theme admission
-status: implementable
+status: implemented
 owners: "@Zzzode"
 reviewers: ["agent:acde9271b5b1810a9 rfc0039-design-review (r1 REQUEST-CHANGES -> r2 APPROVE-TO-ACCEPT)", "agent:ab2865cf0bfe0c5df rfc0039-prr (r1 REQUEST-CHANGES -> r2 APPROVE-TO-IMPLEMENT)"]
 created: 2026-11-22
@@ -245,7 +245,7 @@ is reused as-is.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `look` + `theme` admission | 12 rows (2 bodies × 6 palettes) | proposed | git 58→**70** drawn / 77→**65** fallback; global 1419→**1431** / 726→**714**; formal `drawn_at_240` **1233→1245**; gaps 48, integrity 0; E2a cohort gate and its negative green; release matrix sha recorded |
+| P1 | `look` + `theme` admission | 12 rows (2 bodies × 6 palettes) | done | git 58→**70** drawn / 77→**65** fallback; global 1419→**1431** / 726→**714**; formal `drawn_at_240` **1233→1245**; gaps 48, integrity 0; E2a cohort gate and its negative green; release matrix sha recorded |
 
 Phase-start re-derivations (never assume): the gate's exact test count and the
 `ctest --preset debug -N` total (4627 + N); and every row's `narrow_40` disposition, which
@@ -316,10 +316,12 @@ additive; the roster is regenerated, never hand edited.
 ## Testing and verification plan
 
 - New `tests/ui/test_mermaid_gitgraph_0039_cohort.cpp` (registered in
-  `tests/ui/CMakeLists.txt`), expected **5** tests (ledger pins, twin inertness, look
-  table, theme table, drawn-row frame-identity); `ctest --preset debug -N` reports **4627**
-  today, so the closure total is **4632** if the gate lands as five — re-derive the exact
-  count at phase start and record it, never assume it.
+  `tests/ui/CMakeLists.txt`), **5** gtest cases (ledger pins, twin inertness, look table,
+  theme table, drawn-row frame-identity), plus one hermetic ctest
+  (`MermaidGit0039Cohort.GeneratorIsReproducible`) running the generator `--check` so the
+  reviewed cohort pin is enforced without a manual step. `ctest --preset debug -N`
+  reported **4627** at phase start, so the closure total is **4633** (4627 + 5 + 1);
+  re-derive it at closure, never assume it.
 - Edited `tests/ui/test_mermaid_official.cpp` (matrix branch + reason string) and
   `tests/ui/test_mermaid_e2a_cohort.cpp` (exclusion set + skipped-set equality).
 - Targeted `ctest -L mermaid` in the phase; `generate_git_0039_cohort.py --check`;
@@ -374,3 +376,5 @@ additive; the roster is regenerated, never hand edited.
 | Date | Phase | Change | Commit |
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | — |
+| 2026-11-22 | P1 | Both closed tables land in `git_frontmatter` (two leaves, notice vector, footer appended inside `gitgraph_layout` with the state/flow budget and height guard); reviewed 12-row literal cohort with one whole-cohort digest; generator + sibling ledger + 5-test twin/identity gate + a hermetic `--check` ctest; matrix branch; E2a negative extended (git-root skipped set == ledger, 120 remain). Reviewed by `agent:ab81d8d24feb6dc37` (APPROVE; LOW/NIT items applied test-only and in the generator). Family 58/77 -> 70/65, global 1419/726 -> 1431/714, formal `drawn_at_240` 1233 -> 1245, gaps 48, integrity 0, dual-preset sha `9d925815` | `66d0c942` |
+| 2026-11-22 | — | RFC marked `implemented`: the single phase is done, full debug ctest green on one complete run (4631/4631, CTEST_EXIT=0), dual-preset byte gate identical, closure record `docs/dev/d403-gitgraph-rfc0039-closure.md` | — |

@@ -142,3 +142,36 @@ make, because the largest family has no clean slice:
 - (C) measure the other families' clean config slices first (requirement 148,
   git 77, state-v2 70) and pick the largest *clean* bucket rather than the
   largest raw family.
+
+## 6. Cross-family measurement and the selected next family
+
+After withdrawing RFC 0036, the same config-strip probe was run across the
+next families (fallback rows, exclude the 48 E6c `official_matrix` gaps):
+
+| family | fallbacks | draws after stripping the frontmatter |
+|---|---|---|
+| requirement | 148 | **146** |
+| git | 77 | 50 |
+| state-diagram-v2 | 70 | 25 |
+| swimlanes | 46 | 46 (but lane topology is flattened — wrong geometry) |
+
+Key census of the requirement rows: `look` 121 (neo 96, handDrawn 24),
+`theme` 97 (neo/neo-dark/redux palettes), `layout: elk` 24, `description` 146,
+top-level `htmlLabels: false` 16. The git rows need `gitGraph.parallelCommits`
+and commit-label toggles — ordering/geometry semantics; the swimlane rows need
+the swimlane renderer.
+
+**Selected family: requirement (148), clean slice ≈122 rows** (146 minus the
+24 `layout: elk` rows). This is five times flowchart's clean slice and needs
+no new body geometry.
+
+The decisive design question is `look`/`theme`. The justification that makes
+them admissible under the RFC 0035 OQ-1 precedent is **frame identity**: the
+terminal never replicates Mermaid's SVG stroke style for any row (every
+drawn row already uses Loom's own glyph style), so a `look` or palette value
+can only be admitted if the projected frame is byte-identical with and without
+it. That is testable per row (twin equality), unlike "book the geometry as a
+projection", which OQ-1 rejected. The next RFC therefore proposes
+validate-and-ignore admission for the observed `look`/palette values plus the
+inert envelope keys, with frame-identity gates; `layout: elk` and every
+swimlane/gitGraph/semantic toggle stay capability debt.

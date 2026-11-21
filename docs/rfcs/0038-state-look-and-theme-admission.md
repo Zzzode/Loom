@@ -24,7 +24,7 @@ promoted in **one atomic phase** (both leaves: 20 `look`+`theme` rows and 8
 theme-only rows), family **80 drawn / 65 fallback**, global **1419 / 726**.
 
 The mechanism is the RFC 0037 one, second application: closed tables, per-row
-twin gates, a reviewed cohort ledger, per-phase review records. The state
+twin gates, a reviewed cohort ledger, and one generator-authored review record. The state
 envelope already accepts `description`, `config` (`logLevel`, `fontFamily`,
 `securityLevel`), and `title` (projected through the shared relation-title
 seam), so this RFC adds two leaves and two footer lines — no new geometry, no
@@ -95,7 +95,7 @@ footer.
 
 ## Goals
 
-- **G1.** Promote exactly the measured 28-row cohort (P1 20, P2 8).
+- **G1.** Promote exactly the measured 28-row cohort (20 `look`+`theme`, 8 theme-only).
 - **G2.** Fail closed: unknown or out-of-table values, duplicates, deeper
   nesting, a namespaced `state.*` subtree, `layout: elk`, non-folded or
   tab-bearing descriptions and every body-level rejection keep the whole
@@ -123,7 +123,7 @@ footer.
 
 ## Proposal
 
-### 1. Closed value tables (P1 `look`, P2 `theme`)
+### 1. Closed value tables (`look` and `theme`, one phase)
 
 `state_source_envelope` (`src/ui/visual/mermaid_relations_core_impl.cpp`)
 gains two leaves beside `logLevel`/`fontFamily`/`securityLevel`, at indent 2
@@ -147,8 +147,8 @@ State native projection v1                     (existing header text)
 config.fontFamily="courier" -> ...             (existing)
 config.logLevel=N -> ...                       (existing)
 config.securityLevel="loose" -> ...            (existing)
-config.look=neo -> source node style; not applied      (new, P1)
-config.theme=redux-color -> colour palette; not applied (new, P2)
+config.look=neo -> source node style; not applied      (new)
+config.theme=redux-color -> colour palette; not applied (new)
 ```
 
 The exact header text is whatever `kStateNoticeHeader` already is; this RFC
@@ -158,14 +158,16 @@ does not change it.
 
 - Ledger `tools/mermaid/state-0038-cohort.json` (schema
   `loom_mermaid_state_0038_cohort/v1`), a **sibling** of `e2b-cohort.json`:
-  the E2b ledger stays read-only for this RFC (the RFC 0035 E2c lesson).
+  the E2b ledger stays read-only for this RFC (the RFC 0035 E2c lesson). Its
+  28 rows carry the single phase's review record.
 - Generator `tools/mermaid/generate_state_0038_cohort.py`: renderer-free,
   `--check` reproducible, population = the whole state family by source shape
-  (never the shrinking roster), `ENABLED_PHASES`, classification priority
-  `look` before `theme` (identical to RFC 0037; no title rows exist here),
-  per-phase path+sha digests, review records authored in the generator,
-  denominators `145 = 52 drawn + 28 cohort + 4 elk + 4 useMaxWidth + 1
-  description-tab + 56 body` pinned.
+  (never the shrinking roster), one `ENABLED_PHASES` entry, one whole-cohort
+  path+sha digest as the `--check` pin (a per-phase split digest and a
+  `look`-before-`theme` priority are vestigial with a single phase and are not
+  needed), review records authored in the generator, denominators
+  `145 = 52 drawn + 28 cohort + 4 elk + 4 useMaxWidth + 1 description-tab + 56
+  body` pinned.
 - Gate `tests/ui/test_mermaid_state_0038_cohort.cpp`: the same six
   anti-false-green assertions as RFC 0037 (twin must draw, native predicate,
   per-width ledger equality, determinism, exact footer composition, frozen
@@ -177,7 +179,7 @@ does not change it.
   `expected_states` (Journey style), never the xychart hardcoded triple, with
   the reason string `RFC-0038 state look/theme reviewed cohort`. The E2b branch
   is untouched.
-- Roster migrated with `fallback_attribution.py --emit` in each phase commit.
+- Roster migrated with `fallback_attribution.py --emit` in the phase commit.
 
 ### 3. Named cross-module couplings
 
@@ -262,8 +264,8 @@ ledger is additive; the roster is regenerated, never hand edited.
   `tests/ui/CMakeLists.txt`), expected 5 tests; full ctest baseline 4620 +
   those tests, no deletions.
 - Edited `tests/ui/test_mermaid_official.cpp` (matrix branch + reason string).
-- Targeted `ctest -L mermaid` per phase; `generate_state_0038_cohort.py
-  --check`; release-preset matrix per phase; dual-preset gate at closure.
+- Targeted `ctest -L mermaid` in the phase; `generate_state_0038_cohort.py
+  --check`; release-preset matrix in the phase; dual-preset gate at closure.
 - Known flakes pre-existing (`ServerMain.DirectConnect*`, `E2E_Pty_*`).
 
 ## Documentation impact
@@ -287,9 +289,9 @@ ledger is additive; the roster is regenerated, never hand edited.
 
 - `provisional` → `accepted`: independent agent-run design review.
 - `accepted` → `implementable`: independent PRR with a different lens.
-- Phases: P1, P2, each atomic with its own review record.
-- Graduation: per-phase targeted census; closure runs full ctest once and the
-  dual-preset byte gate.
+- Phases: **one** atomic phase, with its review record.
+- Graduation: the phase's targeted census; closure runs full ctest once and
+  the dual-preset byte gate.
 
 ## Review History
 
@@ -297,6 +299,7 @@ ledger is additive; the roster is regenerated, never hand edited.
 |---|---|---|---|---|
 | 2026-11-21 | — | — | draft | Created provisional from the D-400 reachability measurement |
 | 2026-11-21 | r1 | `agent:aa8df56e34f50b615` (independent general-purpose, own render probe + static re-derivation) | REQUEST-CHANGES | **B-1** the phase split was arithmetically impossible: every `look` row also carries `theme`, so a look-first P1 would promote 0 rows → **accepted**: rephased to one atomic phase admitting both leaves for all 28 rows; rollback and the PRR row rewritten. **M-1** the flowchart downgrade overclaimed "0 reachable": the eight nested/collapsed subgraph rows are blocked only by `theme` (their bodies render with `config:` removed), only the `@{shape}`/icon rows are body-blocked → **accepted**: RFC and D-400 now state **≥8**, and the downgrade reason is "fewer rows + higher unit cost (new exact-bit `Theme` profile)", not "body capability". **M-2** a pre-existing negative test was missed: `test_mermaid_e2b_cohort.cpp::NonWhitelistedConfigRowsKeepWholeSource` iterates every config-bearing state fixture and asserts fallback, so all 28 rows would break it → **accepted**: added to the coupling table together with the correct owner of the E2b footer assertions and the stale `:240` comment. **M-3** the theme value census summed to 22, not 28 → **accepted**: corrected to `redux 6, redux-dark 6, redux-color 3, redux-dark-color 3, neo 4, neo-dark 4, default 2`. MINOR m-1 body count 55→56; m-2 rollback dependency direction dropped with the rephase; m-3 the surviving `theme: dark` negative named (it stays green only because `dark` is excluded). NIT n-1 OQ-3 closed by the review (the standard twin rule already covers `fontFamily`); n-2 tab wording made precise (a literal tab in the payload and body, rejected by the description scan). Independently verified: the 28-row cohort and its composition, the 145 partition, the matrix census, the envelope/footer facts and the inertness claim. |
+| 2026-11-21 | r2 | same design-review agent, independent re-read | REQUEST-CHANGES | All substantive r1 findings verified fixed. **MAJOR-1** residual two-phase wording (G1, the §1 heading, the footer tags and the Gates line that specifies review-record cardinality) → **accepted**: everything now describes one atomic phase and one review record; the generator spec keeps a single whole-cohort digest and notes the per-phase split digest and priority rule as vestigial. **MINOR-1** D-400 §3 still titled "0 行可达" → **accepted**: retitled "≥8 行可达，性价比低" and the intro now points at the eight corrected rows. **MINOR-2** plural "per-phase/each phase" phrasing → **accepted**: singularized. **NIT-1** → **accepted**: recorded in the generator spec. Review also confirmed that one phase does not weaken the review-record safety mechanism (it degenerates to exactly one generator-authored approval plus the `--check` hand-edit guard; only cross-phase anti-drift is lost, which cannot occur with no partial state), and that the midpoint arithmetic left no residue. |
 
 ## Implementation History
 

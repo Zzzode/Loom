@@ -40,9 +40,9 @@ TL 明确否决「按原始 fallback 数排序」的口径：fallback 数最大�
 | agentflow | 11 | 11（11） | 9 `theme`；2 `handDrawnSeed+look` |
 | 其余（mindmap/treemap/venn/xychart/journey/architecture/c4/conf） | — | ≤6 | 键为 `treemap.valueFormat`、`handDrawnSeed`、`pie.*` 等 |
 
-## 3. flowchart 的据证降级（0 行可达）
+## 3. flowchart 的据证降级（≥8 行可达，性价比低）
 
-按键筛选后 flowchart 有 **16** 行「只带 `look`/`theme`」，逐行查 body 后全部落空：
+按键筛选后 flowchart 有 **16** 行「只带 `look`/`theme`」。逐行查 body 后，其中 8 行的 body 其实已受支持（见下方设计评审更正），另 8 行确为 body 能力阻塞：
 
 | body 标记 | 行数 | 例子 |
 |---|---|---|

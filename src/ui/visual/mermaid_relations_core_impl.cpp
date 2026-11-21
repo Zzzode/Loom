@@ -1820,8 +1820,10 @@ namespace {
 // envelope, optionally with a title the relations layout already projects.
 // RFC 0031 E2b: additionally admits a closed whitelist of non-terminal
 // config leaves (logLevel/fontFamily/securityLevel at exact values) and
-// projects them as a user-visible disclosure footer. theme/look/layout,
-// init, and every other key stay whole-source.
+// projects them as a user-visible disclosure footer.
+// RFC 0038: the closed look and theme tables join that whitelist, disclosed
+// after every existing line so the E2b footers stay byte-identical.
+// layout, init, nested state.* maps and every other key stay whole-source.
 struct StateEnvelope {
     std::string_view body;
     std::optional<std::string> title;
@@ -1857,10 +1859,10 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
     if (!parsed || !parsed->has_frontmatter || !parsed->init.empty()) return {};
     bool description_seen = false, title_seen = false, config_seen = false;
     // One bit per accepted leaf; the accepted value set is exact.
-    enum : unsigned { Log = 1u, Font = 2u, Security = 4u };
+    enum : unsigned { Log = 1u, Font = 2u, Security = 4u, Look = 8u, Theme = 16u };
     unsigned fields = 0u;
     int log_value = 0;
-    std::string security_value;
+    std::string security_value, look_value, theme_value;
     StateEnvelope result;
     for (const auto& event : parsed->events) {
         if (event.blank || event.comment) continue;
@@ -1911,6 +1913,22 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
         } else if (event.path == "securityLevel") {
             if (!mark(Security) || (*scalar != "loose" && *scalar != "sandbox")) return {};
             security_value = *scalar;
+        } else if (event.path == "look") {
+            // RFC 0038: the three upstream looks are admitted and disclosed
+            // only. The state renderer never reads look, so the frame must be
+            // byte-identical to the config-free twin's.
+            if (!mark(Look) || (*scalar != "classic" && *scalar != "neo" && *scalar != "handDrawn"))
+                return {};
+            look_value = *scalar;
+        } else if (event.path == "theme") {
+            // RFC 0038: the seven palettes carried by the state corpus are
+            // admitted and disclosed only (the terminal has its own tokens).
+            if (!mark(Theme) ||
+                (*scalar != "default" && *scalar != "neo" && *scalar != "neo-dark" &&
+                 *scalar != "redux" && *scalar != "redux-dark" && *scalar != "redux-color" &&
+                 *scalar != "redux-dark-color"))
+                return {};
+            theme_value = *scalar;
         } else {
             return {};
         }
@@ -1955,6 +1973,20 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
             std::string line = "config.securityLevel=\"";
             line += security_value;
             line += "\" -> no interaction layer; not applied";
+            if (!state_notice_line(result.config_notices, line, work)) return {};
+        }
+        // RFC 0038 appends after every existing leaf so the 61 E2b footers stay
+        // byte-identical; the per-leaf work is charged by state_scalar_text.
+        if ((fields & Look)) {
+            std::string line = "config.look=";
+            line += look_value;
+            line += " -> source node style; not applied";
+            if (!state_notice_line(result.config_notices, line, work)) return {};
+        }
+        if ((fields & Theme)) {
+            std::string line = "config.theme=";
+            line += theme_value;
+            line += " -> colour palette; not applied";
             if (!state_notice_line(result.config_notices, line, work)) return {};
         }
     }

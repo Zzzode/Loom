@@ -29,6 +29,7 @@ const fs::path kTestsDir{LOOM_TESTS_DIR};
 const fs::path kCases = kTestsDir / "fixtures/mermaid_official/cases";
 const fs::path kManifest = kTestsDir / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger = kTestsDir / "../tools/mermaid/e2b-cohort.json";
+const fs::path kRfc0038Ledger = kTestsDir / "../tools/mermaid/state-0038-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 constexpr std::string_view kFooterHeader = "State native projection v1";
@@ -237,12 +238,23 @@ TEST(MermaidE2bCohort, ConfigFreeStateRowsHaveNoFooter) {
 }
 
 TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
-    // State frontmatter rows outside the E2b whitelist (theme/look/layout/
-    // state.* keys, other values, nested maps) must keep whole source.
+    // State frontmatter rows outside the E2b whitelist and outside the RFC 0038
+    // look/theme cohort (layout, state.*, other values, nested maps) must keep
+    // whole source.
     auto ledger = parse_ledger();
     std::set<std::string> cohort;
     ledger.root().get("rows").iter(
         [&](const JsonVal row) { cohort.insert(row.get_string("path")); });
+    // RFC 0038 admits a reviewed 28-row look/theme cohort; those rows change
+    // surface, so they leave this whole-source scan. The excluded set is
+    // asserted below to be exactly that sibling ledger.
+    auto rfc0038 = json::parse(read_file(kRfc0038Ledger));
+    ASSERT_TRUE(rfc0038.has_value()) << "RFC 0038 cohort ledger must parse";
+    std::set<std::string> admitted;
+    rfc0038->root().get("rows").iter(
+        [&](const JsonVal row) { admitted.insert(row.get_string("path")); });
+    cohort.insert(admitted.begin(), admitted.end());
+    std::set<std::string> skipped_by_rfc0038;
     auto declares_config = [](const std::string& source) {
         if (!source.starts_with("---\n")) return false;
         std::istringstream in(source);
@@ -271,14 +283,22 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
              it != fs::recursive_directory_iterator(); ++it) {
             if (!it->is_regular_file() || it->path().extension() != ".mmd") continue;
             const auto rel = fs::relative(it->path(), kCases).generic_string();
-            if (cohort.contains(rel)) continue;
             const auto source = read_file(it->path());
             if (!declares_config(source)) continue;
+            if (cohort.contains(rel)) {
+                if (admitted.contains(rel)) skipped_by_rfc0038.insert(rel);
+                continue;
+            }
             EXPECT_TRUE(same_source_surface(capture_cells(source, "mermaid"),
                                             capture_cells(source, "text")))
                 << "non-whitelisted config row changed surface: " << rel;
             ++checked;
         }
     }
-    EXPECT_GT(checked, 50);
+    EXPECT_EQ(checked, 43);
+    // Under-listing fails here (an admitted row that really changes surface is
+    // no longer excluded, so the whole-source assertion above goes red);
+    // over-listing fails in test_mermaid_state_0038_cohort (a wrongly admitted
+    // row cannot draw or misses its footer). This equality is the set pin.
+    EXPECT_EQ(skipped_by_rfc0038, admitted);
 }

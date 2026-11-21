@@ -30,6 +30,7 @@ const fs::path kCases = kTestsDir / "fixtures/mermaid_official/cases";
 const fs::path kManifest = kTestsDir / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger = kTestsDir / "../tools/mermaid/e2a-cohort.json";
 const fs::path kE2bLedger = kTestsDir / "../tools/mermaid/e2b-cohort.json";
+const fs::path kRfc0038Ledger = kTestsDir / "../tools/mermaid/state-0038-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -247,12 +248,19 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
         [&](const JsonVal row) { cohort.insert(row.get_string("path")); });
     // RFC 0031 E2b admits a reviewed set of state inert-config originals to
     // native drawing; those rows are expected to change surface, so they are
-    // outside this whole-source scan just like the E2a ledger rows.
+    // outside this whole-source scan just like the E2a ledger rows. RFC 0038
+    // adds the reviewed state look/theme cohort (test_mermaid_state_0038_cohort
+    // is its per-row gate).
     auto e2b = json::parse(read_file(kE2bLedger));
     ASSERT_TRUE(e2b.has_value()) << "E2b cohort ledger must parse";
     e2b->root().get("rows").iter([&](const JsonVal row) {
         if (row.get_string("prediction") == "predicted-draw")
             cohort.insert(row.get_string("path"));
+    });
+    auto rfc0038 = json::parse(read_file(kRfc0038Ledger));
+    ASSERT_TRUE(rfc0038.has_value()) << "RFC 0038 cohort ledger must parse";
+    rfc0038->root().get("rows").iter([&](const JsonVal row) {
+        cohort.insert(row.get_string("path"));
     });
     static constexpr const char* kRoots[] = {"git", "state-diagram", "state-diagram-v2"};
     int checked = 0;

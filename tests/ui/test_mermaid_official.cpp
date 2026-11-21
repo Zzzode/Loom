@@ -5738,6 +5738,35 @@ const JourneyCohortEntry* requirement_0037_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0038 state look/theme cohort: the 28 cold state fallbacks whose only
+// non-admitted input is the frontmatter config.look/config.theme tables. Per-row
+// states come from the ledger exactly as the Journey cohort does -- narrow is
+// never hardcoded. The per-row frame gate is test_mermaid_state_0038_cohort.
+const std::map<std::string, JourneyCohortEntry>& state_0038_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/state-0038-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "State 0038 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "State 0038 cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* state_0038_cohort_row(std::string_view path) {
+    const auto& rows = state_0038_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0031 gantt-family renderer cohort: the thirty-nine theme-free,
 // valid-date gantt originals admitted by mermaid_gantt_impl, with per-width
 // states. The eleven themed originals and two malformed-date fixtures stay on
@@ -10492,6 +10521,31 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.status = {wide, "source_fallback", wide};
                     row.expected_states = {drawn ? "drawn" : "source", "source",
                                            drawn ? "drawn" : "source"};
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+            // RFC 0038 state look/theme admission: the 28 reviewed state
+            // originals promoted by the closed look/theme tables, states read
+            // per row.
+            if (class_path.is_str()) {
+                const auto* cohort = state_0038_cohort_row(class_path.as_str());
+                if (cohort) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = (*fs::path(row.path).begin()).string();
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "RFC-0038 state look/theme reviewed cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
                     row.decision_reasons.fill(row.reason);
                     observations.push_back(std::move(row));
                     continue;

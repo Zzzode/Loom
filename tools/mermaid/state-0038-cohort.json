@@ -1,0 +1,1526 @@
+{
+  "schema": "loom_mermaid_state_0038_cohort/v1",
+  "rfc": 38,
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "stateDiagram(-v2) fallback row whose frontmatter is a folded description envelope whose config block carries only the E2b admitted leaves plus the closed look and theme tables",
+    "roots": [
+      "state-diagram",
+      "state-diagram-v2"
+    ],
+    "phase": "P1-look-theme",
+    "cohort_pin": "reviewed literal path set (render-defined split); one atomic phase admitting both leaves",
+    "cohort_digest": "5e855cf9eae7d82c2864732789835bfb8136646f06b33c321841299cad1593c5",
+    "twin_rule": "the frame must equal the synthesized config-free twin's frame plus the recorded footer delta, line by line",
+    "corpus_twins": "none: every body-equivalent drawn state fixture carries logLevel/fontFamily disclosure lines that are not a prefix of the source footer, so all 28 rows use the config-free twin",
+    "exclusions": "layout: elk (4), namespaced config.state.* (4), the folded description carrying a literal tab (1); the remaining rows are body-capability fallbacks",
+    "width_policy": "wide_240 admission only; narrow_40 stays 'source'."
+  },
+  "review": {
+    "phases": {
+      "P1-look-theme": {
+        "reviewer_agent": "agent:acde9271b5b1810a9 rfc0038-p1-final-review (independent adversarial code review; APPROVE; re-derived the 145/28/4/4/1 source counts, the 132/61/28 -> 43 and 160-28=132 negative floors, and the corpus-twin impossibility; verified the closed tables, duplicate/indent/namespace rejection, footer order and E2b byte-identity, Work accounting, generator --check, the 5-test gate, and zero diffs on every protected file, the manifest and the E2b ledger)",
+        "date": "2026-11-21",
+        "verdict": "approved",
+        "note": "Reviewer findings, all applied test-only before the ledger was regenerated: a quoted theme scalar positive with its dequoted footer, securityLevel added to the footer-order composition probe (pinning the append-after-existing rule), extra tab-indent / trailing-comment / mismatched-quote negatives, and a corrected over-/under-listing comment on the E2b negative. The reviewer confirmed no production mis-admission path and no assertion on the render-defined drawn/blocked split."
+      }
+    },
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 28,
+    "predicted_draw": 28,
+    "family": 145,
+    "state_v2": 19,
+    "state_v1": 9
+  },
+  "excluded": [
+    {
+      "path": "state-diagram-v2/nightly-check/1433-should-render-a-simple-state-diagram-with-a-title.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/basic-states-neo-look-neo-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/basic-states-neo-look-neo-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/basic-states-neo-look-redux-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/basic-states-neo-look-redux-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/clickable-state-with-tooltip-handdrawn-look.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/clickable-state-with-tooltip.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-handdrawn-look-redux-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-handdrawn-look-redux-dark-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-redux-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-redux-dark-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-redux-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-redux-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrent-states-neo-look-neo-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrent-states-neo-look-neo-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrent-states-neo-look-redux-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrent-states-neo-look-redux-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/default-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/elk/elk-composite-entry-default-centering.mmd",
+      "class": "layout: elk",
+      "reason": "layout leaf"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/elk/elk-notes-keep-their-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout leaf"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/elk/elk-start-end-edge-centering.mmd",
+      "class": "layout: elk",
+      "reason": "layout leaf"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/forest-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/neutral-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/regions-inside-nesting-composite-containers-redux-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/regions-inside-nesting-composite-containers-redux-dark-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/regions-inside-nesting-composite-containers-redux-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/regions-inside-nesting-composite-containers-redux-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-align-dividers-correctly.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-allow-styles-to-take-effect-in-subgraphs.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-let-styles-take-precedence-over-classes.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-dark-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-dark-color-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-can-have-multiple-classes-applied-to-multiple-states.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-it-should-be-possible-to-use-a-choice.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-handle-different-rendering-directions-in-composite-states.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-handle-multiline-notes-with-different-line-breaks.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-handle-multiple-arrows-from-one-node-to-another.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-handle-multiple-notes-added-to-one-state.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-compact-self-loop-edge.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-long-descriptions-with-additional-descriptions.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-note-with-multiple-lines-in-it.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-simple-info.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams-2.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams-with-labels.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-single-state-with-short-descriptions.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-state-diagram-and-set-the-correct-length-of-the-labels.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-state-with-a-note-together-with-another-state.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-state-with-on-the-left-side-when-so-specified.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-state-with-states-in-it.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-states-with-descriptions-including-multi-line-descriptions.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-transition-descriptions-with-new-lines.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-forks-and-joins.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-forks-in-composite-states.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-multiple-composite-states.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-state-descriptions.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-simplest-composite-state.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-state-label-with-names-in-it.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-usemaxwidth-false.mmd",
+      "class": "namespaced config.state.*",
+      "reason": "namespaced state subtree stays closed"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-usemaxwidth-true.mmd",
+      "class": "namespaced config.state.*",
+      "reason": "namespaced state subtree stays closed"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-width-of-compound-state-should-grow-with-title-if-title-is-wider.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/can-have-styles-applied.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/composite-with-a-loop-starts-on-its-start-state.mmd",
+      "class": "layout: elk",
+      "reason": "layout leaf"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-a-compound-state-should-be-able-to-link-to-itself.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-handle-transition-from-one-state-in-a-composite-state-to-a-composite-state.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-should-render-a-long-descriptions-instead-of-id-when-available.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-should-render-a-state-with-a-note.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-should-render-composite-states.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-should-render-concurrency-states.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-states-can-have-a-class-applied.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/default-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/forest-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/neutral-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-group-all-state-elements-under-a-single-root-g-wrapper.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-handle-multiline-notes-with-different-line-breaks.mmd",
+      "class": "description tab",
+      "reason": "description payload carries a literal tab"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-handle-multiple-arrows-from-one-node-to-another.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-long-descriptions-instead-of-id-when-available.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-long-descriptions-with-additional-descriptions.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-note-with-multiple-lines-in-it.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-simple-state-diagrams-2.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-simple-state-diagrams.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-single-state-with-short-descriptions.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-state-with-a-note.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-state-with-on-the-left-side-when-so-specified.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-transition-descriptions-with-new-lines.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/simplest-composite-state.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/transitions-with-labels-neo-look-neo-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/transitions-with-labels-neo-look-neo-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/transitions-with-labels-neo-look-redux-dark-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/transitions-with-labels-neo-look-redux-theme.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/nightly-check/usemaxwidth-false.mmd",
+      "class": "namespaced config.state.*",
+      "reason": "namespaced state subtree stays closed"
+    },
+    {
+      "path": "state-diagram/nightly-check/usemaxwidth-true.mmd",
+      "class": "namespaced config.state.*",
+      "reason": "namespaced state subtree stays closed"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-a-simple-state-diagrams-with-labels.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-a-state-with-a-note-together-with-another-state.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-a-state-with-states-in-it.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-a-states-with-descriptions-including-multi-line-descriptions.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-composite-states.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-concurrency-states.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-forks-and-joins.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-forks-in-composit-states.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-multiple-composit-states.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-state-descriptions.mmd",
+      "class": "outside the reviewed cohort",
+      "reason": "render-defined remainder: body capability or an unadmitted value"
+    }
+  ],
+  "rows": [
+    {
+      "path": "state-diagram-v2/nightly-check/a-simple-state-diagram-classic-look-default-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "0617f743c86e6a3c19fb36893168c6d3e680c73df80890f2c6b780b1609e85a2",
+      "manifest_sha256": "0617f743c86e6a3c19fb36893168c6d3e680c73df80890f2c6b780b1609e85a2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=classic -> source node style; not applied",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/composite-states-neo-look-neo-dark-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "283dd63d0ec8ef8e5f205b0f9f6c1a7374d492a5b99d4c6da662052bcf2c4b53",
+      "manifest_sha256": "283dd63d0ec8ef8e5f205b0f9f6c1a7374d492a5b99d4c6da662052bcf2c4b53",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/composite-states-neo-look-neo-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "697cec19e9367972cf5fcc91d45a50912caa143cc5449f3ef18aa7218427c4de",
+      "manifest_sha256": "697cec19e9367972cf5fcc91d45a50912caa143cc5449f3ef18aa7218427c4de",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/composite-states-neo-look-redux-dark-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "d561ac0d1dbfc893c9535296f347dccc7a0b5eb9de167e454985df84dac917aa",
+      "manifest_sha256": "d561ac0d1dbfc893c9535296f347dccc7a0b5eb9de167e454985df84dac917aa",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/composite-states-neo-look-redux-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "7e48d73b08098ed79898e52047f2ea34c084ff96283ae3a48a9b185091d22a8d",
+      "manifest_sha256": "7e48d73b08098ed79898e52047f2ea34c084ff96283ae3a48a9b185091d22a8d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/nested-composite-containers-handdrawn-look-redux-color-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "c37c409893063ae8ab5e0f8e4dc3bfd6f920f093b1df15ef0d0af7281766f848",
+      "manifest_sha256": "c37c409893063ae8ab5e0f8e4dc3bfd6f920f093b1df15ef0d0af7281766f848",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=handDrawn -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/nested-composite-containers-handdrawn-look-redux-dark-color-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "4d110b00a43e449e10a3a23cc12faec509a2cd0a382263ec27f5019d088beb6b",
+      "manifest_sha256": "4d110b00a43e449e10a3a23cc12faec509a2cd0a382263ec27f5019d088beb6b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=handDrawn -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/nested-composite-containers-redux-color-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "fcc71b5473ce0ce1d5de4d7344c8015ce61c983745c2dd72b8cb0225ab889089",
+      "manifest_sha256": "fcc71b5473ce0ce1d5de4d7344c8015ce61c983745c2dd72b8cb0225ab889089",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/nested-composite-containers-redux-dark-color-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "2dd9cd56a8fa4ea8f91c4ba5e8f432554e69b43bd6b733731e14375d2b5dd574",
+      "manifest_sha256": "2dd9cd56a8fa4ea8f91c4ba5e8f432554e69b43bd6b733731e14375d2b5dd574",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/nested-composite-containers-redux-dark-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "94b7548df6eb6506558e8362944aa560b96d227594d085b264d910e1b6127055",
+      "manifest_sha256": "94b7548df6eb6506558e8362944aa560b96d227594d085b264d910e1b6127055",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/nested-composite-containers-redux-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "d9eb5165f742865e034c05739d2a325d5f6176471b599858d259b6060819109c",
+      "manifest_sha256": "d9eb5165f742865e034c05739d2a325d5f6176471b599858d259b6060819109c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/redux-color-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "b5f125ad5ac887f7c1041b8608f12219a23ef5065dbb0dfb9f6e409faefef772",
+      "manifest_sha256": "b5f125ad5ac887f7c1041b8608f12219a23ef5065dbb0dfb9f6e409faefef772",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/redux-dark-color-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "9efb47054a07c08a795e47d4b4e7e909f3febe7e40fc4e26dabc8ec597484d23",
+      "manifest_sha256": "9efb47054a07c08a795e47d4b4e7e909f3febe7e40fc4e26dabc8ec597484d23",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/redux-dark-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "d8fd244ec41b2272155734243339d7b6cc15062a7da4e2b022cd219dc7dc0574",
+      "manifest_sha256": "d8fd244ec41b2272155734243339d7b6cc15062a7da4e2b022cd219dc7dc0574",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/redux-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "498be72fc2206c2108406d4b87df90f72468cc793b92cdeaa7740041d5edd5cf",
+      "manifest_sha256": "498be72fc2206c2108406d4b87df90f72468cc793b92cdeaa7740041d5edd5cf",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/special-state-types-neo-look-neo-dark-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "727aa5b941339f19dfa4dbcdfadbcac9fae2a6d00b35b24c45e282bb344187b2",
+      "manifest_sha256": "727aa5b941339f19dfa4dbcdfadbcac9fae2a6d00b35b24c45e282bb344187b2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/special-state-types-neo-look-neo-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "748149d1bb06718424f78415f83bab0d04c417cf2497b0962ac7b7a7c8d60951",
+      "manifest_sha256": "748149d1bb06718424f78415f83bab0d04c417cf2497b0962ac7b7a7c8d60951",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/special-state-types-neo-look-redux-dark-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "0ab61f97f4f7ca13dec329f4dc1cba6bd91e4b1adf740c1265f1561d604d1c1d",
+      "manifest_sha256": "0ab61f97f4f7ca13dec329f4dc1cba6bd91e4b1adf740c1265f1561d604d1c1d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/special-state-types-neo-look-redux-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "88a195a12cac4b293f1a8b22ea2869c5e60bb600ea0198fa5a3d51bf56d27f38",
+      "manifest_sha256": "88a195a12cac4b293f1a8b22ea2869c5e60bb600ea0198fa5a3d51bf56d27f38",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/a-simple-state-diagram-neo-look-neo-dark-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "d8480095cdb6e5bb5729af05b2714b60088e0e09f0f3652e88763a95536a7c69",
+      "manifest_sha256": "d8480095cdb6e5bb5729af05b2714b60088e0e09f0f3652e88763a95536a7c69",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/a-simple-state-diagram-neo-look-neo-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "21c8f2932ea0c6b01ea9ed090637b4fba108c7de69de5bc33e6a8d54c6b907d9",
+      "manifest_sha256": "21c8f2932ea0c6b01ea9ed090637b4fba108c7de69de5bc33e6a8d54c6b907d9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/a-simple-state-diagram-neo-look-redux-dark-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "2fbad28ed72f6cd9cea03c9be9eaa7725c179cb76e1f1d88de8e64fe8f8d83a3",
+      "manifest_sha256": "2fbad28ed72f6cd9cea03c9be9eaa7725c179cb76e1f1d88de8e64fe8f8d83a3",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/a-simple-state-diagram-neo-look-redux-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "5c56e0628e36fdbb6d9eb99efd11f432ab0edb966803ff9e3c420c76c89b0354",
+      "manifest_sha256": "5c56e0628e36fdbb6d9eb99efd11f432ab0edb966803ff9e3c420c76c89b0354",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/a-state-with-a-note-neo-look-neo-dark-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "6f07a9b06aa961b53785c09afd2ba5009d804daf5329d22b637573b36719aa48",
+      "manifest_sha256": "6f07a9b06aa961b53785c09afd2ba5009d804daf5329d22b637573b36719aa48",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/a-state-with-a-note-neo-look-neo-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "0512cdb398ef48a21de44f9e74d00e9b4c04ba65ee678b3cf64f972368bef8bd",
+      "manifest_sha256": "0512cdb398ef48a21de44f9e74d00e9b4c04ba65ee678b3cf64f972368bef8bd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/a-state-with-a-note-neo-look-redux-dark-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "d7e75dfa50a7601a886c2eca801af7735f5eacf5d9de4f893094d58b72d08fb9",
+      "manifest_sha256": "d7e75dfa50a7601a886c2eca801af7735f5eacf5d9de4f893094d58b72d08fb9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/a-state-with-a-note-neo-look-redux-theme.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "50fdf099bc4cd35c5b9658e092eb5bcf8d0a54e9bc057a791ddd2f9ba4f94b02",
+      "manifest_sha256": "50fdf099bc4cd35c5b9658e092eb5bcf8d0a54e9bc057a791ddd2f9ba4f94b02",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/should-render-a-simple-state-diagram.mmd",
+      "family": "state",
+      "phase": "P1-look-theme",
+      "sha256": "ae72e4c8951d7d6b3d01b3409b6d571037c70b65c65659f8caa057e6e0666945",
+      "manifest_sha256": "ae72e4c8951d7d6b3d01b3409b6d571037c70b65c65659f8caa057e6e0666945",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=classic -> source node style; not applied",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0038 config.look/config.theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    }
+  ]
+}

@@ -92,11 +92,14 @@ The roster's `look_handdrawn` category counts 24 because it also holds
 which is one of the 2 excluded namespaced rows; inside the cohort the value is
 `handDrawn` 23 (+ `htmlLabels` on 8 of them).
 
-The twin probe confirms **120/120 twin sources draw** once the three keys are
-removed, so no cohort row hides a body capability: the body axis is unchanged
-by this RFC. 30 of the 120 bodies are byte-equivalent to an already-drawn
-corpus body (23 in P1, 7 in P2); the remaining 90 bodies draw natively today
-(the twin probe) but have no drawn corpus file of their own — see Drawbacks.
+The twin probe confirms **120/120 twin sources draw** once the four keys
+(`look`, `theme`, `htmlLabels`, `title`) are removed, so no cohort row hides a
+body capability: the body axis is unchanged by this RFC. 30 of the 120 rows
+have a **body-byte-equivalent** already-drawn corpus sibling (23 in P1, 7 in
+P2) — the source bytes differ by construction (config block, and for 19 rows
+the inert `description` text), the bodies and frames do not; the remaining 90
+bodies draw natively today (the twin probe) but have no drawn corpus file of
+their own — see Drawbacks.
 
 ### Why admission is testable
 
@@ -229,20 +232,29 @@ removed`.
   `config:` block dropped too. This matters for multi-key rows: the 8 P1
   `look`+`htmlLabels` rows must not keep an F0 footer in the twin, or the
   expected frame double-counts the footer. A *title-free twin* is
-  the same source with the `title:` line removed (any config leaves retained).
-  Expected frames are always `twin frame + the exact footer lines the original
-  source produces`, in the fixed order `logLevel`, `fontFamily`, `htmlLabels`,
-  `look`, `theme`; for a title row it is `title row + blank row + title-free
-  twin frame`.
-- **Corpus twins where they exist.** 30 of the 120 rows have a byte-equivalent
-  drawn sibling (23 P1, 7 P2). For those the twin is the corpus fixture itself
-  (the `-default` sibling, or the `-without-htmllabels-default` F0 sibling for
-  the 8 `look`+`htmlLabels` rows) and the expected frame is that fixture's
-  frame with the source's extra footer lines appended at the end of the
-  fixture's footer block (`look`/`theme` follow `htmlLabels` in the fixed
-  order). The other 90 rows
-  (84 P2, 6 P3) use the synthesized in-memory twin. Both kinds are enumerated
-  per row in the ledger as `twin.kind = "corpus" | "synthetic"`.
+  the same source with the `title:` line removed; it **keeps** `look`+`theme`,
+  so it already carries its own footer.
+  Expected frames are:
+  - config-free / corpus twin rows (114 of 120): `twin frame + the exact
+    footer lines the original source produces`, in the fixed order `logLevel`,
+    `fontFamily`, `htmlLabels`, `look`, `theme`;
+  - the 6 title rows: `title row + blank row + title-free twin frame`, with the
+    twin's own footer retained and **nothing appended** (the titled frame is
+    the twin's frame with exactly two rows prepended).
+- **Corpus twins where they exist.** 30 of the 120 rows have a
+  **body-byte-equivalent** drawn sibling (23 P1, 7 P2); the gate compares
+  frames, never source bytes (the config blocks differ by construction, and 19
+  rows differ in inert `description` text). For those the twin is the corpus
+  fixture itself — the `-default` sibling, or the
+  `-without-htmllabels-default` F0 sibling (which keeps `htmlLabels` and its F0
+  footer) for the 8 `look`+`htmlLabels` rows. **The corpus-twin rule takes
+  precedence over the synthetic config-free rule**, including for those 8 rows
+  whose corpus twin is not literally config-free; their expected frame is the
+  F0 fixture's frame with the source's extra footer lines appended at the end
+  of the fixture's footer block (`look`/`theme` follow `htmlLabels` in the
+  fixed order). The other 90 rows (84 P2, 6 P3) use the synthesized in-memory
+  twin. Both kinds are enumerated per row in the ledger as
+  `twin.kind = "corpus" | "synthetic"`.
 - Ledger `tools/mermaid/requirement-0037-cohort.json` (schema
   `loom_mermaid_requirement_0037_cohort/v1`): one row per promoted fixture with
   `phase`, the `twin` descriptor (`{"kind": "corpus", "path": …}` or
@@ -328,7 +340,7 @@ side only:
 | envelope event model — `parse_envelope` already parses and stores `title` (`mermaid_envelope_impl.cpp:360-368`), so the accept/decode branch is added in the **requirement validator** (`mermaid_requirement_impl.cpp:264-293`), not in the generic parser | `mermaid_requirement_impl.cpp`, `mermaid_detail.cppm` |
 | `RequirementEnvelope` / `RequirementDiagram` field layout | `mermaid_detail.cppm`, `mermaid_requirement_impl.cpp` |
 | shared footer publication and title paint | `mermaid_relations_core_impl.cpp` (`RelationFamily::Requirement` notice branch, title block) |
-| census `expected`/`reason` per fixture | **`tests/fixtures/mermaid_official/manifest.json` holds the source values in `fixtures[].raw`** and the whole file is SHA-pinned by `kManifestSha256`, a pin duplicated across the protected authority headers (`tests/support/mermaid_{block58,class285,class_theme4,er107,er206,er_groupedge,flow400,er198,flow_extra7}_*.hpp`). The promotion therefore must **not** touch the manifest: `tests/ui/test_mermaid_official.cpp` gains a cohort branch (ledger-driven `expected`/`reason` override) exactly as the xychart cohort branch does |
+| census `expected`/`reason` per fixture | **`tests/fixtures/mermaid_official/manifest.json` holds the source values in `fixtures[].raw`** and the whole file is SHA-pinned by `kManifestSha256`, a pin duplicated across the protected authority headers (`tests/support/mermaid_{block58,class285,class_theme4,er107,er206,er_groupedge,flow400,er198,flow_extra7}_*.hpp`). The promotion therefore must **not** touch the manifest: `tests/ui/test_mermaid_official.cpp` gains a cohort branch (ledger-driven `expected`/`reason` override) following the **Journey / requirement-F0 per-row `expected_states` loader** (`:5637-5643`), **not** the xychart hardcoded triple |
 | census reason string | `tests/ui/test_mermaid_official.cpp`, ledger generator, closure doc |
 | roster totals | `tools/mermaid/fallback_roster.json`; `tools/mermaid/e6c-mandatory-gap-roster.json` must stay byte-identical (zero requirement rows among the 48 `mandatory_gaps`) |
 | frozen D-204 / D-395 partitions | `tools/mermaid/generate_requirement_cohort.py`, `requirement-cohort.json`, `requirement-f0-cohort.json` (read-only for this RFC) |
@@ -340,7 +352,7 @@ the shared relations core; no new edges are introduced.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `look` admission | 23 rows (`look` only 15, `look`+`htmlLabels` 8) | proposed | family 24→47 drawn / 148→125 fallback; global 1271→1294 / 874→851; formal `drawn_at_240` 1085→1108; roster regenerated; targeted cohort + F0 tests green; release-preset matrix byte-identical with the new sha recorded |
+| P1 | `look` admission | 23 rows (`look` only 15, `look`+`htmlLabels` 8) | proposed | family 24→47 drawn / 148→125 fallback; global 1271→1294 / 874→851; formal `drawn_at_240` 1085→1108; roster regenerated; targeted cohort + F0 tests green; release-preset matrix run with the new sha recorded (the dual-preset byte-identical gate runs at closure) |
 | P2 | `theme` admission | 91 rows (90 `look`+`theme`, 1 `classic`+`default`) | proposed | family 47→138 / 125→34; global 1294→1385 / 851→760; formal 1108→1199; same gate set |
 | P3 | `title` projection | 6 rows | proposed | family 138→144 / 34→28; global 1385→1391 / 760→754; formal 1199→1205; title twin gate green; same gate set |
 
@@ -376,11 +388,24 @@ Completed at the `implementable` gate. Current answers:
   traces and prompt dumps are untouched.
 - **Documentation** — design-decisions entry, closure doc, README index,
   efficiency retro.
-- **Deletion** — the two stale comments that say "every theme/look row keeps
-  whole-source fallback" (the test file header and the
-  `FrontmatterAndThemeGatesStayClosed` preamble) are corrected in place in the
-  phase that falsifies each.
+- **Deletion** — the three stale comments are corrected in place, each in the
+  phase that falsifies it: the test file header (`:8-9`), the
+  `F0InertBoundaryKeepsVisualKeysClosed` preamble (`:429`, "Visual/semantic
+  keys and unsupported values stay whole-source" — `look` is admitted at P1)
+  and the `FrontmatterAndThemeGatesStayClosed` preamble (`:329-330`).
 - **Deprecation** — none.
+- **Wire / persisted shapes** — N/A: rendering-only change. No wire protocol,
+  session JSONL, prompt dump, settings or ledger-consumed persisted format is
+  touched; the only new persisted file is this RFC's own cohort ledger.
+- **Golden suites** — N/A: no `test_ui_*`, `test_dialog_*`,
+  `test_prompt_dialog` or truecolor golden changes. The affected surface is the
+  mermaid official-matrix census plus the requirement cohort tests; both are
+  assertion-based, not snapshot-based.
+- **Platform readiness** — N/A-with-reason on every row: rendering-only, so no
+  termios/signal/PTY, network, filesystem-permission or offline-cache change;
+  Linux debug+release `-Werror` is the only required matrix (macOS is not a
+  gate per project policy, and CI is not waited on); the truecolor path is
+  untouched apart from a token-only footer line; no new dependency or fetch.
 
 ## Rollout and rollback
 
@@ -443,8 +468,8 @@ edited.
 - Edited `tests/ui/test_mermaid_requirement_cohort.cpp` (two assertion flips,
   one per phase — P1 `F0InertBoundaryKeepsVisualKeysClosed:431`, P3
   `FrontmatterAndThemeGatesStayClosed:330-341` wide — plus cohort negatives and
-  the two stale comments) and `tests/ui/test_mermaid_official.cpp` (matrix
-  branch + reason string).
+  the three stale comments at `:8-9`, `:429` and `:329-330`) and
+  `tests/ui/test_mermaid_official.cpp` (matrix branch + reason string).
 - Targeted `ctest -L mermaid` per phase; full debug ctest once at closure
   (current baseline 4614 tests; expected closure total 4614 + the new file's
   TEST count, planned 5, with no deletions — the two in-place flips change
@@ -492,6 +517,7 @@ edited.
 | 2026-11-21 | r1 | `agent:design-review-r1` (independent general-purpose, own render probe + static re-derivation) | REQUEST-CHANGES | MAJOR-1 the F0 boundary flip count was wrong: a **second** negative, `FrontmatterAndThemeGatesStayClosed` (P3 row `a-diagram-with-a-title-neo-look-redux-dark-theme`), flips at wide in P3 → **accepted**: §3 now enumerates both flips, their phases, the narrow-stays-fallback state and the two stale comments. MAJOR-2 the census coupling omitted `manifest.json` / `kManifestSha256` → **accepted**: coupling row added, manifest immutability made a Non-Goal, ledger-driven cohort branch named. MINOR-3 cohort `look: handDrawn` is 23, not 24 (the roster's 24th is the excluded namespaced row) → **accepted**: RFC and D-397 §7 corrected. MINOR-4 the title grammar was described as `parse_envelope` generically and accepted titles wider than the 240-column paint guard → **accepted**: §2 now pins the ER rule (`er_yaml_value`, printable ASCII, ink, ≤ `kWidthLimit`) so accepted implies paintable, and inventories the three existing title grammars. MINOR-5 "zero requirement rows" overclaimed against the `requirement11_*` gate records → **accepted**: evidence row reworded. MINOR-6 OQ-1 conflated ignore with reject → **accepted**: restated, and the Alternatives entry rewritten. NIT-7 "two field copies" understated the change → **accepted**: §2 enumerates the three production edits. OQ-1 → project the title; OQ-2 → corpus-bounded table; OQ-3 stays implementation-time. No owner ruling required. Core measurement (120/24/2/2), per-phase split 23/91/6, inertness of `look`/`theme`, the title-paint mechanics and the phase arithmetic were independently re-verified. |
 | 2026-11-21 | r2 | same design-review agent, independent re-read of the revised file | APPROVE-TO-ACCEPT | MAJOR-1 → verified fixed (both flips in §3). MAJOR-2 → verified fixed (manifest Non-Goal + coupling row + ledger branch). MINOR-3/5/6, NIT-7 → verified fixed. Fresh pass: MINOR-A PRR "two struct fields" vs one field → **accepted**: PRR reworded; MINOR-B Testing plan still said one flip → **accepted**: both flips named with line anchors; MINOR-C "Form::Plain only" vs ER parity → **accepted**: Plain and quoted both admitted, folded/block rejected, corpus titles plain so no row impact; MINOR-D rollback overclaimed independence → **accepted**: LIFO, P1 prerequisite of P2, P1+P2 of P3; NIT-E reviewers frontmatter → **accepted**: identity recorded; NIT-F PRR Deletion singular → **accepted**: both stale comments named. Arithmetic, partition, inertness, title-paint mechanics and the ER-only titled-empty guard re-confirmed. No BLOCKER/MAJOR. Recommended promotion to accepted. |
 | 2026-11-21 | prr-r1 | `agent:prr-review-r1` (independent general-purpose, production-readiness lens; static re-derivation, no build) | REQUEST-CHANGES | MAJOR-1 the twin transform was under-defined for 99 rows (the 8 `look`+`htmlLabels` and all 91 P2 rows) → **accepted**: §3 now defines the config-free twin as stripping *every* admitted leaf, adds the corpus-twin rule for the 30 byte-equivalent rows, and drops the misleading `config-free`/`title-free` enum. MAJOR-2 the matrix branch cited the xychart cohort pattern, which hardcodes narrow as `source_fallback` → **accepted**: the branch must read per-row `expected_states` like the Journey loader (`:5637-5643`), explicitly not the hardcoded triple. MAJOR-3 the generator lacked an enabled-phase set, classification priority, per-phase digests and review ownership → **accepted**: all four pinned, with the 6 title rows' theme overlap named as the drift case. MAJOR-4 the PRR build-system row asserted fan-out without measurement and the ctest delta was unstated → **accepted**: fan-out measured at 509 compile jobs (`ninja -C build/debug -n`), BMI PSS marked N/A with reason, CMake registration and the expected closure total named. MINOR-1 the P3 loop restructure → **accepted**: split-out assertion specified. MINOR-2 anti-false-green set → **accepted**: six numbered assertions incl. `ASSERT_TRUE(draws(twin))`, a native predicate, per-width ledger equality and five frozen controls. MINOR-3 per-phase formal deltas → **accepted**: 1085→1108→1199→1205. MINOR-4 a third stale comment (`:429`) → **accepted**: all three named. MINOR-5 "accepted implies paintable" overstated → **accepted**: width-paintable, height fails closed. MINOR-6 coupling file list → **accepted**: the accept branch is in the requirement validator. NIT-1 D-397 §6 vs §7 → **accepted**: §6 kept as the historical estimate, §7 cross-referenced. NIT-2 dual-preset per phase → **accepted**: release per phase, dual-preset at closure (efficiency rule 2). Census, phase arithmetic, the 120/24/2/2 partition, D204/F0 disjointness, footer ordering and requirement11 non-interaction verified correct. |
+| 2026-11-21 | prr-r2 | same PRR agent, independent re-read of the revised file | REQUEST-CHANGES | All four r1 MAJORs verified fixed. MAJOR-A the coupling table still prescribed the xychart hardcoded branch, contradicting §3 → **accepted**: row reworded to the Journey/F0 per-row `expected_states` loader. MAJOR-B "expected = twin frame + footer" double-counted the 6 title rows → **accepted**: the rule is now split (config-free/corpus rows append the footer; the 6 title rows are `[title, blank] + title-free twin frame`, twin footer retained, nothing appended). MINOR-1 the PRR section omitted the platform/golden/wire rows → **accepted**: three N/A-with-reason bullets added (rendering-only). MINOR-2 the review record's MINOR-4 was marked accepted while the PRR Deletion and Testing-plan bullets still said "two" → **accepted**: both now say three and name `:429`. MINOR-3 "byte-equivalent" overstated → **accepted**: body-byte-equivalent / frame-equivalent stated, and the gate compares frames, never source bytes. NIT-1 "three keys" → four. NIT-2 P1 phase wording now says release run with the sha recorded and the dual-preset gate at closure. NIT-3 the corpus-twin rule's precedence over the synthetic config-free rule is stated for the 8 htmlLabels rows. Arithmetic, 30/90 twin split, frozen controls and D204/F0 disjointness re-verified. |
 
 ## Implementation History
 

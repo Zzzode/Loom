@@ -51,9 +51,14 @@ TL 明确否决「按原始 fallback 数排序」的口径：fallback 数最大�
 | `@{ shape: … }` 形状主题 | 4 | `shape-themes/07-connect-all-shapes-with-each-other` |
 | 图标字体 `fa:` + 子图 + `%%` 注释 | 4 | `visual-check/{dark,default,forest,neutral}-theme-legacy-graph` |
 
-即：**flowchart 的 240 条 fallback 中，没有一条的阻塞点只是闭合值表**。这与 D-397 §5
-（RFC 0036 撤回时的证伪）一致，但这次是逐行清单，可直接作为降级依据。除非先做
-subgraph 嵌套/折叠视图/形状/图标这四类 body 能力，否则 flowchart 不可达。**降级，不硬啃。**
+即：按「只带 look/theme」筛选出的 16 行里，`@{shape}` 与图标字体两半（8 行）确实是 body
+能力阻塞。但**设计评审修正（RFC 0038 r1 MAJOR-1）**指出：另外 8 行嵌套/折叠 subgraph 的
+body 其实已受支持（FS-7a/7b 已交付），只删掉 `config:` 块即可原生绘制——它们唯一的阻塞
+点是未准入的 `theme` 叶子。因此 flowchart 的闭合表切片不是 0，而是 **≥8**。
+
+降级的理由因此改写为：**行数更少（≥8 对 28）且单价更高**（需要新建 `FlowEnvelope` 的
+`Theme` 精确位 profile，而不是像 state 那样复用现成信封与页脚）。不硬啃 flowchart 的结论
+不变，但依据从「0 行可达」更正为「可达但性价比低」。
 
 ## 4. 排序与选择
 
@@ -77,7 +82,7 @@ twin 门 + 逐阶段账本」的成熟路径。
 - 4 行 `layout: elk`（另一套布局引擎）；
 - 4 行 `state.useMaxWidth`（嵌套命名空间键，需单独的边界决定）；
 - 1 行折叠描述里含**制表符**（`<br\t/>`），阻塞点是 description 语法而非 config；
-- 其余 55 行（v2 45 + v1 11）body 在去掉 frontmatter 后仍不能绘制，属真实 body 能力。
+- 其余 56 行（v2 45 + v1 11）body 在去掉 frontmatter 后仍不能绘制，属真实 body 能力。
 
 ## 5. 三笔历史债（本次不动）
 

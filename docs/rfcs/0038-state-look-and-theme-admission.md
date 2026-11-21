@@ -20,8 +20,8 @@ cost): **28 of its 93 fallbacks** are blocked only by a frontmatter `config`
 block carrying `look` and/or `theme`. This RFC admits both as closed,
 corpus-bounded value tables, validated and disclosed through the disclosure
 footer that `state_source_envelope` already publishes. Target: **28 rows**
-promoted in two phases (P1 `look` 20, P2 `theme` 8 more), family
-**80 drawn / 65 fallback**, global **1419 / 726**.
+promoted in **one atomic phase** (both leaves: 20 `look`+`theme` rows and 8
+theme-only rows), family **80 drawn / 65 fallback**, global **1419 / 726**.
 
 The mechanism is the RFC 0037 one, second application: closed tables, per-row
 twin gates, a reviewed cohort ledger, per-phase review records. The state
@@ -42,7 +42,7 @@ closed-table subset):
 
 | family | fallbacks | non-gap body draws | clean closed-table slice |
 |---|---|---|---|
-| flowchart | 240 | 49 | **0** (all 16 look/theme-only rows carry subgraph nesting, collapsed `@{view}`, `@{shape}` or icon-font bodies) |
+| flowchart | 240 | 49 | **≥8** (design-review correction: the eight nested/collapsed subgraph rows are blocked only by `theme`; the `@{shape}` and icon-font rows are body-blocked; still fewer rows than state and costlier — a new `Theme` profile with exact-bit machinery) |
 | git | 77 | 50 | 12 (`gitGraph.*` rows are ordering/label semantics) |
 | **state v2 + v1** | **93** | 37 | **28** (19 v2 + 9 v1) |
 | timeline | 23 | 16 | 16 (but no envelope exists) |
@@ -50,7 +50,9 @@ closed-table subset):
 | agentflow | 11 | 11 | 9 + 2 (`handDrawnSeed` needs its own ruling) |
 
 state is selected because it is largest *and* cheapest: the envelope, the
-disclosure footer and the title projection already exist.
+disclosure footer and the title projection already exist. flowchart's real
+closed-table slice (**≥8**, per the design-review correction) is smaller and
+needs its own exact-bit `Theme` profile, so it stays out of scope.
 
 ### Evidence
 
@@ -71,12 +73,15 @@ Cohort census (28 rows):
 | key | values | rows |
 |---|---|---|
 | `config.look` | `neo` 16, `handDrawn` 2, `classic` 2 | 20 |
-| `config.theme` | `redux` 4, `redux-dark` 4, `redux-color` 3, `redux-dark-color` 3, `neo` 3, `neo-dark` 3, `default` 2 (v2 19 + v1 9) | 28 |
+| `config.theme` | `redux` 6, `redux-dark` 6, `redux-color` 3, `redux-dark-color` 3, `neo` 4, `neo-dark` 4, `default` 2 | 28 |
 | `config.fontFamily: courier` (already admitted by E2b) | — | 8 (v1 rows combining it with look+theme) |
 
-Phase split: **P1 `look` 20** (11 v2 + 9 v1 rows carrying `look`), **P2 `theme`
-8** (the remaining v2 rows carrying `theme` alone). Every cohort row uses the
-folded (`>-`) description form the envelope already requires.
+Composition (design-review correction): all 20 rows that carry `look` **also**
+carry `theme`; the remaining 8 v2 rows carry `theme` alone; no row carries
+`look` alone. A `look`-first phasing would therefore promote **zero** rows
+(every look row would still be rejected on `theme`), so this RFC admits both
+leaves in **one atomic phase**. Every cohort row uses the folded (`>-`)
+description form the envelope already requires.
 
 ### Why admission is testable
 
@@ -106,9 +111,10 @@ footer.
 - `config.state.useMaxWidth` (4 rows) — a nested namespaced key; D-066 F0 keeps
   namespaced subtrees closed in the sibling families and this RFC does not open
   that boundary for four rows.
-- The one row whose folded description contains a tab (`<br\t/>`): its blocker
-  is the description grammar, not config.
-- The 55 remaining body-capability rows (v1 11 + v2 45): they do not draw even
+- The one row whose folded description contains a literal tab (`<br<TAB>/>`,
+  in the description payload and the body): its blocker is
+  `state_source_envelope`'s description scan rejecting `\t`, not config.
+- The 56 remaining body-capability rows (v1 11 + v2 45): they do not draw even
   with the frontmatter stripped.
 - Theme values with no state-corpus row, `themeVariables.*`, `handDrawnSeed`,
   `curve`.
@@ -178,7 +184,8 @@ does not change it.
 | coupling | files that must change together |
 |---|---|
 | envelope validator and footer | `mermaid_relations_core_impl.cpp` (`state_source_envelope`), the gate, the ledger |
-| E2b cohort byte-identity | `tools/mermaid/e2b-cohort.json` and its 61 rows are read-only; `test_mermaid_relations_semantics.cpp`'s E2b assertions must stay green (the existing footers are a prefix of the new ones) |
+| E2b cohort byte-identity | `tools/mermaid/e2b-cohort.json` and its 61 rows are read-only; **`tests/ui/test_mermaid_e2b_cohort.cpp`** holds the E2b footer/byte assertions and must stay green (the existing footers are a prefix of the new ones). The same file's `NonWhitelistedConfigRowsKeepWholeSource` iterates every `config:`-bearing state fixture and asserts fallback; the phase extends its exclusion set to the sibling ledger and corrects the stale `:240` comment |
+| surviving state negative | `tests/ui/test_mermaid_relations_semantics.cpp` `MermaidStateEnvelope.ConfigFrontmatterStaysSource` asserts `config: theme: dark` stays fallback. It survives **only because `dark` is outside the closed table**; a future widening must revisit it |
 | census `expected`/`reason` | `tests/fixtures/mermaid_official/manifest.json` is SHA-pinned and never edited; promotion is a ledger-driven branch |
 | frozen partitions | `class481`/`state85` gate records in `e6c-mandatory-gap-roster.json` are untouched; `state85` counts are asserted by their own test |
 | reason string | `test_mermaid_official.cpp`, generator, closure doc |
@@ -189,8 +196,7 @@ Dependency direction is unchanged.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `look` admission | 20 rows (11 v2 + 9 v1) | proposed | state 52→72 drawn / 93→73 fallback; global 1391→1411 / 754→734; formal 1205→1225; E2b suite green; release matrix sha recorded |
-| P2 | `theme` admission | 8 rows (v2 theme-only) | proposed | state 72→80 / 73→65; global 1411→1419 / 734→726; formal 1225→1233; same gate set |
+| P1 | `look` + `theme` admission | 28 rows (20 `look`+`theme`, 8 theme-only; v2 19, v1 9) | proposed | state 52→**80** drawn / 93→**65** fallback; global 1391→**1419** / 754→**726**; formal 1205→**1233**; gaps 48, integrity 0; E2b suite and the E2b negative both green; release matrix sha recorded |
 
 Closure: full debug ctest once, dual-preset byte gate, RFC `implemented`,
 closure doc, design-decisions entry, efficiency retro.
@@ -204,8 +210,9 @@ Completed at the `implementable` gate. Current answers:
 - **Build system** — no new module or target; the edit is inside an existing
   non-exported partition function; fan-out is the existing
   `mermaid_relations_core` closure (to be measured at the PRR gate).
-- **Rollback** — one atomic commit per phase; LIFO (P1 is a prerequisite of P2,
-  since every P2 row carries `theme` only after its `look` siblings land).
+- **Rollback** — a single atomic commit (both leaves, 28 rows); one revert
+  restores the previous census exactly. No ordering constraint exists because
+  the two tables are admitted together.
 - **Observability** — the disclosure footer is the user-visible trace.
 - **Documentation** — design-decisions entry, closure doc, README index, retro.
 - **Deletion** — the E2b comment stating that only `logLevel`/`fontFamily`/
@@ -220,8 +227,8 @@ Completed at the `implementable` gate. Current answers:
 
 ## Rollout and rollback
 
-Phases land P1 → P2. Rollback is LIFO. No persisted format changes; the ledger
-is additive; the roster is regenerated, never hand edited.
+One phase lands P1. Rollback is one revert. No persisted format changes; the
+ledger is additive; the roster is regenerated, never hand edited.
 
 ## Drawbacks and risks
 
@@ -274,7 +281,7 @@ is additive; the roster is regenerated, never hand edited.
 |---|---|---|
 | OQ-1: corpus-twin vs synthetic-twin split for the 28 rows | implementation | generator pins the per-kind counts; the gate proves both directions |
 | OQ-2: narrow_40 disposition per row under the footer budget | implementation | ledger `expected_states`, measured per row |
-| OQ-3: whether the v1 rows' `fontFamily: courier` combination needs its own footer delta assertion | design review | design review verdict |
+| OQ-3: whether the v1 rows' `fontFamily: courier` combination needs its own footer-delta assertion | design review | **Resolved (design review)**: no special case — the standard twin rule already emits `config.fontFamily="courier"` because the config-free twin strips `fontFamily` |
 
 ## Gates and who confirms
 
@@ -289,6 +296,7 @@ is additive; the roster is regenerated, never hand edited.
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-21 | — | — | draft | Created provisional from the D-400 reachability measurement |
+| 2026-11-21 | r1 | `agent:aa8df56e34f50b615` (independent general-purpose, own render probe + static re-derivation) | REQUEST-CHANGES | **B-1** the phase split was arithmetically impossible: every `look` row also carries `theme`, so a look-first P1 would promote 0 rows → **accepted**: rephased to one atomic phase admitting both leaves for all 28 rows; rollback and the PRR row rewritten. **M-1** the flowchart downgrade overclaimed "0 reachable": the eight nested/collapsed subgraph rows are blocked only by `theme` (their bodies render with `config:` removed), only the `@{shape}`/icon rows are body-blocked → **accepted**: RFC and D-400 now state **≥8**, and the downgrade reason is "fewer rows + higher unit cost (new exact-bit `Theme` profile)", not "body capability". **M-2** a pre-existing negative test was missed: `test_mermaid_e2b_cohort.cpp::NonWhitelistedConfigRowsKeepWholeSource` iterates every config-bearing state fixture and asserts fallback, so all 28 rows would break it → **accepted**: added to the coupling table together with the correct owner of the E2b footer assertions and the stale `:240` comment. **M-3** the theme value census summed to 22, not 28 → **accepted**: corrected to `redux 6, redux-dark 6, redux-color 3, redux-dark-color 3, neo 4, neo-dark 4, default 2`. MINOR m-1 body count 55→56; m-2 rollback dependency direction dropped with the rephase; m-3 the surviving `theme: dark` negative named (it stays green only because `dark` is excluded). NIT n-1 OQ-3 closed by the review (the standard twin rule already covers `fontFamily`); n-2 tab wording made precise (a literal tab in the payload and body, rejected by the description scan). Independently verified: the 28-row cohort and its composition, the 145 partition, the matrix census, the envelope/footer facts and the inertness claim. |
 
 ## Implementation History
 

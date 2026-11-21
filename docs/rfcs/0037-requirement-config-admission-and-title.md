@@ -1,9 +1,9 @@
 ---
 rfc: 37
 title: requirement family config admission and title projection
-status: provisional
+status: accepted
 owners: "@Zzzode"
-reviewers: []
+reviewers: ["agent:design-review-r1 (a63ae06251ef34362, r1 REQUEST-CHANGES → r2 APPROVE-TO-ACCEPT)"]
 created: 2026-11-21
 last-reviewed: 2026-11-21
 supersedes: ""
@@ -193,8 +193,11 @@ relationship families and it is the strictest:
   **accepted implies paintable** — the envelope never accepts a title the
   renderer would then discard. `kTitleLimit` (1024) is the generic envelope
   bound and is deliberately not used here;
-- `Form::Plain` only: folded/block scalars, tabs, control bytes and duplicates
-  reject.
+- Plain scalars **and** quoted scalars are admitted (ER parity: `er_yaml_value`
+  decodes quotes and ER's own title path checks no scalar form, so `title: "X"`
+  is a title there too). Folded/block scalars, tabs, control bytes and
+  duplicates reject. The corpus titles are plain, so no row depends on this
+  branch; it is stated so the boundary is not left ambiguous.
 
 Three title grammars currently exist (ER/Class via `er_yaml_value`; the
 flowchart path via `unicode_text`; the generic envelope parse). This RFC does
@@ -294,23 +297,30 @@ Completed at the `implementable` gate. Current answers:
   gate is the inertness proof, not a golden snapshot. Known flakes
   (`ServerMain.DirectConnect*`, `E2E_Pty_Handoff*`) are pre-existing and unrelated.
 - **Build system** — no new module, no new target, no interface change beyond
-  two struct fields in an already-shipped `.cppm` producer; fan-out is the
-  existing `mermaid_detail` BMI closure.
+  one struct field (`RequirementEnvelope::title`) plus one field copy in an
+  already-shipped, non-exported `.cppm` partition; fan-out is the existing
+  `mermaid_detail` BMI closure.
 - **Rollback** — each phase is one atomic commit (validator table + ledger +
   generator + gate + matrix branch + roster); reverting one phase restores the
-  previous census exactly. P3 depends on P1/P2 only through its twins.
+  previous census exactly. Rollback is LIFO: every P2 row carries `look` and
+  every P3 row carries `look` + `theme`, so P1 is a hard prerequisite of P2 and
+  P1+P2 of P3.
 - **Observability** — disclosure footer is the user-visible trace; session
   traces and prompt dumps are untouched.
 - **Documentation** — design-decisions entry, closure doc, README index,
   efficiency retro.
-- **Deletion** — the F0 boundary comment that says "every theme/look row keeps
-  whole-source fallback" is corrected in place (it becomes false).
+- **Deletion** — the two stale comments that say "every theme/look row keeps
+  whole-source fallback" (the test file header and the
+  `FrontmatterAndThemeGatesStayClosed` preamble) are corrected in place in the
+  phase that falsifies each.
 - **Deprecation** — none.
 
 ## Rollout and rollback
 
-Phases land in order P1 → P2 → P3, each independently revertible and each
-leaving the census self-consistent. No persisted format, wire shape or debug
+Phases land in order P1 → P2 → P3, each leaving the census self-consistent.
+Rollback is LIFO, not independent: P1 is a prerequisite of P2 (every P2 row
+carries `look`) and P1+P2 of P3 (every P3 row carries `look` + `theme`), so a
+P1 revert first requires reverting P3 and P2. No persisted format, wire shape or debug
 trace changes. The ledger is additive; the roster is regenerated, never hand
 edited.
 
@@ -363,8 +373,10 @@ edited.
 
 - New `tests/ui/test_mermaid_requirement_0037_cohort.cpp` (per-row twins,
   boundary suite, ledger schema and per-phase reviews).
-- Edited `tests/ui/test_mermaid_requirement_cohort.cpp` (one F0 assertion flip
-  plus cohort negatives) and `tests/ui/test_mermaid_official.cpp` (matrix
+- Edited `tests/ui/test_mermaid_requirement_cohort.cpp` (two assertion flips,
+  one per phase — P1 `F0InertBoundaryKeepsVisualKeysClosed:431`, P3
+  `FrontmatterAndThemeGatesStayClosed:330-341` wide — plus cohort negatives and
+  the two stale comments) and `tests/ui/test_mermaid_official.cpp` (matrix
   branch + reason string).
 - Targeted `ctest -L mermaid` per phase; full debug ctest once at closure
   (current baseline 4614 tests); dual-preset byte-identical matrix gate at
@@ -405,6 +417,7 @@ edited.
 |---|---|---|---|---|
 | 2026-11-21 | — | — | draft | Created provisional from the D-397 §6 measurement and the corrected twin probe |
 | 2026-11-21 | r1 | `agent:design-review-r1` (independent general-purpose, own render probe + static re-derivation) | REQUEST-CHANGES | MAJOR-1 the F0 boundary flip count was wrong: a **second** negative, `FrontmatterAndThemeGatesStayClosed` (P3 row `a-diagram-with-a-title-neo-look-redux-dark-theme`), flips at wide in P3 → **accepted**: §3 now enumerates both flips, their phases, the narrow-stays-fallback state and the two stale comments. MAJOR-2 the census coupling omitted `manifest.json` / `kManifestSha256` → **accepted**: coupling row added, manifest immutability made a Non-Goal, ledger-driven cohort branch named. MINOR-3 cohort `look: handDrawn` is 23, not 24 (the roster's 24th is the excluded namespaced row) → **accepted**: RFC and D-397 §7 corrected. MINOR-4 the title grammar was described as `parse_envelope` generically and accepted titles wider than the 240-column paint guard → **accepted**: §2 now pins the ER rule (`er_yaml_value`, printable ASCII, ink, ≤ `kWidthLimit`) so accepted implies paintable, and inventories the three existing title grammars. MINOR-5 "zero requirement rows" overclaimed against the `requirement11_*` gate records → **accepted**: evidence row reworded. MINOR-6 OQ-1 conflated ignore with reject → **accepted**: restated, and the Alternatives entry rewritten. NIT-7 "two field copies" understated the change → **accepted**: §2 enumerates the three production edits. OQ-1 → project the title; OQ-2 → corpus-bounded table; OQ-3 stays implementation-time. No owner ruling required. Core measurement (120/24/2/2), per-phase split 23/91/6, inertness of `look`/`theme`, the title-paint mechanics and the phase arithmetic were independently re-verified. |
+| 2026-11-21 | r2 | same design-review agent, independent re-read of the revised file | APPROVE-TO-ACCEPT | MAJOR-1 → verified fixed (both flips in §3). MAJOR-2 → verified fixed (manifest Non-Goal + coupling row + ledger branch). MINOR-3/5/6, NIT-7 → verified fixed. Fresh pass: MINOR-A PRR "two struct fields" vs one field → **accepted**: PRR reworded; MINOR-B Testing plan still said one flip → **accepted**: both flips named with line anchors; MINOR-C "Form::Plain only" vs ER parity → **accepted**: Plain and quoted both admitted, folded/block rejected, corpus titles plain so no row impact; MINOR-D rollback overclaimed independence → **accepted**: LIFO, P1 prerequisite of P2, P1+P2 of P3; NIT-E reviewers frontmatter → **accepted**: identity recorded; NIT-F PRR Deletion singular → **accepted**: both stale comments named. Arithmetic, partition, inertness, title-paint mechanics and the ER-only titled-empty guard re-confirmed. No BLOCKER/MAJOR. Recommended promotion to accepted. |
 
 ## Implementation History
 

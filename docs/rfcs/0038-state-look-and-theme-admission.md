@@ -1,11 +1,11 @@
 ---
 rfc: 38
 title: state family look and theme admission
-status: implementable
+status: implemented
 owners: "@Zzzode"
 reviewers: ["agent:design-review (aa8df56e34f50b615, r1/r2 REQUEST-CHANGES → r3 APPROVE-TO-ACCEPT)", "agent:prr-review (aa4f19113e92b44ae, r1/r2 REQUEST-CHANGES → r3 APPROVE-TO-IMPLEMENT)"]
 created: 2026-11-21
-last-reviewed: 2026-11-21
+last-reviewed: 2026-11-22
 supersedes: ""
 tracking: local
 ---
@@ -224,7 +224,7 @@ Dependency direction is unchanged.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `look` + `theme` admission | 28 rows (20 `look`+`theme`, 8 theme-only; v2 19, v1 9) | proposed | state 52→**80** drawn / 93→**65** fallback; global 1391→**1419** / 754→**726**; formal `drawn_at_240` **1205→1233**; gaps 48, integrity 0; E2b suite and **both** negatives (E2a, E2b) green; release matrix sha recorded |
+| P1 | `look` + `theme` admission | 28 rows (20 `look`+`theme`, 8 theme-only; v2 19, v1 9) | done | state 52→**80** drawn / 93→**65** fallback; global 1391→**1419** / 754→**726**; formal `drawn_at_240` **1205→1233**; gaps 48, integrity 0; E2b suite and **both** negatives (E2a, E2b) green; release matrix sha recorded |
 
 Closure: full debug ctest once, dual-preset byte gate, RFC `implemented`,
 closure doc, design-decisions entry, efficiency retro.
@@ -351,3 +351,5 @@ ledger is additive; the roster is regenerated, never hand edited.
 | Date | Phase | Change | Commit |
 |---|---|---|---|
 | 2026-11-21 | — | Draft created (provisional), no code | — |
+| 2026-11-22 | P1 | Both closed tables land in `state_source_envelope` (two leaves, two disclosure lines appended after every existing leaf); reviewed 28-row literal cohort with one whole-cohort digest; generator + sibling ledger + 5-test twin gate; matrix branch; E2a/E2b negatives extended (43 / 132 floors); roster `--emit` 754->726. Family 52/93 -> 80/65, global 1391/754 -> 1419/726, formal `drawn_at_240` 1205 -> 1233, gaps 48, integrity 0, dual-preset sha `59cf7de8`. Reviewed by `agent:acde9271b5b1810a9` (APPROVE, 2 MINOR + 2 NIT applied test-only) | `648d7035` |
+| 2026-11-22 | — | RFC marked `implemented`: the single phase is done, full debug ctest run (4627 declared; two load-timing flakes, both green in isolation), dual-preset byte gate identical, closure record `docs/dev/d401-state-rfc0038-closure.md` | — |

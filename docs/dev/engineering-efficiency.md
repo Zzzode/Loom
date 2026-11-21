@@ -441,6 +441,35 @@ Attach a short efficiency section to each closure report, answering:
 
 ## Retro log
 
+- **2026-11-22, RFC 0038 state look/theme family (`648d7035`).** +28 whole
+  draws in one atomic phase; census 1391/754 → 1419/726, formal 1205 → 1233,
+  gaps 48, dual-preset byte-identical at `59cf7de8`. The phase ran front-to-back
+  without a rework loop after review (approve → regenerate → rebuild → both-preset
+  matrix → roster `--emit`, i.e. RFC 0037 rule 5 applied in order). Loops and
+  costs worth keeping:
+  1. *A render-defined split must be pinned, never classified.* The counterpart
+     of RFC 0037 rule 1: here a source-shape classifier over-selects by 16 on the
+     63 look/theme rows, so the 28-row cohort is a reviewed literal path set with
+     one whole-cohort digest, and the generator asserts only source-derivable
+     counts (145/28/4/4/1). Rule: when the split depends on rendering, pin the
+     set and pin the digest — do not derive it.
+  2. *Every existing whole-source scan is a coupling.* The design review found
+     the E2b negative; the PRR found the E2a negative, whose floor silently broke
+     at 71−28=43 against `EXPECT_GT(50)`. Rule: grep the tests for the family's
+     fixture roots, not for the feature's name.
+  3. *A twin-precedence rule needs a measured "none" branch.* Corpus twins were
+     impossible on this family (every body-equivalent drawn state sibling carries
+     `logLevel`/`fontFamily` lines that cannot prefix the source footer). Rule:
+     record the measured reason in the ledger and the generator doc instead of
+     forcing a weaker comparison.
+  4. *Load flakes need the isolation re-run before they count.* The `-j$(nproc)`
+     full run produced two timeouts — `ServerMain.DirectConnect*` (documented)
+     and `Tools.RuntimeTeamCreate...` (mock-server request-count wait) — both
+     green alone (0.47 s / 0.17 s). Rule: re-run failing timing tests serially
+     and record both numbers; never widen a timeout to make the run look green.
+  5. *Release-primary paid off again:* the matrix cost 27 s in release versus
+     240 s in debug (8.9×) for a byte-identical artifact; iteration used release,
+     and the full debug ctest ran once at closure.
 - **2026-11-21, RFC 0037 requirement family (P1 `e645212f`, P2 `c42647ad`, P3
   `bd542e71`).** +120 whole draws in three phases; census 1271/874 → 1391/754,
   formal 1085 → 1205, gaps 48, dual-preset byte-identical at each phase. Rework

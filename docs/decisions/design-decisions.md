@@ -4326,3 +4326,41 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   the shrinking fallback roster. Rollback is LIFO: P1 is a prerequisite of P2
   and P1+P2 of P3.
 
+## state look and theme admission (RFC 0038)
+
+- **Envelope:** the `stateDiagram`/`stateDiagram-v2` description envelope
+  (RFC 0031 E2a) and its non-terminal config whitelist (E2b) additionally
+  accept a closed `look` table (`classic`, `neo`, `handDrawn`) and a closed
+  `theme` palette table (`default`, `neo`, `neo-dark`, `redux`, `redux-dark`,
+  `redux-color`, `redux-dark-color`). Both tables are corpus-bounded; the four
+  other upstream palettes (`base`, `dark`, `forest`, `neutral`) have no state
+  corpus row and stay rejected. The surviving whole-source negative
+  `MermaidStateEnvelope.ConfigFrontmatterStaysSource` uses `theme: dark` and is
+  correct only because of that bound — a future widening must revisit it.
+  `layout: elk`, `state.useMaxWidth`, `curve`, `themeVariables.*` and
+  `handDrawnSeed` remain closed.
+- **Inertness proof:** the state renderer never reads `look` or `theme` — the
+  shared relations core consults `theme` only in the ER source-model seam and
+  paint. The proof is a per-row twin gate: the frame must equal the config-free
+  twin's frame plus exactly the disclosure footer the ledger pins. All 28
+  cohort rows use the synthetic config-free twin because every body-equivalent
+  drawn state fixture carries `logLevel`/`fontFamily` disclosure lines that
+  cannot be a prefix of the source footer (corpus twins are impossible by
+  construction on this family).
+- **Footer order is load-bearing:** the new lines go after every existing leaf
+  (header, `fontFamily`, `logLevel`, `securityLevel`, `look`, `theme`), so the
+  61 E2b cohort footers stay byte-identical. Inserting a line earlier would
+  change 61 reviewed frames.
+- **The 28-row cohort is render-defined:** 63 state originals carry `look`
+  and/or `theme`; only 28 draw once the frontmatter is stripped, and the E2b
+  `state_blocker` detector over-selects by 16 on them. The cohort is therefore
+  a reviewed literal path set pinned in `generate_state_0038_cohort.py` with
+  one whole-cohort path+sha digest; the generator asserts only source-derivable
+  counts (family 145, cohort 28, `layout: elk` 4, `config.state.*` 4,
+  description-tab 1). The drawn/blocked split is a recorded measurement, never
+  an assertion.
+- **Promotion and rollback:** rows are promoted through the sibling ledger
+  `tools/mermaid/state-0038-cohort.json`, never through the pinned manifest
+  (`kManifestSha256` and its duplicate pins stay byte-immutable) and never by
+  editing the E2b ledger. Both leaves land in one atomic phase because every
+  `look` row also carries `theme`; rollback is one revert.

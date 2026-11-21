@@ -59,6 +59,8 @@ struct AfDiagram {
     std::vector<AfElement> elements;
     std::vector<AfEdgeRecord> edges;
     std::vector<std::size_t> roots;
+    // RFC 0041: the validated disclosure footer for an admitted config leaf.
+    std::vector<std::string> notices;
 };
 
 std::string_view af_trim(std::string_view value) {
@@ -90,10 +92,65 @@ std::optional<std::string> af_quoted(std::string_view token) {
     return std::string(inner);
 }
 
-// Key-based visual gate over a leading frontmatter block. Mirrors the other
-// greenfield renderers: config/theme/look (and any non-description key) keep
-// the whole source on fallback because the text surface has no such contract.
-bool af_frontmatter_gated(std::string_view source, std::string_view& body) {
+// RFC 0041: the frontmatter gate validates one admitted shape and discloses it.
+// A column-0 `config:` block whose sole leaf is an indent-2 `theme` inside the
+// closed corpus table is accepted and disclosed through a bounded footer; every
+// other frontmatter shape keeps today's whole-source fallback (the gate still
+// admits only `description` at column 0, and indented lines outside a config
+// block stay ignored, exactly as before). The renderer never reads `theme`, so
+// the footer states that the palette was not applied.
+constexpr std::size_t kAfNoticeLineLimit = 96u;
+constexpr std::string_view kAfNoticeHeader = "Agentflow native projection v1";
+constexpr std::array<std::string_view, 7> kAfThemeTable{{
+    "base", "dark", "default", "forest", "neutral", "redux-color", "redux-dark-color"}};
+
+// Trim, strip a trailing YAML comment outside quotes, then dequote a matched
+// pair; an unmatched quote is a mismatch, never a value.
+std::optional<std::string> af_scalar(std::string_view raw, Work& work) {
+    const auto trim_view = [](std::string_view value) {
+        const auto first = value.find_first_not_of(" \t");
+        if (first == std::string_view::npos) return std::string_view{};
+        const auto last = value.find_last_not_of(" \t");
+        return value.substr(first, last - first + 1u);
+    };
+    auto value = trim_view(raw);
+    char quote = 0;
+    for (std::size_t n = 0; n < value.size(); ++n) {
+        const char c = value[n];
+        if (quote) {
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == '#' && (n == 0u || value[n - 1u] == ' ' || value[n - 1u] == '\t')) {
+            value = trim_view(value.substr(0, n));
+            break;
+        }
+    }
+    if (!work.spend(value.size() + 1u)) return std::nullopt;
+    if (value.size() >= 2u &&
+        ((value.front() == '"' && value.back() == '"') ||
+         (value.front() == '\'' && value.back() == '\'')))
+        value = value.substr(1u, value.size() - 2u);
+    return std::string(value);
+}
+
+bool af_notice_line(std::vector<std::string>& notices, std::string_view line, Work& work) {
+    if (line.size() > kAfNoticeLineLimit ||
+        !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+        return false;
+    notices.emplace_back(line);
+    return true;
+}
+
+// Returns true when the whole source must fall back. Otherwise `body` is the
+// post-fence source and `notices` holds the bounded disclosure footer (empty
+// for a description-only envelope).
+bool af_frontmatter_gated(std::string_view source, std::string_view& body,
+                          std::vector<std::string>& notices, Work& work) {
     if (!source.starts_with("---\n")) {
         body = source;
         return false;
@@ -121,6 +178,9 @@ bool af_frontmatter_gated(std::string_view source, std::string_view& body) {
     }
     // Exclude the closing fence line itself from the scanned frontmatter.
     const auto frontmatter = source.substr(4, close_line_start - 4);
+    bool in_config = false;
+    bool saw_config = false;
+    std::optional<std::string> theme;
     for (std::size_t pos = 0;;) {
         const auto eol = frontmatter.find('\n', pos);
         const auto line = frontmatter.substr(
@@ -131,7 +191,26 @@ bool af_frontmatter_gated(std::string_view source, std::string_view& body) {
             if (eol == std::string_view::npos) break;
             continue;
         }
-        if (key_start != 0) {                                  // nested/continuing line
+        if (key_start != 0) {
+            // RFC 0041: indented lines are interpreted only inside the config
+            // block; outside it they stay ignored exactly as before (a folded
+            // description payload is documentation, never a config event).
+            if (in_config) {
+                const auto leaf = line.substr(key_start);
+                if (!leaf.starts_with('#')) {                 // YAML comment
+                    const auto colon = leaf.find(':');
+                    // Inside the config block the sole admitted leaf is an
+                    // indent-2 `theme`; any other leaf (or a colon-less line)
+                    // keeps the whole source on fallback.
+                    if (colon == std::string_view::npos ||
+                        leaf.substr(0, colon) != "theme" || key_start != 2u || theme)
+                        return true;
+                    auto value = af_scalar(leaf.substr(colon + 1u), work);
+                    if (!value || std::ranges::find(kAfThemeTable, *value) == kAfThemeTable.end())
+                        return true;
+                    theme = std::move(*value);
+                }
+            }
             if (eol == std::string_view::npos) break;
             continue;
         }
@@ -145,8 +224,25 @@ bool af_frontmatter_gated(std::string_view source, std::string_view& body) {
         if (colon == std::string_view::npos) return true;
         // Trim whitespace around the key so `description : x` is recognized.
         const auto key = af_trim(column0.substr(0, colon));
-        if (key != "description") return true;
+        if (key == "description") {
+            in_config = false;
+        } else if (key == "config") {
+            // Exactly one config line is permitted; a second one rejects.
+            if (saw_config) return true;
+            saw_config = true;
+            in_config = true;
+        } else {
+            return true;
+        }
         if (eol == std::string_view::npos) break;
+    }
+    // A config block must carry exactly one admitted leaf.
+    if (saw_config && !theme) return true;
+    if (theme) {
+        if (!af_notice_line(notices, kAfNoticeHeader, work) ||
+            !af_notice_line(notices,
+                            "config.theme=" + *theme + " -> colour palette; not applied", work))
+            return true;
     }
     body = source.substr(*close_nl + 1);
     return false;
@@ -470,7 +566,7 @@ struct AfParser {
                 return std::nullopt;
 
         std::string_view body;
-        if (af_frontmatter_gated(source, body)) return std::nullopt;
+        if (af_frontmatter_gated(source, body, diagram.notices, work)) return std::nullopt;
 
         std::size_t at = 0;
         bool header_seen = false;
@@ -706,6 +802,19 @@ std::optional<std::vector<std::string>> agentflow_layout(std::string_view source
             !work.spend(16 + row.size()))
             return std::nullopt;
         rows.push_back(std::move(row));
+    }
+    // RFC 0041: disclose the validated, not-applied config leaf below the art,
+    // with one blank separator, under the state/flow/git budget.
+    if (!parsed->notices.empty()) {
+        std::size_t bytes = 0;
+        for (const auto& notice : parsed->notices) bytes += notice.size();
+        if (rows.size() + 1u + parsed->notices.size() > kAfMaxRows ||
+            !work.spend((1u + parsed->notices.size()) *
+                            (4u * sizeof(std::string) + 256u) +
+                        bytes * 2u + 256u))
+            return std::nullopt;
+        rows.emplace_back();
+        for (const auto& notice : parsed->notices) rows.push_back(notice);
     }
     return rows;
 }

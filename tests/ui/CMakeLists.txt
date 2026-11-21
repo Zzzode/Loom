@@ -276,6 +276,21 @@ set_tests_properties(
     MermaidJourneyFam0040Cohort.JourneyLedgerIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# RFC 0041: the agentflow admission ledger and the family ledger it partitions
+# are generator constants; these hermetic checks fail on drift or hand edits.
+add_test(NAME MermaidAgentflow0041Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_agentflow_0041_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+add_test(NAME MermaidAgentflow0041Cohort.FamilyLedgerIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_agentflow_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(
+    MermaidAgentflow0041Cohort.GeneratorIsReproducible
+    MermaidAgentflow0041Cohort.FamilyLedgerIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # RFC 0030 Flow400 Extra7: metadata-only post-CTest admission join.
 add_test(NAME MermaidFlow400Extra7AdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
     COMMAND "${LOOM_UI_LINT_PYTHON}" -I
@@ -1067,6 +1082,13 @@ add_executable(test_mermaid_journeyfam_0040_cohort test_mermaid_journeyfam_0040_
 target_link_libraries(test_mermaid_journeyfam_0040_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_journeyfam_0040_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+add_executable(test_mermaid_agentflow_0041_cohort test_mermaid_agentflow_0041_cohort.cpp)
+target_link_libraries(test_mermaid_agentflow_0041_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_agentflow_0041_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

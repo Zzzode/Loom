@@ -1,8 +1,9 @@
 // RFC 0031 D-211 agentflow-family cohort gate. Public API only: enforces
 // tools/mermaid/agentflow-cohort.json against the live renderer and the
 // pinned manifest. All 27 description-only agentflow originals render
-// natively as a bounded outline; the 11 config/theme frontmatter originals
-// keep their whole-source fallback.
+// natively as a bounded outline; RFC 0041 promotes the 9 theme-only originals
+// (their per-row gate is test_mermaid_agentflow_0041_cohort) and the 2
+// look + handDrawnSeed rows keep their whole-source fallback.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -87,7 +88,8 @@ TEST(MermaidAgentflowCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 27);
     EXPECT_EQ(root.get("selection").get_int("family_total"), 38);
     EXPECT_EQ(root.get("selection").get_int("native_draw_count"), 27);
-    EXPECT_EQ(root.get("selection").get_int("gated_count"), 11);
+    EXPECT_EQ(root.get("selection").get_int("admitted_count"), 9);
+    EXPECT_EQ(root.get("selection").get_int("gated_count"), 2);
     EXPECT_EQ(root.get("selection").get_int("narrow_40_draw_count"), 19);
     EXPECT_EQ(root.get("selection").get_int("narrow_40_fallback_count"), 8);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
@@ -247,13 +249,15 @@ TEST(MermaidAgentflowCohort, MalformedInputFailsClosed) {
         "---\ndescription : ok\n---\nagentflow-beta TB\nA[\"x\"]\n", kWide));
 }
 
-// The frozen frontmatter gate is untouched: config/theme/look keys keep the
-// whole source on fallback regardless of a valid body.
-TEST(MermaidAgentflowCohort, FrontmatterGatesStayClosed) {
-    const std::array<std::string, 4> gated{{
-        "agentflow/pr-check/11-should-render-every-container-kind-with-the-base-theme.mmd",
-        "agentflow/visual-check/11-should-render-every-container-kind-with-the-forest-theme.mmd",
-        "agentflow/visual-check/15-support-triage-default-theme.mmd",
+// RFC 0041 admits one config shape (`config:` with a sole indent-2 in-table
+// theme); every other frontmatter keeps the whole source on fallback. The
+// per-row frame gate for the nine admitted rows is
+// test_mermaid_agentflow_0041_cohort.
+TEST(MermaidAgentflowCohort, FrontmatterGateBoundary) {
+    // The two remaining gated rows carry look + handDrawnSeed (a geometry
+    // seed is not inert).
+    const std::array<std::string, 2> gated{{
+        "agentflow/pr-check/should-render-every-container-kind.mmd",
         "agentflow/pr-check/should-render-several-collapsed-containers.mmd",
     }};
     for (const auto& rel : gated) {
@@ -261,8 +265,15 @@ TEST(MermaidAgentflowCohort, FrontmatterGatesStayClosed) {
         EXPECT_FALSE(draws(source, kWide)) << rel;
         EXPECT_FALSE(draws(source, kNarrow)) << rel;
     }
-    // A synthetic config gate fails closed even with a clean body.
-    EXPECT_FALSE(draws(
-        "---\ndescription: x\nconfig:\n  theme: dark\n---\nagentflow-beta TB\nA[\"x\"]\n",
-        kWide));
+    // Out-of-table values and sibling palettes still fail closed.
+    const auto with = [](std::string_view config) {
+        return "---\ndescription: x\nconfig:\n" + std::string(config) +
+               "---\nagentflow-beta TB\nA[\"x\"]\n";
+    };
+    for (const auto* config : {"  theme: neo\n", "  theme: redux\n", "  theme: redux-dark\n",
+                               "  look: handDrawn\n", "  theme: dark\n  handDrawnSeed: 1\n"}) {
+        EXPECT_FALSE(draws(with(config), kWide)) << config;
+    }
+    // The accepted shape now draws and discloses (per-row gate owns the frame).
+    EXPECT_TRUE(draws(with("  theme: dark\n"), kWide));
 }

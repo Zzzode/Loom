@@ -10,13 +10,17 @@ flowchart: unknown statements, shapes, metadata keys or unresolved edge
 endpoints reject the whole source.
 
 The remaining gate is frontmatter-only: a strict column-0 `---` fence whose
-YAML block carries any top-level key besides `description` (config/theme and
-friends) keeps the whole source on fallback, because the text surface has no
-theme/look/color/layout contract.
+YAML block carries any top-level key besides `description`, or a `config:`
+block whose sole leaf is not an indent-2 in-table `theme`, keeps the whole
+source on fallback. RFC 0041 admits the seven corpus theme values (disclosed,
+never applied) and promotes 9 rows; the other 2 gated rows carry
+`look` + `handDrawnSeed`, where the seed is a geometry input and therefore not
+inert.
 
 Renderer-free; the durable gtest enforces every state live. Drift guards pin
-the family partition (38 total / 27 native / 11 gated) and the 27-row cohort;
-manifest shas are pinned; the review block is preserved across regeneration.
+the three-way family partition (38 total / 27 native rows / 9 admitted /
+2 gated) and the 27-row cohort; manifest shas are pinned; the review block is
+preserved across regeneration.
 
 Usage: python3 tools/mermaid/generate_agentflow_cohort.py --repo-root . [--check]
 """
@@ -52,7 +56,17 @@ _NARROW_FALLBACK = {
 # Hard drift-guard tuple, measured through the production renderer.
 _FAMILY_TOTAL = 38
 _NATIVE_DRAW = 27
-_GATED = 11
+_ADMITTED = 9
+_GATED = 2
+
+# RFC 0041 closed theme table (the corpus); any other value keeps fallback.
+_THEME_TABLE = ("base", "dark", "default", "forest", "neutral", "redux-color",
+                "redux-dark-color")
+
+# Measured 40-column draws among the admitted rows: none. The disclosure
+# footer's longest line exceeds a 40-column viewport, so the renderer keeps
+# the whole source there (the corpus twin draws because it has no footer).
+_ADMITTED_NARROW_DRAW = set()
 
 
 def split_frontmatter(text):
@@ -68,32 +82,83 @@ def split_frontmatter(text):
     return None, True  # unclosed fence
 
 
-def frontmatter_gated(frontmatter, malformed):
+def _scalar(raw):
+    """Mirror the C++ reader: trim, strip a trailing comment, dequote."""
+    value = raw.strip(" \t")
+    quote = ""
+    cut = len(value)
+    for index, char in enumerate(value):
+        if quote:
+            if char == quote:
+                quote = ""
+            continue
+        if char in "'\"":
+            quote = char
+        elif char == "#" and (index == 0 or value[index - 1] in " \t"):
+            cut = index
+            break
+    value = value[:cut].strip(" \t")
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+        value = value[1:-1]
+    return value
+
+
+def classify(frontmatter, malformed):
+    """Return (kind, leaves); kind is "drawn", "admitted" or "gated".
+
+    Mirrors the RFC 0041 C++ gate: indented lines are interpreted only inside
+    a `config:` block, where the sole admitted leaf is an indent-2 `theme` in
+    the closed table; every other shape keeps today's whole-source fallback.
+    """
     if malformed:
-        return True
+        return "gated", {}
     if frontmatter is None:
-        return False
+        return "drawn", {}
+    in_config = False
+    saw_config = False
+    theme = None
     for line in frontmatter:
         # Tab indentation anywhere in the block rejects the envelope.
         leading = line[: len(line) - len(line.lstrip(" \t"))]
         if "\t" in leading:
-            return True
+            return "gated", {}
         key_start = next((i for i, c in enumerate(line) if c != " "), None)
         if key_start is None:
             continue  # blank line
         if key_start != 0:
-            continue  # nested or folded-continuation line
+            # Indented lines count only inside the config block; outside it
+            # they stay ignored exactly as before.
+            if in_config:
+                leaf = line[key_start:]
+                if not leaf.startswith("#"):
+                    if ":" not in leaf:
+                        return "gated", {}
+                    if leaf.split(":", 1)[0] != "theme" or key_start != 2 or theme:
+                        return "gated", {}
+                    value = _scalar(leaf.split(":", 1)[1])
+                    if value not in _THEME_TABLE:
+                        return "gated", {}
+                    theme = value
+            continue
         column0 = line[key_start:]
         if column0.startswith("#"):
             continue  # YAML comment
-        # Mirror the C++ gate: a column-0 non-comment line needs a colon and
-        # a trimmed key equal to description; anything else gates the source.
+        # Mirror the C++ gate: a column-0 non-comment line needs a colon.
         if ":" not in column0:
-            return True
+            return "gated", {}
         key = column0.split(":", 1)[0].strip()
-        if key != "description":
-            return True
-    return False
+        if key == "description":
+            in_config = False
+        elif key == "config":
+            if saw_config:
+                return "gated", {}
+            saw_config = True
+            in_config = True
+        else:
+            return "gated", {}
+    if saw_config and theme is None:
+        return "gated", {}
+    return ("admitted", {"theme": theme}) if theme else ("drawn", {})
 
 
 def sha256_file(path):
@@ -124,26 +189,29 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
-    draw, gated = set(), set()
+    draw, admitted, gated = set(), set(), set()
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
         text = path.read_text()
         rel = path.relative_to(
             repo_root / "tests/fixtures/mermaid_official/cases").as_posix()
         frontmatter, malformed = split_frontmatter(text)
-        if frontmatter_gated(frontmatter, malformed):
-            gated.add(rel)
-        else:
-            draw.add(rel)
+        kind, _ = classify(frontmatter, malformed)
+        {"drawn": draw, "admitted": admitted, "gated": gated}[kind].add(rel)
 
-    if (len(draw), len(gated)) != (_NATIVE_DRAW, _GATED) or \
-            len(draw) + len(gated) != _FAMILY_TOTAL:
+    if (len(draw), len(admitted), len(gated)) != (_NATIVE_DRAW, _ADMITTED, _GATED) or \
+            len(draw) + len(admitted) + len(gated) != _FAMILY_TOTAL:
         raise ValueError(
-            f"agentflow partition drift: draw={len(draw)} gated={len(gated)} "
-            f"total={len(draw) + len(gated)} "
-            f"(expected {_NATIVE_DRAW}/{_GATED}/{_FAMILY_TOTAL})")
+            f"agentflow partition drift: draw={len(draw)} admitted={len(admitted)} "
+            f"gated={len(gated)} total={len(draw) + len(admitted) + len(gated)} "
+            f"(expected {_NATIVE_DRAW}/{_ADMITTED}/{_GATED}/{_FAMILY_TOTAL})")
     unknown_narrow = _NARROW_FALLBACK - draw
     if unknown_narrow:
         raise ValueError(f"narrow set references non-drawing fixtures: {unknown_narrow}")
+    if not _ADMITTED_NARROW_DRAW <= admitted:
+        raise ValueError("admitted narrow set references non-admitted fixtures")
+    admitted_digest = hashlib.sha256("".join(
+        f"{rel}\t{sha256_file(repo_root / 'tests/fixtures/mermaid_official/cases' / rel)}\n"
+        for rel in sorted(admitted)).encode()).hexdigest()
 
     rows = []
     for rel in sorted(draw):
@@ -190,8 +258,10 @@ def build(repo_root):
                 "returns/protocol/endpoint/token_required/connectorRef/"
                 "instruction/model } metadata; -->, -.-, --x and labeled edges"),
             "theme_gate": (
-                "a column-0 frontmatter fence carrying any top-level key "
-                "besides description, or an indented/unclosed fence, keeps "
+                "RFC 0041: a column-0 `config:` block whose sole leaf is an "
+                "indent-2 `theme` in the closed corpus table is validated and "
+                "disclosed; any other key, an indented/unclosed fence, a "
+                "second config line, or a config leaf outside that shape keeps "
                 "the whole original on source fallback"),
         },
         "upstream": {
@@ -202,11 +272,16 @@ def build(repo_root):
         },
         "selection": {
             "rule": (
-                "agentflow fixtures without a config/theme/title frontmatter "
-                "gate; all 27 native originals are cohort rows"),
+                "agentflow fixtures whose frontmatter is absent, description-only, "
+                "or a single config block whose sole leaf is an admitted theme; "
+                "the 27 native originals are cohort rows and RFC 0041 promotes "
+                "the 9 theme-only rows through the sibling ledger"),
             "roots": ["agentflow"],
             "family_total": _FAMILY_TOTAL,
             "native_draw_count": _NATIVE_DRAW,
+            "admitted_count": _ADMITTED,
+            "admitted": sorted(admitted),
+            "admitted_digest": admitted_digest,
             "gated_count": _GATED,
             "narrow_40_draw_count": _NATIVE_DRAW - len(_NARROW_FALLBACK),
             "narrow_40_fallback_count": len(_NARROW_FALLBACK),

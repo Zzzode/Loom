@@ -68,13 +68,15 @@ cross-checks every per-family fallback count against the current release matrix
   (which lists only class/flowchart rows), so `mandatory_gaps` stays 48.
 - The strip probe proves the bodies render natively once the frontmatter is removed; the
   per-row proof is the twin gate this RFC adds.
-- **narrow_40 is predicted from the corpus twins but must be measured**: the five
-  container-kind rows are expected to inherit the drawn twin's 40-column behavior (24
-  narrow draws, up from 19) and the four triage rows the triage twin's fallback (14 narrow
-  fallbacks including the 2 still gated) — however the admitted source carries a footer
-  the twin lacks, and the 40-column predicate is a whole-surface comparison, so a footer
-  could flip a row. The phase measures every row and the ledger records the result;
-  `NARROW_DRAW` starts from the five paths as a prediction only.
+- **narrow_40 measured: 0 of 9 draw at 40 columns.** Two causes, both measured: the
+  footer's longest line (`config.theme=<value> -> colour palette; not applied`) exceeds
+  a 40-column viewport, so the five container-kind rows — whose footerless corpus twin
+  draws at 40 — fall back once admitted; the four triage rows were already too wide
+  (their twin's narrow state is `source`). The 19 already-drawn rows keep their prior
+  narrow dispositions (family narrow 19/19 unchanged). This is the PRR's "measure, never
+  transcribe" lesson in action: the pre-implementation corpus-twin prediction (5 draw)
+  was falsified by the live gate and the ledger records the measured `source` state for
+  all nine.
 
 ### Why admission is testable
 
@@ -345,7 +347,7 @@ CLI contract changes. The only data artifacts are regenerable ledgers and the ro
 |---|---|---|
 | OQ-1: does the gate stay TU-local or share RFC 0040's helper? | design review | **Resolved (design review r1)**: stay TU-local — the mermaid detail module is imported by 37 implementation units, a shared declaration is a real BMI fan-out for 9 rows, and agentflow's gate is stricter than RFC 0040's (no pass-through), so sharing would couple two different contracts. |
 | OQ-2: is an empty `config:` block a reject or a pass-through? | design review | **Resolved (design review r1)**: reject — identical to today's verdict; only a block with exactly one admitted theme leaf widens. |
-| OQ-3: narrow_40 disposition per row | implementation | ledger `expected_states`, measured per row (the corpus-twin prediction of 5 draw / 4 fallback is not trusted where a footer could flip the whole-surface predicate) |
+| OQ-3: narrow_40 disposition per row | implementation | **Resolved (P1 measurement)**: 0 of 9 draw at 40 columns — the footer exceeds the 40-column viewport, so every admitted row keeps the whole source there (the corpus twin, footerless, still draws). Ledger records `source` for all nine; family narrow 19/19 unchanged. |
 
 ## Gates and who confirms
 

@@ -1,0 +1,341 @@
+{
+  "schema": "loom_mermaid_agentflow_0041_cohort/v1",
+  "rfc": 41,
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "a column-0 `config:` block whose sole leaf is an indent-2 `theme` with a value inside the family's closed corpus table",
+    "roots": [
+      "agentflow"
+    ],
+    "phase": "P1-theme-admission",
+    "cohort_digest": "5874b783d99a18a8c7c14af4cf9371bf0646d018304546b40688d6fc3f267dfb",
+    "family_total": 38,
+    "native_draw_count": 27,
+    "admitted_count": 9,
+    "gated_count": 2,
+    "admitted_digest": "5874b783d99a18a8c7c14af4cf9371bf0646d018304546b40688d6fc3f267dfb",
+    "twin_rule": "the frame must equal the body-identical corpus twin's frame plus the recorded footer delta, line by line, both sides through the same sentinel-bearing wrapper",
+    "corpus_twins": "5 rows share agentflow/visual-check/10-every-container-kind.mmd and 4 share agentflow/visual-check/15-support-triage.mmd; all nine bodies are byte-identical after frontmatter removal",
+    "exclusions": "the 2 rows carrying look + handDrawnSeed stay whole-source (a seed is a geometry input, not an inert disclosure)",
+    "width_policy": "wide_240 admission only; narrow_40 is measured per row."
+  },
+  "review": {
+    "phases": {
+      "P1-theme-admission": {
+        "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, RFC 0041 agentflow theme admission, 2026-11-22; APPROVE with zero MAJOR; 3 MINOR + 2 NIT all resolved before the phase commit)",
+        "date": "2026-11-22",
+        "verdict": "approved",
+        "note": "Verified against the live gate: the config-block-scoped grammar is a strict widening for exactly one shape, the closed table is exact in C++ and Python, the footer budget is byte-identical to the five sibling paths, the corpus-twin gate recomputes body equivalence and sha, and the narrow_40 assertion is live (0 of 9 draw at 40 columns, so the ledger is measured not transcribed). MINORs fixed: the generator docstring now states the measured 0/9 disposition, the RFC qualifies which rows the footer flips (5 container-kind; the triage twin is already too wide), and the family test header no longer claims 11 gated rows."
+      }
+    },
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 9,
+    "predicted_draw": 9,
+    "narrow_40_draw": 0
+  },
+  "rows": [
+    {
+      "path": "agentflow/nightly-check/11-should-render-every-container-kind-with-the-dark-theme.mmd",
+      "family": "agentflow",
+      "phase": "P1-theme-admission",
+      "sha256": "6d2953b347ad1bbddf9f9470f0d8643260eb619f6dddf79db849d82fed9819dd",
+      "manifest_sha256": "6d2953b347ad1bbddf9f9470f0d8643260eb619f6dddf79db849d82fed9819dd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "agentflow/visual-check/10-every-container-kind.mmd",
+        "sha256": "6d6a0b5ac3a2580cdc045ecb362847e6f57631dc0388ee03724c3fef31ca1cc8"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Agentflow native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0041 agentflow theme admission; validated and disclosed only, the frame equals its corpus twin's plus the bounded footer."
+    },
+    {
+      "path": "agentflow/pr-check/11-should-render-every-container-kind-with-the-base-theme.mmd",
+      "family": "agentflow",
+      "phase": "P1-theme-admission",
+      "sha256": "0676906a3c4d2d443d36d40e5a65e6467723fad52181899bcfd75e84af6f9a9f",
+      "manifest_sha256": "0676906a3c4d2d443d36d40e5a65e6467723fad52181899bcfd75e84af6f9a9f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "agentflow/visual-check/10-every-container-kind.mmd",
+        "sha256": "6d6a0b5ac3a2580cdc045ecb362847e6f57631dc0388ee03724c3fef31ca1cc8"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Agentflow native projection v1",
+        "config.theme=base -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0041 agentflow theme admission; validated and disclosed only, the frame equals its corpus twin's plus the bounded footer."
+    },
+    {
+      "path": "agentflow/pr-check/11-should-render-every-container-kind-with-the-default-theme.mmd",
+      "family": "agentflow",
+      "phase": "P1-theme-admission",
+      "sha256": "1018ad1c8b743e79ca0a700f846226b8ef114d679c7e2c0419d75c6577de7f7a",
+      "manifest_sha256": "1018ad1c8b743e79ca0a700f846226b8ef114d679c7e2c0419d75c6577de7f7a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "agentflow/visual-check/10-every-container-kind.mmd",
+        "sha256": "6d6a0b5ac3a2580cdc045ecb362847e6f57631dc0388ee03724c3fef31ca1cc8"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Agentflow native projection v1",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0041 agentflow theme admission; validated and disclosed only, the frame equals its corpus twin's plus the bounded footer."
+    },
+    {
+      "path": "agentflow/visual-check/11-should-render-every-container-kind-with-the-forest-theme.mmd",
+      "family": "agentflow",
+      "phase": "P1-theme-admission",
+      "sha256": "958546b64b30407762e1f12fd7d42c0d051dfa43dde972a30bc2a291bde2321c",
+      "manifest_sha256": "958546b64b30407762e1f12fd7d42c0d051dfa43dde972a30bc2a291bde2321c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "agentflow/visual-check/10-every-container-kind.mmd",
+        "sha256": "6d6a0b5ac3a2580cdc045ecb362847e6f57631dc0388ee03724c3fef31ca1cc8"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Agentflow native projection v1",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0041 agentflow theme admission; validated and disclosed only, the frame equals its corpus twin's plus the bounded footer."
+    },
+    {
+      "path": "agentflow/visual-check/11-should-render-every-container-kind-with-the-neutral-theme.mmd",
+      "family": "agentflow",
+      "phase": "P1-theme-admission",
+      "sha256": "fd8d4f41bf76416fe52669961de54ee4dbba422e85e8415675ddabfdc1f7a9c1",
+      "manifest_sha256": "fd8d4f41bf76416fe52669961de54ee4dbba422e85e8415675ddabfdc1f7a9c1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "agentflow/visual-check/10-every-container-kind.mmd",
+        "sha256": "6d6a0b5ac3a2580cdc045ecb362847e6f57631dc0388ee03724c3fef31ca1cc8"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Agentflow native projection v1",
+        "config.theme=neutral -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0041 agentflow theme admission; validated and disclosed only, the frame equals its corpus twin's plus the bounded footer."
+    },
+    {
+      "path": "agentflow/visual-check/15-support-triage-dark-theme.mmd",
+      "family": "agentflow",
+      "phase": "P1-theme-admission",
+      "sha256": "a8a2b643e3c5ea2773bf5386df6f6b81dafd804b413a47de7854f94961454be7",
+      "manifest_sha256": "a8a2b643e3c5ea2773bf5386df6f6b81dafd804b413a47de7854f94961454be7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "agentflow/visual-check/15-support-triage.mmd",
+        "sha256": "43b476dbc2def6ecc1a4e392871bdea21ae743e3b08532dcfd149ed8273ca39e"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Agentflow native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0041 agentflow theme admission; validated and disclosed only, the frame equals its corpus twin's plus the bounded footer."
+    },
+    {
+      "path": "agentflow/visual-check/15-support-triage-default-theme.mmd",
+      "family": "agentflow",
+      "phase": "P1-theme-admission",
+      "sha256": "2f99da537a379494862a8f665250b10dc63d985cab51f35f6344420654cb2e21",
+      "manifest_sha256": "2f99da537a379494862a8f665250b10dc63d985cab51f35f6344420654cb2e21",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "agentflow/visual-check/15-support-triage.mmd",
+        "sha256": "43b476dbc2def6ecc1a4e392871bdea21ae743e3b08532dcfd149ed8273ca39e"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Agentflow native projection v1",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0041 agentflow theme admission; validated and disclosed only, the frame equals its corpus twin's plus the bounded footer."
+    },
+    {
+      "path": "agentflow/visual-check/15-support-triage-redux-color-theme.mmd",
+      "family": "agentflow",
+      "phase": "P1-theme-admission",
+      "sha256": "68ac3978398457a00101fe6de01b3246d38c7cebcb00d4c708c7e2191142cf63",
+      "manifest_sha256": "68ac3978398457a00101fe6de01b3246d38c7cebcb00d4c708c7e2191142cf63",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "agentflow/visual-check/15-support-triage.mmd",
+        "sha256": "43b476dbc2def6ecc1a4e392871bdea21ae743e3b08532dcfd149ed8273ca39e"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Agentflow native projection v1",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0041 agentflow theme admission; validated and disclosed only, the frame equals its corpus twin's plus the bounded footer."
+    },
+    {
+      "path": "agentflow/visual-check/15-support-triage-redux-dark-color-theme.mmd",
+      "family": "agentflow",
+      "phase": "P1-theme-admission",
+      "sha256": "6ec7fbd26a98b047d634f2334179063081ad4580a9da87079279cbea27d647e0",
+      "manifest_sha256": "6ec7fbd26a98b047d634f2334179063081ad4580a9da87079279cbea27d647e0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "agentflow/visual-check/15-support-triage.mmd",
+        "sha256": "43b476dbc2def6ecc1a4e392871bdea21ae743e3b08532dcfd149ed8273ca39e"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Agentflow native projection v1",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0041 agentflow theme admission; validated and disclosed only, the frame equals its corpus twin's plus the bounded footer."
+    }
+  ]
+}

@@ -5,7 +5,7 @@
   "renderer": {
     "module": "src/ui/visual/mermaid_agentflow_impl.cpp",
     "grammar": "agentflow-beta header; connector/flow/global declarations; id[\"label\"]/id(\"label\") nodes; @{ shape/view/value/params/returns/protocol/endpoint/token_required/connectorRef/instruction/model } metadata; -->, -.-, --x and labeled edges",
-    "theme_gate": "a column-0 frontmatter fence carrying any top-level key besides description, or an indented/unclosed fence, keeps the whole original on source fallback"
+    "theme_gate": "RFC 0041: a column-0 `config:` block whose sole leaf is an indent-2 `theme` in the closed corpus table is validated and disclosed; any other key, an indented/unclosed fence, a second config line, or a config leaf outside that shape keeps the whole original on source fallback"
   },
   "upstream": {
     "tag": "mermaid@12.2.0",
@@ -13,27 +13,31 @@
     "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
   },
   "selection": {
-    "rule": "agentflow fixtures without a config/theme/title frontmatter gate; all 27 native originals are cohort rows",
+    "rule": "agentflow fixtures whose frontmatter is absent, description-only, or a single config block whose sole leaf is an admitted theme; the 27 native originals are cohort rows and RFC 0041 promotes the 9 theme-only rows through the sibling ledger",
     "roots": [
       "agentflow"
     ],
     "family_total": 38,
     "native_draw_count": 27,
-    "gated_count": 11,
-    "narrow_40_draw_count": 19,
-    "narrow_40_fallback_count": 8,
-    "gated": [
+    "admitted_count": 9,
+    "admitted": [
       "agentflow/nightly-check/11-should-render-every-container-kind-with-the-dark-theme.mmd",
       "agentflow/pr-check/11-should-render-every-container-kind-with-the-base-theme.mmd",
       "agentflow/pr-check/11-should-render-every-container-kind-with-the-default-theme.mmd",
-      "agentflow/pr-check/should-render-every-container-kind.mmd",
-      "agentflow/pr-check/should-render-several-collapsed-containers.mmd",
       "agentflow/visual-check/11-should-render-every-container-kind-with-the-forest-theme.mmd",
       "agentflow/visual-check/11-should-render-every-container-kind-with-the-neutral-theme.mmd",
       "agentflow/visual-check/15-support-triage-dark-theme.mmd",
       "agentflow/visual-check/15-support-triage-default-theme.mmd",
       "agentflow/visual-check/15-support-triage-redux-color-theme.mmd",
       "agentflow/visual-check/15-support-triage-redux-dark-color-theme.mmd"
+    ],
+    "admitted_digest": "5874b783d99a18a8c7c14af4cf9371bf0646d018304546b40688d6fc3f267dfb",
+    "gated_count": 2,
+    "narrow_40_draw_count": 19,
+    "narrow_40_fallback_count": 8,
+    "gated": [
+      "agentflow/pr-check/should-render-every-container-kind.mmd",
+      "agentflow/pr-check/should-render-several-collapsed-containers.mmd"
     ]
   },
   "review": {

@@ -1,12 +1,12 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 683,
+  "total_fallback": 674,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
     "dagre_layout_tuning": 18,
-    "edge_animation_metadata": 91,
+    "edge_animation_metadata": 82,
     "elk_layout_engine": 38,
     "family_residual:architecture": 4,
     "family_residual:c4": 9,
@@ -115,8 +115,8 @@
     },
     "edge_animation_metadata": {
       "originals_matching_predicate": 242,
-      "drawn_among_matches": 151,
-      "fallback_among_matches": 91,
+      "drawn_among_matches": 160,
+      "fallback_among_matches": 82,
       "sufficient_blocker": false
     },
     "elk_layout_engine": {
@@ -320,17 +320,8 @@
       "usecase/nightly-check/10-configuration-and-accessibility.mmd"
     ],
     "edge_animation_metadata": [
-      "agentflow/nightly-check/11-should-render-every-container-kind-with-the-dark-theme.mmd",
-      "agentflow/pr-check/11-should-render-every-container-kind-with-the-base-theme.mmd",
-      "agentflow/pr-check/11-should-render-every-container-kind-with-the-default-theme.mmd",
       "agentflow/pr-check/should-render-every-container-kind.mmd",
       "agentflow/pr-check/should-render-several-collapsed-containers.mmd",
-      "agentflow/visual-check/11-should-render-every-container-kind-with-the-forest-theme.mmd",
-      "agentflow/visual-check/11-should-render-every-container-kind-with-the-neutral-theme.mmd",
-      "agentflow/visual-check/15-support-triage-dark-theme.mmd",
-      "agentflow/visual-check/15-support-triage-default-theme.mmd",
-      "agentflow/visual-check/15-support-triage-redux-color-theme.mmd",
-      "agentflow/visual-check/15-support-triage-redux-dark-color-theme.mmd",
       "flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd",
       "flowchart/nightly-check/dagre/6080-should-handle-diamond-shape-intersections.mmd",
       "flowchart/nightly-check/dagre/6088-4-should-handle-diamond-shape-intersections.mmd",

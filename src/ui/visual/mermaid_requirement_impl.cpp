@@ -263,12 +263,37 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
     enum : unsigned { Log = 1u, Font = 2u, Html = 4u, Look = 8u, Theme = 16u };
     unsigned fields = 0u;
     std::string log_value, html_value, look_value, theme_value;
+    std::optional<std::string> title;
     for (const auto& event : envelope->events) {
         if (event.blank || event.comment) continue;
         if (event.top_level) {
             if (event.path == "description") continue;
             if (event.path == "config" && !config_seen) {
                 config_seen = true;
+                continue;
+            }
+            if (event.path == "title" && !title) {
+                // RFC 0037 P3: the ER family's title rule -- decoded scalar,
+                // printable ASCII, at least one ink byte, bounded by the paint
+                // guard so an accepted title is always width-paintable. Block
+                // forms and duplicates are rejected by parse_envelope itself.
+                if (!envelope->title) return {};
+                // The ER family's decoder: a YAML text scalar only, so a
+                // boolean, number, flow collection, embedded colon or
+                // unbalanced quote is rejected rather than rendered.
+                const auto decoded =
+                    er_yaml_value(er_strip_comment(envelope->title->text), work);
+                if (decoded.kind != ErMetaValue::Kind::Text ||
+                    decoded.text.size() > static_cast<std::size_t>(kWidthLimit))
+                    return {};
+                bool ink = false;
+                for (const unsigned char c : decoded.text) {
+                    if (c < 0x20u || c > 0x7eu) return {};
+                    ink |= c != ' ';
+                }
+                if (!ink || !work.spend(decoded.text.size() * 4u + sizeof(std::string) + 48u))
+                    return {};
+                title = std::string(decoded.text);
                 continue;
             }
             return {};
@@ -367,7 +392,7 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
     }
     if (!envelope->raw_body.starts_with("requirementDiagram")) return {};
     return RequirementEnvelope{envelope->raw_body, std::move(raw), std::move(decoded),
-                               std::move(notices)};
+                               std::move(notices), std::move(title)};
 }
 
 bool requirement_same_role_name(const RequirementNode& node, RequirementRole role,
@@ -849,7 +874,7 @@ std::optional<RequirementDiagram> parse_requirement(std::string_view source, Wor
     } else {
         if (!requirement_bare_header(source) || !work.spend(sizeof(RequirementEnvelope) + 64u))
             return {};
-        envelope = RequirementEnvelope{source, {}, {}, {}};
+        envelope = RequirementEnvelope{source, {}, {}, {}, std::nullopt};
     }
     if (!work.spend(2u * sizeof(std::vector<RequirementNode>) +
                     2u * sizeof(std::vector<RequirementEdge>) + sizeof(RequirementDiagram) + 128u))
@@ -1084,6 +1109,12 @@ std::optional<RelationDiagram> project_requirement(const RequirementDiagram& par
     if (!work.spend(8u * sizeof(std::optional<std::string>) + 128u)) return {};
     RelationDiagram result;
     result.family = RelationFamily::Requirement;
+    // RFC 0037 P3: the reviewed title lowers onto the shared relation-title
+    // seam (row 0 + one blank row), the same projection ER and state use.
+    if (parsed.envelope.title) {
+        if (!work.spend(parsed.envelope.title->size() + sizeof(std::string) + 64u)) return {};
+        result.diagram_title = *parsed.envelope.title;
+    }
     result.direction = parsed.direction;
     result.entities.reserve(parsed.nodes.size());
     result.edges.reserve(parsed.edges.size());

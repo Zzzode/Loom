@@ -40,7 +40,7 @@ SCHEMA = "loom_mermaid_requirement_0037_cohort/v1"
 ROOT_REL = "requirement"
 
 ALL_PHASES = ("P1-look", "P2-theme", "P3-title")
-ENABLED_PHASES = ("P1-look", "P2-theme")
+ENABLED_PHASES = ("P1-look", "P2-theme", "P3-title")
 
 # Pinned population per phase; asserted whether or not the phase is enabled.
 EXPECTED = {"P1-look": 23, "P2-theme": 91, "P3-title": 6}
@@ -105,10 +105,26 @@ DRAWN_TWINS = frozenset({
 PHASE_DIGESTS = {
     "P1-look": "86b3c00211c5d84da3344235f8580555d102ccd256f8c01bd4cc5e0471a94ab5",
     "P2-theme": "7aa1dc5b3dc81105227882699b94f3158f528116e9f7ad5a8497438e9d5c8842",
+    "P3-title": "154086e874f2b27dd9972db91654f7fbad78a20b51209669aee6ed631a0fb8ea",
 }
 
 # Per-phase review records: authored here, written into the ledger.
 PHASE_REVIEWS = {
+    "P3-title": {
+        "reviewer_agent": "agent:c4f1a7e29b3d60851 rfc0037-p3-final-review (independent "
+                          "adversarial code review; r1 REQUEST-CHANGES -> r2 APPROVE; verified "
+                          "the ER-decoder fix and the seven decoder-branch negatives, "
+                          "title+footer and title+D204-direct-style composition, six-file scope "
+                          "with protected-file/manifest immutability, generator --check, 6/6 "
+                          "cohort gate, 10/10 F0 suite, and an official matrix red only on the "
+                          "pending verdict)",
+        "date": "2026-11-21",
+        "verdict": "approved",
+        "note": "P3 projects the top-level title through the shared relation-title seam. "
+                "Reviewer disposition: the first draft decoded with the config-leaf helper; "
+                "the ER decoder (er_yaml_value + Kind::Text) is now used and the seven "
+                "non-text/malformed scalars are asserted as fallbacks.",
+    },
     "P2-theme": {
         "reviewer_agent": "agent:aa19624ebdb712b6a rfc0037-p2-final-review (independent "
                           "adversarial code review; APPROVE; verified the 4-file scope and "
@@ -265,6 +281,22 @@ def twin_candidate(rel, cases, source_leaves):
     return None
 
 
+def frontmatter_title(path):
+    """The projected title, mirroring the renderer's dequote/trim reader."""
+    front, _ = split_lines(path.read_text())
+    if front is None:
+        raise ValueError(f"no frontmatter: {path}")
+    for raw in front:
+        if raw.startswith("title:"):
+            value = raw[len("title:"):].strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+                value = value[1:-1]
+            if not value:
+                raise ValueError(f"empty title: {path}")
+            return value
+    raise ValueError(f"no title: {path}")
+
+
 def body_digest(path):
     """Digest over the non-blank, per-line-stripped body."""
     text = path.read_text()
@@ -383,21 +415,32 @@ def build(repo_root: pathlib.Path):
                 f"RFC 0037 {phase} row set drifted: digest {digest} != pinned "
                 f"{PHASE_DIGESTS[phase]}")
         for rel, top, leaves in sorted(entries):
-            twin = twin_candidate(rel, cases, leaves)
-            if twin is None:
-                kind = {"kind": "synthetic"}
+            prepend = []
+            twin = None
+            if phase == "P3-title":
+                # The title rows use the *title-free* twin: the same source with
+                # the `title:` line removed, so its own look/theme footer stays.
+                kind = {"kind": "title-free"}
+                prepend = [frontmatter_title(cases / rel), ""]
+                source_footer = notice_lines(leaves)
+                footer_lines = []
             else:
-                kind = {"kind": "corpus", "path": twin, "sha256": sha256_bytes((cases / twin).read_bytes())}
-            twin_leaves = {}
-            if twin is not None:
-                twin_front, _ = split_lines((cases / twin).read_text())
-                _, twin_leaves, _ = parse_frontmatter(twin_front)
-            source_footer = notice_lines(leaves)
-            twin_footer = notice_lines(twin_leaves)
-            if source_footer[: len(twin_footer)] != twin_footer:
-                raise ValueError(f"twin footer is not a prefix of the source footer: {rel}")
-            delta = source_footer[len(twin_footer):]
-            footer_lines = ([] if twin_footer else [""]) + delta
+                twin = twin_candidate(rel, cases, leaves)
+                if twin is None:
+                    kind = {"kind": "synthetic"}
+                else:
+                    kind = {"kind": "corpus", "path": twin,
+                            "sha256": sha256_bytes((cases / twin).read_bytes())}
+                twin_leaves = {}
+                if twin is not None:
+                    twin_front, _ = split_lines((cases / twin).read_text())
+                    _, twin_leaves, _ = parse_frontmatter(twin_front)
+                source_footer = notice_lines(leaves)
+                twin_footer = notice_lines(twin_leaves)
+                if source_footer[: len(twin_footer)] != twin_footer:
+                    raise ValueError(f"twin footer is not a prefix of the source footer: {rel}")
+                delta = source_footer[len(twin_footer):]
+                footer_lines = ([] if twin_footer else [""]) + delta
             counts["total"] += 1
             counts["predicted_draw"] += 1
             counts["by_phase"][phase] = counts["by_phase"].get(phase, 0) + 1
@@ -409,6 +452,7 @@ def build(repo_root: pathlib.Path):
                 "manifest_sha256": manifest_rows[rel]["sha256"],
                 "prior_status": manifest_rows[rel]["raw"],
                 "twin": kind,
+                "expected_prepend_lines": prepend,
                 "expected_footer_lines": footer_lines,
                 "prediction": "predicted-draw",
                 "expected_states": {

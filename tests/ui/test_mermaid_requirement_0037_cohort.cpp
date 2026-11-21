@@ -115,6 +115,31 @@ bool admitted_config_leaf(const std::string& key) {
     return key == "look" || key == "theme" || key == "htmlLabels" || key == "logLevel" ||
            key == "fontFamily";
 }
+// RFC 0037 section 3: the title-free twin is the same source with its
+// `title:` line removed; every config leaf (and its footer) stays.
+std::string title_free_twin(const std::string& source) {
+    if (!source.starts_with("---\n")) return source;
+    const auto close = source.find("\n---", 3);
+    if (close == std::string::npos) return source;
+    std::vector<std::string> lines;
+    std::string cur;
+    for (char c : source.substr(0, close + 1)) {
+        if (c == '\n') {
+            lines.push_back(cur);
+            cur.clear();
+        } else {
+            cur.push_back(c);
+        }
+    }
+    if (!cur.empty()) lines.push_back(cur);
+    std::string rebuilt;
+    for (const auto& line : lines) {
+        if (line.rfind("title:", 0) == 0) continue;
+        rebuilt += line;
+        rebuilt.push_back('\n');
+    }
+    return rebuilt + source.substr(close + 1);
+}
 // RFC 0037 section 3: the synthetic config-free twin removes every admitted
 // config leaf and drops an emptied `config:` block; a folded/plain description
 // payload is preserved verbatim.
@@ -189,10 +214,11 @@ TEST(MermaidRequirement0037Cohort, LedgerSchemaReviewsAndPins) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_requirement_0037_cohort/v1");
     EXPECT_EQ(root.get("rfc").as_int(), 37);
     const auto counts = root.get("counts");
-    EXPECT_EQ(counts.get_int("total"), 114);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 114);
+    EXPECT_EQ(counts.get_int("total"), 120);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 120);
     EXPECT_EQ(counts.get("by_phase").get_int("P1-look"), 23);
     EXPECT_EQ(counts.get("by_phase").get_int("P2-theme"), 91);
+    EXPECT_EQ(counts.get("by_phase").get_int("P3-title"), 6);
 
     // Only enabled phases are emitted, and the review verdict is approved only
     // when every enabled phase carries an approved record. While P1 is
@@ -200,9 +226,10 @@ TEST(MermaidRequirement0037Cohort, LedgerSchemaReviewsAndPins) {
     const auto enabled = root.get("selection").get("enabled_phases");
     std::vector<std::string> phases;
     enabled.iter([&](JsonVal phase) { phases.push_back(std::string(phase.as_str())); });
-    ASSERT_EQ(phases.size(), 2u);
+    ASSERT_EQ(phases.size(), 3u);
     EXPECT_EQ(phases[0], "P1-look");
     EXPECT_EQ(phases[1], "P2-theme");
+    EXPECT_EQ(phases[2], "P3-title");
     const auto reviews = root.get("review").get("phases");
     for (const auto& phase : phases)
         EXPECT_TRUE(reviews.has(phase)) << phase;
@@ -223,7 +250,7 @@ TEST(MermaidRequirement0037Cohort, LedgerSchemaReviewsAndPins) {
         [&](JsonVal fixture) { manifest_rows.emplace(fixture.get_string("path"), fixture); });
 
     int rows = 0;
-    std::map<std::string, int> corpus_by_phase, synthetic_by_phase;
+    std::map<std::string, int> corpus_by_phase, synthetic_by_phase, title_free_by_phase;
     std::map<std::string, std::vector<std::pair<std::string, std::string>>> digest_input;
     root.get("rows").iter([&](JsonVal row) {
         const auto rel = row.get_string("path");
@@ -236,7 +263,7 @@ TEST(MermaidRequirement0037Cohort, LedgerSchemaReviewsAndPins) {
         EXPECT_EQ(row.get_string("sha256"), it->second.get_string("sha256")) << rel;
         const auto twin = row.get("twin");
         const std::string kind = twin.get_string("kind");
-        EXPECT_TRUE(kind == "corpus" || kind == "synthetic") << rel;
+        EXPECT_TRUE(kind == "corpus" || kind == "synthetic" || kind == "title-free") << rel;
         if (kind == "corpus") {
             const auto twin_rel = twin.get_string("path");
             ASSERT_TRUE(fs::exists(kCases / twin_rel)) << rel << " -> " << twin_rel;
@@ -245,16 +272,21 @@ TEST(MermaidRequirement0037Cohort, LedgerSchemaReviewsAndPins) {
                 << rel << " twin pin";
         }
         const auto phase = row.get_string("phase");
-        (kind == "corpus" ? corpus_by_phase : synthetic_by_phase)[phase] += 1;
+        (kind == "corpus"   ? corpus_by_phase
+         : kind == "synthetic" ? synthetic_by_phase
+                               : title_free_by_phase)[phase] += 1;
         digest_input[phase].emplace_back(rel, row.get_string("sha256"));
     });
-    EXPECT_EQ(rows, 114);
+    EXPECT_EQ(rows, 120);
     // Twin kinds are pinned per phase: P1 is fully corpus, P2 has seven
     // body-equivalent corpus twins and 84 synthetic ones.
     EXPECT_EQ(corpus_by_phase["P1-look"], 23);
     EXPECT_EQ(synthetic_by_phase["P1-look"], 0);
     EXPECT_EQ(corpus_by_phase["P2-theme"], 7);
     EXPECT_EQ(synthetic_by_phase["P2-theme"], 84);
+    EXPECT_EQ(title_free_by_phase["P3-title"], 6);
+    EXPECT_EQ(corpus_by_phase["P3-title"], 0);
+    EXPECT_EQ(synthetic_by_phase["P3-title"], 0);
     // The pinned per-phase digest is the sorted (path, sha256) digest of the
     // emitted row set, so an earlier phase cannot silently gain or lose rows.
     const auto digests = root.get("selection").get("phase_digests");
@@ -279,10 +311,15 @@ TEST(MermaidRequirement0037Cohort, RowsAreInertAgainstTwins) {
         const auto source = read_file(kCases / rel);
         std::string twin;
         std::string twin_label;
-        if (twin_info.get_string("kind") == "corpus") {
+        const std::string kind = twin_info.get_string("kind");
+        if (kind == "corpus") {
             twin_label = twin_info.get_string("path");
             ASSERT_NE(twin_label, rel) << "corpus twin must not be the row itself";
             twin = read_file(kCases / twin_label);
+        } else if (kind == "title-free") {
+            twin_label = rel + " (title-free)";
+            twin = title_free_twin(source);
+            EXPECT_LT(twin.size(), source.size()) << rel;
         } else {
             twin_label = rel + " (synthetic config-free)";
             twin = config_free_twin(source);
@@ -315,10 +352,17 @@ TEST(MermaidRequirement0037Cohort, RowsAreInertAgainstTwins) {
         expected.pop_back();
         const bool tail_blank = !expected.empty() && expected.back().empty();
         if (tail_blank) expected.pop_back();
+        // A title row prepends its title + blank row to the twin frame; every
+        // other row appends its footer delta. Both are pinned per row.
+        std::vector<std::string> prepend_lines;
+        row.get("expected_prepend_lines").iter(
+            [&](JsonVal line) { prepend_lines.emplace_back(line.as_str()); });
         row.get("expected_footer_lines").iter(
-            [&](JsonVal line) { expected.push_back(std::string(line.as_str())); });
+            [&](JsonVal line) { expected.emplace_back(line.as_str()); });
         if (tail_blank) expected.emplace_back();
         expected.emplace_back("EM_SENTINEL");
+        if (!prepend_lines.empty())
+            expected.insert(expected.begin(), prepend_lines.begin(), prepend_lines.end());
         const auto got = trimmed_lines(first, kWide);
         ASSERT_EQ(got.size(), expected.size()) << rel;
         for (std::size_t line = 0; line < got.size(); ++line) {
@@ -328,7 +372,7 @@ TEST(MermaidRequirement0037Cohort, RowsAreInertAgainstTwins) {
         }
         ++checked;
     });
-    EXPECT_EQ(checked, 114);
+    EXPECT_EQ(checked, 120);
 }
 
 // The closed `look` table: the three upstream values are admitted and
@@ -383,10 +427,9 @@ TEST(MermaidRequirement0037Cohort, P1LookTableIsClosed) {
     // up to that single rule -- a description-only source draws -- so they
     // exercise the top-level title rejection rather than the description gate.
     EXPECT_FALSE(draws("---\ndescription: empty config probe\nconfig:\n---\n" + body, kWide));
+    // describe-only envelopes draw; the title key itself is P3's contract and
+    // is asserted by P3TitleIsProjectedAndClosed.
     EXPECT_TRUE(draws("---\ndescription: title probe\n---\n" + body, kWide));
-    EXPECT_FALSE(
-        draws("---\ndescription: title probe\ntitle: >-\n  folded title\n---\n" + body, kWide));
-    EXPECT_FALSE(draws("---\ndescription: title probe\ntitle: plain title\n---\n" + body, kWide));
     // A malformed envelope still fails closed.
     EXPECT_FALSE(draws("---\ndescription: tab probe\nconfig:\n\tlook: neo\n---\n" + body, kWide));
     EXPECT_FALSE(draws("---\r\ndescription: crlf probe\r\nconfig:\r\n  look: neo\r\n---\r\n" + body,
@@ -444,4 +487,85 @@ TEST(MermaidRequirement0037Cohort, P2ThemeTableIsClosed) {
     EXPECT_NE(capture(with("  theme: \"neo\"\n"), "mermaid", kWide)
                   .text.find("config.theme=neo -> colour palette; not applied"),
               std::string::npos);
+}
+
+// The projected title (P3): the ER rule -- decoded scalar, printable ASCII,
+// ink, width-bounded -- and the shared relation-title seam (row 0 + blank).
+TEST(MermaidRequirement0037Cohort, P3TitleIsProjectedAndClosed) {
+    const std::string body =
+        "requirementDiagram\n"
+        "requirement test_req {\n"
+        "id: 1\ntext: the test text.\nrisk: high\nverifymethod: test\n}\n"
+        "element test_entity {\ntype: simulation\n}\n"
+        "test_entity - satisfies -> test_req\n";
+    const auto with = [&](std::string_view title) {
+        return "---\ndescription: title boundary probe\n" + std::string(title) + "---\n" + body;
+    };
+    // A plain title renders as the first row plus one blank row, above the
+    // drawing; the disclosure footer for the config leaves still follows.
+    const auto titled = with("title: Requirement Diagram Title\nconfig:\n  look: neo\n");
+    ASSERT_TRUE(draws(titled, kWide));
+    const auto lines = trimmed_lines(capture(titled, "mermaid", kWide), kWide);
+    ASSERT_GE(lines.size(), 3u);
+    EXPECT_EQ(lines[0], "Requirement Diagram Title");
+    EXPECT_TRUE(lines[1].empty());
+    const auto untitled = with("config:\n  look: neo\n");
+    auto expected = trimmed_lines(capture(untitled, "mermaid", kWide), kWide);
+    ASSERT_FALSE(expected.empty());
+    expected.insert(expected.begin(), {"Requirement Diagram Title", ""});
+    ASSERT_EQ(lines.size(), expected.size());
+    for (std::size_t i = 0; i < lines.size(); ++i) EXPECT_EQ(lines[i], expected[i]) << i;
+    // A quoted title is the same YAML string and dequotes.
+    const auto quoted = with("title: \"Quoted Title\"\n");
+    ASSERT_TRUE(draws(quoted, kWide));
+    EXPECT_EQ(trimmed_lines(capture(quoted, "mermaid", kWide), kWide).front(), "Quoted Title");
+    // Folded/block titles, blank titles, control bytes and duplicates reject,
+    // and a title wider than the paint guard is never accepted.
+    EXPECT_FALSE(draws(with("title: >-\n  folded title\n"), kWide));
+    EXPECT_FALSE(draws(with("title:\n"), kWide));
+    EXPECT_FALSE(draws(with("title:    \n"), kWide));
+    EXPECT_FALSE(draws(with("title: tab\there\n"), kWide));
+    EXPECT_FALSE(draws(with("title: both\ntitle: twice\n"), kWide));
+    const std::string wide_title(241, 'x');
+    EXPECT_FALSE(draws(with("title: " + wide_title + "\n"), kWide));
+    const std::string max_title(240, 'x');
+    EXPECT_TRUE(draws(with("title: " + max_title + "\n"), kWide));
+    // The decoder is ER's: non-text YAML scalars and malformed scalars reject
+    // rather than render literally.
+    EXPECT_FALSE(draws(with("title: true\n"), kWide));
+    EXPECT_FALSE(draws(with("title: 123\n"), kWide));
+    EXPECT_FALSE(draws(with("title: \"unbalanced\n"), kWide));
+    EXPECT_FALSE(draws(with("title: a\\b\n"), kWide));
+    EXPECT_FALSE(draws(with("title: a: b\n"), kWide));
+    EXPECT_FALSE(draws(with("title: [x]\n"), kWide));
+    EXPECT_FALSE(draws(with("title: foo | bar\n"), kWide));
+    // The title does not rescue a malformed or non-requirement envelope.
+    EXPECT_FALSE(draws("---\ntitle: only a title\n---\n" + body, kWide));
+}
+
+// Title + D204 direct styles compose: the title rows lead, the styled drawing
+// follows, and the style legend stays outside the styled region.
+TEST(MermaidRequirement0037Cohort, P3TitleComposesWithDirectStyles) {
+    const std::string source =
+        "---\n"
+        "description: titled styled probe\n"
+        "title: Styled Title\n"
+        "---\n"
+        "requirementDiagram\n"
+        "requirement test_req:::blue {\n"
+        "id: 1\ntext: the test text.\nrisk: high\nverifymethod: test\n}\n"
+        "element test_entity {\ntype: simulation\n}\n"
+        "test_entity - satisfies -> test_req\n"
+        "classDef blue stroke:lightblue, color:blue\n";
+    ASSERT_TRUE(draws(source, kWide));
+    const auto lines = trimmed_lines(capture(source, "mermaid", kWide), kWide);
+    ASSERT_GE(lines.size(), 4u);
+    EXPECT_EQ(lines[0], "Styled Title");
+    EXPECT_TRUE(lines[1].empty());
+    bool legend_seen = false;
+    for (const auto& line : lines)
+        if (line.find("classDef blue stroke:lightblue, color:blue") != std::string::npos)
+            legend_seen = true;
+    EXPECT_TRUE(legend_seen);
+    EXPECT_EQ(lines[0].find("classDef"), std::string::npos);
 }

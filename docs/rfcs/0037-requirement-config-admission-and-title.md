@@ -362,7 +362,7 @@ the shared relations core; no new edges are introduced.
 |---|---|---|---|---|
 | P1 | `look` admission | 23 rows (`look` only 15, `look`+`htmlLabels` 8) | **done** | **Measured 2026-11-21**: family 24→**47** drawn / 148→**125** fallback; global 1271→**1294** / 874→**851**; formal `drawn_at_240` 1085→**1108**; gaps 48, integrity 0, `Requirement11.mandatory_remaining` 160 unchanged; roster `--emit` 874→851; debug and release matrix byte-identical at sha `36384e6c`; cohort gate 4/4, F0 suite 10/10, official matrix green |
 | P2 | `theme` admission | 91 rows (90 `look`+`theme`, 1 `classic`+`default`) | **done** | **Measured 2026-11-21**: family 47→**138** / 125→**34**; global 1294→**1385** / 851→**760**; formal 1108→**1199**; gaps 48, integrity 0, `Requirement11.mandatory_remaining` 160 unchanged; roster `--emit` 851→760; 7 corpus twins + 84 synthetic; debug and release matrix byte-identical at sha `4a5fbe87`; cohort gate 4/4, F0 suite 10/10, official matrix green |
-| P3 | `title` projection | 6 rows | proposed | family 138→144 / 34→28; global 1385→1391 / 760→754; formal 1199→1205; title twin gate green; same gate set |
+| P3 | `title` projection | 6 rows | **done** | **Measured 2026-11-21**: family 138→**144** / 34→**28**; global 1385→**1391** / 760→**754**; formal 1199→**1205**; gaps 48, integrity 0, `Requirement11.mandatory_remaining` 160 unchanged; roster `--emit` 760→754; debug and release matrix byte-identical at sha `7fd2b117`; cohort gate 6/6, F0 suite 10/10, official matrix green |
 
 Closure: full debug ctest once, dual-preset byte gate, RFC `implemented`,
 closure doc, design-decisions entry, efficiency retro.
@@ -538,5 +538,6 @@ edited.
 | Date | Phase | Change | Commit |
 |---|---|---|---|
 | 2026-11-21 | — | Draft created (provisional), no code | — |
+| 2026-11-21 | P3 | `title` projection: the top-level `title:` accepted through the **ER decoder** (`er_yaml_value` + `Kind::Text`, printable ASCII, ink, ≤ `kWidthLimit`) and lowered onto the shared relation-title seam; `title-free` twin kind with `expected_prepend_lines`; 6 rows promoted, family 144/28, global 1391/754, formal 1205, dual-preset sha `7fd2b117`. Reviewed by `agent:c4f1a7e29b3d60851` (r1 REQUEST-CHANGES → r2 APPROVE) | — |
 | 2026-11-21 | P2 | `theme` admission: closed 7-palette table with its disclosure line after `look`; corpus-twin resolution by body equivalence over the pinned drawn set with a footer-prefix rule; the synthetic config-free twin added to the gate; 91 rows promoted (7 corpus + 84 synthetic), family 138/34, global 1385/760, formal 1199, dual-preset sha `4a5fbe87`. Reviewed by `agent:aa19624ebdb712b6a` (APPROVE, three NITs applied) | — |
 | 2026-11-21 | P1 | `look` admission: closed `classic`/`neo`/`handDrawn` table in the requirement envelope with its disclosure line; ledger + generator (filesystem population, per-phase digests, per-phase review records) + 23-row corpus-twin gate + official-matrix cohort branch; F0 boundary flip; 23 rows promoted, family 47/125, global 1294/851, formal 1108, dual-preset sha `36384e6c`. Reviewed by `agent:ab5e96a11461da018` (r1 REQUEST-CHANGES → final APPROVE) | — |

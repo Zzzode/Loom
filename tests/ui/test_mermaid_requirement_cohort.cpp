@@ -329,11 +329,13 @@ TEST(MermaidRequirementCohort, FontWeightReachesBoldPixels) {
 }
 
 // The frozen frontmatter gates are untouched: engine directives and the
-// indented YAML fence keep the whole-source fallback disposition.
+// indented YAML fence keep the whole-source fallback disposition. RFC 0037 P3
+// promotes the titled row (title + look + theme are all admitted now), so it
+// is asserted separately: drawn wide, still source-fallback narrow because the
+// disclosure footer exceeds the narrow budget.
 TEST(MermaidRequirementCohort, FrontmatterAndThemeGatesStayClosed) {
-    const std::array<std::string, 4> gated{{
+    const std::array<std::string, 3> gated{{
         "requirement/nightly-check/a-not-so-simple-requirement-diagram-elk-layout.mmd",
-        "requirement/nightly-check/a-diagram-with-a-title-neo-look-redux-dark-theme.mmd",
         "requirement/visual-check/with-a-theme-default.mmd",
         "requirement/visual-check/with-a-title-default.mmd",
     }};
@@ -342,6 +344,10 @@ TEST(MermaidRequirementCohort, FrontmatterAndThemeGatesStayClosed) {
         EXPECT_FALSE(draws(source, kWide)) << rel;
         EXPECT_FALSE(draws(source, kNarrow)) << rel;
     }
+    const auto titled = read_file(
+        kCases / "requirement/nightly-check/a-diagram-with-a-title-neo-look-redux-dark-theme.mmd");
+    EXPECT_TRUE(draws(titled, kWide));
+    EXPECT_FALSE(draws(titled, kNarrow));
 }
 
 // The pre-D204 clean requirement sources keep drawing: the style extension is

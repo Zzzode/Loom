@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 760,
+  "total_fallback": 754,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -42,7 +42,7 @@
     "linkstyle_directive": 12,
     "look_classic_other": 8,
     "look_handdrawn": 47,
-    "look_neo": 70,
+    "look_neo": 64,
     "multiline_label": 7,
     "securitylevel_directive": 34,
     "special_link_markers": 16,
@@ -163,8 +163,8 @@
     },
     "look_neo": {
       "originals_matching_predicate": 349,
-      "drawn_among_matches": 218,
-      "fallback_among_matches": 131,
+      "drawn_among_matches": 224,
+      "fallback_among_matches": 125,
       "sufficient_blocker": false
     },
     "multiline_label": {
@@ -940,12 +940,6 @@
       "mindmap/nightly-check/all-shapes-neo-look-redux-dark-theme.mmd",
       "mindmap/nightly-check/all-shapes-neo-look-redux-theme.mmd",
       "mindmap/pr-check/depth-colors.mmd",
-      "requirement/nightly-check/a-diagram-with-a-title-neo-look-neo-dark-theme.mmd",
-      "requirement/nightly-check/a-diagram-with-a-title-neo-look-neo-theme.mmd",
-      "requirement/nightly-check/a-diagram-with-a-title-neo-look-redux-color-theme.mmd",
-      "requirement/nightly-check/a-diagram-with-a-title-neo-look-redux-dark-color-theme.mmd",
-      "requirement/nightly-check/a-diagram-with-a-title-neo-look-redux-dark-theme.mmd",
-      "requirement/nightly-check/a-diagram-with-a-title-neo-look-redux-theme.mmd",
       "state-diagram-v2/nightly-check/basic-states-neo-look-neo-dark-theme.mmd",
       "state-diagram-v2/nightly-check/basic-states-neo-look-neo-theme.mmd",
       "state-diagram-v2/nightly-check/basic-states-neo-look-redux-dark-theme.mmd",

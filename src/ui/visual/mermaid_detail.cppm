@@ -549,6 +549,9 @@ struct RequirementEnvelope {
     // D-066 F0: accepted non-terminal config leaves, projected as a bounded
     // disclosure footer. Empty for config-free sources (byte-identical path).
     std::vector<std::string> config_notices;
+    // RFC 0037 P3: a projected top-level title. Empty keeps the historical
+    // title-free frame byte-identical.
+    std::optional<std::string> title;
 };
 
 // D204 requirement style statements. They are collected by the requirement

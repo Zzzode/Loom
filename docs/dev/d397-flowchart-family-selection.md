@@ -88,3 +88,57 @@ surface. `look` therefore remains a future F1 item of its own.
 3. ER107 B3 gates (`MATRIX_API_CONFIRMED`, `REVIEWED_HELPER_SHA`/
    `kB3ReviewStatus`, `WRITE_REVIEW_APPROVED`) — untouched; flipping needs
    owner authorization.
+
+## 5. Addendum after the RFC 0036 design review (2026-11-21)
+
+The independent review of RFC 0036 falsified three load-bearing measurements
+in §2; the corrected picture is materially different:
+
+1. **18 of the 67 "config frontmatter" rows are frozen E6c `official_matrix`
+   mandatory-gap fixtures.** Their body_diagnostic rows report `error`
+   (`unsupported-node-shape:cylinder/circle/trapezoid`, group-edge endpoints),
+   so the probe's "draws after config removal" was wrong geometry, not a draw.
+   Excluding them leaves 22 config candidates, and 10 of the 33 originally
+   admitted rows were gap rows.
+2. **Styling is already projected.** RFC 0031 FS-3a graduated `classDef`/
+   `class`/direct-style to real terminal cells and a legend
+   (`src/ui/visual/mermaid_impl.cpp:21-22`, `resolve_flow_styles`,
+   `paint_flow_styles`, `tests/ui/test_mermaid_fs3_style.cpp`). Skipping those
+   statements would change 23 already-drawn frames; the "inert body
+   statements" phase is void.
+3. **The 13-row body slice is not inert.** Certified body reasons are
+   `unsupported-flow-statement` (9), `unsupported-statement` (3) and
+   `configuration-directive` (3); the style rows are FS-3a grammar limits and
+   the rest are `%%{init}%%` directives, not comments. Zero rows are recovered
+   by comments or `@{animation}`.
+
+Further row-by-row checks on the remaining candidates found that even the
+clean-looking theme rows carry hidden body capabilities: the legacy-theme
+graph bodies contain `fa:fa-car` icon glyphs, the redux-color-subgraph bodies
+are collapsed/nested container cases, and the other candidates use
+`@{shape}`, `<br>` wrapping or `wrappingWidth`/`minNodeWidth` geometry. The
+existing flowchart profile already accepts most config leaves (`layout: dagre`
+and `elk.rectpacking`, `fontFamily: courier`, `securityLevel: loose`,
+`logLevel: 1`, `htmlLabels`, `useMaxWidth`, `titleTopMargin: 0`,
+`diagramPadding: 0`, `nodeSpacing`/`rankSpacing`, `look: handDrawn` preview);
+the only genuinely new leaves measured are `theme` and
+`securityLevel: sandbox`, and the rows carrying them are the capability-bound
+ones above.
+
+**Corrected conclusion:** flowchart's remaining 240 fallbacks are essentially
+all body capability (82+), geometry-changing input (`look`/`curve`/`elk`/
+shapes/icons/`<br>`), or frozen gap fixtures. An inert-input RFC would
+promote at most a handful of rows and would risk unfaithful frames; RFC 0036
+as drafted is withdrawn (never accepted, never implemented).
+
+Next-family choice therefore needs a decision that the mechanism alone cannot
+make, because the largest family has no clean slice:
+
+- (A) start flowchart **body capability** work (subgraph nesting 28, icons 27,
+  special link markers 9, multiline 2) as its own program — highest volume,
+  highest cost;
+- (B) open the **F1 theme/look policy** RFC, whose look half is geometry
+  (`look: handDrawn` strokes) and therefore needs the same fidelity test;
+- (C) measure the other families' clean config slices first (requirement 148,
+  git 77, state-v2 70) and pick the largest *clean* bucket rather than the
+  largest raw family.

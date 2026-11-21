@@ -175,3 +175,43 @@ projection", which OQ-1 rejected. The next RFC therefore proposes
 validate-and-ignore admission for the observed `look`/palette values plus the
 inert envelope keys, with frame-identity gates; `layout: elk` and every
 swimlane/gitGraph/semantic toggle stay capability debt.
+
+## 7. Corrected requirement cohort before RFC 0037 (2026-11-21)
+
+The §6 figures were a static frontmatter parse. Before drafting RFC 0037 the
+same population was re-measured with a render probe (throwaway test, never
+committed; evidence log `/tmp/req_probe_d397_corrected.log`): every
+`requirement/` fixture is rendered through the public `render_markdown` path,
+then re-rendered with `look`/`theme`/`htmlLabels`/`title` removed from the
+frontmatter, and the native frame is compared against the same source fenced as
+`text`.
+
+| class | rows |
+|---|---|
+| admitted-key-only (the RFC 0037 cohort) | **120** |
+| `config.layout: elk` | 24 |
+| `config.flowchart.htmlLabels` (namespaced subtree) | 2 |
+| malformed envelope (leading newline; indented closing fence) | 2 |
+| total fallbacks | 148 |
+
+Two corrections against §6: the cohort is **120**, not 122 — the two
+namespaced `config.flowchart.htmlLabels` rows are excluded because D-066 F0
+keeps every namespaced subtree closed, not because they are capability debt —
+and the probe proves **120/120 twins draw**, so no cohort row hides a body
+capability. The per-key split is `look` 120 (`neo` 96, `handDrawn` 24,
+`classic` 1), `theme` 97 (six redux/neo palettes ×16 plus `default` 1),
+`title` 6, `htmlLabels` 8 — hence the RFC 0037 phases 23 / 91 / 6.
+
+Second correction: §6 proposed validate-and-ignore for the whole envelope.
+`title` is the exception. Upstream paints a diagram title, so ignoring it would
+silently drop authored content; the shared relations core already paints
+`RelationDiagram::diagram_title` for ER and state
+(`mermaid_relations_core_impl.cpp:9138`), so the RFC projects the title through
+that seam instead. `look`/`theme` remain validate-and-disclose only, with the
+twin gate as the inertness proof.
+
+Residual risk recorded for the RFC: 90 of the 120 rows have no drawn corpus
+sibling (upstream's visual-check corpus only carries `-default` files for 23
+body families), so their bodies draw under Loom's renderer but were never
+compared with upstream output. 30 rows (23 in P1, 7 in P2) have a
+byte-equivalent drawn body.

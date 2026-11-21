@@ -63,12 +63,21 @@ is dominated by **theme/look (44 of 67)**.
   the E2a cohort; state-v2 (70) is config-heavy in the same theme-sensitive
   way. No family offers a larger policy-free bucket than flowchart's 13.
 
-Recommendation: **A then B**, i.e. an F1 theme/look RFC scoped to the
-flowchart bucket first, with color-only admission and hand-drawn geometry as
-an explicit capability non-goal, then the small policy-free body slice in the
-same RFC's later phases. This is a product-faithfulness ruling (what "theme
-admission" may claim in a terminal), so it is recorded here for the owner
-rather than decided unilaterally.
+Recommendation: **A then B**, i.e. a theme/look RFC scoped to the flowchart
+bucket first, with color-only admission and hand-drawn geometry as an
+explicit capability non-goal, then the small policy-free body slice in the
+same RFC's later phases.
+
+**Decision (recorded 2026-11-21, before RFC 0036):** follow the recommendation
+under the RFC 0035 OQ-1 precedent. Color palettes and tuning metrics are the
+same class as the eleven validated-and-ignored color roles — upstream applies
+them in SVG and the terminal never projects color — so they are admitted as
+inert input. Anything that changes projected geometry (`look: handDrawn`
+strokes, `curve` routing, `elk` layout, `@{shape}`, collapsed `@{view}`,
+icon fonts, `<br>`) stays capability debt, because booking it as a projection
+would repeat the pattern OQ-1 rejected. No owner ruling is needed for this
+split: it applies an existing ruling rather than opening a new policy
+surface. `look` therefore remains a future F1 item of its own.
 
 ## 4. Preserved debts (unchanged by this memo)
 

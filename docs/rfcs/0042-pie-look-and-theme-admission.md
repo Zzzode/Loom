@@ -1,7 +1,7 @@
 ---
 rfc: 42
 title: pie look and theme admission
-status: provisional
+status: accepted
 owners: "@Zzzode"
 reviewers: []
 created: 2026-11-22
@@ -70,7 +70,7 @@ oracle over the 7 Pie7 rows the family already draws.
 
 ## Goals
 
-- **G1.** Admit exactly the five corpus `theme` values, and only inside the reviewed
+- **G1.** Admit exactly the five reachable-row `theme` values, and only inside the reviewed
   folded-description envelope with a single `config:` block.
 - **G2.** Disclose the accepted leaf through a bounded footer
   (`Pie native projection v1` + one line) naming the value the renderer accepted.
@@ -117,7 +117,8 @@ raw frontmatter to be exactly `description: >-` plus two-space payload lines —
   non-space, non-tab third character (the unchanged `pie_description_frontmatter` rules).
 - It may then carry **exactly one** `config:` line, followed by exactly one leaf line
   whose raw text is literally `  theme: <value>` (exactly two leading spaces, no space
-  before the colon; `theme : dark` therefore rejects). The scalar is read exactly like
+  before the colon; `theme : dark` therefore rejects — the literal raw-line check governs,
+  `event.path` alone would accept it because the envelope trims keys). The scalar is read exactly like
   `PieConfig` does today: on the raw `event.value`, with `chart_yaml_scalar` and an
   explicit rejection of a leading quote — no comment stripping and no separate dequoting,
   so a quoted value and a value carrying a trailing comment both reject. The resulting
@@ -170,17 +171,20 @@ attach condition is unambiguous).
   `--check`-reproducible: pinned literal path set and digest, source-derivable counts
   (24 originals / 7 drawn / 5 admitted / 12 other), body-equivalence verification for the
   corpus twin, and per-row shape validation. The classifier must not rely on the first
-  body statement alone: the four body-blocked theme rows share the admitted frontmatter
-  shape and differ only by their body carrying `accTitle:`/`accDescr:` (which
-  `parse_chart` rejects), so the admissible set is "frontmatter matches **and** the body
-  has no `accTitle:`/`accDescr:` statement" — the corpus-exact structural rule, pinned by
-  the 5/4/8 split. The roster and the matrix artifact are never read.
+  body statement alone. Here "frontmatter matches" includes **value-table membership**:
+  of the four body-blocked theme rows only `dark-theme.mmd` carries an in-table value and
+  is excluded solely by its `accTitle:`/`accDescr:` body (which `parse_chart` rejects),
+  while `default-/forest-/neutral-theme.mmd` are additionally excluded by the closed
+  table. The admissible set is therefore "frontmatter matches (shape **and** value) and
+  the body has no `accTitle:`/`accDescr:` statement" — the corpus-exact structural rule,
+  pinned by the 5/4/8 split. The roster and the matrix artifact are never read.
 - **Twin rule**: the frame equals the twin's frame plus the recorded literal footer delta,
   line by line, both sides through the same sentinel-bearing wrapper.
 - Gate `tests/ui/test_mermaid_pie_0042_cohort.cpp`: ledger pins; per-row twin inertness
   with a **live** per-row `narrow_40` assertion; a closed-table battery with pinned
   verdicts (every admitted value with the exact footer block; unknown/case/empty;
   duplicate; **quoted scalar rejects**; **trailing comment rejects**; unmatched quote;
+  an indented comment inside the config block rejects;
   `theme : dark` rejects — the raw line must be literally `  theme:`; indent 0 and indent
   4 reject, indent 2 is the admitted position; a payload line that looks like `theme:`;
   a blank line inside the description rejects; theme plus any other leaf; a second config
@@ -202,9 +206,11 @@ attach condition is unambiguous).
   sets are disjoint. **Accounting path is pinned**: the new branch leaves
   `raw_active_schema` empty, so the generic `++originals_drawn` counter credits the five
   rows (1285 → 1290) without a new accumulator and without touching the owned-contract
-  skip list. The published `Pie7_native_whole_source` summary is updated in the same
-  commit (`remaining` 17 → 12 and its scope string names RFC 0042) so the artifact does
-  not contradict the new census.
+  skip list. The published `Pie7_native_whole_source` summary keeps its whole-scene
+  arithmetic intact (`whole_sources_admitted` 7 + `mandatory_remaining` 17 = `target`
+  24) — the five RFC 0042 rows are terminal-track admissions, not whole-scene ones — and
+  its `scope` string is extended to name the separate RFC 0042 terminal theme cohort, so
+  the artifact neither contradicts the new census nor breaks its own reconciliation.
 - Roster migrated with `fallback_attribution.py --emit` in the phase commit
   (674 → 669; `family_residual:pie` 17 → 12, non-empty).
 
@@ -291,7 +297,7 @@ data, no wire protocol, no CLI contract changes.
 
 | Question | Owner | Resolved by |
 |---|---|---|
-| OQ-1: does the new profile share xychart's description-shape helper? | design review | proposed: no — reuse the existing `pie_description_frontmatter` rules inline and keep the profiles separate |
+| OQ-1: does the new profile share xychart's description-shape helper? | design review | **Resolved (design review r2)**: no — reuse the payload-indent rule but take the stricter blank-line rule (`xy_description_shape`), keep the profiles separate and the old description-only profile byte-unchanged |
 | OQ-2: is a theme leaf without the folded description admitted? | design review | proposed: no — no corpus row, keep the standalone `pie_config` profile byte-unchanged |
 | OQ-3: narrow_40 disposition per row | implementation | ledger `expected_states`, measured live per row |
 
@@ -308,10 +314,12 @@ data, no wire protocol, no CLI contract changes.
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-22 | — | — | draft | Created provisional from the D-408 reachability measurement |
-| 2026-11-22 | r1 | independent design-review agent (own re-derivation; read the charts TU, the envelope reader, the Pie7/precedent gates, the roster, the gap roster and the matrix) | REQUEST-CHANGES | Every partition and endpoint re-derived as correct (24 = 7 + 5 + 8 + 4; five values; 12/12; 1476/669; 1290; gaps 48; integrity 0; roster 669 with `family_residual:pie` 17→12; corpus twin for `dark`, no drawn peer for the four redux rows). **MAJOR**: the scalar rule misattributed behaviour to `chart_yaml_scalar` (it neither trims comments nor dequotes; `event.value` keeps the trailing comment) and its own "trailing comment positive" battery case could not pass without an unstated `strip_comment` that would diverge from `PieConfig` → **accepted**: the leaf is read exactly like `PieConfig` (raw `event.value`, `chart_yaml_scalar`, leading quote rejected), so quoted and comment-bearing values are negatives; the battery pins them as such. **MINORs**: blank-line-inside-description was contradictory → `PieTheme` takes the stricter reject rule (the old profile is untouched); the `drawn_at_240` accounting path was unspecified → the new branch leaves `raw_active_schema` empty so the generic counter credits 1285→1290, and the stale `Pie7_native_whole_source` summary is updated in the same commit; the adjacent `test_mermaid_charts_semantics` supplementary controls and the xychart pie-body guard are named in the change set; the generator cannot classify by the first body statement alone → the corpus-exact rule excludes bodies carrying `accTitle:`/`accDescr:`; the twin delta is wide-only and the footer's longest line is 60 (not 64) characters. **NITs**: "exactly the corpus" reworded to the reachable-row values; the theme-without-description rationale corrected (it falls through to `xy_visual_envelope`, not `pie_config`); `theme : dark` and indent verdicts pinned; `PieTheme` added to the `starts_with("pie")` guard; the empty-slice footer path excluded. |
+| 2026-11-22 | r1 | independent design-review agent (own re-derivation; read the charts TU, the envelope reader, the Pie7/precedent gates, the roster, the gap roster and the matrix) | REQUEST-CHANGES | Every partition and endpoint re-derived as correct (24 = 7 + 5 + 8 + 4; five values; 12/12; 1476/669; 1290; gaps 48; integrity 0; roster 669 with `family_residual:pie` 17→12; corpus twin for `dark`, no drawn peer for the four redux rows). **MAJOR**: the scalar rule misattributed behaviour to `chart_yaml_scalar` (it neither trims comments nor dequotes; `event.value` keeps the trailing comment) and its own "trailing comment positive" battery case could not pass without an unstated `strip_comment` that would diverge from `PieConfig` → **fixed by revision**: the leaf is read exactly like `PieConfig` (raw `event.value`, `chart_yaml_scalar`, leading quote rejected), so quoted and comment-bearing values are negatives; the battery pins them as such. **MINORs**: blank-line-inside-description was contradictory → `PieTheme` takes the stricter reject rule (the old profile is untouched); the `drawn_at_240` accounting path was unspecified → the new branch leaves `raw_active_schema` empty so the generic counter credits 1285→1290, and the stale `Pie7_native_whole_source` summary is updated in the same commit; the adjacent `test_mermaid_charts_semantics` supplementary controls and the xychart pie-body guard are named in the change set; the generator cannot classify by the first body statement alone → the corpus-exact rule excludes bodies carrying `accTitle:`/`accDescr:`; the twin delta is wide-only and the footer's longest line is 60 (not 64) characters. **NITs**: "exactly the corpus" reworded to the reachable-row values; the theme-without-description rationale corrected (it falls through to `xy_visual_envelope`, not `pie_config`); `theme : dark` and indent verdicts pinned; `PieTheme` added to the `starts_with("pie")` guard; the empty-slice footer path excluded. |
+| 2026-11-22 | r2 | same design-review agent, re-read at 5c697207 against the live code | APPROVE-TO-ACCEPT | All five gating items verified resolved in substance: the scalar rule now matches `PieConfig` exactly (raw `event.value`, `chart_yaml_scalar`, leading quote rejected; quoted/comment/unmatched all negatives), `PieTheme` takes the stricter blank-line rule with the old profile untouched, the 1285→1290 accounting path is the live generic counter with no new accumulator, the classifier's structural rule reproduces 5 of 24, and the twin comparison is wide-only with the footer's longest line at 60 characters. MINOR-4 and NITs 7–11 verified folded in. Two new MINORs folded into this revision before the gate: the `Pie7_native_whole_source` summary must **keep** its whole-scene arithmetic (7 + 17 = 24) and express the RFC 0042 contrast in its scope string — the five rows are terminal-track, not whole-scene admissions — and the generator's "frontmatter matches" must be stated to include value-table membership (`dark-theme.mmd` is the sole value-valid row excluded by its body). NITs also folded: OQ-1 wording, an explicit indented-comment battery case, the raw-line-vs-`event.path` note, the G1 wording, and the Review History wording. Gate to `accepted` passed. |
 
 ## Implementation History
 
 | Date | Phase | Change | Commit |
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | — |
+| 2026-11-22 | — | Accepted after design review r2 | — |

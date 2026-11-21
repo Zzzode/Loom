@@ -134,6 +134,9 @@ under the single `config:` block, at most once each:
 | `look` | `classic`, `neo`, `handDrawn` | any other string, duplicate |
 | `theme` | `default`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color` | any other string, duplicate |
 
+`state_scalar_text` dequotes, so a quoted scalar (`theme: "neo"`) is the same
+value and is admitted; the boundary suite pins that, as RFC 0037 did.
+
 Both tables are corpus-bounded, matching the requirement tables and this
 renderer's convention. The four upstream palettes without a state row
 (`base`, `dark`, `forest`, `neutral`) stay rejected and are listed explicitly.
@@ -160,21 +163,36 @@ does not change it.
   `loom_mermaid_state_0038_cohort/v1`), a **sibling** of `e2b-cohort.json`:
   the E2b ledger stays read-only for this RFC (the RFC 0035 E2c lesson). Its
   28 rows carry the single phase's review record.
-- Generator `tools/mermaid/generate_state_0038_cohort.py`: renderer-free,
-  `--check` reproducible, population = the whole state family by source shape
-  (never the shrinking roster), one `ENABLED_PHASES` entry, one whole-cohort
-  path+sha digest as the `--check` pin (a per-phase split digest and a
-  `look`-before-`theme` priority are vestigial with a single phase and are not
-  needed), review records authored in the generator, denominators
+- Generator `tools/mermaid/generate_state_0038_cohort.py`: `--check`
+  reproducible. **The 28/56 split is render-defined, not shape-defined**: the
+  PRR review proved that the existing E2b `state_blocker` detector (calibrated
+  on 61 rows) over-selects by 16 when applied to the 63 look/theme rows, so the
+  cohort is a **reviewed literal path set** pinned in the generator — exactly
+  like RFC 0037's `DRAWN_TWINS` — with three hard-asserted counts: cohort 28,
+  body 56, and the family partition
   `145 = 52 drawn + 28 cohort + 4 elk + 4 useMaxWidth + 1 description-tab + 56
-  body` pinned.
-- Gate `tests/ui/test_mermaid_state_0038_cohort.cpp`: the same six
-  anti-false-green assertions as RFC 0037 (twin must draw, native predicate,
-  per-width ledger equality, determinism, exact footer composition, frozen
-  controls: gaps 48, integrity empty, `drawn_at_240` delta equals the phase
-  count, `original_files_executed == 2145`). Twin kinds: corpus twins where a
-  body-equivalent drawn sibling exists, synthetic config-free twins otherwise
-  (counts fixed by the generator at implementation).
+  body`. One whole-cohort path+sha digest is the `--check` pin (a per-phase
+  split digest and a `look`-before-`theme` priority are vestigial with one
+  phase). The review record is authored in the generator.
+- **Twin rule (RFC 0037 restated, with the state-specific prefix clause).**
+  Corpus twins take precedence; the recorded delta is *source footer lines
+  minus twin footer lines*, compared line-by-line against the live frame, so a
+  wrong delta is red, not green. When a twin already carries an E2b footer
+  (e.g. a `-default` sibling with `htmlLabels` or `fontFamily`), only the lines
+  the twin lacks are appended — the header and blank separator are never
+  re-added. The 8 v1 rows carrying `fontFamily: courier` + `look` + `theme`
+  lose three footer lines at once against their config-free twin and must
+  record all three.
+- Gate `tests/ui/test_mermaid_state_0038_cohort.cpp`: the same anti-false-green
+  assertions as RFC 0037 (twin must draw, native predicate, per-width ledger
+  equality, determinism, exact footer composition). The frozen controls are
+  **owned by `MermaidCapabilityReport.OfficialMatrix`** (it pins
+  `observations.size() == 2145 + 593` and runs the gap-roster diff gate); the
+  new gate reads `build/<preset>/tests/ui/mermaid-official-matrix.json` through
+  `LOOM_MERMAID_REPORT_DIR` and asserts the `drawn_at_240` delta equals the
+  cohort size, `mandatory_gaps == 48` and `integrity_errors` empty. Work
+  accounting: the two new leaves charge only when present, so the 61 E2b rows'
+  budgets do not shrink — the E2b suite is the guard.
 - Matrix branch in `tests/ui/test_mermaid_official.cpp` reading per-row
   `expected_states` (Journey style), never the xychart hardcoded triple, with
   the reason string `RFC-0038 state look/theme reviewed cohort`. The E2b branch
@@ -186,7 +204,9 @@ does not change it.
 | coupling | files that must change together |
 |---|---|
 | envelope validator and footer | `mermaid_relations_core_impl.cpp` (`state_source_envelope`), the gate, the ledger |
-| E2b cohort byte-identity | `tools/mermaid/e2b-cohort.json` and its 61 rows are read-only; **`tests/ui/test_mermaid_e2b_cohort.cpp`** holds the E2b footer/byte assertions and must stay green (the existing footers are a prefix of the new ones). The same file's `NonWhitelistedConfigRowsKeepWholeSource` iterates every `config:`-bearing state fixture and asserts fallback; the phase extends its exclusion set to the sibling ledger and corrects the stale `:240` comment |
+| E2b cohort byte-identity | `tools/mermaid/e2b-cohort.json` and its 61 rows are read-only; **`tests/ui/test_mermaid_e2b_cohort.cpp`** holds the E2b footer/byte assertions and must stay green (the existing footers are a prefix of the new ones) |
+| **E2b negative** `NonWhitelistedConfigRowsKeepWholeSource` (`:239-284`) | iterates every `config:`-bearing state fixture outside the E2b ledger (**71** today) and asserts whole source. The phase adds the sibling ledger to its `cohort` set, asserts the excluded set **equals** that ledger, and lowers the floor `EXPECT_GT(checked, 50)` to `EXPECT_EQ(checked, 43)` (71 − 28). The test stays meaningful: the 43 rows still cover `theme: dark`, `layout: elk`, `state.useMaxWidth`, the tab row and init directives; over-listing fails the new cohort gate, under-listing fails this negative. The stale `:240` comment is corrected |
+| **E2a negative** `MermaidE2aCohort.ConfigAndInitRowsKeepWholeSource` (`tests/ui/test_mermaid_e2a_cohort.cpp:243-275`) | iterates `git` + both state roots with only the E2a ledger and the E2b predicted-draw rows excluded (**160** rows today) and asserts whole source. The 28 cohort rows are in neither set, so the phase extends this exclusion set with the sibling ledger too; its floor `EXPECT_GT(checked, 100)` still holds (132 remain) |
 | surviving state negative | `tests/ui/test_mermaid_relations_semantics.cpp` `MermaidStateEnvelope.ConfigFrontmatterStaysSource` asserts `config: theme: dark` stays fallback. It survives **only because `dark` is outside the closed table**; a future widening must revisit it |
 | census `expected`/`reason` | `tests/fixtures/mermaid_official/manifest.json` is SHA-pinned and never edited; promotion is a ledger-driven branch |
 | frozen partitions | `class481`/`state85` gate records in `e6c-mandatory-gap-roster.json` are untouched; `state85` counts are asserted by their own test |
@@ -209,9 +229,14 @@ Completed at the `implementable` gate. Current answers:
 
 - **Correctness & tests** — per-row twin gate plus a boundary suite; the gate
   is the inertness proof. Known flakes are pre-existing.
-- **Build system** — no new module or target; the edit is inside an existing
-  non-exported partition function; fan-out is the existing
-  `mermaid_relations_core` closure (to be measured at the PRR gate).
+- **Build system** — no new module, target or import; the edit is inside a
+  module **implementation unit** (`src/ui/visual/mermaid_relations_core_impl.cpp`
+  is a `.cpp` in `module loom.ui.visual.mermaid`), so **BMI PSS is N/A with
+  reason** (no interface or BMI change). Fan-out measured by the PRR review
+  against `build/release/build.ninja`: **1 C++ compile**, one
+  `libloom_ui_visual.a` archive relink and **~206 executable relink edges**
+  naming the archive — not a BMI closure, and far below RFC 0037's 509-unit
+  interface edit. No concurrency caps; no new textual includes.
 - **Rollback** — a single atomic commit (both leaves, 28 rows); one revert
   restores the previous census exactly. No ordering constraint exists because
   the two tables are admitted together.
@@ -261,11 +286,18 @@ ledger is additive; the roster is regenerated, never hand edited.
 ## Testing and verification plan
 
 - New `tests/ui/test_mermaid_state_0038_cohort.cpp` (registered in
-  `tests/ui/CMakeLists.txt`), expected 5 tests; full ctest baseline 4620 +
-  those tests, no deletions.
+  `tests/ui/CMakeLists.txt`), expected 5 tests; `ctest --preset debug -N` reports **4622** total, so the
+  closure total is `4622 + 5 = 4627` with no deletions (re-derive at phase
+  start).
 - Edited `tests/ui/test_mermaid_official.cpp` (matrix branch + reason string).
 - Targeted `ctest -L mermaid` in the phase; `generate_state_0038_cohort.py
   --check`; release-preset matrix in the phase; dual-preset gate at closure.
+- **False-green guardrails.** The matrix cohort branch is a *ledger echo* (it
+  takes `status` from the ledger, like Journey), so the census is meaningful
+  only after a full build (efficiency rule 3), and the render proof is
+  `test_mermaid_state_0038_cohort`, never the echo. The full ctest is
+  redirected to a log with `CTEST_EXIT=$?` — never piped through `tail`
+  (efficiency rule 7).
 - Known flakes pre-existing (`ServerMain.DirectConnect*`, `E2E_Pty_*`).
 
 ## Documentation impact
@@ -301,6 +333,7 @@ ledger is additive; the roster is regenerated, never hand edited.
 | 2026-11-21 | r1 | `agent:aa8df56e34f50b615` (independent general-purpose, own render probe + static re-derivation) | REQUEST-CHANGES | **B-1** the phase split was arithmetically impossible: every `look` row also carries `theme`, so a look-first P1 would promote 0 rows → **accepted**: rephased to one atomic phase admitting both leaves for all 28 rows; rollback and the PRR row rewritten. **M-1** the flowchart downgrade overclaimed "0 reachable": the eight nested/collapsed subgraph rows are blocked only by `theme` (their bodies render with `config:` removed), only the `@{shape}`/icon rows are body-blocked → **accepted**: RFC and D-400 now state **≥8**, and the downgrade reason is "fewer rows + higher unit cost (new exact-bit `Theme` profile)", not "body capability". **M-2** a pre-existing negative test was missed: `test_mermaid_e2b_cohort.cpp::NonWhitelistedConfigRowsKeepWholeSource` iterates every config-bearing state fixture and asserts fallback, so all 28 rows would break it → **accepted**: added to the coupling table together with the correct owner of the E2b footer assertions and the stale `:240` comment. **M-3** the theme value census summed to 22, not 28 → **accepted**: corrected to `redux 6, redux-dark 6, redux-color 3, redux-dark-color 3, neo 4, neo-dark 4, default 2`. MINOR m-1 body count 55→56; m-2 rollback dependency direction dropped with the rephase; m-3 the surviving `theme: dark` negative named (it stays green only because `dark` is excluded). NIT n-1 OQ-3 closed by the review (the standard twin rule already covers `fontFamily`); n-2 tab wording made precise (a literal tab in the payload and body, rejected by the description scan). Independently verified: the 28-row cohort and its composition, the 145 partition, the matrix census, the envelope/footer facts and the inertness claim. |
 | 2026-11-21 | r2 | same design-review agent, independent re-read | REQUEST-CHANGES | All substantive r1 findings verified fixed. **MAJOR-1** residual two-phase wording (G1, the §1 heading, the footer tags and the Gates line that specifies review-record cardinality) → **accepted**: everything now describes one atomic phase and one review record; the generator spec keeps a single whole-cohort digest and notes the per-phase split digest and priority rule as vestigial. **MINOR-1** D-400 §3 still titled "0 行可达" → **accepted**: retitled "≥8 行可达，性价比低" and the intro now points at the eight corrected rows. **MINOR-2** plural "per-phase/each phase" phrasing → **accepted**: singularized. **NIT-1** → **accepted**: recorded in the generator spec. Review also confirmed that one phase does not weaken the review-record safety mechanism (it degenerates to exactly one generator-authored approval plus the `--check` hand-edit guard; only cross-phase anti-drift is lost, which cannot occur with no partial state), and that the midpoint arithmetic left no residue. |
 | 2026-11-21 | r3 | same design-review agent, final consistency pass | APPROVE-TO-ACCEPT | All r2 items verified fixed: one-phase wording, endpoint arithmetic, the 5-test count, the theme census, the named e2b negative and the closed OQ-3. Two cosmetic NITs noted (the phase-table label "P1"; a plural "review records"), the second folded in. Gate to `accepted` passed; no owner ruling required. |
+| 2026-11-21 | prr-r1 | `agent:aa4f19113e92b44ae` (independent production-readiness lens; static census re-derivation, build-graph fan-out measurement, negative-test count re-derivation, false-green audit) | REQUEST-CHANGES | **MAJOR-1** a second existing negative was missed: `MermaidE2aCohort.ConfigAndInitRowsKeepWholeSource` covers both state roots and excludes only the E2a/E2b ledgers, so all 28 rows would break it → **accepted**: named in the coupling table with its exclusion-set extension (its `>100` floor still holds at 132). **MAJOR-2** the E2b negative's floor breaks after the (correct) exclusion: 71 − 28 = 43 against `EXPECT_GT(checked, 50)` → **accepted**: the phase asserts the excluded set equals the sibling ledger and pins `EXPECT_EQ(checked, 43)`. **MAJOR-3** the renderer-free generator cannot derive the 28/56 split (the E2b detector over-selects by 16) → **accepted**: the cohort is a reviewed literal path set with a whole-cohort path+sha `--check` pin and three hard-asserted counts. **MAJOR-4** the build-system row deferred its measurement → **accepted**: measured fan-out (1 compile, archive relink, ~206 executable relinks) and BMI-PSS N/A-with-reason recorded; "BMI closure" corrected. MINOR-1 ctest total 4622 → closure 4627; MINOR-2 the README index's two-phase wording corrected now; MINOR-3 false-green guardrails (full build, log capture, the cohort gate is the render proof and the matrix branch is an echo); MINOR-4 frozen-control ownership assigned to `OfficialMatrix` with the report-dir read. NIT-1 quoted scalars pinned in the boundary suite; NIT-2 the new leaves' Work charges made conditional. The twin rule now restates corpus-twin precedence and the footer-prefix clause. |
 
 ## Implementation History
 

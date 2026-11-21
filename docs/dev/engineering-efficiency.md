@@ -384,6 +384,21 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     unescaped-key and dead-bool-return defects were corpus-invisible, found by
     reading the writer, not the differential.
 
+33. **When an RFC pins an explicit per-family / "at minimum" probe list, treat
+    that list as the authoring checklist for the test, not as background.** RFC
+    0040 §3 enumerated the probes the cross-family battery must cover "per
+    family". The first gate draft implemented the full set only for timeline;
+    gantt and journey carried table membership plus two negatives, so a later
+    edit to a single TU's comment-stripping, dequoting, unmatched-quote or
+    indent-4 logic would have passed every test — the exact drift the battery
+    exists to prevent. The adversarial review caught it (MAJOR), costing a test
+    rewrite plus a full rebuild/rerun cycle. A shared battery helper is only a
+    drift guard when it is *executed per TU*: one `FamilyBattery` table +
+    `run_battery()` run once per family, with literal verdicts and literal
+    footer blocks, so no family can be silently weaker. The same review round
+    also showed the value of pinning the footer as a block (blank separator +
+    header + leaf order) rather than as substrings.
+
 ## Per-task efficiency retro (mandatory at every closure)
 
 Attach a short efficiency section to each closure report, answering:
@@ -1688,3 +1703,33 @@ Attach a short efficiency section to each closure report, answering:
   Rule: when a phase changes a row's classification or mechanism, update the
   generator's per-phase note and rule text in the same edit, then run
   `--check`.
+
+### 2026-11-22 — RFC 0040 (journey-family) implementation retro
+
+1. **Gate wall-clock.** The new cohort gate is 18 s for 11 tests (7 gtest +
+   4 hermetic `--check`); the three existing family cohorts add ~112 s. The
+   dominated step is the release OfficialMatrix at 27.8 s normally, but the
+   one full debug `ctest -L mermaid` run cost 483 s real (3855.9 s*proc,
+   1457 tests) — 17x the release matrix — so iteration used the focused gates
+   plus the release matrix, and the debug label run happened once.
+2. **False green/red.** None in a green run. Two near-misses were caught before
+   any red gate: the roster `--self-test` key-set break if `--emit` omits an
+   emptied detector category (design review BLOCKER; `look_classic_other`
+   empties here), and the matrix `observed_gap_rows` 48 -> 79 break if the new
+   branches sit after the generic fallback (PRR). Both are durable rules now
+   (key-set emission in `--emit`; branch order).
+3. **Rework.** One real loop: the first gate draft's gantt/journey batteries did
+   not implement the RFC §3 per-family probe set, found at code-review r1
+   (MAJOR) and fixed by one `FamilyBattery` executed per family (rule 33). The
+   upstream check that would have caught it earlier: read §3's "per family, at
+   minimum" list as a test-authoring checklist at draft time.
+4. **Build fan-out.** No interfaces changed: three implementation units
+   recompile + archive relink + executable relinks; no BMI change; one new test
+   executable. The dual-preset byte gate needed no recompile after the ledger
+   flip (data-only), only the matrix rerun.
+5. **Cheaper approach evidence.** Targeted gate 18 s vs 483 s label run vs
+   27.8 s release matrix; the release matrix is byte-identical to debug
+   (`fd852b74…`), so the family closure used release for the census and debug
+   once for the full suite.
+6. **New entry.** Rule 33 (per-family probe lists are an authoring checklist;
+   run the shared battery per TU).

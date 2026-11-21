@@ -1,7 +1,7 @@
 ---
 rfc: 40
 title: journey-family look and theme admission (timeline, gantt, journey)
-status: implementable
+status: implemented
 owners: "@Zzzode"
 reviewers: ["agent:aa0ce043b4adde4a9 rfc0040-design-review (r1/r2 REQUEST-CHANGES -> r3 APPROVE-TO-ACCEPT)", "agent:ab976b78b004c884a rfc0040-prr (r1 APPROVE-TO-IMPLEMENT; fold-in confirmation r2 APPROVE-TO-IMPLEMENT)"]
 created: 2026-11-22
@@ -274,7 +274,7 @@ TU-local validator, and one cross-family test enforces that the three verdicts a
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `look` + `theme` admission | 31 rows (16 timeline + 11 gantt + 4 journey) | proposed | timeline 7/23 → **23/7**, gantt 39/13 → **50/2**, journey 10/8 → **14/4**; global 1431/714 → **1462/683**; formal `drawn_at_240` **1245 → 1276**; gaps 48, integrity 0; three `themed_excluded` lists at 7/0/4; dual-preset sha recorded |
+| P1 | `look` + `theme` admission | 31 rows (16 timeline + 11 gantt + 4 journey) | done | timeline 7/23 → **23/7**, gantt 39/13 → **50/2**, journey 10/8 → **14/4**; global 1431/714 → **1462/683**; formal `drawn_at_240` **1245 → 1276**; gaps 48, integrity 0; three `themed_excluded` lists at **7/0/4**; dual-preset sha `fd852b74a8dbc0817c20c89b0f9a743f51aa1799effe3414b1258d31298d20fd` recorded |
 
 Closure: full debug ctest once (D-401 §7 discipline), dual-preset byte gate, RFC
 `implemented`, closure doc, design-decisions entry, efficiency retro.
@@ -358,11 +358,11 @@ additive; the three existing ledgers and the roster are regenerated, never hand 
 
 ## Documentation impact
 
-- [ ] `docs/dev/d404-next-family-journey-trio.md` — records the selection
-- [ ] `docs/dev/d405-journey-family-rfc0040-closure.md` — closure record
-- [ ] `docs/decisions/design-decisions.md` — journey-family config admission entry
-- [ ] `docs/README.md` — RFC index
-- [ ] `docs/dev/engineering-efficiency.md` — per-task retro
+- [x] `docs/dev/d404-next-family-journey-trio.md` — records the selection
+- [x] `docs/dev/d405-journey-family-rfc0040-closure.md` — closure record
+- [x] `docs/decisions/design-decisions.md` — journey-family config admission entry
+- [x] `docs/README.md` — RFC index
+- [x] `docs/dev/engineering-efficiency.md` — per-task retro
 
 ## Open questions
 
@@ -390,9 +390,14 @@ additive; the three existing ledgers and the roster are regenerated, never hand 
 | 2026-11-22 | r3 | same design-review agent, final consistency pass | APPROVE-TO-ACCEPT | Every r2 residual verified substantively resolved against the live tree (block-context grammar reproduces the corpus and preserves the three existing negatives; the trim/comment/dequote reader reconciles the 31 rows with gantt's sanitize path; the four-way partition reconciles 30/52/18; the `importlib` loading works under `python3 -I`); no sentence implies payload admission and no "any indentation" wording survives. Five editorial NITs folded in before the gate: "column-0 non-blank, non-comment" block opener; only the frontmatter half of the generator classifier is replaced; gantt generator sanitize parity noted; the Summary says "at the admitted position" and no longer calls the gate byte-identical; D-404 drops the "auditable" adjective. Gate to `accepted` passed. |
 | 2026-11-22 | prr-r1 | independent PRR agent (production-readiness lens; hidden-test enumeration, build-graph measurement, false-green audit, Work/DoS bounds, rollback audit) | APPROVE-TO-IMPLEMENT | Independently confirmed: the 30/52/18 four-way partitions, the 31 admitted rows, the BLOCKER fix's self-consistency (`counts`/`paths_by_category` key sets, `recomputed == counts`, `sum == total`, `drift_check` unaffected, no other consumer of the roster schema), the build fan-out (3 compile edges + 1 archive relink + 198 executable relinks + 3 phony; 8 UI static libraries link only order-only; zero BMI change), the 56-row oracle's validity and the matrix `observed_gap_rows == 48` dependency (the new branches must precede the generic fallback or gaps become 79). MINOR/NIT items folded in: the look-probe test names corrected (timeline/gantt carry them inside `ThemeWordIn...`, only journey is `FrontmatterLookIsAVisualGate`); the battery must enumerate the full sibling-only value sets; the ledger footers are generator-derived and the independent oracle is the battery; surface comparisons are character cells and marker-absence uses the full header strings (drawn bodies literally contain "Gantt"/"Journey" in their titles); scalar Work charge stated; rollback inventory names the matrix-branch test and the CMake registrations; hermetic `--check` ctests added for the three existing generators; baseline count clarified; colon-less lines are never visual keys; four-way wording. |
 | 2026-11-22 | prr-r2 | same PRR agent, fold-in consistency pass | APPROVE-TO-IMPLEMENT | All twelve folded items verified against the live tree with no new contradiction and no weakened contract: corrected look-probe test names, the full sibling-only battery sets, generator-derived ledger footers vs the battery as independent oracle, character-cell surfaces plus full-header-string marker absence (drawn titles contain "Gantt"/"Journey"), scalar Work charge, the complete rollback inventory, the three hermetic `--check` ctests, the 4633-declared/4631-run baseline wording, colon-less lines never being visual keys, and the four-way wording. Gate to `implementable` passed. |
+| 2026-11-22 | p1-code-r1 | independent read-only adversarial code review agent (fresh agent; RFC contract + hidden-test enumeration) | REQUEST-CHANGES | BLOCKER: the delivered tree could not pass `OfficialMatrix` while the ledger stayed `pending` — closed by this phase-review record (the intended finalization step). MAJOR: the gantt/journey boundary tests did not implement the RFC §3 per-family probe set (only timeline did), so a break in a single TU's comment/dequote/indent logic would have gone undetected → fixed with one shared `FamilyBattery` run per family (every admitted value with the exact footer, sibling-only values, unknown/case/empty, duplicate, quoted, trailing comment, unmatched quote, indent 0/2/4, `themeVariables`, payload, admitted+body-init). MINOR: the drawn-row oracle must pin 7+39+10=56 rows; the battery must assert the literal footer block (blank separator, look-before-theme order) rather than substrings. NIT: Python/C++ fence parity (`rstrip` vs exact) → tightened; second `config:` block and colon-less lines accepted per RFC §1 wording; roster regeneration ordered after the first green matrix. |
+| 2026-11-22 | p1-code-r2 | same adversarial code-review agent | **APPROVE** | Every r1 finding verified closed: the battery is discriminating and non-vacuous, the literal-footer window is guarded, the oracle count guard is present, the three TU helpers are byte-identical, and `pending` was confirmed the sole remaining red, which this approval closes. Recorded as the `P1-look-theme` phase review record in `generate_journeyfam_0040_cohort.py`. |
 
 ## Implementation History
 
 | Date | Phase | Change | Commit |
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | — |
+| 2026-11-22 | — | Accepted after design review r3; implementable after PRR r2 | — |
+| 2026-11-22 | P1 | Three TU-local validating gates + disclosure footers; 31 rows promoted; shared Python tables module; four-way partitions + sibling ledger; 7 gtest + 4 hermetic `--check` ctests; matrix branch; roster 714 → 683 | `bea4ae5b` |
+| 2026-11-22 | — | Closure: full debug ctest, dual-preset byte gate, D-405 record, design-decisions and README entries, efficiency retro | see D-405 |

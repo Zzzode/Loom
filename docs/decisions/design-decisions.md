@@ -4403,3 +4403,48 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   `tools/mermaid/git-0039-cohort.json`, never through the pinned manifest and
   never by editing the E2a ledger. Both leaves land in one atomic phase;
   rollback is one revert.
+
+## journey-family look and theme admission (RFC 0040)
+
+- **One rule, three TU-local copies.** `timeline`, `gantt` and `journey` share
+  one frontmatter gate whose comment requires that they "must not drift apart".
+  The rule is a block-context line scan: a column-0 non-blank non-comment line
+  opens a block (`config:` opens the config block; any other column-0 key
+  closes it); a line containing a colon whose key (text before the first colon)
+  is exactly `theme` or `look` is a visual key; only a visual key at indent 2
+  inside the config block is validated against the family's closed corpus table
+  and, when admitted, disclosed. A visual key anywhere else — top level, a
+  folded `description:` payload line, indent 4 or deeper — keeps the
+  whole-source fallback, as does an in-body `%%{init … theme …}%%` line. Every
+  other key keeps the long-standing pass-through, which is what keeps the 11
+  drawn rows carrying nested `config.gantt.*` / `config.journey.*` maps and a
+  tab-bearing folded description drawing. A colon-less line is never a visual
+  key. Deliberately not `parse_envelope`: that would reject those 11 rows.
+- **Closed tables are corpus-bounded, per family:** timeline `look`
+  {`classic`, `neo`} and ten palettes; gantt eight palettes and no `look`;
+  journey the four `redux*` palettes and no `look`. A value a sibling admits
+  but this family does not is a whole-source fallback, pinned by the
+  cross-family battery.
+- **Gantt reads sanitized bytes.** `gantt_layout` sanitizes `<br>` before the
+  gate and before parsing, so the gate and the notice derivation must read the
+  same sanitized text; `theme: dark<br/>` therefore normalizes to `dark` and is
+  admitted with `config.theme=dark` disclosed. The C++ reader and the Python
+  generator mirror each other: trim, strip a trailing YAML comment outside
+  quotes, dequote a matched pair; an unmatched quote is a mismatch.
+- **Disclosure footer:** `Timeline` / `Gantt` / `Journey native projection v1`,
+  one line per accepted leaf, blank separator first, fixed order `look` then
+  `theme`; 96-byte line cap, per-line and emission charges and the
+  `art + 1 + n <= kHeightLimit` guard mirror the state/flow/git paths. A
+  non-admitted visual key never emits a footer.
+- **Three family ledgers keep their row sets** (7 / 39 / 10) and gain a named
+  `admitted` partition (16 / 11 / 4) so each family is a four-way partition
+  (`rows + admitted + themed_excluded + fail_closed` = 30 / 52 / 18). Promotion
+  goes through the sibling ledger `tools/mermaid/journeyfam-0040-cohort.json`,
+  never by editing a family ledger or the pinned manifest. All four generators
+  share one Python tables module loaded by explicit path (`python3 -I` implies
+  `-P`).
+- **Fallback-attribution key-set invariant:** `--emit` now emits every detector
+  category even when it empties (`look_classic_other` empties at this
+  admission), because `--self-test` pins `causality` to `category_counts` key
+  equality. Without it, an admission that empties a category turns the roster
+  self-test red after a green `--emit`.

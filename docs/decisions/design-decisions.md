@@ -4289,3 +4289,40 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   per-phase review records, never through the pinned manifest. Each phase is
   one atomic commit (code, ledger, matrix branch, gates, roster); rollback is
   LIFO with the envelope phase as a hard prerequisite.
+## requirement config admission and title projection (RFC 0037)
+
+- **Envelope:** a requirement `description` envelope may additionally carry a
+  `config:` subtree with the F0 leaves (`htmlLabels`, `logLevel`,
+  `fontFamily`), a closed `look` table (`classic`, `neo`, `handDrawn`) and a
+  closed `theme` palette table (`default`, `neo`, `neo-dark`, `redux`,
+  `redux-dark`, `redux-color`, `redux-dark-color`). The tables are
+  corpus-bounded: the four other upstream palettes (`base`, `dark`, `forest`,
+  `neutral`) have no requirement-corpus row and stay rejected, so a future
+  corpus row is an explicit extension, not a silent widening.
+- **Inertness proof:** `look` and `theme` are validated and disclosed only —
+  the requirement renderer never reads them (the shared relations core does
+  not consult them on this path). The proof is a per-row twin gate: the frame
+  must equal the config-free/corpus twin's frame plus exactly the disclosure
+  footer the ledger pins. Upstream paints stroke style and palettes in SVG;
+  the terminal never does.
+- **Title is projected, not ignored:** upstream paints a diagram title, so
+  ignoring it would drop authored content. The title is accepted through the
+  ER decoder (`er_yaml_value`, `Kind::Text` only — a boolean, number, flow
+  collection, embedded colon, backslash or unbalanced quote rejects), must be
+  printable ASCII with at least one ink byte, and is bounded by `kWidthLimit`
+  (240) so an accepted title is always width-paintable; over-tall diagrams
+  still fail closed. It lowers onto the shared
+  `RelationDiagram::diagram_title` seam (row 0 + one blank row) that ER and
+  state already use.
+- **Twin kinds:** corpus twins (body-equivalent certified drawn siblings) take
+  precedence; the synthetic config-free twin strips every admitted leaf and
+  drops an emptied `config:`; title rows use the title-free twin, whose own
+  footer stays and to whose frame the title rows are prepended.
+- **Promotion and rollback:** rows are promoted through
+  `tools/mermaid/requirement-0037-cohort.json` with per-phase review records,
+  never through the pinned manifest (`kManifestSha256` and its duplicated
+  authority pins stay byte-immutable). The generator classifies the whole
+  172-original family by source shape, so its pins survive phase promotion and
+  the shrinking fallback roster. Rollback is LIFO: P1 is a prerequisite of P2
+  and P1+P2 of P3.
+

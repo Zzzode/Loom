@@ -441,6 +441,45 @@ Attach a short efficiency section to each closure report, answering:
 
 ## Retro log
 
+- **2026-11-21, RFC 0037 requirement family (P1 `e645212f`, P2 `c42647ad`, P3
+  `bd542e71`).** +120 whole draws in three phases; census 1271/874 → 1391/754,
+  formal 1085 → 1205, gaps 48, dual-preset byte-identical at each phase. Rework
+  loops, all caught before shipping:
+  1. *A derived artifact must not be the generator's population.* The first
+     generator enumerated `fallback_roster.json`, so the phase's own `--emit`
+     migration removed the promoted rows and made the pins self-destruct. Rule:
+     classify the family by source shape over the fixture tree (172 originals),
+     never over a roster the phase itself shrinks.
+  2. *Define the twin over all admitted keys.* "Same source with the added key
+     removed" leaves an F0 footer for the 8 `look`+`htmlLabels` rows and
+     double-counts it; the design review caught this before code. Rule: the
+     twin is the config-free source, with the footer delta recorded per row.
+  3. *Reuse the stricter sibling decoder.* P3's first draft decoded the title
+     with the config-leaf helper (trim + dequote), so `true`, `123`, `a: b`,
+     `[x]` and unbalanced quotes were admitted — wider than the pinned ER rule.
+     Rule: call the sibling family's decoder and add one negative per rejection
+     class it owns.
+  4. *Negatives must be well-formed up to the single violated rule, again.*
+     P1's first title negatives omitted `description:`, so they rejected at the
+     description gate, not the title branch. Rule: add the positive control
+     that removes only the violated rule and still draws.
+  5. *`require()` in the matrix collection loop truncates the artifact.* A
+     pending-ledger run throws, then reports `observations.size() != 2738` and
+     overwrites the matrix JSON with a truncated report. This is the deliberate
+     fail-closed norm for cohort loaders. Rule: after a phase is approved,
+     rerun the matrix in both presets before emitting the roster.
+  6. *Bookkeeping dominated the findings again.* 13 of 19 review findings
+     across the design, PRR and three phase reviews were record drift
+     (disclosure string, comments, test counts, flip counts, coupling rows).
+     Rule: when a phase changes a user-visible string, a test count or an
+     assertion's phase, update the RFC and the generator note in the same edit,
+     then rerun `--check` and `rfc_lint.py`.
+  7. *Never pipe the full suite through a formatter.* Running
+     `ctest --preset debug -j$(nproc) | tail -12` returned `tail`'s exit code
+     and dropped the summary line, so a green-looking tail could not prove the
+     run's verdict and the suite had to be repeated. Rule: redirect the full
+     suite to a log file, append `CTEST_EXIT=$?`, and read the verdict from the
+     file.
 - **2026-11-09, FS-elk cohort (`eb3118c8`).** Outcome +1 whole draw. A broad
   whitelist was implemented first and rejected by the full matrix (one new
   error, two no-op rows held by the FS-1b Work ceiling), then narrowed to one

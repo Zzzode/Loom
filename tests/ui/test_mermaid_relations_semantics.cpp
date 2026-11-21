@@ -32608,7 +32608,10 @@ TEST(MermaidCapabilityReport, Requirement11P1P6) {
          std::string(p5).replace(p5.find(">-"), 2, "|"),
          std::string(p5).insert(p5.find("---\nrequirementDiagram"), "unknown: yes\n"),
          std::string(p5).insert(p5.find("---\nrequirementDiagram"), "config: {}\n"),
-         std::string(p5).insert(p5.find("---\nrequirementDiagram"), "title: hidden\n"),
+         // RFC 0037 P3 admits a top-level title, so this negative uses a key
+         // that stays unadmitted in every phase; the contract it proves is
+         // unchanged (an unknown top-level key keeps the body from drawing).
+         std::string(p5).insert(p5.find("---\nrequirementDiagram"), "securityLevel: strict\n"),
          std::string(p5).insert(p5.find("---\nrequirementDiagram"),
                                 "description: >-\n  duplicate\n"),
          std::string(p5).replace(p5.find("  Source"), 2, "\t"),

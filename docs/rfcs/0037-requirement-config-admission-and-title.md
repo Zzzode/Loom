@@ -1,7 +1,7 @@
 ---
 rfc: 37
 title: requirement family config admission and title projection
-status: implementable
+status: implemented
 owners: "@Zzzode"
 reviewers: ["agent:design-review-r1 (a63ae06251ef34362, r1 REQUEST-CHANGES → r2 APPROVE-TO-ACCEPT)", "agent:prr-review-r1 (adaa7ad84dd094605, r1/r2 REQUEST-CHANGES → r3 APPROVE-TO-IMPLEMENT)"]
 created: 2026-11-21
@@ -332,6 +332,16 @@ removed`.
     source-fallback-narrow (the disclosure footer exceeds the narrow budget,
     the D-066 F0 `narrow_note` contract); the loop keeps the elk row and the
     two malformed rows as full negatives.
+  - **P3 (found at closure, not in the first inventory):**
+    `MermaidCapabilityReport.Requirement11P1P6`
+    (`tests/ui/test_mermaid_relations_semantics.cpp:32611`) builds ten
+    malformed-prefix negatives from the pinned P5 witness; negative 5 inserted
+    a `title:` key as its example of an unadmitted top-level key. P3 admits
+    titles, so that source now draws and the "rejected prefix cannot draw
+    body" contract flipped. The negative now inserts `securityLevel: strict`
+    instead — a key that stays unadmitted in every phase — so the contract it
+    proves (an unknown top-level key keeps the body from drawing) is
+    unchanged. The pinned witness asset and its sha are untouched.
   Three comments become false and each phase's commit corrects the one it
   falsifies: the test file header (`:8-9`), the
   `F0InertBoundaryKeepsVisualKeysClosed` preamble (`:429`, "Visual/semantic keys
@@ -352,6 +362,7 @@ side only:
 | census reason string | `tests/ui/test_mermaid_official.cpp`, ledger generator, closure doc |
 | roster totals | `tools/mermaid/fallback_roster.json`; `tools/mermaid/e6c-mandatory-gap-roster.json` must stay byte-identical (zero requirement rows among the 48 `mandatory_gaps`) |
 | frozen D-204 / D-395 partitions | `tools/mermaid/generate_requirement_cohort.py`, `requirement-cohort.json`, `requirement-f0-cohort.json` (read-only for this RFC) |
+| Requirement11 control negatives | `tests/ui/test_mermaid_relations_semantics.cpp` (`Requirement11P1P6`): its malformed-prefix negatives are constructed from the pinned P5 witness, and one of them used an unadmitted `title:` key as its example. Any future key admission must re-check that array. The witness asset (`requirement11_controls.proposed.md`, sha-pinned) and the `admitted == 11` / `mandatory_remaining == 160` aggregates are unaffected |
 
 Dependency direction is unchanged: the requirement renderer keeps depending on
 the shared relations core; no new edges are introduced.
@@ -538,6 +549,8 @@ edited.
 | Date | Phase | Change | Commit |
 |---|---|---|---|
 | 2026-11-21 | — | Draft created (provisional), no code | — |
+| 2026-11-21 | P3 (closure correction) | The first inventory missed a third flip: `Requirement11P1P6`'s P5 negative 5 used an unadmitted `title:` key and now draws. The negative inserts `securityLevel: strict` instead, preserving the contract; the coupling table names the array. Found by the full debug ctest (2741 failed), not by the phase review | — |
 | 2026-11-21 | P3 | `title` projection: the top-level `title:` accepted through the **ER decoder** (`er_yaml_value` + `Kind::Text`, printable ASCII, ink, ≤ `kWidthLimit`) and lowered onto the shared relation-title seam; `title-free` twin kind with `expected_prepend_lines`; 6 rows promoted, family 144/28, global 1391/754, formal 1205, dual-preset sha `7fd2b117`. Reviewed by `agent:c4f1a7e29b3d60851` (r1 REQUEST-CHANGES → r2 APPROVE) | — |
+| 2026-11-21 | — | RFC marked `implemented`: all three phases done, full debug ctest green, dual-preset byte gate identical at each phase, closure record `docs/dev/d399-requirement-rfc0037-closure.md` | — |
 | 2026-11-21 | P2 | `theme` admission: closed 7-palette table with its disclosure line after `look`; corpus-twin resolution by body equivalence over the pinned drawn set with a footer-prefix rule; the synthetic config-free twin added to the gate; 91 rows promoted (7 corpus + 84 synthetic), family 138/34, global 1385/760, formal 1199, dual-preset sha `4a5fbe87`. Reviewed by `agent:aa19624ebdb712b6a` (APPROVE, three NITs applied) | — |
 | 2026-11-21 | P1 | `look` admission: closed `classic`/`neo`/`handDrawn` table in the requirement envelope with its disclosure line; ledger + generator (filesystem population, per-phase digests, per-phase review records) + 23-row corpus-twin gate + official-matrix cohort branch; F0 boundary flip; 23 rows promoted, family 47/125, global 1294/851, formal 1108, dual-preset sha `36384e6c`. Reviewed by `agent:ab5e96a11461da018` (r1 REQUEST-CHANGES → final APPROVE) | — |

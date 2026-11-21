@@ -469,7 +469,15 @@ Attach a short efficiency section to each closure report, answering:
      and record both numbers; never widen a timeout to make the run look green.
   5. *Release-primary paid off again:* the matrix cost 27 s in release versus
      240 s in debug (8.9×) for a byte-identical artifact; iteration used release,
-     and the full debug ctest ran once at closure.
+     and the full debug ctest ran at closure.
+  6. *A red full gate is not laundered by a partial rerun.* The first complete
+     run ended `CTEST_EXIT=8` (two 3 s-TCP/mock-server timing failures); the
+     second complete run ended `CTEST_EXIT=8` again with two *different* timing
+     failures. The initial write-up called both "reruns passed", which the Tech
+     Lead rejected. Rule: the full gate's verdict is one complete run; a failing
+     item is either fixed or backed by **>= 3 consecutive clean reruns plus a
+     surface-unrelatedness argument** (file diff, symbol references, failure
+     mechanism), and the closure record states the red run's exit code verbatim.
 - **2026-11-21, RFC 0037 requirement family (P1 `e645212f`, P2 `c42647ad`, P3
   `bd542e71`).** +120 whole draws in three phases; census 1271/874 → 1391/754,
   formal 1085 → 1205, gaps 48, dual-preset byte-identical at each phase. Rework

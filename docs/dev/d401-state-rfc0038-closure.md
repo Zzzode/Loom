@@ -91,14 +91,38 @@ Roster 迁移唯一 diff = 被晋升的 28 条 state 行（19 v2 + 9 v1），无
 - 生成器 `--check` 可复现；`fallback_attribution.py --self-test` 绿（726 行、44 类、
   零未分类、分类可复现）。
 - 双预设矩阵：release 27 s / debug 240 s，均通过且字节一致 `59cf7de8…`。
-- 全量 debug ctest（`-j$(nproc)`，4627 项，日志 `/tmp/ctest_d401_full.log`）：
-  **2 失败，均为负载时序 flake**——`ServerMain.DirectConnectPermissionControlCanAllowAndDenyToolUse`
-  （文档已记录的 3 秒 TCP flake，6.51 s）与
-  `Tools.RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage`
-  （mock server 请求计数等待超时，3.14 s）。二者单独重跑分别 **0.47 s / 0.17 s 通过**
-  （`/tmp/ctest_d401_flakes.log`，CTEST_EXIT=0）。无断言放宽、无 skip、无 sleep。
+- **全量 debug ctest（两次完整运行，均为 `-j$(nproc)`，4627 项）：两次都是红门。**
+  - 第 1 次（`/tmp/ctest_d401_full.log`）：**CTEST_EXIT=8**，2 项失败——
+    `#859 ServerMain.DirectConnectPermissionControlCanAllowAndDenyToolUse`（6.51 s：
+    `:1464`/`:1520` 的 ws 帧等待 3 s 超时，6.51 s ≈ 2×3 s）与
+    `#508 Tools.RuntimeTeamCreateCanStartNativeAgentsAndResumeThemWithSendMessage`
+    （3.14 s：mock server `wait_for_request_count(3)` 超时）。
+  - 第 2 次（同一命令，`/tmp/ctest_d401_full_run2.log`）：**CTEST_EXIT=8**，
+    **另外** 2 项失败——`#857 ServerMain.DirectConnectSessionsAndWebSocketUsePersistentRoutes`
+    （0.46 s：ws 帧读取失败）与
+    `#860 ServerMain.DirectConnectToolLoopPersistsTeamCreateAndSendMessage`
+    （3.23 s：同 3 s 帧超时）。**两次运行的失败集合互不相同，共涉及 4 个用例。**
+  - **flaky 证据（非单次重跑）**：上述 4 个用例在干净环境串行**各连续 5 次全通过**
+    （共 20 次，全部 rc=0）——859：0.58/0.48/0.48/0.48/0.48 s；508：
+    0.29/0.17/0.18/0.17/0.17 s；857：0.45/0.34/0.35/0.34/0.34 s；860：0.20/0.20/0.20/0.20/0.21 s。
+    日志 `/tmp/flaky859_run{1..5}.log`、`/tmp/flaky508_run{1..5}.log`、
+    `/tmp/flaky_DirectConnect*_run{1..5}.log`。
+  - **与 RFC 0038 改动面无关**：两个提交对 `tests/services/`、`tests/tools/` **零文件改动**，
+    两个测试源码 **0 处 mermaid 引用**；4 次失败中 3 次是 `LocalMessagesServer` 的 3 s
+    真实 TCP 等待到期（并行下比串行慢 14–18×），1 次是 ws 帧读取失败；`CLAUDE.md` 已把
+    `ServerMain.DirectConnect*` 记录为受并行负载影响的已知 flake。
+  - **结论（不粉饰）**：全量门两次完整运行均为红（CTEST_EXIT=8）。按 TL 纪律，失败项
+    要么修复、要么给出 flaky 证据——本 RFC 选择后者，证据即上；红门事实保留在文档与
+    提交信息里，不用局部重跑改写成绿门。无断言放宽、无 skip、无 sleep。
 
-## 7. 未消解 / 推迟项
+## 7. 验证纪律（本收口新增）
+
+- **全量门只认一次完整运行的结果**；失败项必须在「修复」与「flaky 证据」之间二选一，
+  flaky 证据的最低要求是：同一用例在干净环境连续重跑 **≥3 次**全通过，并说明它与本次
+  改动面无关（文件面 + 符号面 + 失败机理）。不得用局部重跑代替全量结论，也不得把
+  `CTEST_EXIT≠0` 的运行表述为「全量验证完成」。
+
+## 8. 未消解 / 推迟项
 
 1. 65 条 state fallback 保持：4 `layout: elk`、4 `config.state.useMaxWidth`、
    1 条描述含制表符、56 条 body 能力阻塞（v2 45 + v1 11）——全部显式 non-goal。

@@ -1,9 +1,9 @@
 ---
 rfc: 39
 title: gitGraph look and theme admission
-status: accepted
+status: implementable
 owners: "@Zzzode"
-reviewers: ["agent:acde9271b5b1810a9 rfc0039-design-review (r1 REQUEST-CHANGES -> r2 APPROVE-TO-ACCEPT)"]
+reviewers: ["agent:acde9271b5b1810a9 rfc0039-design-review (r1 REQUEST-CHANGES -> r2 APPROVE-TO-ACCEPT)", "agent:ab2865cf0bfe0c5df rfc0039-prr (r1 REQUEST-CHANGES -> r2 APPROVE-TO-IMPLEMENT)"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -74,7 +74,8 @@ Composition: every row carries **both** leaves. The family's **non-namespaced**
 look/theme shape class — indent-2 `look`/`theme` leaves with no other indent-2 config key
 and no deeper key — has **18** rows: the 12 cohort rows plus six
 (`multiple-branches-cycling-theme-color-limit-…`) that do not draw even with the
-frontmatter stripped (a body capability: theme-colour cycling limit). A further 12 rows
+frontmatter stripped — a body capability limit (branch/route density), not a colour
+issue; the renderer never reads the theme. A further 12 rows
 carry `look`/`theme` **inside** the namespaced `config.gitGraph.*` subtree and belong to
 that 44-row semantic debt. Because the 12/18 split is render-defined, the cohort is a
 **reviewed literal path set**, not a classifier output.
@@ -101,8 +102,8 @@ the leaves equals the frame without them plus the bounded footer.
 
 - The other 65 git fallbacks: 44 carry a namespaced `config.gitGraph.*` subtree
   (`mainBranchName`, `parallelCommits`, `showBranches`, `showCommitLabel`, `rotateCommitLabel`,
-  `mainBranchOrder`, …) — a semantics debt, not a table; 6 are theme rows whose bodies hit
-  the colour-cycling limit; 1 carries no look/theme; the remaining 14 have no body
+  `mainBranchOrder`, …) — a semantics debt, not a table; 6 are theme rows whose bodies exceed the
+  renderer's branch/route density; 1 carries no look/theme; the remaining 14 have no body
   capability even with the frontmatter stripped.
 - `title:` projection for gitGraph (the existing envelope rejects it and no cohort row
   needs it).
@@ -123,7 +124,8 @@ notice vector. It accepts, inside at most one `config:` block at indent 2:
 | `look` | `neo` | any other string, duplicate |
 | `theme` | `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color` | any other string, duplicate |
 
-The scalar reader dequotes, so `theme: "neo"` is the same value; an unmatched quote is a
+Each scalar read charges `work.spend(value.size() + 1)` like the state envelope's
+`state_scalar_text`; the reader dequotes, so `theme: "neo"` is the same value; an unmatched quote is a
 quoting mismatch, never a value. A trailing YAML comment is stripped like the shared
 envelope reader does. An **empty `config:` block** (present, zero accepted leaves) keeps
 the whole source, exactly as the state envelope and the pre-existing git envelope do.
@@ -165,6 +167,21 @@ sentinel). A wrong delta is therefore red, not green.
 
 ### 2. Reviewed cohort, twin gate and wiring
 
+**Drawn-row guard oracle (MAJOR-1).** The fifth test is *not* a byte baseline: for every
+git row the E2a ledger already marks `predicted-draw` (58 today), render the source and
+render the same source with its whole frontmatter stripped, **both through the same
+sentinel-bearing fenced wrapper** (the state gate's `fenced(..., "mermaid")` + sentinel
+form), and require the **full, untrimmed cell surfaces to be equal** (240×400, character
++ background). The sentinel is what makes a lone trailing blank row visible: it shifts the
+sentinel down one row and the surfaces differ. Descriptions are
+never rendered, so equality holds today; a footer or blank separator emitted merely
+because a frontmatter is present — the exact regression this guard exists for — breaks the
+equality and turns the test red. The same test also asserts the three footer markers
+(`GitGraph native projection v1`, `config.look=`, `config.theme=`) are absent from every
+drawn git frame. Nothing is stored as a golden artifact for this oracle, so it cannot be
+"regenerated to match a bug"; the separate 12-row twin gate does of course consume the
+ledger's reviewed `expected_footer_lines` literals, which is the point of that ledger.
+
 **No signature change.** `git_frontmatter` is TU-local to
 `mermaid_gitgraph_impl.cpp`, and `gitgraph_layout` keeps its signature: the notices ride
 inside its returned line vector. The three call sites — `mermaid_impl.cpp:6694` (ASCII
@@ -177,10 +194,14 @@ N/A-with-reason claim and G3 auditable.
   phase's review record.
 - Generator `tools/mermaid/generate_git_0039_cohort.py`, `--check` reproducible. The
   12/18 split is render-defined, so the cohort is a **reviewed literal path set** pinned
-  in the generator with one whole-cohort path+sha digest; the generator hard-asserts only
+  in the generator with one whole-cohort path+sha digest (a reviewed generator constant
+  over manifest-pinned bytes, so changing a row requires a visible generator diff); the generator hard-asserts only
   source-derivable counts — family 135, cohort 12, non-namespaced look/theme shape class
   18 (defined above), namespaced `config.gitGraph.*` 44. The roster and the matrix
-  artifact are never read.
+  artifact are never read. Like the state generator, it validates every cohort row
+  before emitting it: exactly one `description` and one `config` block, every indent-2
+  leaf inside {`look`, `theme`}, every value inside its closed table, and no deeper key —
+  so a hand-edited row cannot slip in merely by moving the digest.
 - **Twin rule** (RFC 0037/0038 restated): the recorded delta is the source footer lines
   minus the twin footer lines, compared line-by-line against the live frame. No drawn git
   fixture is body-equivalent to a cohort row (measured: the 58 drawn git rows carry the
@@ -190,10 +211,15 @@ N/A-with-reason claim and G3 auditable.
   native-frame predicate (never the `find("gitGraph")` mnemonic), per-width ledger
   equality, determinism, exact footer composition, both tables closed (dequote, trailing
   comment, duplicate, indent, unknown value, namespaced subtree, title, init, empty
-  `config:`), one probe proving a folded description payload containing a `look: neo`
-  line is documentation and not a config event, and the E2a byte-identity guard for the drawn git rows.
+  `config:`), one probe inside the look-table test proving a folded description payload containing a
+  `look: neo`
+  line is documentation and not a config event, and the drawn-row frame-identity guard above (frontmatter-stripped twin, full
+  untrimmed surfaces, no footer markers).
 - Matrix branch in `tests/ui/test_mermaid_official.cpp` reading per-row `expected_states`
-  (Journey style), reason `RFC-0039 gitGraph look/theme reviewed cohort`.
+  (Journey style), reason `RFC-0039 gitGraph look/theme reviewed cohort`. It is placed
+  after the state-0038 branch and **before** the generic fallback, as an earliest-match
+  ledger echo (no `run_case` call), so the 12 rows cannot fall through to the manifest's
+  `source` expectation as a shadowed branch; the render proof is the cohort gate.
 - Roster migrated with `fallback_attribution.py --emit` in the phase commit.
 - Census (`drawn_at_240` 1233 → 1245, gaps/integrity invariants) is verified in the phase
   census procedure; the gate does not read the matrix artifact (false-red hazard).
@@ -203,7 +229,9 @@ N/A-with-reason claim and G3 auditable.
 | coupling | files that must change together |
 |---|---|
 | envelope validator and footer | `mermaid_gitgraph_impl.cpp`, the gate, the ledger |
-| E2a negative `ConfigAndInitRowsKeepWholeSource` (`tests/ui/test_mermaid_e2a_cohort.cpp`) | iterates `git` + both state roots and excludes only the E2a/E2b/RFC 0038 ledgers (**132** rows today = git 71 + state-v2 47 + state-v1 14). The phase adds the git sibling ledger and asserts the **git-root skipped set equals the git ledger** (12 rows; 59 git rows remain scanned); `EXPECT_GT(checked, 100)` still holds at **120** = 59 + 47 + 14 |
+| E2a negative `ConfigAndInitRowsKeepWholeSource` (`tests/ui/test_mermaid_e2a_cohort.cpp`) | iterates `git` + both state roots and excludes only the E2a/E2b/RFC 0038 ledgers (**132** rows today = git 71 + state-v2 47 + state-v1 14). The phase adds the git sibling ledger and asserts the **config/init-bearing git-root skipped set equals the git ledger**
+(12 rows; the 64 config-free E2a git rows are excluded separately and are not part of this
+set), so 59 config/init-bearing git rows remain scanned; `EXPECT_GT(checked, 100)` still holds at **120** = 59 + 47 + 14 |
 | surviving git negative `MermaidGitGraphEnvelope.ConfigFrontmatterStaysSource` (`tests/ui/test_mermaid_gitgraph_semantics.cpp`) | uses a namespaced `config.gitGraph.mainBranchName`; it survives **only because** namespaced subtrees stay closed — a future widening must revisit it |
 | git title negative `TitleIsBlockedNotDropped` | unchanged: `title:` stays unadmitted |
 | census `expected`/`reason` | `tests/fixtures/mermaid_official/manifest.json` is SHA-pinned and never edited; promotion is a ledger-driven branch |
@@ -219,6 +247,11 @@ is reused as-is.
 |---|---|---|---|---|
 | P1 | `look` + `theme` admission | 12 rows (2 bodies × 6 palettes) | proposed | git 58→**70** drawn / 77→**65** fallback; global 1419→**1431** / 726→**714**; formal `drawn_at_240` **1233→1245**; gaps 48, integrity 0; E2a cohort gate and its negative green; release matrix sha recorded |
 
+Phase-start re-derivations (never assume): the gate's exact test count and the
+`ctest --preset debug -N` total (4627 + N); and every row's `narrow_40` disposition, which
+must be **measured per row** under the footer budget (OQ-3) rather than copied from the
+state ledger.
+
 Closure: full debug ctest once (a red run is handled by the D-401 §7 discipline), dual-preset
 byte gate, RFC `implemented`, closure doc, design-decisions entry, efficiency retro.
 
@@ -228,16 +261,21 @@ Completed at the `implementable` gate. Current answers:
 
 - **Correctness & tests** — per-row twin gate plus a boundary suite; known flakes are
   pre-existing and recorded.
-- **Build system** — no new module, target or import; the edit is inside the gitGraph
+- **Build system** — no new **production** module, target or import (the phase adds one test
+  executable target for the gate); the edit is inside the gitGraph
   implementation unit (`src/ui/visual/mermaid_gitgraph_impl.cpp`), so BMI PSS is N/A with
   reason; the fan-out is one implementation-unit compile plus archive and executable
-  relinks (to be measured by the PRR review, not asserted).
+  relinks. PRR measurement against `build/release/build.ninja`: **1**
+  `mermaid_gitgraph_impl.cpp.o` compile edge, **1** `libloom_ui_visual.a` archive relink,
+  and **207** relink edges naming the archive (198 executable + 9 static-library), plus 3
+  phony aliases — not a BMI closure.
 - **Rollback** — one atomic commit (both leaves, 12 rows); one revert restores the previous
   census exactly.
 - **Observability** — the disclosure footer is the user-visible trace.
 - **Documentation** — design-decisions entry, closure doc, README index, retro.
-- **Deletion** — the envelope's comment stating that any `config` key keeps the whole
-  source is corrected in the same phase.
+- **Deletion** — the stale envelope comment at
+  `src/ui/visual/mermaid_gitgraph_impl.cpp:946-949` ("A top-level config key … keeps the
+  whole source") is corrected in the same phase.
 - **Deprecation** — none.
 - **Wire / persisted shapes** — N/A: rendering-only.
 - **Golden suites** — N/A: assertion-based mermaid cohorts only.
@@ -279,7 +317,7 @@ additive; the roster is regenerated, never hand edited.
 
 - New `tests/ui/test_mermaid_gitgraph_0039_cohort.cpp` (registered in
   `tests/ui/CMakeLists.txt`), expected **5** tests (ledger pins, twin inertness, look
-  table, theme table, E2a byte-identity); `ctest --preset debug -N` reports **4627**
+  table, theme table, drawn-row frame-identity); `ctest --preset debug -N` reports **4627**
   today, so the closure total is **4632** if the gate lands as five — re-derive the exact
   count at phase start and record it, never assume it.
 - Edited `tests/ui/test_mermaid_official.cpp` (matrix branch + reason string) and
@@ -287,6 +325,10 @@ additive; the roster is regenerated, never hand edited.
 - Targeted `ctest -L mermaid` in the phase; `generate_git_0039_cohort.py --check`;
   `fallback_attribution.py --emit` followed by its `--self-test` (a ctest case); the
   release-preset matrix in the phase; dual-preset gate at closure.
+- **Roster correctness** is guaranteed by the phase procedure — full build, release
+  matrix, then `--emit` — not by `--self-test`, which re-derives the committed roster from
+  source shape and therefore only catches hand edits (the matrix `drift_check` comparison
+  is not wired into ctest).
 - **False-green guardrails.** The matrix cohort branch is a ledger echo, so the census is
   meaningful only after a full build (efficiency rule 3), and the render proof is the
   cohort gate, never the echo. The full ctest is redirected to a log with `CTEST_EXIT=$?`
@@ -324,6 +366,8 @@ additive; the roster is regenerated, never hand edited.
 | 2026-11-22 | — | — | draft | Created provisional from the D-402 reachability measurement |
 | 2026-11-22 | r1 | independent design-review agent (own re-derivation over the fixture tree, roster, E2a ledger and matrix; no trust in the RFC's numbers) | REQUEST-CHANGES | All measured claims independently re-derived and confirmed: family 135, cohort 12 (two bodies × six palettes), non-namespaced look/theme class 18, six body-blocked rows, namespaced `config.gitGraph.*` 44, no body-equivalent drawn fixture, E2a checked 132→120 (git 71 + state-v2 47 + state-v1 14), endpoints 70/65, 1431/714, 1245, gaps 48. **MAJOR-1** the lowercase `gitGraph` header broke the three-header capitalisation convention and collided with the `find("gitGraph") == npos` native-drawn mnemonic in two existing gates → **accepted**: header is `GitGraph native projection v1` and the new gate's predicate is pinned to the line-equality form. **MAJOR-2** the footer composition, Work budget and height guard were undefined → **accepted**: blank separator + capitals + 96-byte cap + `(1+n)*(4*sizeof(std::string)+256)+bytes*2+256` + `art+1+n <= 1024` are now stated, and the ledger delta's blank-line handling is pinned. **MINOR-1** the E2a "skipped set equals it" was imprecise (the scan also excludes E2b/RFC 0038 rows) → **accepted**: the *git-root* skipped set equals the git ledger; 120 = 59 + 47 + 14. **MINOR-2** no signature change / call sites pinned (`:6694`, `:6734`, fuzz `:77`). **MINOR-3** empty `config:` rejected. **MINOR-4** `fallback_attribution.py --self-test` added to the plan. **MINOR-5/6** the 18-row class reworded and defined (12 cohort + 6 body-blocked; a further 12 nested rows live inside the 44). **MINOR-7** the 5-test count flagged as re-derive-at-phase-start. **NIT-1** a folded-description `look: neo` probe added. **NIT-2** "extend e2a in place" alternative added. **NIT-3** OQ-1 closed. |
 | 2026-11-22 | r2 | same design-review agent, independent re-read against the live tree | APPROVE-TO-ACCEPT | Every r1 item verified as a genuine fix, with the emission formula, the height guard, the 96-byte cap, the three family headers, the TU-local envelope and the E2a arithmetic all re-checked against the code. Two cosmetic residuals folded in before the gate: the third `find("gitGraph")` consumer (`tests/e2e/e2e_pty_shutdown.cpp:3060`) is now named (three, not two), and the gate bullet's "E2b/E2a" is corrected to "E2a" (E2b is state-only). Gate to `accepted` passed. |
+| 2026-11-22 | prr-r1 | independent PRR agent (production-readiness lens: hidden test flips, false-green audit, build-graph measurement, Work/DoS bounds, rollback) | REQUEST-CHANGES | Independently confirmed: endpoints (git 58/77, global 1419/726, formal 1233, no git gap rows, integrity 0), the 135/18/44 shape counts, zero body-equivalent drawn siblings, the E2a 132->120 arithmetic (git 71 + state-v2 47 + state-v1 14), that no other test pins git draw counts, the build fan-out (1 compile / 1 archive relink / 207 relink edges / BMI N/A), the DoS bounds, and the seen headers. **MAJOR-1** the "E2a byte-identity" test as written had no oracle that could see a spurious trailing blank line -> **accepted**: the oracle is now a full untrimmed surface equality between each drawn git row and the same source with its frontmatter stripped, plus footer-marker absence, with no stored golden artifact. MINORs: scalar read Work charge written; generator per-row validation written; "no new production target" corrected; the description probe folded into the look-table test so the count stays five; matrix branch placement pinned; the E2a set limited to config/init-bearing rows; the measured fan-out recorded; the six body-blocked rows re-attributed from "colour cycling" to branch/route density; the roster/`--self-test` limitation written into the guardrails. NITs: the stale comment pinned to `mermaid_gitgraph_impl.cpp:946-949`; the digest described as a reviewed generator constant. |
+| 2026-11-22 | prr-r2 | same PRR agent, independent re-read against the live tree | APPROVE-TO-IMPLEMENT | Every r1 item verified as a genuine fix and no new numeric contradiction (4627±5, 132/120, 58/70, 77/65, 1419/1431, 726/714, 1233/1245 all reconcile). The new drawn-row oracle is confirmed able to catch the "footer or blank separator emitted merely because a frontmatter exists" regression (the sentinel shifts and the full surface diverges) and confirmed not to false-red any of the 58 E2a drawn rows (all are description-only, strip-then-render yields the same body and frame, and the three markers appear in none of them). Five non-blocking NITs folded in before promotion: the sentinel wrapper is now explicit (A), the test is named "drawn-row frame-identity" everywhere (B), the roster paragraph is back inside the bullet list (C), and the golden-free oracle is distinguished from the ledger's reviewed footer literals (E). NIT-D (a descriptive wording) left as is. Gate to `implementable` passed. |
 
 ## Implementation History
 

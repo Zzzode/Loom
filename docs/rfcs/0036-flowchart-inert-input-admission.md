@@ -1,7 +1,7 @@
 ---
 rfc: 36
 title: flowchart inert-input admission (theme colors, tuning keys, style statements)
-status: provisional
+status: withdrawn
 owners: "@Zzzode"
 reviewers: []
 created: 2026-11-21
@@ -30,8 +30,13 @@ routing), `elk` (layout engine), `@{ shape }`, collapsed `@{ view }`, icon
 fonts and `<br>` multiline labels. Target: the exact measured row set, up to
 ~40, recorded in a reviewed cohort ledger per phase.
 
-Status is **provisional**: this document is a draft for agent-run design
-review. No production code may merge before the `implementable` gate.
+Status is **withdrawn** (2026-11-21): the independent design review falsified
+the blocker composition this draft was built on — 18 of the 67 config rows are
+frozen E6c mandatory-gap fixtures, styling is already projected by RFC 0031
+FS-3a, and the body slice is style-grammar/init-directive debt. The corrected
+measurement and the three paths forward are recorded in
+`docs/dev/d397-flowchart-family-selection.md` §5. The number is kept and never
+reused.
 
 ## Motivation
 
@@ -175,6 +180,24 @@ Malformed forms of these statements keep the whole source; `@{ shape }`,
 - Phases: P1 config admission, P2 inert body statements; each atomic.
 - Graduation: targeted flowchart census per phase; family closure runs full
   ctest once and the dual-preset byte gate.
+
+## Rationale
+
+Withdrawn on 2026-11-21 after the independent design review:
+
+- 18 of the 67 config-frontmatter rows are frozen E6c `official_matrix`
+  mandatory-gap fixtures whose bodies render wrong geometry, so they may not
+  be promoted; excluding them and the geometry-bound remainders leaves no
+  clean config cohort beyond `theme`/`securityLevel: sandbox`, whose rows all
+  carry hidden body capabilities.
+- `classDef`/`class`/`style` are already projected to terminal cells by RFC
+  0031 FS-3a, so the "inert styling statements" phase would change drawn
+  frames rather than skip inert input.
+- The 13-row body slice is style-grammar and `%%{init}%%` directive debt, not
+  comments or `@{animation}`.
+
+The corrected measurement and the three paths forward are recorded in
+`docs/dev/d397-flowchart-family-selection.md` §5.
 
 ## Review History
 

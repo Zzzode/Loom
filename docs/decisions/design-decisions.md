@@ -4448,3 +4448,42 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   admission), because `--self-test` pins `causality` to `category_counts` key
   equality. Without it, an admission that empties a category turns the roster
   self-test red after a green `--emit`.
+
+## agentflow look and theme admission (RFC 0041)
+
+- **One strict gate, no pass-through.** `af_frontmatter_gated` accepts only a
+  column-0 `description` today and that does not change: agentflow, unlike the
+  timeline/gantt/journey gate, has no pass-through for other keys. The single
+  widening is a column-0 `config:` block whose sole leaf is an indent-2 `theme`
+  in the closed corpus table {`base`, `dark`, `default`, `forest`, `neutral`,
+  `redux-color`, `redux-dark-color`}. Indented lines are interpreted **only**
+  inside the config block; outside it they stay ignored exactly as before, so a
+  folded description payload that reads `theme: dark` is still documentation.
+  Any other config leaf (including `look` and `handDrawnSeed`), a colon-less
+  indented line, `theme : dark` (key text `theme `), indent 0/4, a duplicate
+  leaf, a second `config:` line, or a config with no admitted leaf rejects the
+  whole source. Because no currently-accepted frontmatter can contain a
+  column-0 `config:`, the change cannot narrow anything.
+- **Corpus twins, not synthetic.** Every admitted body is byte-identical to an
+  already-drawn fixture (5 → `agentflow/visual-check/10-every-container-kind.mmd`,
+  4 → `agentflow/visual-check/15-support-triage.mmd`), so the ledger pins
+  `twin: {kind: "corpus", path, sha256}` and the frame oracle compares against
+  the drawn twin's own frame plus the literal footer. Corpus twins take
+  precedence (RFC 0037 rule); the synthetic config-free twin is only a fallback.
+- **Disclosure footer:** `Agentflow native projection v1` + one theme line, blank
+  separator first, with the 96-byte cap, per-line/emission charges and the
+  `rows + 1 + n <= kAfMaxRows (1024)` guard identical to the five sibling paths.
+  The validated leaves travel from the gate to `agentflow_layout` through the
+  parser (`AfDiagram::notices`) so the layout discloses exactly what the gate
+  accepted.
+- **A body-equivalent twin does not imply the same narrow disposition.** The
+  footer's longest line exceeds a 40-column viewport, so all nine admitted rows
+  fall back whole-source at 40 columns even though five of their footerless twins
+  draw there. The ledger records the measured `source` for all nine and the gate
+  asserts `draws(source, 40)` live per row — a transcribed narrow pin would be
+  wrong here and is therefore forbidden.
+- **Partition and promotion:** the family ledger becomes a three-way partition
+  27 native rows + 9 admitted + 2 `look`+`handDrawnSeed` gated = 38, with the
+  admitted set pinned by a digest that the sibling ledger
+  `tools/mermaid/agentflow-0041-cohort.json` repeats; the matrix branch loads the
+  sibling ledger before the family cohort branch and the generic fallback.

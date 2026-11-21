@@ -6002,5 +6002,6 @@
     "reviewed_proposal_sha256": "63b48be5b021d9dca8068185dadcc96e8e2133adfd10de073c7333aed1b80168",
     "drawing_credit_added": 0,
     "qualification": "Exact direct-key source census and current matrix arithmetic only; no theme, terminal projection, or drawing admission."
-  }
+  },
+  "superseded_by": "RFC 0041 (2026-11-22) admits the 9 theme-only agentflow rows; this snapshot predates that admission and is kept as a point-in-time census. Its agentflow `source_fallback` cells are stale; the live matrix and the RFC 0041 cohort ledger are authoritative."
 }

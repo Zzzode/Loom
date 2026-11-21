@@ -399,6 +399,16 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     also showed the value of pinning the footer as a block (blank separator +
     header + leaf order) rather than as substrings.
 
+34. **A body-equivalent twin does not predict the admitted row's narrow state.** A
+    disclosure footer is part of the whole-surface 40-column predicate, so inheriting
+    the corpus twin's `narrow_40` is invalid: in RFC 0041 the footer's longest line
+    exceeded a 40-column viewport and flipped the five container-kind rows from draw
+    to fallback, falsifying the design-time prediction (5 draw) — the measured result
+    is 0 of 9. Rule: after adding a footer (or any trailing rows), re-measure every
+    admitted row at 40 columns live, record the measured state, and never derive
+    `NARROW_DRAW` from a twin. The PRR's "measure, never transcribe" requirement is
+    what caught it before the closure.
+
 ## Per-task efficiency retro (mandatory at every closure)
 
 Attach a short efficiency section to each closure report, answering:
@@ -1733,3 +1743,24 @@ Attach a short efficiency section to each closure report, answering:
    once for the full suite.
 6. **New entry.** Rule 33 (per-family probe lists are an authoring checklist;
    run the shared battery per TU).
+
+### 2026-11-22 — RFC 0041 (agentflow) implementation retro
+
+1. **Gate wall-clock.** The new cohort gate is ~36 s for 13 tests (6 gtest + 5 family
+   + 2 hermetic); the debug `ctest -L mermaid` label run cost 1465/1465 at the phase
+   gate; the release OfficialMatrix is 27.2 s. Iteration used the focused gates plus
+   release.
+2. **False green/red.** One real falsification caught by design, not by a red gate: the
+   pre-measurement narrow prediction (5 draw) was wrong; the live per-row assertion
+   (a PRR MAJOR) forced the measured 0/9 before the ledger was pinned. No flake.
+3. **Rework.** The design r1 review found the "strict widening" claim false (indented
+   lines outside a config block) and the fail-open `theme` + other leaf; both were fixed
+   in the RFC before any code. One implementation-loop cost: the first ledger run pinned
+   `narrow_40 = drawn` for five rows and the gate went red on the live assertion — the
+   correct behavior, and the reason the assertion exists.
+4. **Build fan-out.** One `.cpp` body recompiled, then archive + ~114 executable
+   relinks; no BMI change; one new test executable target.
+5. **Cheaper approach evidence.** Focused gate 36 s vs the 1465-test label run; release
+   matrix byte-identical to debug (`326fb96f…`), so the census used release.
+6. **New entry.** Rule 34 (a footer changes the narrow predicate; re-measure, never
+   inherit from the twin).

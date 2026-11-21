@@ -198,9 +198,11 @@ Two corrections against §6: the cohort is **120**, not 122 — the two
 namespaced `config.flowchart.htmlLabels` rows are excluded because D-066 F0
 keeps every namespaced subtree closed, not because they are capability debt —
 and the probe proves **120/120 twins draw**, so no cohort row hides a body
-capability. The per-key split is `look` 120 (`neo` 96, `handDrawn` 24,
-`classic` 1), `theme` 97 (six redux/neo palettes ×16 plus `default` 1),
-`title` 6, `htmlLabels` 8 — hence the RFC 0037 phases 23 / 91 / 6.
+capability. The per-key split is `look` 120 (`neo` 96, `handDrawn` 23,
+`classic` 1 — the roster's `look_handdrawn` category counts 24 because it also
+holds the excluded namespaced `edge-labels-…-handdrawn-look` row), `theme` 97
+(six redux/neo palettes ×16 plus `default` 1), `title` 6, `htmlLabels` 8 —
+hence the RFC 0037 phases 23 / 91 / 6.
 
 Second correction: §6 proposed validate-and-ignore for the whole envelope.
 `title` is the exception. Upstream paints a diagram title, so ignoring it would

@@ -6362,6 +6362,34 @@ const JourneyCohortEntry* agentflow_0041_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0042 pie look/theme admission: the 5 reviewed theme-only rows promoted by
+// the closed five-value table, states read per row. The per-row frame gate is
+// test_mermaid_pie_0042_cohort.
+const std::map<std::string, JourneyCohortEntry>& pie_0042_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/pie-0042-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "Pie 0042 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "Pie 0042 cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* pie_0042_cohort_row(std::string_view path) {
+    const auto& rows = pie_0042_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0031 D-211 sankey-family cohort: the single description-only sankey-beta
 // original admitted by mermaid_sankey_impl. The 17 config-gated fixtures have
 // no ledger row and keep their default source disposition.
@@ -8934,8 +8962,12 @@ void emit_report(const std::vector<Observation>& rows,
     pie7_summary.set("resource_errors", static_cast<int64_t>(pies.resources));
     pie7_summary.set("original_foreign_assertions_certified", 0);
     pie7_summary.set("glyph_golden_required", false);
+    // The whole-scene arithmetic stays 7 + 17 = 24; the five RFC 0042 rows are
+    // terminal-track admissions, named here so the artifact cannot read as a
+    // contradiction of the terminal census.
     pie7_summary.set("scope", "Complete7 Pie originals only; remaining17 Pie originals and "
-                              "browser/API/SVG assertions do not admit coverage.");
+                              "browser/API/SVG assertions do not admit coverage; 5 of "
+                              "these 17 are terminal-track and admitted by RFC 0042.");
     root.add("Pie7_native_whole_source", pie7_summary);
     const auto body_flows = flow_body2_counts(rows);
     auto body_summary = root.make_obj();
@@ -10976,6 +11008,32 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                         observations.capacity()));
                     continue;
                 }
+            // RFC 0042 pie look/theme admission: the 5 reviewed theme-only
+            // originals promoted by the closed table, states read per row.
+            // `raw_active_schema` is deliberately left empty so the generic
+            // originals_drawn counter credits these terminal rows.
+            if (class_path.is_str()) {
+                if (const auto* cohort = pie_0042_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "pie";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "RFC-0042 pie look/theme reviewed cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // Only complete original Flow rows select a new verification ledger.
             // The subsequent body_diagnostic block below is deliberately literal.
             std::optional<flow_oracle::OracleWork> official_flow_work;

@@ -157,6 +157,8 @@ struct Chart {
     std::optional<std::pair<double, double>> x_domain;
     std::vector<ChartSeries> series;
     std::vector<ChartSlice> slices;
+    // RFC 0042: the validated disclosure footer for an admitted pie theme leaf.
+    std::vector<std::string> notices;
 };
 
 // RFC 0031 E1: frontmatter structure is owned by the shared envelope reader;
@@ -694,6 +696,81 @@ bool pie_config_frontmatter(const Envelope& envelope) {
     return config_seen && pie_seen && position_seen;
 }
 
+// RFC 0042: the pie theme profile. The reviewed folded description (literal
+// `description: >-` header, two-space payload, no blank or comment payload
+// line) followed by exactly one `config:` block carrying exactly one literal
+// `  theme: <value>` leaf, read like pie_config_frontmatter's leaf: an
+// unquoted raw scalar in the closed corpus table. The renderer never reads the
+// value; the caller discloses it through a bounded footer.
+constexpr std::size_t kPieNoticeLineLimit = 96u;
+constexpr std::string_view kPieNoticeHeader = "Pie native projection v1";
+constexpr std::array<std::string_view, 5> kPieThemeTable{
+    {"dark", "redux", "redux-dark", "redux-color", "redux-dark-color"}};
+
+std::optional<std::string_view> pie_theme_frontmatter(const Envelope& envelope) {
+    const auto& description = envelope.description;
+    if (!description || description->form != EnvelopeScalarForm::Folded ||
+        description->header != ">-")
+        return std::nullopt;
+    enum class Section { Description, Config };
+    Section section = Section::Description;
+    bool first = true, have_payload = false, theme_seen = false;
+    std::optional<std::string_view> theme;
+    for (auto rest = envelope.raw_frontmatter; !rest.empty();) {
+        const auto newline = rest.find('\n');
+        auto raw = rest.substr(0, newline == std::string_view::npos ? rest.size() : newline);
+        if (raw.ends_with('\r')) raw.remove_suffix(1);
+        if (first) {
+            if (raw != "description: >-") return std::nullopt;
+            first = false;
+        } else if (section == Section::Description) {
+            if (raw == "config:") {
+                section = Section::Config;
+            } else {
+                // The stricter xy_description_shape payload rule: no blank line,
+                // no indented comment.
+                if (raw.size() <= 2u || raw[0] != ' ' || raw[1] != ' ' || raw[2] == ' ' ||
+                    raw[2] == '\t' || raw[2] == '#')
+                    return std::nullopt;
+                have_payload = true;
+            }
+        } else {
+            // Exactly one leaf, literally `  theme: <value>` with one space
+            // after the colon and no further whitespace in the scalar.
+            if (theme_seen || !raw.starts_with("  theme: ")) return std::nullopt;
+            const auto value = raw.substr(9u);
+            if (value.empty() || value.find_first_of(" \t") != std::string_view::npos)
+                return std::nullopt;
+            if (value.front() == '\'' || value.front() == '"') return std::nullopt;
+            const auto scalar = chart_yaml_scalar(value);
+            if (!scalar ||
+                std::ranges::find(kPieThemeTable, *scalar) == kPieThemeTable.end())
+                return std::nullopt;
+            theme = *scalar;
+            theme_seen = true;
+        }
+        if (newline == std::string_view::npos) break;
+        rest = rest.substr(newline + 1);
+    }
+    if (!have_payload || !theme_seen) return std::nullopt;
+    return theme;
+}
+
+bool pie_theme_notices(std::vector<std::string>& notices, std::string_view theme, Work& work) {
+    const auto push = [&](std::string_view line) {
+        if (line.size() > kPieNoticeLineLimit ||
+            !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+            return false;
+        notices.emplace_back(line);
+        return true;
+    };
+    if (!push(kPieNoticeHeader)) return false;
+    std::string line = "config.theme=";
+    line += theme;
+    line += " -> colour palette; not applied";
+    return push(line);
+}
+
 // RFC 0031 D236: a description-only frontmatter envelope carries no
 // chart-specific config, so it is family-agnostic; the body's first real
 // statement decides whether the source is a pie or an xychart. Mirrors the
@@ -727,8 +804,8 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
         return {};
     const auto envelope = detail::parse_envelope(source, work);
     if (!envelope) return {};
-    enum class Profile { Plain, PieDescription, PieConfig, Xy, XyDescription } profile =
-        Profile::Plain;
+    enum class Profile { Plain, PieDescription, PieConfig, PieTheme, Xy, XyDescription }
+        profile = Profile::Plain;
     if (envelope->has_frontmatter) {
         const bool pie_config =
             std::ranges::any_of(envelope->config, [](const EnvelopeEvent& event) {
@@ -752,7 +829,13 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
             // envelope scan; description-only sources pay one extra pass.
             switch (chart_body_family(envelope->raw_body)) {
                 case ChartBodyFamily::Pie:
-                    if (pie_config || !pie_description_frontmatter(*envelope)) return {};
+                    if (pie_config) return {};
+                    if (const auto theme = pie_theme_frontmatter(*envelope)) {
+                        if (!pie_theme_notices(chart.notices, *theme, work)) return {};
+                        profile = Profile::PieTheme;
+                        break;
+                    }
+                    if (!pie_description_frontmatter(*envelope)) return {};
                     profile = Profile::PieDescription;
                     break;
                 case ChartBodyFamily::Xy:
@@ -805,7 +888,8 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
         rest = rest.substr(newline + 1);
     }
     if (lines.empty()) return {};
-    if (profile == Profile::PieDescription || profile == Profile::PieConfig) {
+    if (profile == Profile::PieDescription || profile == Profile::PieConfig ||
+        profile == Profile::PieTheme) {
         if (!lines.front().starts_with("pie")) return {};
     } else if (profile == Profile::Xy || profile == Profile::XyDescription) {
         if (!lines.front().starts_with("xychart")) return {};
@@ -1818,6 +1902,24 @@ std::optional<std::vector<std::string>> xy_chart(const Chart& chart, Work& work)
 std::optional<std::vector<std::string>> charts_layout(std::string_view source, Work& work) {
     const auto chart = parse_chart(source, work);
     if (!chart) return {};
-    return chart->pie ? pie_chart(*chart, work) : xy_chart(*chart, work);
+    auto rows = chart->pie ? pie_chart(*chart, work) : xy_chart(*chart, work);
+    if (!rows) return {};
+    // RFC 0042: disclose the validated, not-applied theme leaf below the art
+    // (including the degenerate title-only chart), under the shared budget.
+    if (!chart->notices.empty()) {
+        std::size_t bytes = 0;
+        for (const auto& notice : chart->notices) {
+            if (notice.size() > kPieNoticeLineLimit) return {};
+            bytes += notice.size();
+        }
+        if (rows->size() + 1u + chart->notices.size() > kHeightLimit ||
+            !work.spend((1u + chart->notices.size()) *
+                            (4u * sizeof(std::string) + 256u) +
+                        bytes * 2u + 256u))
+            return {};
+        rows->emplace_back();
+        for (const auto& notice : chart->notices) rows->push_back(notice);
+    }
+    return rows;
 }
 }  // namespace loom::ui::mermaid::detail

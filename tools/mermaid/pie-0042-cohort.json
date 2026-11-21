@@ -1,0 +1,200 @@
+{
+  "schema": "loom_mermaid_pie_0042_cohort/v1",
+  "rfc": 42,
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the reviewed folded description followed by exactly one `config:` block whose sole leaf is an indent-2 in-table `theme`, with a body carrying no accTitle:/accDescr: statement",
+    "roots": [
+      "pie"
+    ],
+    "phase": "P1-theme-admission",
+    "cohort_digest": "3caa028a13c1ee9d7abab6a743266d3f8784b1854cac6c3cb8a847d274483205",
+    "family_total": 24,
+    "native_draw_count": 7,
+    "admitted_count": 5,
+    "other_count": 12,
+    "twin_rule": "the frame must equal the twin's frame (corpus twin when one exists, else the config-free synthetic twin) plus the recorded footer delta, line by line, at wide width only",
+    "corpus_twins": "one row (the `dark` sports pie) is body-identical to pie/pr-check/simple-sports.mmd; the four twelve-slice redux rows have no drawn body-equivalent",
+    "exclusions": "the 8 pie.* semantic rows and the 4 accTitle:/accDescr: body-blocked theme rows stay whole-source",
+    "width_policy": "wide_240 admission only; narrow_40 is measured per row."
+  },
+  "review": {
+    "phases": {
+      "P1-theme-admission": {
+        "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, RFC 0042 pie theme admission, 2026-11-22; APPROVE with zero MAJOR; 2 MINOR + 3 NIT resolved before the phase commit)",
+        "date": "2026-11-22",
+        "verdict": "approved",
+        "note": "Verified against the live gate: the PieTheme profile matches the RFC shape exactly, PieConfig/PieDescription are byte-unchanged, the footer budget is byte-identical to the six sibling paths, the corpus/synthetic twin gate recomputes sha and body equivalence, and the 0/5 narrow state is live-asserted. Items fixed: the RFC placement sentence now says the branch sits after the Pie7 block (it cannot shadow the special branch), the generator strips CR before classifying, the emission block re-checks the 96-byte cap for sibling parity, and the in-table no-description negative pins the body-family guard."
+      }
+    },
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 5,
+    "predicted_draw": 5,
+    "narrow_40_draw": 0
+  },
+  "rows": [
+    {
+      "path": "pie/nightly-check/redux-color-theme.mmd",
+      "family": "pie",
+      "phase": "P1-theme-admission",
+      "sha256": "eb131a04663ee612b28d57b7d3f3e657fcdfab51d52f87f9d7bef61e941a4ce4",
+      "manifest_sha256": "eb131a04663ee612b28d57b7d3f3e657fcdfab51d52f87f9d7bef61e941a4ce4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Pie native projection v1",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0042 pie theme admission; validated and disclosed only, the frame equals its twin's plus the bounded footer."
+    },
+    {
+      "path": "pie/nightly-check/redux-dark-color-theme.mmd",
+      "family": "pie",
+      "phase": "P1-theme-admission",
+      "sha256": "7aeecae03a6eb9d2aa1b39de9fad474d01eb4615aa9f427ab9fdbb3906b9aa7b",
+      "manifest_sha256": "7aeecae03a6eb9d2aa1b39de9fad474d01eb4615aa9f427ab9fdbb3906b9aa7b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Pie native projection v1",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0042 pie theme admission; validated and disclosed only, the frame equals its twin's plus the bounded footer."
+    },
+    {
+      "path": "pie/nightly-check/redux-dark-theme.mmd",
+      "family": "pie",
+      "phase": "P1-theme-admission",
+      "sha256": "ec833f11062239ea604f2eed5896e53ae29d18211c0da77b0b062bc923ad8f12",
+      "manifest_sha256": "ec833f11062239ea604f2eed5896e53ae29d18211c0da77b0b062bc923ad8f12",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Pie native projection v1",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0042 pie theme admission; validated and disclosed only, the frame equals its twin's plus the bounded footer."
+    },
+    {
+      "path": "pie/nightly-check/redux-theme.mmd",
+      "family": "pie",
+      "phase": "P1-theme-admission",
+      "sha256": "d708357fdbe1a7f1f75fe16a00a9570af15f08f8bebe05c5dae2bcd5f2095174",
+      "manifest_sha256": "d708357fdbe1a7f1f75fe16a00a9570af15f08f8bebe05c5dae2bcd5f2095174",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Pie native projection v1",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0042 pie theme admission; validated and disclosed only, the frame equals its twin's plus the bounded footer."
+    },
+    {
+      "path": "pie/pr-check/should-render-a-pie-diagram-with-readable-title-and-legend-in-dark-mode.mmd",
+      "family": "pie",
+      "phase": "P1-theme-admission",
+      "sha256": "b1855477207c6f4a3df58f8b10750b01bfc1653b1e846bde1f75ce87ff3f2404",
+      "manifest_sha256": "b1855477207c6f4a3df58f8b10750b01bfc1653b1e846bde1f75ce87ff3f2404",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "pie/pr-check/simple-sports.mmd",
+        "sha256": "ca811be701e227efde886ddcf7cd91d9c38ee5b37db6bd0093e0e6799a630ec5"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Pie native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0042 pie theme admission; validated and disclosed only, the frame equals its twin's plus the bounded footer."
+    }
+  ]
+}

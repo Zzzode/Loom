@@ -291,6 +291,15 @@ set_tests_properties(
     MermaidAgentflow0041Cohort.FamilyLedgerIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# RFC 0042: the pie admission ledger is a generator constant; this hermetic
+# check fails on drift or a hand edit.
+add_test(NAME MermaidPie0042Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_pie_0042_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidPie0042Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # RFC 0030 Flow400 Extra7: metadata-only post-CTest admission join.
 add_test(NAME MermaidFlow400Extra7AdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
     COMMAND "${LOOM_UI_LINT_PYTHON}" -I
@@ -1089,6 +1098,13 @@ add_executable(test_mermaid_agentflow_0041_cohort test_mermaid_agentflow_0041_co
 target_link_libraries(test_mermaid_agentflow_0041_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_agentflow_0041_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+add_executable(test_mermaid_pie_0042_cohort test_mermaid_pie_0042_cohort.cpp)
+target_link_libraries(test_mermaid_pie_0042_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_pie_0042_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

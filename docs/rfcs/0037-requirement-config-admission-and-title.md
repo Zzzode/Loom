@@ -1,9 +1,9 @@
 ---
 rfc: 37
 title: requirement family config admission and title projection
-status: accepted
+status: implementable
 owners: "@Zzzode"
-reviewers: ["agent:design-review-r1 (a63ae06251ef34362, r1 REQUEST-CHANGES → r2 APPROVE-TO-ACCEPT)"]
+reviewers: ["agent:design-review-r1 (a63ae06251ef34362, r1 REQUEST-CHANGES → r2 APPROVE-TO-ACCEPT)", "agent:prr-review-r1 (adaa7ad84dd094605, r1/r2 REQUEST-CHANGES → r3 APPROVE-TO-IMPLEMENT)"]
 created: 2026-11-21
 last-reviewed: 2026-11-21
 supersedes: ""
@@ -22,7 +22,8 @@ palette table (both validated and disclosed, never painted), and the top-level
 rather than ignored. Target: exactly the **120 measured rows** whose only
 non-admitted input is those keys, proven per row by a twin gate (frame equality
 against the same source with every admitted config leaf removed, plus the
-bounded disclosure footer). The 24 `layout: elk` rows, the 2 namespaced `config.flowchart.*` rows
+bounded disclosure footer; the 6 title rows use the §2 projection twin — title
+row + blank row, nothing appended). The 24 `layout: elk` rows, the 2 namespaced `config.flowchart.*` rows
 and the 2 malformed envelopes stay whole-source fallback. Family target:
 **144 drawn / 28 fallback**; global **1391 drawn / 754 fallback**.
 
@@ -235,9 +236,11 @@ removed`.
   the same source with the `title:` line removed; it **keeps** `look`+`theme`,
   so it already carries its own footer.
   Expected frames are:
-  - config-free / corpus twin rows (114 of 120): `twin frame + the exact
-    footer lines the original source produces`, in the fixed order `logLevel`,
-    `fontFamily`, `htmlLabels`, `look`, `theme`;
+  - config-free / corpus twin rows (114 of 120): `twin frame + the footer
+    lines the twin does not already carry`, in the fixed order `logLevel`,
+    `fontFamily`, `htmlLabels`, `look`, `theme` (a synthetic twin carries none;
+    the 8 F0 corpus twins already carry `v1` + `htmlLabels`, so only the new
+    `look` line is appended);
   - the 6 title rows: `title row + blank row + title-free twin frame`, with the
     twin's own footer retained and **nothing appended** (the titled frame is
     the twin's frame with exactly two rows prepended).
@@ -406,6 +409,10 @@ Completed at the `implementable` gate. Current answers:
   Linux debug+release `-Werror` is the only required matrix (macOS is not a
   gate per project policy, and CI is not waited on); the truecolor path is
   untouched apart from a token-only footer line; no new dependency or fetch.
+- **CLAUDE.md** — no change: no convention, configuration path or build-layout
+  rule changes.
+- **Architecture-graph lint** — N/A: no new module, no new import, no new
+  target edge (§4 "dependency direction is unchanged").
 
 ## Rollout and rollback
 
@@ -518,6 +525,7 @@ edited.
 | 2026-11-21 | r2 | same design-review agent, independent re-read of the revised file | APPROVE-TO-ACCEPT | MAJOR-1 → verified fixed (both flips in §3). MAJOR-2 → verified fixed (manifest Non-Goal + coupling row + ledger branch). MINOR-3/5/6, NIT-7 → verified fixed. Fresh pass: MINOR-A PRR "two struct fields" vs one field → **accepted**: PRR reworded; MINOR-B Testing plan still said one flip → **accepted**: both flips named with line anchors; MINOR-C "Form::Plain only" vs ER parity → **accepted**: Plain and quoted both admitted, folded/block rejected, corpus titles plain so no row impact; MINOR-D rollback overclaimed independence → **accepted**: LIFO, P1 prerequisite of P2, P1+P2 of P3; NIT-E reviewers frontmatter → **accepted**: identity recorded; NIT-F PRR Deletion singular → **accepted**: both stale comments named. Arithmetic, partition, inertness, title-paint mechanics and the ER-only titled-empty guard re-confirmed. No BLOCKER/MAJOR. Recommended promotion to accepted. |
 | 2026-11-21 | prr-r1 | `agent:prr-review-r1` (independent general-purpose, production-readiness lens; static re-derivation, no build) | REQUEST-CHANGES | MAJOR-1 the twin transform was under-defined for 99 rows (the 8 `look`+`htmlLabels` and all 91 P2 rows) → **accepted**: §3 now defines the config-free twin as stripping *every* admitted leaf, adds the corpus-twin rule for the 30 byte-equivalent rows, and drops the misleading `config-free`/`title-free` enum. MAJOR-2 the matrix branch cited the xychart cohort pattern, which hardcodes narrow as `source_fallback` → **accepted**: the branch must read per-row `expected_states` like the Journey loader (`:5637-5643`), explicitly not the hardcoded triple. MAJOR-3 the generator lacked an enabled-phase set, classification priority, per-phase digests and review ownership → **accepted**: all four pinned, with the 6 title rows' theme overlap named as the drift case. MAJOR-4 the PRR build-system row asserted fan-out without measurement and the ctest delta was unstated → **accepted**: fan-out measured at 509 compile jobs (`ninja -C build/debug -n`), BMI PSS marked N/A with reason, CMake registration and the expected closure total named. MINOR-1 the P3 loop restructure → **accepted**: split-out assertion specified. MINOR-2 anti-false-green set → **accepted**: six numbered assertions incl. `ASSERT_TRUE(draws(twin))`, a native predicate, per-width ledger equality and five frozen controls. MINOR-3 per-phase formal deltas → **accepted**: 1085→1108→1199→1205. MINOR-4 a third stale comment (`:429`) → **accepted**: all three named. MINOR-5 "accepted implies paintable" overstated → **accepted**: width-paintable, height fails closed. MINOR-6 coupling file list → **accepted**: the accept branch is in the requirement validator. NIT-1 D-397 §6 vs §7 → **accepted**: §6 kept as the historical estimate, §7 cross-referenced. NIT-2 dual-preset per phase → **accepted**: release per phase, dual-preset at closure (efficiency rule 2). Census, phase arithmetic, the 120/24/2/2 partition, D204/F0 disjointness, footer ordering and requirement11 non-interaction verified correct. |
 | 2026-11-21 | prr-r2 | same PRR agent, independent re-read of the revised file | REQUEST-CHANGES | All four r1 MAJORs verified fixed. MAJOR-A the coupling table still prescribed the xychart hardcoded branch, contradicting §3 → **accepted**: row reworded to the Journey/F0 per-row `expected_states` loader. MAJOR-B "expected = twin frame + footer" double-counted the 6 title rows → **accepted**: the rule is now split (config-free/corpus rows append the footer; the 6 title rows are `[title, blank] + title-free twin frame`, twin footer retained, nothing appended). MINOR-1 the PRR section omitted the platform/golden/wire rows → **accepted**: three N/A-with-reason bullets added (rendering-only). MINOR-2 the review record's MINOR-4 was marked accepted while the PRR Deletion and Testing-plan bullets still said "two" → **accepted**: both now say three and name `:429`. MINOR-3 "byte-equivalent" overstated → **accepted**: body-byte-equivalent / frame-equivalent stated, and the gate compares frames, never source bytes. NIT-1 "three keys" → four. NIT-2 P1 phase wording now says release run with the sha recorded and the dual-preset gate at closure. NIT-3 the corpus-twin rule's precedence over the synthetic config-free rule is stated for the 8 htmlLabels rows. Arithmetic, 30/90 twin split, frozen controls and D204/F0 disjointness re-verified. |
+| 2026-11-21 | prr-r3 | same PRR agent, independent re-read | APPROVE-TO-IMPLEMENT | All r2 findings verified fixed; fresh pass found only three wording NITs, all folded in: NIT-1 the Summary twin-gate parenthetical now covers the 6 title rows; NIT-2 the PRR adds the CLAUDE.md and architecture-graph-lint N/A rows; NIT-3 the general footer rule now says "the footer lines the twin does not already carry", so the 8 F0 corpus twins append only the new `look` line. Arithmetic, the 114/6 and 30/90 splits, the frozen controls and the PRR answer set were re-verified. Gate to `implementable` passed. |
 
 ## Implementation History
 

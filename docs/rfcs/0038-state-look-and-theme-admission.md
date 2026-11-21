@@ -1,9 +1,9 @@
 ---
 rfc: 38
 title: state family look and theme admission
-status: provisional
+status: accepted
 owners: "@Zzzode"
-reviewers: []
+reviewers: ["agent:design-review (aa8df56e34f50b615, r1/r2 REQUEST-CHANGES → r3 APPROVE-TO-ACCEPT)"]
 created: 2026-11-21
 last-reviewed: 2026-11-21
 supersedes: ""
@@ -300,6 +300,7 @@ ledger is additive; the roster is regenerated, never hand edited.
 | 2026-11-21 | — | — | draft | Created provisional from the D-400 reachability measurement |
 | 2026-11-21 | r1 | `agent:aa8df56e34f50b615` (independent general-purpose, own render probe + static re-derivation) | REQUEST-CHANGES | **B-1** the phase split was arithmetically impossible: every `look` row also carries `theme`, so a look-first P1 would promote 0 rows → **accepted**: rephased to one atomic phase admitting both leaves for all 28 rows; rollback and the PRR row rewritten. **M-1** the flowchart downgrade overclaimed "0 reachable": the eight nested/collapsed subgraph rows are blocked only by `theme` (their bodies render with `config:` removed), only the `@{shape}`/icon rows are body-blocked → **accepted**: RFC and D-400 now state **≥8**, and the downgrade reason is "fewer rows + higher unit cost (new exact-bit `Theme` profile)", not "body capability". **M-2** a pre-existing negative test was missed: `test_mermaid_e2b_cohort.cpp::NonWhitelistedConfigRowsKeepWholeSource` iterates every config-bearing state fixture and asserts fallback, so all 28 rows would break it → **accepted**: added to the coupling table together with the correct owner of the E2b footer assertions and the stale `:240` comment. **M-3** the theme value census summed to 22, not 28 → **accepted**: corrected to `redux 6, redux-dark 6, redux-color 3, redux-dark-color 3, neo 4, neo-dark 4, default 2`. MINOR m-1 body count 55→56; m-2 rollback dependency direction dropped with the rephase; m-3 the surviving `theme: dark` negative named (it stays green only because `dark` is excluded). NIT n-1 OQ-3 closed by the review (the standard twin rule already covers `fontFamily`); n-2 tab wording made precise (a literal tab in the payload and body, rejected by the description scan). Independently verified: the 28-row cohort and its composition, the 145 partition, the matrix census, the envelope/footer facts and the inertness claim. |
 | 2026-11-21 | r2 | same design-review agent, independent re-read | REQUEST-CHANGES | All substantive r1 findings verified fixed. **MAJOR-1** residual two-phase wording (G1, the §1 heading, the footer tags and the Gates line that specifies review-record cardinality) → **accepted**: everything now describes one atomic phase and one review record; the generator spec keeps a single whole-cohort digest and notes the per-phase split digest and priority rule as vestigial. **MINOR-1** D-400 §3 still titled "0 行可达" → **accepted**: retitled "≥8 行可达，性价比低" and the intro now points at the eight corrected rows. **MINOR-2** plural "per-phase/each phase" phrasing → **accepted**: singularized. **NIT-1** → **accepted**: recorded in the generator spec. Review also confirmed that one phase does not weaken the review-record safety mechanism (it degenerates to exactly one generator-authored approval plus the `--check` hand-edit guard; only cross-phase anti-drift is lost, which cannot occur with no partial state), and that the midpoint arithmetic left no residue. |
+| 2026-11-21 | r3 | same design-review agent, final consistency pass | APPROVE-TO-ACCEPT | All r2 items verified fixed: one-phase wording, endpoint arithmetic, the 5-test count, the theme census, the named e2b negative and the closed OQ-3. Two cosmetic NITs noted (the phase-table label "P1"; a plural "review records"), the second folded in. Gate to `accepted` passed; no owner ruling required. |
 
 ## Implementation History
 

@@ -111,6 +111,76 @@ bool native_frame(const std::string& source, int width) {
     }
     return got.back() == "EM_SENTINEL";
 }
+bool admitted_config_leaf(const std::string& key) {
+    return key == "look" || key == "theme" || key == "htmlLabels" || key == "logLevel" ||
+           key == "fontFamily";
+}
+// RFC 0037 section 3: the synthetic config-free twin removes every admitted
+// config leaf and drops an emptied `config:` block; a folded/plain description
+// payload is preserved verbatim.
+std::string config_free_twin(const std::string& source) {
+    if (!source.starts_with("---\n")) return source;
+    const auto close = source.find("\n---", 3);
+    if (close == std::string::npos) return source;
+    std::vector<std::string> lines;
+    std::string cur;
+    for (char c : source.substr(0, close + 1)) {
+        if (c == '\n') {
+            lines.push_back(cur);
+            cur.clear();
+        } else {
+            cur.push_back(c);
+        }
+    }
+    if (!cur.empty()) lines.push_back(cur);
+    std::vector<std::string> kept;
+    bool in_block = false, in_config = false, config_leaf = false;
+    long config_line = -1;
+    for (const auto& line : lines) {
+        if (line.find_first_not_of(" \t") == std::string::npos) {
+            kept.push_back(line);
+            continue;
+        }
+        const auto start = line.find_first_not_of(' ');
+        const bool top = start == 0u;
+        const auto colon = line.find(':');
+        const auto at = start == std::string::npos ? 0u : start;
+        const auto key = colon == std::string::npos ? std::string{}
+                                                    : line.substr(at, colon - at);
+        const auto value = colon == std::string::npos ? std::string{} : line.substr(colon + 1);
+        if (top) {
+            in_block = false;
+            in_config = false;
+            if (key == "config") {
+                in_config = true;
+                config_line = static_cast<long>(kept.size());
+                kept.push_back(line);
+                continue;
+            }
+            const auto trimmed = value.find_first_not_of(" \t");
+            const bool block_indicator =
+                trimmed != std::string::npos && (value[trimmed] == '>' || value[trimmed] == '|');
+            if (key == "description" && (trimmed == std::string::npos || block_indicator))
+                in_block = true;
+            kept.push_back(line);
+            continue;
+        }
+        if (in_block) {
+            kept.push_back(line);
+            continue;
+        }
+        if (in_config && admitted_config_leaf(key)) continue;
+        if (in_config) config_leaf = true;
+        kept.push_back(line);
+    }
+    if (!config_leaf && config_line >= 0) kept.erase(kept.begin() + config_line);
+    std::string rebuilt;
+    for (const auto& line : kept) {
+        rebuilt += line;
+        rebuilt.push_back('\n');
+    }
+    return rebuilt + source.substr(close + 1);
+}
 }  // namespace
 
 TEST(MermaidRequirement0037Cohort, LedgerSchemaReviewsAndPins) {
@@ -119,9 +189,10 @@ TEST(MermaidRequirement0037Cohort, LedgerSchemaReviewsAndPins) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_requirement_0037_cohort/v1");
     EXPECT_EQ(root.get("rfc").as_int(), 37);
     const auto counts = root.get("counts");
-    EXPECT_EQ(counts.get_int("total"), 23);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 23);
+    EXPECT_EQ(counts.get_int("total"), 114);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 114);
     EXPECT_EQ(counts.get("by_phase").get_int("P1-look"), 23);
+    EXPECT_EQ(counts.get("by_phase").get_int("P2-theme"), 91);
 
     // Only enabled phases are emitted, and the review verdict is approved only
     // when every enabled phase carries an approved record. While P1 is
@@ -129,8 +200,9 @@ TEST(MermaidRequirement0037Cohort, LedgerSchemaReviewsAndPins) {
     const auto enabled = root.get("selection").get("enabled_phases");
     std::vector<std::string> phases;
     enabled.iter([&](JsonVal phase) { phases.push_back(std::string(phase.as_str())); });
-    ASSERT_EQ(phases.size(), 1u);
-    EXPECT_EQ(phases.front(), "P1-look");
+    ASSERT_EQ(phases.size(), 2u);
+    EXPECT_EQ(phases[0], "P1-look");
+    EXPECT_EQ(phases[1], "P2-theme");
     const auto reviews = root.get("review").get("phases");
     for (const auto& phase : phases)
         EXPECT_TRUE(reviews.has(phase)) << phase;
@@ -151,8 +223,8 @@ TEST(MermaidRequirement0037Cohort, LedgerSchemaReviewsAndPins) {
         [&](JsonVal fixture) { manifest_rows.emplace(fixture.get_string("path"), fixture); });
 
     int rows = 0;
-    std::map<std::string, std::string> observed_phase_digest;
-    std::vector<std::pair<std::string, std::string>> digest_input;
+    std::map<std::string, int> corpus_by_phase, synthetic_by_phase;
+    std::map<std::string, std::vector<std::pair<std::string, std::string>>> digest_input;
     root.get("rows").iter([&](JsonVal row) {
         const auto rel = row.get_string("path");
         ++rows;
@@ -172,34 +244,55 @@ TEST(MermaidRequirement0037Cohort, LedgerSchemaReviewsAndPins) {
                       twin.get_string("sha256"))
                 << rel << " twin pin";
         }
-        digest_input.emplace_back(rel, row.get_string("sha256"));
+        const auto phase = row.get_string("phase");
+        (kind == "corpus" ? corpus_by_phase : synthetic_by_phase)[phase] += 1;
+        digest_input[phase].emplace_back(rel, row.get_string("sha256"));
     });
-    EXPECT_EQ(rows, 23);
+    EXPECT_EQ(rows, 114);
+    // Twin kinds are pinned per phase: P1 is fully corpus, P2 has seven
+    // body-equivalent corpus twins and 84 synthetic ones.
+    EXPECT_EQ(corpus_by_phase["P1-look"], 23);
+    EXPECT_EQ(synthetic_by_phase["P1-look"], 0);
+    EXPECT_EQ(corpus_by_phase["P2-theme"], 7);
+    EXPECT_EQ(synthetic_by_phase["P2-theme"], 84);
     // The pinned per-phase digest is the sorted (path, sha256) digest of the
     // emitted row set, so an earlier phase cannot silently gain or lose rows.
-    std::ranges::sort(digest_input);
-    const auto pinned = root.get("selection").get("phase_digests").get_string("P1-look");
-    std::string payload;
-    for (const auto& [rel, sha] : digest_input) payload += rel + "\t" + sha + "\n";
-    EXPECT_EQ(pinned, loom::utils::crypto::sha256(payload));
+    const auto digests = root.get("selection").get("phase_digests");
+    for (const auto& phase : phases) {
+        auto entries = digest_input[phase];
+        std::ranges::sort(entries);
+        std::string payload;
+        for (const auto& [rel, sha] : entries) payload += rel + "\t" + sha + "\n";
+        EXPECT_EQ(digests.get_string(phase), loom::utils::crypto::sha256(payload)) << phase;
+    }
 }
 
-// P1 is 23/23 corpus twins. The synthetic-twin composition (config-free twin
-// built in memory) belongs to the P2 phase, whose 84 theme rows have no drawn
-// body-equivalent sibling; this test is P1-local and must be extended there.
-TEST(MermaidRequirement0037Cohort, P1RowsAreInertAgainstCorpusTwins) {
+// Every cohort row: corpus twin (a certified drawn sibling) or the synthetic
+// config-free twin (no drawn body-equivalent exists), plus the ledger's exact
+// footer delta.
+TEST(MermaidRequirement0037Cohort, RowsAreInertAgainstTwins) {
     const auto ledger = parse_doc(kLedger);
     int checked = 0;
     ledger.root().get("rows").iter([&](JsonVal row) {
         const auto rel = row.get_string("path");
-        const auto twin_rel = row.get("twin").get_string("path");
+        const auto twin_info = row.get("twin");
         const auto source = read_file(kCases / rel);
-        const auto twin = read_file(kCases / twin_rel);
+        std::string twin;
+        std::string twin_label;
+        if (twin_info.get_string("kind") == "corpus") {
+            twin_label = twin_info.get_string("path");
+            ASSERT_NE(twin_label, rel) << "corpus twin must not be the row itself";
+            twin = read_file(kCases / twin_label);
+        } else {
+            twin_label = rel + " (synthetic config-free)";
+            twin = config_free_twin(source);
+            EXPECT_LT(twin.size(), source.size()) << rel;
+        }
         const auto states = load_states(row.get("expected_states"));
 
         // 1. The twin must itself draw: "both fall back equal" is not inertness.
-        ASSERT_TRUE(draws(twin, kWide)) << twin_rel << " (twin must draw)";
-        ASSERT_TRUE(native_frame(twin, kWide)) << twin_rel;
+        ASSERT_TRUE(draws(twin, kWide)) << twin_label << " (twin must draw)";
+        ASSERT_TRUE(native_frame(twin, kWide)) << twin_label;
 
         // 2. The admitted source draws and is a native frame, not the fenced
         //    source echoed back.
@@ -235,7 +328,7 @@ TEST(MermaidRequirement0037Cohort, P1RowsAreInertAgainstCorpusTwins) {
         }
         ++checked;
     });
-    EXPECT_EQ(checked, 23);
+    EXPECT_EQ(checked, 114);
 }
 
 // The closed `look` table: the three upstream values are admitted and
@@ -300,9 +393,10 @@ TEST(MermaidRequirement0037Cohort, P1LookTableIsClosed) {
                        kWide));
 }
 
-// Phase-local closure: P2 admits `theme`, so before P2 the observed palette
-// values must still fall back. P2 replaces this test with the admitted set.
-TEST(MermaidRequirement0037Cohort, ThemeAdmissionIsPhaseLocalToP2) {
+// The closed `theme` palette table (P2): the seven requirement-corpus values
+// are admitted and disclosed; every other value keeps the whole source on
+// fallback. Upstream paints palettes in SVG; the terminal never does.
+TEST(MermaidRequirement0037Cohort, P2ThemeTableIsClosed) {
     const std::string body =
         "requirementDiagram\n"
         "requirement test_req {\n"
@@ -310,9 +404,44 @@ TEST(MermaidRequirement0037Cohort, ThemeAdmissionIsPhaseLocalToP2) {
         "element test_entity {\ntype: simulation\n}\n"
         "test_entity - satisfies -> test_req\n";
     const auto with = [&](std::string_view config) {
-        return "---\ndescription: theme phase probe\nconfig:\n" + std::string(config) + "---\n" +
-               body;
+        return "---\ndescription: theme boundary probe\nconfig:\n" + std::string(config) +
+               "---\n" + body;
     };
-    EXPECT_FALSE(draws(with("  theme: neo\n"), kWide));
-    EXPECT_FALSE(draws(with("  look: neo\n  theme: neo\n"), kWide));
+    for (const auto* value : {"default", "neo", "neo-dark", "redux", "redux-dark",
+                              "redux-color", "redux-dark-color"}) {
+        const auto source = with(std::string("  theme: ") + value + "\n");
+        ASSERT_TRUE(draws(source, kWide)) << value;
+        ASSERT_TRUE(native_frame(source, kWide)) << value;
+        const auto frame = capture(source, "mermaid", kWide).text;
+        EXPECT_NE(frame.find(std::string("config.theme=") + value +
+                             " -> colour palette; not applied"),
+                  std::string::npos)
+            << value;
+    }
+    // look + theme compose in the fixed footer order (look before theme).
+    const auto combined = with("  look: neo\n  theme: redux-color\n");
+    ASSERT_TRUE(draws(combined, kWide));
+    const auto combined_frame = capture(combined, "mermaid", kWide).text;
+    const auto look_at = combined_frame.find("config.look=neo");
+    const auto theme_at = combined_frame.find("config.theme=redux-color");
+    EXPECT_NE(look_at, std::string::npos);
+    EXPECT_NE(theme_at, std::string::npos);
+    EXPECT_LT(look_at, theme_at);
+    // Palettes without requirement-corpus evidence, malformed forms and
+    // duplicates reject.
+    EXPECT_FALSE(draws(with("  theme: dark\n"), kWide));
+    EXPECT_FALSE(draws(with("  theme: forest\n"), kWide));
+    EXPECT_FALSE(draws(with("  theme: neutral\n"), kWide));
+    EXPECT_FALSE(draws(with("  theme: base\n"), kWide));
+    EXPECT_FALSE(draws(with("  theme: Neo\n"), kWide));
+    EXPECT_FALSE(draws(with("  theme:\n"), kWide));
+    EXPECT_FALSE(draws(with("  theme: \"neo\n"), kWide));
+    EXPECT_FALSE(draws(with("  theme: neo\n  theme: redux\n"), kWide));
+    EXPECT_FALSE(draws(with("    theme: neo\n"), kWide));
+    EXPECT_FALSE(draws(with("  themeVariables:\n    primaryColor: \"#ff0000\"\n"), kWide));
+    EXPECT_TRUE(draws(with("  theme: neo # note\n"), kWide));
+    EXPECT_TRUE(draws(with("  theme: \"neo\"\n"), kWide));
+    EXPECT_NE(capture(with("  theme: \"neo\"\n"), "mermaid", kWide)
+                  .text.find("config.theme=neo -> colour palette; not applied"),
+              std::string::npos);
 }

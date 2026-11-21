@@ -260,9 +260,9 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
     // semantic key keeps the whole source on fallback; an empty config block
     // stays rejected.
     bool config_seen = false;
-    enum : unsigned { Log = 1u, Font = 2u, Html = 4u, Look = 8u };
+    enum : unsigned { Log = 1u, Font = 2u, Html = 4u, Look = 8u, Theme = 16u };
     unsigned fields = 0u;
-    std::string log_value, html_value, look_value;
+    std::string log_value, html_value, look_value, theme_value;
     for (const auto& event : envelope->events) {
         if (event.blank || event.comment) continue;
         if (event.top_level) {
@@ -296,6 +296,16 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
             if (!mark(Look) || (text != "classic" && text != "neo" && text != "handDrawn"))
                 return {};
             look_value = std::move(text);
+        } else if (event.path == "theme" && event.indent == 2) {
+            // RFC 0037 P2: the seven palettes carried by the requirement
+            // corpus are admitted and disclosed only. The terminal has its own
+            // design tokens and never projects a Mermaid palette, so the frame
+            // must be byte-identical to the config-free twin's.
+            if (!mark(Theme) ||
+                (text != "default" && text != "neo" && text != "neo-dark" && text != "redux" &&
+                 text != "redux-dark" && text != "redux-color" && text != "redux-dark-color"))
+                return {};
+            theme_value = std::move(text);
         } else {
             return {};
         }
@@ -321,6 +331,9 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
             return {};
         if ((fields & Look) &&
             !push("config.look=" + look_value + " -> source node style; not applied"))
+            return {};
+        if ((fields & Theme) &&
+            !push("config.theme=" + theme_value + " -> colour palette; not applied"))
             return {};
     }
     const auto& description = *envelope->description;

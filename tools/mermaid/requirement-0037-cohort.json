@@ -14,7 +14,8 @@
     "phase_partition": "renderer-free classification with pinned per-phase denominators; only ENABLED_PHASES is emitted",
     "classification_priority": "title -> P3, else theme -> P2, else look -> P1",
     "enabled_phases": [
-      "P1-look"
+      "P1-look",
+      "P2-theme"
     ],
     "phase_digests": {
       "P1-look": "86b3c00211c5d84da3344235f8580555d102ccd256f8c01bd4cc5e0471a94ab5",
@@ -26,6 +27,12 @@
   },
   "review": {
     "phases": {
+      "P2-theme": {
+        "reviewer_agent": "agent:aa19624ebdb712b6a rfc0037-p2-final-review (independent adversarial code review; APPROVE; verified the 4-file scope and protected-file/manifest immutability, the closed 7-palette table and F0/P1 footer byte-identity, an independent 172/23/91/6 re-derivation with the 7-corpus/84-synthetic split, a ported audit of the synthetic config-free twin, generator --check, cohort gate 4/4, F0 suite 10/10, and an official matrix red only on the pending verdict)",
+        "date": "2026-11-21",
+        "verdict": "approved",
+        "note": "P2 admits the closed theme palette table; title rows keep whole source. Reviewer NITs applied: the gate's config-free twin now skips blank lines like the generator, a corpus twin may not be the row itself, and a quoted palette scalar is asserted."
+      },
       "P1-look": {
         "reviewer_agent": "agent:ab5e96a11461da018 rfc0037-p1-final-review (independent adversarial code review; r1 REQUEST-CHANGES -> r2/r3 APPROVE; verified scope, the closed look table, generator --check, the 23-row corpus-twin gate, F0 footer byte-identity and the official-matrix pending-refusal)",
         "date": "2026-11-21",
@@ -36,10 +43,11 @@
     "verdict": "approved"
   },
   "counts": {
-    "total": 23,
-    "predicted_draw": 23,
+    "total": 114,
+    "predicted_draw": 114,
     "by_phase": {
-      "P1-look": 23
+      "P1-look": 23,
+      "P2-theme": 91
     }
   },
   "excluded": [
@@ -1024,6 +1032,2841 @@
         "restored_240": "drawn"
       },
       "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/a-complex-diagram-with-multiple-requirements-and-elements-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "d7ed941e00f1b6bfd440e77196b01e19599ac1d2c391d5e7b99e4472adc72381",
+      "manifest_sha256": "d7ed941e00f1b6bfd440e77196b01e19599ac1d2c391d5e7b99e4472adc72381",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/a-complex-diagram-with-multiple-requirements-and-elements-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "94ccd0d86c0bd962cfdad9dcbd2068ca51d8c4dca5d727101b13a6a0ca4ca0fd",
+      "manifest_sha256": "94ccd0d86c0bd962cfdad9dcbd2068ca51d8c4dca5d727101b13a6a0ca4ca0fd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/a-complex-diagram-with-multiple-requirements-and-elements-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "64ffaca94ddf022637d797726345e838ac07e760d1334aed2923b6b071209c94",
+      "manifest_sha256": "64ffaca94ddf022637d797726345e838ac07e760d1334aed2923b6b071209c94",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/a-complex-diagram-with-multiple-requirements-and-elements-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "dc1cc9b4ab10ddf0c494214e3e6655090cec4612e9e53ff3862a30e5c0418ed8",
+      "manifest_sha256": "dc1cc9b4ab10ddf0c494214e3e6655090cec4612e9e53ff3862a30e5c0418ed8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/a-complex-diagram-with-multiple-requirements-and-elements-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "94509ad60e9bcc957be5aa61ca5d89babb9384838108a82788c9bca35e5952db",
+      "manifest_sha256": "94509ad60e9bcc957be5aa61ca5d89babb9384838108a82788c9bca35e5952db",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/a-complex-diagram-with-multiple-requirements-and-elements-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "3899b975b7b0bfac031fce0e2e4de4a1813ccef571264b169e28ba04342adf58",
+      "manifest_sha256": "3899b975b7b0bfac031fce0e2e4de4a1813ccef571264b169e28ba04342adf58",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "3c93ef53eca2760c36d1c46aa2743f7179461dfaa7ab1f0a8bdef764c32020b0",
+      "manifest_sha256": "3c93ef53eca2760c36d1c46aa2743f7179461dfaa7ab1f0a8bdef764c32020b0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+        "sha256": "33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "d3a305a70ab7fa5de43d58a7db7aac208e90962ce5b1f2eca7c8b1e1df020f19",
+      "manifest_sha256": "d3a305a70ab7fa5de43d58a7db7aac208e90962ce5b1f2eca7c8b1e1df020f19",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+        "sha256": "33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "de7e21d5545d9c50191ee66f023c015fc289522cf2337bef65d5e54a488f9fa9",
+      "manifest_sha256": "de7e21d5545d9c50191ee66f023c015fc289522cf2337bef65d5e54a488f9fa9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+        "sha256": "33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "61a8449c6c7fbfd41f3093d91a7a379f1b59c31c11d98f29bef0d432a56e1c93",
+      "manifest_sha256": "61a8449c6c7fbfd41f3093d91a7a379f1b59c31c11d98f29bef0d432a56e1c93",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+        "sha256": "33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "2fdcc95061870960e5c6f173a270d874bb5a078ef27f7c76fdb8a50e00f48ae8",
+      "manifest_sha256": "2fdcc95061870960e5c6f173a270d874bb5a078ef27f7c76fdb8a50e00f48ae8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+        "sha256": "33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "a718b25399576f211f441d93ba783a7abb9adf57aef6b47cbe6cdf638a86380c",
+      "manifest_sha256": "a718b25399576f211f441d93ba783a7abb9adf57aef6b47cbe6cdf638a86380c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+        "sha256": "33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-relationship-types-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "b46518f035ab0e3d75a0db967c35d5b4082b0df51b38b95a6ee64cd1e0aa59f2",
+      "manifest_sha256": "b46518f035ab0e3d75a0db967c35d5b4082b0df51b38b95a6ee64cd1e0aa59f2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-relationship-types-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "705da790861b06917bcdb488071a56e450e7b54afdc4b697a4a85ecdee89fd57",
+      "manifest_sha256": "705da790861b06917bcdb488071a56e450e7b54afdc4b697a4a85ecdee89fd57",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-relationship-types-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "347e64e0ae45cf023cf1248d06427bbb29bd7027493f9551ddf4dca0ff76b6da",
+      "manifest_sha256": "347e64e0ae45cf023cf1248d06427bbb29bd7027493f9551ddf4dca0ff76b6da",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-relationship-types-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "ef3c2f198847f79b9be8091c4cd168ef4f31dcb53bd6c7f1cd3e84ede58ff1bc",
+      "manifest_sha256": "ef3c2f198847f79b9be8091c4cd168ef4f31dcb53bd6c7f1cd3e84ede58ff1bc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-relationship-types-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "5b1587184abc481335c340396a5ccf9f38bec91f953cf1116846a54cc817fa8c",
+      "manifest_sha256": "5b1587184abc481335c340396a5ccf9f38bec91f953cf1116846a54cc817fa8c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-relationship-types-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "4290b0b9af0803b59a9e5424c15723657938442ea0412c458393476babba631b",
+      "manifest_sha256": "4290b0b9af0803b59a9e5424c15723657938442ea0412c458393476babba631b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-requirement-types-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "c96c9277f74ae7f95ad6d1f84a4ec1389ba801ed44e1a9c06bc0b7a8b19502ef",
+      "manifest_sha256": "c96c9277f74ae7f95ad6d1f84a4ec1389ba801ed44e1a9c06bc0b7a8b19502ef",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-requirement-types-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "a95976df3c7bafa88cfafc0367bfe0ffb0f224114e530c11d3d6301b528c2756",
+      "manifest_sha256": "a95976df3c7bafa88cfafc0367bfe0ffb0f224114e530c11d3d6301b528c2756",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-requirement-types-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "4efc40e9e588d0ca76220df906f8f4f2e031a120d1db160ac8c1b5e87d5be33e",
+      "manifest_sha256": "4efc40e9e588d0ca76220df906f8f4f2e031a120d1db160ac8c1b5e87d5be33e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-requirement-types-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "f88ff651f3a3d23477a994deade91a9ddd54e6d6c19b43948ea14045f7afe462",
+      "manifest_sha256": "f88ff651f3a3d23477a994deade91a9ddd54e6d6c19b43948ea14045f7afe462",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-requirement-types-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "e3555e8b4314ee8520173bf73f445bf46f06c0a18fc60f01560f595e7ac4b976",
+      "manifest_sha256": "e3555e8b4314ee8520173bf73f445bf46f06c0a18fc60f01560f595e7ac4b976",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/all-requirement-types-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "9bc571d1c7f751c028d8664e4b0c2c7aa073c594b61122282fca3c93ee20de67",
+      "manifest_sha256": "9bc571d1c7f751c028d8664e4b0c2c7aa073c594b61122282fca3c93ee20de67",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/an-element-with-type-and-docref-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "a2a745400f71875b54082d1ee14354e36f531eb715bba41c1a457c4f231a3b8b",
+      "manifest_sha256": "a2a745400f71875b54082d1ee14354e36f531eb715bba41c1a457c4f231a3b8b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/an-element-with-type-and-docref-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "94d24297caef53128b2f30910337591cecdcabfe24d9e3f28268f5384eb2b498",
+      "manifest_sha256": "94d24297caef53128b2f30910337591cecdcabfe24d9e3f28268f5384eb2b498",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/an-element-with-type-and-docref-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "1c1c2d0933ddb229331244c882bed60443dc8d187c2c7b19bfc230e315af3286",
+      "manifest_sha256": "1c1c2d0933ddb229331244c882bed60443dc8d187c2c7b19bfc230e315af3286",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/an-element-with-type-and-docref-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "969c251fae634c681d55d1dd81c20883bb01b88423537c6fefee25e43b80c8c6",
+      "manifest_sha256": "969c251fae634c681d55d1dd81c20883bb01b88423537c6fefee25e43b80c8c6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/an-element-with-type-and-docref-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "9a7dc1753492b36e4fd8ba38cfb6c32c8cb097d150d488bb744e0187e5e11abe",
+      "manifest_sha256": "9a7dc1753492b36e4fd8ba38cfb6c32c8cb097d150d488bb744e0187e5e11abe",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/an-element-with-type-and-docref-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "bb77c2c2f276253f83a176d3d0b49546c0cd73e8954bab050b85923f4b4d0169",
+      "manifest_sha256": "bb77c2c2f276253f83a176d3d0b49546c0cd73e8954bab050b85923f4b4d0169",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-bt-direction-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "f43903171fd1ae824680f21807e7efb733551f429c55ffc9789545bc56e047f5",
+      "manifest_sha256": "f43903171fd1ae824680f21807e7efb733551f429c55ffc9789545bc56e047f5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-bt-direction-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "b9cc3c965cef48dc1814381f008afb3c20aa8d6ad4c8e7d137f7ac867ffe2ad4",
+      "manifest_sha256": "b9cc3c965cef48dc1814381f008afb3c20aa8d6ad4c8e7d137f7ac867ffe2ad4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-bt-direction-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "cd85eb8babaf4093bd0c55cd3a5a1dbb5db9461fd427b01bcd3226279dc18425",
+      "manifest_sha256": "cd85eb8babaf4093bd0c55cd3a5a1dbb5db9461fd427b01bcd3226279dc18425",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-bt-direction-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "1b1c3afca0066226f1f38674adc6c810136bd563cab7c934edb908ed104e2199",
+      "manifest_sha256": "1b1c3afca0066226f1f38674adc6c810136bd563cab7c934edb908ed104e2199",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-bt-direction-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "36a376f165c45e759d6dd532f36c4d71bbac33e61b25fc5bf1e119ed9a4823c1",
+      "manifest_sha256": "36a376f165c45e759d6dd532f36c4d71bbac33e61b25fc5bf1e119ed9a4823c1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-bt-direction-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "76b5f37a5b20f15ba48213e5651bd18fe99b4dc6e3a5100a651c75624a612d74",
+      "manifest_sha256": "76b5f37a5b20f15ba48213e5651bd18fe99b4dc6e3a5100a651c75624a612d74",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-lr-direction-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "668df1dfb28aec31f28d6e1c70be0f72c243d3618df6261989db82e121ede92d",
+      "manifest_sha256": "668df1dfb28aec31f28d6e1c70be0f72c243d3618df6261989db82e121ede92d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-lr-direction-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "8ae01f14aa876ea128fc2a6bdb798d32f6e1334557e55a1c9814d7f1c712e82d",
+      "manifest_sha256": "8ae01f14aa876ea128fc2a6bdb798d32f6e1334557e55a1c9814d7f1c712e82d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-lr-direction-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "b4e79a7e250586d6eb5e5785ef28c10778dac5f8df448cebd3f216c2393cfbd5",
+      "manifest_sha256": "b4e79a7e250586d6eb5e5785ef28c10778dac5f8df448cebd3f216c2393cfbd5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-lr-direction-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "b6921ab7dfa551e47d483c5ae0a2b8e070d6e0bf607598a7e3e04def9182940a",
+      "manifest_sha256": "b6921ab7dfa551e47d483c5ae0a2b8e070d6e0bf607598a7e3e04def9182940a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-lr-direction-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "1f5511edbba7702d67734485b818b2f7854e8f67e794b481b7f426faa1e6c51a",
+      "manifest_sha256": "1f5511edbba7702d67734485b818b2f7854e8f67e794b481b7f426faa1e6c51a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-lr-direction-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "a91ea2718d17638a5d97a8f7b53979df373d7b6ed74685359e67d653eae90ad5",
+      "manifest_sha256": "a91ea2718d17638a5d97a8f7b53979df373d7b6ed74685359e67d653eae90ad5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-rl-direction-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "0f2b45e79f69d019e2cd36f0f999030f9c9d29d7a16dd24e6095e95e3ce16104",
+      "manifest_sha256": "0f2b45e79f69d019e2cd36f0f999030f9c9d29d7a16dd24e6095e95e3ce16104",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-rl-direction-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "a221689d90eaddbbea0921cfec76014b121459fe03cf913ccb6250fe6c923b0c",
+      "manifest_sha256": "a221689d90eaddbbea0921cfec76014b121459fe03cf913ccb6250fe6c923b0c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-rl-direction-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "4c9a24fca34b88d4d146fab379ab4dbae6ba1bd53d6ba55e4b62bbbcd240e8fc",
+      "manifest_sha256": "4c9a24fca34b88d4d146fab379ab4dbae6ba1bd53d6ba55e4b62bbbcd240e8fc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-rl-direction-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "3237b44a213040447dffd1adef294983e04f77790a951ec6f0612a11f523a688",
+      "manifest_sha256": "3237b44a213040447dffd1adef294983e04f77790a951ec6f0612a11f523a688",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-rl-direction-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "098558d350ae116d3cb0034bed9909ded9a5faa0a699b7ae0a9480cb137745b1",
+      "manifest_sha256": "098558d350ae116d3cb0034bed9909ded9a5faa0a699b7ae0a9480cb137745b1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-rl-direction-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "aa0216ee592b4046dee78b9481ff510d9a1a46989701561f4142f47fa3b40893",
+      "manifest_sha256": "aa0216ee592b4046dee78b9481ff510d9a1a46989701561f4142f47fa3b40893",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-tb-direction-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "7aa1780319a1e83b93c3b84a374b19e7bcfee81497b85541cb979a3a5fcf93d1",
+      "manifest_sha256": "7aa1780319a1e83b93c3b84a374b19e7bcfee81497b85541cb979a3a5fcf93d1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-tb-direction-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "6df3d45cd8980f842565e3c72c60645dda326aca2e13f68e81eeb0f67e592c66",
+      "manifest_sha256": "6df3d45cd8980f842565e3c72c60645dda326aca2e13f68e81eeb0f67e592c66",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-tb-direction-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "0d42ab0b9f0193925a6ab637cf942b58bd13bd5f3c531866b3959d4b05f7f64f",
+      "manifest_sha256": "0d42ab0b9f0193925a6ab637cf942b58bd13bd5f3c531866b3959d4b05f7f64f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-tb-direction-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "8a066d492020e51f2157ee226c64af8bd06c850b8b67b8aa2ce380c22b0f0bed",
+      "manifest_sha256": "8a066d492020e51f2157ee226c64af8bd06c850b8b67b8aa2ce380c22b0f0bed",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-tb-direction-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "91b5df6689463830ea634d347744ef942247f56ca351982bfc53d570c40ee765",
+      "manifest_sha256": "91b5df6689463830ea634d347744ef942247f56ca351982bfc53d570c40ee765",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/diagram-with-tb-direction-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "fe36e0e9d263c590c038fa9f53e8cb9d57e7f58b5d3f703bd6c9b25a8329ae8e",
+      "manifest_sha256": "fe36e0e9d263c590c038fa9f53e8cb9d57e7f58b5d3f703bd6c9b25a8329ae8e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/relationship-using-reverse-arrow-direction-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "88e23b8acbd52bebdc33865e86a8e1e7558a8adb99b5256c52541515c0da3955",
+      "manifest_sha256": "88e23b8acbd52bebdc33865e86a8e1e7558a8adb99b5256c52541515c0da3955",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/relationship-using-reverse-arrow-direction-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "e48ce38a4ab871794df2a18395270614ece1e3114c7778dcee5b7bea5bff2507",
+      "manifest_sha256": "e48ce38a4ab871794df2a18395270614ece1e3114c7778dcee5b7bea5bff2507",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/relationship-using-reverse-arrow-direction-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "b3a3a703c3fb1d78cdc9ded7386704745b9ca1ce795bbda6327764e6ab674bf6",
+      "manifest_sha256": "b3a3a703c3fb1d78cdc9ded7386704745b9ca1ce795bbda6327764e6ab674bf6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/relationship-using-reverse-arrow-direction-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "0d389b37a25a9650f6c8eac5362a2d520546a9dda432279be08f873e83d4b79b",
+      "manifest_sha256": "0d389b37a25a9650f6c8eac5362a2d520546a9dda432279be08f873e83d4b79b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/relationship-using-reverse-arrow-direction-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "1027eeced177411b580237f80175f691a3c71d53607939b7e23e3748d41b2914",
+      "manifest_sha256": "1027eeced177411b580237f80175f691a3c71d53607939b7e23e3748d41b2914",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/relationship-using-reverse-arrow-direction-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "7d568293cf089461c873a7471b84d88bd0430125b7e37f9a788321755a32fc0f",
+      "manifest_sha256": "7d568293cf089461c873a7471b84d88bd0430125b7e37f9a788321755a32fc0f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-empty-bodies-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "cea81089d2fb8e2d5f2f422c7cce8243b77f20cdb9411ce01bc2407c796f044e",
+      "manifest_sha256": "cea81089d2fb8e2d5f2f422c7cce8243b77f20cdb9411ce01bc2407c796f044e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-empty-bodies-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "f0cbdfd1a4e2707eebccc95e014188f005b4347f6414c37cbda47b140703221f",
+      "manifest_sha256": "f0cbdfd1a4e2707eebccc95e014188f005b4347f6414c37cbda47b140703221f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-empty-bodies-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "e4fffb6958b0a6887d1f564ca14ace20c2856a733ea9338d07905b55728b5bfd",
+      "manifest_sha256": "e4fffb6958b0a6887d1f564ca14ace20c2856a733ea9338d07905b55728b5bfd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-empty-bodies-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "f08f67f6cbd6f3c71045be86973d1cce2d25091414703469625018d71f4ad74a",
+      "manifest_sha256": "f08f67f6cbd6f3c71045be86973d1cce2d25091414703469625018d71f4ad74a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-empty-bodies-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "d5d40c407422e6451933a74067bdb80ae63cdbb032f80d32583d19535fa821a2",
+      "manifest_sha256": "d5d40c407422e6451933a74067bdb80ae63cdbb032f80d32583d19535fa821a2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-empty-bodies-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "1c8cb92ef1ef2b5a52ca797eeefcfca183a18c6825977260330af6bb96cd1bf1",
+      "manifest_sha256": "1c8cb92ef1ef2b5a52ca797eeefcfca183a18c6825977260330af6bb96cd1bf1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-quoted-names-containing-spaces-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "a886af6b8d3490807b9d1771c3f3d76fc7ff25d2d706187e61017d59dc313673",
+      "manifest_sha256": "a886af6b8d3490807b9d1771c3f3d76fc7ff25d2d706187e61017d59dc313673",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-quoted-names-containing-spaces-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "8272085419b00f3e68c4b00959002cdd40bcbe1e1cf1ab5968abce467a174515",
+      "manifest_sha256": "8272085419b00f3e68c4b00959002cdd40bcbe1e1cf1ab5968abce467a174515",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-quoted-names-containing-spaces-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "b7c76bd603270c8379a187fd9e0fd578644516798bac8321affe7620310e078d",
+      "manifest_sha256": "b7c76bd603270c8379a187fd9e0fd578644516798bac8321affe7620310e078d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-quoted-names-containing-spaces-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "44a6f72f0d4f3127acc45e13abb9f004d3fea2a618faf8271ca67d769a3d299a",
+      "manifest_sha256": "44a6f72f0d4f3127acc45e13abb9f004d3fea2a618faf8271ca67d769a3d299a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-quoted-names-containing-spaces-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "c7c841de88b61d5849c13a3387d320cfa6093ef5055a3d689e991616cbe7419e",
+      "manifest_sha256": "c7c841de88b61d5849c13a3387d320cfa6093ef5055a3d689e991616cbe7419e",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-quoted-names-containing-spaces-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "6920cc358188ce781a0477e936fa0f804ada27d8114d9ce56b2d22b9cb1d9cbc",
+      "manifest_sha256": "6920cc358188ce781a0477e936fa0f804ada27d8114d9ce56b2d22b9cb1d9cbc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-class-statement-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "399fa2ac6e66dbbc7e051eb190bf94769cfa6c0ddf9b7630eb9f4fa6eb3dc64c",
+      "manifest_sha256": "399fa2ac6e66dbbc7e051eb190bf94769cfa6c0ddf9b7630eb9f4fa6eb3dc64c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-class-statement-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "a3098c49e8f2a4da484a23e06c4295e02b987004fcda9742c361c68405646160",
+      "manifest_sha256": "a3098c49e8f2a4da484a23e06c4295e02b987004fcda9742c361c68405646160",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-class-statement-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "d92d813867f65e397909e010ea1d299ba7758ecdfbe93d8b6dd4452655f6eaeb",
+      "manifest_sha256": "d92d813867f65e397909e010ea1d299ba7758ecdfbe93d8b6dd4452655f6eaeb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-class-statement-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "e6e7b3349883f73830a57f3cac61fc44fca89da3183619e94581b97c6a862fc2",
+      "manifest_sha256": "e6e7b3349883f73830a57f3cac61fc44fca89da3183619e94581b97c6a862fc2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-class-statement-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "c5eb97da6cbe5374648282a67aef90d57b6bf7f4a812662f79f89ec3802f9926",
+      "manifest_sha256": "c5eb97da6cbe5374648282a67aef90d57b6bf7f4a812662f79f89ec3802f9926",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-class-statement-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "55f2372a74f3cbe2a9ca7086fd7fceb221b11588aac30c58ea8c924d2c08b26a",
+      "manifest_sha256": "55f2372a74f3cbe2a9ca7086fd7fceb221b11588aac30c58ea8c924d2c08b26a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-classdef-shorthand-syntax-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "cf679b887fcff9acdb23be0df0f5af07d2a0c35afa4c7156a78a08ccd2430590",
+      "manifest_sha256": "cf679b887fcff9acdb23be0df0f5af07d2a0c35afa4c7156a78a08ccd2430590",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-classdef-shorthand-syntax-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "e1393c144abe9ea1f5223541028dfa0ca92b913b5b411295cbd850aa12c6cfe5",
+      "manifest_sha256": "e1393c144abe9ea1f5223541028dfa0ca92b913b5b411295cbd850aa12c6cfe5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-classdef-shorthand-syntax-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "fabdb8ae303c62e119a174b229d43eee6e69725442a2d1ff7b841b1751500b78",
+      "manifest_sha256": "fabdb8ae303c62e119a174b229d43eee6e69725442a2d1ff7b841b1751500b78",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-classdef-shorthand-syntax-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "953e0a9809f2dfdfb7bce2d6d7094bb36c44df3575b87660dc667265491c7f89",
+      "manifest_sha256": "953e0a9809f2dfdfb7bce2d6d7094bb36c44df3575b87660dc667265491c7f89",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-classdef-shorthand-syntax-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "8cad17f0509bba2d7b68228e9016d3bacecb60d03bfa3e9a7f92a5f958a3b605",
+      "manifest_sha256": "8cad17f0509bba2d7b68228e9016d3bacecb60d03bfa3e9a7f92a5f958a3b605",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-classdef-shorthand-syntax-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "5f3389d5956a51791254984f6e5a09ba54b2e78cf10535f48efbe5bbeb1897dc",
+      "manifest_sha256": "5f3389d5956a51791254984f6e5a09ba54b2e78cf10535f48efbe5bbeb1897dc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-style-statement-neo-look-neo-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "548f73b1468b4f9b158a1e63232ee8264a5968fa038a55a05adc7eef8fed71a6",
+      "manifest_sha256": "548f73b1468b4f9b158a1e63232ee8264a5968fa038a55a05adc7eef8fed71a6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-style-statement-neo-look-neo-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "2d8d06476fdd4f07118aa58d312138c1eeb07686d505426e79f8cb01aa3e25bd",
+      "manifest_sha256": "2d8d06476fdd4f07118aa58d312138c1eeb07686d505426e79f8cb01aa3e25bd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-style-statement-neo-look-redux-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "13b1306f5ceec2e930cf7e90c56af8f4d0708c03fea1e5766f4c8043bb69c3a7",
+      "manifest_sha256": "13b1306f5ceec2e930cf7e90c56af8f4d0708c03fea1e5766f4c8043bb69c3a7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-style-statement-neo-look-redux-dark-color-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "b1a8a6d36352a5a6c9e1c45bf4a5801d2d73d1b6fd899c4b6e8fbb5f27248886",
+      "manifest_sha256": "b1a8a6d36352a5a6c9e1c45bf4a5801d2d73d1b6fd899c4b6e8fbb5f27248886",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-style-statement-neo-look-redux-dark-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "191a7b4a6d0b01c090e69e49ecdea343e10c567735e5382338d42ad7a7e5b452",
+      "manifest_sha256": "191a7b4a6d0b01c090e69e49ecdea343e10c567735e5382338d42ad7a7e5b452",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-with-styles-applied-from-style-statement-neo-look-redux-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "014e38feb703dc53fc9089f5f09a88a7d589c127b197088c653f3046b2e2c663",
+      "manifest_sha256": "014e38feb703dc53fc9089f5f09a88a7d589c127b197088c653f3046b2e2c663",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
+    },
+    {
+      "path": "requirement/pr-check/should-render-a-basic-requirement-diagram-with-relationship-in-classic-look-and-default-theme.mmd",
+      "family": "requirement",
+      "phase": "P2-theme",
+      "sha256": "3d5e1bad126ed9d870d5a5bd94d3ab5993f86e85cfd7356cf40b8b837168d5f0",
+      "manifest_sha256": "3d5e1bad126ed9d870d5a5bd94d3ab5993f86e85cfd7356cf40b8b837168d5f0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+        "sha256": "33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=classic -> source node style; not applied",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P2 closed theme-palette admission; validated and disclosed only."
     }
   ]
 }

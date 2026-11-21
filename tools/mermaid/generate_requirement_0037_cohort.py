@@ -40,7 +40,7 @@ SCHEMA = "loom_mermaid_requirement_0037_cohort/v1"
 ROOT_REL = "requirement"
 
 ALL_PHASES = ("P1-look", "P2-theme", "P3-title")
-ENABLED_PHASES = ("P1-look",)
+ENABLED_PHASES = ("P1-look", "P2-theme")
 
 # Pinned population per phase; asserted whether or not the phase is enabled.
 EXPECTED = {"P1-look": 23, "P2-theme": 91, "P3-title": 6}
@@ -104,10 +104,26 @@ DRAWN_TWINS = frozenset({
 # order. Pinned when a phase is enabled; a re-partition aborts generation.
 PHASE_DIGESTS = {
     "P1-look": "86b3c00211c5d84da3344235f8580555d102ccd256f8c01bd4cc5e0471a94ab5",
+    "P2-theme": "7aa1dc5b3dc81105227882699b94f3158f528116e9f7ad5a8497438e9d5c8842",
 }
 
 # Per-phase review records: authored here, written into the ledger.
 PHASE_REVIEWS = {
+    "P2-theme": {
+        "reviewer_agent": "agent:aa19624ebdb712b6a rfc0037-p2-final-review (independent "
+                          "adversarial code review; APPROVE; verified the 4-file scope and "
+                          "protected-file/manifest immutability, the closed 7-palette table and "
+                          "F0/P1 footer byte-identity, an independent 172/23/91/6 re-derivation "
+                          "with the 7-corpus/84-synthetic split, a ported audit of the synthetic "
+                          "config-free twin, generator --check, cohort gate 4/4, F0 suite 10/10, "
+                          "and an official matrix red only on the pending verdict)",
+        "date": "2026-11-21",
+        "verdict": "approved",
+        "note": "P2 admits the closed theme palette table; title rows keep whole source. "
+                "Reviewer NITs applied: the gate's config-free twin now skips blank lines like "
+                "the generator, a corpus twin may not be the row itself, and a quoted palette "
+                "scalar is asserted.",
+    },
     "P1-look": {
         "reviewer_agent": "agent:ab5e96a11461da018 rfc0037-p1-final-review (independent "
                           "adversarial code review; r1 REQUEST-CHANGES -> r2/r3 APPROVE; verified "
@@ -204,28 +220,47 @@ def notice_lines(leaves):
     return [NOTICE_HEADER] + lines if lines else []
 
 
-def twin_candidate(rel, cases):
-    """Resolve the body-equivalent drawn corpus twin, if one exists."""
+def name_candidates(rel):
+    """Name-derived twin candidates, most specific first."""
     directory, _, name = rel.rpartition("/")
     stem = name[: -len(".mmd")] if name.endswith(".mmd") else name
     prefix = directory + "/" if directory else ""
-    base = None
     if "-neo-look-" in stem and stem.endswith("-theme"):
         base = stem.split("-neo-look-")[0]
     elif stem.endswith("-handdrawn-look"):
         base = stem[: -len("-handdrawn-look")]
-    elif stem == ("should-render-a-basic-requirement-diagram-with-relationship-in-"
-                  "classic-look-and-default-theme"):
-        base = "sample"
-    if base is None:
-        return None
-    for suffix in ("-default", "-without-htmllabels-default"):
-        candidate = f"{prefix}{base}{suffix}.mmd"
-        if candidate not in DRAWN_TWINS:
+    else:
+        return []
+    return [f"{prefix}{base}{suffix}.mmd" for suffix in ("-default", "-without-htmllabels-default")]
+
+
+def twin_candidate(rel, cases, source_leaves):
+    """Resolve the body-equivalent drawn corpus twin, if one exists.
+
+    Name-derived siblings first, then a deterministic scan of the pinned drawn
+    set. A candidate is only accepted when its own footer is a prefix of the
+    source's footer, so the recorded delta is a pure append.
+    """
+    source_footer = notice_lines(source_leaves)
+    for candidate in name_candidates(rel):
+        if candidate not in DRAWN_TWINS or not (cases / candidate).is_file():
             continue
+        if body_digest(cases / candidate) != body_digest(cases / rel):
+            continue
+        front, _ = split_lines((cases / candidate).read_text())
+        _, twin_leaves, _ = parse_frontmatter(front)
+        twin_footer = notice_lines(twin_leaves)
+        if source_footer[: len(twin_footer)] == twin_footer:
+            return candidate
+    for candidate in sorted(DRAWN_TWINS):
         if not (cases / candidate).is_file():
             continue
-        if body_digest(cases / candidate) == body_digest(cases / rel):
+        if body_digest(cases / candidate) != body_digest(cases / rel):
+            continue
+        front, _ = split_lines((cases / candidate).read_text())
+        _, twin_leaves, _ = parse_frontmatter(front)
+        twin_footer = notice_lines(twin_leaves)
+        if source_footer[: len(twin_footer)] == twin_footer:
             return candidate
     return None
 
@@ -348,7 +383,7 @@ def build(repo_root: pathlib.Path):
                 f"RFC 0037 {phase} row set drifted: digest {digest} != pinned "
                 f"{PHASE_DIGESTS[phase]}")
         for rel, top, leaves in sorted(entries):
-            twin = twin_candidate(rel, cases)
+            twin = twin_candidate(rel, cases, leaves)
             if twin is None:
                 kind = {"kind": "synthetic"}
             else:

@@ -175,19 +175,35 @@ TEST(MermaidXychart0035Cohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(root.get_int("rfc"), 35);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
     const auto counts = root.get("counts");
-    EXPECT_EQ(counts.get_int("total"), 17);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 17);
+    EXPECT_EQ(counts.get_int("total"), 22);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 22);
     EXPECT_EQ(counts.get("by_phase").get_int("P1-envelope"), 17);
+    EXPECT_EQ(counts.get("by_phase").get_int("P2-show-false"), 5);
     const auto phases = root.get("selection").get("enabled_phases");
-    int phase_count = 0;
-    phases.iter([&](const JsonVal value) {
-        ++phase_count;
-        EXPECT_EQ(value.as_str(), "P1-envelope");
+    std::set<std::string> enabled;
+    phases.iter([&](const JsonVal value) { enabled.emplace(value.as_str()); });
+    EXPECT_EQ(enabled, (std::set<std::string>{"P1-envelope", "P2-show-false"}));
+    // Every enabled phase must carry its own approved review record; a
+    // missing record is not a silent pass.
+    const auto reviews = root.get("review").get("phases");
+    for (const auto& phase : enabled) {
+        const auto record = reviews.get(phase);
+        ASSERT_TRUE(record.is_obj()) << phase;
+        EXPECT_EQ(record.get_string("verdict"), "approved") << phase;
+        EXPECT_FALSE(record.get_string("reviewer_agent").empty()) << phase;
+    }
+    for (const auto& phase : enabled)
+        EXPECT_TRUE(reviews.get(phase).is_obj()) << phase;
+    int rows = 0, p1 = 0, p2 = 0;
+    root.get("rows").iter([&](const JsonVal row) {
+        ++rows;
+        const auto phase = row.get_string("phase");
+        if (phase == "P1-envelope") ++p1;
+        if (phase == "P2-show-false") ++p2;
     });
-    EXPECT_EQ(phase_count, 1);
-    int rows = 0;
-    root.get("rows").iter([&](const JsonVal) { ++rows; });
-    EXPECT_EQ(rows, 17);
+    EXPECT_EQ(rows, 22);
+    EXPECT_EQ(p1, 17);
+    EXPECT_EQ(p2, 5);
 }
 
 TEST(MermaidXychart0035Cohort, RowsPinFixtureBytesAndPriorStatus) {
@@ -208,7 +224,9 @@ TEST(MermaidXychart0035Cohort, RowsPinFixtureBytesAndPriorStatus) {
             << path;
         EXPECT_EQ(found->second.get("raw").get_string("expected"), "source") << path;
         EXPECT_EQ(found->second.get("raw").get_string("reason"), "frontmatter") << path;
-        EXPECT_EQ(row.get_string("phase"), "P1-envelope") << path;
+        EXPECT_TRUE(row.get_string("phase") == "P1-envelope" ||
+                    row.get_string("phase") == "P2-show-false")
+            << path;
     });
 }
 
@@ -243,8 +261,7 @@ TEST(MermaidXychart0035Cohort, DescriptionPlusConfigBoundaryKeepsWholeSource) {
     EXPECT_FALSE(xy_is_fallback(with_config("  xyChart:\n    width: 400\n", kBody)));
 
     const std::vector<std::string> rejected{
-        // Widened keys that belong to later phases stay closed at P1.
-        with_config("  xyChart:\n    xAxis:\n      showLabel: false\n", kBody),
+        // Widened keys that belong to later phases stay closed.
         with_config("  xyChart:\n    themeVariables:\n      xyChart:\n        dataLabelColor: "
                     "\"#eeeeee\"\n",
                     kBody),
@@ -297,6 +314,149 @@ TEST(MermaidXychart0035Cohort, DescriptionPlusConfigBoundaryKeepsWholeSource) {
     }
 }
 
+
+namespace {
+std::string flip_suppression_to_true(const std::string& source) {
+    std::string flipped = source;
+    for (const char* key : {"showLabel", "showTitle", "showTick", "showAxisLine"}) {
+        const std::string from = std::string(key) + ": false";
+        const std::string to = std::string(key) + ": true";
+        for (std::size_t at = 0; (at = flipped.find(from, at)) != std::string::npos; at += to.size())
+            flipped.replace(at, from.size(), to);
+    }
+    return flipped;
+}
+
+int non_space_cells(const CellCapture& capture) {
+    int count = 0;
+    for (const auto& cell : capture.cells)
+        if (cell.first != " ") ++count;
+    return count;
+}
+
+bool frame_text_contains(const CellCapture& capture, int width, const std::string& token) {
+    for (const auto& line : frame_lines(capture, width))
+        if (line.find(token) != std::string::npos) return true;
+    return false;
+}
+}  // namespace
+
+TEST(MermaidXychart0035Cohort, SuppressionRowsHideExactlyTheirElement) {
+    auto ledger = parse_ledger();
+    int checked = 0;
+    for (const auto& row : read_rows(ledger.root())) {
+        if (row.phase != "P2-show-false") continue;
+        ++checked;
+        SCOPED_TRACE(row.path);
+        const auto source = read_file(kCases / row.path);
+        const auto flipped = flip_suppression_to_true(source);
+        ASSERT_NE(source, flipped) << "row must carry a show*: false flag";
+        ASSERT_TRUE(drawn_native(source));
+        ASSERT_TRUE(drawn_native(flipped));
+        const auto hidden = capture_cells(source, "mermaid");
+        const auto shown = capture_cells(flipped, "mermaid");
+        EXPECT_NE(hidden.cells, shown.cells) << "suppression must change the frame";
+        EXPECT_EQ(frame_lines(hidden, kWide).size(), frame_lines(shown, kWide).size())
+            << "suppression must not reflow the frame";
+        // Tick marks and axis lines replace glyphs in place, so a cell-count
+        // drop is only expected where label/title text disappears.
+        if (row.path.find("show-axis-label-false") != std::string::npos ||
+            row.path.find("show-axis-title-false") != std::string::npos ||
+            row.path.find("spark-bar") != std::string::npos)
+            EXPECT_LT(non_space_cells(hidden), non_space_cells(shown))
+                << "suppression must remove content";
+        if (row.path.find("show-axis-label-false") != std::string::npos) {
+            EXPECT_TRUE(frame_text_contains(shown, kWide, "jan"));
+            EXPECT_FALSE(frame_text_contains(hidden, kWide, "jan"));
+        }
+        if (row.path.find("show-axis-title-false") != std::string::npos) {
+            EXPECT_TRUE(frame_text_contains(shown, kWide, "Months"));
+            EXPECT_FALSE(frame_text_contains(hidden, kWide, "Months"));
+            EXPECT_FALSE(frame_text_contains(hidden, kWide, "(in $)"));
+        }
+    }
+    EXPECT_EQ(checked, 5);
+}
+
+
+namespace {
+bool is_axis_cell(const std::string& cell) {
+    if (cell == " ") return true;
+    static const std::set<std::string> glyphs{"─", "│", "┌", "┐", "└", "┘", "├", "┤", "┬", "┴",
+                                             "┼", "━", "┃", "┏", "┓", "┗", "┛", "┣", "┫", "┳",
+                                             "┻", "╋"};
+    return glyphs.contains(cell);
+}
+
+// Tick/line suppression may only reshape axis cells; every other differing
+// cell means content was removed or moved.
+void expect_only_axis_cells_differ(const CellCapture& off, const CellCapture& on,
+                                   const char* label) {
+    ASSERT_EQ(off.cells.size(), on.cells.size()) << label;
+    int other = 0;
+    for (std::size_t i = 0; i < off.cells.size(); ++i) {
+        if (off.cells[i] == on.cells[i]) continue;
+        if (!is_axis_cell(off.cells[i].first) || !is_axis_cell(on.cells[i].first)) ++other;
+    }
+    EXPECT_EQ(other, 0) << label << ": non-axis cells changed";
+}
+}  // namespace
+
+TEST(MermaidXychart0035Cohort, SuppressionIsPerAxisAndKeepsOtherElements) {
+    auto synthetic = [&](const std::string& key, const std::string& value) {
+        return "---\ndescription: >-\n  d\nconfig:\n  xyChart:\n    xAxis:\n      " + key +
+               ": " + value + "\n---\nxychart\n  x-axis \"CatTitle\" [catA, catB]\n  y-axis "
+               "\"ValTitle\" 0 --> 10\n  bar [3, 6]\n";
+    };
+    // Hiding x labels removes the category text but keeps the axis titles.
+    const auto labels_off = capture_cells(synthetic("showLabel", "false"), "mermaid");
+    const auto labels_on = capture_cells(synthetic("showLabel", "true"), "mermaid");
+    EXPECT_FALSE(frame_text_contains(labels_off, kWide, "catA"));
+    EXPECT_TRUE(frame_text_contains(labels_on, kWide, "catA"));
+    EXPECT_TRUE(frame_text_contains(labels_off, kWide, "CatTitle"));
+    EXPECT_TRUE(frame_text_contains(labels_off, kWide, "ValTitle"));
+    // Hiding the x title keeps the category labels.
+    const auto title_off = capture_cells(synthetic("showTitle", "false"), "mermaid");
+    EXPECT_FALSE(frame_text_contains(title_off, kWide, "CatTitle"));
+    EXPECT_TRUE(frame_text_contains(title_off, kWide, "ValTitle"));
+    EXPECT_TRUE(frame_text_contains(title_off, kWide, "catA"));
+    // Hiding ticks and the axis line only reshapes axis cells: labels, titles
+    // and every data cell stay untouched (no reflow, no wrong-element removal).
+    for (const char* key : {"showTick", "showAxisLine"}) {
+        const auto off = capture_cells(synthetic(key, "false"), "mermaid");
+        const auto on = capture_cells(synthetic(key, "true"), "mermaid");
+        EXPECT_NE(off.cells, on.cells) << key;
+        EXPECT_EQ(frame_lines(off, kWide).size(), frame_lines(on, kWide).size()) << key;
+        EXPECT_TRUE(frame_text_contains(off, kWide, "catA")) << key;
+        EXPECT_TRUE(frame_text_contains(off, kWide, "CatTitle")) << key;
+        expect_only_axis_cells_differ(off, on, key);
+    }
+    // Horizontal orientation: x stays the category axis and y the value axis.
+    auto horizontal = [&](const std::string& key, const std::string& value) {
+        return "---\ndescription: >-\n  d\nconfig:\n  xyChart:\n    chartOrientation: "
+               "horizontal\n    xAxis:\n      " + key + ": " + value +
+               "\n---\nxychart\n  x-axis \"CatTitle\" [catA, catB]\n  y-axis "
+               "\"ValTitle\" 0 --> 10\n  bar [3, 6]\n";
+    };
+    const auto h_labels_off = capture_cells(horizontal("showLabel", "false"), "mermaid");
+    EXPECT_FALSE(frame_text_contains(h_labels_off, kWide, "catA"));
+    EXPECT_TRUE(frame_text_contains(h_labels_off, kWide, "CatTitle"));
+    EXPECT_TRUE(frame_text_contains(h_labels_off, kWide, "ValTitle"));
+    EXPECT_LT(non_space_cells(h_labels_off),
+              non_space_cells(capture_cells(horizontal("showLabel", "true"), "mermaid")))
+        << "horizontal label suppression must remove content";
+    for (const char* key : {"showTick", "showAxisLine"}) {
+        const auto off = capture_cells(horizontal(key, "false"), "mermaid");
+        const auto on = capture_cells(horizontal(key, "true"), "mermaid");
+        EXPECT_NE(off.cells, on.cells) << key;
+        EXPECT_EQ(frame_lines(off, kWide).size(), frame_lines(on, kWide).size()) << key;
+        EXPECT_TRUE(frame_text_contains(off, kWide, "catA")) << key;
+        expect_only_axis_cells_differ(off, on, key);
+    }
+    // A false value outside the four flags stays closed.
+    EXPECT_TRUE(xy_is_fallback(synthetic("showLegend", "false")));
+}
+
 TEST(MermaidXychart0035Cohort, SignedValueCapabilityRowsStayOnFallback) {
     const std::vector<std::string> pinned{
         "xychart/nightly-check/should-render-negative-and-decimal-values-with-correct-labels-"
@@ -315,8 +475,8 @@ TEST(MermaidXychart0035Cohort, DescriptionOnlyAndConfigOnlyPathsAreUnchanged) {
     EXPECT_FALSE(xy_is_fallback("---\ndescription: >-\n  d\n---\n" + kBody));
     // Config-only xychart keeps the existing profile (including its negatives).
     EXPECT_FALSE(xy_is_fallback("---\nconfig:\n  xyChart:\n    width: 400\n---\n" + kBody));
-    EXPECT_TRUE(xy_is_fallback("---\nconfig:\n  xyChart:\n    xAxis:\n      showLabel: false\n---\n" +
-                               kBody));
+    EXPECT_FALSE(xy_is_fallback("---\nconfig:\n  xyChart:\n    xAxis:\n      showLabel: false\n---\n" +
+                                kBody));
     // CRLF is normalized before validation, matching the D236 pie path.
     EXPECT_FALSE(xy_is_fallback("---\r\ndescription: >-\r\n  d\r\nconfig:\r\n  "
                                 "xyChart:\r\n    width: 400\r\n---\n" +

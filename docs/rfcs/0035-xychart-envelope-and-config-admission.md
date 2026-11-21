@@ -524,7 +524,7 @@ delta must be the same number (no other family moves).
 | Phase | Status | Rows | xychart drawn/fallback | global drawn/fallback | formal |
 |---|---|---|---|---|---|
 | P1 envelope grammar | done | 17 | 30 / 18 | 1264 / 881 | 1078 |
-| P2 `show*: false` suppression | proposed | 5 | 35 / 13 | 1269 / 876 | 1083 |
+| P2 `show*: false` suppression | done | 5 | 35 / 13 | 1269 / 876 | 1083 |
 | P3 `dataLabelColor` role | proposed | 1 | 36 / 12 | 1270 / 875 | 1084 |
 | P4 Wave B init | proposed | 1 | 37 / 11 | 1271 / 874 | 1085 |
 
@@ -533,6 +533,14 @@ P1 evidence (measured): debug and release matrix sha256
 (byte-identical), xychart 30/18, global 1264/881, formal `drawn_at_240`
 1078, mandatory gaps 48, integrity errors 0, roster 881 rows / 44 categories
 migrated with `--emit`; cohort gate 6/6 debug and release.
+
+P2 evidence (measured): debug and release matrix sha256
+`5096d1a93a1ddc3f5b92f4861a902c2017d9576bfa10ba419d4ec95717550bf9`
+(byte-identical), xychart 35/13, global 1269/876, formal `drawn_at_240`
+1083, mandatory gaps 48, integrity errors 0, roster 876 rows / 44 categories
+migrated with `--emit`; cohort gate 8/8 debug and release. The per-axis
+suppression gate is proven by flag-flip twins (frame changes, no reflow,
+axis cells only) and by horizontal-orientation synthetics.
 
 The eleven capability rows (8 geometry + 3 rotation) stay
 `source_fallback`; there is no OQ-1 fallback branch anymore — the ruling is
@@ -560,3 +568,4 @@ migrated it), close-out record in `docs/dev/`.
 | 2026-11-21 | — | OQ-1 owner ruling: `labelRotation` rejected (capability bucket), target 27 → 24; phases renumbered; PRR r2 MINOR-1/MINOR-2 and NIT-1..3 applied | — |
 | 2026-11-21 | — | prr-r2 APPROVE-TO-IMPLEMENTABLE; production-readiness sign-off recorded; promoted to `implementable` | — |
 | 2026-11-21 | P1 | Closed description+config grammar; 17 rows promoted; census and dual-preset sha recorded in the phase table | — |
+| 2026-11-21 | P2 | Applied axis-element suppression for show*: false; 5 rows promoted; per-phase review gating tightened | — |

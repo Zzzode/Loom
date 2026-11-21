@@ -4407,7 +4407,6 @@ TEST(MermaidChartsMermanXY102Resources,
     for (const auto options :
          {"  xyChart:\n    plotBorderWidth: 5\n", "", "  xyChart:\n", "  xyChart:\n    xAxis:\n",
           "  theme: dark\n%% invalid YAML statement\n", "  xyChart:\n    showTitle: false\n",
-          "  xyChart:\n    xAxis:\n      showLabel: false\n",
           "  xyChart:\n    width: 200\n    width: 300\n", "  xyChart:\n    width: '200'\n",
           "  xyChart:\n    width: 200\n     height: 20\n", "  xyChart:\n    width: &metric 200\n",
           "  theme: imaginary\n", "  theme: dark\n   xyChart:\n    width: 200\n",

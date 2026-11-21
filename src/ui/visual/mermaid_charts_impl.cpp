@@ -147,6 +147,10 @@ struct ChartSlice {
 struct Chart {
     bool pie = false, horizontal = false, show_data = false, show_data_outside = false,
          configured = false;
+    // RFC 0035: per-axis suppression flags (x is the category axis, y the value
+    // axis, independent of orientation). They hide draws without reflow.
+    bool x_show_label = true, x_show_title = true, x_show_tick = true, x_show_axis_line = true;
+    bool y_show_label = true, y_show_title = true, y_show_tick = true, y_show_axis_line = true;
     std::string title, x_title, y_title;
     std::vector<std::string> categories;
     std::optional<std::pair<double, double>> domain;
@@ -270,10 +274,20 @@ bool xy_visual_envelope(const Envelope& envelope, Chart& chart, bool allow_descr
             continue;
         }
         const bool axis = field.starts_with("xAxis.") || field.starts_with("yAxis.");
+        const bool axis_is_x = field.starts_with("xAxis.");
         if (axis) field.remove_prefix(6);
         if (axis && (field == "showTitle" || field == "showLabel" || field == "showTick" ||
                      field == "showAxisLine")) {
-            if (*value != "true") return false;
+            if (*value != "true" && *value != "false") return false;
+            const bool enabled = *value == "true";
+            if (field == "showTitle")
+                (axis_is_x ? chart.x_show_title : chart.y_show_title) = enabled;
+            else if (field == "showLabel")
+                (axis_is_x ? chart.x_show_label : chart.y_show_label) = enabled;
+            else if (field == "showTick")
+                (axis_is_x ? chart.x_show_tick : chart.y_show_tick) = enabled;
+            else
+                (axis_is_x ? chart.x_show_axis_line : chart.y_show_axis_line) = enabled;
             continue;
         }
         constexpr std::array<std::string_view, 7> axis_metrics{
@@ -1514,8 +1528,14 @@ std::optional<std::vector<std::string>> xy_chart(const Chart& chart, Work& work)
     int title_y = 0;
     if (!chart.title.empty() && !canvas.text({0, title_y++}, chart.title)) return {};
     const auto& top_label = chart.horizontal ? chart.x_title : chart.y_title;
-    if (!top_label.empty() && !canvas.text({0, title_y}, top_label)) return {};
-    if (!canvas.segment({left, top}, {left, bottom}) ||
+    const bool show_top_title = chart.horizontal ? chart.x_show_title : chart.y_show_title;
+    if (show_top_title && !top_label.empty() && !canvas.text({0, title_y}, top_label)) return {};
+    // Axis lines: the left segment is the value axis when vertical and the
+    // category axis when horizontal; the bottom segment is the reverse.
+    if ((chart.horizontal ? chart.x_show_axis_line : chart.y_show_axis_line) &&
+        !canvas.segment({left, top}, {left, bottom}))
+        return {};
+    if ((chart.horizontal ? chart.y_show_axis_line : chart.x_show_axis_line) &&
         !canvas.segment({left, bottom}, {right, bottom}))
         return {};
     auto axis_tick = [&](Point p, unsigned extra) {
@@ -1523,27 +1543,39 @@ std::optional<std::vector<std::string>> xy_chart(const Chart& chart, Work& work)
         c.bits |= extra;
         return canvas.put(p, line_glyph(c.bits));
     };
+    // Value-axis tick marks and labels (y in both orientations).
     for (int n = 0; n <= 4; ++n) {
         const int coordinate = project(tick_values[static_cast<std::size_t>(n)]);
         const auto& text = tick_labels[static_cast<std::size_t>(n)];
         if (chart.horizontal) {
-            if (!axis_tick({coordinate, bottom}, kLeft | kRight | kDown) ||
-                !canvas.text({coordinate - static_cast<int>(text.size()) / 2, bottom + 1}, text))
+            if ((chart.y_show_tick && !axis_tick({coordinate, bottom}, kLeft | kRight | kDown)) ||
+                (chart.y_show_label &&
+                 !canvas.text({coordinate - static_cast<int>(text.size()) / 2, bottom + 1}, text)))
                 return {};
-        } else if (!axis_tick({left, coordinate}, kUp | kDown | kLeft) ||
-                   !canvas.text({left - 1 - static_cast<int>(text.size()), coordinate}, text))
+        } else if ((chart.y_show_tick &&
+                    !axis_tick({left, coordinate}, kUp | kDown | kLeft)) ||
+                   (chart.y_show_label &&
+                    !canvas.text({left - 1 - static_cast<int>(text.size()), coordinate}, text)))
             return {};
     }
-    if (!axis_tick({left, bottom}, kUp | kRight | kLeft | kDown)) return {};
+    // The origin corner joins both axis lines; when one is hidden the other
+    // segment already paints its own endpoint, so the cross is skipped.
+    if (chart.x_show_axis_line && chart.y_show_axis_line &&
+        !axis_tick({left, bottom}, kUp | kRight | kLeft | kDown))
+        return {};
+    // Category-axis tick marks and labels (x in both orientations).
     for (std::size_t c = 0; c < chart.categories.size(); ++c) {
         const auto& label = chart.categories[c];
         const int label_size = label_width(label);
         if (chart.horizontal) {
-            if (!axis_tick({left, category[c]}, kUp | kDown | kRight) ||
-                !canvas.text({left - 1 - label_size, category[c]}, label))
+            if ((chart.x_show_tick && !axis_tick({left, category[c]}, kUp | kDown | kRight)) ||
+                (chart.x_show_label &&
+                 !canvas.text({left - 1 - label_size, category[c]}, label)))
                 return {};
-        } else if (!axis_tick({category[c], bottom}, kLeft | kRight | kDown) ||
-                   !canvas.text({category[c] - (label_size - 1) / 2, bottom + 1}, label))
+        } else if ((chart.x_show_tick &&
+                    !axis_tick({category[c], bottom}, kLeft | kRight | kDown)) ||
+                   (chart.x_show_label &&
+                    !canvas.text({category[c] - (label_size - 1) / 2, bottom + 1}, label)))
             return {};
     }
     if (reverse_singleton_x) {
@@ -1551,20 +1583,28 @@ std::optional<std::vector<std::string>> xy_chart(const Chart& chart, Work& work)
         // endpoint still has a physical tick and label on the authored axis.
         const auto& label = reverse_endpoints[1];
         const int at = right;
-        if (!axis_tick({at, bottom}, kLeft | kRight | kDown) ||
-            !canvas.text({at - (label_width(label) - 1) / 2, bottom + 1}, label))
+        if ((chart.x_show_tick && !axis_tick({at, bottom}, kLeft | kRight | kDown)) ||
+            (chart.x_show_label &&
+             !canvas.text({at - (label_width(label) - 1) / 2, bottom + 1}, label)))
             return {};
     }
     const auto& bottom_label = chart.horizontal ? chart.y_title : chart.x_title;
-    if (!bottom_label.empty() && !canvas.text({0, axis_footer}, bottom_label)) return {};
+    const bool show_bottom_title = chart.horizontal ? chart.y_show_title : chart.x_show_title;
+    if (show_bottom_title && !bottom_label.empty() &&
+        !canvas.text({0, axis_footer}, bottom_label))
+        return {};
     if (shared_axis) {
-        for (int y = top; y <= bottom; ++y) {
-            const Point p{left, y};
-            if (!canvas.put(p, data_line_glyph(canvas.at(p).bits, 2))) return {};
+        if ((chart.horizontal ? chart.x_show_axis_line : chart.y_show_axis_line)) {
+            for (int y = top; y <= bottom; ++y) {
+                const Point p{left, y};
+                if (!canvas.put(p, data_line_glyph(canvas.at(p).bits, 2))) return {};
+            }
         }
-        for (int x = left + 1; x <= right; ++x) {
-            const Point p{x, bottom};
-            if (!canvas.put(p, data_line_glyph(canvas.at(p).bits, 2))) return {};
+        if ((chart.horizontal ? chart.y_show_axis_line : chart.x_show_axis_line)) {
+            for (int x = left + 1; x <= right; ++x) {
+                const Point p{x, bottom};
+                if (!canvas.put(p, data_line_glyph(canvas.at(p).bits, 2))) return {};
+            }
         }
     }
     for (std::size_t i = 0; i < owners.size(); ++i) {

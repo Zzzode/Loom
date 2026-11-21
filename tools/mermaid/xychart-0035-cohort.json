@@ -1,7 +1,6 @@
 {
   "schema": "loom_mermaid_xychart_0035_cohort/v1",
   "rfc": 35,
-  "phase": "P1-envelope",
   "upstream": {
     "tag": "mermaid@12.2.0",
     "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
@@ -14,22 +13,35 @@
     ],
     "phase_partition": "renderer-free classification with pinned per-phase denominators; only ENABLED_PHASES is emitted",
     "enabled_phases": [
-      "P1-envelope"
+      "P1-envelope",
+      "P2-show-false"
     ],
     "capability_detection": "labelRotation is capability debt by OQ-1 ruling; the two signed-value rows are path-pinned capability debt",
     "width_policy": "wide_240 admission only; narrow_40 stays 'source'."
   },
   "review": {
-    "reviewer_agent": "agent:afdd5fdaf6f59d4dd independent P1 code review (fresh general-purpose agent; own source selector reproduced the 17-row set and an independent render probe reproduced drawn 30/18)",
-    "date": "2026-11-21",
-    "verdict": "approved",
-    "note": "P1 admits the description+config envelope only; P2/P3/P4 rows and the capability exclusions keep whole source. Reviewer dispositions: CRLF aligned with the D236 normalization precedent, boundary set extended, signed-value capability rows pinned."
+    "phases": {
+      "P1-envelope": {
+        "reviewer_agent": "agent:afdd5fdaf6f59d4dd independent P1 code review (fresh general-purpose agent; own source selector reproduced the 17-row set and an independent render probe reproduced drawn 30/18)",
+        "date": "2026-11-21",
+        "verdict": "approved",
+        "note": "P1 admits the description+config envelope only; later-phase rows and the capability exclusions keep whole source. Reviewer dispositions: CRLF aligned with the D236 normalization precedent, boundary set extended, signed-value capability rows pinned."
+      },
+      "P2-show-false": {
+        "reviewer_agent": "agent:a67ad4e0bf007cffd independent P2 code review (fresh general-purpose agent; verified the per-axis gating in both orientations, the no-reflow reservations and the admission closure line by line)",
+        "date": "2026-11-21",
+        "verdict": "approved",
+        "note": "show*: false suppresses only its own axis element. Reviewer dispositions: per-phase review gating tightened against a silent missing record, axis-only diff confinement and horizontal synthetic cases added, origin corner gated on both axis lines."
+      }
+    },
+    "verdict": "approved"
   },
   "counts": {
-    "total": 17,
-    "predicted_draw": 17,
+    "total": 22,
+    "predicted_draw": 22,
     "by_phase": {
-      "P1-envelope": 17
+      "P1-envelope": 17,
+      "P2-show-false": 5
     }
   },
   "excluded": [
@@ -496,6 +508,116 @@
         "restored_240": "drawn"
       },
       "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/render-spark-bar-without-displaying-other-property.mmd",
+      "family": "xychart",
+      "phase": "P2-show-false",
+      "sha256": "33eda566f100b4b6e419149fbc3f3f913a2f5baaa75f8d7003c2bcea7bb5adaa",
+      "manifest_sha256": "33eda566f100b4b6e419149fbc3f3f913a2f5baaa75f8d7003c2bcea7bb5adaa",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 axis-element suppression; show*: false now hides the matching element without reflow."
+    },
+    {
+      "path": "xychart/nightly-check/render-with-show-axis-label-false.mmd",
+      "family": "xychart",
+      "phase": "P2-show-false",
+      "sha256": "f366781daf09aba8c5b4445a2cff34212782503a07b2612385fb50a83063a3a2",
+      "manifest_sha256": "f366781daf09aba8c5b4445a2cff34212782503a07b2612385fb50a83063a3a2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 axis-element suppression; show*: false now hides the matching element without reflow."
+    },
+    {
+      "path": "xychart/nightly-check/render-with-show-axis-tick-false.mmd",
+      "family": "xychart",
+      "phase": "P2-show-false",
+      "sha256": "bfec2bdeaaa7a656e37e36f3cfe94d9fe77febab39f86ba02a31f29712d69ed5",
+      "manifest_sha256": "bfec2bdeaaa7a656e37e36f3cfe94d9fe77febab39f86ba02a31f29712d69ed5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 axis-element suppression; show*: false now hides the matching element without reflow."
+    },
+    {
+      "path": "xychart/nightly-check/render-with-show-axis-title-false.mmd",
+      "family": "xychart",
+      "phase": "P2-show-false",
+      "sha256": "dba0f38198d85b55f1b91a79a0b9184eea2f816a1dc232a83a501240baa4de71",
+      "manifest_sha256": "dba0f38198d85b55f1b91a79a0b9184eea2f816a1dc232a83a501240baa4de71",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 axis-element suppression; show*: false now hides the matching element without reflow."
+    },
+    {
+      "path": "xychart/pr-check/render-with-show-axis-line-false.mmd",
+      "family": "xychart",
+      "phase": "P2-show-false",
+      "sha256": "bdc70544783c6d895c078fa0dcd05a702b44c30a106adcf73ab57d5f11f5c1cd",
+      "manifest_sha256": "bdc70544783c6d895c078fa0dcd05a702b44c30a106adcf73ab57d5f11f5c1cd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 axis-element suppression; show*: false now hides the matching element without reflow."
     }
   ]
 }

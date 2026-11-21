@@ -45,7 +45,7 @@ LEDGER = pathlib.Path("tools/mermaid/xychart-0035-cohort.json")
 
 SCHEMA = "loom_mermaid_xychart_0035_cohort/v1"
 ROOT_REL = "xychart"
-ENABLED_PHASES = ("P1-envelope",)
+ENABLED_PHASES = ("P1-envelope", "P2-show-false")
 
 EXPECTED = {
     "P1-envelope": 17,
@@ -66,16 +66,33 @@ CAPABILITY_EXCLUDED = {
         "label placement for signed bars is not implemented.",
 }
 
-REVIEW = {
-    "reviewer_agent": "agent:afdd5fdaf6f59d4dd independent P1 code review "
-                      "(fresh general-purpose agent; own source selector reproduced the "
-                      "17-row set and an independent render probe reproduced drawn 30/18)",
-    "date": "2026-11-21",
-    "verdict": "approved",
-    "note": "P1 admits the description+config envelope only; P2/P3/P4 rows and the "
-            "capability exclusions keep whole source. Reviewer dispositions: CRLF aligned "
-            "with the D236 normalization precedent, boundary set extended, signed-value "
-            "capability rows pinned.",
+# Per-phase review records. The ledger verdict is "approved" only when every
+# enabled phase carries an approved record; a newly enabled phase starts
+# pending and cannot reach the matrix until its own review lands.
+PHASE_REVIEWS = {
+    "P1-envelope": {
+        "reviewer_agent": "agent:afdd5fdaf6f59d4dd independent P1 code review "
+                          "(fresh general-purpose agent; own source selector reproduced the "
+                          "17-row set and an independent render probe reproduced drawn 30/18)",
+        "date": "2026-11-21",
+        "verdict": "approved",
+        "note": "P1 admits the description+config envelope only; later-phase rows and the "
+                "capability exclusions keep whole source. Reviewer dispositions: CRLF aligned "
+                "with the D236 normalization precedent, boundary set extended, signed-value "
+                "capability rows pinned.",
+    },
+    "P2-show-false": {
+        "reviewer_agent": "agent:a67ad4e0bf007cffd independent P2 code review "
+                          "(fresh general-purpose agent; verified the per-axis gating in both "
+                          "orientations, the no-reflow reservations and the admission closure "
+                          "line by line)",
+        "date": "2026-11-21",
+        "verdict": "approved",
+        "note": "show*: false suppresses only its own axis element. Reviewer dispositions: "
+                "per-phase review gating tightened against a silent missing record, axis-only "
+                "diff confinement and horizontal synthetic cases added, origin corner gated on "
+                "both axis lines.",
+    },
 }
 
 
@@ -220,14 +237,17 @@ def build(repo_root: pathlib.Path):
                     "narrow_40": "source",
                     "restored_240": "drawn",
                 },
-                "ledger_note": "RFC 0035 description+config envelope admission; "
-                               "the config profile is unchanged.",
+                "ledger_note": (
+                    "RFC 0035 description+config envelope admission; the config "
+                    "profile is unchanged."
+                    if phase == "P1-envelope" else
+                    "RFC 0035 axis-element suppression; show*: false now hides the "
+                    "matching element without reflow."),
             })
 
     return {
         "schema": SCHEMA,
         "rfc": 35,
-        "phase": "P1-envelope",
         "upstream": {
             "tag": manifest["upstream"]["tag"],
             "commit": manifest["upstream"]["commit"],
@@ -244,7 +264,12 @@ def build(repo_root: pathlib.Path):
                                     "signed-value rows are path-pinned capability debt",
             "width_policy": "wide_240 admission only; narrow_40 stays 'source'.",
         },
-        "review": REVIEW,
+        "review": {
+            "phases": PHASE_REVIEWS,
+            "verdict": "approved" if all(
+                phase in PHASE_REVIEWS and PHASE_REVIEWS[phase]["verdict"] == "approved"
+                for phase in ENABLED_PHASES) else "pending",
+        },
         "counts": counts,
         "excluded": excluded,
         "rows": rows,

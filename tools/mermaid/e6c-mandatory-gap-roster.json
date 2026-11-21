@@ -5,7 +5,7 @@
     "status": "reviewed",
     "date": "2026-11-02",
     "phase": "RFC 0031 E6c",
-    "note": "Every row audited against its converted reporter, report and pinned authority source: exact error-message mapping for official_matrix, frozen ids/outcomes for the ten id/name/ordinal-keyed gates, counts reconciled with strict EXPECT pins. On 2026-10-29 agent:/root/class_oracle_review independently audited removal of the 26 Class originals and corresponding six Notes rows against the Debug complete-source geometry, mutation, and matrix reports; other rows remain unchanged. Debug and Release reports and mandatory-gap verification passed. On 2026-10-29 agent:/root/class_oracle_review also independently verified the three overlapping Class481 and Endpoint29 complete-source positive gains; other gaps remain. DefaultConfig complete-source Model reviewed by agent:default_config_source_review; consumer and single-row removal reviewed by agent:default_config_consumer_review. Final dual-preset validation is recorded in the P0 checkpoint document. ER rich6 source projections reviewed by agent:er6_source_design_review; six complete-source scene, source binding, finite-domain and forged-proof tests validate the six added Models. Consumer and resource review is recorded in the ER checkpoint. Class accessibility4 source projection approved by agent:class4_source_model_review after bounded retention design approved by agent:class_accessibility_design_review. Executed tests and implementation review are recorded separately in mermaid-class4-review.md. RequirementMarkdown1 complete source projection approved by agent:requirement_markdown_source_review; consumer review and executed results in mermaid-requirement-markdown-review.md. Only its original ordinary-source-expected row is removed. Flow P0 grouped7 complete source Models independently approved in agent:flow10_source_review2; finite-domain and producer routing reviews are recorded with executed validation in mermaid-flow-p0-grouped7-review.md. Only the seven approved original flow_whole_null_unmet rows are removed; body diagnostic rows remain. P0Length1 reuses the independently approved LinkProfile3 visual294 Model/Profile under its distinct nighttime source and complete P0 Model pins. Its source-alias design is approved by agent:flow_p0_length_alias_design_review; execution and final review are recorded in mermaid-flow-p0-length-review.md. Only its original flow_whole_null_unmet row is removed. P0Strands2 exact source Models and separate deterministic physical strand design/implementation are independently reviewed. Actual source proofs retain14/3 edges and seven decisive negatives per original on charged128M scenes; resource/failure/forgery controls are recorded in mermaid-flow-p0-strands-review.md. Only these two original flow_whole_null_unmet rows are removed; body diagnostics and other gates remain unchanged.",
+    "note": "Every row audited against its converted reporter, report and pinned authority source: exact error-message mapping for official_matrix, frozen ids/outcomes for the ten id/name/ordinal-keyed gates, counts reconciled with strict EXPECT pins. On 2026-10-29 agent:/root/class_oracle_review independently audited removal of the 26 Class originals and corresponding six Notes rows against the Debug complete-source geometry, mutation, and matrix reports; other rows remain unchanged. Debug and Release reports and mandatory-gap verification passed. On 2026-10-29 agent:/root/class_oracle_review also independently verified the three overlapping Class481 and Endpoint29 complete-source positive gains; other gaps remain. DefaultConfig complete-source Model reviewed by agent:default_config_source_review; consumer and single-row removal reviewed by agent:default_config_consumer_review. Final dual-preset validation is recorded in the P0 checkpoint document. ER rich6 source projections reviewed by agent:er6_source_design_review; six complete-source scene, source binding, finite-domain and forged-proof tests validate the six added Models. Consumer and resource review is recorded in the ER checkpoint. Class accessibility4 source projection approved by agent:class4_source_model_review after bounded retention design approved by agent:class_accessibility_design_review. Executed tests and implementation review are recorded separately in mermaid-class4-review.md. RequirementMarkdown1 complete source projection approved by agent:requirement_markdown_source_review; consumer review and executed results in mermaid-requirement-markdown-review.md. Only its original ordinary-source-expected row is removed. Flow P0 grouped7 complete source Models independently approved in agent:flow10_source_review2; finite-domain and producer routing reviews are recorded with executed validation in mermaid-flow-p0-grouped7-review.md. Only the seven approved original flow_whole_null_unmet rows are removed; body diagnostic rows remain. P0Length1 reuses the independently approved LinkProfile3 visual294 Model/Profile under its distinct nighttime source and complete P0 Model pins. Its source-alias design is approved by agent:flow_p0_length_alias_design_review; execution and final review are recorded in mermaid-flow-p0-length-review.md. Only its original flow_whole_null_unmet row is removed. P0Strands2 exact source Models and separate deterministic physical strand design/implementation are independently reviewed. Actual source proofs retain14/3 edges and seven decisive negatives per original on charged128M scenes; resource/failure/forgery controls are recorded in mermaid-flow-p0-strands-review.md. Only these two original flow_whole_null_unmet rows are removed; body diagnostics and other gates remain unchanged. On 2026-11-21, owner-authorized RFC 0035 axis suppression moved five of the six partial_or_hidden_axis_profile_pending merman_xy102 rows from source_fallback to candidate_art; they stay profile-pending and uncertified, and the protected diff and re-pinned digests were independently reviewed (see docs/dev/d396-xychart-rfc0035-closure.md for the reviewer identity).",
     "class_style13": "Remove only13 source-reviewed Class285 whole-source pending rows after complete source/geometry/attributes, eight decisive negatives and independent reviews; original source coverage only, no browser/phase graduation.",
     "class_defined6": "Remove only the six independently source-reviewed Class285 defined-style pending rows after complete five-frame source/geometry/legend/attributes proof and eight decisive negatives per original. Foreign browser/CSS and phase graduation remain debt; dual regression, exact comparison and real PTY/copy are required.",
     "rebase_integration": "Independent source identity review by agent:/root/rebase_authority_review: preserve all local admitted identities and upstream independent proof suites; remove only foreign_owner_keeps_caption, repaired by the upstream caption router. The expected combined gap set is 248 rows, subject to dual-build semantic proof and roster verification."
@@ -362,7 +362,7 @@
       },
       {
         "id": "merman/2a560d9f1a4a77ccb143",
-        "observed": "source_fallback",
+        "observed": "candidate_art",
         "profile": "partial_or_hidden_axis_profile_pending"
       },
       {
@@ -372,7 +372,7 @@
       },
       {
         "id": "merman/3ed4094769d676b210bb",
-        "observed": "source_fallback",
+        "observed": "candidate_art",
         "profile": "partial_or_hidden_axis_profile_pending"
       },
       {
@@ -382,7 +382,7 @@
       },
       {
         "id": "merman/4bfa9b0b6ff611a098f1",
-        "observed": "source_fallback",
+        "observed": "candidate_art",
         "profile": "partial_or_hidden_axis_profile_pending"
       },
       {
@@ -392,7 +392,7 @@
       },
       {
         "id": "merman/804c98ab5c760b722e99",
-        "observed": "source_fallback",
+        "observed": "candidate_art",
         "profile": "partial_or_hidden_axis_profile_pending"
       },
       {
@@ -427,7 +427,7 @@
       },
       {
         "id": "merman/e38d2009076692e2096a",
-        "observed": "source_fallback",
+        "observed": "candidate_art",
         "profile": "partial_or_hidden_axis_profile_pending"
       },
       {

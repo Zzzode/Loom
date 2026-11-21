@@ -70,11 +70,11 @@ PROTECTED = [
     ("tests/fixtures/mermaid_native/er206_native_whole_source_authority.config62.v1.json",
      "76d54ecbc725e59645501f7079f9387b272172d584703f0ea72f143c83c469db", 622036),
     ("tools/mermaid/e6c-mandatory-gap-roster.json",
-     "1fe297da6adb4630a015bf33c9730fb0d9d4e6e6e09dd9df8457d4fcf38d1127", 44740),
+     "908b088f6339fed88da92d07b92ddc3a24a90881dd6a69eb829447376f655a01", 45096),
     ("tests/support/mermaid_relations_oracle.hpp",
      "ce9d3fd7d54eab66b469d630b77f0f5b7acf9f72524124c758c576fc7808c3cd", 169038),
     ("tests/support/mermaid_gap_roster.hpp",
-     "3c0135fd91ce21d6a961d10c695123ac7e1c9b89477572d9941703c52ab1a0b0", 11591),
+     "45012318fb59e6e27c1dabba02e5a2d5f920c27fd7cec0e284a2a12d917510e8", 11591),
 ]
 
 # The historical reviewed Work-ceiling exclusion. Ordinal 198 carries two debts;

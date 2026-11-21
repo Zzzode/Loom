@@ -43,9 +43,9 @@ inline constexpr std::string_view kRosterRelPath = "tools/mermaid/e6c-mandatory-
 
 // Frozen ledger pins. The verifier script parses these exact constants, so
 // there is a single source of truth for size and SHA-256.
-inline constexpr std::size_t kRosterBytes = 44740;
+inline constexpr std::size_t kRosterBytes = 45096;
 inline constexpr std::string_view kRosterSha256 =
-    "1fe297da6adb4630a015bf33c9730fb0d9d4e6e6e09dd9df8457d4fcf38d1127";
+    "908b088f6339fed88da92d07b92ddc3a24a90881dd6a69eb829447376f655a01";
 
 // Flow400CompleteSources deliberately has no roster: its pending/decoded
 // membership is determined by immutable Model authority assets and is pinned

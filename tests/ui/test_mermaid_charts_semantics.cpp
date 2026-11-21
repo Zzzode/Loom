@@ -4310,10 +4310,10 @@ TEST(MermaidCapabilityReport, MermanXY102) {
 #endif
     // RFC 0031 E6c frozen pins.
     EXPECT_EQ(visited, 102);
-    EXPECT_EQ(candidates, 85);
-    EXPECT_EQ(fallbacks, 17);
-    EXPECT_EQ(candidate_pending, 3);
-    EXPECT_EQ(source_pending, 17);
+    EXPECT_EQ(candidates, 90);
+    EXPECT_EQ(fallbacks, 12);
+    EXPECT_EQ(candidate_pending, 8);
+    EXPECT_EQ(source_pending, 12);
     EXPECT_EQ(candidate_active, 82);
     EXPECT_EQ(source_active, 0);
     EXPECT_EQ(geometry_matches, 77);

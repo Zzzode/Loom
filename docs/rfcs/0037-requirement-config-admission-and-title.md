@@ -21,8 +21,8 @@ palette table (both validated and disclosed, never painted), and the top-level
 `title:` key, which is **projected** through the shared relation-title seam
 rather than ignored. Target: exactly the **120 measured rows** whose only
 non-admitted input is those keys, proven per row by a twin gate (frame equality
-against the same source with the key removed, plus the bounded disclosure
-footer). The 24 `layout: elk` rows, the 2 namespaced `config.flowchart.*` rows
+against the same source with every admitted config leaf removed, plus the
+bounded disclosure footer). The 24 `layout: elk` rows, the 2 namespaced `config.flowchart.*` rows
 and the 2 malformed envelopes stay whole-source fallback. Family target:
 **144 drawn / 28 fallback**; global **1391 drawn / 754 fallback**.
 
@@ -190,9 +190,12 @@ relationship families and it is the strictest:
   ASCII (`0x20..0x7e`);
 - length bounded by `kWidthLimit` (240), which is exactly the paint guard
   (`mermaid_relations_core_impl.cpp:9018-9020` rejects a wider title), so
-  **accepted implies paintable** — the envelope never accepts a title the
-  renderer would then discard. `kTitleLimit` (1024) is the generic envelope
-  bound and is deliberately not used here;
+  **accepted implies width-paintable** — the envelope never accepts a title the
+  renderer would discard for width. The same guard also rejects a title whose
+  diagram would exceed `kHeightLimit - 2`; that bound depends on the diagram, so
+  an accepted title on an over-tall diagram still fails closed with the rest of
+  the layout, exactly as an untitled over-tall diagram does. `kTitleLimit`
+  (1024) is the generic envelope bound and is deliberately not used here;
 - Plain scalars **and** quoted scalars are admitted (ER parity: `er_yaml_value`
   decodes quotes and ER's own title path checks no scalar form, so `title: "X"`
   is a title there too). Folded/block scalars, tabs, control bytes and
@@ -220,27 +223,79 @@ removed`.
 
 ### 3. Reviewed cohort, twin gates and wiring
 
+- **Twin definition (one rule, two kinds).** A *config-free twin* is the same
+  source with **every admitted config leaf** removed — `look`, `theme` and the
+  F0 leaves `htmlLabels`/`logLevel`/`fontFamily` — and with an emptied
+  `config:` block dropped too. This matters for multi-key rows: the 8 P1
+  `look`+`htmlLabels` rows must not keep an F0 footer in the twin, or the
+  expected frame double-counts the footer. A *title-free twin* is
+  the same source with the `title:` line removed (any config leaves retained).
+  Expected frames are always `twin frame + the exact footer lines the original
+  source produces`, in the fixed order `logLevel`, `fontFamily`, `htmlLabels`,
+  `look`, `theme`; for a title row it is `title row + blank row + title-free
+  twin frame`.
+- **Corpus twins where they exist.** 30 of the 120 rows have a byte-equivalent
+  drawn sibling (23 P1, 7 P2). For those the twin is the corpus fixture itself
+  (the `-default` sibling, or the `-without-htmllabels-default` F0 sibling for
+  the 8 `look`+`htmlLabels` rows) and the expected frame is that fixture's
+  frame with the source's extra footer lines appended at the end of the
+  fixture's footer block (`look`/`theme` follow `htmlLabels` in the fixed
+  order). The other 90 rows
+  (84 P2, 6 P3) use the synthesized in-memory twin. Both kinds are enumerated
+  per row in the ledger as `twin.kind = "corpus" | "synthetic"`.
 - Ledger `tools/mermaid/requirement-0037-cohort.json` (schema
   `loom_mermaid_requirement_0037_cohort/v1`): one row per promoted fixture with
-  `phase`, `twin` kind (`config-free` or `title-free`), the exact expected
-  footer lines, and the measured `expected_states` (wide/narrow/restored).
-  Per-phase `review` records; a phase counts as approved only when every
-  enabled phase has an approving record — the RFC 0035 per-phase rule.
+  `phase`, the `twin` descriptor (`{"kind": "corpus", "path": …}` or
+  `{"kind": "synthetic"}`), the exact expected footer/title lines, and the
+  measured `expected_states` (wide/narrow/restored). Per-phase `review`
+  records; a phase counts as approved only when every enabled phase has an
+  approving record — the RFC 0035 per-phase rule.
 - Generator `tools/mermaid/generate_requirement_0037_cohort.py` (renderer-free,
-  `--check` reproducible): partitions the 148 fallbacks into the four classes
-  above, pins the denominators 148/120/24/2/2 and the per-phase counts 23/91/6,
-  and preserves review blocks across regeneration. It does not re-derive the
-  frozen D-204/D-395 partitions in `requirement-cohort.json` or
-  `requirement-f0-cohort.json`.
-- Gate `tests/ui/test_mermaid_requirement_0037_cohort.cpp`: per row, native
-  frame, determinism, `text`-fence non-equality, twin equality with the exact
-  footer/title composition, and the fail-closed boundary set (every non-goal
-  key and value, duplicates, namespaced subtree, folded title, empty config).
+  `--check` reproducible). It carries, not merely mentions, the 0035
+  invariants:
+  - `ENABLED_PHASES` drives emission: only enabled phases produce rows, so
+    landing P1 does not pre-book P2/P3 rows; the counts for all three phases
+    stay pinned regardless;
+  - a fixed classification **priority** `title→P3`, else `theme→P2`, else
+    `look→P1`, so a later phase cannot reclassify an earlier phase's rows (the
+    6 title rows also carry `theme`, so a theme-first rule would silently move
+    them into P2);
+  - a **per-phase path-set digest** (sorted path + source sha256 per row, one
+    digest per phase) pinned in the generator and asserted by `--check`, so an
+    earlier phase's row set cannot drift while totals stay equal;
+  - review records are **authored in the generator** and written to the ledger,
+    never read back from it, so a hand-edited ledger fails `--check`;
+  - the denominators 148/120/24/2/2 and the per-phase counts 23/91/6 are
+    hard-asserted. It does not re-derive the frozen D-204/D-395 partitions in
+    `requirement-cohort.json` or `requirement-f0-cohort.json`.
+- Gate `tests/ui/test_mermaid_requirement_0037_cohort.cpp` (registered in
+  `tests/ui/CMakeLists.txt`): per row, the anti-false-green set —
+  1. `ASSERT_TRUE(draws(twin, kWide))`: a twin that also falls back must not
+     let "both fall back equal" pass (the F0 pattern);
+  2. a **native predicate** that also rejects a frame still carrying the raw
+     `requirementDiagram`/`config:`/`description:` source signature, not just a
+     `mermaid`-vs-`text` surface difference;
+  3. `draws(source, width) == expected_states[i]` for each of
+     wide/narrow/restored, so a ledger state the render does not produce fails;
+  4. determinism (the same source rendered twice is byte-identical) and twin
+     equality with the exact footer/title composition;
+  5. the fail-closed boundary set (every non-goal key and value, duplicates,
+     namespaced subtree, folded title, empty config, malformed envelope);
+  6. frozen controls: `mandatory_gaps == 48`, `integrity_errors` empty,
+     `drawn_at_240` delta equals the phase row count,
+     `original_files_executed == 2145`, and
+     `Requirement11_native_whole_source.mandatory_remaining == 160`.
+  The gate runs against a full build of both presets; a target-only build's
+  matrix verdict is never accepted (`docs/dev/engineering-efficiency.md` rules
+  3, 5, 27, 28).
 - Matrix branch in `tests/ui/test_mermaid_official.cpp` mapping each ledger row
-  to a new reason string, following the RFC 0035 cohort-branch pattern (loader
-  plus branch overriding `expected`/`reason`, as `xychart_0035_cohort_map` does).
-  The branch reads the census **from the ledger**; `manifest.json` and the
-  `kManifestSha256` pin are never edited.
+  to a new reason string. It reads the **per-row** `expected_states` the way the
+  Journey cohort loader does (`:5637-5643`), deriving `expected`/`status` from
+  the measured wide/narrow/restored states — **not** copying the xychart
+  branch's hardcoded `{wide, "source_fallback", wide}` triple (`:10482-10485`),
+  which would leave narrow unenforced and bypass OQ-3. The branch reads the
+  census **from the ledger**; `manifest.json` and the `kManifestSha256` pin are
+  never edited.
 - Roster migrated with `tools/mermaid/fallback_attribution.py --emit` in each
   phase commit.
 - Existing negative tests that must flip, enumerated exactly (there are two,
@@ -250,15 +305,18 @@ removed`.
     `look: handDrawn` stays fallback; it draws after P1. The probe keeps
     `theme: dark`, `layout: elk`, namespaced keys and the invalid forms
     rejected, so no other assertion in it changes.
-  - **P3:** `FrontmatterAndThemeGatesStayClosed` (`:330-341`) gates four
-    frozen rows, one of which is
-    `a-diagram-with-a-title-neo-look-redux-dark-theme.mmd` — a P3 cohort row.
-    Its wide assertion flips to drawn in P3; its narrow assertion stays
-    fallback (the disclosure footer exceeds the narrow budget, the D-066 F0
-    `narrow_note` contract).
-  Both tests' comments (file header and the `FrontmatterAndThemeGatesStayClosed`
-  preamble) say "every theme/look row keeps whole-source fallback" and become
-  false; each phase's commit corrects the comment it invalidates.
+  - **P3:** `FrontmatterAndThemeGatesStayClosed` (`:330-341`) loops four frozen
+    rows asserting both widths fall back. One of them,
+    `a-diagram-with-a-title-neo-look-redux-dark-theme.mmd`, is a P3 cohort row.
+    P3 **splits it out of the loop** and asserts it drawn-wide /
+    source-fallback-narrow (the disclosure footer exceeds the narrow budget,
+    the D-066 F0 `narrow_note` contract); the loop keeps the elk row and the
+    two malformed rows as full negatives.
+  Three comments become false and each phase's commit corrects the one it
+  falsifies: the test file header (`:8-9`), the
+  `F0InertBoundaryKeepsVisualKeysClosed` preamble (`:429`, "Visual/semantic keys
+  and unsupported values stay whole-source" — `look` is admitted at P1), and
+  the `FrontmatterAndThemeGatesStayClosed` preamble (`:329-330`).
 
 ### 4. Named cross-module couplings
 
@@ -267,7 +325,7 @@ side only:
 
 | coupling | files that must change together |
 |---|---|
-| envelope event model (`title` is already parsed and stored by `parse_envelope`) | `mermaid_envelope_impl.cpp`, `mermaid_detail.cppm` |
+| envelope event model — `parse_envelope` already parses and stores `title` (`mermaid_envelope_impl.cpp:360-368`), so the accept/decode branch is added in the **requirement validator** (`mermaid_requirement_impl.cpp:264-293`), not in the generic parser | `mermaid_requirement_impl.cpp`, `mermaid_detail.cppm` |
 | `RequirementEnvelope` / `RequirementDiagram` field layout | `mermaid_detail.cppm`, `mermaid_requirement_impl.cpp` |
 | shared footer publication and title paint | `mermaid_relations_core_impl.cpp` (`RelationFamily::Requirement` notice branch, title block) |
 | census `expected`/`reason` per fixture | **`tests/fixtures/mermaid_official/manifest.json` holds the source values in `fixtures[].raw`** and the whole file is SHA-pinned by `kManifestSha256`, a pin duplicated across the protected authority headers (`tests/support/mermaid_{block58,class285,class_theme4,er107,er206,er_groupedge,flow400,er198,flow_extra7}_*.hpp`). The promotion therefore must **not** touch the manifest: `tests/ui/test_mermaid_official.cpp` gains a cohort branch (ledger-driven `expected`/`reason` override) exactly as the xychart cohort branch does |
@@ -282,9 +340,9 @@ the shared relations core; no new edges are introduced.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `look` admission | 23 rows (`look` only 15, `look`+`htmlLabels` 8) | proposed | family 24→47 drawn / 148→125 fallback; global 1271→1294 / 874→851; roster regenerated; targeted cohort + F0 tests green; dual-preset matrix byte-identical with new sha recorded |
-| P2 | `theme` admission | 91 rows (90 `look`+`theme`, 1 `classic`+`default`) | proposed | family 47→138 / 125→34; global 1294→1385 / 851→760; same gate set |
-| P3 | `title` projection | 6 rows | proposed | family 138→144 / 34→28; global 1385→1391 / 760→754; formal 1085→1205; title twin gate green; same gate set |
+| P1 | `look` admission | 23 rows (`look` only 15, `look`+`htmlLabels` 8) | proposed | family 24→47 drawn / 148→125 fallback; global 1271→1294 / 874→851; formal `drawn_at_240` 1085→1108; roster regenerated; targeted cohort + F0 tests green; release-preset matrix byte-identical with the new sha recorded |
+| P2 | `theme` admission | 91 rows (90 `look`+`theme`, 1 `classic`+`default`) | proposed | family 47→138 / 125→34; global 1294→1385 / 851→760; formal 1108→1199; same gate set |
+| P3 | `title` projection | 6 rows | proposed | family 138→144 / 34→28; global 1385→1391 / 760→754; formal 1199→1205; title twin gate green; same gate set |
 
 Closure: full debug ctest once, dual-preset byte gate, RFC `implemented`,
 closure doc, design-decisions entry, efficiency retro.
@@ -296,10 +354,19 @@ Completed at the `implementable` gate. Current answers:
 - **Correctness & tests** — new per-row twin gate plus a boundary suite; the
   gate is the inertness proof, not a golden snapshot. Known flakes
   (`ServerMain.DirectConnect*`, `E2E_Pty_Handoff*`) are pre-existing and unrelated.
-- **Build system** — no new module, no new target, no interface change beyond
-  one struct field (`RequirementEnvelope::title`) plus one field copy in an
-  already-shipped, non-exported `.cppm` partition; fan-out is the existing
-  `mermaid_detail` BMI closure.
+- **Build system** — no new module, no new target, no new import, no interface
+  change beyond one struct field (`RequirementEnvelope::title`) plus one field
+  copy in an already-shipped, non-exported `.cppm` partition. **Fan-out
+  measured**: touching `src/ui/visual/mermaid_detail.cppm` in the debug tree
+  re-schedules **509** C++ compile jobs (`ninja -C build/debug -n`) — the whole
+  `loom.ui.visual.mermaid` import closure, identical for any edit to that
+  partition. That one-time closure rebuild is the dominant cost of this RFC and
+  recurs once per phase commit (three times total); it is inherent to the
+  atomic-phase rule, not introduced by the change. **BMI PSS: N/A with reason**
+  — the edit adds one field to a non-exported partition's struct and no new
+  BMI-included code: no new inline body, no new template instantiation and no
+  new exported declaration, so the only BMI delta is the field itself. No
+  concurrency caps; no new textual third-party includes.
 - **Rollback** — each phase is one atomic commit (validator table + ledger +
   generator + gate + matrix branch + roster); reverting one phase restores the
   previous census exactly. Rollback is LIFO: every P2 row carries `look` and
@@ -379,16 +446,22 @@ edited.
   the two stale comments) and `tests/ui/test_mermaid_official.cpp` (matrix
   branch + reason string).
 - Targeted `ctest -L mermaid` per phase; full debug ctest once at closure
-  (current baseline 4614 tests); dual-preset byte-identical matrix gate at
-  closure and after each phase (record the sha).
+  (current baseline 4614 tests; expected closure total 4614 + the new file's
+  TEST count, planned 5, with no deletions — the two in-place flips change
+  assertions, not test counts). Per phase the matrix byte-gate runs on the
+  **release** preset (debug is ~9x slower; `docs/dev/engineering-efficiency.md`
+  rule 2), and the **dual-preset** byte-identical gate runs once at closure;
+  record the sha at each phase.
 - Known timing flakes are pre-existing (`ServerMain.DirectConnect*` 3-second
   TCP timeouts under load; `E2E_Pty_Handoff` deadline); re-run in isolation.
 
 ## Documentation impact
 
-- [ ] `docs/dev/d397-flowchart-family-selection.md` §6 — corrected cohort
-      measurement (120 admitted; the 2 namespaced rows excluded; title
-      projected, not ignored)
+- [ ] `docs/dev/d397-flowchart-family-selection.md` — §7 (added 2026-11-21)
+      already holds the corrected 120/23/91/6 measurement, the namespaced-row
+      exclusions and the title-projection correction. §6 stays as the historical
+      pre-probe estimate and is cross-referenced by §7 rather than rewritten
+      (append-only measurement discipline); the closure doc cites §7.
 - [ ] `docs/dev/d398-requirement-rfc0037-closure.md` — closure record
 - [ ] `docs/decisions/design-decisions.md` — requirement config admission and
       title projection entry
@@ -418,6 +491,7 @@ edited.
 | 2026-11-21 | — | — | draft | Created provisional from the D-397 §6 measurement and the corrected twin probe |
 | 2026-11-21 | r1 | `agent:design-review-r1` (independent general-purpose, own render probe + static re-derivation) | REQUEST-CHANGES | MAJOR-1 the F0 boundary flip count was wrong: a **second** negative, `FrontmatterAndThemeGatesStayClosed` (P3 row `a-diagram-with-a-title-neo-look-redux-dark-theme`), flips at wide in P3 → **accepted**: §3 now enumerates both flips, their phases, the narrow-stays-fallback state and the two stale comments. MAJOR-2 the census coupling omitted `manifest.json` / `kManifestSha256` → **accepted**: coupling row added, manifest immutability made a Non-Goal, ledger-driven cohort branch named. MINOR-3 cohort `look: handDrawn` is 23, not 24 (the roster's 24th is the excluded namespaced row) → **accepted**: RFC and D-397 §7 corrected. MINOR-4 the title grammar was described as `parse_envelope` generically and accepted titles wider than the 240-column paint guard → **accepted**: §2 now pins the ER rule (`er_yaml_value`, printable ASCII, ink, ≤ `kWidthLimit`) so accepted implies paintable, and inventories the three existing title grammars. MINOR-5 "zero requirement rows" overclaimed against the `requirement11_*` gate records → **accepted**: evidence row reworded. MINOR-6 OQ-1 conflated ignore with reject → **accepted**: restated, and the Alternatives entry rewritten. NIT-7 "two field copies" understated the change → **accepted**: §2 enumerates the three production edits. OQ-1 → project the title; OQ-2 → corpus-bounded table; OQ-3 stays implementation-time. No owner ruling required. Core measurement (120/24/2/2), per-phase split 23/91/6, inertness of `look`/`theme`, the title-paint mechanics and the phase arithmetic were independently re-verified. |
 | 2026-11-21 | r2 | same design-review agent, independent re-read of the revised file | APPROVE-TO-ACCEPT | MAJOR-1 → verified fixed (both flips in §3). MAJOR-2 → verified fixed (manifest Non-Goal + coupling row + ledger branch). MINOR-3/5/6, NIT-7 → verified fixed. Fresh pass: MINOR-A PRR "two struct fields" vs one field → **accepted**: PRR reworded; MINOR-B Testing plan still said one flip → **accepted**: both flips named with line anchors; MINOR-C "Form::Plain only" vs ER parity → **accepted**: Plain and quoted both admitted, folded/block rejected, corpus titles plain so no row impact; MINOR-D rollback overclaimed independence → **accepted**: LIFO, P1 prerequisite of P2, P1+P2 of P3; NIT-E reviewers frontmatter → **accepted**: identity recorded; NIT-F PRR Deletion singular → **accepted**: both stale comments named. Arithmetic, partition, inertness, title-paint mechanics and the ER-only titled-empty guard re-confirmed. No BLOCKER/MAJOR. Recommended promotion to accepted. |
+| 2026-11-21 | prr-r1 | `agent:prr-review-r1` (independent general-purpose, production-readiness lens; static re-derivation, no build) | REQUEST-CHANGES | MAJOR-1 the twin transform was under-defined for 99 rows (the 8 `look`+`htmlLabels` and all 91 P2 rows) → **accepted**: §3 now defines the config-free twin as stripping *every* admitted leaf, adds the corpus-twin rule for the 30 byte-equivalent rows, and drops the misleading `config-free`/`title-free` enum. MAJOR-2 the matrix branch cited the xychart cohort pattern, which hardcodes narrow as `source_fallback` → **accepted**: the branch must read per-row `expected_states` like the Journey loader (`:5637-5643`), explicitly not the hardcoded triple. MAJOR-3 the generator lacked an enabled-phase set, classification priority, per-phase digests and review ownership → **accepted**: all four pinned, with the 6 title rows' theme overlap named as the drift case. MAJOR-4 the PRR build-system row asserted fan-out without measurement and the ctest delta was unstated → **accepted**: fan-out measured at 509 compile jobs (`ninja -C build/debug -n`), BMI PSS marked N/A with reason, CMake registration and the expected closure total named. MINOR-1 the P3 loop restructure → **accepted**: split-out assertion specified. MINOR-2 anti-false-green set → **accepted**: six numbered assertions incl. `ASSERT_TRUE(draws(twin))`, a native predicate, per-width ledger equality and five frozen controls. MINOR-3 per-phase formal deltas → **accepted**: 1085→1108→1199→1205. MINOR-4 a third stale comment (`:429`) → **accepted**: all three named. MINOR-5 "accepted implies paintable" overstated → **accepted**: width-paintable, height fails closed. MINOR-6 coupling file list → **accepted**: the accept branch is in the requirement validator. NIT-1 D-397 §6 vs §7 → **accepted**: §6 kept as the historical estimate, §7 cross-referenced. NIT-2 dual-preset per phase → **accepted**: release per phase, dual-preset at closure (efficiency rule 2). Census, phase arithmetic, the 120/24/2/2 partition, D204/F0 disjointness, footer ordering and requirement11 non-interaction verified correct. |
 
 ## Implementation History
 

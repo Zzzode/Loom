@@ -1,9 +1,9 @@
 ---
 rfc: 41
 title: agentflow look and theme admission
-status: accepted
+status: implementable
 owners: "@Zzzode"
-reviewers: ["agent:a255f982730d3c06d rfc0041-design-review (r1 REQUEST-CHANGES -> r2 APPROVE-TO-ACCEPT)"]
+reviewers: ["agent:a255f982730d3c06d rfc0041-design-review (r1 REQUEST-CHANGES -> r2 APPROVE-TO-ACCEPT)", "agent:a2a24cca22d776afd rfc0041-prr (r1 APPROVE-TO-IMPLEMENT)"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -199,8 +199,10 @@ the gate validated.
   review record. Each row pins the literal `expected_footer_lines` (blank separator,
   header, theme line), `expected_states`, and its **corpus twin** —
   `twin: {kind: "corpus", path: <drawn fixture>}` — exactly like the RFC 0037/0038
-  ledgers. `NARROW_DRAW` starts from the five container-kind rows (they inherit the
-  drawn twin's 40-column draw) and is confirmed by the phase measurement.
+  ledgers. `NARROW_DRAW` is populated only from a **live 40-column render** — never
+  transcribed from the corpus twin — and the ledger's `twin` object also pins the twin's
+  `sha256` (RFC 0037's corpus-twin shape; RFC 0038/0039/0040 supply the footer and
+  `expected_states` shape).
 - Generator `tools/mermaid/generate_agentflow_0041_cohort.py`, renderer-free,
   `--check`-reproducible, with pinned literal path sets and digests, source-derivable
   counts (38 originals / 27 drawn / 9 admitted / 2 still gated), body-equivalence
@@ -221,9 +223,13 @@ the gate validated.
   `fontFamily` (rejects), a `config:` carrying only a non-visual leaf (rejects), an empty
   `config:` (rejects), and a second `config:` line both with a duplicate theme and with an
   empty second block (both reject) — all with hardcoded
-  verdicts and literal footer strings; plus the drawn-row frame-identity oracle over the
-  27 already-drawn rows (full untrimmed character surfaces, footer-marker absence,
-  line-equality native predicate).
+  verdicts and literal footer strings; a **live per-row `narrow_40` assertion** for every
+  admitted row (`EXPECT_EQ(draws(source, kNarrow), expected_states.narrow_40 == "drawn")`,
+  mirroring `test_mermaid_journeyfam_0040_cohort.cpp`), so a transcribed narrow pin cannot
+  survive; plus the drawn-row frame-identity oracle over the 27 already-drawn rows (full
+  untrimmed character surfaces, footer-marker absence, line-equality native predicate).
+  Planned TEST cases: LedgerSchemaReviewsAndPins, RowsAreInertAgainstCorpusTwins,
+  ThemeTableIsClosed, GrammarBattery, FamilyLedgerPartition, DrawnRowsKeepFrameIdentity.
 - **Existing family gate** `tests/ui/test_mermaid_agentflow_cohort.cpp` is updated in the
   same change: the `gated_count` pin 11 → 2, a new `admitted_count == 9` pin, and
   `FrontmatterGatesStayClosed` becomes an out-of-table negative battery (`theme: neo`,
@@ -262,7 +268,8 @@ Completed at the `implementable` gate. Answers:
   BMI PSS N/A (no interface change). Fan-out measured by the PRR, not asserted.
 - **Rollback** — one atomic commit containing the renderer, the new ledger and generator,
   the updated family generator/ledger, the gate, the matrix branch, the CMake
-  registrations, and the roster; one revert restores the previous census exactly.
+  registrations, and the roster; one revert **plus a rebuild and matrix re-run** restores
+  the previous census exactly (the census is measured, not committed).
 - **Observability** — no new diagnostics; session traces unaffected.
 - **Documentation** — RFC, closure doc, design-decisions entry, docs index, retro.
 - **Deletion** — the old `key != description` column-0 gate is replaced, not wrapped.
@@ -271,7 +278,7 @@ Completed at the `implementable` gate. Answers:
 
 ## Rollout and rollback
 
-One phase lands P1. Rollback is one revert. No persisted user data, no wire protocol, no
+One phase lands P1. Rollback is one revert plus a rebuild/re-measure. No persisted user data, no wire protocol, no
 CLI contract changes. The only data artifacts are regenerable ledgers and the roster.
 
 ## Drawbacks and risks
@@ -299,7 +306,8 @@ CLI contract changes. The only data artifacts are regenerable ledgers and the ro
 
 ## Testing and verification plan
 
-- New gate `tests/ui/test_mermaid_agentflow_0041_cohort.cpp` (7 gtests) registered in
+- New gate `tests/ui/test_mermaid_agentflow_0041_cohort.cpp` (six gtests as enumerated in
+  §4) registered in
   `tests/ui/CMakeLists.txt`, plus a hermetic `--check` ctest for the new generator and one
   for `generate_agentflow_cohort.py`. The existing
   `tests/ui/test_mermaid_agentflow_cohort.cpp` is updated in the same change (count pins
@@ -308,10 +316,16 @@ CLI contract changes. The only data artifacts are regenerable ledgers and the ro
   byte gate at closure; full debug ctest once at closure.
 - `fallback_attribution.py --emit` followed by `--self-test` and `--matrix`.
 - **False-green guardrails.** The matrix branch is a ledger echo; the render proof is the
-  cohort gate. A census command must run from the preset build directory and the artifact
-  sha must change, not just the exit code. A red full gate is handled per D-401 §7 —
-  fixed, or evidenced by ≥3 clean reruns plus unrelatedness; never laundered by a partial
-  rerun.
+  cohort gate. The phase edits both a production body and the byte-pinned report test, so
+  before trusting any matrix verdict the **full build must have run** (EE rule 3 — verify
+  the binary mtime; a target-only build leaves a stale-linked report) and
+  `test_mermaid_official` is rebuilt in both presets before the dual-preset sha compare
+  (rule 28). A census command runs from the preset build directory and the artifact sha
+  must change, not just the exit code. The ordering is fixed: review approved → full
+  rebuild → matrix in both presets → `--self-test` → `--matrix` → `--emit` (a matrix run
+  against a still-pending ledger truncates the report, so the roster must never be emitted
+  from it). A red full gate is handled per D-401 §7 — fixed, or evidenced by ≥3 clean
+  reruns plus unrelatedness; never laundered by a partial rerun.
 
 ## Documentation impact
 
@@ -320,6 +334,10 @@ CLI contract changes. The only data artifacts are regenerable ledgers and the ro
 - [ ] `docs/decisions/design-decisions.md` — agentflow config admission entry
 - [ ] `docs/README.md` — RFC index
 - [ ] `docs/dev/engineering-efficiency.md` — per-task retro
+- [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — the agentflow row moves to 36/2
+- [ ] `tests/fixtures/mermaid_native/direct_theme_source_audit.v1.json` — unconsumed
+      point-in-time census; annotate as superseded by RFC 0041 (it lists these 9 rows as
+      `source_fallback` with a pre-phase `matrix_sha256`)
 
 ## Open questions
 
@@ -342,6 +360,7 @@ CLI contract changes. The only data artifacts are regenerable ledgers and the ro
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-22 | — | — | draft | Created provisional from the D-406 reachability measurement |
+| 2026-11-22 | prr-r1 | independent PRR agent (production-readiness lens; graduation measurability, hidden-test enumeration, build/Work, false-green audit, rollback, string couplings, precedent consistency) | APPROVE-TO-IMPLEMENT | Graduation numbers re-derived from the live matrix (`fd852b74…`: 1462/683/0, agentflow 27/11/0, narrow 19/19, formal 1276, gaps 48, integrity 0; all 9 rows original-track `source_fallback`, zero in the protected gap roster). Build fan-out confirmed relink-only (one body unit, no BMI), and every Work formula proven byte-identical to the five sibling paths. **MAJOR**: the new gate enumeration omitted the live per-row `narrow_40` render, so a transcribed narrow pin could survive while the matrix's agentflow narrow aggregate went silently wrong → **accepted**: §4 and the testing plan now pin the live assertion (`NARROW_DRAW` from a live render, never from the twin). MINORs folded in: the full-build/mtime and both-preset-rebuild requirements (EE rules 3 and 28), the fixed emit ordering (review approved → rebuild → both matrices → `--self-test` → `--matrix` → `--emit`), the two stale census documents added to the documentation-impact list, and the expected `ctest -L mermaid -N` denominator delta stated (+9: six gtests + three hermetic `--check` tests; reconciled at closure). NITs: corpus-twin schema re-cited to RFC 0037 with `twin.sha256` pinned; the "7 gtests" count replaced by six enumerated TEST names; rollback restated as "one revert + rebuild". |
 | 2026-11-22 | r2 | same design-review agent, re-read against the revised text and an executable model of both gates | APPROVE-TO-ACCEPT | Both new decision points verified against a run of today's gate and the revised gate over all 38 fixtures: indented lines outside a config block are byte-identical in both directions (payload `theme:` and post-`description` indent-4 draw; post-`title` shapes reject on the column-0 key itself), and the one-leaf rule introduces no narrowing because no currently-accepted frontmatter has a column-0 `config:` at all. Four MINORs and three NITs folded in before the gate: a second `config:` line now rejects outright (the cumulative wording admitted `theme` + an empty second block — an over-widening), the testable section names the corpus twin, venn/ishikawa mechanism corrected to "extend the existing gate", the narrow_40 prediction softened to "predicted, measured at the phase" because a footer can flip a whole-surface 40-column predicate, and three wording/ambiguity fixes. Gate to `accepted` passed. |
 | 2026-11-22 | r1 | independent design-review agent (own re-derivation; read the renderer, generators, ledgers, roster, gap roster and matrix) | REQUEST-CHANGES | Every partition and endpoint re-derived as correct (38 = 27 + 9 + 2; seven values; 36/2; 1471/674; 1285; gaps 48; integrity 0; roster 674 with matched 242 / drawn 160 / fallback 82). **BLOCKER**: the pre-existing `tests/ui/test_mermaid_agentflow_cohort.cpp` is not in the change set and its `gated_count == 11` pin plus `FrontmatterGatesStayClosed` negatives (three admitted rows and the synthetic `theme: dark` probe) would go red → **accepted**: named in §4 and the testing plan, with the pin deltas and the replaced battery spelled out. **MAJOR-1**: the "strict widening" claim was false — today all indented lines are skipped, so a description-payload `theme:` line and an indent-4 visual key are *accepted* today and would have been narrowed → **accepted**: the new interpretation is scoped to the config block only; indented lines elsewhere stay ignored (pinned as a probe). **MAJOR-2**: the rule was fail-open for a config carrying an admitted leaf plus other leaves (`look`/`handDrawnSeed` silently dropped) → **accepted**: a config block must carry exactly one admitted leaf; `theme+look` / `theme+seed` / `theme+fontFamily` pin rejection. **MAJOR-3**: "no drawn row is body-equivalent" was false — all 9 bodies are byte-identical to two drawn fixtures (5 → `10-every-container-kind`, 4 → `15-support-triage`) → **accepted**: corpus twins take precedence (`twin.kind = "corpus"`), a stronger oracle. **MINOR**: pie already has `pie_config_frontmatter` (mechanism cell corrected); ledger field deltas spelled out (`native_draw_count` stays 27, new `admitted_count: 9`, `gated_count: 2`); narrow_40 prediction stated (24/14) instead of "empty unless measured"; roster sufficiency numbers written in-text. **NIT**: "substring gate" reworded; `test_mermaid_official.cpp` named; `theme : dark`, second config block and colon-less nested lines pinned. |
 
@@ -350,4 +369,4 @@ CLI contract changes. The only data artifacts are regenerable ledgers and the ro
 | Date | Phase | Change | Commit |
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | — |
-| 2026-11-22 | — | Accepted after design review r2 | — |
+| 2026-11-22 | — | Accepted after design review r2; implementable after PRR r1 | — |

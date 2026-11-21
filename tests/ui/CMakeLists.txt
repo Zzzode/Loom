@@ -1014,6 +1014,13 @@ gtest_discover_tests(test_mermaid_requirement_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 
+add_executable(test_mermaid_requirement_0037_cohort test_mermaid_requirement_0037_cohort.cpp)
+target_link_libraries(test_mermaid_requirement_0037_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_requirement_0037_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
 add_executable(test_mermaid_agentflow_cohort test_mermaid_agentflow_cohort.cpp)
 target_link_libraries(test_mermaid_agentflow_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)

@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 874,
+  "total_fallback": 851,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -41,7 +41,7 @@
     "icon_font_glyphs": 29,
     "linkstyle_directive": 12,
     "look_classic_other": 9,
-    "look_handdrawn": 70,
+    "look_handdrawn": 47,
     "look_neo": 160,
     "multiline_label": 7,
     "securitylevel_directive": 34,
@@ -97,8 +97,8 @@
   "predicate_sufficiency": {
     "classdef_styling": {
       "originals_matching_predicate": 147,
-      "drawn_among_matches": 23,
-      "fallback_among_matches": 124,
+      "drawn_among_matches": 29,
+      "fallback_among_matches": 118,
       "sufficient_blocker": false
     },
     "click_interactive_callback": {
@@ -133,8 +133,8 @@
     },
     "htmllabels_false": {
       "originals_matching_predicate": 220,
-      "drawn_among_matches": 105,
-      "fallback_among_matches": 115,
+      "drawn_among_matches": 113,
+      "fallback_among_matches": 107,
       "sufficient_blocker": false
     },
     "icon_font_glyphs": {
@@ -157,8 +157,8 @@
     },
     "look_handdrawn": {
       "originals_matching_predicate": 206,
-      "drawn_among_matches": 98,
-      "fallback_among_matches": 108,
+      "drawn_among_matches": 121,
+      "fallback_among_matches": 85,
       "sufficient_blocker": false
     },
     "look_neo": {
@@ -906,30 +906,7 @@
       "flowchart/nightly-check/handdrawn/should-style-nodes-via-a-class.mmd",
       "flowchart/nightly-check/handdrawn/testing-the-label-width-in-percy.mmd",
       "ishikawa/pr-check/6-should-render-with-handdrawn-look.mmd",
-      "requirement/nightly-check/a-not-so-simple-requirement-diagram-handdrawn-look.mmd",
-      "requirement/nightly-check/a-not-so-simple-requirement-diagram-without-htmllabels-handdrawn-look.mmd",
-      "requirement/nightly-check/a-requirement-diagram-with-bt-direction-handdrawn-look.mmd",
-      "requirement/nightly-check/a-requirement-diagram-with-empty-information-handdrawn-look.mmd",
-      "requirement/nightly-check/a-requirement-diagram-with-lr-direction-handdrawn-look.mmd",
-      "requirement/nightly-check/a-requirement-diagram-with-rl-direction-handdrawn-look.mmd",
-      "requirement/nightly-check/a-requirement-diagram-with-tb-direction-handdrawn-look.mmd",
-      "requirement/nightly-check/a-simple-requirement-diagram-handdrawn-look.mmd",
-      "requirement/nightly-check/a-simple-requirement-diagram-without-htmllabels-handdrawn-look.mmd",
       "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-and-without-information-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-without-htmllabels-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-markdown-text-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-markdown-text-without-htmllabels-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-quoted-text-for-spaces-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-without-htmllabels-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-without-htmllabels-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-without-htmllabels-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-handdrawn-look.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-without-htmllabels-handdrawn-look.mmd",
       "state-diagram-v2/nightly-check/concurrency-composite-containers-handdrawn-look-redux-color-theme.mmd",
       "state-diagram-v2/nightly-check/concurrency-composite-containers-handdrawn-look-redux-dark-color-theme.mmd",
       "state-diagram-v2/nightly-check/nested-composite-containers-handdrawn-look-redux-color-theme.mmd",

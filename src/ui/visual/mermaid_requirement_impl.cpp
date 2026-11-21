@@ -255,12 +255,14 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
     const auto envelope = detail::parse_envelope(source, work);
     if (!envelope || !envelope->has_frontmatter || !envelope->description) return {};
     // D-066 F0: a description may coexist with a config subtree that carries
-    // only non-terminal (inert) leaves. Any visual/semantic key keeps the
-    // whole source on fallback; an empty config block stays rejected.
+    // only non-terminal (inert) leaves. RFC 0037 P1 adds the closed `look`
+    // table (validated and disclosed, never painted). Any other visual or
+    // semantic key keeps the whole source on fallback; an empty config block
+    // stays rejected.
     bool config_seen = false;
-    enum : unsigned { Log = 1u, Font = 2u, Html = 4u };
+    enum : unsigned { Log = 1u, Font = 2u, Html = 4u, Look = 8u };
     unsigned fields = 0u;
-    std::string log_value, html_value;
+    std::string log_value, html_value, look_value;
     for (const auto& event : envelope->events) {
         if (event.blank || event.comment) continue;
         if (event.top_level) {
@@ -287,6 +289,13 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
         } else if (event.path == "htmlLabels" && event.indent == 2) {
             if (!mark(Html) || (text != "false" && text != "true")) return {};
             html_value = std::move(text);
+        } else if (event.path == "look" && event.indent == 2) {
+            // RFC 0037 P1: the three upstream looks are admitted and disclosed
+            // only. The terminal never projects Mermaid's SVG stroke style, so
+            // the frame must be byte-identical to the config-free twin's.
+            if (!mark(Look) || (text != "classic" && text != "neo" && text != "handDrawn"))
+                return {};
+            look_value = std::move(text);
         } else {
             return {};
         }
@@ -309,6 +318,9 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
             return {};
         if ((fields & Html) &&
             !push("config.htmlLabels=" + html_value + " -> native text labels; not applied"))
+            return {};
+        if ((fields & Look) &&
+            !push("config.look=" + look_value + " -> source node style; not applied"))
             return {};
     }
     const auto& description = *envelope->description;

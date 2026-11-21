@@ -1,0 +1,1029 @@
+{
+  "schema": "loom_mermaid_requirement_0037_cohort/v1",
+  "rfc": 37,
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "requirement fallback row whose frontmatter is a description envelope whose config subtree carries only the F0 leaves plus the admitted look (P1), theme (P2) and top-level title (P3)",
+    "roots": [
+      "requirement"
+    ],
+    "phase_partition": "renderer-free classification with pinned per-phase denominators; only ENABLED_PHASES is emitted",
+    "classification_priority": "title -> P3, else theme -> P2, else look -> P1",
+    "enabled_phases": [
+      "P1-look"
+    ],
+    "phase_digests": {
+      "P1-look": "86b3c00211c5d84da3344235f8580555d102ccd256f8c01bd4cc5e0471a94ab5",
+      "P2-theme": "7aa1dc5b3dc81105227882699b94f3158f528116e9f7ad5a8497438e9d5c8842",
+      "P3-title": "154086e874f2b27dd9972db91654f7fbad78a20b51209669aee6ed631a0fb8ea"
+    },
+    "exclusions": "layout: elk (24), namespaced config.flowchart.* (2) and malformed envelopes (2) stay whole-source fallback",
+    "width_policy": "wide_240 admission only; narrow_40 stays 'source'."
+  },
+  "review": {
+    "phases": {
+      "P1-look": {
+        "reviewer_agent": "agent:ab5e96a11461da018 rfc0037-p1-final-review (independent adversarial code review; r1 REQUEST-CHANGES -> r2/r3 APPROVE; verified scope, the closed look table, generator --check, the 23-row corpus-twin gate, F0 footer byte-identity and the official-matrix pending-refusal)",
+        "date": "2026-11-21",
+        "verdict": "approved",
+        "note": "P1 admits config.look only; theme/title rows keep whole source. Reviewer dispositions: the RFC disclosure example was aligned to the implemented string, unbalanced-quote/empty-config/title negatives were added, the synthetic-twin composition was deferred to P2, and the title negatives were made well-formed up to the single violated rule."
+      }
+    },
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 23,
+    "predicted_draw": 23,
+    "by_phase": {
+      "P1-look": 23
+    }
+  },
+  "excluded": [
+    {
+      "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-without-htmllabels-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-without-htmllabels-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-bt-direction-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-bt-direction-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-empty-information-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-empty-information-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-lr-direction-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-lr-direction-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-rl-direction-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-rl-direction-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-tb-direction-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-tb-direction-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-without-htmllabels-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-without-htmllabels-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-default.mmd",
+      "class": "namespaced config.flowchart.*",
+      "reason": "namespaced config.flowchart.*"
+    },
+    {
+      "path": "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-handdrawn-look.mmd",
+      "class": "namespaced config.flowchart.*",
+      "reason": "namespaced config.flowchart.*"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-and-without-information-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-and-without-information-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-without-htmllabels-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-without-htmllabels-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-without-htmllabels-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-without-htmllabels-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-quoted-text-for-spaces-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-quoted-text-for-spaces-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-without-htmllabels-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-without-htmllabels-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-without-htmllabels-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-without-htmllabels-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-without-htmllabels-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-without-htmllabels-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-without-htmllabels-default.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-without-htmllabels-elk-layout.mmd",
+      "class": "layout: elk",
+      "reason": "layout: elk"
+    },
+    {
+      "path": "requirement/pr-check/sample.mmd",
+      "class": "already drawn (no admitted key)",
+      "reason": "no admitted key"
+    },
+    {
+      "path": "requirement/visual-check/with-a-theme-default.mmd",
+      "class": "malformed envelope",
+      "reason": "malformed envelope: no column-0 opening fence"
+    },
+    {
+      "path": "requirement/visual-check/with-a-title-default.mmd",
+      "class": "malformed envelope",
+      "reason": "malformed envelope: no column-0 closing fence"
+    }
+  ],
+  "rows": [
+    {
+      "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "7248ea5268eb0c35d040d9ba67af016b9bf5cff6d055953f6e0430fd70e8cf53",
+      "manifest_sha256": "7248ea5268eb0c35d040d9ba67af016b9bf5cff6d055953f6e0430fd70e8cf53",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-default.mmd",
+        "sha256": "0d663c6f705c243b7938a610b414942ca159053a8ef3e4dd0338b5cd3e81528e"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-without-htmllabels-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "498df5c589bfb0d16007b800f99cf6b99ebc761ff80c9723248e7203c0c81aac",
+      "manifest_sha256": "498df5c589bfb0d16007b800f99cf6b99ebc761ff80c9723248e7203c0c81aac",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-without-htmllabels-default.mmd",
+        "sha256": "7de4d8c4ac502c20b5579a59a96c60fc35883bac2ae59114f66eb764d826f604"
+      },
+      "expected_footer_lines": [
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-bt-direction-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "a84daa4327d03e98d783bd8b028762a20c3144fd0764a41f29aa6b8263c87b1b",
+      "manifest_sha256": "a84daa4327d03e98d783bd8b028762a20c3144fd0764a41f29aa6b8263c87b1b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-requirement-diagram-with-bt-direction-default.mmd",
+        "sha256": "4c5bd8f6e4d37eb38b652b44910fbcd19d341947439b5198dce072d98dba7062"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-empty-information-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "8a39413a5c151981e7985229655265c6ed2ef8fe840de4ff76107ef392f4b81b",
+      "manifest_sha256": "8a39413a5c151981e7985229655265c6ed2ef8fe840de4ff76107ef392f4b81b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-requirement-diagram-with-empty-information-default.mmd",
+        "sha256": "29e1dbfc28307c32d863b8f87912d6009ed98a313a1fc19eb0fa2449dadc8321"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-lr-direction-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "91a9846134291cdeb37757c89bf07206e17b7d3d290ea5cd1a17e7b580e57d2a",
+      "manifest_sha256": "91a9846134291cdeb37757c89bf07206e17b7d3d290ea5cd1a17e7b580e57d2a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-requirement-diagram-with-lr-direction-default.mmd",
+        "sha256": "f950ce72b3330c7d431c25159856576c6203f01cd7ea74f84ab37d6b681f8cd3"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-rl-direction-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "fb02117944bb4abfd1126f2b9956e111858b9a0ae79cc545be5922667fbc0c45",
+      "manifest_sha256": "fb02117944bb4abfd1126f2b9956e111858b9a0ae79cc545be5922667fbc0c45",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-requirement-diagram-with-rl-direction-default.mmd",
+        "sha256": "c80dcf6db0a78fd625b0518119ba53558fde7542866c72febebfdea924b29740"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-tb-direction-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "f582aa4d2f26323c8968f0602b5a547360014bdbff49fa115c05ed0d2c70bd8a",
+      "manifest_sha256": "f582aa4d2f26323c8968f0602b5a547360014bdbff49fa115c05ed0d2c70bd8a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-requirement-diagram-with-tb-direction-default.mmd",
+        "sha256": "2c597fd583728204b1454c54f9645449c639e533b0c425085933360a0a86ecc6"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "0dd7e884c673024abdc608bffcaf66ad110035e2b61504bbf8418d387599d362",
+      "manifest_sha256": "0dd7e884c673024abdc608bffcaf66ad110035e2b61504bbf8418d387599d362",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+        "sha256": "33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-without-htmllabels-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "69f8ea0a4c5f9a4b8c7f84e9a8fd2be128d83839b9fa3053f946c0f0726292b7",
+      "manifest_sha256": "69f8ea0a4c5f9a4b8c7f84e9a8fd2be128d83839b9fa3053f946c0f0726292b7",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/a-simple-requirement-diagram-without-htmllabels-default.mmd",
+        "sha256": "70931911f0405d53f7b911e3fe20cdb283d396c2d220e69dcdc463c195a63e02"
+      },
+      "expected_footer_lines": [
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-and-without-information-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "b953f5c5e7d33161c459bed086e29f75fcdad9b08a89dc3ed129707be9f59677",
+      "manifest_sha256": "b953f5c5e7d33161c459bed086e29f75fcdad9b08a89dc3ed129707be9f59677",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-and-without-information-default.mmd",
+        "sha256": "de9241221c9e39174077a3ae6cd94f8b90e06efeb41388eed27ae5b6b0affd73"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "7226eb88bb7b5db19587c8f6ee58dd501dd3223187a5e1916a021946c90bf1af",
+      "manifest_sha256": "7226eb88bb7b5db19587c8f6ee58dd501dd3223187a5e1916a021946c90bf1af",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-default.mmd",
+        "sha256": "f1a7236f3f3ac0e6bf621046f1cced10c65535bdb7d265226999888a3278136c"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-without-htmllabels-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "5a0117c1baa819ab566ad20cdb0116c7bebce7e825f11562a9b0252b552653ad",
+      "manifest_sha256": "5a0117c1baa819ab566ad20cdb0116c7bebce7e825f11562a9b0252b552653ad",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-without-htmllabels-default.mmd",
+        "sha256": "0f79cb301ffa67d1ef97856850972ee65fb89f9cd36e48dbbf98be0d7c4ce9b9"
+      },
+      "expected_footer_lines": [
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "282078b973556ece87e9338ead1d54d1f9ef1f68c80feae1666f29d2cdfd14fc",
+      "manifest_sha256": "282078b973556ece87e9338ead1d54d1f9ef1f68c80feae1666f29d2cdfd14fc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd",
+        "sha256": "f6191d86b05c8b654c0ecb9de0fc7744d0e00b8f0a9fe681981e8f2d4f52d9c8"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-without-htmllabels-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "90f9bb59db6965af170f139c450fb2501391eea58e2e6a07ec2fa7ba6cc05f81",
+      "manifest_sha256": "90f9bb59db6965af170f139c450fb2501391eea58e2e6a07ec2fa7ba6cc05f81",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-without-htmllabels-default.mmd",
+        "sha256": "348ea1af88a0d46dc71dc0bc919098fe47f1e857917cc01ba95e3c03b8345c8a"
+      },
+      "expected_footer_lines": [
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-quoted-text-for-spaces-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "ae97722824f44191006efbc706ad517ae689ad22b6c99740a376a39e0a6c05ce",
+      "manifest_sha256": "ae97722824f44191006efbc706ad517ae689ad22b6c99740a376a39e0a6c05ce",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-quoted-text-for-spaces-default.mmd",
+        "sha256": "1fbeae16c5c88aacc7dca198913f9e0278ef876c123274b6cb286035eb74d8b5"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "2567888394fed236bfac970f282d9459da8ae1c498a04255c1cde993ea24a18c",
+      "manifest_sha256": "2567888394fed236bfac970f282d9459da8ae1c498a04255c1cde993ea24a18c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-default.mmd",
+        "sha256": "5f427a6fc1446482f144d9d50c18b7ab4b772509fb5ce60376e1c0c14d2b32e8"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-without-htmllabels-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "cdcd6c8307407a22a0e572fc570dcb871bf0b1ac31993c91d89ccdea864e09d2",
+      "manifest_sha256": "cdcd6c8307407a22a0e572fc570dcb871bf0b1ac31993c91d89ccdea864e09d2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-without-htmllabels-default.mmd",
+        "sha256": "ce8efef8eebb0aa282a629c0e735714ceed056ba77c677262ebe4ffe115bb0bc"
+      },
+      "expected_footer_lines": [
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "1a60500337b8176a3a780c7dde3f2e785cdc8dfda3c4d346af0d9266124f012c",
+      "manifest_sha256": "1a60500337b8176a3a780c7dde3f2e785cdc8dfda3c4d346af0d9266124f012c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-default.mmd",
+        "sha256": "820897c61fa254dba3aacf0c911d29d12868fa2a049ea774040e0a53a95dd6dd"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-without-htmllabels-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "daea2dba50ff70b2ea8452a77e546e954023398bd714093a80b8d487cad04b07",
+      "manifest_sha256": "daea2dba50ff70b2ea8452a77e546e954023398bd714093a80b8d487cad04b07",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-without-htmllabels-default.mmd",
+        "sha256": "adf92c0cae53e92896b7551b6d79864d328e1771db590633cce8b66f3346d5a0"
+      },
+      "expected_footer_lines": [
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "f7c684929edf2d178451000c0dbb5f41c42602cd0e5eb570e8f67bcd61a9a9ce",
+      "manifest_sha256": "f7c684929edf2d178451000c0dbb5f41c42602cd0e5eb570e8f67bcd61a9a9ce",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-default.mmd",
+        "sha256": "4dac25a71106ec55a1e13b4eac8e592d4d3e295bd425c96dfc12249d29a0e305"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-without-htmllabels-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "cc40bf4bf02eaaba27a4318d853bd43988b9eb4cad9aa44587b8d65f10f38bbf",
+      "manifest_sha256": "cc40bf4bf02eaaba27a4318d853bd43988b9eb4cad9aa44587b8d65f10f38bbf",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-without-htmllabels-default.mmd",
+        "sha256": "510efb9e33dab0f96672e7dd60253558698e304384b8e444b33b9b37f9f89eef"
+      },
+      "expected_footer_lines": [
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "a897d4ce3caaca1042ba9bb79dbd80241827fa017f6e00953f4f893940a2e345",
+      "manifest_sha256": "a897d4ce3caaca1042ba9bb79dbd80241827fa017f6e00953f4f893940a2e345",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-default.mmd",
+        "sha256": "6debb8435dfea933156117469e0716ab82eb2fbe5d6dab2af25647142e4fc262"
+      },
+      "expected_footer_lines": [
+        "",
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-without-htmllabels-handdrawn-look.mmd",
+      "family": "requirement",
+      "phase": "P1-look",
+      "sha256": "802447ae634e3eb2c7d496265e238b827db3655a438b9b185c7bb8ecf82f6662",
+      "manifest_sha256": "802447ae634e3eb2c7d496265e238b827db3655a438b9b185c7bb8ecf82f6662",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "corpus",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-without-htmllabels-default.mmd",
+        "sha256": "bc43bcc1865013887d1f8402ca3b244e0a218b9d68ea0d42fcd9b61205579b41"
+      },
+      "expected_footer_lines": [
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0037 P1 config.look admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    }
+  ]
+}

@@ -178,7 +178,7 @@ identical): `logLevel`, `fontFamily`, `htmlLabels`, then `look`, then `theme`:
 
 ```
 Requirement native projection v1
-config.look=neo -> terminal glyph style is Loom-owned; not applied
+config.look=neo -> source node style; not applied
 config.theme=redux-color -> colour palette; not applied
 ```
 
@@ -280,9 +280,14 @@ removed`.
     earlier phase's row set cannot drift while totals stay equal;
   - review records are **authored in the generator** and written to the ledger,
     never read back from it, so a hand-edited ledger fails `--check`;
-  - the denominators 148/120/24/2/2 and the per-phase counts 23/91/6 are
-    hard-asserted. It does not re-derive the frozen D-204/D-395 partitions in
-    `requirement-cohort.json` or `requirement-f0-cohort.json`.
+  - the population is the **whole 172-original requirement family, classified
+    by source shape from the filesystem** — not the derived fallback roster,
+    which shrinks as phases promote rows — so the pins stay stable across
+    phases: 172 = 23 P1 + 91 P2 + 6 P3 + 24 `layout: elk` + 2 namespaced +
+    2 malformed + 24 already drawn (no admitted key). Those denominators and
+    the per-phase counts 23/91/6 are hard-asserted. The generator does not
+    re-derive the frozen D-204/D-395 partitions in `requirement-cohort.json`
+    or `requirement-f0-cohort.json`.
 - Gate `tests/ui/test_mermaid_requirement_0037_cohort.cpp` (registered in
   `tests/ui/CMakeLists.txt`): per row, the anti-false-green set —
   1. `ASSERT_TRUE(draws(twin, kWide))`: a twin that also falls back must not
@@ -355,7 +360,7 @@ the shared relations core; no new edges are introduced.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `look` admission | 23 rows (`look` only 15, `look`+`htmlLabels` 8) | proposed | family 24→47 drawn / 148→125 fallback; global 1271→1294 / 874→851; formal `drawn_at_240` 1085→1108; roster regenerated; targeted cohort + F0 tests green; release-preset matrix run with the new sha recorded (the dual-preset byte-identical gate runs at closure) |
+| P1 | `look` admission | 23 rows (`look` only 15, `look`+`htmlLabels` 8) | **done** | **Measured 2026-11-21**: family 24→**47** drawn / 148→**125** fallback; global 1271→**1294** / 874→**851**; formal `drawn_at_240` 1085→**1108**; gaps 48, integrity 0, `Requirement11.mandatory_remaining` 160 unchanged; roster `--emit` 874→851; debug and release matrix byte-identical at sha `36384e6c`; cohort gate 4/4, F0 suite 10/10, official matrix green |
 | P2 | `theme` admission | 91 rows (90 `look`+`theme`, 1 `classic`+`default`) | proposed | family 47→138 / 125→34; global 1294→1385 / 851→760; formal 1108→1199; same gate set |
 | P3 | `title` projection | 6 rows | proposed | family 138→144 / 34→28; global 1385→1391 / 760→754; formal 1199→1205; title twin gate green; same gate set |
 
@@ -479,8 +484,9 @@ edited.
   `tests/ui/test_mermaid_official.cpp` (matrix branch + reason string).
 - Targeted `ctest -L mermaid` per phase; full debug ctest once at closure
   (current baseline 4614 tests; expected closure total 4614 + the new file's
-  TEST count, planned 5, with no deletions — the two in-place flips change
-  assertions, not test counts). Per phase the matrix byte-gate runs on the
+  TEST count, planned 4, with no deletions — the two in-place flips change
+  assertions, not test counts). The generator's `--check` is part of every
+  phase's verification, not only closure. Per phase the matrix byte-gate runs on the
   **release** preset (debug is ~9x slower; `docs/dev/engineering-efficiency.md`
   rule 2), and the **dual-preset** byte-identical gate runs once at closure;
   record the sha at each phase.
@@ -532,3 +538,4 @@ edited.
 | Date | Phase | Change | Commit |
 |---|---|---|---|
 | 2026-11-21 | — | Draft created (provisional), no code | — |
+| 2026-11-21 | P1 | `look` admission: closed `classic`/`neo`/`handDrawn` table in the requirement envelope with its disclosure line; ledger + generator (filesystem population, per-phase digests, per-phase review records) + 23-row corpus-twin gate + official-matrix cohort branch; F0 boundary flip; 23 rows promoted, family 47/125, global 1294/851, formal 1108, dual-preset sha `36384e6c`. Reviewed by `agent:ab5e96a11461da018` (r1 REQUEST-CHANGES → final APPROVE) | — |

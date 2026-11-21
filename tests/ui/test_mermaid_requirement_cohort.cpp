@@ -4,9 +4,12 @@
 // originals whose bodies use classDef/class/style/::: statements render
 // natively through the shared ClassDirectStyles seam. The D-204 counts are a
 // frozen snapshot: D-066 F0 (D-395) additionally admits eight inert-config
-// rows governed by requirement-f0-cohort.json, so the live partition is
-// 172 total / 24 native / 148 gated; every theme/look/visual-config row keeps
-// its whole-source fallback.
+// rows governed by requirement-f0-cohort.json, so the D-204+ F0 partition is
+// 172 total / 24 native / 148 gated. RFC 0037 then admits the config.look
+// table (P1), so a `look` row now draws; every unadmitted key (theme before
+// P2, title before P3, namespaced subtrees, layout) still keeps its
+// whole-source fallback. The live counts are asserted by
+// test_mermaid_requirement_0037_cohort.cpp and the official matrix.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -426,9 +429,12 @@ TEST(MermaidRequirementCohort, F0InertBoundaryKeepsVisualKeysClosed) {
     EXPECT_TRUE(draws(with("  fontFamily: courier\n"), kWide));
     // A namespaced flowchart.* key is outside this family whitelist.
     EXPECT_FALSE(draws(with("  flowchart:\n    htmlLabels: false\n"), kWide));
-    // Visual/semantic keys and unsupported values stay whole-source.
+    // Visual/semantic keys and unsupported values stay whole-source. RFC 0037
+    // P1 admits the closed look table, so `look: handDrawn` now draws with its
+    // disclosure footer; `theme: dark` is outside the closed palette table and
+    // stays rejected in every phase.
     EXPECT_FALSE(draws(with("  theme: dark\n"), kWide));
-    EXPECT_FALSE(draws(with("  look: handDrawn\n"), kWide));
+    EXPECT_TRUE(draws(with("  look: handDrawn\n"), kWide));
     EXPECT_FALSE(draws(with("  layout: elk\n"), kWide));
     EXPECT_FALSE(draws(with("  securityLevel: strict\n"), kWide));
     EXPECT_FALSE(draws(with("  flowchart:\n    curve: linear\n"), kWide));

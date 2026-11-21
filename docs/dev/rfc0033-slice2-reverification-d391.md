@@ -11,7 +11,7 @@ RFC 0033 的唯一在册问题——六个 whole-null ER group-edge 整源如何
 | 项 | 状态 | 落地 commit / 证据 |
 |---|---|---|
 | Slice 1 解析器准入 + §7.0 全帧 oracle | 已落地 | `426fcb58` |
-| Slice 2 六阶段（proposal、双 support header、verifier、matrix 接线、smoke、T1 转正、收口矩阵） | 已落地，HEAD `ee417aac` | `docs/rfcs/0033-slice2-closure.md`（收口文档 `fc642506`） |
+| Slice 2 六阶段（proposal、双 support header、verifier、matrix 接线、smoke、T1 转正、收口矩阵） | 已落地，HEAD `ee417aac` | `docs/rfcs/tracking/0033-slice2-closure.md`（收口文档 `fc642506`） |
 | 评审 NIT-1：两个转正 literal 缺直接 seam 对等断言 | **已落地** | `62580e0c`（2026-11-18，test-only，+81 行）：新增 `MermaidErSubgraphSourceProfile.WholeSceneSeamDirectlyMatchesAllSixteenLiterals`，对全部 16 个 literal 直接钉住 `er_whole_scene_json_for_testing` 输出（7 positive 规范化 canonical 对等、9 closed 必须 nullopt） |
 | 评审 NIT-2：报告计数硬编码（7+5+4=16） | **已落地** | `1e61d60a`（2026-11-18，test-only）：`er_subgraph_profile_count()` 从 `kErSubgraphLiterals` 表派生三个 profile 计数，附 partition `static_assert` |
 | §8.2 候选 ordinal 198（handDrawn Work 上限行） | 已由独立 RFC 闭环 | RFC 0034 全四阶段完成（本仓库 HEAD 序列内，普查 ordinal 198 已 drawn） |
@@ -21,7 +21,7 @@ NIT-1/NIT-2 均按收口文档 §8.3 指定路径执行：普通测试维护、�
 
 ### Slice 3 / 4 不存在的复核
 
-`docs/rfcs/0033-slice2-closure.md` §8.1 的结论今日仍然成立：实现规格标题虽含 “Slice 2/3/4”，但正文是单个六阶段实现；父 RFC（`0033-er-group-edge-owned-proof.md`）中 “slice” 仅指 witness 字节跨度（`source_slice_sha256`），从非工作包划分；全树 `git grep` 无任何 slice 3/4 的目标、边界或前置定义。没有可“开工”的对象。
+`docs/rfcs/tracking/0033-slice2-closure.md` §8.1 的结论今日仍然成立：实现规格标题虽含 “Slice 2/3/4”，但正文是单个六阶段实现；父 RFC（`0033-er-group-edge-owned-proof.md`）中 “slice” 仅指 witness 字节跨度（`source_slice_sha256`），从非工作包划分；全树 `git grep` 无任何 slice 3/4 的目标、边界或前置定义。没有可“开工”的对象。
 
 ## 3. 今日复验证据（针对性门，未放宽任何断言）
 

@@ -2,14 +2,14 @@
 
 Status: **CLOSED — all six phases landed and measured.** This document is the
 durable, in-repository record required by slice-2 implementation spec §4.2
-(`docs/rfcs/0033-slice2-implementation.md`). It captures the evidence that
+(`docs/rfcs/tracking/0033-slice2-implementation.md`). It captures the evidence that
 previously existed only in the implementing session, so the result remains
 auditable after that session is gone.
 
 Document kind: a numbered companion record of RFC 0033, not a standalone RFC
 proposal — it deliberately shares the `0033-` filename prefix with the parent
 RFC and the implementation spec and follows the same no-frontmatter support-
-document convention as `0033-slice2-implementation.md`. The repository
+document convention as `tracking/0033-slice2-implementation.md`. The repository
 `rfc_lint.py` assumes one file per RFC number and therefore reports a
 duplicate-number finding for this multi-document RFC; that finding pre-existed
 between the parent RFC and the implementation spec and is not a content
@@ -183,7 +183,7 @@ phase 5). Every changed path is a new authority/test file or an additive edit
 on the spec whitelist; there is no `src/` change and no protected-file change.
 
 ```text
- docs/rfcs/0033-slice2-implementation.md            |  291 +
+ docs/rfcs/tracking/0033-slice2-implementation.md            |  291 +
  tests/fixtures/mermaid_native/er_groupedge_complete_proposal.v1.json | 6834 +++
  tests/support/mermaid_er_groupedge_official.hpp    |  476 ++
  tests/support/mermaid_er_groupedge_source.hpp      |  347 ++

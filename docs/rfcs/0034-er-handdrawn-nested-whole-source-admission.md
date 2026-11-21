@@ -303,7 +303,7 @@ can no longer take the whole-null downgrade; the row stays `error` and books
 expected to be RED by one row from the end of phase 1 until the phase-3 proof
 is attached. During that window only targeted tests are green; exactly one
 full matrix is run, at the phase-4 closure, mirroring the discipline in
-`0033-slice2-implementation.md` §4.1. A red interim matrix must never be
+`tracking/0033-slice2-implementation.md` §4.1. A red interim matrix must never be
 misread as a regression, and the tree must never be left at a red gate across
 a commit boundary without an explicit documented reason.
 
@@ -398,7 +398,7 @@ asserted from intent.
   dual-preset byte gate outcome.
 - [ ] Code comments at the changed Work/envelope site and in the new verifier.
 - [ ] This RFC's Implementation History and, at closure, a closure-evidence
-  document mirroring `0033-slice2-closure.md`.
+  document mirroring `tracking/0033-slice2-closure.md`.
 
 ## Open questions
 

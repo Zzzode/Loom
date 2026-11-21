@@ -7,7 +7,7 @@ meter that lets ER206 ordinal 198's whole source draw within the production
 turn green in Phases 2-4 (owned proof + matrix wiring + closing matrix). This
 doc records the measured evidence and the exact red/green boundary so the
 interim red is never misread as a regression (RFC 0034 "Expected interim red
-state", mirroring `0033-slice2-implementation.md` §4.1).
+state", mirroring `tracking/0033-slice2-implementation.md` §4.1).
 
 Design of record: `0034-phase1-design.md` (r3 APPROVE). Refusal evidence:
 `0034-phase0-meter.md`.

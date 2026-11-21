@@ -11,6 +11,8 @@ tracking: Tech Lead D-306; follows D293/D298 NO-GO (docs/er107-group-edge-admiss
 
 # RFC 0033: Owned-proof path for whole-null ER group-edge originals
 
+## Summary
+
 - Status: **Approved (r3 APPROVE 2026-11-17) — implementation permitted,
   gated by the §7.0 full-frame oracle spike before any frozen asset.**
 - Scope: answer exactly one question — *how do the six whole-null ER
@@ -22,6 +24,47 @@ tracking: Tech Lead D-306; follows D293/D298 NO-GO (docs/er107-group-edge-admiss
   admission yields 6 errors / 0 new drawn; D301 (same doc §8) established
   that the six already satisfy the drawn geometry predicate once parsed. The
   only missing element is the owned proof.
+
+## Motivation
+
+Six whole-null ER group-edge originals satisfy the drawn geometry predicate
+once parsed (D301), but a whole-null original reaches `drawn` only through a
+supplemental-proof branch: unreviewed render output must book an error, never
+a draw. The only missing element is an authority-owned proof; §2 records why
+that property may not be weakened.
+
+## Goals
+
+- Obtain an authority-owned proof for the six originals so they classify
+  `drawn` in the OfficialMatrix without changing renderer geometry.
+- Preserve the ER107 107-case baseline, the ER206 prior and the three
+  fail-closed gates byte-identically.
+- Keep the new proof cohort mutually disjoint from ER107 with compile-time
+  and verifier-recomputed assertions.
+
+## Non-Goals
+
+- Renderer geometry changes (D301 proved none is needed).
+- Flipping `MATRIX_API_CONFIRMED`, `REVIEWED_HELPER_SHA`/`kB3ReviewStatus` or
+  `WRITE_REVIEW_APPROVED`; those remain owner-gated.
+- Editing any sha-frozen ER107 review helper or the ER206 prior.
+
+## Proposal
+
+Build a second, parallel owned-proof slot (candidate (b), §4) validated by a
+dual-track Model authority and a full-frame oracle pre-gate (§7.0); §3 rejects
+the fold-into-ER107 candidates (a1)/(a2).
+
+## Alternatives
+
+- (a1) rewrite the ER206 prior debt and (a2) widen the ER107 selection
+  predicate: both mutate sha-frozen, cross-gate authorities and cannot keep
+  the 107 baseline unchanged (§3).
+- The explicit-exclusion stop outcome (§6): if the pre-gate spike or review
+  fails, the six are recorded as permanently excluded rather than admitted on
+  unreviewed art.
+- Do nothing: the six stay in error, which the matrix counts as a mandatory
+  gap rather than a resolved state.
 
 ## 0. Revision history (r1 review findings → disposition)
 

@@ -243,6 +243,11 @@ TEST(MermaidE2cXychartCohort, TitleAndInitRowsKeepWholeSource) {
          it != fs::recursive_directory_iterator(); ++it) {
         if (!it->is_regular_file() || it->path().extension() != ".mmd") continue;
         const auto rel = fs::relative(it->path(), kCases).generic_string();
+        // RFC 0035 P4 promotes exactly one description+init row through its
+        // own reviewed ledger (tools/mermaid/xychart-0035-cohort.json); it is
+        // no longer an E2c-scope assertion.
+        if (rel == "xychart/nightly-check/should-use-all-the-config-from-directive.mmd")
+            continue;
         const auto source = read_file(it->path());
         if (!has_title_or_init(source)) continue;
         ++checked;

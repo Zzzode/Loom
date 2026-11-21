@@ -4259,3 +4259,33 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   existing work label, before any tip. Keep Tasks/Teams/editor/footer row
   allocations unchanged. Revert the app record, screen suffix, tests and docs
   together to remove this additive UI behavior. See RFC 0018.
+
+
+## xychart envelope admission, axis suppression and color-role projections (RFC 0035)
+
+- **Envelope:** an xychart folded `description` (`>-`, first key, two-space
+  payload, no blank line or indented comment) may coexist with exactly one
+  `config:` block whose leaves the unchanged `xy_visual_envelope` profile
+  already accepts, and with exactly one leading `%%{init: ...}%%` directive
+  validated by a sibling walker (`xy_description_init_json`). The pie
+  description profile and the description-only path are byte-unchanged;
+  frontmatter `title` stays rejected because no promoted row needs it.
+- **Suppression:** `xAxis`/`yAxis` `showTitle`/`showLabel`/`showTick`/
+  `showAxisLine: false` hide their own element. Layout reservations are
+  never recomputed, so a hidden element leaves a hole rather than reflowing
+  the chart; the origin corner is drawn only when both axis lines are shown.
+  Top-level `xyChart.showTitle`/`showLegend` remain `true`-only.
+- **Color role:** `themeVariables.xyChart.dataLabelColor` is the eleventh
+  validated-and-ignored color role. Upstream applies chart colors in SVG
+  only; the terminal validates the color grammar and discards the value, so
+  the projected frame cannot depend on it.
+- **Rotation:** `labelRotation` is not admitted. Rotation changes label
+  geometry, so accepting it would book an unimplemented capability as drawn
+  (OQ-1 ruling). The three rotation rows stay visible capability debt; 120
+  and -100 happen to clamp to 0 degrees upstream, which is coincidence, not
+  an implementation.
+- **Promotion and rollback:** rows are promoted through the code-side
+  reviewed cohort ledger `tools/mermaid/xychart-0035-cohort.json` with
+  per-phase review records, never through the pinned manifest. Each phase is
+  one atomic commit (code, ledger, matrix branch, gates, roster); rollback is
+  LIFO with the envelope phase as a hard prerequisite.

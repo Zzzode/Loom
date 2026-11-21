@@ -183,6 +183,29 @@ bool chart_color_value(std::string_view value) {
     });
 }
 
+// RFC 0035 C6: one leaf/value table for both the YAML profile and the
+// description+init walker. `plotBorderWidth` is the only init-only metric.
+constexpr std::array<std::string_view, 7> kXyAxisMetrics{
+    {"axisLineWidth", "labelFontSize", "labelPadding", "tickLength", "tickWidth", "titleFontSize",
+     "titlePadding"}};
+constexpr std::array<std::string_view, 5> kXyChartMetrics{
+    {"width", "height", "titleFontSize", "titlePadding", "plotReservedSpacePercent"}};
+constexpr std::array<std::string_view, 11> kXyColorRoles{
+    {"backgroundColor", "dataLabelColor", "titleColor", "xAxisLabelColor", "xAxisLineColor",
+     "xAxisTickColor", "xAxisTitleColor", "yAxisLabelColor", "yAxisLineColor", "yAxisTickColor",
+     "yAxisTitleColor"}};
+
+void xy_apply_axis_show_flag(Chart& chart, bool axis_is_x, std::string_view field, bool enabled) {
+    if (field == "showTitle")
+        (axis_is_x ? chart.x_show_title : chart.y_show_title) = enabled;
+    else if (field == "showLabel")
+        (axis_is_x ? chart.x_show_label : chart.y_show_label) = enabled;
+    else if (field == "showTick")
+        (axis_is_x ? chart.x_show_tick : chart.y_show_tick) = enabled;
+    else
+        (axis_is_x ? chart.x_show_axis_line : chart.y_show_axis_line) = enabled;
+}
+
 bool xy_visual_envelope(const Envelope& envelope, Chart& chart, bool allow_description = false) {
     constexpr std::array<std::string_view, 5> kMaps{
         {"xyChart", "xyChart.xAxis", "xyChart.yAxis", "themeVariables", "themeVariables.xyChart"}};
@@ -244,11 +267,8 @@ bool xy_visual_envelope(const Envelope& envelope, Chart& chart, bool allow_descr
             } else {
                 // RFC 0035 P3: dataLabelColor joins the validated-and-ignored
                 // color roles; color application is SVG-only in upstream.
-                constexpr std::array<std::string_view, 11> roles{
-                    {"backgroundColor", "dataLabelColor", "titleColor", "xAxisLabelColor",
-                     "xAxisLineColor", "xAxisTickColor", "xAxisTitleColor", "yAxisLabelColor",
-                     "yAxisLineColor", "yAxisTickColor", "yAxisTitleColor"}};
-                if (std::ranges::find(roles, role) == roles.end() || !chart_color_value(*value))
+                if (std::ranges::find(kXyColorRoles, role) == kXyColorRoles.end() ||
+                    !chart_color_value(*value))
                     return false;
             }
             continue;
@@ -281,24 +301,11 @@ bool xy_visual_envelope(const Envelope& envelope, Chart& chart, bool allow_descr
         if (axis && (field == "showTitle" || field == "showLabel" || field == "showTick" ||
                      field == "showAxisLine")) {
             if (*value != "true" && *value != "false") return false;
-            const bool enabled = *value == "true";
-            if (field == "showTitle")
-                (axis_is_x ? chart.x_show_title : chart.y_show_title) = enabled;
-            else if (field == "showLabel")
-                (axis_is_x ? chart.x_show_label : chart.y_show_label) = enabled;
-            else if (field == "showTick")
-                (axis_is_x ? chart.x_show_tick : chart.y_show_tick) = enabled;
-            else
-                (axis_is_x ? chart.x_show_axis_line : chart.y_show_axis_line) = enabled;
+            xy_apply_axis_show_flag(chart, axis_is_x, field, *value == "true");
             continue;
         }
-        constexpr std::array<std::string_view, 7> axis_metrics{
-            {"axisLineWidth", "labelFontSize", "labelPadding", "tickLength", "tickWidth",
-             "titleFontSize", "titlePadding"}};
-        constexpr std::array<std::string_view, 5> chart_metrics{
-            {"width", "height", "titleFontSize", "titlePadding", "plotReservedSpacePercent"}};
-        if (axis ? std::ranges::find(axis_metrics, field) == axis_metrics.end()
-                 : std::ranges::find(chart_metrics, field) == chart_metrics.end())
+        if (axis ? std::ranges::find(kXyAxisMetrics, field) == kXyAxisMetrics.end()
+                 : std::ranges::find(kXyChartMetrics, field) == kXyChartMetrics.end())
             return false;
         const auto metric = number(*value);
         if (!metric || *metric < 0 || (field == "plotReservedSpacePercent" && *metric > 100))
@@ -448,6 +455,113 @@ bool xy_init_json(std::string_view json, Chart& chart) {
     return true;
 }
 
+// RFC 0035 P4: sibling walker for a description-bearing xychart whose body
+// starts with one `%%{init: ...}%%` directive. The leaf set mirrors the
+// reviewed YAML profile (metrics are validated and ignored) plus
+// `plotBorderWidth`; it applies chartOrientation, the two data-label booleans
+// and the per-axis show flags only. `xy_init_json` (plain-init path) is
+// untouched, so its two-boolean contract and its orientation rejection stand.
+bool xy_description_init_json(std::string_view json, Chart& chart) {
+    const auto document = loom::utils::json::parse(json);
+    if (!document || !document->root().is_obj() || document->root().size() != 1) return false;
+    const auto options = document->root().get("xyChart");
+    if (!options.is_obj() || options.size() == 0) return false;
+    auto chart_metric = [](std::string_view name) {
+        return std::ranges::find(kXyChartMetrics, name) != kXyChartMetrics.end() ||
+               name == "plotBorderWidth";  // init-only metric
+    };
+    auto numeric = [](loom::utils::json::JsonVal value, double& out) {
+        if (value.is_num()) {
+            out = value.as_double();
+            return true;
+        }
+        if (!value.is_str()) return false;
+        const auto parsed = number(value.as_str());
+        if (!parsed) return false;
+        out = *parsed;
+        return true;
+    };
+    bool valid = true;
+    std::set<std::string> seen;
+    options.iter_obj([&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
+        const auto name = key.as_str();
+        if (!seen.insert(std::string(name)).second) {
+            valid = false;
+            return;
+        }
+        if (name == "chartOrientation") {
+            if (!value.is_str()) {
+                valid = false;
+                return;
+            }
+            const auto text = value.as_str();
+            if (text == "horizontal")
+                chart.horizontal = true;
+            else if (text == "vertical")
+                chart.horizontal = false;
+            else
+                valid = false;
+            return;
+        }
+        if (name == "showDataLabel" || name == "showDataLabelOutsideBar") {
+            if (!value.is_bool()) {
+                valid = false;
+                return;
+            }
+            (name == "showDataLabel" ? chart.show_data : chart.show_data_outside) =
+                value.as_bool();
+            return;
+        }
+        if (name == "showTitle" || name == "showLegend") {
+            if (!value.is_bool() || !value.as_bool()) valid = false;  // YAML parity
+            return;
+        }
+        if (name == "xAxis" || name == "yAxis") {
+            if (!value.is_obj() || value.size() == 0) {
+                valid = false;
+                return;
+            }
+            const bool is_x = name == "xAxis";
+            std::set<std::string> inner;
+            value.iter_obj(
+                [&](loom::utils::json::JsonVal axis_key, loom::utils::json::JsonVal axis_value) {
+                    const auto field = axis_key.as_str();
+                    if (!inner.insert(std::string(field)).second) {
+                        valid = false;
+                        return;
+                    }
+                    const bool show_flag =
+                        field == "showTitle" || field == "showLabel" || field == "showTick" ||
+                        field == "showAxisLine";
+                    if (show_flag) {
+                        if (!axis_value.is_bool()) {
+                            valid = false;
+                            return;
+                        }
+                        xy_apply_axis_show_flag(chart, is_x, field, axis_value.as_bool());
+                        return;
+                    }
+                    if (std::ranges::find(kXyAxisMetrics, field) == kXyAxisMetrics.end()) {
+                        valid = false;
+                        return;
+                    }
+                    double parsed = 0;
+                    if (!numeric(axis_value, parsed) || parsed < 0) valid = false;
+                });
+            return;
+        }
+        if (!chart_metric(name)) {
+            valid = false;
+            return;
+        }
+        double parsed = 0;
+        if (!numeric(value, parsed) || parsed < 0 ||
+            (name == "plotReservedSpacePercent" && parsed > 100))
+            valid = false;
+    });
+    return valid;
+}
+
 std::optional<std::string> pie_title(std::string_view text) {
     // The primary TITLE converter trims and collapses horizontal whitespace.
     // RFC 0031 E5: the normalized copy is a validated <=256-glyph label; the
@@ -511,7 +625,8 @@ bool pie_description_frontmatter(const Envelope& envelope) {
 // validated by the unchanged xy_visual_envelope profile. A blank line inside
 // the description block, an indented comment, a second block, or any other
 // top-level key keeps the whole source.
-bool xy_description_frontmatter(const Envelope& envelope) {
+bool xy_description_shape(const Envelope& envelope, bool& config_seen_out) {
+    config_seen_out = false;
     const auto& description = envelope.description;
     if (!description || description->form != EnvelopeScalarForm::Folded ||
         description->header != ">-")
@@ -541,7 +656,14 @@ bool xy_description_frontmatter(const Envelope& envelope) {
         if (newline == std::string_view::npos) break;
         rest = rest.substr(newline + 1);
     }
-    return have_payload && config_seen && !envelope.config.empty();
+    config_seen_out = config_seen;
+    return have_payload;
+}
+
+bool xy_description_frontmatter(const Envelope& envelope) {
+    bool config_seen = false;
+    if (!xy_description_shape(envelope, config_seen)) return false;
+    return config_seen && !envelope.config.empty();
 }
 
 // The narrow Pie config profile admits exactly config.pie.textPosition with
@@ -608,12 +730,20 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
     enum class Profile { Plain, PieDescription, PieConfig, Xy, XyDescription } profile =
         Profile::Plain;
     if (envelope->has_frontmatter) {
-        if (!envelope->init.empty()) return {};
         const bool pie_config =
             std::ranges::any_of(envelope->config, [](const EnvelopeEvent& event) {
                 return event.path == "pie.textPosition";
             });
-        if (envelope->description) {
+        if (!envelope->init.empty()) {
+            // RFC 0035 P4: a description-bearing xychart may carry exactly one
+            // leading init directive; the sibling walker owns its leaf set.
+            bool config_seen = false;
+            if (!envelope->description || envelope->init.size() != 1u || pie_config) return {};
+            if (chart_body_family(envelope->raw_body) != ChartBodyFamily::Xy) return {};
+            if (!xy_description_shape(*envelope, config_seen) || config_seen) return {};
+            if (!xy_description_init_json(envelope->init.front().json, chart)) return {};
+            profile = Profile::Xy;
+        } else if (envelope->description) {
             // RFC 0035: choose the family before validating so a
             // description+config xychart routes to its own sibling profile
             // while the pie path stays byte-unchanged.

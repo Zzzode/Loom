@@ -12195,9 +12195,11 @@ TEST(MermaidXyDescriptionEnvelope, ConfigDrawsTitleAndInitStillFailClosed) {
     const std::string with_title =
         "---\ndescription: >-\n  d\ntitle: quarterly\n---\n" + std::string{kXyBody};
     EXPECT_TRUE(xy_is_fallback(with_title));
-    // A body init directive is still a hard gate.
+    // A body init directive without an enclosing config is still a hard gate:
+    // RFC 0035 P4 admits one leading init only through the sibling walker, and
+    // a valid empty `{"xyChart": {}}` object is rejected there.
     const std::string with_init =
-        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {}}%%\n" +
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {}}}%%\n" +
         std::string{kXyBody};
     EXPECT_TRUE(xy_is_fallback(with_init));
 }

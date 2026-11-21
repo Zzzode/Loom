@@ -45,7 +45,7 @@ LEDGER = pathlib.Path("tools/mermaid/xychart-0035-cohort.json")
 
 SCHEMA = "loom_mermaid_xychart_0035_cohort/v1"
 ROOT_REL = "xychart"
-ENABLED_PHASES = ("P1-envelope", "P2-show-false", "P3-data-label-color")
+ENABLED_PHASES = ("P1-envelope", "P2-show-false", "P3-data-label-color", "P4-init")
 
 EXPECTED = {
     "P1-envelope": 17,
@@ -80,6 +80,18 @@ PHASE_REVIEWS = {
                 "capability exclusions keep whole source. Reviewer dispositions: CRLF aligned "
                 "with the D236 normalization precedent, boundary set extended, signed-value "
                 "capability rows pinned.",
+    },
+    "P4-init": {
+        "reviewer_agent": "agent:a42d5fffd08111920 independent P4 code re-review "
+                          "(fresh general-purpose agent; verified every boundary case falls "
+                          "back for the right reason and the shared-table refactor is "
+                          "behavior-preserving)",
+        "date": "2026-11-21",
+        "verdict": "approved",
+        "note": "Description+init sibling walker only; the plain-init path is untouched. "
+                "Reviewer dispositions: boundary set expanded to the full closure list, the "
+                "malformed empty-object evidence corrected, shared leaf/value tables and a P4 "
+                "ledger note added.",
     },
     "P3-data-label-color": {
         "reviewer_agent": "agent:a56c5abd2821b7b24 independent P3 code review "
@@ -167,9 +179,14 @@ def config_leaves(config_lines):
 
 def classify(frontmatter_lines, body_lines):
     """Return (phase, reason) or (None, reason) when the row is excluded."""
-    if any(line.lstrip().startswith("%%{") for line in body_lines):
-        return "P4-init", "description-only frontmatter with a leading init directive"
     has_description, config_start = description_shape(frontmatter_lines)
+    init_lines = [line for line in body_lines if line.lstrip().startswith("%%{")]
+    if init_lines:
+        first_body = next((line for line in body_lines if line.strip()), "")
+        if (has_description and config_start is None and len(init_lines) == 1 and
+                first_body.lstrip().startswith("%%{")):
+            return "P4-init", "description-only frontmatter with a leading init directive"
+        return None, "init directive outside the Wave B shape"
     if not has_description or config_start is None:
         return None, "not a description+config envelope"
     for line in frontmatter_lines[config_start + 1:]:
@@ -256,7 +273,10 @@ def build(repo_root: pathlib.Path):
                     "matching element without reflow."
                     if phase == "P2-show-false" else
                     "RFC 0035 validated-and-ignored color role; SVG-only upstream, "
-                    "not projected by the terminal."),
+                    "not projected by the terminal."
+                    if phase == "P3-data-label-color" else
+                    "RFC 0035 description+init sibling walker; chartOrientation and the "
+                    "data-label flags apply, metrics are validated and ignored."),
             })
 
     return {
@@ -269,7 +289,8 @@ def build(repo_root: pathlib.Path):
         },
         "selection": {
             "rule": "xychart original whose folded (>-) description is followed by exactly "
-                    "one config block already inside the xy_visual_envelope profile",
+                    "one config block already inside the xy_visual_envelope profile, or by "
+                    "exactly one leading init directive handled by the sibling walker",
             "roots": [ROOT_REL],
             "phase_partition": "renderer-free classification with pinned per-phase "
                                "denominators; only ENABLED_PHASES is emitted",

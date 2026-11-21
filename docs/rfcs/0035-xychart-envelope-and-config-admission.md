@@ -438,8 +438,10 @@ unless stated):
   - P4 (Wave B) flips no `test_mermaid_charts_semantics.cpp` assertion:
     plain-init orientation-only remains rejected because `xy_init_json` is
     untouched (`:5637`), and the description+init empty-object source stays
-    rejected by the sibling walker (`:12201`). P4 does require the E2c
-    boundary-test edit named in §3.
+    rejected by the sibling walker's empty-object check (`:12201`, whose
+    directive was corrected to the well-formed `{"xyChart": {}}}` so it
+    exercises the walker rather than JSON malformation). P4 does require the
+    E2c boundary-test edit named in §3.
   - NIT-3 (test comment): `tests/ui/test_mermaid_charts_semantics.cpp:10637-10639`
     says "config/title/init and malformed envelopes still fail closed"; the
     `config` clause becomes false at P1, so P1 updates that comment.
@@ -526,7 +528,7 @@ delta must be the same number (no other family moves).
 | P1 envelope grammar | done | 17 | 30 / 18 | 1264 / 881 | 1078 |
 | P2 `show*: false` suppression | done | 5 | 35 / 13 | 1269 / 876 | 1083 |
 | P3 `dataLabelColor` role | done | 1 | 36 / 12 | 1270 / 875 | 1084 |
-| P4 Wave B init | proposed | 1 | 37 / 11 | 1271 / 874 | 1085 |
+| P4 Wave B init | done | 1 | 37 / 11 | 1271 / 874 | 1085 |
 
 P1 evidence (measured): debug and release matrix sha256
 `7047d8a19335dd8367f5254c0df2f3d994b9bd47551b4c8680d260dde4171b2f`
@@ -548,6 +550,14 @@ P3 evidence (measured): debug and release matrix sha256
 1084, mandatory gaps 48, integrity errors 0, roster 875 rows / 44 categories
 migrated with `--emit`; cohort gate 8/8 debug and release. The role shares
 `chart_color_value` with the existing ten and is discarded after validation.
+
+P4 evidence (measured): debug and release matrix sha256
+`ee75f00325cafae93d46bcbf6fa338e6c0b0ac91409f45e361ac7cf55fc40bf6`
+(byte-identical), xychart 37/11, global 1271/874, formal `drawn_at_240`
+1085, mandatory gaps 48, integrity errors 0, roster 874 rows / 44 categories
+migrated with `--emit`; cohort gate 8/8 debug and release. The promoted row
+is the only description+init original; its twin proves `chartOrientation`
+applies, and the plain-init path is untouched.
 
 The eleven capability rows (8 geometry + 3 rotation) stay
 `source_fallback`; there is no OQ-1 fallback branch anymore — the ruling is
@@ -577,3 +587,4 @@ migrated it), close-out record in `docs/dev/`.
 | 2026-11-21 | P1 | Closed description+config grammar; 17 rows promoted; census and dual-preset sha recorded in the phase table | — |
 | 2026-11-21 | P2 | Applied axis-element suppression for show*: false; 5 rows promoted; per-phase review gating tightened | — |
 | 2026-11-21 | P3 | dataLabelColor joins the validated-and-ignored color roles; 1 row promoted | — |
+| 2026-11-21 | P4 | Description+init sibling walker; 1 row promoted; all four phases done | — |

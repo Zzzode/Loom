@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 875,
+  "total_fallback": 874,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -34,7 +34,7 @@
     "family_residual:treemap": 6,
     "family_residual:venn": 7,
     "family_residual:wardley": 4,
-    "family_residual:xychart": 12,
+    "family_residual:xychart": 11,
     "family_residual:zenuml": 1,
     "git_cherry_pick": 18,
     "htmllabels_false": 44,
@@ -743,7 +743,6 @@
       "xychart/nightly-check/should-render-a-line-chart-with-point-labels.mmd",
       "xychart/nightly-check/should-render-multiple-lines-where-only-one-has-labels.mmd",
       "xychart/nightly-check/should-render-negative-and-decimal-values-with-correct-labels-for-vertical-xy-chart.mmd",
-      "xychart/nightly-check/should-use-all-the-config-from-directive.mmd",
       "xychart/nightly-check/x-axis-range-same-value.mmd",
       "xychart/pr-check/multiple-plots-can-be-rendered.mmd",
       "xychart/pr-check/should-render-negative-and-decimal-values-with-correct-labels-for-horizontal-xy-chart.mmd"

@@ -66,13 +66,6 @@ bool same_source_surface(const CellCapture& a, const CellCapture& b) {
     return a.cells == b.cells;
 }
 
-bool drawn_native(const std::string& source) {
-    const auto native = capture_cells(source, "mermaid");
-    const auto control = capture_cells(source, "text");
-    if (native.cells.empty() || same_source_surface(native, control)) return false;
-    return same_source_surface(native, capture_cells(source, "mermaid"));
-}
-
 std::vector<std::string> frame_lines(const CellCapture& capture, int width) {
     std::vector<std::string> lines;
     std::string line;
@@ -84,6 +77,16 @@ std::vector<std::string> frame_lines(const CellCapture& capture, int width) {
         }
     }
     return lines;
+}
+
+bool drawn_native(const std::string& source) {
+    const auto native = capture_cells(source, "mermaid");
+    const auto control = capture_cells(source, "text");
+    if (native.cells.empty() || same_source_surface(native, control)) return false;
+    if (!same_source_surface(native, capture_cells(source, "mermaid"))) return false;
+    for (const auto& line : frame_lines(native, kWide))
+        if (line.find("xychart") != std::string::npos) return false;
+    return true;
 }
 
 JsonDoc parse_ledger() {
@@ -175,16 +178,17 @@ TEST(MermaidXychart0035Cohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(root.get_int("rfc"), 35);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
     const auto counts = root.get("counts");
-    EXPECT_EQ(counts.get_int("total"), 23);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 23);
+    EXPECT_EQ(counts.get_int("total"), 24);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 24);
     EXPECT_EQ(counts.get("by_phase").get_int("P1-envelope"), 17);
     EXPECT_EQ(counts.get("by_phase").get_int("P2-show-false"), 5);
     EXPECT_EQ(counts.get("by_phase").get_int("P3-data-label-color"), 1);
+    EXPECT_EQ(counts.get("by_phase").get_int("P4-init"), 1);
     const auto phases = root.get("selection").get("enabled_phases");
     std::set<std::string> enabled;
     phases.iter([&](const JsonVal value) { enabled.emplace(value.as_str()); });
     EXPECT_EQ(enabled, (std::set<std::string>{"P1-envelope", "P2-show-false",
-                                            "P3-data-label-color"}));
+                                            "P3-data-label-color", "P4-init"}));
     // Every enabled phase must carry its own approved review record; a
     // missing record is not a silent pass.
     const auto reviews = root.get("review").get("phases");
@@ -203,7 +207,7 @@ TEST(MermaidXychart0035Cohort, LedgerMatchesSchemaAndReviewed) {
         if (phase == "P1-envelope") ++p1;
         if (phase == "P2-show-false") ++p2;
     });
-    EXPECT_EQ(rows, 23);
+    EXPECT_EQ(rows, 24);
     EXPECT_EQ(p1, 17);
     EXPECT_EQ(p2, 5);
 }
@@ -228,12 +232,12 @@ TEST(MermaidXychart0035Cohort, RowsPinFixtureBytesAndPriorStatus) {
         EXPECT_EQ(found->second.get("raw").get_string("reason"), "frontmatter") << path;
         const std::string phase = row.get_string("phase");
         EXPECT_TRUE(phase == "P1-envelope" || phase == "P2-show-false" ||
-                    phase == "P3-data-label-color")
+                    phase == "P3-data-label-color" || phase == "P4-init")
             << path;
     });
 }
 
-TEST(MermaidXychart0035Cohort, EveryRowDrawsNativelyAndMatchesItsConfigOnlyTwin) {
+TEST(MermaidXychart0035Cohort, EveryRowDrawsNativelyAndMatchesItsUnstyledTwin) {
     auto ledger = parse_ledger();
     for (const auto& row : read_rows(ledger.root())) {
         SCOPED_TRACE(row.path);
@@ -244,11 +248,31 @@ TEST(MermaidXychart0035Cohort, EveryRowDrawsNativelyAndMatchesItsConfigOnlyTwin)
         EXPECT_EQ(capture_cells(source, "mermaid").cells,
                   capture_cells(source, "mermaid").cells)
             << "capture is not deterministic";
-        const auto twin = config_only_twin(source);
-        ASSERT_FALSE(twin.empty()) << "twin construction failed";
-        EXPECT_TRUE(drawn_native(twin)) << "config-only twin must stay admitted";
-        EXPECT_EQ(capture_cells(source, "mermaid").cells, capture_cells(twin, "mermaid").cells)
-            << "description must not change the projected chart";
+        if (row.phase == "P4-init") {
+            // The init row has no config block: its twin is the same source
+            // without the leading init directive (D236 description-only).
+            // The folded description may mention a directive as text, so the
+            // init is located after the closing frontmatter fence.
+            const auto fence = source.find("\n---\n");
+            ASSERT_NE(fence, std::string::npos);
+            const auto at = source.find("%%{", fence);
+            ASSERT_NE(at, std::string::npos);
+            const auto line_end = source.find('\n', at);
+            ASSERT_NE(line_end, std::string::npos);
+            std::string twin = source;
+            twin.erase(at, line_end + 1 - at);
+            EXPECT_TRUE(drawn_native(twin)) << "description-only twin must stay admitted";
+            EXPECT_NE(capture_cells(source, "mermaid").cells,
+                      capture_cells(twin, "mermaid").cells)
+                << "chartOrientation from the init directive must apply";
+        } else {
+            const auto twin = config_only_twin(source);
+            ASSERT_FALSE(twin.empty()) << "twin construction failed";
+            EXPECT_TRUE(drawn_native(twin)) << "config-only twin must stay admitted";
+            EXPECT_EQ(capture_cells(source, "mermaid").cells,
+                      capture_cells(twin, "mermaid").cells)
+                << "description must not change the projected chart";
+        }
         const auto token = description_token(source);
         ASSERT_FALSE(token.empty());
         bool found = false;
@@ -260,7 +284,7 @@ TEST(MermaidXychart0035Cohort, EveryRowDrawsNativelyAndMatchesItsConfigOnlyTwin)
     }
 }
 
-TEST(MermaidXychart0035Cohort, DescriptionPlusConfigBoundaryKeepsWholeSource) {
+TEST(MermaidXychart0035Cohort, EnvelopeBoundaryKeepsWholeSource) {
     EXPECT_FALSE(xy_is_fallback(with_config("  xyChart:\n    width: 400\n", kBody)));
 
     const std::vector<std::string> rejected{
@@ -292,8 +316,6 @@ TEST(MermaidXychart0035Cohort, DescriptionPlusConfigBoundaryKeepsWholeSource) {
             kBody,
         "---\ndescription: >\n  d\nconfig:\n  xyChart:\n    width: 400\n---\n" + kBody,
         "---\ndescription: |\n  d\nconfig:\n  xyChart:\n    width: 400\n---\n" + kBody,
-        // A body init directive is a later phase (P4).
-        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"width\": 400}}}%%\n" + kBody,
         "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {}}}%%\n%%{init: "
         "{\"xyChart\": {}}}%%\n" + kBody,
         "---\ndescription: >-\n  d\n---\n" + kBody +
@@ -307,13 +329,70 @@ TEST(MermaidXychart0035Cohort, DescriptionPlusConfigBoundaryKeepsWholeSource) {
         // Negative metric and deeper nesting stay closed at P1.
         with_config("  xyChart:\n    plotBorderWidth: -5\n", kBody),
         with_config("  xyChart:\n    xAxis:\n      nested:\n        deep: 1\n", kBody),
+        // P4 init walker closure: description+config+init stays out of scope,
+        // and the sibling leaf set rejects unknown keys, wrong types, empty or
+        // negative values and non-numeric strings.
+        "---\ndescription: >-\n  d\nconfig:\n  xyChart:\n    width: 400\n---\n%%{init: "
+        "{\"xyChart\": {\"width\": 400}}}%%\n" + kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"unknown\": 1}}}%%\n" +
+            kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"width\": \"wide\"}}}%%\n" +
+            kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"plotBorderWidth\": "
+        "-5}}}%%\n" +
+            kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"chartOrientation\": "
+        "\"diagonal\"}}}%%\n" +
+            kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"xAxis\": []}}}%%\n" + kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"other\": {}}}%%\n" + kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"showTitle\": false}}}%%\n" +
+            kBody,
+        // Valid empty object, wrong scalar types, out-of-range metric, flags.
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {}}}%%\n" + kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"width\": null}}}%%\n" + kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"width\": {}}}}%%\n" + kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"width\": []}}}%%\n" + kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": "
+        "{\"plotReservedSpacePercent\": 101}}}%%\n" +
+            kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"showLegend\": false}}}%%\n" +
+            kBody,
+        // Duplicate keys at root, option and axis level.
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {}, \"xyChart\": {}}}%%\n" +
+            kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"width\": 1, "
+        "\"width\": 2}}}%%\n" +
+            kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"xAxis\": {\"tickWidth\": "
+        "1, \"tickWidth\": 2}}}}%%\n" +
+            kBody,
+        // Nested depth, empty axis and unknown axis key.
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"xAxis\": {\"showTitle\": "
+        "{\"deep\": true}}}}}%%\n" +
+            kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"xAxis\": {}}}}%%\n" + kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"xAxis\": "
+        "{\"unknown\": 1}}}}%%\n" +
+            kBody,
+        // Title coexistence and pie bodies stay out of Wave B.
+        "---\ndescription: >-\n  d\ntitle: t\n---\n%%{init: {\"xyChart\": {\"width\": "
+        "400}}}%%\n" +
+            kBody,
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"width\": 400}}}%%\n"
+        "pie\n  \"A\" : 1\n  \"B\" : 2\n",
     };
+    const std::string init_ok =
+        "---\ndescription: >-\n  d\n---\n%%{init: {\"xyChart\": {\"width\": \"400\", "
+        "\"plotBorderWidth\": 5, \"xAxis\": {\"tickWidth\": 5, \"axisLineWidth\": 2}, "
+        "\"chartOrientation\": "
+        "\"horizontal\", \"showDataLabel\": true}}}%%\n" + kBody;
+    EXPECT_FALSE(xy_is_fallback(init_ok));
     for (const auto& source : rejected) {
         SCOPED_TRACE(source);
         EXPECT_TRUE(xy_is_fallback(source)) << "source must stay on fallback";
     }
 }
-
 
 namespace {
 std::string flip_suppression_to_true(const std::string& source) {
@@ -377,7 +456,6 @@ TEST(MermaidXychart0035Cohort, SuppressionRowsHideExactlyTheirElement) {
     }
     EXPECT_EQ(checked, 5);
 }
-
 
 namespace {
 bool is_axis_cell(const std::string& cell) {

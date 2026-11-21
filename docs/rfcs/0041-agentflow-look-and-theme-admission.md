@@ -1,9 +1,9 @@
 ---
 rfc: 41
 title: agentflow look and theme admission
-status: provisional
+status: accepted
 owners: "@Zzzode"
-reviewers: []
+reviewers: ["agent:a255f982730d3c06d rfc0041-design-review (r1 REQUEST-CHANGES -> r2 APPROVE-TO-ACCEPT)"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -43,7 +43,7 @@ cross-checks every per-family fallback count against the current release matrix
 | **agentflow** | **9** | **1** — rewrite its own `af_frontmatter_gated` into a validating gate and append a footer in `agentflow_layout` | low: single file, single family, no shared contract |
 | flowchart | 8–11 | one but huge — the 2800-line exact-bit profile machine | high: RFC 0036 was withdrawn after measurement falsified it |
 | pie | 4 | one — extend the existing `pie_config_frontmatter` gate | low but smallest useful increment |
-| venn / ishikawa | 2 | one — a new envelope (those families have no gate) | low, too small |
+| venn / ishikawa | 2 | one — extend their existing key-based frontmatter gates | low, too small |
 | git 38 / requirement 26 / state-v2 6 | 0 inert | semantic or geometric capability, not admission | out of scope by construction |
 
 ### Evidence
@@ -68,20 +68,22 @@ cross-checks every per-family fallback count against the current release matrix
   (which lists only class/flowchart rows), so `mandatory_gaps` stays 48.
 - The strip probe proves the bodies render natively once the frontmatter is removed; the
   per-row proof is the twin gate this RFC adds.
-- **narrow_40 is predictable from the corpus twins**: the five container-kind rows inherit
-  the drawn twin's 40-column behavior (24 narrow draws total, up from 19), the four triage
-  rows inherit the triage twin's fallback (14 narrow fallbacks including the 2 still
-  gated). The phase records the per-row measurement; the generator's `NARROW_DRAW` set
-  starts from these five paths.
+- **narrow_40 is predicted from the corpus twins but must be measured**: the five
+  container-kind rows are expected to inherit the drawn twin's 40-column behavior (24
+  narrow draws, up from 19) and the four triage rows the triage twin's fallback (14 narrow
+  fallbacks including the 2 still gated) — however the admitted source carries a footer
+  the twin lacks, and the 40-column predicate is a whole-surface comparison, so a footer
+  could flip a row. The phase measures every row and the ledger records the result;
+  `NARROW_DRAW` starts from the five paths as a prediction only.
 
 ### Why admission is testable
 
 The renderer never reads `theme`; the text surface has no colour contract. The proof is
-the same two-part oracle RFC 0038/0039/0040 used: per-row twin inertness (the admitted
-frame equals the synthesized config-free twin's frame plus exactly the ledger's literal
-footer delta) and a drawn-row frame-identity oracle over the 27 rows the family already
-draws (identical untrimmed cell surfaces with and without the frontmatter, no footer
-markers).
+the same two-part oracle RFC 0037/0038/0039/0040 used: per-row twin inertness (the
+admitted frame equals its **corpus twin's** frame plus exactly the ledger's literal footer
+delta — the synthetic config-free twin is only the fallback when no corpus twin exists)
+and a drawn-row frame-identity oracle over the 27 rows the family already draws (identical
+untrimmed cell surfaces with and without the frontmatter, no footer markers).
 
 ## Goals
 
@@ -132,8 +134,9 @@ The RFC adds exactly one interpretation, scoped to the config block:
 
 - A column-0 non-blank, non-comment line opens a block; its key is the text before the
   first colon, `af_trim`med. `config:` opens the config block; every other column-0 key
-  closes it. A second `config:` line re-opens it; the leaf accounting below is cumulative
-  across the whole frontmatter, so a second block cannot smuggle in a second leaf.
+  closes it. **Exactly one `config:` line is permitted; a second `config:` line rejects
+  the whole source** (so `config:` carrying the admitted leaf followed by an empty second
+  `config:` is a reject, not an accept).
 - **Inside the config block** (and only there) an indented line is interpreted:
   - blank lines and YAML comment lines (`#…` after indentation) are skipped;
   - a line that contains a colon whose key (text before the first colon, leading spaces
@@ -174,7 +177,8 @@ config.theme=<value> -> colour palette; not applied
 
 Each line is capped at 96 bytes and charged at `size * 4 + sizeof(std::string) + 32`;
 emission charges `(1 + n) * (4 * sizeof(std::string) + 256) + bytes * 2 + 256`; the total
-must satisfy `art_lines + 1 + n <= kAfMaxRows (1024)`; failing either bound keeps the
+must satisfy `art_lines + 1 + n <= kAfMaxRows (1024, the same value as the sibling
+families' `kHeightLimit`)`; failing either bound keeps the
 whole source. This is byte-for-byte the state/flow/git/journey-family budget (their
 `kHeightLimit` is the same 1024). The height guard reads an off-by-one-safe `>`
 comparison, so `art + 1 + n == 1024` is admitted. The footer is appended inside
@@ -215,7 +219,8 @@ the gate validated.
   `theme:` (still draws, no footer — today's skip), an admitted leaf plus an in-body
   `%%{init … theme …}%%` line (rejects), `theme` combined with `look` / `handDrawnSeed` /
   `fontFamily` (rejects), a `config:` carrying only a non-visual leaf (rejects), an empty
-  `config:` (rejects), and a second `config:` block (rejects) — all with hardcoded
+  `config:` (rejects), and a second `config:` line both with a duplicate theme and with an
+  empty second block (both reject) — all with hardcoded
   verdicts and literal footer strings; plus the drawn-row frame-identity oracle over the
   27 already-drawn rows (full untrimmed character surfaces, footer-marker absence,
   line-equality native predicate).
@@ -260,7 +265,7 @@ Completed at the `implementable` gate. Answers:
   registrations, and the roster; one revert restores the previous census exactly.
 - **Observability** — no new diagnostics; session traces unaffected.
 - **Documentation** — RFC, closure doc, design-decisions entry, docs index, retro.
-- **Deletion** — the old substring/`key != description` gate is replaced, not wrapped.
+- **Deletion** — the old `key != description` column-0 gate is replaced, not wrapped.
 - **Deprecation** — the family ledger's `gated` list shrinks; no persisted format
   changes (ledgers are tool-generated).
 
@@ -322,7 +327,7 @@ CLI contract changes. The only data artifacts are regenerable ledgers and the ro
 |---|---|---|
 | OQ-1: does the gate stay TU-local or share RFC 0040's helper? | design review | **Resolved (design review r1)**: stay TU-local — the mermaid detail module is imported by 37 implementation units, a shared declaration is a real BMI fan-out for 9 rows, and agentflow's gate is stricter than RFC 0040's (no pass-through), so sharing would couple two different contracts. |
 | OQ-2: is an empty `config:` block a reject or a pass-through? | design review | **Resolved (design review r1)**: reject — identical to today's verdict; only a block with exactly one admitted theme leaf widens. |
-| OQ-3: narrow_40 disposition per row | implementation | ledger `expected_states`, measured per row; predicted 5 draw / 4 fallback from the corpus twins |
+| OQ-3: narrow_40 disposition per row | implementation | ledger `expected_states`, measured per row (the corpus-twin prediction of 5 draw / 4 fallback is not trusted where a footer could flip the whole-surface predicate) |
 
 ## Gates and who confirms
 
@@ -337,6 +342,7 @@ CLI contract changes. The only data artifacts are regenerable ledgers and the ro
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-22 | — | — | draft | Created provisional from the D-406 reachability measurement |
+| 2026-11-22 | r2 | same design-review agent, re-read against the revised text and an executable model of both gates | APPROVE-TO-ACCEPT | Both new decision points verified against a run of today's gate and the revised gate over all 38 fixtures: indented lines outside a config block are byte-identical in both directions (payload `theme:` and post-`description` indent-4 draw; post-`title` shapes reject on the column-0 key itself), and the one-leaf rule introduces no narrowing because no currently-accepted frontmatter has a column-0 `config:` at all. Four MINORs and three NITs folded in before the gate: a second `config:` line now rejects outright (the cumulative wording admitted `theme` + an empty second block — an over-widening), the testable section names the corpus twin, venn/ishikawa mechanism corrected to "extend the existing gate", the narrow_40 prediction softened to "predicted, measured at the phase" because a footer can flip a whole-surface 40-column predicate, and three wording/ambiguity fixes. Gate to `accepted` passed. |
 | 2026-11-22 | r1 | independent design-review agent (own re-derivation; read the renderer, generators, ledgers, roster, gap roster and matrix) | REQUEST-CHANGES | Every partition and endpoint re-derived as correct (38 = 27 + 9 + 2; seven values; 36/2; 1471/674; 1285; gaps 48; integrity 0; roster 674 with matched 242 / drawn 160 / fallback 82). **BLOCKER**: the pre-existing `tests/ui/test_mermaid_agentflow_cohort.cpp` is not in the change set and its `gated_count == 11` pin plus `FrontmatterGatesStayClosed` negatives (three admitted rows and the synthetic `theme: dark` probe) would go red → **accepted**: named in §4 and the testing plan, with the pin deltas and the replaced battery spelled out. **MAJOR-1**: the "strict widening" claim was false — today all indented lines are skipped, so a description-payload `theme:` line and an indent-4 visual key are *accepted* today and would have been narrowed → **accepted**: the new interpretation is scoped to the config block only; indented lines elsewhere stay ignored (pinned as a probe). **MAJOR-2**: the rule was fail-open for a config carrying an admitted leaf plus other leaves (`look`/`handDrawnSeed` silently dropped) → **accepted**: a config block must carry exactly one admitted leaf; `theme+look` / `theme+seed` / `theme+fontFamily` pin rejection. **MAJOR-3**: "no drawn row is body-equivalent" was false — all 9 bodies are byte-identical to two drawn fixtures (5 → `10-every-container-kind`, 4 → `15-support-triage`) → **accepted**: corpus twins take precedence (`twin.kind = "corpus"`), a stronger oracle. **MINOR**: pie already has `pie_config_frontmatter` (mechanism cell corrected); ledger field deltas spelled out (`native_draw_count` stays 27, new `admitted_count: 9`, `gated_count: 2`); narrow_40 prediction stated (24/14) instead of "empty unless measured"; roster sufficiency numbers written in-text. **NIT**: "substring gate" reworded; `test_mermaid_official.cpp` named; `theme : dark`, second config block and colon-less nested lines pinned. |
 
 ## Implementation History
@@ -344,3 +350,4 @@ CLI contract changes. The only data artifacts are regenerable ledgers and the ro
 | Date | Phase | Change | Commit |
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | — |
+| 2026-11-22 | — | Accepted after design review r2 | — |

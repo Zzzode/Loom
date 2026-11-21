@@ -47,7 +47,7 @@ faithfulness 阻塞。最后用「每单位成本」（新增机制面：需要�
 | **agentflow** | **9** | **1**：把自有 `af_frontmatter_gated` 从「只准 description」改写为「校验+披露」（与 RFC 0040 同形，TU 本地）；页脚接入 `agentflow_layout` | 低：单文件、单家族、无共享模块/跨家族不变式；body 已实测可绘（同 body × 多主题） |
 | flowchart | 8–11 | 1 个但极大：exact-bit profile 机器需新增 4 类 profile 形状并放宽 `look: neo` | 高：RFC 0036 曾因测量被证伪撤回 |
 | pie | 4 | 1：扩展既有 `pie_config_frontmatter` 闸门 | 低但增量小 |
-| venn / ishikawa | 2 | 1：新增信封（这两家族无现有 gate） | 低但增量最小 |
+| venn / ishikawa | 2 | 1：扩展现有键式 frontmatter 闸门 | 低但增量最小 |
 | git 剩余 38 / requirement 26 / state-v2 6 | 0 惰性 | 语义/几何能力 | 不是准入切片 |
 
 **选择：agentflow，9 行**（`theme` ∈ {base, dark, default, forest, neutral,

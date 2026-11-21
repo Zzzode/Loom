@@ -1,7 +1,7 @@
 ---
 rfc: 35
 title: xychart family envelope and config admission
-status: implementable
+status: implemented
 owners: "@Zzzode"
 reviewers:
   - "agent:ad3f7286f2f4af8be (independent design review, own measurement; r1 REQUEST-CHANGES → r2 APPROVE-TO-ACCEPT)"
@@ -565,7 +565,13 @@ final for this RFC.
 
 Family closure: dual-preset byte-identical matrix, mandatory gaps 48,
 integrity errors 0, roster final state re-verified (each phase already
-migrated it), close-out record in `docs/dev/`.
+migrated it), close-out record in `docs/dev/d396-xychart-rfc0035-closure.md`.
+
+Implementation closed 2026-11-21: all four phases done, family at 37 drawn /
+11 capability-debt fallbacks, full debug ctest 4614/4614 passed, dual-preset
+matrix byte-identical (`ee75f003…`), and the one owner-authorized protected
+change (E6c gap roster reconciliation for five Merman XY102 rows) independently
+reviewed.
 
 ## Review History
 
@@ -588,3 +594,4 @@ migrated it), close-out record in `docs/dev/`.
 | 2026-11-21 | P2 | Applied axis-element suppression for show*: false; 5 rows promoted; per-phase review gating tightened | — |
 | 2026-11-21 | P3 | dataLabelColor joins the validated-and-ignored color roles; 1 row promoted | — |
 | 2026-11-21 | P4 | Description+init sibling walker; 1 row promoted; all four phases done | — |
+| 2026-11-21 | — | RFC marked `implemented`; closure record docs/dev/d396-xychart-rfc0035-closure.md | — |

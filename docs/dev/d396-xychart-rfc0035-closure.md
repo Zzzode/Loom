@@ -1,7 +1,8 @@
 # D-396 —— RFC 0035（xychart 家族）实现收口记录
 
 日期 2026-11-21 · 分支 master · 起点 HEAD `e2d4fbfe` 之前为 `9b496117`（RFC implementable）
-· 本地执行，未 push、未 merge。
+· 本地执行，未 push、未 merge。RFC 0035 已标记 **implemented**（全四阶段完成、全量 ctest
+与双预设字节门通过、唯一受保护例外经授权并独立复核）。
 范围：RFC 0035 的独立设计/PRR 评审、P1–P4 四阶段实现、xychart 家族普查收口、
 OQ-1 业主裁定落地、文档与决策登记。
 

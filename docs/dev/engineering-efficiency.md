@@ -1548,3 +1548,37 @@ Attach a short efficiency section to each closure report, answering:
   same key to the generator restored reproducibility. Rule: when annotating
   a tool-generated ledger, update the generator in the same commit and run
   its `--check`.
+
+### 2026-11-21 — RFC 0035 (xychart) implementation retro
+
+- **A render-diff predicate is not a fallback predicate.** Comparing a
+  mermaid-fenced render against a plain `text`-fenced render can differ for
+  reasons unrelated to native drawing (fence language handling), so it
+  reports "drawn" for a source that is actually on fallback. Symptom: the
+  per-row gate passed while the twin-equality assertion proved the frame was
+  the untouched source. Rule: a fallback probe must use the source's own
+  hallmark (the diagram keyword still visible in the frame, as the E2c gate
+  does) and must be combined with a twin assertion; never infer "drawn" from
+  "differs from the text fence".
+- **Locate body directives structurally, not by first substring.** The P4
+  fixture's folded description mentions ``%%{init: ...}%%`` as literal text;
+  a naive `find("%%{")` erased the description tail and left the real
+  directive in the "twin", producing identical frames and a misleading
+  orientation failure. Rule: search for body constructs only after the
+  closing frontmatter fence.
+- **Per-phase review records, not one ledger verdict.** A single
+  `review.verdict` combined with a generator that iterates the records it
+  finds lets a newly enabled phase be admitted before it is reviewed
+  (silent false green). Rule: the generator and the gate both iterate the
+  enabled phase list and require an approved record per phase.
+- **A negative test must prove the intended rejection branch.** The P4
+  empty-object evidence was a directive missing one closing brace, so it
+  passed on JSON malformation instead of the walker's empty-object check.
+  Rule: negative sources must be well-formed up to the single violated
+  rule; reviewers should re-derive the parse result for each negative.
+- **Bookkeeping is part of the gate.** Five of the nine post-review findings
+  across P1–P4 were metadata drift (ledger notes, selection.rule text,
+  counts, a stale doc index), each requiring a regenerate-and-check cycle.
+  Rule: when a phase changes a row's classification or mechanism, update the
+  generator's per-phase note and rule text in the same edit, then run
+  `--check`.

@@ -205,8 +205,10 @@ config:                    # zero or one config block, immediately after
   keeps the D236 `XyDescription` path, and a pie body keeps today's path.
 - `description` alone remains admitted exactly as today (RFC 0031 D236).
   `config` alone remains admitted exactly as today. `title`, any second
-  top-level key, a second `description`/`config`, a tab indent, CRLF, or a
-  payload line with one or three spaces rejects.
+  top-level key, a second `description`/`config`, a tab indent, or a
+  payload line with one or three spaces rejects. Trailing CR is normalized
+  before validation, matching the D236 pie folded-description path: a CRLF
+  source projects identically to its LF twin and is admitted.
 
 Wave B adds one shape: a description-bearing frontmatter whose body starts
 with exactly one `%%{init: ...}%%` directive before the first statement
@@ -303,7 +305,7 @@ unless stated):
   `show*: false` rows, and a boundary set that stays fallback (unknown
   keys/values, theme/look/layout values outside the existing profile,
   duplicate description/config, title, blank
-  line or indented comment in the block, tab, CRLF, two config blocks, two
+  line or indented comment in the block, tab, two config blocks, two
   init directives, non-leading init, empty `xyChart: {}` init,
   orientation-only plain-init (non-description path), depth beyond
   `kConfigDepthLimit`, any `labelRotation` occurrence, negative
@@ -519,12 +521,18 @@ formal `drawn_at_240` 1061; mandatory gaps 48; integrity errors 0. Each
 phase's xychart delta must equal its row list exactly, and the global drawn
 delta must be the same number (no other family moves).
 
-| Phase | Rows | xychart drawn/fallback | global drawn/fallback | formal |
-|---|---|---|---|---|
-| P1 envelope grammar | 17 | 30 / 18 | 1264 / 881 | 1078 |
-| P2 `show*: false` suppression | 5 | 35 / 13 | 1269 / 876 | 1083 |
-| P3 `dataLabelColor` role | 1 | 36 / 12 | 1270 / 875 | 1084 |
-| P4 Wave B init | 1 | 37 / 11 | 1271 / 874 | 1085 |
+| Phase | Status | Rows | xychart drawn/fallback | global drawn/fallback | formal |
+|---|---|---|---|---|---|
+| P1 envelope grammar | done | 17 | 30 / 18 | 1264 / 881 | 1078 |
+| P2 `show*: false` suppression | proposed | 5 | 35 / 13 | 1269 / 876 | 1083 |
+| P3 `dataLabelColor` role | proposed | 1 | 36 / 12 | 1270 / 875 | 1084 |
+| P4 Wave B init | proposed | 1 | 37 / 11 | 1271 / 874 | 1085 |
+
+P1 evidence (measured): debug and release matrix sha256
+`7047d8a19335dd8367f5254c0df2f3d994b9bd47551b4c8680d260dde4171b2f`
+(byte-identical), xychart 30/18, global 1264/881, formal `drawn_at_240`
+1078, mandatory gaps 48, integrity errors 0, roster 881 rows / 44 categories
+migrated with `--emit`; cohort gate 6/6 debug and release.
 
 The eleven capability rows (8 geometry + 3 rotation) stay
 `source_fallback`; there is no OQ-1 fallback branch anymore — the ruling is
@@ -551,3 +559,4 @@ migrated it), close-out record in `docs/dev/`.
 | 2026-11-21 | — | r2 APPROVE-TO-ACCEPT; promoted to `accepted`; residual MINOR/NIT folded in | — |
 | 2026-11-21 | — | OQ-1 owner ruling: `labelRotation` rejected (capability bucket), target 27 → 24; phases renumbered; PRR r2 MINOR-1/MINOR-2 and NIT-1..3 applied | — |
 | 2026-11-21 | — | prr-r2 APPROVE-TO-IMPLEMENTABLE; production-readiness sign-off recorded; promoted to `implementable` | — |
+| 2026-11-21 | P1 | Closed description+config grammar; 17 rows promoted; census and dual-preset sha recorded in the phase table | — |

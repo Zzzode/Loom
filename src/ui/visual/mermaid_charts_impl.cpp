@@ -179,16 +179,23 @@ bool chart_color_value(std::string_view value) {
     });
 }
 
-bool xy_visual_envelope(const Envelope& envelope, Chart& chart) {
+bool xy_visual_envelope(const Envelope& envelope, Chart& chart, bool allow_description = false) {
     constexpr std::array<std::string_view, 5> kMaps{
         {"xyChart", "xyChart.xAxis", "xyChart.yAxis", "themeVariables", "themeVariables.xyChart"}};
     std::set<std::string> maps, maps_with_children;
     std::map<std::string, int> child_indent;
     bool config_seen = false;
+    bool description_seen = false;
     for (const EnvelopeEvent& event : envelope.events) {
         if (event.blank) continue;  // the old line splitter dropped blank lines
         if (event.comment) return false;
         if (event.top_level) {
+            if (allow_description && event.path == "description" && !description_seen) {
+                // RFC 0035: the description is documentation-only metadata; the
+                // sibling raw-shape validator owns its folded form.
+                description_seen = true;
+                continue;
+            }
             if (event.path != "config" || event.indent != 0 || config_seen) return false;
             config_seen = true;
             continue;
@@ -482,6 +489,45 @@ bool pie_description_frontmatter(const Envelope& envelope) {
     return have_payload && !first;
 }
 
+// RFC 0035: xychart-only sibling of the pie folded-description profile. The
+// literal `description: >-` header and two-space payload are the same; unlike
+// pie, an exactly-one `config:` block may follow, and every config leaf is
+// validated by the unchanged xy_visual_envelope profile. A blank line inside
+// the description block, an indented comment, a second block, or any other
+// top-level key keeps the whole source.
+bool xy_description_frontmatter(const Envelope& envelope) {
+    const auto& description = envelope.description;
+    if (!description || description->form != EnvelopeScalarForm::Folded ||
+        description->header != ">-")
+        return false;
+    enum class Section { Description, Config };
+    Section section = Section::Description;
+    bool first = true, have_payload = false, config_seen = false;
+    for (auto rest = envelope.raw_frontmatter; !rest.empty();) {
+        const auto newline = rest.find('\n');
+        auto raw = rest.substr(0, newline == std::string_view::npos ? rest.size() : newline);
+        if (raw.ends_with('\r')) raw.remove_suffix(1);
+        if (first) {
+            if (raw != "description: >-") return false;
+            first = false;
+        } else if (section == Section::Description) {
+            if (raw == "config:") {
+                section = Section::Config;
+                config_seen = true;
+            } else {
+                if (raw.empty()) return false;  // no blank line inside the block
+                if (raw.size() <= 2u || raw[0] != ' ' || raw[1] != ' ' || raw[2] == ' ' ||
+                    raw[2] == '\t' || raw[2] == '#')
+                    return false;
+                have_payload = true;
+            }
+        }
+        if (newline == std::string_view::npos) break;
+        rest = rest.substr(newline + 1);
+    }
+    return have_payload && config_seen && !envelope.config.empty();
+}
+
 // The narrow Pie config profile admits exactly config.pie.textPosition with
 // a plain numeric scalar in the reviewed 0..1 range; nothing else.
 bool pie_config_frontmatter(const Envelope& envelope) {
@@ -552,14 +598,30 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
                 return event.path == "pie.textPosition";
             });
         if (envelope->description) {
-            if (pie_config || !pie_description_frontmatter(*envelope)) return {};
-            // D236: a description-only envelope documents but does not style the
-            // chart; admit it for both families, choosing the profile from the
-            // body's first statement so a config/title/init-free xychart is no
-            // longer rejected simply for carrying a folded description.
+            // RFC 0035: choose the family before validating so a
+            // description+config xychart routes to its own sibling profile
+            // while the pie path stays byte-unchanged.
+            // The extra frontmatter pass is bounded by the parse boundary fee
+            // (kChartParsePerByte) charged once at entry, like every other
+            // envelope scan; description-only sources pay one extra pass.
             switch (chart_body_family(envelope->raw_body)) {
-                case ChartBodyFamily::Pie: profile = Profile::PieDescription; break;
-                case ChartBodyFamily::Xy: profile = Profile::XyDescription; break;
+                case ChartBodyFamily::Pie:
+                    if (pie_config || !pie_description_frontmatter(*envelope)) return {};
+                    profile = Profile::PieDescription;
+                    break;
+                case ChartBodyFamily::Xy:
+                    if (xy_description_frontmatter(*envelope)) {
+                        if (!xy_visual_envelope(*envelope, chart, true)) return {};
+                        profile = Profile::Xy;
+                        break;
+                    }
+                    // D236: a description-only envelope documents but does not
+                    // style the chart; admit it for both families so a
+                    // config/title/init-free xychart is no longer rejected
+                    // simply for carrying a folded description.
+                    if (pie_config || !pie_description_frontmatter(*envelope)) return {};
+                    profile = Profile::XyDescription;
+                    break;
                 case ChartBodyFamily::None: return {};
             }
         } else if (pie_config) {

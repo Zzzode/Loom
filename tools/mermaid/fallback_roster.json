@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 898,
+  "total_fallback": 881,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -34,7 +34,7 @@
     "family_residual:treemap": 6,
     "family_residual:venn": 7,
     "family_residual:wardley": 4,
-    "family_residual:xychart": 35,
+    "family_residual:xychart": 18,
     "family_residual:zenuml": 1,
     "git_cherry_pick": 18,
     "htmllabels_false": 44,
@@ -735,16 +735,9 @@
       "wardley/pr-check/theme-test-neutral.mmd"
     ],
     "family_residual:xychart": [
-      "xychart/nightly-check/data-labels-single-bar-horizontal.mmd",
-      "xychart/nightly-check/data-labels-single-bar-vertical.mmd",
-      "xychart/nightly-check/data-labels-within-bars-horizontal-many-bars.mmd",
-      "xychart/nightly-check/data-labels-within-bars-horizontal.mmd",
-      "xychart/nightly-check/data-labels-within-bars-vertical-many-bars.mmd",
-      "xychart/nightly-check/data-labels-within-bars-vertical.mmd",
       "xychart/nightly-check/label-rotation-clamped-above-limit.mmd",
       "xychart/nightly-check/label-rotation-clamped-below-limit.mmd",
       "xychart/nightly-check/render-spark-bar-without-displaying-other-property.mmd",
-      "xychart/nightly-check/render-spark-line-with-plotreservedspacepercent.mmd",
       "xychart/nightly-check/render-with-show-axis-label-false.mmd",
       "xychart/nightly-check/render-with-show-axis-tick-false.mmd",
       "xychart/nightly-check/render-with-show-axis-title-false.mmd",
@@ -752,24 +745,14 @@
       "xychart/nightly-check/should-render-a-horizontal-line-chart-with-point-labels.mmd",
       "xychart/nightly-check/should-render-a-line-chart-with-mixed-labels-some-points-labeled-some-not.mmd",
       "xychart/nightly-check/should-render-a-line-chart-with-point-labels.mmd",
-      "xychart/nightly-check/should-render-a-single-bar-with-label-for-a-horizontal-xy-chart.mmd",
-      "xychart/nightly-check/should-render-a-single-bar-with-label-for-a-vertical-xy-chart.mmd",
-      "xychart/nightly-check/should-render-horizontal-bar-chart-with-labels-outside-bar.mmd",
-      "xychart/nightly-check/should-render-horizontal-bar-chart-without-labels-by-default.mmd",
-      "xychart/nightly-check/should-render-multiple-bar-plots-horizontally-with-labels-correctly.mmd",
       "xychart/nightly-check/should-render-multiple-lines-where-only-one-has-labels.mmd",
       "xychart/nightly-check/should-render-negative-and-decimal-values-with-correct-labels-for-vertical-xy-chart.mmd",
-      "xychart/nightly-check/should-render-vertical-bar-chart-with-labels-outside-bar.mmd",
       "xychart/nightly-check/should-use-all-the-config-from-directive.mmd",
-      "xychart/nightly-check/should-use-all-the-config-from-yaml.mmd",
       "xychart/nightly-check/x-axis-range-same-value.mmd",
       "xychart/pr-check/multiple-plots-can-be-rendered.mmd",
       "xychart/pr-check/render-all-the-theme-color.mmd",
       "xychart/pr-check/render-with-show-axis-line-false.mmd",
-      "xychart/pr-check/should-render-horizontal-bar-chart-with-labels.mmd",
-      "xychart/pr-check/should-render-multiple-bar-plots-vertically-with-labels-correctly.mmd",
-      "xychart/pr-check/should-render-negative-and-decimal-values-with-correct-labels-for-horizontal-xy-chart.mmd",
-      "xychart/pr-check/should-render-vertical-bar-chart-with-labels.mmd"
+      "xychart/pr-check/should-render-negative-and-decimal-values-with-correct-labels-for-horizontal-xy-chart.mmd"
     ],
     "family_residual:zenuml": [
       "zenuml/pr-check/basic-zen-uml-diagram.mmd"

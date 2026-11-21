@@ -1,0 +1,501 @@
+{
+  "schema": "loom_mermaid_xychart_0035_cohort/v1",
+  "rfc": 35,
+  "phase": "P1-envelope",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "xychart original whose folded (>-) description is followed by exactly one config block already inside the xy_visual_envelope profile",
+    "roots": [
+      "xychart"
+    ],
+    "phase_partition": "renderer-free classification with pinned per-phase denominators; only ENABLED_PHASES is emitted",
+    "enabled_phases": [
+      "P1-envelope"
+    ],
+    "capability_detection": "labelRotation is capability debt by OQ-1 ruling; the two signed-value rows are path-pinned capability debt",
+    "width_policy": "wide_240 admission only; narrow_40 stays 'source'."
+  },
+  "review": {
+    "reviewer_agent": "agent:afdd5fdaf6f59d4dd independent P1 code review (fresh general-purpose agent; own source selector reproduced the 17-row set and an independent render probe reproduced drawn 30/18)",
+    "date": "2026-11-21",
+    "verdict": "approved",
+    "note": "P1 admits the description+config envelope only; P2/P3/P4 rows and the capability exclusions keep whole source. Reviewer dispositions: CRLF aligned with the D236 normalization precedent, boundary set extended, signed-value capability rows pinned."
+  },
+  "counts": {
+    "total": 17,
+    "predicted_draw": 17,
+    "by_phase": {
+      "P1-envelope": 17
+    }
+  },
+  "excluded": [
+    {
+      "path": "xychart/nightly-check/correct-distances-between-data-points.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/label-rotation-clamped-above-limit.mmd",
+      "reason": "label rotation is capability debt (OQ-1 ruling)"
+    },
+    {
+      "path": "xychart/nightly-check/label-rotation-clamped-below-limit.mmd",
+      "reason": "label rotation is capability debt (OQ-1 ruling)"
+    },
+    {
+      "path": "xychart/nightly-check/legends-for-named-plots.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/rotated-label-45-degrees.mmd",
+      "reason": "label rotation is capability debt (OQ-1 ruling)"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-a-chart-without-title.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-a-horizontal-line-chart-with-point-labels.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-a-line-chart-with-mixed-labels-some-points-labeled-some-not.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-a-line-chart-with-point-labels.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-multiple-lines-where-only-one-has-labels.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-negative-and-decimal-values-with-correct-labels-for-vertical-xy-chart.mmd",
+      "reason": "signed-value bar labels (negative data with showDataLabel); terminal label placement for signed bars is not implemented."
+    },
+    {
+      "path": "xychart/nightly-check/should-render-the-simplest-possible-xy-beta-chart.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-the-simplest-possible-xy-chart.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/should-render-vertical-bar-chart-without-labels-by-default.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/x-axis-range-same-value.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/x-axis-title-not-required.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/nightly-check/y-axis-title-not-required.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/pr-check/decimals-and-negative-numbers-are-supported.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/pr-check/multiple-plots-can-be-rendered.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/pr-check/should-render-a-chart-without-y-axis-with-different-range.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/pr-check/should-render-a-complete-chart.mmd",
+      "reason": "not a description+config envelope"
+    },
+    {
+      "path": "xychart/pr-check/should-render-negative-and-decimal-values-with-correct-labels-for-horizontal-xy-chart.mmd",
+      "reason": "signed-value bar labels (negative data with showDataLabel); terminal label placement for signed bars is not implemented."
+    }
+  ],
+  "rows": [
+    {
+      "path": "xychart/nightly-check/data-labels-single-bar-horizontal.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "487f86d9241ffac5fd0d3db197c1ace402874c3c3a62e9eb232abbf27f282d56",
+      "manifest_sha256": "487f86d9241ffac5fd0d3db197c1ace402874c3c3a62e9eb232abbf27f282d56",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/data-labels-single-bar-vertical.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "78889a35762b2bebdac31e8ba1c1de5a5310f926903800c3c1ba27ed64f61131",
+      "manifest_sha256": "78889a35762b2bebdac31e8ba1c1de5a5310f926903800c3c1ba27ed64f61131",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/data-labels-within-bars-horizontal-many-bars.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "52b3a84d4bfaa22e6200e14e4fa681ca208d2648c1f022dde6d1bf67b1c1f2fc",
+      "manifest_sha256": "52b3a84d4bfaa22e6200e14e4fa681ca208d2648c1f022dde6d1bf67b1c1f2fc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/data-labels-within-bars-horizontal.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "23ee3c355124b40d12d189d2301bf05372278889d3a9e8a88728aed708dc8c80",
+      "manifest_sha256": "23ee3c355124b40d12d189d2301bf05372278889d3a9e8a88728aed708dc8c80",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/data-labels-within-bars-vertical-many-bars.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "0d80f4939e9adb63fbbab4bc8e986af1e04290d85c1348926146bd95257ed382",
+      "manifest_sha256": "0d80f4939e9adb63fbbab4bc8e986af1e04290d85c1348926146bd95257ed382",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/data-labels-within-bars-vertical.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "e9d775d30a9da8632d8e8346ae8cef9c019e297bd24fffa82ab6d7df2c838bb0",
+      "manifest_sha256": "e9d775d30a9da8632d8e8346ae8cef9c019e297bd24fffa82ab6d7df2c838bb0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/render-spark-line-with-plotreservedspacepercent.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "d25d49f21c2ae0b1bb1d9d33c2a2e41556606eff6118596776520753fb004a60",
+      "manifest_sha256": "d25d49f21c2ae0b1bb1d9d33c2a2e41556606eff6118596776520753fb004a60",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/should-render-a-single-bar-with-label-for-a-horizontal-xy-chart.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "07d70e6a26bafd600de602d2e52a412f98e82f4ed95752775c4ad91832b932ec",
+      "manifest_sha256": "07d70e6a26bafd600de602d2e52a412f98e82f4ed95752775c4ad91832b932ec",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/should-render-a-single-bar-with-label-for-a-vertical-xy-chart.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "85b4b8253c4056b664699f1de8dc222f63e3edca44ec1b05630b816c382fb326",
+      "manifest_sha256": "85b4b8253c4056b664699f1de8dc222f63e3edca44ec1b05630b816c382fb326",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/should-render-horizontal-bar-chart-with-labels-outside-bar.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "88c54c2fec32a983dd824f018e0afbeb1b64beb70d6e1307fb0d680bd6448db6",
+      "manifest_sha256": "88c54c2fec32a983dd824f018e0afbeb1b64beb70d6e1307fb0d680bd6448db6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/should-render-horizontal-bar-chart-without-labels-by-default.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "75edf37e9953bdfa1a47c38640f4e19ffeaddde16ec088b2bf17857c7cb604cd",
+      "manifest_sha256": "75edf37e9953bdfa1a47c38640f4e19ffeaddde16ec088b2bf17857c7cb604cd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/should-render-multiple-bar-plots-horizontally-with-labels-correctly.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "7e0092f28b8ea347198652ff6218611c0f70c1851ded097506c18147eecb9312",
+      "manifest_sha256": "7e0092f28b8ea347198652ff6218611c0f70c1851ded097506c18147eecb9312",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/should-render-vertical-bar-chart-with-labels-outside-bar.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "a7cc52c8a84fe12d10a60945cd3c12216e7c1ba3e1c882741697ca946a3a103b",
+      "manifest_sha256": "a7cc52c8a84fe12d10a60945cd3c12216e7c1ba3e1c882741697ca946a3a103b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/nightly-check/should-use-all-the-config-from-yaml.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "d49153d64d5073a2fd2fb525396bc7a8b2797c94cb0019c8e532c4454f3891c0",
+      "manifest_sha256": "d49153d64d5073a2fd2fb525396bc7a8b2797c94cb0019c8e532c4454f3891c0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/pr-check/should-render-horizontal-bar-chart-with-labels.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "2ce674060d0e3d4db5901a12807c34180758855e17dafc682ef13ea5d45a8415",
+      "manifest_sha256": "2ce674060d0e3d4db5901a12807c34180758855e17dafc682ef13ea5d45a8415",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/pr-check/should-render-multiple-bar-plots-vertically-with-labels-correctly.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "c0f56541d058a5728c24fa9af525a0ebcb98e6d787d996e906bdf1a0fb963083",
+      "manifest_sha256": "c0f56541d058a5728c24fa9af525a0ebcb98e6d787d996e906bdf1a0fb963083",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    },
+    {
+      "path": "xychart/pr-check/should-render-vertical-bar-chart-with-labels.mmd",
+      "family": "xychart",
+      "phase": "P1-envelope",
+      "sha256": "b4e0f903e22f09d053802e417bffb8fb146153fa5848ed9ae875dd4e4dd22624",
+      "manifest_sha256": "b4e0f903e22f09d053802e417bffb8fb146153fa5848ed9ae875dd4e4dd22624",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0035 description+config envelope admission; the config profile is unchanged."
+    }
+  ]
+}

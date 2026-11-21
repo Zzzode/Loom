@@ -10635,9 +10635,10 @@ constexpr std::array<Pie7Supplement, 14> kPie7Supplementary{{
     // pie-specific fixture. The description envelope is no longer pie-only: it
     // now admits an XY body symmetrically (validated, discarded, never
     // rendered), so that source is a positive XY case covered by
-    // MermaidXyDescriptionEnvelope. config/title/init and malformed envelopes
-    // still fail closed there, and the six ValidUnsupported controls below
-    // keep guarding the pie reject paths.
+    // MermaidXyDescriptionEnvelope. RFC 0035 lets a description coexist with
+    // an already-reviewed config block; frontmatter title, body init and
+    // malformed envelopes still fail closed there, and the six
+    // ValidUnsupported controls below keep guarding the pie reject paths.
 }};
 
 Pie pie7_supplementary_model(Pie7SupplementModel profile) {
@@ -12184,12 +12185,13 @@ TEST(MermaidXyDescriptionEnvelope, DescriptionOnlyPieIsUnchanged) {
     EXPECT_FALSE(xy_is_fallback(source)) << "pie description envelope must keep drawing";
 }
 
-TEST(MermaidXyDescriptionEnvelope, ConfigTitleAndInitStillFailClosed) {
-    // A config key (no terminal contract) keeps the whole source.
+TEST(MermaidXyDescriptionEnvelope, ConfigDrawsTitleAndInitStillFailClosed) {
+    // RFC 0035: a description may coexist with a config block whose leaves are
+    // already inside the reviewed XY profile; the description stays inert.
     const std::string with_config =
         "---\ndescription: >-\n  d\nconfig:\n  xyChart:\n    width: 400\n---\n" +
         std::string{kXyBody};
-    EXPECT_TRUE(xy_is_fallback(with_config));
+    EXPECT_FALSE(xy_is_fallback(with_config));
     // A title alongside the description is rejected (no title projection).
     const std::string with_title =
         "---\ndescription: >-\n  d\ntitle: quarterly\n---\n" + std::string{kXyBody};

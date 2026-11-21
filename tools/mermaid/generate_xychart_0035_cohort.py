@@ -45,7 +45,7 @@ LEDGER = pathlib.Path("tools/mermaid/xychart-0035-cohort.json")
 
 SCHEMA = "loom_mermaid_xychart_0035_cohort/v1"
 ROOT_REL = "xychart"
-ENABLED_PHASES = ("P1-envelope", "P2-show-false")
+ENABLED_PHASES = ("P1-envelope", "P2-show-false", "P3-data-label-color")
 
 EXPECTED = {
     "P1-envelope": 17,
@@ -80,6 +80,17 @@ PHASE_REVIEWS = {
                 "capability exclusions keep whole source. Reviewer dispositions: CRLF aligned "
                 "with the D236 normalization precedent, boundary set extended, signed-value "
                 "capability rows pinned.",
+    },
+    "P3-data-label-color": {
+        "reviewer_agent": "agent:a56c5abd2821b7b24 independent P3 code review "
+                          "(fresh general-purpose agent; verified the eleventh role shares "
+                          "chart_color_value, the closure negatives and the config-only twin "
+                          "equality of the promoted row)",
+        "date": "2026-11-21",
+        "verdict": "approved",
+        "note": "Validated-and-ignored color role only. Reviewer dispositions: P3 ledger_note "
+                "corrected, misnested and invalid-value negatives restored, roster migrated in "
+                "the same commit per C9.",
     },
     "P2-show-false": {
         "reviewer_agent": "agent:a67ad4e0bf007cffd independent P2 code review "
@@ -242,7 +253,10 @@ def build(repo_root: pathlib.Path):
                     "profile is unchanged."
                     if phase == "P1-envelope" else
                     "RFC 0035 axis-element suppression; show*: false now hides the "
-                    "matching element without reflow."),
+                    "matching element without reflow."
+                    if phase == "P2-show-false" else
+                    "RFC 0035 validated-and-ignored color role; SVG-only upstream, "
+                    "not projected by the terminal."),
             })
 
     return {

@@ -242,10 +242,12 @@ bool xy_visual_envelope(const Envelope& envelope, Chart& chart, bool allow_descr
                     remaining.remove_prefix(comma + 1);
                 } while (true);
             } else {
-                constexpr std::array<std::string_view, 10> roles{
-                    {"backgroundColor", "titleColor", "xAxisLabelColor", "xAxisLineColor",
-                     "xAxisTickColor", "xAxisTitleColor", "yAxisLabelColor", "yAxisLineColor",
-                     "yAxisTickColor", "yAxisTitleColor"}};
+                // RFC 0035 P3: dataLabelColor joins the validated-and-ignored
+                // color roles; color application is SVG-only in upstream.
+                constexpr std::array<std::string_view, 11> roles{
+                    {"backgroundColor", "dataLabelColor", "titleColor", "xAxisLabelColor",
+                     "xAxisLineColor", "xAxisTickColor", "xAxisTitleColor", "yAxisLabelColor",
+                     "yAxisLineColor", "yAxisTickColor", "yAxisTitleColor"}};
                 if (std::ranges::find(roles, role) == roles.end() || !chart_color_value(*value))
                     return false;
             }

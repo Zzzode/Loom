@@ -525,7 +525,7 @@ delta must be the same number (no other family moves).
 |---|---|---|---|---|---|
 | P1 envelope grammar | done | 17 | 30 / 18 | 1264 / 881 | 1078 |
 | P2 `show*: false` suppression | done | 5 | 35 / 13 | 1269 / 876 | 1083 |
-| P3 `dataLabelColor` role | proposed | 1 | 36 / 12 | 1270 / 875 | 1084 |
+| P3 `dataLabelColor` role | done | 1 | 36 / 12 | 1270 / 875 | 1084 |
 | P4 Wave B init | proposed | 1 | 37 / 11 | 1271 / 874 | 1085 |
 
 P1 evidence (measured): debug and release matrix sha256
@@ -541,6 +541,13 @@ P2 evidence (measured): debug and release matrix sha256
 migrated with `--emit`; cohort gate 8/8 debug and release. The per-axis
 suppression gate is proven by flag-flip twins (frame changes, no reflow,
 axis cells only) and by horizontal-orientation synthetics.
+
+P3 evidence (measured): debug and release matrix sha256
+`240eec9e631555eda9038c4c032c9016118ff78c6baed3225e70b65bdd8790aa`
+(byte-identical), xychart 36/12, global 1270/875, formal `drawn_at_240`
+1084, mandatory gaps 48, integrity errors 0, roster 875 rows / 44 categories
+migrated with `--emit`; cohort gate 8/8 debug and release. The role shares
+`chart_color_value` with the existing ten and is discarded after validation.
 
 The eleven capability rows (8 geometry + 3 rotation) stay
 `source_fallback`; there is no OQ-1 fallback branch anymore — the ruling is
@@ -569,3 +576,4 @@ migrated it), close-out record in `docs/dev/`.
 | 2026-11-21 | — | prr-r2 APPROVE-TO-IMPLEMENTABLE; production-readiness sign-off recorded; promoted to `implementable` | — |
 | 2026-11-21 | P1 | Closed description+config grammar; 17 rows promoted; census and dual-preset sha recorded in the phase table | — |
 | 2026-11-21 | P2 | Applied axis-element suppression for show*: false; 5 rows promoted; per-phase review gating tightened | — |
+| 2026-11-21 | P3 | dataLabelColor joins the validated-and-ignored color roles; 1 row promoted | — |

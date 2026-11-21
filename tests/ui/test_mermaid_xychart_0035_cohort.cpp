@@ -175,14 +175,16 @@ TEST(MermaidXychart0035Cohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(root.get_int("rfc"), 35);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
     const auto counts = root.get("counts");
-    EXPECT_EQ(counts.get_int("total"), 22);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 22);
+    EXPECT_EQ(counts.get_int("total"), 23);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 23);
     EXPECT_EQ(counts.get("by_phase").get_int("P1-envelope"), 17);
     EXPECT_EQ(counts.get("by_phase").get_int("P2-show-false"), 5);
+    EXPECT_EQ(counts.get("by_phase").get_int("P3-data-label-color"), 1);
     const auto phases = root.get("selection").get("enabled_phases");
     std::set<std::string> enabled;
     phases.iter([&](const JsonVal value) { enabled.emplace(value.as_str()); });
-    EXPECT_EQ(enabled, (std::set<std::string>{"P1-envelope", "P2-show-false"}));
+    EXPECT_EQ(enabled, (std::set<std::string>{"P1-envelope", "P2-show-false",
+                                            "P3-data-label-color"}));
     // Every enabled phase must carry its own approved review record; a
     // missing record is not a silent pass.
     const auto reviews = root.get("review").get("phases");
@@ -201,7 +203,7 @@ TEST(MermaidXychart0035Cohort, LedgerMatchesSchemaAndReviewed) {
         if (phase == "P1-envelope") ++p1;
         if (phase == "P2-show-false") ++p2;
     });
-    EXPECT_EQ(rows, 22);
+    EXPECT_EQ(rows, 23);
     EXPECT_EQ(p1, 17);
     EXPECT_EQ(p2, 5);
 }
@@ -224,8 +226,9 @@ TEST(MermaidXychart0035Cohort, RowsPinFixtureBytesAndPriorStatus) {
             << path;
         EXPECT_EQ(found->second.get("raw").get_string("expected"), "source") << path;
         EXPECT_EQ(found->second.get("raw").get_string("reason"), "frontmatter") << path;
-        EXPECT_TRUE(row.get_string("phase") == "P1-envelope" ||
-                    row.get_string("phase") == "P2-show-false")
+        const std::string phase = row.get_string("phase");
+        EXPECT_TRUE(phase == "P1-envelope" || phase == "P2-show-false" ||
+                    phase == "P3-data-label-color")
             << path;
     });
 }
@@ -262,9 +265,6 @@ TEST(MermaidXychart0035Cohort, DescriptionPlusConfigBoundaryKeepsWholeSource) {
 
     const std::vector<std::string> rejected{
         // Widened keys that belong to later phases stay closed.
-        with_config("  xyChart:\n    themeVariables:\n      xyChart:\n        dataLabelColor: "
-                    "\"#eeeeee\"\n",
-                    kBody),
         with_config("  xyChart:\n    xAxis:\n      labelRotation: 45\n", kBody),
         with_config("  xyChart:\n    plotBorderWidth: 5\n", kBody),
         with_config("  xyChart:\n    showTitle: false\n", kBody),
@@ -477,6 +477,24 @@ TEST(MermaidXychart0035Cohort, DescriptionOnlyAndConfigOnlyPathsAreUnchanged) {
     EXPECT_FALSE(xy_is_fallback("---\nconfig:\n  xyChart:\n    width: 400\n---\n" + kBody));
     EXPECT_FALSE(xy_is_fallback("---\nconfig:\n  xyChart:\n    xAxis:\n      showLabel: false\n---\n" +
                                 kBody));
+    // P3: dataLabelColor joins the validated-and-ignored color roles.
+    EXPECT_FALSE(xy_is_fallback(
+        with_config("  themeVariables:\n    xyChart:\n      dataLabelColor: \"#eeeeee\"\n",
+                    kBody)));
+    EXPECT_TRUE(xy_is_fallback(
+        with_config("  themeVariables:\n    xyChart:\n      unknownColor: \"#eeeeee\"\n",
+                    kBody)));
+    // The role uses the same color validation as the existing ten, and a
+    // misnested themeVariables block stays closed.
+    EXPECT_TRUE(xy_is_fallback(
+        with_config("  themeVariables:\n    xyChart:\n      dataLabelColor: red\n", kBody)));
+    EXPECT_TRUE(xy_is_fallback(
+        with_config("  themeVariables:\n    xyChart:\n      dataLabelColor: \"#zzzzzz\"\n",
+                    kBody)));
+    EXPECT_TRUE(xy_is_fallback(
+        with_config("  xyChart:\n    themeVariables:\n      xyChart:\n        dataLabelColor: "
+                    "\"#eeeeee\"\n",
+                    kBody)));
     // CRLF is normalized before validation, matching the D236 pie path.
     EXPECT_FALSE(xy_is_fallback("---\r\ndescription: >-\r\n  d\r\nconfig:\r\n  "
                                 "xyChart:\r\n    width: 400\r\n---\n" +

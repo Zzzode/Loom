@@ -52,7 +52,7 @@ redux 调色板 × 4 + Sports in Sweden × dark）。corpus twin：dark 行与
   gaps 48、integrity 0 不变。
 - roster 674 → **669**（`family_residual:pie` 17→12，类别非空；`--self-test` 键集不变式安全）。
 - 5 行均不在受保护 `e6c` gap roster（该 roster 仅 class/flowchart）。
-- narrow_40 必须 live 实测：按规则 34，页脚行（64 字符）超过 40 列视口，预计 0/5 可绘，
+- narrow_40 必须 live 实测：按规则 34，页脚行（最长 60 字符）超过 40 列视口，预计 0/5 可绘，
   以门禁实测为准。
 
 ## 6. 三笔历史债（本次不动）

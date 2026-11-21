@@ -324,9 +324,10 @@ CLI contract changes. The only data artifacts are regenerable ledgers and the ro
   `test_mermaid_official` is rebuilt in both presets before the dual-preset sha compare
   (rule 28). A census command runs from the preset build directory and the artifact sha
   must change, not just the exit code. The ordering is fixed: review approved → full
-  rebuild → matrix in both presets → `--self-test` → `--matrix` → `--emit` (a matrix run
-  against a still-pending ledger truncates the report, so the roster must never be emitted
-  from it). A red full gate is handled per D-401 §7 — fixed, or evidenced by ≥3 clean
+  rebuild → matrix in both presets → cohort gate green → `--emit` → `--self-test` →
+  `--matrix` (a matrix run against a still-pending ledger truncates the report, so the
+  roster must never be emitted from it; and `--matrix` before `--emit` fails by
+  construction, live 674 vs pinned 683). A red full gate is handled per D-401 §7 — fixed, or evidenced by ≥3 clean
   reruns plus unrelatedness; never laundered by a partial rerun.
 
 ## Documentation impact

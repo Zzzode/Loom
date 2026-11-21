@@ -1,9 +1,9 @@
 ---
 rfc: 42
 title: pie look and theme admission
-status: accepted
+status: implementable
 owners: "@Zzzode"
-reviewers: []
+reviewers: ["agent:a91726bc2e6905718 rfc0042-design-review (r1 REQUEST-CHANGES -> r2 APPROVE-TO-ACCEPT)", "agent:ac41c7a527c6f43f6 rfc0042-prr (r1 REQUEST-CHANGES -> folded; see Review History)"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -127,9 +127,11 @@ raw frontmatter to be exactly `description: >-` plus two-space payload lines —
   `layout`, …), a duplicate theme, or an out-of-table/empty value keeps the whole source.
 - The description rules are the reviewed `PieTheme` rules, not the old profile's: unlike
   `pie_description_frontmatter` (which tolerates a blank payload line), `PieTheme`
-  rejects a blank line inside the description block — the stricter `xy_description_shape`
-  rule — so the admitted shape is fully pinned. The old description-only profile is
-  untouched.
+  rejects a blank line inside the description block and an indented comment inside it —
+  the stricter `xy_description_shape` rule — so the admitted shape is fully pinned. The
+  old description-only profile is untouched. Likewise exactly one space follows the
+  `theme:` colon in the leaf line (`  theme: dark`); the scalar's surrounding whitespace is
+  then trimmed by `chart_yaml_scalar`, so `  theme:    dark` is not the pinned shape.
 - A source carrying a theme leaf **without** the folded description keeps today's
   rejection: `pie_config` is not entered (it requires a `pie.textPosition` event), and the
   fallthrough `xy_visual_envelope` profile rejects the pie body.
@@ -154,10 +156,10 @@ Each line is capped at 96 bytes and charged at `size * 4 + sizeof(std::string) +
 emission charges `(1 + n) * (4 * sizeof(std::string) + 256) + bytes * 2 + 256`; the total
 must satisfy `rows + 1 + n <= kHeightLimit (1024)`; failing either bound keeps the whole
 source. Byte-for-byte the state/flow/git/journey-family/agentflow budget. The guard uses
-an off-by-one-safe `>` comparison. The footer attaches only when the parsed chart has at
-least one slice: `pie_chart` returns a title-only row for an empty slice list, and that
-degenerate path stays footer-free (no corpus row reaches it; the rule exists so the
-attach condition is unambiguous).
+an off-by-one-safe `>` comparison. The footer attaches whenever the gate accepted a leaf
+(`notices` non-empty) — including the degenerate title-only chart `pie_chart` returns for
+an empty slice list — so an admitted source always discloses (G2). The degenerate probe is
+pinned in the battery.
 
 ### 4. Reviewed cohort, twin gate and wiring
 
@@ -189,6 +191,10 @@ attach condition is unambiguous).
   4 reject, indent 2 is the admitted position; a payload line that looks like `theme:`;
   a blank line inside the description rejects; theme plus any other leaf; a second config
   block; theme without the folded description; theme plus an in-body `%%{init}%%`); a
+  the four body-blocked theme fixtures (`dark-`, `default-`, `forest-`, `neutral-theme.mmd`)
+  pinned as explicit whole-source negatives (the body parser rejects `accTitle:`/
+  `accDescr:`), so a future body-parser widening cannot silently promote a sixth row; the
+  empty-slice degeneracy (`pie title X` with an admitted theme) drawing with the footer; a
   partition test against the Pie7 rows; and the drawn-row frame-identity oracle over the
   seven Pie7 paths.
   The twin comparison is **wide-only** (`kWide`), exactly like the git/agentflow gates;
@@ -277,9 +283,12 @@ data, no wire protocol, no CLI contract changes.
   `tests/ui/CMakeLists.txt`, plus a hermetic `--check` ctest for the new generator.
 - Targeted `ctest -L mermaid` in the phase; release-preset matrix in the phase; dual-preset
   byte gate at closure; full debug ctest once at closure.
-- `fallback_attribution.py --emit` followed by `--self-test` and `--matrix`, in the fixed
-  order: review approved → full rebuild → both matrices → `--self-test` → `--matrix` →
-  `--emit`.
+- `fallback_attribution.py` in the only order that can be green: review approved → full
+  rebuild → both preset matrices → **cohort gate green** → `--emit` (write the migrated
+  roster) → `--self-test` → `--matrix` (the drift gate compares the live matrix against
+  the migrated roster). Running `--matrix` before `--emit` fails by construction (live
+  669 vs pinned 674); the same correction applies to RFC 0041's identically worded
+  sentence, which this phase fixes as a docs correction.
 - **False-green guardrails.** The matrix branch is a ledger echo; the render proof is the
   cohort gate. The full build must precede any matrix verdict, and the report target is
   rebuilt in both presets before the sha compare. A red full gate is handled per D-401 §7.
@@ -292,6 +301,9 @@ data, no wire protocol, no CLI contract changes.
 - [ ] `docs/README.md` — RFC index
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — pie row 17/7 → 12/12
 - [ ] `docs/dev/engineering-efficiency.md` — per-task retro
+- [ ] `tests/fixtures/mermaid_native/direct_theme_source_audit.v1.json` — unconsumed
+      point-in-time census; annotate as superseded by RFC 0042 (it lists pie rows as
+      `source_fallback` with a pre-phase `matrix_sha256`)
 
 ## Open questions
 
@@ -323,3 +335,5 @@ data, no wire protocol, no CLI contract changes.
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | — |
 | 2026-11-22 | — | Accepted after design review r2 | — |
+| 2026-11-22 | — | Implementable after PRR r1 (MAJOR folded) | — |
+| 2026-11-22 | prr-r1 | independent PRR agent (production-readiness lens; graduation measurability, hidden tests, build/Work, false-green, rollback, couplings, precedent) | REQUEST-CHANGES -> folded | Every product-side number re-derived live (1471/674, 1285, gaps 48, integrity 0, pie 7/17; the five rows original-track `family_residual:pie`, absent from the protected gap roster; the +5 accounting path is the generic counter; a simulated promotion gives 669 / pie 12 / formal 1290 / `--self-test` green). Build is body-only, no BMI change; Work formulas byte-identical to five siblings; no shared-contract change; mixed corpus/synthetic twins match RFC 0037. **MAJOR**: the testing plan's fixed order put `--matrix` before `--emit`, which fails by construction (live 669 vs pinned 674) → folded: the only green order is review approved → full rebuild → both matrices → cohort gate green → `--emit` → `--self-test` → `--matrix` (and RFC 0041's identically worded sentence is corrected as a docs fix). MINORs folded: the footer now attaches whenever a leaf was accepted, including the title-only empty-slice chart (G2); `PieTheme` takes the stricter `xy_description_shape` rule for an indented comment inside the payload and pins exactly one space after `theme:`; the four body-blocked theme rows are explicit whole-source negatives in the gate; the point-in-time `direct_theme_source_audit` snapshot joins the documentation impact; D-408's footer length is corrected to 60 characters. |

@@ -220,6 +220,13 @@ def emit_roster(matrix_path: Path) -> dict:
         rel = row["fixture"]
         category = classify(fixture_source(rel), row["type"])
         by_category.setdefault(category, []).append(rel)
+    # RFC 0040: every detector category is emitted even when the roster no
+    # longer has a member (an admission can empty a category). The self-test
+    # pins `causality` to `category_counts` key equality, so an omitted empty
+    # category would be an orphan label; seeding here keeps the key set stable
+    # across admissions.
+    for det in DETECTORS:
+        by_category.setdefault(det.category, [])
     for paths in by_category.values():
         paths.sort()
     counts = {cat: len(paths) for cat, paths in by_category.items()}

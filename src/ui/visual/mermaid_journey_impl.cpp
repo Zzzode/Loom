@@ -86,6 +86,157 @@ bool journey_wrap(const std::string& label, Work& work, std::vector<std::string>
     return flush();
 }
 
+
+// RFC 0040: the shared "no color contract" gate becomes a validating one. A
+// `theme`/`look` key at indent 2 inside the single `config:` block is validated
+// against this family's closed corpus table and disclosed through a footer
+// below the art; a visual key anywhere else (top level, inside a
+// `description:` payload, or at indent 4 or deeper) keeps the whole source, as
+// does an in-body %%{...theme...}%% initializer. Every other frontmatter line
+// is ignored (the three renderers' long-standing pass-through contract).
+constexpr std::size_t kJourneyFamNoticeLineLimit = 96u;
+constexpr std::string_view kFamilyNoticeHeader = "Journey native projection v1";
+constexpr std::array<std::string_view, 0> kFamilyLookTable{};
+constexpr std::array<std::string_view, 4> kFamilyThemeTable{"redux", "redux-dark", "redux-color", "redux-dark-color"};
+
+std::optional<std::string> journey_fam_scalar(std::string_view raw, Work& work) {
+    const auto trim_view = [](std::string_view value) {
+        const auto first = value.find_first_not_of(" \t");
+        if (first == std::string_view::npos) return std::string_view{};
+        const auto last = value.find_last_not_of(" \t");
+        return value.substr(first, last - first + 1u);
+    };
+    auto value = trim_view(raw);
+    char quote = 0;
+    for (std::size_t n = 0; n < value.size(); ++n) {
+        const char c = value[n];
+        if (quote) {
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == '#' && (n == 0u || value[n - 1u] == ' ' || value[n - 1u] == '\t')) {
+            value = trim_view(value.substr(0, n));
+            break;
+        }
+    }
+    if (!work.spend(value.size() + 1u)) return std::nullopt;
+    if (value.size() >= 2u &&
+        ((value.front() == '"' && value.back() == '"') ||
+         (value.front() == '\'' && value.back() == '\'')))
+        value = value.substr(1u, value.size() - 2u);
+    return std::string(value);
+}
+
+bool journey_fam_notice_line(std::vector<std::string>& notices, std::string_view line, Work& work) {
+    if (line.size() > kJourneyFamNoticeLineLimit ||
+        !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+        return false;
+    notices.emplace_back(line);
+    return true;
+}
+
+// nullopt: the whole source stays whole-source. Otherwise the bounded
+// disclosure footer (possibly empty), emitted below the art by the caller.
+std::optional<std::vector<std::string>> journey_fam_visual_config(
+    std::string_view source, std::string_view header,
+    std::span<const std::string_view> looks, std::span<const std::string_view> themes,
+    Work& work) {
+    const auto matches = [](std::span<const std::string_view> table,
+                            const std::string& value) {
+        return std::ranges::find(table, value) != table.end();
+    };
+    std::string look_value, theme_value;
+    enum : unsigned { Look = 1u, Theme = 2u };
+    unsigned fields = 0u;
+    std::string_view body = source;
+    if (source.starts_with("---\n")) {
+        const auto close = source.find("\n---\n", 4);
+        if (close != std::string_view::npos) {
+            body = source.substr(close + 5u);
+            bool in_config = false;
+            const std::string_view frontmatter = source.substr(4u, close - 4u);
+            for (std::size_t pos = 0;;) {
+                const auto eol = frontmatter.find('\n', pos);
+                std::string_view line = frontmatter.substr(
+                    pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
+                pos = eol == std::string_view::npos ? frontmatter.size() : eol + 1u;
+                if (!line.empty() && line.back() == '\r') line.remove_suffix(1u);
+                const auto indent = line.find_first_not_of(' ');
+                if (indent != std::string_view::npos) {
+                    const bool column0 = indent == 0u;
+                    const auto content = line.substr(indent);
+                    const auto colon = content.find(':');
+                    if (column0) {
+                        if (!content.starts_with('#')) {
+                            const auto key =
+                                colon == std::string_view::npos ? content
+                                                                : content.substr(0, colon);
+                            // A visual key outside the config block (top level
+                            // or a description payload opener) keeps the whole
+                            // source, exactly as before RFC 0040.
+                            if (colon != std::string_view::npos &&
+                                (key == "theme" || key == "look"))
+                                return std::nullopt;
+                            in_config = colon != std::string_view::npos && key == "config";
+                        }
+                    } else if (colon != std::string_view::npos &&
+                               (content.substr(0, colon) == "theme" ||
+                                content.substr(0, colon) == "look")) {
+                        // Admitted only at indent 2 inside the config block; a
+                        // payload line or a namespaced key stays a gate.
+                        if (!in_config || indent != 2u) return std::nullopt;
+                        const auto value = journey_fam_scalar(content.substr(colon + 1u), work);
+                        if (!value) return std::nullopt;
+                        if (content.substr(0, colon) == "look") {
+                            if ((fields & Look) || !matches(looks, *value)) return std::nullopt;
+                            look_value = *value;
+                            fields |= Look;
+                        } else {
+                            if ((fields & Theme) || !matches(themes, *value)) return std::nullopt;
+                            theme_value = *value;
+                            fields |= Theme;
+                        }
+                    }
+                }
+                if (eol == std::string_view::npos) break;
+            }
+        }
+    }
+    // The in-body themed initializer stays a whole-source gate (unchanged).
+    for (std::size_t pos = 0;;) {
+        const auto eol = body.find('\n', pos);
+        const std::string_view line = body.substr(
+            pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
+        pos = eol == std::string_view::npos ? body.size() : eol + 1u;
+        const auto trimmed = line.find_first_not_of(" \t");
+        if (trimmed != std::string_view::npos && line.substr(trimmed).starts_with("%%{") &&
+            line.find("theme") != std::string_view::npos)
+            return std::nullopt;
+        if (eol == std::string_view::npos) break;
+    }
+    std::vector<std::string> notices;
+    if (fields != 0u) {
+        if (!journey_fam_notice_line(notices, header, work)) return std::nullopt;
+        if ((fields & Look) &&
+            !journey_fam_notice_line(notices,
+                                     "config.look=" + look_value +
+                                         " -> source node style; not applied",
+                                     work))
+            return std::nullopt;
+        if ((fields & Theme) &&
+            !journey_fam_notice_line(notices,
+                                     "config.theme=" + theme_value +
+                                         " -> colour palette; not applied",
+                                     work))
+            return std::nullopt;
+    }
+    return notices;
+}
+
 }  // namespace
 
 std::optional<std::vector<std::string>> journey_layout(std::string_view source, Work& work) {
@@ -99,49 +250,10 @@ std::optional<std::vector<std::string>> journey_layout(std::string_view source, 
     }
 
     const std::string_view body = journey_body(source);
-    // The terminal has no color/theme contract, so a themed journey stays on
-    // ordinary whole-source fallback. Theme can arrive as a frontmatter
-    // config leaf (theme/look) or as an in-body %%{init}%% directive. Both
-    // checks are key-based, not whole-text substring scans, so a task label
-    // that happens to contain the word "theme" is never falsely rejected.
-    {
-        bool visual_gate = false;
-        if (source.starts_with("---\n")) {
-            const auto close = source.find("\n---\n", 4);
-            if (close != std::string_view::npos) {
-                const std::string_view frontmatter = source.substr(0, close);
-                for (std::size_t pos = 0;;) {
-                    const auto eol = frontmatter.find('\n', pos);
-                    std::string_view line = frontmatter.substr(
-                        pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
-                    pos = eol == std::string_view::npos ? frontmatter.size() : eol + 1;
-                    const auto key_start = line.find_first_not_of(' ');
-                    if (key_start != std::string_view::npos) {
-                        std::string_view key = line.substr(key_start);
-                        const auto colon = key.find(':');
-                        if (colon != std::string_view::npos) key = key.substr(0, colon);
-                        if (key == "theme" || key == "look") visual_gate = true;
-                    }
-                    if (eol == std::string_view::npos) break;
-                }
-            }
-        }
-        if (!visual_gate) {
-            for (std::size_t pos = 0;;) {
-                const auto eol = body.find('\n', pos);
-                std::string_view line = body.substr(
-                    pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
-                pos = eol == std::string_view::npos ? body.size() : eol + 1;
-                const auto trimmed = line.find_first_not_of(' ');
-                if (trimmed != std::string_view::npos &&
-                    line.substr(trimmed).starts_with("%%{") &&
-                    line.find("theme") != std::string_view::npos)
-                    visual_gate = true;
-                if (eol == std::string_view::npos) break;
-            }
-        }
-        if (visual_gate) return {};
-    }
+    const auto visual = journey_fam_visual_config(
+        source, kFamilyNoticeHeader, kFamilyLookTable, kFamilyThemeTable, work);
+    if (!visual) return {};
+    const std::vector<std::string>& notices = *visual;
     std::vector<JourneySection> sections;
     std::string title;
     bool saw_header = false;
@@ -261,6 +373,22 @@ std::optional<std::vector<std::string>> journey_layout(std::string_view source, 
         }
     }
     if (out.empty()) return {};
+    // RFC 0040: the bounded disclosure footer is part of the returned art
+    // (blank separator, then the header and one line per accepted leaf), with
+    // the same cap, charge and height guard as the state/flow/git paths.
+    if (!notices.empty()) {
+        std::size_t bytes = 0u;
+        for (const auto& line : notices) {
+            if (line.size() > kJourneyFamNoticeLineLimit) return {};
+            bytes += line.size();
+        }
+        if (out.size() + 1u + notices.size() > static_cast<std::size_t>(kHeightLimit) ||
+            !work.spend((1u + notices.size()) * (4u * sizeof(std::string) + 256u) + bytes * 2u +
+                        256u))
+            return {};
+        out.emplace_back();
+        for (const auto& line : notices) out.push_back(line);
+    }
     return out;
 }
 

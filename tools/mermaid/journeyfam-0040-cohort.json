@@ -1,0 +1,1038 @@
+{
+  "schema": "loom_mermaid_journeyfam_0040_cohort/v1",
+  "rfc": 40,
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "a `theme`/`look` key at indent 2 inside the single `config:` block, with a value inside the family's closed corpus table and at most one per key",
+    "roots": [
+      "timeline",
+      "gantt",
+      "journey"
+    ],
+    "phase": "P1-look-theme",
+    "cohort_digest": "cfdb3e80c92e566d3a4ec0d64aa72e824dddbd7b6807a12e8642d71c0246ac6b",
+    "families": {
+      "timeline": {
+        "originals": 30,
+        "admitted": 16,
+        "digest": "c20195a1ee4fcfe3e86bd8552f5f9cc83bd7ec7df3c934b288fe1889c383d349"
+      },
+      "gantt": {
+        "originals": 52,
+        "admitted": 11,
+        "digest": "026f49b9cf460574be0b83ecd7d02e1c069d3e5026c133dc3218af5ce52a8bd6"
+      },
+      "journey": {
+        "originals": 18,
+        "admitted": 4,
+        "digest": "d910db07953ea1379be6cb51ab0cb74104cb59dfea1bcf8f47ca7348c675a463"
+      }
+    },
+    "twin_rule": "the frame must equal the synthesized config-free twin's frame plus the recorded footer delta, line by line, both sides through the same sentinel-bearing wrapper",
+    "corpus_twins": "none: no drawn fixture of the three families is body-equivalent to an admitted row",
+    "pass_through": "every non-theme/look frontmatter key keeps the renderers' long-standing pass-through (11 drawn rows rely on it)",
+    "exclusions": "in-body %%{init}%% theme directives (timeline 7, journey 4) and the two malformed-date gantt rows stay whole-source",
+    "width_policy": "wide_240 admission only; narrow_40 is measured per row."
+  },
+  "review": {
+    "phases": {
+      "P1-look-theme": {
+        "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, RFC 0040 journey-family admission, 2026-11-22; round 1 REQUEST-CHANGES with 1 BLOCKER + 1 MAJOR + 2 MINOR + 4 NIT, all resolved, round 2 APPROVE)",
+        "date": "2026-11-22",
+        "verdict": "approved",
+        "note": "Round 1: the delivered tree could not pass OfficialMatrix while the ledger stayed pending (this record closes it); the gantt/journey batteries did not implement the RFC section 3 per-family probe set. Fix: one FamilyBattery run per family covering every admitted value, sibling-only/unknown/case/empty, duplicate, quoted, trailing comment, unmatched quote, indent 0/2/4, themeVariables, description payload, admitted+in-body init, and the literal footer block (blank separator, header, look-before-theme) independent of the ledger; the drawn-row oracle pins 7+39+10=56 rows; the Python fence matcher is tightened to the C++ exact match. Round 2 verified each fix and the three TU helpers byte-identical; no protected file touched."
+      }
+    },
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 31,
+    "predicted_draw": 31,
+    "timeline": 16,
+    "gantt": 11,
+    "journey": 4
+  },
+  "rows": [
+    {
+      "path": "gantt/nightly-check/should-render-done-task-outside-text-readable-in-dark-mode-regression-7433.mmd",
+      "family": "gantt",
+      "phase": "P1-look-theme",
+      "sha256": "2c31a7865af2d923937fe6f2d82d61f2e6da525af347c2c0e050833111f7b2c8",
+      "manifest_sha256": "2c31a7865af2d923937fe6f2d82d61f2e6da525af347c2c0e050833111f7b2c8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Gantt native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 gantt look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "gantt/nightly-check/should-render-done-tasks-with-readable-text-in-dark-mode.mmd",
+      "family": "gantt",
+      "phase": "P1-look-theme",
+      "sha256": "1a4de96fc6b44ffdcc35844a23672215d5d22a11a91c18ffeabb760bfa8936c0",
+      "manifest_sha256": "1a4de96fc6b44ffdcc35844a23672215d5d22a11a91c18ffeabb760bfa8936c0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Gantt native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 gantt look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "gantt/pr-check/should-render-done-task-inside-text-readable-in-dark-mode.mmd",
+      "family": "gantt",
+      "phase": "P1-look-theme",
+      "sha256": "f1738e9fa80997afffa6adc290429131052e4be812d6abdf8eecc304d5af68f4",
+      "manifest_sha256": "f1738e9fa80997afffa6adc290429131052e4be812d6abdf8eecc304d5af68f4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Gantt native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 gantt look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "gantt/visual-check/dark-theme.mmd",
+      "family": "gantt",
+      "phase": "P1-look-theme",
+      "sha256": "23952fb6277cb0d98481ee35eaae228f227b9e1ecab6b3dbf0d769c9fd895b27",
+      "manifest_sha256": "23952fb6277cb0d98481ee35eaae228f227b9e1ecab6b3dbf0d769c9fd895b27",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Gantt native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 gantt look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "gantt/visual-check/default-theme.mmd",
+      "family": "gantt",
+      "phase": "P1-look-theme",
+      "sha256": "3cb6b2e312d89f7a832f59348c1b8aac195ef810498cea47a680bd7bb549f158",
+      "manifest_sha256": "3cb6b2e312d89f7a832f59348c1b8aac195ef810498cea47a680bd7bb549f158",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Gantt native projection v1",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 gantt look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "gantt/visual-check/forest-theme.mmd",
+      "family": "gantt",
+      "phase": "P1-look-theme",
+      "sha256": "67e55162e7db39874405e68bbe7cc31adc05605566db61f1132160b18f9d0c5c",
+      "manifest_sha256": "67e55162e7db39874405e68bbe7cc31adc05605566db61f1132160b18f9d0c5c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Gantt native projection v1",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 gantt look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "gantt/visual-check/neutral-theme.mmd",
+      "family": "gantt",
+      "phase": "P1-look-theme",
+      "sha256": "d815376e7f7868614ddf6beff7a64b73dae5c18287e0da627f1d72476e797299",
+      "manifest_sha256": "d815376e7f7868614ddf6beff7a64b73dae5c18287e0da627f1d72476e797299",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Gantt native projection v1",
+        "config.theme=neutral -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 gantt look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "gantt/visual-check/redux-color-theme.mmd",
+      "family": "gantt",
+      "phase": "P1-look-theme",
+      "sha256": "5ef5d89e6f883127a4c192cb97b8ff1a75030ee4ff74d86f35eeaab0a61450b5",
+      "manifest_sha256": "5ef5d89e6f883127a4c192cb97b8ff1a75030ee4ff74d86f35eeaab0a61450b5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Gantt native projection v1",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 gantt look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "gantt/visual-check/redux-dark-color-theme.mmd",
+      "family": "gantt",
+      "phase": "P1-look-theme",
+      "sha256": "d25a5787d131dabac337af0528acf54edba49fb412f0c8158f7d8481a70f6f23",
+      "manifest_sha256": "d25a5787d131dabac337af0528acf54edba49fb412f0c8158f7d8481a70f6f23",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Gantt native projection v1",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 gantt look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "gantt/visual-check/redux-dark-theme.mmd",
+      "family": "gantt",
+      "phase": "P1-look-theme",
+      "sha256": "a16eb0807e4aba749d230252df6ffcc428172b3e0d75b3f453537947cf4c5bde",
+      "manifest_sha256": "a16eb0807e4aba749d230252df6ffcc428172b3e0d75b3f453537947cf4c5bde",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Gantt native projection v1",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 gantt look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "gantt/visual-check/redux-theme.mmd",
+      "family": "gantt",
+      "phase": "P1-look-theme",
+      "sha256": "222cb14ef2f3389d540cf53a6229f98bbc3d70d899cfcdcc2f8f3ab7c2a0f2f1",
+      "manifest_sha256": "222cb14ef2f3389d540cf53a6229f98bbc3d70d899cfcdcc2f8f3ab7c2a0f2f1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Gantt native projection v1",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 gantt look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "journey/pr-check/redux-color-theme.mmd",
+      "family": "journey",
+      "phase": "P1-look-theme",
+      "sha256": "9de02a44a4497803c7494e321fe78c2cf4627972efc45cf978dbaf8eb45e2067",
+      "manifest_sha256": "9de02a44a4497803c7494e321fe78c2cf4627972efc45cf978dbaf8eb45e2067",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Journey native projection v1",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 journey look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "journey/pr-check/redux-dark-color-theme.mmd",
+      "family": "journey",
+      "phase": "P1-look-theme",
+      "sha256": "b9bf3e38e5ce94f5c6c950cee265cad9c2c693be3e59b813b419e20e7ac58821",
+      "manifest_sha256": "b9bf3e38e5ce94f5c6c950cee265cad9c2c693be3e59b813b419e20e7ac58821",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Journey native projection v1",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 journey look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "journey/pr-check/redux-dark-theme.mmd",
+      "family": "journey",
+      "phase": "P1-look-theme",
+      "sha256": "103d749e98e4a3275a4f29fe51d2f1142acd7cd4ebf6b86279d30392ec21c704",
+      "manifest_sha256": "103d749e98e4a3275a4f29fe51d2f1142acd7cd4ebf6b86279d30392ec21c704",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Journey native projection v1",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 journey look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "journey/pr-check/redux-theme.mmd",
+      "family": "journey",
+      "phase": "P1-look-theme",
+      "sha256": "157071490f97cef44641e0d03feb7b3c11306b8e07b90f1c5f2f68232c50b531",
+      "manifest_sha256": "157071490f97cef44641e0d03feb7b3c11306b8e07b90f1c5f2f68232c50b531",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Journey native projection v1",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 journey look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-dark-theme-neo-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "a0ed37ea943cdb97592ad8820b7ecc6dfec0f772dcb7701975b1cf66b0395e5d",
+      "manifest_sha256": "a0ed37ea943cdb97592ad8820b7ecc6dfec0f772dcb7701975b1cf66b0395e5d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-default-theme-neo-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "7c5a0b08ae5304e74a5b64a0f3b4c31c8dcebc6b6c27c0cf907e6cb1357250a1",
+      "manifest_sha256": "7c5a0b08ae5304e74a5b64a0f3b4c31c8dcebc6b6c27c0cf907e6cb1357250a1",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-forest-theme-neo-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "d037779372ecd17dead83f1ba785a02d84a84307ab01850017cf1b4e6f7188f3",
+      "manifest_sha256": "d037779372ecd17dead83f1ba785a02d84a84307ab01850017cf1b4e6f7188f3",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-neo-dark-theme-classic-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "83d7c0921859973179085780902f525017e17c4944c504a7e2dcac800accad9f",
+      "manifest_sha256": "83d7c0921859973179085780902f525017e17c4944c504a7e2dcac800accad9f",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=classic -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-neo-dark-theme-neo-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "86726746dd3a48894a0b7a624cdd21c0259a21b5a5f332fca644fab143bcbb14",
+      "manifest_sha256": "86726746dd3a48894a0b7a624cdd21c0259a21b5a5f332fca644fab143bcbb14",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-neo-theme-classic-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "cdabfe525fd520bbaff7253c8fce6e2a30ea65abae187bdc55b69338cbccba39",
+      "manifest_sha256": "cdabfe525fd520bbaff7253c8fce6e2a30ea65abae187bdc55b69338cbccba39",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=classic -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-neo-theme-neo-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "ae3015c3aa9f2ac0eeab5dc682451bf27d12bdf6b8eea45282addfc1703fe819",
+      "manifest_sha256": "ae3015c3aa9f2ac0eeab5dc682451bf27d12bdf6b8eea45282addfc1703fe819",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-neutral-theme-neo-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "67075d7af6f1e89ee8994ab6b5137da3645d161acd84f8cdc8c00738abcb5354",
+      "manifest_sha256": "67075d7af6f1e89ee8994ab6b5137da3645d161acd84f8cdc8c00738abcb5354",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neutral -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-redux-color-theme-classic-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "91bbe0e1db02ad0832b27852c0d29f0e959fdc1689ad9439e4c7c8277ecfdd25",
+      "manifest_sha256": "91bbe0e1db02ad0832b27852c0d29f0e959fdc1689ad9439e4c7c8277ecfdd25",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=classic -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-redux-color-theme-neo-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "937080db336b907190d9295e07e3a8deb8c51edb631fd22755e3505eefc6d8c5",
+      "manifest_sha256": "937080db336b907190d9295e07e3a8deb8c51edb631fd22755e3505eefc6d8c5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-redux-dark-color-theme-classic-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "0bfd4674fef0ac4c34974876b960ece4e8237b82e0500ace7672b9f2e64fd5c2",
+      "manifest_sha256": "0bfd4674fef0ac4c34974876b960ece4e8237b82e0500ace7672b9f2e64fd5c2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=classic -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-redux-dark-color-theme-neo-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "b201a3043c7a2eb6b1ba4f6c359d280eb4316290aa788c3d70432e45f34f9701",
+      "manifest_sha256": "b201a3043c7a2eb6b1ba4f6c359d280eb4316290aa788c3d70432e45f34f9701",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-redux-dark-theme-classic-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "99deb5debf36485ca8e8432b6a81ff2f9f19062869b4a6a04b4dce6efa035e90",
+      "manifest_sha256": "99deb5debf36485ca8e8432b6a81ff2f9f19062869b4a6a04b4dce6efa035e90",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=classic -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-redux-dark-theme-neo-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "10ee104ab6f7856147c3f8353ea105ace6a475b5e34f55391a65c92ea387bd5b",
+      "manifest_sha256": "10ee104ab6f7856147c3f8353ea105ace6a475b5e34f55391a65c92ea387bd5b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-redux-theme-classic-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "25369c4c526e83beb52dbd46f25ef07f68c3fa32ac4a09a7609be74a65d0fdf8",
+      "manifest_sha256": "25369c4c526e83beb52dbd46f25ef07f68c3fa32ac4a09a7609be74a65d0fdf8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=classic -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/space-exploration-redux-theme-neo-look.mmd",
+      "family": "timeline",
+      "phase": "P1-look-theme",
+      "sha256": "0a1f3ede763c20fc7365876f9aac29bcf45714ca86e05a1a1da8293cc4dd7798",
+      "manifest_sha256": "0a1f3ede763c20fc7365876f9aac29bcf45714ca86e05a1a1da8293cc4dd7798",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "twin": {
+        "kind": "synthetic"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0040 timeline look/theme admission; validated and disclosed only, the frame equals the config-free twin's plus the bounded footer."
+    }
+  ]
+}

@@ -5796,6 +5796,35 @@ const JourneyCohortEntry* git_0039_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0040 journey-family look/theme cohort: the 31 reviewed timeline/gantt/
+// journey originals promoted by the three families' closed look/theme tables.
+// States are read per row exactly as the three family ledgers do. The per-row
+// frame gate is test_mermaid_journeyfam_0040_cohort.
+const std::map<std::string, JourneyCohortEntry>& journeyfam_0040_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/journeyfam-0040-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "Journey-family 0040 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "Journey-family 0040 cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* journeyfam_0040_cohort_row(std::string_view path) {
+    const auto& rows = journeyfam_0040_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0031 gantt-family renderer cohort: the thirty-nine theme-free,
 // valid-date gantt originals admitted by mermaid_gantt_impl, with per-width
 // states. The eleven themed originals and two malformed-date fixtures stay on
@@ -10594,6 +10623,33 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.source_sha256 = fixture.get_string("sha256");
                     row.expected = "drawn";
                     row.reason = "RFC-0039 gitGraph look/theme reviewed cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+            // RFC 0040 journey-family look/theme admission: the 31 reviewed
+            // timeline/gantt/journey originals promoted by the three families'
+            // closed look/theme tables, states read per row. Placed before the
+            // generic fallback so these rows cannot fall through to the
+            // manifest's source expectation.
+            if (class_path.is_str()) {
+                const auto* cohort = journeyfam_0040_cohort_row(class_path.as_str());
+                if (cohort) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = (*fs::path(row.path).begin()).string();
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "RFC-0040 journey-family look/theme reviewed cohort";
                     const auto state_status = [](const std::string& state) {
                         return state == "drawn" ? "drawn" : "source_fallback";
                     };

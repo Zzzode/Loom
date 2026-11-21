@@ -18,17 +18,21 @@
       "journey"
     ],
     "clean_count": 10,
-    "themed_excluded_count": 8,
+    "themed_excluded_count": 4,
     "themed_excluded": [
       "journey/pr-check/dark-theme.mmd",
       "journey/pr-check/default-theme.mmd",
       "journey/pr-check/forest-theme.mmd",
-      "journey/pr-check/neutral-theme.mmd",
+      "journey/pr-check/neutral-theme.mmd"
+    ],
+    "admitted_count": 4,
+    "admitted": [
       "journey/pr-check/redux-color-theme.mmd",
       "journey/pr-check/redux-dark-color-theme.mmd",
       "journey/pr-check/redux-dark-theme.mmd",
       "journey/pr-check/redux-theme.mmd"
-    ]
+    ],
+    "admitted_digest": "d910db07953ea1379be6cb51ab0cb74104cb59dfea1bcf8f47ca7348c675a463"
   },
   "review": {
     "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, journey renderer cohort, 2026-11-11, task a9c9dfef3711bc7f6, zero builds)",

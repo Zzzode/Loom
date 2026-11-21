@@ -85,14 +85,35 @@ def split_frontmatter(text):
     return None, text
 
 
-def is_themed(text, frontmatter, body):
-    if frontmatter is not None and re.search(r"^\s*(theme|look)\s*:", frontmatter, re.M):
-        return True
-    return "%%{" in body and "theme" in body
-
-
 def sha256_file(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+import importlib.util
+
+
+def _journeyfam_tables():
+    """Load the RFC 0040 shared tables from an explicit path.
+
+    The hermetic ctests run `python3 -I`, which implies `-P`, so a plain
+    sibling import fails; this is the pattern the admission verifiers use.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "journeyfam_tables", pathlib.Path(__file__).resolve().parent / "journeyfam_tables.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+TABLES = _journeyfam_tables()
+
+
+def admitted_digest(repo_root, paths):
+    """sha256 over sorted `path<TAB>source_sha256` rows: the reviewed set pin."""
+    cases = repo_root / "tests/fixtures/mermaid_official/cases"
+    payload = "".join(f"{p}\t{sha256_file(cases / p)}\n" for p in sorted(paths))
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
 
 
 def build_review(repo_root):
@@ -129,23 +150,23 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
-    draw, themed, fail_closed = set(), set(), set()
+    draw, admitted, themed, fail_closed = set(), set(), set(), set()
+    buckets = {"drawn": draw, "admitted": admitted, "themed": themed}
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
-        text = path.read_text()
         rel = path.relative_to(repo_root / "tests/fixtures/mermaid_official/cases").as_posix()
-        frontmatter, body = split_frontmatter(text)
         if rel in FAIL_CLOSED:
             fail_closed.add(rel)
-        elif is_themed(text, frontmatter, body):
-            themed.add(rel)
-        else:
-            draw.add(rel)
+            continue
+        kind, _ = TABLES.classify("gantt", path.read_text())
+        buckets[kind].add(rel)
 
-    # Drift guards: the partition is a reviewed fact, not an assumption.
-    if len(draw) != 39 or len(themed) != 11 or len(fail_closed) != 2:
+    # RFC 0040 four-way partition: the partition is a reviewed fact.
+    if len(draw) != 39 or len(admitted) != 11 or len(themed) != 0 or len(fail_closed) != 2:
         raise ValueError(
-            f"gantt partition drift: draw={len(draw)} themed={len(themed)} "
-            f"fail_closed={len(fail_closed)} (expected 39/11/2)")
+            f"gantt partition drift: draw={len(draw)} admitted={len(admitted)} "
+            f"themed={len(themed)} fail_closed={len(fail_closed)} (expected 39/11/0/2)")
+    if len(draw) + len(admitted) + len(themed) + len(fail_closed) != 52:
+        raise ValueError("gantt four-way partition does not sum to 52")
     if set(FAIL_CLOSED) != fail_closed:
         raise ValueError("gantt fail-closed fixture set drift")
 
@@ -188,8 +209,11 @@ def build(repo_root):
                         "todayMarker directives; section; task tags, ids, "
                         "points, durations, after/until, milestone"),
             "theme_gate": (
-                "frontmatter theme/look or an in-body %%{init theme}%% "
-                "directive keeps the whole original on source fallback"),
+                "RFC 0040: theme/look at indent 2 inside config is validated "
+                "against the closed tables and disclosed; any other visual key "
+                "and an in-body %%{init theme}%% directive keep the whole "
+                "original on source fallback (the gate reads sanitize_breaks "
+                "output, like the renderer)"),
         },
         "upstream": {
             "tag": manifest["upstream"]["tag"],
@@ -202,6 +226,9 @@ def build(repo_root):
             "draw_count": len(draw),
             "themed_excluded_count": len(themed),
             "themed_excluded": sorted(themed),
+            "admitted_count": len(admitted),
+            "admitted": sorted(admitted),
+            "admitted_digest": admitted_digest(repo_root, admitted),
             "fail_closed_count": len(fail_closed),
             "fail_closed": sorted(fail_closed),
         },

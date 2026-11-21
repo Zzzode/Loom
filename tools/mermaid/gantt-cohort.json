@@ -5,7 +5,7 @@
   "renderer": {
     "module": "src/ui/visual/mermaid_gantt_impl.cpp",
     "grammar": "gantt; dateFormat/axisFormat/tickInterval/excludes/todayMarker directives; section; task tags, ids, points, durations, after/until, milestone",
-    "theme_gate": "frontmatter theme/look or an in-body %%{init theme}%% directive keeps the whole original on source fallback"
+    "theme_gate": "RFC 0040: theme/look at indent 2 inside config is validated against the closed tables and disclosed; any other visual key and an in-body %%{init theme}%% directive keep the whole original on source fallback (the gate reads sanitize_breaks output, like the renderer)"
   },
   "upstream": {
     "tag": "mermaid@12.2.0",
@@ -18,8 +18,10 @@
       "gantt"
     ],
     "draw_count": 39,
-    "themed_excluded_count": 11,
-    "themed_excluded": [
+    "themed_excluded_count": 0,
+    "themed_excluded": [],
+    "admitted_count": 11,
+    "admitted": [
       "gantt/nightly-check/should-render-done-task-outside-text-readable-in-dark-mode-regression-7433.mmd",
       "gantt/nightly-check/should-render-done-tasks-with-readable-text-in-dark-mode.mmd",
       "gantt/pr-check/should-render-done-task-inside-text-readable-in-dark-mode.mmd",
@@ -32,6 +34,7 @@
       "gantt/visual-check/redux-dark-theme.mmd",
       "gantt/visual-check/redux-theme.mmd"
     ],
+    "admitted_digest": "026f49b9cf460574be0b83ecd7d02e1c069d3e5026c133dc3218af5ce52a8bd6",
     "fail_closed_count": 2,
     "fail_closed": [
       "gantt/nightly-check/should-fail-rendering-a-gantt-chart-for-issue-1060-with-invalid-date.mmd",

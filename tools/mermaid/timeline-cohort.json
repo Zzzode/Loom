@@ -5,7 +5,7 @@
   "renderer": {
     "module": "src/ui/visual/mermaid_timeline_impl.cpp",
     "grammar": "timeline [TD]; title; section; period : event [: event]",
-    "theme_gate": "frontmatter theme/look or an in-body %%{init theme}%% directive keeps the whole original on source fallback"
+    "theme_gate": "RFC 0040: theme/look at indent 2 inside config is validated against the closed tables and disclosed; any other visual key and an in-body %%{init theme}%% directive keep the whole original on source fallback"
   },
   "upstream": {
     "tag": "mermaid@12.2.0",
@@ -18,10 +18,18 @@
       "timeline"
     ],
     "clean_count": 7,
-    "themed_excluded_count": 23,
+    "themed_excluded_count": 7,
     "themed_excluded": [
       "timeline/nightly-check/10-should-render-a-simple-timeline-in-forest-theme.mmd",
       "timeline/nightly-check/9-should-render-a-simple-timeline-in-neutral-theme.mmd",
+      "timeline/pr-check/4-should-render-a-simple-timeline-with-directives-and-disablemulticolor-true.mmd",
+      "timeline/pr-check/5-should-render-a-simple-timeline-with-directive-overridden-colors.mmd",
+      "timeline/pr-check/6-should-render-a-simple-timeline-in-base-theme.mmd",
+      "timeline/pr-check/7-should-render-a-simple-timeline-in-default-theme.mmd",
+      "timeline/pr-check/8-should-render-a-simple-timeline-in-dark-theme.mmd"
+    ],
+    "admitted_count": 16,
+    "admitted": [
       "timeline/nightly-check/space-exploration-dark-theme-neo-look.mmd",
       "timeline/nightly-check/space-exploration-default-theme-neo-look.mmd",
       "timeline/nightly-check/space-exploration-forest-theme-neo-look.mmd",
@@ -37,13 +45,9 @@
       "timeline/nightly-check/space-exploration-redux-dark-theme-classic-look.mmd",
       "timeline/nightly-check/space-exploration-redux-dark-theme-neo-look.mmd",
       "timeline/nightly-check/space-exploration-redux-theme-classic-look.mmd",
-      "timeline/nightly-check/space-exploration-redux-theme-neo-look.mmd",
-      "timeline/pr-check/4-should-render-a-simple-timeline-with-directives-and-disablemulticolor-true.mmd",
-      "timeline/pr-check/5-should-render-a-simple-timeline-with-directive-overridden-colors.mmd",
-      "timeline/pr-check/6-should-render-a-simple-timeline-in-base-theme.mmd",
-      "timeline/pr-check/7-should-render-a-simple-timeline-in-default-theme.mmd",
-      "timeline/pr-check/8-should-render-a-simple-timeline-in-dark-theme.mmd"
-    ]
+      "timeline/nightly-check/space-exploration-redux-theme-neo-look.mmd"
+    ],
+    "admitted_digest": "c20195a1ee4fcfe3e86bd8552f5f9cc83bd7ec7df3c934b288fe1889c383d349"
   },
   "review": {
     "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, timeline renderer cohort, 2026-11-11, task a7f26a8ecbe8991e6)",

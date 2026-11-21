@@ -1,8 +1,10 @@
 // RFC 0031 journey-family renderer durable cohort gate. Public API only:
 // enforces tools/mermaid/journey-cohort.json against the live renderer and
 // the pinned manifest. The ten clean (theme-free) journey originals render
-// natively; the eight theme/look fixtures stay on whole-source fallback.
-// Per-width states are measured, not assumed.
+// natively; RFC 0040 promotes the four frontmatter-only redux* theme rows
+// (their per-row gate is test_mermaid_journeyfam_0040_cohort), and the four
+// rows whose theme arrives through an in-body %%{init}%% directive stay on
+// whole-source fallback. Per-width states are measured, not assumed.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>

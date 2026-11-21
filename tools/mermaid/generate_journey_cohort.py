@@ -48,14 +48,35 @@ def split_frontmatter(text):
     return None, text
 
 
-def is_themed(text, frontmatter, body):
-    if frontmatter is not None and re.search(r"theme|look\s*:", frontmatter):
-        return True
-    return "%%{" in body and "theme" in body
-
-
 def sha256_file(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+import importlib.util
+
+
+def _journeyfam_tables():
+    """Load the RFC 0040 shared tables from an explicit path.
+
+    The hermetic ctests run `python3 -I`, which implies `-P`, so a plain
+    sibling import fails; this is the pattern the admission verifiers use.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "journeyfam_tables", pathlib.Path(__file__).resolve().parent / "journeyfam_tables.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+TABLES = _journeyfam_tables()
+
+
+def admitted_digest(repo_root, paths):
+    """sha256 over sorted `path<TAB>source_sha256` rows: the reviewed set pin."""
+    cases = repo_root / "tests/fixtures/mermaid_official/cases"
+    payload = "".join(f"{p}\t{sha256_file(cases / p)}\n" for p in sorted(paths))
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
 
 
 def build_review(repo_root):
@@ -99,16 +120,20 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
-    clean, themed = set(), set()
+    clean, admitted, themed = set(), set(), set()
+    buckets = {"drawn": clean, "admitted": admitted, "themed": themed}
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
-        frontmatter, body = split_frontmatter(path.read_text())
         rel = path.relative_to(repo_root / "tests/fixtures/mermaid_official/cases").as_posix()
-        (themed if is_themed(path.read_text(), frontmatter, body) else clean).add(rel)
+        kind, _ = TABLES.classify("journey", path.read_text())
+        buckets[kind].add(rel)
 
-    if len(clean) != 10 or len(themed) != 8:
+    # RFC 0040 four-way partition (journey has no fail_closed rows).
+    if len(clean) != 10 or len(admitted) != 4 or len(themed) != 4:
         raise ValueError(
-            f"journey partition drift: clean={len(clean)} themed={len(themed)} "
-            f"(expected 10/8)")
+            f"journey partition drift: drawn={len(clean)} admitted={len(admitted)} "
+            f"themed={len(themed)} (expected 10/4/4)")
+    if len(clean) + len(admitted) + len(themed) != 18:
+        raise ValueError("journey four-way partition does not sum to 18")
 
     rows = []
     for rel in sorted(clean):
@@ -161,6 +186,9 @@ def build(repo_root):
             "clean_count": len(clean),
             "themed_excluded_count": len(themed),
             "themed_excluded": sorted(themed),
+            "admitted_count": len(admitted),
+            "admitted": sorted(admitted),
+            "admitted_digest": admitted_digest(repo_root, admitted),
         },
         "review": build_review(repo_root),
         "counts": {

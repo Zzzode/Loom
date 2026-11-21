@@ -50,14 +50,35 @@ def split_frontmatter(text):
     return None, text
 
 
-def is_themed(text, frontmatter, body):
-    if frontmatter is not None and re.search(r"theme|look\s*:", frontmatter):
-        return True
-    return "%%{" in body and "theme" in body
-
-
 def sha256_file(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+import importlib.util
+
+
+def _journeyfam_tables():
+    """Load the RFC 0040 shared tables from an explicit path.
+
+    The hermetic ctests run `python3 -I`, which implies `-P`, so a plain
+    sibling import fails; this is the pattern the admission verifiers use.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "journeyfam_tables", pathlib.Path(__file__).resolve().parent / "journeyfam_tables.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+TABLES = _journeyfam_tables()
+
+
+def admitted_digest(repo_root, paths):
+    """sha256 over sorted `path<TAB>source_sha256` rows: the reviewed set pin."""
+    cases = repo_root / "tests/fixtures/mermaid_official/cases"
+    payload = "".join(f"{p}\t{sha256_file(cases / p)}\n" for p in sorted(paths))
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
 
 
 def build_review(repo_root):
@@ -97,16 +118,20 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
-    clean, themed = set(), set()
+    clean, admitted, themed = set(), set(), set()
+    buckets = {"drawn": clean, "admitted": admitted, "themed": themed}
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
-        frontmatter, body = split_frontmatter(path.read_text())
         rel = path.relative_to(repo_root / "tests/fixtures/mermaid_official/cases").as_posix()
-        (themed if is_themed(path.read_text(), frontmatter, body) else clean).add(rel)
+        kind, _ = TABLES.classify("timeline", path.read_text())
+        buckets[kind].add(rel)
 
-    if len(clean) != 7 or len(themed) != 23:
+    # RFC 0040 four-way partition (timeline has no fail_closed rows).
+    if len(clean) != 7 or len(admitted) != 16 or len(themed) != 7:
         raise ValueError(
-            f"timeline partition drift: clean={len(clean)} themed={len(themed)} "
-            f"(expected 7/23)")
+            f"timeline partition drift: drawn={len(clean)} admitted={len(admitted)} "
+            f"themed={len(themed)} (expected 7/16/7)")
+    if len(clean) + len(admitted) + len(themed) != 30:
+        raise ValueError("timeline four-way partition does not sum to 30")
 
     rows = []
     for rel in sorted(clean):
@@ -145,8 +170,10 @@ def build(repo_root):
             "module": "src/ui/visual/mermaid_timeline_impl.cpp",
             "grammar": "timeline [TD]; title; section; period : event [: event]",
             "theme_gate": (
-                "frontmatter theme/look or an in-body %%{init theme}%% "
-                "directive keeps the whole original on source fallback"),
+                "RFC 0040: theme/look at indent 2 inside config is validated "
+                "against the closed tables and disclosed; any other visual key "
+                "and an in-body %%{init theme}%% directive keep the whole "
+                "original on source fallback"),
         },
         "upstream": {
             "tag": manifest["upstream"]["tag"],
@@ -159,6 +186,9 @@ def build(repo_root):
             "clean_count": len(clean),
             "themed_excluded_count": len(themed),
             "themed_excluded": sorted(themed),
+            "admitted_count": len(admitted),
+            "admitted": sorted(admitted),
+            "admitted_digest": admitted_digest(repo_root, admitted),
         },
         "review": build_review(repo_root),
         "counts": {

@@ -1,8 +1,9 @@
 // RFC 0031 gantt-family renderer durable cohort gate. Public API only:
 // enforces tools/mermaid/gantt-cohort.json against the live renderer and the
 // pinned manifest. The thirty-nine theme-free, valid-date gantt originals
-// render natively; the eleven theme/look fixtures stay on whole-source
-// fallback and the two malformed-date fixtures fail closed.
+// render natively; RFC 0040 promotes the eleven frontmatter-only theme rows
+// (their per-row gate is test_mermaid_journeyfam_0040_cohort) and the two
+// malformed-date fixtures fail closed.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -84,7 +85,10 @@ TEST(MermaidGanttCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_gantt_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 39);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 39);
-    EXPECT_EQ(root.get("selection").get_int("themed_excluded_count"), 11);
+    // RFC 0040 promotes every themed row through the closed table; the only
+    // whole-source remainder is the two malformed-date fixtures.
+    EXPECT_EQ(root.get("selection").get_int("themed_excluded_count"), 0);
+    EXPECT_EQ(root.get("selection").get_int("admitted_count"), 11);
     EXPECT_EQ(root.get("selection").get_int("fail_closed_count"), 2);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
@@ -137,13 +141,19 @@ TEST(MermaidGanttCohort, CleanGanttsDrawOnWholeAndBodyTracks) {
     });
 }
 
-TEST(MermaidGanttCohort, ThemedGanttsStayWholeSource) {
-    const auto ledger = parse_doc(kLedger);
-    const auto excluded = ledger.root().get("selection").get("themed_excluded");
-    excluded.iter([&](JsonVal value) {
-        const auto rel = value.as_str();
-        EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
-    });
+// RFC 0040: gantt's themed-only list is empty, so this family gate asserts the
+// boundary values the closed table must keep on whole-source fallback, plus a
+// control that an in-table palette still draws.
+TEST(MermaidGanttCohort, OutOfTableVisualValuesStayWholeSource) {
+    const auto probe = [](std::string_view config) {
+        return "---\ndescription: >-\n  gantt boundary probe\nconfig:\n" + std::string(config) +
+               "---\ngantt\n  dateFormat YYYY-MM-DD\n  section S\n  Task one :a1, 2024-01-01, 2d\n";
+    };
+    for (const auto* config : {"  theme: neo\n", "  theme: neo-dark\n", "  theme: base\n",
+                               "  look: classic\n", "  look: neo\n", "  look: handDrawn\n"}) {
+        EXPECT_FALSE(draws(probe(config), kWide)) << config;
+    }
+    EXPECT_TRUE(draws(probe("  theme: dark\n"), kWide));
 }
 
 TEST(MermaidGanttCohort, MalformedDateFixturesFailClosed) {

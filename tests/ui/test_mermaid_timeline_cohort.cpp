@@ -1,7 +1,10 @@
 // RFC 0031 timeline-family renderer durable cohort gate. Public API only:
 // enforces tools/mermaid/timeline-cohort.json against the live renderer and
 // the pinned manifest. The seven clean (theme-free) timeline originals render
-// natively; the twenty-three theme/look fixtures stay on whole-source fallback.
+// natively; RFC 0040 promotes the sixteen frontmatter-only look/theme rows
+// (their per-row gate is test_mermaid_journeyfam_0040_cohort), and the seven
+// rows whose theme arrives through an in-body %%{init}%% directive stay on
+// whole-source fallback.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>

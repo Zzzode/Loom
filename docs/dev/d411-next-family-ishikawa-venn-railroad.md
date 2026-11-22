@@ -14,7 +14,7 @@ theme-only 行，共 6 条**（ishikawa 2、venn 3、railroad 1）。它们都�
 | 家族 | originals | 现 drawn / fallback | 惰性 theme 行 | 其余回退 |
 |---|---|---|---|---|
 | ishikawa | 13 | 7 / 6 | **2**（forest、dark） | 4 条 `config.ishikawa.*`（useMaxWidth×2、diagramPadding）/`look: handDrawn` |
-| venn | 21 | 11 / 10 | **3**（dark、redux-color、redux-dark-color） | 2 条 look+handDrawnSeed、5 条 body 能力 |
+| venn | 21 | 11 / 10 | **3**（dark、redux-color、redux-dark-color） | 3 条 look/handDrawnSeed（其中 1 条同时带 body style）、4 条其余（1 条 theme+body style 与 3 条纯 body） |
 | railroad | 9 | 8 / 1 | **1**（dark） | — |
 
 三族都有既有 cohort 账本（`{ishikawa,venn,railroad}-cohort.json`，字段一致：

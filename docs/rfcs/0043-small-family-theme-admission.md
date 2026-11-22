@@ -164,7 +164,9 @@ the table applied is the family's):
 | `  # comment` or a blank line inside config | skipped (theme elsewhere still decides) |
 | `\ttheme: dark` | rejected by the existing tab pre-check |
 | `config: {theme: dark}` (inline flow mapping) | rejected (no block leaf) |
-| config block first, `description` payload after | rejected (payload lines parsed as leaves) |
+| `config:` with theme **first**, then column-0 `description:` + payload | admitted (description closes the block; its payload is outside and ignored) |
+| `description:` nested **inside** the config block (indent > 0) | rejected (non-theme leaf) |
+| unrelated column-0 metadata key (`title: x`) before/after | passthrough; an admitted theme elsewhere still decides |
 
 ### 3. Per-family preserved behaviour (must not drift)
 
@@ -181,7 +183,9 @@ Appended inside the family's own `*_layout` (no parser seam, no new entry point)
 separator row, header, theme line. Line cap 96 bytes; per-line charge
 `size * 4 + sizeof(std::string) + 32`; emission charge
 `(1 + n) * (4 * sizeof(std::string) + 256) + bytes * 2 + 256`; the append is refused when
-`art_rows + 1 + n >` the family's row cap. Refusal keeps the whole source on fallback.
+`art_rows + 1 + n >` the family's row cap, where `art_rows` is the row vector the footer is
+appended to — for venn that is `title_rows.size() + out.size()`, the same quantity its own
+cap already counts. Refusal keeps the whole source on fallback.
 
 ### 5. Reviewed cohort, twin gate and wiring
 
@@ -189,11 +193,20 @@ separator row, header, theme line. Line cap 96 bytes; per-line charge
   `loom_mermaid_smallfam_0043_cohort/v1`) with the 6 rows (a `family` field), literal
   `expected_states` (wide measured), `expected_footer_lines`, and `twin` (corpus with
   path+sha for the four body-identical rows, synthetic for venn `dark` and railroad).
-- The three family ledgers gain the sibling `admitted` / `admitted_count` /
-  `admitted_digest` fields (agentflow naming) and a four-way partition
+- The three family ledgers gain `admitted` / `admitted_count` / `admitted_digest` in
+  `selection` (agentflow's `admitted_count`/`admitted_digest` naming, plus the explicit path
+  list this RFC needs) and a four-way partition
   (`rows + admitted + frontmatter_gated(remaining) + body_style_gated` = originals):
-  ishikawa 7 + 2 + 4 + 0 = 13; venn 11 + 3 + 4 + 3 = 21; railroad 8 + 1 + 0 + 0 = 9.
-  Generators updated structurally and regenerated, never hand-edited.
+  ishikawa 7 + 2 + 4 + 0 = 13; venn **11 + 3 + 3 + 4** = 21; railroad 8 + 1 + 0 + 0 = 9.
+  Generators must **reclassify, not subtract**: a row whose only frontmatter gate was an
+  admitted theme and whose body carries `style `/`classDef`/`:::` moves to
+  `body_style_gated` (venn `explicit-set-style-over-redux-palette.mmd` is exactly this case;
+  its `config.theme: redux-color` is admitted, then its body style fires). Pins therefore
+  change: ishikawa frontmatter 6 → 4; venn frontmatter 7 → **3** and body 3 → **4**;
+  railroad frontmatter 1 → 0.
+- The sibling ledger and the three family `admitted` lists carry the same six paths; the
+  gate asserts sibling ↔ family agreement path by path and per-family digest, so the
+  duplicate cannot drift silently.
 - Generator `tools/mermaid/generate_smallfam_0043_cohort.py`, renderer-free,
   `--check`-reproducible, pinned path sets/digests, body-equivalence verification. **The
   Python path/digest set and the C++ closed tables are a string-shape coupling**: they must
@@ -202,7 +215,9 @@ separator row, header, theme line. Line cap 96 bytes; per-line charge
 - **Twin rule**: wide-only frame equality = twin frame + the literal footer delta through
   the same sentinel wrapper; narrow is a separate live measurement (rule 34) — the footer
   line is 48–60 characters, wider than a 40-column viewport, so the expected measured state is
-  `source_fallback` on narrow for all 6, recorded from the live run rather than predicted.
+  `source_fallback` on narrow for all 6: expected 0/6 until measured, from the RFC 0041
+  precedent (all 9 footer rows with the identical 48-character line measure narrow `source`),
+  and recorded from the live gate run — never asserted from the prediction.
 - Gate `tests/ui/test_mermaid_smallfam_0043_cohort.cpp`: ledger pins (schema, review
   pins, the 6 literal paths with sha256); per-row twin inertness; one closed-table battery
   per family (every admitted value with the exact two-line footer; the rejects in §2);
@@ -212,8 +227,8 @@ separator row, header, theme line. Line cap 96 bytes; per-line charge
 - Matrix branch: one block per family, before the family cohort branch and the generic
   fallback, reason `RFC-0043 small-family theme reviewed cohort`, states read per row,
   `raw_active_schema` empty so the generic `originals_drawn` counter credits +6. The
-  existing family-branch commentary ("six gated fixtures", etc.) is corrected to four/three
-  and points at the sibling branch.
+  existing family-branch commentary is corrected to the post-admission counts and points at
+  the sibling branch: venn "ten gated" → 7, ishikawa "six gated" → 4, railroad "one gated" → 0.
 - Roster migrated with `fallback_attribution.py --emit` after the cohort gate is green:
   669 → 663; `family_residual:railroad` empties (44 → 43 categories).
 
@@ -282,7 +297,8 @@ data, no wire protocol, no CLI contract changes.
 - Existing family tests change in the same commit (they pin the old partitions):
   `tests/ui/test_mermaid_ishikawa_cohort.cpp` (`frontmatter_gated_count` 6 → 4, admitted
   draw+footer assertions for the 2 promoted rows),
-  `tests/ui/test_mermaid_venn_cohort.cpp` (7 → 4, 3 promoted positives),
+  `tests/ui/test_mermaid_venn_cohort.cpp` (`frontmatter_gated_count` 7 → 3,
+  `body_style_gated_count` 3 → 4, 3 promoted positives),
   `tests/ui/test_mermaid_railroad_cohort.cpp` (1 → 0; the gated loop would be vacuous, so
   it is replaced by an explicit asserted-empty partition plus the admitted positive).
   `test_mermaid_official.cpp` gains the sibling-ledger matrix branches.
@@ -324,6 +340,7 @@ data, no wire protocol, no CLI contract changes.
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | 2 BLOCKER + 5 MAJOR + 8 MINOR + 3 NIT. B1 venn `dark` row missing from the scope → added (6 rows, endpoints corrected); B2 the three existing family tests were unmentioned → named with pin deltas; MAJOR-1 "indented lines ignored" was wrong (the flat scan rejects indented visual keys) → grammar rewritten with the exact admitted position; MAJOR-2 venn partition arithmetic → 11+3+4+3; MAJOR-3 scalar semantics unpinned → `af_scalar` copy and the §2 verdict table; MAJOR-4 per-family behaviours → §3 table; MAJOR-5 "entire vein" overclaim → scoped with the conf-and-directives exclusion; MINORs: D-411 roster numbers (measured 4/7/1 → 2/4/0, 44→43), D-410 arithmetic recomputed structurally, live narrow assertion named, gate+footer in the layout body, exact footer literals, +10 test delta, graph unchanged, C++/Python table coupling, agentflow ledger field names; NITs: `config.ishikawa.*` naming, 44→43 comments, arithmetic note. All folded |
+| 2026-11-22 | r2 | agent:design-review | REQUEST-CHANGES | Scope (exactly 6), endpoints, roster, twins, scalar, +10 delta, protected files all confirmed. 2 MAJOR + 4 MINOR + 1 NIT: (1) venn partition is 11+3+3+4, not 11+3+4+3 — `explicit-set-style-over-redux-palette` reclassifies to body_style once its theme is admitted (this also refutes r1's folded "7→4" pin; correct pin 7→3, body 3→4); (2) the §2 row "config first, description after → rejected" contradicted the grammar (column-0 description closes the block) → relabeled and the positive added; MINORs: matrix commentary values are 4/7/0, agentflow has no `admitted` path list (kept the list and added a sibling↔family cross-check), venn footer cap must count title rows, missing unrelated-column-0 passthrough positive; NIT: narrow 0/6 is expectation-until-measured with the RFC 0041 precedent. All folded |
 | 2026-11-22 | — | — | draft | Created provisional from D-410's 5d bucket |
 
 ## Implementation History

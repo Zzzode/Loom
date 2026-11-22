@@ -62,6 +62,7 @@ are not whole-original errors).
 | After D-429 packet closed namespace (2 rows, packet family closed) | 2026-11-23 | local | 1600 | 545 | 0 |
 | After D-430 radar closed frontmatter (3 rows, radar family closed) | 2026-11-23 | local | 1603 | 542 | 0 |
 | After D-431 cynefin closed frontmatter (5 rows) | 2026-11-23 | local | 1608 | 537 | 0 |
+| After D-432 c4 config.wrap (1 row) | 2026-11-23 | local | 1609 | 536 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -79,7 +80,7 @@ disposition (fix or documented infeasibility).
 | swimlanes | 46 | 0 | hard wall, no renderer; re-confirmed 2026-11-14 through the production render_markdown seam (0 drawn / 46 fallback): every fixture is swimlane-beta (LR/TD 23 each) and carries a `config.flowchart.htmlLabels` + `useMaxWidth` visual/layout contract (46/46), 18 add theme/look and 5 carry body classDef/class/style; native text rendering cannot honor the lane geometry without silently dropping those contracts, so the whole family stays gated; unblock needs a real lane-geometry renderer |
 | xychart | 35 | 13 | D236: +11 folded-description envelope originals (description-only `>-` frontmatter now family-agnostic, not pie-only); 5 SHA-bound E2c rows stay source (4 inline per-point quoted labels, 1 over-limit multi-series), remaining are config/theme/title/init gates |
 | agentflow | 2 | 36 | renderer added 2026-11-14; full agentflow-beta grammar (flow/global/connector containers, @{ } metadata, four edge vocabularies, labeled branches) validated and projected as a bounded native outline, not a flowchart approximation; RFC 0041 (2026-11-22) admits the 9 theme-only rows through a closed seven-value table with a disclosure footer, so the live census is 36/2/0 from 38 (the 2 `look`+`handDrawnSeed` rows stay source); 19 of 27 native rows draw at 40 columns and 0 of 9 admitted rows do (the footer exceeds the viewport) |
-| c4 | 9 | 23 | renderer added 2026-11-12; 8 Update*Style/UpdateLayoutConfig + 1 frontmatter config rows stay source (no color/layout contract) |
+| c4 | 8 | 24 | renderer added 2026-11-12; D-432 (2026-11-23) admits the single `config.wrap` frontmatter row through a tri-state closed parser (the leaf is inert and disclosed, art equals the config-stripped twin); the 8 remaining rows are Update*Style/UpdateLayoutConfig statements with no color/layout contract; live census 24/8/0 from 32 |
 | usecase | 18 | 14 | renderer added 2026-11-13; 12 frontmatter theme/look/config + 6 body classDef/:::/style/init rows stay source (no placement/color contract) |
 | er-diagram | 31 | 13 | |
 | timeline | 2 | 28 | renderer added 2026-11-11; RFC 0040 admitted 16 look/theme rows and RFC 0047 admits the 5 inert leading `%%{init}%%` theme directives (footer-disclosed, synthetic directive-free twins); the 2 remaining are the `disableMulticolor` content key and the multi-line `themeVariables` override; live census 28/2/0 from 30 |

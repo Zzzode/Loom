@@ -2070,3 +2070,19 @@ Attach a short efficiency section to each closure report, answering:
    the reach proof live in different hunks; patch them together and verify the
    loader symbol exists before building, or the report is produced with three
    unexpected draws and a red matrix.
+
+## D-431 cynefin / D-432 c4 frontmatter retro (2026-11-23)
+
+1. **"Accepted" and "has a leaf" are two different facts.** D-432's first
+   parser returned `optional<string>`: absent meant both "plain source" and
+   "rejected frontmatter", so every source without a `wrap` leaf fell back and
+   the twin oracle failed on the first row. Return an explicit tri-state
+   `{accepted, leaf?}` whenever a gate both rejects shapes and admits shapes
+   with no payload.
+2. **Derive the twin before deriving the footer.** The gate's `config_free_twin`
+   path is what proves inertness; running it first would have exposed the
+   tri-state defect before any matrix time was spent. Order the gate tests
+   ledger → twin → negatives, and run the new target before the matrix.
+3. **A family close needs the roster to shrink by the exact number.** After
+   D-431, `--emit` moved total 542 → 537 and dropped `family_residual:cynefin`;
+   after D-432, c4 goes 9 → 8. Diff the category map, not just the total.

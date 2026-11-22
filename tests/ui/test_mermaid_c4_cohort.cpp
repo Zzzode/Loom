@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -29,6 +30,8 @@ using json::JsonVal;
 const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases";
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/c4-cohort.json";
+const fs::path kD432Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/c4-wrap-d432-cohort.json";
 constexpr int kWide = 240;
 constexpr int kNarrow = 40;
 constexpr int kHeight = 1600;
@@ -138,10 +141,26 @@ TEST(MermaidC4Cohort, StructuralC4sDrawOnWholeAndBodyTracks) {
 
 TEST(MermaidC4Cohort, StyledC4sStayWholeSource) {
     const auto ledger = parse_doc(kLedger);
+    // D-432 admits the one closed `config.wrap` row through the frontmatter
+    // state machine; its positive is owned by
+    // test_mermaid_c4_wrap_d432_cohort. The partition is preserved: that row
+    // must be a D-432 ledger member, every other styled row stays whole source.
+    std::set<std::string> wrap_rows;
+    auto wrap_ledger = json::parse(read_file(kD432Ledger));
+    ASSERT_TRUE(wrap_ledger.has_value()) << "D-432 cohort ledger must parse";
+    wrap_ledger->root().get("rows").iter(
+        [&](const JsonVal row) { wrap_rows.insert(row.get_string("path")); });
+    int admitted = 0;
     ledger.root().get("selection").get("styled_excluded").iter([&](JsonVal value) {
         const auto rel = value.as_str();
+        if (wrap_rows.contains(std::string(rel))) {
+            ++admitted;
+            return;
+        }
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
     });
+    EXPECT_EQ(admitted, 1);
+    EXPECT_EQ(wrap_rows.size(), 1u);
 }
 
 // Key-based gate: prose mentioning "style" is not a gate; a frontmatter

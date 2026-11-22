@@ -4554,6 +4554,27 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## c4 config.wrap admission (D-432)
+
+- **The frontmatter parser is tri-state, not optional.** A plain source, a
+  config-free twin and a rejected frontmatter must be distinguishable:
+  `c4_frontmatter_wrap()` returns `{accepted, wrap?}`. Collapsing `accepted`
+  into `optional<string>` makes "no frontmatter" indistinguishable from "not an
+  admitted frontmatter" and silently falls back every plain c4 source — the
+  exact bug the twin oracle caught.
+- **Closed shape.** Start fence `---` → a single `description:` (its indented
+  lines are the folded payload) → `config:` → a single indent-2
+  `wrap: true|false`. Any other key, indent, duplicate or value rejects.
+- **Inert and disclosed.** The terminal projection already wraps descriptions,
+  so `config.wrap` has no terminal counterpart; it is disclosed as
+  `config.wrap=<v> -> SVG text wrapping; not applied` under
+  `C4 native projection v1`, and the art equals the config-stripped twin's.
+  The disclosure line exceeds 40 columns, so the row stays `source` at narrow.
+- **Accounting.** The matrix branch precedes the RFC 0031 c4 cohort branch
+  (disjoint sets) with a rule-38 reach proof; the RFC 0031 gate's
+  `styled_excluded` partition keeps its eight remaining negatives and asserts
+  the admitted row is a D-432 ledger member.
+
 ## Cynefin closed frontmatter table (D-431)
 
 - **Closed leaves, inert and disclosed.**

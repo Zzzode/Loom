@@ -168,6 +168,63 @@ bool c4_wrap(const std::string& label, Work& work, std::vector<std::string>& out
 
 }  // namespace
 
+// D-432: the closed `config.wrap` leaf. SVG-level text wrapping has no
+// terminal analogue (the projection already wraps descriptions), so the leaf
+// is validated and disclosed.
+struct C4Frontmatter {
+    bool accepted = false;
+    std::optional<std::string> wrap;
+};
+
+C4Frontmatter c4_frontmatter_wrap(std::string_view source) {
+    C4Frontmatter result;
+    if (!source.starts_with("---\n")) {
+        result.accepted = true;  // a plain source carries no frontmatter to admit
+        return result;
+    }
+    const auto close = source.find("\n---\n", 4);
+    if (close == std::string_view::npos) return result;
+    const std::string_view frontmatter = source.substr(0, close);
+    enum class Section { Description, Config } section = Section::Description;
+    bool description_seen = false, config_seen = false;
+    for (std::size_t pos = 0;;) {
+        const auto eol = frontmatter.find('\n', pos);
+        const auto end = eol == std::string_view::npos ? frontmatter.size() : eol;
+        const std::string_view line = frontmatter.substr(pos, end - pos);
+        const bool last = eol == std::string_view::npos;
+        pos = last ? frontmatter.size() + 1u : eol + 1u;
+        const auto key_start = line.find_first_not_of(' ');
+        if (key_start != std::string_view::npos) {
+            const std::string_view content = line.substr(key_start);
+            if (key_start == 0u) {
+                if (content == "---") {
+                } else if (content.starts_with("description:")) {
+                    if (description_seen || config_seen) return result;
+                    description_seen = true;
+                    section = Section::Description;
+                } else if (content == "config:") {
+                    if (config_seen) return result;
+                    config_seen = true;
+                    section = Section::Config;
+                } else {
+                    return result;
+                }
+            } else if (section == Section::Description) {
+            } else if (key_start == 2u && content.starts_with("wrap: ") && !result.wrap) {
+                const std::string_view value = content.substr(6u);
+                if (value != "true" && value != "false") return result;
+                result.wrap = std::string{value};
+            } else {
+                return result;
+            }
+        }
+        if (last) break;
+    }
+    if (config_seen && !result.wrap) return result;
+    result.accepted = true;
+    return result;
+}
+
 std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
     std::size_t fee = 256;
@@ -179,33 +236,13 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
     }
 
     const std::string_view body = c4_body(source);
-    // No color/layout contract: a frontmatter theme/look/config key or an
-    // in-body Update*Style/UpdateLayoutConfig statement keeps the whole source
-    // on ordinary fallback. Key-based so prose mentioning "style" is not a gate.
+    // D-432: the closed frontmatter parser owns the admitted shape; an in-body
+    // Update*Style/UpdateLayoutConfig statement keeps the whole source on
+    // ordinary fallback. Key-based so prose mentioning "style" is not a gate.
+    const auto frontmatter = c4_frontmatter_wrap(source);
+    if (!frontmatter.accepted) return {};
     {
         bool visual_gate = false;
-        if (source.starts_with("---\n")) {
-            const auto close = source.find("\n---\n", 4);
-            if (close != std::string_view::npos) {
-                const std::string_view frontmatter(source.data(), close);
-                for (std::size_t pos = 0;;) {
-                    const auto eol = frontmatter.find('\n', pos);
-                    std::string_view line = frontmatter.substr(
-                        pos, eol == std::string_view::npos ? std::string_view::npos
-                                                           : eol - pos);
-                    pos = eol == std::string_view::npos ? frontmatter.size() : eol + 1;
-                    const auto key_start = line.find_first_not_of(' ');
-                    if (key_start != std::string_view::npos) {
-                        std::string_view key = line.substr(key_start);
-                        const auto colon = key.find(':');
-                        if (colon != std::string_view::npos) key = key.substr(0, colon);
-                        if (key == "theme" || key == "look" || key == "config")
-                            visual_gate = true;
-                    }
-                    if (eol == std::string_view::npos) break;
-                }
-            }
-        }
         if (!visual_gate) {
             for (std::size_t pos = 0;;) {
                 const auto eol = body.find('\n', pos);
@@ -368,6 +405,15 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
         out = std::move(combined);
     }
     if (out.empty()) return {};
+    if (frontmatter.wrap) {
+        const std::string line =
+            "config.wrap=" + *frontmatter.wrap + " -> SVG text wrapping; not applied";
+        if (line.size() > 96u || !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+            return {};
+        out.push_back("");
+        out.push_back("C4 native projection v1");
+        out.push_back(line);
+    }
     return out;
 }
 

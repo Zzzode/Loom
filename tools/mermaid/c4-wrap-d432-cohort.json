@@ -1,0 +1,38 @@
+{
+  "schema": "loom_mermaid_c4_wrap_d432_cohort/v1",
+  "decision": "D-432",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "c4 original whose frontmatter is a folded description plus config: > wrap: true|false",
+    "cohort_digest": "74d11b9c09b249ad11837142b196873d54991f2a06b93553d58de584efebd453",
+    "exclusions": "theme/look keys, other config keys, unknown values, init directives and Update* statements stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice without a design gate; the gate is the test document plus the twin oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 1
+  },
+  "rows": [
+    {
+      "path": "c4/nightly-check/description-wrapping.mmd",
+      "sha256": "da72d567cc593063fab15c6573cbd8e7fb16e5c2ab48be5814703cf9c20fbe9d",
+      "manifest_sha256": "da72d567cc593063fab15c6573cbd8e7fb16e5c2ab48be5814703cf9c20fbe9d",
+      "wrap": "true",
+      "expected_footer_lines": [
+        "C4 native projection v1",
+        "config.wrap=true -> SVG text wrapping; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

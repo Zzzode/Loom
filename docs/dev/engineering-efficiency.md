@@ -2042,3 +2042,15 @@ Attach a short efficiency section to each closure report, answering:
 4. **Quoted YAML scalars appear in config values too.** `valueFormat: '$0,0'`
    is quoted; both the C++ parser and the Python mirror must strip a matching
    quote pair, or the mirror and the renderer disagree silently.
+
+## D-429 packet namespace retro (2026-11-23)
+
+1. **A sibling gate's helper can carry a family-specific guard.** The packet
+   gate reused `native_frame` from the treemap gate, including its
+   `packet`/`title:` line rejections — but the packet projection legitimately
+   transcribes its `packet` header, so every live frame read as "source echo".
+   Re-derive each helper's guards from *this* family's frame shape instead of
+   copying them; a one-line guard difference cost a full debug cycle.
+2. **"Gate green" evidence must name the test.** The TL rule is right: the
+   targeted log now shows `MermaidPacketCohort.GatedPacketsStayWholeSource`
+   (the red one) passing by name, plus all four D-429 names, not just a count.

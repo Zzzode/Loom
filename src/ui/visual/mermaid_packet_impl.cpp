@@ -106,6 +106,96 @@ bool is_packet_header(std::string_view header) {
 
 }  // namespace
 
+// D-429: the closed `config.packet` namespace plus the frontmatter title. The
+// native projection transcribes fields, never a bit grid, so `showBits`,
+// `bitOrder` and `bitsPerRow` are inert and disclosed; the frontmatter title is
+// honoured as a transcribed `title <text>` line (the body form), so no source
+// content is dropped silently.
+struct PacketFrontmatter {
+    std::optional<std::string> title;
+    std::optional<std::string> show_bits;
+    std::optional<std::string> bit_order;
+    std::optional<std::string> bits_per_row;
+};
+
+std::optional<PacketFrontmatter> packet_frontmatter(std::string_view source) {
+    PacketFrontmatter out;
+    if (!source.starts_with("---\n")) return out;
+    const auto close = source.find("\n---\n", 4);
+    if (close == std::string_view::npos) return out;
+    const std::string_view frontmatter = source.substr(0, close);
+    enum class Section { Description, Config, Packet } section = Section::Description;
+    bool description_seen = false, config_seen = false, packet_seen = false;
+    bool title_seen = false;
+    for (std::size_t pos = 0;;) {
+        const auto eol = frontmatter.find('\n', pos);
+        const auto end = eol == std::string_view::npos ? frontmatter.size() : eol;
+        const std::string_view line = frontmatter.substr(pos, end - pos);
+        const bool last = eol == std::string_view::npos;
+        pos = last ? frontmatter.size() + 1u : eol + 1u;
+        const auto key_start = line.find_first_not_of(' ');
+        if (key_start != std::string_view::npos) {
+            const std::string_view content = line.substr(key_start);
+            if (key_start == 0u) {
+                if (content == "---") {
+                    // opening fence
+                } else if (content.starts_with("description:")) {
+                    if (description_seen || config_seen) return std::nullopt;
+                    description_seen = true;
+                    section = Section::Description;
+                } else if (content.starts_with("title:")) {
+                    if (title_seen || config_seen) return std::nullopt;
+                    const auto value = trim_spaces(content.substr(6u));
+                    if (value.size() < 2u || value.front() != '"' || value.back() != '"')
+                        return std::nullopt;
+                    const auto text = value.substr(1u, value.size() - 2u);
+                    if (!is_prose(text)) return std::nullopt;
+                    out.title = std::string{text};
+                    title_seen = true;
+                } else if (content == "config:") {
+                    if (config_seen) return std::nullopt;
+                    config_seen = true;
+                    section = Section::Config;
+                } else {
+                    return std::nullopt;
+                }
+            } else if (section == Section::Description) {
+                // folded payload
+            } else if (section == Section::Config) {
+                if (key_start != 2u || content != "packet:" || packet_seen)
+                    return std::nullopt;
+                packet_seen = true;
+                section = Section::Packet;
+            } else {
+                if (key_start != 4u) return std::nullopt;
+                const auto colon = content.find(':');
+                if (colon == std::string_view::npos) return std::nullopt;
+                const auto key = trim_spaces(content.substr(0, colon));
+                const auto value = trim_spaces(content.substr(colon + 1u));
+                if (key == "showBits") {
+                    if (out.show_bits || (value != "true" && value != "false"))
+                        return std::nullopt;
+                    out.show_bits = std::string{value};
+                } else if (key == "bitOrder") {
+                    if (out.bit_order || (value != "ascending" && value != "descending"))
+                        return std::nullopt;
+                    out.bit_order = std::string{value};
+                } else if (key == "bitsPerRow") {
+                    if (out.bits_per_row || !is_uint(value)) return std::nullopt;
+                    const auto count = std::stoul(std::string{value});
+                    if (count == 0u || count > 64u) return std::nullopt;
+                    out.bits_per_row = std::string{value};
+                } else {
+                    return std::nullopt;
+                }
+            }
+        }
+        if (last) break;
+    }
+    if (config_seen && !packet_seen) return std::nullopt;
+    return out;
+}
+
 std::optional<std::vector<std::string>> packet_layout(std::string_view source,
                                                       Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
@@ -118,41 +208,14 @@ std::optional<std::vector<std::string>> packet_layout(std::string_view source,
     }
 
     const std::string_view body = packet_body(source);
-    // No bit-cell/color contract: a frontmatter theme/look/config key, an
-    // %%{init}%% directive or a classDef/:::/style statement keeps the whole
-    // source on fallback. Trim the key before comparing so the YAML-legal
-    // "config : 42" spacing shape still gates.
+    // D-429: the frontmatter parser owns the closed description/title/config
+    // shape; everything else returns std::nullopt and keeps the whole source.
+    const auto frontmatter = packet_frontmatter(source);
+    if (!frontmatter) return {};
+    // An %%{init}%% directive or a classDef/:::/style statement still keeps the
+    // whole source on fallback (no color/bit-cell contract).
     {
         bool visual_gate = false;
-        if (source.starts_with("---\n")) {
-            std::size_t search = 4;
-            while (search < source.size()) {
-                const auto nl = source.find('\n', search);
-                const std::string_view line =
-                    source.substr(search, nl == std::string_view::npos
-                                                      ? std::string_view::npos
-                                                      : nl - search);
-                std::size_t i = 0;
-                bool is_fence = false;
-                if (line.size() >= 3 && line[0] == '-' && line[1] == '-' && line[2] == '-') {
-                    i = 3;
-                    while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) ++i;
-                    is_fence = i == line.size();
-                }
-                const auto key_start = line.find_first_not_of(' ');
-                if (!is_fence && key_start != std::string_view::npos) {
-                    std::string_view key = line.substr(key_start);
-                    const auto colon = key.find(':');
-                    if (colon != std::string_view::npos)
-                        key = trim_spaces(key.substr(0, colon));
-                    if (key == "theme" || key == "look" || key == "config")
-                        visual_gate = true;
-                }
-                if (is_fence) break;
-                if (nl == std::string_view::npos) break;
-                search = nl + 1;
-            }
-        }
         if (!visual_gate) {
             for (std::size_t pos = 0;;) {
                 const auto eol = body.find('\n', pos);
@@ -231,6 +294,33 @@ std::optional<std::vector<std::string>> packet_layout(std::string_view source,
                                                            : nl)});
         combined.insert(combined.end(), out.begin(), out.end());
         out = std::move(combined);
+    }
+    if (frontmatter->title) {
+        if (!push_guarded("title " + *frontmatter->title)) return {};
+        // The honoured title leads the frame.
+        std::rotate(out.begin(), out.end() - 1, out.end());
+    }
+    if (frontmatter->bit_order || frontmatter->bits_per_row || frontmatter->show_bits) {
+        const auto push_notice = [&](const std::string& line) -> bool {
+            if (line.size() > 96u || !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+                return false;
+            out.push_back(line);
+            return true;
+        };
+        if (!push_guarded("")) return {};
+        if (!push_notice("Packet native projection v1")) return {};
+        if (frontmatter->bit_order &&
+            !push_notice("config.packet.bitOrder=" + *frontmatter->bit_order +
+                         " -> bit numbering direction; not applied"))
+            return {};
+        if (frontmatter->bits_per_row &&
+            !push_notice("config.packet.bitsPerRow=" + *frontmatter->bits_per_row +
+                         " -> ruler row grouping; not applied"))
+            return {};
+        if (frontmatter->show_bits &&
+            !push_notice("config.packet.showBits=" + *frontmatter->show_bits +
+                         " -> per-bit position rulers; not applied"))
+            return {};
     }
     return out;
 }

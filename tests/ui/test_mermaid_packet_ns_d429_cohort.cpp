@@ -1,0 +1,290 @@
+// D-429 packet closed-namespace + title gate.
+//
+// Selection rationale (TL directive): the D-428 census left packet as the
+// recommended next seam (2 of its 6 fallbacks are config-only). Expected drop:
+// 2 rows (packet 2 -> 0 fallbacks become 4/2; global 547 -> 545, formal
+// 1412 -> 1414).
+//
+// Criterion (semantic, D-412): the native projection transcribes fields, never
+// a bit grid, so `showBits`, `bitOrder` and `bitsPerRow` are inert and
+// disclosed. The frontmatter `title:` IS honoured — the frame leads with the
+// body's own `title <text>` form, so no source content is dropped silently.
+// The oracle is exact: the art above the footer equals the config-stripped
+// twin's art, and the title text is present.
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/screen.hpp>
+#include <gtest/gtest.h>
+
+#include <array>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <map>
+#include <string>
+#include <vector>
+
+import std;
+import loom.ui.visual.markdown;
+import loom.serdes.json;
+import loom.crypto.crypto;
+
+namespace {
+namespace fs = std::filesystem;
+namespace json = loom::utils::json;
+using json::JsonDoc;
+using json::JsonVal;
+
+const fs::path kFixtures = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official";
+const fs::path kCases = kFixtures / "cases";
+const fs::path kManifest = kFixtures / "manifest.json";
+const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/packet-ns-d429-cohort.json";
+constexpr int kWide = 240;
+constexpr int kNarrow = 40;
+constexpr int kHeight = 900;
+constexpr std::string_view kHeader = "Packet native projection v1";
+
+std::string read_file(const fs::path& path) {
+    std::ifstream input(path, std::ios::binary);
+    return {std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
+}
+
+struct CellCapture {
+    std::vector<std::string> chars;
+    std::string text;
+};
+
+CellCapture capture(const std::string& source, const char* language, int width) {
+    const std::string fenced =
+        "```" + std::string(language) + "\n" + source + "\n```\n\nP429_SENTINEL";
+    auto element = loom::ui::render_markdown(fenced);
+    CellCapture out;
+    if (!element) return out;
+    auto screen =
+        ftxui::Screen::Create(ftxui::Dimension::Fixed(width), ftxui::Dimension::Fixed(kHeight));
+    ftxui::Render(screen, element);
+    out.chars.reserve(static_cast<std::size_t>(width) * kHeight);
+    for (int y = 0; y < kHeight; ++y)
+        for (int x = 0; x < width; ++x) {
+            out.chars.push_back(screen.PixelAt(x, y).character);
+            out.text += screen.PixelAt(x, y).character;
+        }
+    return out;
+}
+
+bool same_surface(const CellCapture& a, const CellCapture& b) { return a.chars == b.chars; }
+bool draws(const std::string& source, int width) {
+    return !same_surface(capture(source, "mermaid", width), capture(source, "text", width));
+}
+JsonDoc parse_doc(const fs::path& path) {
+    auto parsed = json::parse(read_file(path));
+    if (!parsed) throw std::runtime_error("cannot parse " + path.string());
+    return std::move(*parsed);
+}
+std::array<std::string, 3> load_states(const JsonVal& states) {
+    return {states.get_string("wide_240"), states.get_string("narrow_40"),
+            states.get_string("restored_240")};
+}
+std::vector<std::string> trimmed_lines(const CellCapture& capture, int width) {
+    if (capture.chars.size() !=
+        static_cast<std::size_t>(width) * static_cast<std::size_t>(kHeight))
+        return {};
+    std::vector<std::string> lines;
+    lines.reserve(static_cast<std::size_t>(kHeight));
+    for (int y = 0; y < kHeight; ++y) {
+        std::string line;
+        line.reserve(static_cast<std::size_t>(width));
+        for (int x = 0; x < width; ++x)
+            line += capture.chars[static_cast<std::size_t>(y) * static_cast<std::size_t>(width) +
+                                   static_cast<std::size_t>(x)];
+        while (!line.empty() && line.back() == ' ') line.pop_back();
+        lines.push_back(std::move(line));
+    }
+    while (!lines.empty() && lines.back().empty()) lines.pop_back();
+    return lines;
+}
+bool native_frame(const std::string& source, int width) {
+    const auto got = trimmed_lines(capture(source, "mermaid", width), width);
+    if (got.empty()) return false;
+    for (const auto& line : got) {
+        if (line == "```mermaid") return false;
+        if (line == "description:" || line == "config:" || line == "  packet:") return false;
+        if (line == "title:" || line == "---") return false;
+    }
+    return got.back() == "P429_SENTINEL";
+}
+// The art above the disclosure footer; a footer-free frame keeps everything.
+std::vector<std::string> canvas_lines(const std::string& source) {
+    auto lines = trimmed_lines(capture(source, "mermaid", kWide), kWide);
+    std::size_t header = lines.size();
+    for (std::size_t i = lines.size(); i-- > 0;)
+        if (lines[i] == kHeader) {
+            header = i;
+            break;
+        }
+    std::vector<std::string> out(lines.begin(), lines.begin() + static_cast<std::ptrdiff_t>(header));
+    while (!out.empty() && (out.back().empty() || out.back() == "P429_SENTINEL")) out.pop_back();
+    return out;
+}
+std::string config_free_twin(const std::string& source) {
+    const auto close = source.find("\n---\n", 4);
+    if (close == std::string::npos) return source;
+    const std::string frontmatter = source.substr(4, close - 4);
+    const std::string body = source.substr(close + 5);
+    std::string kept;
+    bool skipping = false;
+    for (std::size_t pos = 0; pos < frontmatter.size();) {
+        const auto eol = frontmatter.find('\n', pos);
+        const auto end = eol == std::string::npos ? frontmatter.size() : eol;
+        const std::string line = frontmatter.substr(pos, end - pos);
+        pos = end + 1;
+        if (skipping && line.size() >= 2 && line[0] == ' ' && line[1] == ' ') continue;
+        skipping = false;
+        if (line.starts_with("config:")) {
+            skipping = true;
+            continue;
+        }
+        kept += line;
+        kept += "\n";
+    }
+    return "---\n" + kept + "---\n" + body;
+}
+void expect_footer(const std::string& source, const std::vector<std::string>& footer,
+                   const std::string& label) {
+    std::vector<std::string> expected{""};
+    expected.insert(expected.end(), footer.begin(), footer.end());
+    const auto lines = trimmed_lines(capture(source, "mermaid", kWide), kWide);
+    ASSERT_GE(lines.size(), expected.size() + 2u) << label;
+    ASSERT_EQ(lines.back(), "P429_SENTINEL") << label;
+    ASSERT_TRUE(lines[lines.size() - 2u].empty()) << label << " (trailing blank row)";
+    const auto begin = lines.size() - 2u - expected.size();
+    for (std::size_t i = 0; i < expected.size(); ++i)
+        EXPECT_EQ(lines[begin + i], expected[i]) << label << " footer line " << i;
+}
+std::vector<std::string> string_list(const JsonVal& value) {
+    std::vector<std::string> out;
+    value.iter([&](JsonVal item) { out.emplace_back(item.as_str()); });
+    return out;
+}
+constexpr std::string_view kBody =
+    "packet\n  0-7: \"DATA\"\n  8-15: \"TYPE\"\n";
+std::string probe(std::string_view frontmatter_tail, std::string_view body = kBody) {
+    return "---\ndescription: >-\n  packet namespace probe\n" + std::string(frontmatter_tail) +
+           "---\n" + std::string(body);
+}
+}  // namespace
+
+TEST(MermaidPacketNamespaceD429Cohort, LedgerSchemaReviewsAndPins) {
+    const auto ledger = parse_doc(kLedger);
+    const auto& root = ledger.root();
+    EXPECT_EQ(root.get_string("schema"), "loom_mermaid_packet_ns_d429_cohort/v1");
+    EXPECT_EQ(root.get_string("decision"), "D-429");
+    const auto counts = root.get("counts");
+    EXPECT_EQ(counts.get_int("total"), 2);
+    EXPECT_EQ(counts.get_int("titles"), 2);
+    EXPECT_EQ(counts.get("leaves").get_int("bitOrder"), 1);
+    EXPECT_EQ(counts.get("leaves").get_int("bitsPerRow"), 1);
+    EXPECT_EQ(counts.get("leaves").get_int("showBits"), 2);
+    EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
+    EXPECT_EQ(root.get("selection").get_string("cohort_digest"),
+              "aca34405d0d3e6c100f7ba833adabf86e9e2e9c00473f9c81fdcc17bb4c1507e");
+    const auto manifest = parse_doc(kManifest);
+    std::map<std::string, JsonVal> manifest_rows;
+    manifest.root().get("fixtures").iter(
+        [&](JsonVal fixture) { manifest_rows.emplace(fixture.get_string("path"), fixture); });
+    EXPECT_EQ(root.get("upstream").get_string("manifest_sha256"),
+              loom::utils::crypto::sha256(read_file(kManifest)));
+    std::vector<std::pair<std::string, std::string>> digest_input;
+    root.get("rows").iter([&](JsonVal row) {
+        const auto rel = row.get_string("path");
+        auto it = manifest_rows.find(rel);
+        ASSERT_NE(it, manifest_rows.end()) << rel;
+        EXPECT_EQ(loom::utils::crypto::sha256(read_file(kCases / rel)),
+                  it->second.get_string("sha256"))
+            << rel;
+        EXPECT_EQ(row.get_string("sha256"), it->second.get_string("sha256")) << rel;
+        EXPECT_EQ(loom::utils::crypto::sha256(config_free_twin(read_file(kCases / rel))),
+                  loom::utils::crypto::sha256(config_free_twin(read_file(kCases / rel))))
+            << rel;
+        digest_input.emplace_back(rel, row.get_string("sha256"));
+    });
+    EXPECT_EQ(digest_input.size(), 2u);
+    std::ranges::sort(digest_input);
+    std::string payload;
+    for (const auto& [rel, sha] : digest_input) payload += rel + "\t" + sha + "\n";
+    EXPECT_EQ(root.get("selection").get_string("cohort_digest"),
+              loom::utils::crypto::sha256(payload));
+}
+
+TEST(MermaidPacketNamespaceD429Cohort, TitleHonouredAndLeavesInert) {
+    const auto ledger = parse_doc(kLedger);
+    int checked = 0;
+    ledger.root().get("rows").iter([&](JsonVal row) {
+        const auto rel = row.get_string("path");
+        const auto source = read_file(kCases / rel);
+        const auto twin = config_free_twin(source);
+        const auto states = load_states(row.get("expected_states"));
+        const auto footer = string_list(row.get("expected_footer_lines"));
+        ASSERT_TRUE(draws(twin, kWide)) << rel << " (twin must draw)";
+        EXPECT_EQ(draws(source, kWide), states[0] == "drawn") << rel;
+        ASSERT_TRUE(native_frame(source, kWide)) << rel;
+        EXPECT_EQ(draws(source, kNarrow), states[1] == "drawn") << rel << " narrow ledger";
+        expect_footer(source, footer, rel);
+        // The title is honoured as the body's own form.
+        EXPECT_NE(capture(source, "mermaid", kWide).text.find("title " + row.get_string("title")),
+                  std::string::npos)
+            << rel;
+        // Inertness: the art above the footer is the config-free twin's art.
+        EXPECT_EQ(canvas_lines(source), canvas_lines(twin)) << rel << " leaf changed the art";
+        ++checked;
+    });
+    EXPECT_EQ(checked, 2);
+}
+
+TEST(MermaidPacketNamespaceD429Cohort, ClosedNamespaceNegativesStayWholeSource) {
+    for (const auto& [tail, leaf] :
+         {std::pair{"config:\n  packet:\n    showBits: false\n", "showBits=false"},
+          std::pair{"config:\n  packet:\n    showBits: true\n", "showBits=true"},
+          std::pair{"config:\n  packet:\n    bitOrder: ascending\n", "bitOrder=ascending"},
+          std::pair{"config:\n  packet:\n    bitOrder: descending\n", "bitOrder=descending"},
+          std::pair{"config:\n  packet:\n    bitsPerRow: 16\n", "bitsPerRow=16"}}) {
+        const auto source = probe(tail);
+        ASSERT_TRUE(draws(source, kWide)) << leaf;
+        ASSERT_TRUE(native_frame(source, kWide)) << leaf;
+        EXPECT_TRUE(capture(source, "mermaid", kWide)
+                        .text.find(std::string("config.packet.") + leaf)
+                    != std::string::npos)
+            << leaf;
+    }
+    // The title composes with the namespace.
+    {
+        const auto source = probe("title: \"Status Register\"\nconfig:\n  packet:\n    bitOrder: "
+                                  "descending\n");
+        ASSERT_TRUE(draws(source, kWide));
+        EXPECT_NE(capture(source, "mermaid", kWide).text.find("title Status Register"),
+                  std::string::npos);
+    }
+    for (const auto* tail : {
+             "config:\n  theme: dark\n",
+             "config:\n  look: neo\n",
+             "config:\n  packet:\n    showFlags: true\n",
+             "config:\n  packet:\n    showBits: yes\n",
+             "config:\n  packet:\n    bitOrder: sideways\n",
+             "config:\n  packet:\n    bitsPerRow: 0\n",
+             "config:\n  packet:\n    bitsPerRow: 65\n",
+             "config:\n  packet:\n    showBits: false\n    showBits: true\n",
+             "config:\n  packet:\n      showBits: false\n",
+             "title: unquoted title\n",
+             "title: \"one\"\ntitle: \"two\"\n",
+         }) {
+        const auto source = probe(tail);
+        EXPECT_FALSE(draws(source, kWide)) << tail;
+        EXPECT_FALSE(native_frame(source, kWide)) << tail;
+    }
+    // Body style stays gated with or without the namespace.
+    for (const auto* body : {"packet\n  0-7: \"DATA\":::red\n", "packet\n  classDef red fill:#fff;\n",
+                             "packet\n  %%{init: {}}%%\n"}) {
+        EXPECT_FALSE(draws(std::string(body), kWide)) << body;
+        EXPECT_FALSE(draws(probe("config:\n  packet:\n    showBits: false\n", body), kWide))
+            << body << " (namespace does not bypass the body style gate)";
+    }
+}

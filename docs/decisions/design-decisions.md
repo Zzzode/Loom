@@ -4554,6 +4554,23 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## Packet closed namespace and frontmatter title (D-429)
+
+- **Inert bit-grid leaves, disclosed.** The packet projection transcribes
+  `position: "label"` statements; it draws no bit grid or ruler, so
+  `config.packet.{showBits, bitOrder, bitsPerRow}` cannot be honoured. They are
+  validated (boolean / `ascending|descending` / `1..64`) and disclosed:
+  `Packet native projection v1` + one line per leaf, canonical order
+  (bitOrder, bitsPerRow, showBits).
+- **The frontmatter title IS honoured.** `title: "<prose>"` is validated with
+  the same printable-ASCII rule as body titles and drawn as the body's own
+  `title <text>` line at the top of the frame, so a source title is never
+  dropped silently.
+- **Strict frontmatter state machine.** description payload → optional title →
+  `config:` → `packet:` → closed leaves; any other key, indent, duplicate or
+  body style statement keeps the whole source. The old "any config key gates"
+  scan is gone.
+
 ## Treemap valueFormat (D-427)
 
 - **The formatter is honoured, not disclosed.** Treemap leaf labels carry the

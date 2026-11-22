@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -28,6 +29,8 @@ using json::JsonVal;
 const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases";
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/packet-cohort.json";
+const fs::path kD429Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/packet-ns-d429-cohort.json";
 constexpr int kWide = 240;
 constexpr int kNarrow = 40;
 constexpr int kHeight = 1600;
@@ -138,12 +141,27 @@ TEST(MermaidPacketCohort, CleanPacketsDrawOnWholeAndBodyTracks) {
 TEST(MermaidPacketCohort, GatedPacketsStayWholeSource) {
     const auto ledger = parse_doc(kLedger);
     const auto& selection = ledger.root().get("selection");
-    for (const auto* key : {"frontmatter_gated", "body_style_gated"}) {
-        selection.get(key).iter([&](JsonVal value) {
-            const auto rel = value.as_str();
-            EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
-        });
-    }
+    // D-429 admits every `frontmatter_gated` row through the closed
+    // `config.packet` namespace (and the honoured frontmatter title); the
+    // positives live in test_mermaid_packet_ns_d429_cohort. The partition is
+    // preserved: each excluded row must be a D-429 ledger member.
+    std::set<std::string> namespace_rows;
+    auto ns_ledger = json::parse(read_file(kD429Ledger));
+    ASSERT_TRUE(ns_ledger.has_value()) << "D-429 cohort ledger must parse";
+    ns_ledger->root().get("rows").iter(
+        [&](const JsonVal row) { namespace_rows.insert(row.get_string("path")); });
+    int gated = 0;
+    selection.get("frontmatter_gated").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        EXPECT_TRUE(namespace_rows.contains(std::string(rel))) << rel;
+        ++gated;
+    });
+    EXPECT_EQ(gated, 2);
+    EXPECT_EQ(namespace_rows.size(), 2u);
+    selection.get("body_style_gated").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
+    });
 }
 
 TEST(MermaidPacketCohort, VisualGateIsKeyBased) {

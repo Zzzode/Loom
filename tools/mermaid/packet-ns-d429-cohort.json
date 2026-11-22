@@ -1,0 +1,74 @@
+{
+  "schema": "loom_mermaid_packet_ns_d429_cohort/v1",
+  "decision": "D-429",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "packet original whose frontmatter is a folded description, an optional quoted title and config: > packet: with closed leaves",
+    "cohort_digest": "aca34405d0d3e6c100f7ba833adabf86e9e2e9c00473f9c81fdcc17bb4c1507e",
+    "leaves": [
+      "bitOrder",
+      "bitsPerRow",
+      "showBits"
+    ],
+    "exclusions": "theme/look keys, unknown packet leaves, init directives and style statements stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice without a design gate; the gate is the test document plus the twin oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 2,
+    "titles": 2,
+    "leaves": {
+      "bitOrder": 1,
+      "bitsPerRow": 1,
+      "showBits": 2
+    }
+  },
+  "rows": [
+    {
+      "path": "packet/pr-check/should-render-a-complex-packet-diagram-with-showbits-false.mmd",
+      "sha256": "4be300e4b8ce652bcf7467f3298981e4d1e2564b7a433cd2ede3760dbad3671b",
+      "manifest_sha256": "4be300e4b8ce652bcf7467f3298981e4d1e2564b7a433cd2ede3760dbad3671b",
+      "title": "Packet Diagram",
+      "leaves": {
+        "showBits": "false"
+      },
+      "expected_footer_lines": [
+        "Packet native projection v1",
+        "config.packet.showBits=false -> per-bit position rulers; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "packet/pr-check/should-render-a-packet-diagram-with-descending-bit-order.mmd",
+      "sha256": "dbf77ed5cf7c6e4a0cc9457f93eb212a06009604ed77b43381c4cb22ce5e448a",
+      "manifest_sha256": "dbf77ed5cf7c6e4a0cc9457f93eb212a06009604ed77b43381c4cb22ce5e448a",
+      "title": "Status Register",
+      "leaves": {
+        "showBits": "true",
+        "bitOrder": "descending",
+        "bitsPerRow": "16"
+      },
+      "expected_footer_lines": [
+        "Packet native projection v1",
+        "config.packet.bitOrder=descending -> bit numbering direction; not applied",
+        "config.packet.bitsPerRow=16 -> ruler row grouping; not applied",
+        "config.packet.showBits=true -> per-bit position rulers; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

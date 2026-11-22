@@ -1,9 +1,9 @@
 ---
 rfc: 46
 title: Layout and display tuning namespace admission (ishikawa, architecture, state)
-status: accepted
+status: implementable
 owners: "@Zzzode"
-reviewers: ["agent:design-review"]
+reviewers: ["agent:design-review", "agent:prr-review"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -129,10 +129,11 @@ TU-local copy mirroring `ishikawa_scalar`, not a shared one.
   leaf, with the same namespace-without-leaf rejection pattern RFC 0045 applies
   (`(GitGraphNs && !Parallel)` there; `(StateNs && !UseMaxWidth)` here).
   `detail::parse_envelope` is unchanged.
-- **Composition inside one namespace** is admitted only in the corpus order: `useMaxWidth`
-  before `diagramPadding` (ishikawa), `randomize`/`seed`/`idealEdgeLengthMultiplier`
-  (architecture, each at most once, in source order), and the `useMaxWidth` leaf alone
-  (state). The battery pins admit-or-reject for each co-occurrence.
+- **Composition inside one namespace** is admitted only in the corpus order and disclosed
+  in a fixed canonical order independent of source order: ishikawa `useMaxWidth` then
+  `diagramPadding`; architecture `randomize` then `seed` then `idealEdgeLengthMultiplier`;
+  state `useMaxWidth` alone. A namespace without any admitted leaf falls back. The battery
+  pins admit-or-reject and the canonical footer order for every co-occurrence.
 
 ### 2. Footer
 
@@ -155,7 +156,10 @@ frames stay byte-identical.
   following indent ≥ 2 line to the next column-0 key) for the other nine.
 - `generate_layouttuning_0046_cohort.py`, renderer-free, `--check`-reproducible; its
   structure mirror asserts the namespace/leaf/indent/closed-value rules, the tab and body
-  init rejections, and the corpus-twin body equivalence it claims.
+  init rejections, and the corpus-twin body equivalence it claims. The synthetic twin's
+  "config-free" check is structural (no `config:` line, no namespace/leaf line at its
+  indent) — never a whole-source substring search: three architecture descriptions
+  legitimately contain the key names in prose, the same trap RFC 0045's code review found.
 - Gate `tests/ui/test_mermaid_layouttuning_0046_cohort.cpp` (5 tests): ledger pins and the
   corpus-twin pins; per-row inertness (corpus twin frame + footer, or synthetic twin frame
   + footer); a battery per family (both booleans admitted, quotation/comment
@@ -167,44 +171,62 @@ frames stay byte-identical.
 - **Existing ledgers, generators and tests updated in the same atomic phase** (each flip
   paired with a new negative; nothing deleted or relaxed):
   - `tools/mermaid/architecture-cohort.json` + `generate_architecture_cohort.py`:
+    the generator's `gate_kind` mirror becomes the same structural scan as the production
+    gate (the flat `theme|look|config` regex cannot yield the new counts);
     `frontmatter_gated_count` 4 → 0, `selection.draw_count` 16 → 20,
     `counts.total` / `counts.predicted_draw` / `counts.predicted_original_draw` 16 → 20,
     the generator's partition pin `(16, 4, 0)` → `(20, 0, 0)` and its measured narrow
-    constants extended to the 4 new rows; the 4 rows move from the gated list into the
-    ledger's cohort rows.
-  - `tests/ui/test_mermaid_architecture_cohort.cpp`: counts; `GatedArchitecturesStayWholeSource`
-    runs over the remaining (empty) gated sets and over the new cohort rows with the
-    sibling ledger; `VisualGateIsKeyBased` flips its `config: architecture: randomize: false`
-    sample to a positive and keeps a paired negative (e.g. an out-of-table
-    `idealEdgeLengthMultiplier: 4`).
+    constants extended to the 4 new rows; the ledger's narrative fields
+    (`renderer.theme_gate`, the review note's "16 draw / 4 frontmatter-gated") are rewritten
+    so they do not become false statements.
+  - `tests/ui/test_mermaid_architecture_cohort.cpp`: counts; **a new frame-identity
+    assertion** in `CleanArchitecturesDrawOnWholeAndBodyTracks` — for every drawn row,
+    `same_surface(whole_wide, body_wide)` plus the absence of the `Architecture native
+    projection v1` header and any `config.architecture.` line (the 16 clean rows carry no
+    `config:` and must stay footer-free); `GatedArchitecturesStayWholeSource` asserts the
+    gated lists are *empty* (non-vacuously, by `EXPECT_EQ(count, 0)` for each list) and the
+    4 new rows' inertness is covered by the 0046 gate; `VisualGateIsKeyBased` flips its
+    `config: architecture: randomize: false` sample to a positive and keeps a paired
+    negative (an out-of-table `idealEdgeLengthMultiplier: 4`); the stale header comment
+    ("sixteen clean … four frontmatter-gated") is corrected.
   - `tools/mermaid/ishikawa-cohort.json` + `generate_ishikawa_cohort.py`:
     `frontmatter_gated_count` 4 → 1 (`look: handDrawn`); the RFC 0043 `admitted` list and
     its `admitted_digest` stay byte-identical (2 theme rows) and a new
     `layout_admitted` bucket carries the 3 namespace rows with its own digest, so the
     partition becomes five-way: 13 = 7 drawn + 2 admitted + 3 layout-admitted + 1
-    frontmatter + 0 body.
+    frontmatter + 0 body. The ledger's `theme_gate` narrative and review note are rewritten
+    to match.
   - `tests/ui/test_mermaid_ishikawa_cohort.cpp`: counts 4/2 → 1/2 with the new bucket
     asserted; the admitted loop's `config.theme=` assertion stays, the layout bucket gets
-    its own `config.ishikawa.` assertion.
+    its own `config.ishikawa.` assertion; the stale header comment ("six frontmatter-gated")
+    is corrected.
   - `tests/ui/test_mermaid_smallfam_0043_cohort.cpp` (the generator
     `generate_smallfam_0043_cohort.py` is unchanged: `admitted_count` stays 2 and its
     `EXPECTED` stays 43/26/6/11):
     the FamilySpec gains an `expected_layout_admitted` field (3 for ishikawa, 0 for venn
-    and railroad), the partition check becomes five-way
+    and railroad), the partition sum becomes five-way
     (`draw + admitted + layout_admitted + frontmatter + body == family_total`) and the
-    `ishikawa.useMaxWidth` negative flips for the ishikawa spec only (agentflow/railroad
-    keep it) with a paired out-of-table negative. **The RFC 0043 theme-only contract
-    stays**: the smallfam ledger keeps its 2 ishikawa rows, `counts.admitted=6` /
+    disjoint-list coverage loop additionally walks `layout_admitted` with its own count
+    assertion (otherwise `covered.size()` falls short and the coverage silently shrinks);
+    the `ishikawa.useMaxWidth` negative flips for the ishikawa spec only (venn/railroad
+    keep it) with a paired out-of-table negative; the test named
+    `FamilyLedgersPartitionFourWays` is renamed to five-way. **The RFC 0043 theme-only
+    contract stays**: the smallfam ledger keeps its 2 ishikawa rows, `counts.admitted=6` /
     `counts.other=11`, `per_family["ishikawa"]==2`, `twin_kinds` (corpus 4 / synthetic 2),
     the `:238`/`:245` theme requirements, the `:278-286` family-vs-smallfam admitted
     equality and the `:561` row-count pin are all unchanged; only the ishikawa family
     ledger's own five-way partition and the new FamilySpec field move.
   - `tests/ui/test_mermaid_state_0038_cohort.cpp` + `generate_state_0038_cohort.py`: the
     `state.useMaxWidth` negative flips, paired with a negative (e.g. `state.width`), and
-    the generator's "namespaced config.state.* stays closed" exclusion note is corrected.
+    the flip also asserts the footer line
+    `config.state.useMaxWidth=<v> -> display sizing; not applied` (not merely `draws()`);
+    the generator's "namespaced config.state.* stays closed" exclusion note is corrected
+    **without changing its `EXCLUDED_EXPECTED["namespaced config.state.*"]=4` count** — the
+    4 rows still do not belong to the 0038 cohort.
   - `tests/ui/test_mermaid_e2a_cohort.cpp`: the whole-source scan gains the RFC 0046 ledger
-    in its exclusion set (the git set equality is unchanged; the 4 state rows join the
-    exclusion set, with over-listing covered by the 0046 gate; 108 → 104 rows scanned).
+    in its exclusion set, and the state-side set is pinned the way the git side is (a
+    `state_skipped_by_rfc0046` set equality, or an exact `checked == 104`) so over-listing
+    cannot pass silently; 108 → 104 rows scanned.
   - `tests/ui/test_mermaid_e2b_cohort.cpp`: the state scanned set drops the 4 rows
     (`checked` 43 → 39) and the `skipped_by_rfc0038` set equality extends to the new
     skipped-by-0046 set.
@@ -212,7 +234,8 @@ frames stay byte-identical.
   `family_residual:ishikawa` 2 → 0, `family_residual:architecture` 4 → 0,
   `family_residual:state-diagram` 9 → 7, `family_residual:state-diagram-v2` 22 → 20,
   `dagre_layout_tuning` 18 → 17; categories **43 → 41** (two emptied categories). The
-  matrix family fallbacks move by the same 11 (state v1 14 → 12, v2 51 → 49).
+  matrix family fallbacks move by the same 11: ishikawa 9/4 → 12/1, architecture 16/4 →
+  20/0, state v1 28/14 → 30/12 and v2 52/51 → 54/49.
 
 ## Phases and graduation criteria
 
@@ -222,7 +245,48 @@ frames stay byte-identical.
 
 ## Production Readiness Review
 
-To be completed at the `implementable` gate by an independent PRR agent.
+Completed at the `implementable` gate by an independent PRR agent.
+
+### 1. Correctness and tests
+
+- Every new behaviour has a new test: the five-test cohort gate (ledger pins incl. the two
+  corpus-twin pins, per-row inertness, per-family batteries, literal partition) and one
+  hermetic `--check`; no assertion is deleted or relaxed — every flipped verdict is paired
+  with a new negative, and the architecture family gains a **new** frame-identity assertion
+  for its 16 clean rows (`same_surface(whole_wide, body_wide)` plus footer absence) because
+  the existing architecture tests did not protect the no-footer invariant.
+- Flakes: none added. Serial ctest total: **4681 → 4687**.
+- The synthetic-twin config-free check is structural, not a whole-source substring search
+  (three architecture descriptions mention the key names in prose).
+
+### 2. Build system and module discipline
+
+- N/A for BMI: three `.cpp` body units (ishikawa, architecture, `relations_core` state
+  gate); no `.cppm`, import or declaration change; `detail::parse_envelope` is untouched.
+  Body edits recompile only those objects.
+
+### 3. Rollback and compatibility
+
+- One atomic commit including the three gates, the sibling ledger and generator, the
+  updated family ledgers/generators/tests, the matrix branch and the roster; a revert
+  restores 628 and every pin. No persisted data, wire, CLI or settings change.
+
+### 4. Observability / 5. Documentation / 6. Platform
+
+- The footer line per key is honest ("display sizing" / "diagram padding" /
+  "layout tuning; not applied"); the renderers provably never read the keys. Architecture
+  gains a bounded footer channel without touching the 16 clean rows' frames (asserted).
+  Documentation impact is enumerated (d417/d418/decisions/README/d117 from the current
+  census/efficiency retro). Debug + release `-Werror` on the Linux box; ASCII output;
+  macos-14 CI is not a gate; no new fetch.
+
+### Review sign-off
+
+| Role | Reviewer | Date | Verdict |
+|---|---|---|---|
+| Design | agent:design-review | 2026-11-22 | approve (r3) |
+| Production readiness | agent:prr-review | 2026-11-22 | approve (1 MAJOR + 9 MINOR + 7 NIT folded) |
+| Code (per phase) | pending | — | — |
 
 ## Rollout and rollback
 
@@ -243,21 +307,31 @@ restores 628 and every pin. No persisted data, wire, CLI or settings change.
 
 ## Testing and verification plan
 
-- New gate (5 gtests) + one hermetic `--check`; `ctest -L mermaid` delta **+6**; full debug
-  ctest 4681 → 4687 executed, with the complete stdout and exit code captured to a fixed
-  log path per the TL 2026-11-22 process requirement
-  (`/tmp/loom-logs/ctest-full-dbg-0046.log`, cited with its sha256 in the closure doc).
-- The updated family gates (architecture, ishikawa, smallfam 0043, state 0038, E2a, E2b)
-  are the drawn-row regression oracles and must stay green.
+- New gate (5 gtests) + one hermetic `--check`: registered like its siblings —
+  `add_executable(test_mermaid_layouttuning_0046_cohort …)` / `target_link_libraries` /
+  `gtest_discover_tests(… PROPERTIES TIMEOUT 600 LABELS "mermaid")`, plus
+  `add_test(NAME MermaidLayouttuning0046Cohort.GeneratorIsReproducible COMMAND python3 -I
+  …/generate_layouttuning_0046_cohort.py --check …)` with `LABELS "mermaid" TIMEOUT 120`.
+  `ctest -L mermaid` delta **+6**; full debug ctest 4681 → 4687 executed, with the complete
+  stdout and exit code captured to `/tmp/loom-logs/ctest-full-dbg-0046.log` and cited with
+  its sha256 in the closure doc.
+- The updated family gates (architecture incl. the new frame-identity assertion, ishikawa,
+  smallfam 0043, state 0038, E2a, E2b) are the drawn-row regression oracles and must stay
+  green.
 - Dual-preset matrix byte gate and roster `--emit`/`--self-test`/`--matrix` at closure.
 
 ## Documentation impact
 
 - [ ] `docs/dev/d417-next-family-layout-tuning.md` — selection (twin evidence corrected)
 - [ ] `docs/dev/d418-layout-tuning-rfc0046-closure.md` — closure record
-- [ ] `docs/decisions/design-decisions.md` — namespace admission entry
-- [ ] `docs/README.md` — RFC index row
+- [ ] `docs/decisions/design-decisions.md` — namespace admission entry, and the existing
+      "`state.useMaxWidth` stays closed" sentence is amended
+- [ ] `docs/README.md` — RFC index row status
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — ishikawa/architecture/state rows
+      corrected **from the current census** (the state rows are stale at 70/33 and 23/19,
+      not derived by subtracting from them)
+- [ ] `docs/dev/engineering-efficiency.md` — per-task retro (capture cost of the new gate
+      and any rework loop)
 
 ## Open questions
 
@@ -281,6 +355,7 @@ restores 628 and every pin. No persisted data, wire, CLI or settings change.
 | 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | Census, row selection, closed value sets, arithmetic and the inertness argument all verified independently. 2 BLOCKER: the "no body-equivalent drawn twin (0/11)" evidence was false — ishikawa `diagramPadding` and architecture `idealEdgeLengthMultiplier` have clean corpus twins already used by sibling ledgers → corpus twins adopted for those two, synthetic for nine (the state four have body-equal fixtures but with their own E2b footers); and the "existing batteries unchanged" claim was false — the architecture/ishikawa/smallfam/state ledgers and tests, plus the E2a/E2b scans, pin the current fallbacks and are now enumerated as same-phase updates with paired negatives. 3 MAJOR: the state change is confined to `state_source_envelope` (`parse_envelope` untouched); architecture needs a new TU-local scalar helper; the architecture mechanism is resolved to a hand-rolled scan. 4 MINOR + 2 NIT folded (composition order, exact footer literals, 43→41 categories, reviewer record, log path). All folded |
 | 2026-11-22 | r2 | agent:design-review | REQUEST-CHANGES | Re-verified B1/M1-M3. One load-bearing item still open (B3): the ishikawa admitted bucket could not move from 2 to 5 without breaking the RFC 0043 theme-only contract (smallfam pins at `:238/:245/:263/:278-286/:561`); the folded text already used a separate `layout_admitted` bucket, and it is now explicit about every unchanged smallfam pin and the five-way partition. Two MINORs (roster category numbers 9→7 / 22→20 vs the matrix family fallbacks; architecture `draw_count`/`predicted_draw` enumeration) and three NITs folded |
 | 2026-11-22 | r3 | agent:design-review | **APPROVE-TO-ACCEPT** | Every consumer of the ishikawa/smallfam pins re-checked and consistent (partition 13 = 7 + 2 + 3 + 1 + 0; smallfam generator unchanged); roster/architecture numbers and all NITs verified; E2a 108→104 and E2b 43→39 reproduced exactly. Gate: provisional → accepted |
+| 2026-11-22 | PRR | agent:prr-review | REQUEST-CHANGES | 1 MAJOR: the 16 clean architecture rows' byte-identical frames were not guarded by any test (the existing gate computed both surfaces without comparing them; the matrix only counts verdicts) → a new frame-identity assertion is specified. 9 MINOR: the smallfam disjoint-list coverage loop; the architecture generator's flat `gate_kind` regex; stale narrative fields in both family ledgers; the empty-gated-list disposition; the E2a state-side over-listing pin; README/d117 staleness; the CMake registration and timeouts; the state 0038 `EXCLUDED_EXPECTED` count must stay 4. 7 NIT: venn/railroad naming, canonical footer order, structural twin check, footer assertion on the state flip, stale test names/comments, efficiency retro, complete family-fallback list. All folded |
 
 ## Implementation History
 

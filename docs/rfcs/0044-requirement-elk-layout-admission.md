@@ -1,9 +1,9 @@
 ---
 rfc: 44
 title: requirement elk layout admission
-status: accepted
+status: implementable
 owners: "@Zzzode"
-reviewers: ["agent:design-review"]
+reviewers: ["agent:design-review", "agent:prr-review"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -110,12 +110,25 @@ In `requirement_envelope` (the event-driven gate used by all requirement admissi
 
 - Sibling ledger `tools/mermaid/requirement-0044-cohort.json` (schema
   `loom_mermaid_requirement_0044_cohort/v1`) with the 23 rows, each with its corpus twin
-  path + sha (body equivalence verified by the generator), literal footer lines, and the
-  measured per-width states.
-- `generate_requirement_0044_cohort.py`, renderer-free, `--check`-reproducible. The RFC
+  path + sha (body equivalence verified by the generator), the twin's own footer block, the
+  literal source footer block, and the measured per-width states.
+- **Twin selection rule (measured).** A row's body can be byte-identical to several drawn
+  twins carrying different footers, so the rule is pinned: prefer a **footer-free** drawn
+  twin (a drawn row whose frontmatter has no `config:` block, so it emits no notices) —
+  20 of 23 rows; otherwise use a drawn twin whose footer block is a **byte-prefix** of the
+  source footer — the 3 rows whose only twins carry `htmlLabels: false`. The gate composes
+  `source frame = twin frame with the twin's recorded footer block stripped, then the
+  source footer block appended`, and asserts the prefix relation for every prefix twin.
+  Self-twins and non-drawn twins are rejected explicitly; the ledger records the kind and
+  both blocks, so the composition is never ambiguous.
+- `generate_requirement_0044_cohort.py`, renderer-free, `--check`-reproducible; its scalar
+  mirror is quote-aware exactly like `er_strip_comment` (`#` starts a comment only at index
+  0 or after a space/tab and outside quotes, returning the trimmed prefix), reused from an
+  existing generator helper rather than a naive split. The RFC
   0037 generator is source-shape based: its `EXCLUDED_EXPECTED["layout: elk"] = 24` stays
   24 (the fixture shape has not changed) and only its human-readable `exclusions` sentence
-  is updated to name RFC 0044; its 120 rows and counts do not change.
+  is updated to say "23 admitted by RFC 0044, 1 remains"; its 120 rows and counts do not
+  change. The generator's module docstring no longer calls `config.layout` capability debt.
 - Partition arithmetic is literal against the filesystem: 172 = 144 drawn + 23 admitted +
   5 remaining, with the drawn 144 split 120 (0037) + 8 (F0) + 4 (base cohort) + 12
   pre-existing.
@@ -128,12 +141,18 @@ In `requirement_envelope` (the event-driven gate used by all requirement admissi
   `Keys outside the admitted set` battery flips `layout: elk` to the admitted positive and
   keeps a `layout: dagre` reject. Nothing is deleted; each flip is paired with a negative.
 - Gate `tests/ui/test_mermaid_requirement_0044_cohort.cpp` (5 tests): ledger schema/review/
-  pins and sibling↔0037 agreement; per-row twin inertness + exact footer composition; the
-  closed table (elk admitted; `dagre`/`elk-layout`/case variants/empty/duplicate/indent 4/
-  column-0 `layout` rejected; nested map still rejected; the four other leaves unchanged);
-  the composed-order battery (`htmlLabels` + `layout` emits html then layout; the three
-  RFC 0037 leaf batteries keep their expected sequences); the literal four-way partition.
-- Matrix branch before the requirement family branches, reason
+  pins and sibling↔0037 agreement — every 0044 path appears in
+  `requirement-0037-cohort.json`'s `excluded` list with `class == "layout: elk"`, the 0044
+  set is disjoint from the 0037 `rows`, and the 0037 excluded class still has 24 entries;
+  per-row twin inertness + exact footer composition (both twin kinds non-vacuously counted
+  20/3); the closed table (elk admitted; `dagre`/`elk-layout`/case variants/empty/duplicate/
+  indent 4/column-0 `layout` rejected; nested map still rejected; the five existing leaves
+  unchanged); the composed-order battery (`htmlLabels` + `layout` emits html then layout;
+  the three RFC 0037 leaf batteries keep their expected sequences); the literal six-group
+  partition (120 + 8 + 4 + 12 drawn, 23 admitted, 5 remaining).
+- Matrix branch inserted **immediately before the D-066 F0 requirement block**
+  (`tests/ui/test_mermaid_official.cpp` ~10057), ahead of the F0 (~10059), RFC 0037
+  (~10082) and base-cohort (~10572) requirement branches, reason
   `RFC-0044 requirement elk layout reviewed cohort`, `raw_active_schema` empty so the
   generic `originals_drawn` counter credits +23.
 - Roster: `--emit` 663 → 640, `elk_layout_engine` 38 → 15, category count unchanged (43).
@@ -142,7 +161,7 @@ In `requirement_envelope` (the event-driven gate used by all requirement admissi
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `layout` admission | 23 rows, 1 family | proposed | requirement 144/28 → **167/5**; global 1482/663 → **1505/640**; formal **1296 → 1319**; gaps 48, integrity 0; narrow measured per row; dual-preset sha recorded |
+| P1 | `layout` admission | 23 rows, 1 family | proposed | red-first: the 23 rows are `source_fallback` on wide/narrow/restored before the change (measured on the committed matrix); then requirement 144/28 → **167/5**; global 1482/663 → **1505/640**; formal **1296 → 1319**; gaps 48, integrity 0; narrow measured per row; dual-preset sha recorded; independent P1 code review APPROVE |
 
 Closure: full debug ctest once, dual-preset byte gate, RFC `implemented`, closure doc,
 design-decisions entry, efficiency retro.
@@ -155,6 +174,56 @@ phase's net reduction (**23**).
 ## Production Readiness Review
 
 Completed at the `implementable` gate by an independent PRR agent.
+
+### 1. Correctness and tests
+
+- Every new behaviour has a new test: the five-test cohort gate, the three existing-
+  assertion flips (each paired with a `layout: dagre` negative), and three hermetic
+  `--check` entries.
+- Failure paths covered: the closed table and shape batteries.
+- Golden suites: N/A — no rendered-cell golden or truecolor path; the text surface is
+  asserted by the cohort gate and by the RFC 0037 120-row oracle, which stays green only if
+  the new leaf does not disturb frames without `layout`.
+- Flakes: none added; no wall-clock assertion.
+- Serial ctest total: **4667 → 4675**.
+- Couplings named and both-sided: ledger fields, matrix reason, roster category, C++ gate ↔
+  Python classifier (quote-aware scalar mirror), the 0037 `EXCLUDED_EXPECTED` constant, the
+  base generator's `superseded_note`.
+
+### 2. Build system and module discipline
+
+- BMI PSS: N/A — one `.cpp` body unit; `RequirementEnvelope` already carries
+  `config_notices`, so no interface/module change. No concurrency change; no new module.
+
+### 3. Rollback and compatibility
+
+- One atomic commit including the roster, so one `git revert` restores 663 and every pin;
+  splitting the roster out would red the `--self-test` (live vs committed).
+- No persisted data, wire, CLI, or settings change.
+
+### 4. Observability
+
+- The disclosure footer is the existing requirement notice channel; no new diagnostics,
+  threads, or render ticker.
+
+### 5. Documentation and deletion
+
+- No gate is wrapped or duplicated; the phase updates the 0037 generator's human sentence
+  and the base ledger's `superseded_note`, plus the docs listed below.
+
+### 6. Platform readiness
+
+- Debug + release `-Werror` on the Linux box; ASCII cell text, no platform code touched;
+  macos-14 CI is not a verification gate (directive 2026-09-29); no new fetch; no colour
+  painted.
+
+### Review sign-off
+
+| Role | Reviewer | Date | Verdict |
+|---|---|---|---|
+| Design | agent:design-review | 2026-11-22 | approve (r3) |
+| Production readiness | agent:prr-review | 2026-11-22 | approve (2 MAJOR + 5 MINOR + 5 NIT folded) |
+| Code (per phase) | pending | — | — |
 
 ## Rollout and rollback
 
@@ -185,9 +254,11 @@ persisted data, wire protocol, CLI, or settings change.
 
 ## Testing and verification plan
 
-- New gate (5 gtests) + two hermetic `--check` entries — one for the new generator and one
-  **newly registered** for `generate_requirement_0037_cohort.py` (which supports `--check`
-  but has no ctest entry today): expected `ctest -L mermaid` delta **+7**.
+- New gate (5 gtests) + three hermetic `--check` entries — the new generator plus
+  **newly registered** checks for `generate_requirement_0037_cohort.py` and
+  `generate_requirement_cohort.py` (both support `--check` and are green today, but neither
+  is registered; the base generator is touched, so its check belongs): expected
+  `ctest -L mermaid` delta **+8**; full debug ctest **4667 → 4675**.
 - The RFC 0037 gate is the drawn-row regression oracle (120 rows) and must stay green.
 - Targeted `ctest -L mermaid`; release matrix; dual-preset byte gate at closure; full
   debug ctest once.
@@ -199,7 +270,8 @@ persisted data, wire protocol, CLI, or settings change.
 - [ ] `docs/dev/d413-next-family-requirement-elk.md` — selection (already written)
 - [ ] `docs/dev/d414-requirement-elk-rfc0044-closure.md` — closure record
 - [ ] `docs/decisions/design-decisions.md` — requirement layout admission entry
-- [ ] `docs/README.md` — RFC index
+- [ ] `docs/README.md` — RFC 0044 row and the RFC 0037 row's still-current "`layout: elk`
+      (24) stay fallback" clause
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — requirement row
 - [ ] `tools/mermaid/generate_requirement_cohort.py` + `requirement-cohort.json` — the
       frozen D-204 snapshot keeps its rows and counts; the generator-authored
@@ -226,6 +298,7 @@ persisted data, wire protocol, CLI, or settings change.
 | 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | Scope, twin bytes, arithmetic, inertness and wiring all confirmed. BLOCKER: three existing assertions pin `layout: elk` as fallback (`test_mermaid_requirement_cohort.cpp` gated array + single-leaf battery, `test_mermaid_requirement_0037_cohort.cpp` keys battery) and were outside the plan → named as in-scope edits, each flip paired with a `layout: dagre` negative. MAJOR: the two remaining rows' stated causes were wrong (indented closing fence = malformed envelope; leading blank line = no `---\n` at offset 0), and nested maps total 3, not 2 → rewritten. MINOR: the 0037 generator's `EXCLUDED_EXPECTED["layout: elk"]` stays 24 (source-shape) with only the human sentence changing; the 0037 `--check` is a newly registered entry, not an existing one; NITs: scalar trims spaces only and dequotes an outer same-char pair (tabs rejected upstream), the notice-order claim is vacuous for old frames and pinned only for the new rows, and the roster is fallback-only so the category cannot mix. All folded |
 | 2026-11-22 | r2 | agent:design-review | REQUEST-CHANGES | r1 folds confirmed faithful (three assertion edits, 0037 generator constant, +7 registry, scalar/order/roster wording). New MAJOR introduced by the r1 rewrite: the nested-map attribution said "two ELK rows" and "only the ELK one", which is self-contradictory — the correct partition is 1 ELK nested row (also htmlLabels, no twin) + 2 non-ELK nested rows (one plain, one `look`) → fixed. MINORs: Non-Goals still used the retracted descriptors → aligned; the `superseded_note` is generator-authored, so the generator is added to the doc-impact list; the family test's header comment is added to the in-scope edits. All folded |
 | 2026-11-22 | r3 | agent:design-review | **APPROVE-TO-ACCEPT** | All r2 fixes verified against fixtures and roster; all recomputed numbers consistent (172/144/28; 24 elk = 15+8+1; 23 promoted; 5 remaining; 38→15; 640/289/23). One optional NIT: G2's causal clause was loose → softened. Gate: provisional → accepted |
+| 2026-11-22 | PRR | agent:prr-review | REQUEST-CHANGES | 2 MAJOR + 5 MINOR + 5 NIT. MAJOR: the touched base generator's `--check` was unregistered (+8, total 4675); twin selection was undefined and the footer delta ambiguous (rows have several body-identical drawn twins with different footers) → pinned footer-free-first/prefix-second with both blocks in the ledger and a composed strip-then-append rule. MINORs: ctest total stated; matrix anchor named; sibling↔0037 assertion specified; README status and the 0037 README clause added to doc impact; red-first and the P1 code-review gate added to the phase criteria. NITs: five existing leaves, six-group partition, 0037 docstring, quote-aware scalar mirror, no F0 generator. All folded |
 | 2026-11-22 | — | — | draft | Created provisional from D-413 |
 
 ## Implementation History
@@ -234,3 +307,4 @@ persisted data, wire protocol, CLI, or settings change.
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | e06c993d |
 | 2026-11-22 | — | Folded design r1/r2; accepted after r3; no code | 33459cfe |
+| 2026-11-22 | — | PRR folded (+8 ctest, twin rule, anchor); implementable; no code | — |

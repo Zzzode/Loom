@@ -6281,6 +6281,34 @@ const JourneyCohortEntry* ishikawa_cohort_row(std::string_view path) {
 // RFC 0031 cynefin-family renderer cohort: the seven clean (no frontmatter
 // gate and no body style statement) cynefin-beta originals admitted by
 // mermaid_cynefin_impl, with per-width states.
+// D-431 cynefin closed-frontmatter cohort: the 5 cynefin fallbacks whose only
+// non-admitted input is the closed frontmatter tables. States are read per row.
+// The per-row gate is test_mermaid_cynefin_ns_d431_cohort.
+const std::map<std::string, JourneyCohortEntry>& cynefin_d431_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/cynefin-ns-d431-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-431 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-431 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* cynefin_d431_cohort_row(std::string_view path) {
+    const auto& rows = cynefin_d431_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 const std::map<std::string, JourneyCohortEntry>& cynefin_cohort_map() {
     static const std::map<std::string, JourneyCohortEntry> map = [] {
         std::map<std::string, JourneyCohortEntry> rows;
@@ -10836,6 +10864,32 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // D-431 cynefin closed-frontmatter admission: the 5 cynefin
+            // originals whose only non-admitted input is the closed tables,
+            // under the TL's review exemption. Placed before the RFC 0031
+            // cynefin cohort (the sets are disjoint); the post-loop reach proof
+            // asserts every ledger row is observed here (rule 38).
+            if (class_path.is_str() && class_path.as_str().starts_with("cynefin/")) {
+                if (const auto* cohort = cynefin_d431_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "cynefin";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-431 cynefin closed-frontmatter cohort (TL review-exempt)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
             // RFC 0031 cynefin-family renderer: the seven clean cynefin
             // originals are governed by their reviewed cohort ledger; the
             // per-row pixel gate is test_mermaid_cynefin_cohort. The five
@@ -12400,6 +12454,25 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_0047 == expected_0047,
                     "RFC 0047 branch reach set must equal its ledger");
+        }
+        // D-431 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d431 = json::parse(read_file(
+                kRoot / "../../../tools/mermaid/cynefin-ns-d431-cohort.json"));
+            require(ledger_d431.has_value(), "D-431 cohort ledger must parse");
+            std::set<std::string> expected_d431;
+            ledger_d431->root().get("rows").iter([&](const JsonVal row) {
+                expected_d431.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d431;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-431 cynefin closed-frontmatter cohort (TL review-exempt)")
+                    reached_d431.insert(row.path);
+            }
+            require(reached_d431 == expected_d431,
+                    "D-431 branch reach set must equal its ledger");
         }
         // D-430 rule-38 reach proof: every ledger row must be observed through
         // its own branch, and the branch must not match anything else.

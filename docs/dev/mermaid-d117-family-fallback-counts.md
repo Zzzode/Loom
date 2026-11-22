@@ -61,6 +61,7 @@ are not whole-original errors).
 | After D-427 treemap valueFormat (6 rows) | 2026-11-23 | local | 1598 | 547 | 0 |
 | After D-429 packet closed namespace (2 rows, packet family closed) | 2026-11-23 | local | 1600 | 545 | 0 |
 | After D-430 radar closed frontmatter (3 rows, radar family closed) | 2026-11-23 | local | 1603 | 542 | 0 |
+| After D-431 cynefin closed frontmatter (5 rows) | 2026-11-23 | local | 1608 | 537 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -99,7 +100,7 @@ disposition (fix or documented infeasibility).
 | railroad | 0 | 9 | renderer added 2026-11-13; first multi-dialect family (railroad-beta IR + abnf/ebnf/peg-beta); RFC 0043 (2026-11-22) admits the single dark-theme row through a closed one-value table (synthetic twin), so no frontmatter-gated row remains; live census 9/0/0 from 9; measured narrow_40 is 0/1; only non-ASCII byte is in one frontmatter description |
 | block | 0 | 58 | complete (B0a/B6) |
 | sequence | 0 | 193 | complete |
-| cynefin | 5 | 7 | renderer added 2026-11-13; 5 frontmatter config/theme/look rows stay source (no boundary-geometry/color contract); live census 7/5/0 from a candidate pool of 12 |
+| cynefin | 0 | 12 | renderer added 2026-11-14 (transcribed outline, no boundary geometry); D-431 (2026-11-23) admits the last 5 rows through a closed frontmatter table: `config.cynefin.{boundaryAmplitude, seed, width, height, showDomainDescriptions}` (layout geometry and the automatic domain descriptions are terminal-inexpressible, so inert) and `theme: base` with `themeVariables.cynefin.{complexBg, clearBg, boundaryColor}`; art equals the config-stripped twin; live census 12/0/0 from a candidate pool of 12 |
 | eventmodeling | 0 | 6 | renderer added 2026-11-14; first whole-pool-clean family (6/0/0); column-0 frames/data blocks, dotted names, ->> relations; all bodies pure ASCII, no frontmatter gate in the family |
 | packet | 0 | 6 | renderer added 2026-11-14; packet/packet-beta alias, single-bit and ranged fields; D-429 (2026-11-23) admits the last 2 rows through the closed `config.packet` namespace (`showBits`/`bitOrder`/`bitsPerRow` are inert because the native projection transcribes fields, never a bit grid) and honours the frontmatter `title:` as the body's own `title <text>` form; art equals the config-stripped twin; live census 6/0/0 from a candidate pool of 6; all bodies pure ASCII |
 | radar | 0 | 6 | renderer added 2026-11-14 (transcribed outline, no polygon/colour); D-430 (2026-11-23) admits the last 3 rows through a closed frontmatter table: `theme: base`, `themeVariables.{fontSize, cScale0, radar.axisColor}` and `config.radar.{marginTop, axisScaleFactor}`, all inert and disclosed under `Radar native projection v1`; art equals the config-stripped twin; live census 6/0/0 from a candidate pool of 6 |

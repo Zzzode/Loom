@@ -4554,6 +4554,20 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## Cynefin closed frontmatter table (D-431)
+
+- **Closed leaves, inert and disclosed.**
+  `config.cynefin.{boundaryAmplitude, seed, width, height}` are layout geometry
+  and `showDomainDescriptions` toggles the *automatic* domain descriptions the
+  terminal never draws, so all five are disclosed under
+  `Cynefin native projection v1`. `theme: base` plus
+  `themeVariables.cynefin.{complexBg, clearBg, boundaryColor}` are colour
+  overrides, also inert; colours are disclosed unquoted and
+  `boundaryColor` gets its own wording.
+- **Duplicates and shapes fail closed.** A repeated leaf, an unknown leaf, a
+  wrong indent or a mixed `cynefin:`/`themeVariables:` nesting keeps the whole
+  source; the body style gate is unchanged.
+
 ## Radar closed frontmatter table (D-430)
 
 - **Three closed shapes, all inert.** `theme: base`; `themeVariables` with

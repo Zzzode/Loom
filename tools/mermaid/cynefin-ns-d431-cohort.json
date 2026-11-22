@@ -1,0 +1,125 @@
+{
+  "schema": "loom_mermaid_cynefin_ns_d431_cohort/v1",
+  "decision": "D-431",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "cynefin original whose frontmatter is a folded description plus closed cynefin/themeVariables shapes",
+    "cohort_digest": "da252278ed3c2a99b699f4735a8dcbc3fd49521192b5b71803b8c5498136b303",
+    "theme_values": [
+      "base"
+    ],
+    "exclusions": "look keys, other theme names, unknown leaves, init directives and style statements stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice without a design gate; the gate is the test document plus the twin oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 5
+  },
+  "rows": [
+    {
+      "path": "cynefin/nightly-check/should-render-cynefin-with-straight-boundaries-when-amplitude-is-zero.mmd",
+      "sha256": "39c13d4702dec9e149f6a92b805942fa658d472e5a64c01bd6c0a2c6b24a53f2",
+      "manifest_sha256": "39c13d4702dec9e149f6a92b805942fa658d472e5a64c01bd6c0a2c6b24a53f2",
+      "theme": null,
+      "leaves": [
+        "config.cynefin.boundaryAmplitude=0 -> layout geometry; not applied"
+      ],
+      "expected_footer_lines": [
+        "Cynefin native projection v1",
+        "config.cynefin.boundaryAmplitude=0 -> layout geometry; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "cynefin/nightly-check/should-render-cynefin-without-domain-descriptions.mmd",
+      "sha256": "60375309198ce122944e76acb14e6fefdc9eda7ffe6f00aa8a39163a398db992",
+      "manifest_sha256": "60375309198ce122944e76acb14e6fefdc9eda7ffe6f00aa8a39163a398db992",
+      "theme": null,
+      "leaves": [
+        "config.cynefin.showDomainDescriptions=false -> automatic domain descriptions; not applied"
+      ],
+      "expected_footer_lines": [
+        "Cynefin native projection v1",
+        "config.cynefin.showDomainDescriptions=false -> automatic domain descriptions; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "cynefin/pr-check/should-render-cynefin-deterministically-with-an-explicit-seed-override.mmd",
+      "sha256": "61cb7984d7dfe6d5583aee8d8d6b5ffb8655ae415918e82faa59dba60c454288",
+      "manifest_sha256": "61cb7984d7dfe6d5583aee8d8d6b5ffb8655ae415918e82faa59dba60c454288",
+      "theme": null,
+      "leaves": [
+        "config.cynefin.seed=42 -> layout geometry; not applied"
+      ],
+      "expected_footer_lines": [
+        "Cynefin native projection v1",
+        "config.cynefin.seed=42 -> layout geometry; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "cynefin/pr-check/should-render-cynefin-with-config-override.mmd",
+      "sha256": "db0a99e2136fda44b176b30af3b70533ac921c54a72fcbb304e120bcb192c145",
+      "manifest_sha256": "db0a99e2136fda44b176b30af3b70533ac921c54a72fcbb304e120bcb192c145",
+      "theme": null,
+      "leaves": [
+        "config.cynefin.width=1000 -> layout geometry; not applied",
+        "config.cynefin.height=700 -> layout geometry; not applied",
+        "config.cynefin.boundaryAmplitude=15 -> layout geometry; not applied"
+      ],
+      "expected_footer_lines": [
+        "Cynefin native projection v1",
+        "config.cynefin.width=1000 -> layout geometry; not applied",
+        "config.cynefin.height=700 -> layout geometry; not applied",
+        "config.cynefin.boundaryAmplitude=15 -> layout geometry; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "cynefin/pr-check/should-render-cynefin-with-theme-override.mmd",
+      "sha256": "7ad921020038f42df645538eb415661de2e5ed989124dff81ce5f290ca259bbb",
+      "manifest_sha256": "7ad921020038f42df645538eb415661de2e5ed989124dff81ce5f290ca259bbb",
+      "theme": "base",
+      "leaves": [
+        "config.themeVariables.cynefin.complexBg=#FFE4B5 -> domain fill colour; not applied",
+        "config.themeVariables.cynefin.clearBg=#E6E6FA -> domain fill colour; not applied",
+        "config.themeVariables.cynefin.boundaryColor=#FF0000 -> domain boundary colour; not applied"
+      ],
+      "expected_footer_lines": [
+        "Cynefin native projection v1",
+        "config.theme=base -> colour palette; not applied",
+        "config.themeVariables.cynefin.complexBg=#FFE4B5 -> domain fill colour; not applied",
+        "config.themeVariables.cynefin.clearBg=#E6E6FA -> domain fill colour; not applied",
+        "config.themeVariables.cynefin.boundaryColor=#FF0000 -> domain boundary colour; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

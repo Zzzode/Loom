@@ -115,6 +115,145 @@ bool parse_transition(std::string_view statement) {
 
 }  // namespace
 
+// D-431: the closed cynefin frontmatter tables. The native projection
+// transcribes statements and draws no boundary curve, colour, size or the
+// automatic domain descriptions, so every admitted leaf is inert and
+// disclosed: `config.cynefin.{boundaryAmplitude, seed, width, height,
+// showDomainDescriptions}` and `theme: base` plus
+// `themeVariables.cynefin.{complexBg, clearBg, boundaryColor}`.
+bool cynefin_hex_colour(std::string_view value, std::string& out) {
+    if (value.size() >= 2u && (value.front() == '\'' || value.front() == '"') &&
+        value.back() == value.front())
+        value = value.substr(1u, value.size() - 2u);
+    if (value.size() != 7u || value.front() != '#') return false;
+    if (!std::ranges::all_of(value.substr(1u), [](char c) {
+            return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
+                   (c >= 'A' && c <= 'F');
+        }))
+        return false;
+    out = std::string{value};
+    return true;
+}
+
+bool cynefin_decimal(std::string_view value) {
+    if (value.empty() || value.size() > 16u) return false;
+    char* end = nullptr;
+    const std::string copy{value};
+    std::strtod(copy.c_str(), &end);
+    return end == copy.c_str() + copy.size();
+}
+
+std::optional<std::vector<std::string>> cynefin_frontmatter(std::string_view source) {
+    std::vector<std::string> notices;
+    if (!source.starts_with("---\n")) return notices;
+    const auto close = source.find("\n---\n", 4);
+    if (close == std::string_view::npos) return notices;
+    const std::string_view frontmatter = source.substr(0, close);
+    enum class Section { Description, Config, Cynefin, ThemeVars, CyVars } section =
+        Section::Description;
+    bool description_seen = false, config_seen = false;
+    bool theme_seen = false, vars_seen = false, cynefin_seen = false, cy_vars_seen = false;
+    std::vector<std::string> cynefin_leaves;
+    std::optional<std::string> theme;
+    std::vector<std::string> colour_leaves;
+    std::vector<std::string> seen_leaves;
+    for (std::size_t pos = 0;;) {
+        const auto eol = frontmatter.find('\n', pos);
+        const auto end = eol == std::string_view::npos ? frontmatter.size() : eol;
+        const std::string_view line = frontmatter.substr(pos, end - pos);
+        const bool last = eol == std::string_view::npos;
+        pos = last ? frontmatter.size() + 1u : eol + 1u;
+        const auto key_start = line.find_first_not_of(' ');
+        if (key_start != std::string_view::npos) {
+            const std::string_view content = line.substr(key_start);
+            if (key_start == 0u) {
+                if (content == "---") {
+                } else if (content.starts_with("description:")) {
+                    if (description_seen || config_seen) return std::nullopt;
+                    description_seen = true;
+                    section = Section::Description;
+                } else if (content == "config:") {
+                    if (config_seen) return std::nullopt;
+                    config_seen = true;
+                    section = Section::Config;
+                } else {
+                    return std::nullopt;
+                }
+            } else if (section == Section::Description) {
+            } else if (section == Section::Config) {
+                if (key_start != 2u) return std::nullopt;
+                if (content == "cynefin:" && !cynefin_seen) {
+                    cynefin_seen = true;
+                    section = Section::Cynefin;
+                } else if (content == "themeVariables:" && !vars_seen) {
+                    vars_seen = true;
+                    section = Section::ThemeVars;
+                } else if (content.starts_with("theme: ") && !theme_seen) {
+                    const auto value = trim_spaces(content.substr(7u));
+                    if (value != "base") return std::nullopt;
+                    theme = std::string{value};
+                    theme_seen = true;
+                } else {
+                    return std::nullopt;
+                }
+            } else if (section == Section::Cynefin) {
+                if (key_start != 4u) return std::nullopt;
+                const auto colon = content.find(':');
+                if (colon == std::string_view::npos) return std::nullopt;
+                const auto key = trim_spaces(content.substr(0, colon));
+                const auto value = trim_spaces(content.substr(colon + 1u));
+                std::string normalised;
+                const std::string leaf_name{key};
+                if (std::ranges::find(seen_leaves, leaf_name) != seen_leaves.end())
+                    return std::nullopt;
+                seen_leaves.push_back(leaf_name);
+                if (key == "boundaryAmplitude" || key == "seed" || key == "width" ||
+                    key == "height") {
+                    if (!cynefin_decimal(value)) return std::nullopt;
+                    normalised = "config.cynefin." + std::string{key} + "=" +
+                                 std::string{value} + " -> layout geometry; not applied";
+                } else if (key == "showDomainDescriptions") {
+                    if (value != "true" && value != "false") return std::nullopt;
+                    normalised = "config.cynefin.showDomainDescriptions=" +
+                                 std::string{value} +
+                                 " -> automatic domain descriptions; not applied";
+                } else {
+                    return std::nullopt;
+                }
+                cynefin_leaves.push_back(std::move(normalised));
+            } else if (section == Section::ThemeVars) {
+                if (key_start != 4u || content != "cynefin:" || cy_vars_seen)
+                    return std::nullopt;
+                cy_vars_seen = true;
+                section = Section::CyVars;
+            } else {
+                if (key_start != 6u) return std::nullopt;
+                const auto colon = content.find(':');
+                if (colon == std::string_view::npos) return std::nullopt;
+                const auto key = trim_spaces(content.substr(0, colon));
+                const std::string leaf_name{"themeVariables." + std::string{key}};
+                if (key != "complexBg" && key != "clearBg" && key != "boundaryColor")
+                    return std::nullopt;
+                if (std::ranges::find(seen_leaves, leaf_name) != seen_leaves.end())
+                    return std::nullopt;
+                seen_leaves.push_back(leaf_name);
+                std::string colour;
+                if (!cynefin_hex_colour(trim_spaces(content.substr(colon + 1u)), colour))
+                    return std::nullopt;
+                colour_leaves.push_back(
+                    "config.themeVariables.cynefin." + std::string{key} + "=" + colour +
+                    (key == "boundaryColor" ? " -> domain boundary colour; not applied"
+                                            : " -> domain fill colour; not applied"));
+            }
+        }
+        if (last) break;
+    }
+    if (theme) notices.push_back("config.theme=" + *theme + " -> colour palette; not applied");
+    for (const auto& leaf : cynefin_leaves) notices.push_back(leaf);
+    for (const auto& leaf : colour_leaves) notices.push_back(leaf);
+    return notices;
+}
+
 std::optional<std::vector<std::string>> cynefin_layout(std::string_view source,
                                                        Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
@@ -127,42 +266,15 @@ std::optional<std::vector<std::string>> cynefin_layout(std::string_view source,
     }
 
     const std::string_view body = cynefin_body(source);
-    // No boundary/color contract: a frontmatter theme/look/config key, an
+    // D-431: the closed frontmatter parser owns the admitted shape; anything
+    // else returns std::nullopt.
+    const auto frontmatter = cynefin_frontmatter(source);
+    if (!frontmatter) return {};
+    // No boundary/color contract: an
     // %%{init}%% directive or a classDef/:::/style statement keeps the whole
     // source on fallback. The fence splitter tolerates trailing whitespace.
     {
         bool visual_gate = false;
-        if (source.starts_with("---\n")) {
-            std::size_t search = 4;
-            while (search < source.size()) {
-                const auto nl = source.find('\n', search);
-                const std::string_view line =
-                    source.substr(search, nl == std::string_view::npos
-                                                      ? std::string_view::npos
-                                                      : nl - search);
-                std::size_t i = 0;
-                bool is_fence = false;
-                if (line.size() >= 3 && line[0] == '-' && line[1] == '-' && line[2] == '-') {
-                    i = 3;
-                    while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) ++i;
-                    is_fence = i == line.size();
-                }
-                const auto key_start = line.find_first_not_of(' ');
-                if (!is_fence && key_start != std::string_view::npos) {
-                    std::string_view key = line.substr(key_start);
-                    const auto colon = key.find(':');
-                    if (colon != std::string_view::npos)
-                        key = trim_spaces(key.substr(0, colon));
-                    // YAML permits whitespace before the mapping colon
-                    // ("config : 42"); trim so the visual key still gates.
-                    if (key == "theme" || key == "look" || key == "config")
-                        visual_gate = true;
-                }
-                if (is_fence) break;
-                if (nl == std::string_view::npos) break;
-                search = nl + 1;
-            }
-        }
         if (!visual_gate) {
             for (std::size_t pos = 0;;) {
                 const auto eol = body.find('\n', pos);
@@ -246,6 +358,18 @@ std::optional<std::vector<std::string>> cynefin_layout(std::string_view source,
         combined.push_back("cynefin-beta");
         combined.insert(combined.end(), out.begin(), out.end());
         out = std::move(combined);
+    }
+    if (!frontmatter->empty()) {
+        const auto push_notice = [&](const std::string& line) -> bool {
+            if (line.size() > 96u || !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+                return false;
+            out.push_back(line);
+            return true;
+        };
+        if (!push_guarded("")) return {};
+        if (!push_notice("Cynefin native projection v1")) return {};
+        for (const auto& line : *frontmatter)
+            if (!push_notice(line)) return {};
     }
     return out;
 }

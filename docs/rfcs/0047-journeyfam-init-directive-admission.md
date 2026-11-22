@@ -193,14 +193,28 @@ The code of the three copies remains byte-identical; only these constants differ
   mirroring **G1.1–G1.8, Proposal step 3 (the legacy tail) and G5** — the same switch, tables,
   grammar, tail rule and frontmatter-leaf composition) and `journeyfam_tables.notice_lines`
   (extended with the directive footer in canonical order). It pins the cohort path+sha digest
-  and per-family counts, and it **runs a literal `PROBE_TABLE`**: one entry per boundary shape
-  (`(family, body line, expected kind, expected leaves)`), covering bare `init`, `{}`,
-  logLevel-only, theme-only, both keys, CRLF, quotes, unknown key, nested object, duplicate,
-  out-of-table theme, out-of-grammar logLevel, trailing text, `init :`, non-`init` name,
-  non-leading theme and no-theme lines, and the mirror/gate boundary. The C++ gate asserts the
-  same literal table through the public renderer (admit rows draw with the exact footer, gate
-  rows fall back), so **both sides are driven by one probe table** (efficiency rule 37) rather
-  than by corpus stability alone.
+  and per-family counts.
+- **Single-source probe artifact** `tools/mermaid/journeyfam-init-0047-probes.json` (review
+  record + digest pinned in the ledger): a reviewed array whose entries are
+  `{family, frontmatter, body[], expected_kind, expected_footer[]}`. `body` holds the diagram
+  header and any leading/comment/blank lines in order, so placement, frontmatter and
+  frontmatter-less shapes are all encodable. The Python generator assembles each entry and
+  asserts `classify` → `expected_kind` (and `notice_lines` → `expected_footer`); the C++
+  gate assembles the same string and asserts the user-visible verdict:
+  `init_admitted` and `admitted` → draws and ends with `expected_footer`;
+  `drawn` → draws and has no footer; `themed` → falls back. Both sides read **the same file**;
+  neither hand-copies the other. The case list is exactly the boundary set and includes every
+  shape the batteries use plus efficiency rule 37's named classes (indent, quoting, comments,
+  duplicates): bare `init`, `{}`, logLevel-only, theme-only, both keys, each admitted theme and
+  logLevel value, two directives (footer order logLevel→theme), CRLF, single/double quotes,
+  quoted key, indent 2, after a blank line, after a comment, unknown key, nested
+  `flowchart`/`timeline`/`themeVariables`, duplicate within and across directives,
+  out-of-table theme, out-of-grammar logLevel, trailing `#` comment, comment containing a
+  comma, trailing text after `}%%`, a second `}%%`, `init :`, non-`init` name, unterminated
+  quote, raw control byte, backslash in a single-quoted string, non-leading theme and no-theme
+  lines, frontmatter-less, frontmatter leaf + keyed directive, frontmatter leaf + bare `init`,
+  and the gantt legacy trio. (The directives-only body is excluded here: it is a renderer
+  boundary, not a gate classification, and the gate test asserts its fallback directly.)
 - Gate `tests/ui/test_mermaid_journeyfam_init_0047_cohort.cpp` (5 tests): ledger schema,
   `prior_status`, digest and count pins; per-row twin inertness and literal footer composition;
   a battery per family (bare `init`; `{}`; theme and logLevel alone and together; two separate
@@ -239,8 +253,10 @@ The code of the three copies remains byte-identical; only these constants differ
   `test_mermaid_journeyfam_0040_cohort.cpp` (the 4-path `themed_excluded` loop becomes a 4-path
   positive over the 0047 ledger; the "admitted + body init" negative keeps its verdict under
   G5). `generate_gantt_cohort.py` and `gantt-cohort.json` are **unchanged**: the mirror's gantt
-  switch returns the legacy kinds, so `init_admitted` is unreachable there; the RFC records this
-  measured rationale so the absent migration is intentional.
+  switch returns the legacy kinds, and the generator gains a defensive
+  `buckets.setdefault(kind, set())` plus an assertion that the kind set stays within
+  {drawn, admitted, themed}, so a future mirror slip fails closed instead of raising; the RFC
+  records this measured rationale so the absent ledger migration is intentional.
 - Roster `--emit` 617 → 608; `family_residual:journey` 4 → 0 (category removed),
   `family_residual:timeline` 7 → 2; categories 41 → 40.
 
@@ -262,7 +278,7 @@ The code of the three copies remains byte-identical; only these constants differ
 | **Rollback** | One atomic commit. It must contain: `src/ui/visual/mermaid_{journey,timeline,gantt}_impl.cpp`; `tools/mermaid/journeyfam_tables.py`; `generate_{journey,timeline,journeyfam_0040}_cohort.py` + `{journey,timeline,journeyfam-0040}-cohort.json`; new `generate_journeyfam_init_0047_cohort.py` + `journeyfam-init-0047-cohort.json`; `tests/ui/test_mermaid_{journey,timeline,journeyfam_0040}_cohort.cpp`; new `tests/ui/test_mermaid_journeyfam_init_0047_cohort.cpp`; `tests/ui/test_mermaid_official.cpp`; `tests/ui/CMakeLists.txt`; `tools/mermaid/fallback_roster.json`; and the docs below. `generate_gantt_cohort.py`/`gantt-cohort.json` are absent by design. `git revert` of that single commit restores the 617 roster and every pin. |
 | **Protected pins** | No protected file is in the footprint (`tests/support/mermaid_er107_*`, the three `er107_*` proposals, `er206_native_whole_source_authority.config62.v1.json`, `tools/mermaid/e6c-mandatory-gap-roster.json`, `mermaid_relations_oracle.hpp`, `mermaid_gap_roster.hpp`). The only shared test file is `tests/ui/test_mermaid_official.cpp`, changed additively: the new loader + branch before every family branch, plus the branch-reach assertion; the 9 rows have no manifest `diagnostic`, so each replaces one `run_case` original observation 1:1 and the observation total (2738), 48-gap roster, ER107 107, ER206 and Class285 pins stay unchanged. |
 | **Observability** | No new diagnostics. The disclosure footer is the user-visible record of the substituted upstream behaviour, matching RFC 0040/0045/0046. Session traces are untouched. |
-| **Work meter / budgets** | The leading-block scan is covered by the existing prepaid fee (`256 + source*8` in each layout entry); a new per-scan `work.spend(body.size()*2 + 256)` bound is added anyway. Notice lines keep the 96-byte cap, the `(1+n)×(4·sizeof(string)+256)+bytes·2+256` charge and the height guard; the new lines measure 45, 48, 49 or 51 bytes depending on the value, all under the cap. |
+| **Work meter / budgets** | The existing prepaid fee (`256 + source*8`) covers the source copy; the new leading-block scan pays its own linear charge (`body.size()*2 + 256`), so the pass is not free. That charge is a monotone tightening only: a 64 KB body costs ≈131 KB against the 1,000,000 `kWorkLimit`, so no outcome can flip. Notice lines keep the 96-byte cap, the `(1+n)×(4·sizeof(string)+256)+bytes·2+256` charge and the height guard; the new lines measure 45, 48, 49 or 51 bytes depending on the value, all under the cap. |
 | **Documentation** | design-decisions entry (directive admission, cross-channel asymmetry policy, gantt switch **and the updated four-way→five-way bucket counts at the RFC 0040 section**), README RFC index, d117 family rows, d419 selection, d420 closure, engineering-efficiency retro. |
 | **Deletion** | The legacy substring loop is **replaced** in the two enabled copies (not kept alongside); gantt retains it verbatim by design. No dead code added. |
 | **Deprecation** | None: no shape or module is replaced; the closed frontmatter contract is unchanged. |
@@ -277,7 +293,8 @@ settings change.
 
 - A closed directive scanner in three TU-local copies plus its Python mirror. The batteries and
   the per-row twin gate pin closure; the mirror is exercised by the four generators' `--check`
-  runs and by the new hermetic check.
+  runs and by the single-source `journeyfam-init-0047-probes.json`, which drives both sides on
+  the same boundary shapes (efficiency rule 37).
 - A disclosed upstream behaviour the terminal cannot emulate (palette/logger directives not
   applied). The footer makes the substitution visible.
 - Leading directives that today pass through undisclosed now gain a footer or a verdict: a
@@ -324,7 +341,7 @@ settings change.
 - [ ] `docs/decisions/design-decisions.md` — directive admission entry (including the
       cross-channel asymmetry policy and the gantt switch); RFC 0040 "in-body initializer stays
       a whole-source gate" sentences amended
-- [ ] `docs/README.md` — RFC index row (already staged as Provisional; updated at closure)
+- [ ] `docs/README.md` — RFC index row (staged as Accepted, PRR pending; updated at closure)
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — journey/timeline rows, whose current
       cells are also stale/mis-ordered (table header is "Remaining fallback | Drawn"; journey
       reads `10 | 18` from before RFC 0040 and must be corrected to 4/14 → 0/18, timeline to
@@ -360,4 +377,8 @@ settings change.
 | Date | Phase | Change | Commit |
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | e47bbaa1 |
-| 2026-11-22 | — | r1 revisions folded in (still provisional) | (this commit) |
+| 2026-11-22 | — | r1 revisions folded in | 89ce2790 |
+| 2026-11-22 | — | Accepted after two-lens design review r2 APPROVE | 50e4eb00 |
+| 2026-11-22 | — | PRR table added | f0dbb014 |
+| 2026-11-22 | — | PRR r1 findings folded (probe table, checklist, rollback set) | c98b51a5 |
+| 2026-11-22 | — | PRR r2 findings folded (single-source probe artifact) | (this commit) |

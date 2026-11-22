@@ -1,11 +1,12 @@
 ---
 rfc: 48
 title: state concurrent regions and in-body init/accessibility
-status: accepted
+status: implementable
 owners: "@Zzzode"
 reviewers:
   - agent:design-review-evidence
   - agent:design-review-geometry
+  - agent:prr-review
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -211,7 +212,11 @@ ER107).
   `same_source_surface` after flipping. The cardinality differs per scan: the E2a scan visits
   both config- and init-bearing rows and absorbs all **16**, while the E2b scan visits only
   `declares_config` rows and absorbs the **8** config-bearing ones (the 8 init rows never
-  enter it). A `skipped_by_rfc0048` equality pin must therefore be 16 (E2a) and 8 (E2b).
+  enter it). A `skipped_by_rfc0048` equality pin must therefore be **over the explicitly
+  enumerated out-of-cohort paths — 16 for E2a and 8 for E2b — never over the full 19-row
+  `state-region-0048-cohort.json`**: `should-align-dividers-correctly` declares neither
+  `config:` nor an init, so it is not a whole-source-scan candidate and a full-ledger pin
+  would demand 19 (E2a) / 19 (E2b) and fail.
 - **0046 ledger/test**: `tools/mermaid/generate_layouttuning_0046_cohort.py:51-60`
   (`FAMILY_COUNTS`), `:442-454`; `tests/ui/test_mermaid_layouttuning_0046_cohort.cpp:234` (`counts.drawn` 105 → 124),
   `:236` (remaining 62 → 43 after P1+P2), `:263-270` (state drawn 28 → 33, 52 → 66),
@@ -342,6 +347,9 @@ wire, CLI or settings change.
 | 2026-11-22 | r2 | agent:design-review-geometry | APPROVE | All r1 dispositions verified against code; arithmetic and ledger constants re-derived and self-consistent. Folded: header formula (region height already includes the header; never add one), the exact seven insertion sites, the 3-overlap/16-out-of-cohort matrix wording, state-0038's real excluded composition, the 16 out-of-cohort paths wired into both whole-source scans, the title-wider-than-regions policy, the labeled-transition boundary with the two P1 rows as a named red-first risk, and the side-table Work prepay. |
 | 2026-11-22 | r2 | agent:design-review-evidence | APPROVE | All r1 findings verified resolved; 19-row range and every target number self-consistent. Folded: D-421 stale block, 3-overlap wording, E2a/E2b frozen-set precision with counts, 0046 `counts.drawn` 105→124, the e2a cohort snapshot doc, and the accTitle no-op trade-off recorded for the PRR. |
 | 2026-11-22 | r1 | agent:design-review-evidence | REQUEST-CHANGES | BLOCKER initializer theme table → explicit `{dark,default,forest,neutral}`; arithmetic → v2 30/73 (and, with routing deferred, v1 7/35, v2 35/68, global 589/1556, formal 1370); the two `test_mermaid_relations_semantics.cpp` negatives added to the flip set; E2a/E2b generators/tests/constants enumerated; matrix branch ordered before the state branches; state-0038 no-migration fact; 0046 constants enumerated; composite-row count corrected (14 of 28); snapshot docs added |
+| 2026-11-22 | r1 | agent:prr-review | REQUEST-CHANGES | B1 `EXPECT_EQ(checked, 88)` wrong — the E2a whole-source scan also absorbs the 2 E2b concurrency rows through `:259-262`, so the re-pin is **86** (104 − 16 − 2); m1 stale E2b scan citation; m2 PRR rows over-stated the build-system and shared-struct footprint; minor missing per-scan cardinalities; NIT wording |
+| 2026-11-22 | r2 | agent:prr-review | REQUEST-CHANGES | Only the `86` value remained wrong (still `88` in the re-pin text) plus residuals; all other r1 items verified resolved (E2b 31, 0046 constants, 19-row totals, rollback phases) |
+| 2026-11-22 | r3 | agent:prr-review | APPROVE | Faithful replay of `ConfigAndInitRowsKeepWholeSource` reproduces `checked = 104` and post-P1 `86`; no other count depended on the old 88; E2b 31 and 51/10→53/8 re-confirmed; 16/8 per-scan cardinalities correct. NIT N1 folded: the `skipped_by_rfc0048` pin is over the enumerated 16/8 out-of-cohort paths, not the full 19-row ledger. Gate `accepted → implementable` passed. |
 
 ## Implementation History
 
@@ -349,3 +357,4 @@ wire, CLI or settings change.
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | acc9efea |
 | 2026-11-22 | — | r1 revisions: routing deferred, scope 19 rows, footprint and design fixes | (this commit) |
+| 2026-11-22 | — | Gate `accepted` → `implementable`: PRR r3 APPROVE (E2a re-pin 86, out-of-cohort pin clause). No code yet | (this commit) |

@@ -173,7 +173,7 @@ In `git_frontmatter` (the envelope gate used by the git renderer):
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `parallelCommits` admission | 12 rows, 1 family | **done** | red-first measured (all 12 manifest `source`/`frontmatter`); git **70/65 → 82/53**; global **1505/640 → 1517/628**; formal **1319 → 1331**; gaps 48, integrity 0; narrow **0/12** live; dual-preset matrix byte-identical sha `ca24369e…`; full debug ctest 4681/4681 executed (two known `ServerMain.DirectConnect*` flakes and one `E2E_Pty_Handoff_HupStress` under load, each clean on 3 isolated reruns); independent P1 code review APPROVE (r2) |
+| P1 | `parallelCommits` admission | 12 rows, 1 family | **done** | red-first measured (all 12 manifest `source`/`frontmatter`); git **70/65 → 82/53**; global **1505/640 → 1517/628**; formal **1319 → 1331**; gaps 48, integrity 0; narrow **0/12** live; dual-preset matrix byte-identical sha `ca24369e…`; full debug ctest `100% out of 4681`, `CTEST_EXIT=0`, durable log `/tmp/loom-logs/ctest-full-dbg-0045.log` sha256 `abeffb14…` (two earlier same-binary runs hit the documented `ServerMain.DirectConnect*`/`E2E_Pty` flakes, each clean on 3 isolated reruns); independent P1 code review APPROVE (r2) |
 
 Closure: full debug ctest once, dual-preset byte gate, RFC `implemented`, closure doc,
 design-decisions entry, efficiency retro.

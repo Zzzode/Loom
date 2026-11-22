@@ -62,14 +62,15 @@ git **70/65 → 82/53**；全局 **1505/640 → 1517/628**；formal `drawn_at_24
   实测：`original ALL wide_240` **1517 drawn / 628 fallback / 0 error**；
   `original git wide_240` **82 / 53 / 0**；`original_drawing_coverage.drawn_at_240`
   **1331**（2145 分母，62.05%）；`mandatory_gaps` 48；`integrity_errors` 空。
-- **全量 debug ctest 一次完整运行**：`99% tests passed, 2 tests failed out of 4681`
-  （`ctest -N` 4683，含 2 个 `DISABLED_` layout 测试）。红项均为已知环境 flake：
-  首跑 `ServerMain.DirectConnectSessionsAndWebSocketUsePersistentRoutes` +
-  `E2E_Pty_Handoff_HupStress`，复跑 `ServerMain.DirectConnectPermissionControl…` +
-  `ServerMain.DirectConnectToolLoop…`（负载 load average ≈ 15–16）。每个红项在隔离下
-  ≥3 次干净重跑（`100% tests passed`），且本次 diff 只触及 gitGraph frontmatter、
-  账本与测试注册，与 ServerMain/PTY 无关；同一次全量运行中全部 mermaid 门（含
-  0045 6 项、0039 5 项、`ConfigAndInitRowsKeepWholeSource`）均为绿。
+- **全量 debug ctest 一次完整运行**（TL 2026-11-22 流程要求：完整 stdout + 退出码
+  落盘）：`/tmp/loom-logs/ctest-full-dbg-0045.log`（1136016 B，
+  sha256 `abeffb144af627b43d8272da39b0412bf1dfef7376111fba25b374657b057196`），
+  `100% tests passed out of 4681`、`CTEST_EXIT=0`。此前的第一次全量运行（同一二进制）
+  为 `99% / 2 failed out of 4681`，红项是已知环境 flake
+  `ServerMain.DirectConnectSessionsAndWebSocketUsePersistentRoutes` +
+  `E2E_Pty_Handoff_HupStress`，在隔离下 ≥3 次干净重跑；第二次全量为另一对
+  `ServerMain.DirectConnect*`，同样隔离复跑全通过（负载 load average ≈ 15–16）。
+  最终落盘的一次为 100% 绿，故不再以 transcript 反查取证。
 - **roster**：`fallback_attribution.py --emit` 得 **628 / 43 类**，
   `family_residual:git` 46 → **34**；`--self-test` 628/43/零未分类/可复现；
   `--matrix` 628 行全匹配、无未登记或改判。

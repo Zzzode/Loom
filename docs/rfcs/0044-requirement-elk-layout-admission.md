@@ -1,9 +1,9 @@
 ---
 rfc: 44
 title: requirement elk layout admission
-status: implementable
+status: implemented
 owners: "@Zzzode"
-reviewers: ["agent:design-review", "agent:prr-review"]
+reviewers: ["agent:design-review", "agent:prr-review", "agent:code-review"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -161,7 +161,7 @@ In `requirement_envelope` (the event-driven gate used by all requirement admissi
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `layout` admission | 23 rows, 1 family | proposed | red-first: the 23 rows are `source_fallback` on wide/narrow/restored before the change (measured on the committed matrix); then requirement 144/28 → **167/5**; global 1482/663 → **1505/640**; formal **1296 → 1319**; gaps 48, integrity 0; narrow measured per row; dual-preset sha recorded; independent P1 code review APPROVE |
+| P1 | `layout` admission | 23 rows, 1 family | **done** | red-first measured; requirement **167/5**; global **1505/640**; formal **1296 → 1319**; gaps 48, integrity 0; narrow **0/23** live; dual-preset sha `0732abe2…`; full debug ctest 4675/4675; independent P1 code review APPROVE (r2) |
 
 Closure: full debug ctest once, dual-preset byte gate, RFC `implemented`, closure doc,
 design-decisions entry, efficiency retro.
@@ -223,7 +223,7 @@ Completed at the `implementable` gate by an independent PRR agent.
 |---|---|---|---|
 | Design | agent:design-review | 2026-11-22 | approve (r3) |
 | Production readiness | agent:prr-review | 2026-11-22 | approve (2 MAJOR + 5 MINOR + 5 NIT folded) |
-| Code (per phase) | pending | — | — |
+| Code (per phase) | agent:code-review | 2026-11-22 | approve (r2; 1 MAJOR fixed) |
 
 ## Rollout and rollback
 
@@ -267,8 +267,8 @@ persisted data, wire protocol, CLI, or settings change.
 
 ## Documentation impact
 
-- [ ] `docs/dev/d413-next-family-requirement-elk.md` — selection (already written)
-- [ ] `docs/dev/d414-requirement-elk-rfc0044-closure.md` — closure record
+- [x] `docs/dev/d413-next-family-requirement-elk.md` — selection
+- [x] `docs/dev/d414-requirement-elk-rfc0044-closure.md` — closure record
 - [ ] `docs/decisions/design-decisions.md` — requirement layout admission entry
 - [ ] `docs/README.md` — RFC 0044 row and the RFC 0037 row's still-current "`layout: elk`
       (24) stay fallback" clause
@@ -299,6 +299,7 @@ persisted data, wire protocol, CLI, or settings change.
 | 2026-11-22 | r2 | agent:design-review | REQUEST-CHANGES | r1 folds confirmed faithful (three assertion edits, 0037 generator constant, +7 registry, scalar/order/roster wording). New MAJOR introduced by the r1 rewrite: the nested-map attribution said "two ELK rows" and "only the ELK one", which is self-contradictory — the correct partition is 1 ELK nested row (also htmlLabels, no twin) + 2 non-ELK nested rows (one plain, one `look`) → fixed. MINORs: Non-Goals still used the retracted descriptors → aligned; the `superseded_note` is generator-authored, so the generator is added to the doc-impact list; the family test's header comment is added to the in-scope edits. All folded |
 | 2026-11-22 | r3 | agent:design-review | **APPROVE-TO-ACCEPT** | All r2 fixes verified against fixtures and roster; all recomputed numbers consistent (172/144/28; 24 elk = 15+8+1; 23 promoted; 5 remaining; 38→15; 640/289/23). One optional NIT: G2's causal clause was loose → softened. Gate: provisional → accepted |
 | 2026-11-22 | PRR | agent:prr-review | REQUEST-CHANGES | 2 MAJOR + 5 MINOR + 5 NIT. MAJOR: the touched base generator's `--check` was unregistered (+8, total 4675); twin selection was undefined and the footer delta ambiguous (rows have several body-identical drawn twins with different footers) → pinned footer-free-first/prefix-second with both blocks in the ledger and a composed strip-then-append rule. MINORs: ctest total stated; matrix anchor named; sibling↔0037 assertion specified; README status and the 0037 README clause added to doc impact; red-first and the P1 code-review gate added to the phase criteria. NITs: five existing leaves, six-group partition, 0037 docstring, quote-aware scalar mirror, no F0 generator. All folded |
+| 2026-11-22 | P1 | agent:code-review | r1 **REQUEST-CHANGES** → r2 **APPROVE** | r1 ran the binaries and confirmed the gate, matrix wiring, three flips, twin composition and ledger arithmetic; one MAJOR: the generator's `admits()`/scalar mirror was naive (no indent-2 check, no quote-aware comment/dequote) and contradicted RFC §2 → fixed to mirror `requirement_inert_scalar` exactly and reject indent≠2/duplicates/namespaced entries, with direct probes matching every C++ battery verdict and all `--check`s reproducing. MINOR/NIT folded: stale d117/README requirement rows, empty-config footer guard, duplicate top-level keys. Residual documented: `admits()` does not mirror the title ink/width rules; no 0044 row carries a title |
 | 2026-11-22 | — | — | draft | Created provisional from D-413 |
 
 ## Implementation History
@@ -307,4 +308,5 @@ persisted data, wire protocol, CLI, or settings change.
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | e06c993d |
 | 2026-11-22 | — | Folded design r1/r2; accepted after r3; no code | 33459cfe |
-| 2026-11-22 | — | PRR folded (+8 ctest, twin rule, anchor); implementable; no code | — |
+| 2026-11-22 | — | PRR folded (+8 ctest, twin rule, anchor); implementable; no code | e864a051 |
+| 2026-11-22 | P1 | layout admission implemented: one TU leaf + footer, 23 rows, sibling ledger, five-test gate + three hermetic checks, matrix branch, roster 663→640 | 1f1debb5 |

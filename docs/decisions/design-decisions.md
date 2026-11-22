@@ -4570,3 +4570,36 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   counter credits +6. The roster's `family_residual:railroad` category disappears
   (44 → 43); dynamic `family_residual:*` categories are derived from counts, so
   `--self-test`'s causality/key-set equality shrinks with it and stays green.
+
+## requirement `layout: elk` admission (RFC 0044)
+
+- **Scope.** The requirement family's 24 `config.layout: elk` fallbacks were the largest
+  clean bucket-5 slice (D-413). 23 are promoted: 15 layout-only and 8 that also carry the
+  already-admitted `htmlLabels: false`. The 24th has only a nested `config.flowchart.htmlLabels`
+  sibling (no drawn twin) and stays, together with two other nested-map rows, one
+  leading-blank source and one indented-fence malformed envelope.
+- **Mechanism.** The requirement gate is an event-driven envelope parser with a per-leaf
+  bitset and a disclosure footer, so this is one more leaf (`Layout = 32u`), not a new gate:
+  indent-2 `layout`, once, only the value `elk`, read through the existing
+  `requirement_inert_scalar` (comment strip, spaces-only trim, outer same-char dequote).
+  The notice `config.layout=elk -> external layout engine; not applied` is appended **last**
+  in the fixed leaf order; no already-drawn frame can carry a `layout` leaf, so this only
+  fixes the new rows' order (`htmlLabels` then `layout`).
+- **Twin rule (the subtle part).** A body can be byte-identical to several drawn twins with
+  different footers (config-free, `htmlLabels`, `look`, …). The rule is pinned: prefer a
+  **footer-free** drawn twin (a drawn row with no `config:` block — 20 rows); otherwise use
+  a drawn twin whose footer block is a **byte-prefix** of the source footer (3 rows, the
+  `htmlLabels: false` siblings). The ledger records the twin's full footer block (header
+  included); the gate strips `[""] + twin_block` from the twin frame and appends
+  `[""] + source_block`. `footer_lines` in the generator always includes the header.
+- **Generator is the ledger's provenance authority.** `generate_requirement_0044_cohort.py`
+  must mirror the live gate, not approximate it: quote-aware `#` comments (`#` at index 0 or
+  after space/tab; prefix trimmed of space/tab/CR), spaces-only trim, outer same-char
+  dequote, indent exactly 2, depth exactly 2 (namespaced entries reject), duplicate
+  top-level keys reject, description required, one config, at least one leaf. A naive split
+  would misclassify on a corpus refresh even while the shipped ledger reproduces.
+- **Accounting.** The matrix branch precedes the F0, RFC 0037 and base requirement branches
+  and leaves `raw_active_schema` empty, so the generic `originals_drawn` counter credits
+  +23. The roster is fallback-only, so the 23 leave `elk_layout_engine` (38 → 15) and the
+  remaining rows keep the `foreign-engine` label; `predicate_sufficiency` becomes
+  79 / 62 / 17 and `sufficient_blocker` stays false.

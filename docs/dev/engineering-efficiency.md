@@ -1819,3 +1819,28 @@ Attach a short efficiency section to each closure report, answering:
 6. **New entry.** Rule 36: a probe's key-set field that concatenates payload continuation
    lines is not a classifier — parse the frontmatter structurally, and re-derive a bill
    subgroup before pinning scope on it.
+
+### 2026-11-22 — RFC 0044 (requirement elk) implementation retro
+
+1. **Gate wall-clock.** The new gate is ~19 s for 5 tests; the RFC 0037 120-row oracle is
+   ~135 s; the three hermetic `--check` entries total 0.2 s; the debug OfficialMatrix is
+   240 s, release 27 s. Full debug ctest 4675/4675 in 555 s.
+2. **False green/red.** Three self-inflicted reds, all caught before shipping: the twin
+   composition treated `footer_lines` (which includes the header) as leaf-only and
+   double-counted the header; `layout : elk` (spaces around the key) was expected to reject
+   but the envelope parser trims keys and admits it, so the battery was wrong and was
+   corrected to pin the real behavior; a ctest invocation without `LD_LIBRARY_PATH` failed
+   all five gtests and looked like a product red — the environment, not the code.
+3. **Rework.** The code review's MAJOR was a provenance defect, not a runtime one: the
+   generator's `admits()` was a naive split that disagreed with the live gate on indent-4,
+   quoted and commented values. It would not have changed the shipped 23 rows, but it is
+   the ledger's provenance authority, so the mirror was rewritten and probe-matched.
+   Design r1's BLOCKER (three existing assertions pinning elk as fallback) would have
+   reded the suite; design r2 caught a self-contradiction introduced by the r1 rewrite.
+4. **Build fan-out.** One `.cpp` body recompiled, archive + dependent relinks; no BMI
+   change; one new test executable and three hermetic ctests.
+5. **Cheaper approach evidence.** Focused gate 19 s vs 4675-test full suite; release matrix
+   byte-identical to debug (`0732abe2…`), so the census used release.
+6. **New entry.** Rule 37: when a ledger generator claims to mirror a live gate, drive the
+   same shapes through both (indent, quoting, comments, duplicates) as a probe table; a
+   `--check` that reproduces proves stability, not fidelity.

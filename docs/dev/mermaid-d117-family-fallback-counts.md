@@ -52,6 +52,7 @@ are not whole-original errors).
 | After D235 gitGraph empty quoted-tag group (3 representable git originals) | 2026-11-14 | local | 1221 | 924 | 0 |
 | After D236 xychart folded-description envelope group (11 representable xy originals) | 2026-11-15 | local | 1232 | 913 | 0 |
 | After RFC 0043 small-family theme (6 rows) | 2026-11-22 | 7aa711a3 | 1482 | 663 | 0 |
+| After RFC 0044 requirement elk (23 rows) | 2026-11-22 | 1f1debb5 | 1505 | 640 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -62,7 +63,7 @@ disposition (fix or documented infeasibility).
 | Family | Remaining fallback | Drawn | Notes |
 |---|---:|---:|---|
 | flowchart | 240 | 160 | active track; see breakdown below |
-| requirement | 156 | 16 | renderer extended 2026-11-14; classDef/class/style/`:::` body statements now validated and rendered through the shared palette-role style seam (4 new draws); 156 frontmatter config/theme/title/indented-fence rows stay source (no theme/layout/color contract) |
+| requirement | 5 | 167 | renderer extended 2026-11-14; RFC 0037 admitted 120 look/theme/title rows, D-066 F0 8 htmlLabels rows and RFC 0044 23 `layout: elk` rows (bodies byte-identical to drawn non-ELK twins, footer-disclosed); the 5 remaining are 3 rows with a nested `config.flowchart.*` map (one ELK, no twin), 1 leading-blank source and 1 indented-fence malformed envelope; live census 167/5/0 from 172 |
 | git | 77 | 58 | D235: +3 explicit empty quoted tag (`tag: ""`) cherry-pick originals; empty string decodes to no label (no glyphs, same frame as an omitted tag). Remaining 77 = 62 non-whitelisted theme/layout frontmatter + 9 `%%{init}%%` + 6 E2a git blockers (4 nine-branch canvas-overflow, 1 unprojected title, 1 multiline quoted branch label) |
 | state-diagram-v2 | 70 | 33 | D223 batch one: +4 (HTML-entity fork/join, square choice, note tab break, edge `\n`/`#colon;`); D228: +4 representable classDef/class/style originals (palette-role fill/stroke/color, border shorthand to stroke, bold to pixels); the 1 italic fixture, 1 click, 1 description-tab and the inline `Node:::class` edge form stay gated, plus geometry/concurrency debt |
 | gantt | 13 | 39 | renderer added 2026-11-12; 11 themed rows stay source (no color contract), 2 malformed-date fixtures fail closed |

@@ -84,7 +84,9 @@ carries none.
 
 In `git_frontmatter` (the envelope gate used by the git renderer):
 
-- Extend the field bitset with `GitGraphNs = 4u` and `Parallel = 8u`.
+- Extend the field bitset with `GitGraphNs = 4u` and `Parallel = 8u`; hoist the `mark()`
+  lambda above the new branches and never call `git_inert_scalar` on a namespace event (its
+  value is provably empty and the call would charge Work).
 - `event.namespace_entry && event.path == "gitGraph" && event.indent == 2` marks the
   namespace once; a second namespace rejects. (The envelope parser already rejects
   duplicate paths.)
@@ -108,18 +110,25 @@ In `git_frontmatter` (the envelope gate used by the git renderer):
 
 - Sibling ledger `tools/mermaid/git-0045-cohort.json` (schema
   `loom_mermaid_git_0045_cohort/v1`) with the 12 rows, each with its **synthetic**
-  config-free twin (the generation rule is the ledger's own path with the config block
-  removed), literal footer lines, and the measured per-width states.
+  config-free twin (delete the `config:` line **and every following line indented at least
+  two spaces, until the next column-0 key** — the RFC 0039 `config_free_twin` helper cannot
+  be reused because it only skips flat `look`/`theme` leaves and would leave the namespace
+  in place), literal footer lines, and the measured per-width states.
 - `generate_git_0045_cohort.py`, renderer-free, `--check`-reproducible; its shape mirror
-  follows the live gate (description folded `>-` with a two-space payload, one config, the
-  namespace + leaf, scalar normalization).
+  **asserts**, never approximates: folded `>-` description with a two-space payload, no
+  tab, exactly one `config`, namespace at indent 2 with empty value and the leaf at indent
+  4, duplicate/empty-namespace/unknown-key rejection, and scalar normalization identical to
+  `git_inert_scalar` (quote-aware `#` cut via `er_strip_comment`'s rule, `trim_relation` on
+  the cut prefix, paired dequote, no extra strip beyond the parser's).
 - The RFC 0039 generator's `counts.namespaced` stays **44** and its `EXCLUDED`-style pins
   are source-shape; only the human `exclusions` sentence changes to "12 parallelCommits
   rows admitted by RFC 0045, 32 namespaced rows remain". That sentence is generator
   source, so `tools/mermaid/git-0039-cohort.json` is **regenerated** (its 12 rows, counts
   and pins do not change) — editing the sentence without regenerating would turn the
   registered `MermaidGit0039Cohort.GeneratorIsReproducible` check red. The ledger file is
-  part of the phase commit.
+  part of the phase commit. Its machine-readable `excluded[]` per-row reasons predate this
+  phase, so `selection.census_note` declares that list the **frozen 0039 census** and names
+  the 12 admitted rows; `counts.namespaced == 44` stays the source-shape pin.
 - Partition arithmetic is literal against the filesystem: 135 = 70 drawn + 12 admitted + 53
   remaining; the remaining split by roster category (34 `family_residual:git` +
   12 `git_cherry_pick` + 6 `look_neo` + 1 `multiline_label`).
@@ -127,7 +136,8 @@ In `git_frontmatter` (the envelope gate used by the git renderer):
   the 0039 `namespaced == 44` source-shape agreement; per-row twin inertness + exact footer
   composition; the namespace battery (both booleans admitted; `yes`/`1`/empty/`True`/
   duplicate namespace/`mainBranchName`/`mainBranchOrder`/`showBranches`/nested-too-deep/
-  namespace-without-leaf/empty-config/title rejected); the leaf-composition battery
+  `gitGraph: foo` (a value makes it a leaf, not a namespace)/namespace-without-leaf/
+  empty-config/title rejected); the leaf-composition battery
   (`look` + `theme` + namespace emits three lines in order); the literal partition.
 - Matrix branch before the RFC 0039 git branch and the generic fallback, reason
   `RFC-0045 gitGraph parallelCommits reviewed cohort`, `raw_active_schema` empty so the
@@ -137,6 +147,18 @@ In `git_frontmatter` (the envelope gate used by the git renderer):
 - **Existing-assertion audit**: no current test pins `parallelCommits`; the two namespace
   negatives that exist (`mainBranchName: trunk` in `test_mermaid_gitgraph_semantics.cpp` and
   `test_mermaid_gitgraph_0039_cohort.cpp`) stay rejected and unchanged.
+- **The footer contains the literal `gitGraph`**, which three consumers use as a "not
+  natively drawn" substring mnemonic (`test_mermaid_e2a_cohort.cpp`, the gitgraph
+  semantics gate, `e2e_pty_shutdown.cpp`; `design-decisions.md` records that the RFC 0039
+  header was capitalised to avoid exactly this). They stay green only because none renders
+  these rows. The new gate therefore uses **line-equality** native-frame predicates (the
+  `test_mermaid_gitgraph_0039_cohort.cpp` form), never `find("gitGraph")`, and any row
+  carrying this footer must never be judged by the substring mnemonic.
+
+- **Stale "namespaced subtrees stay closed" promises are amended in the same phase**: the
+  production comments in `git_frontmatter` (~951-953, ~1002-1003), the
+  `design-decisions.md` paragraph that names `parallelCommits` as closed, and RFC 0039's
+  testing-plan sentence (the `mainBranchName` negative remains valid).
 
 ## Phases and graduation criteria
 
@@ -179,7 +201,10 @@ persisted data, wire protocol, CLI, or settings change.
 ## Testing and verification plan
 
 - New gate (5 gtests) + one hermetic `--check` for the new generator: expected
-  `ctest -L mermaid` delta **+6**; full debug ctest **4675 → 4681**.
+  `ctest -L mermaid` delta **+6**; full debug ctest **4675 → 4681**. The executable is
+  registered like its siblings (`add_executable` / `target_link_libraries` /
+  `gtest_discover_tests ... LABELS "mermaid"`) with `TIMEOUT 600` (the 0039 gate's
+  five-capture × 12-row cost).
 - The RFC 0039 git gate stays the drawn-row regression oracle and must stay green.
 - Targeted `ctest -L mermaid`; release matrix; dual-preset byte gate at closure; full debug
   ctest once.
@@ -194,7 +219,8 @@ persisted data, wire protocol, CLI, or settings change.
 - [ ] `docs/decisions/design-decisions.md` — gitGraph namespace admission entry
 - [ ] `docs/README.md` — RFC index (0045 row; the RFC 0039 row's "44 namespaced" clause)
 - [ ] `tools/mermaid/git-0039-cohort.json` — regenerated with the updated exclusions sentence
-- [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — git row and headline
+- [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — the git row is stale at 77/58 and
+      is corrected to 53/82 with the new headline
 
 ## Open questions
 
@@ -216,6 +242,7 @@ persisted data, wire protocol, CLI, or settings change.
 |---|---|---|---|---|
 | 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | Scope (exactly 12), arithmetic (135=70+12+53; 53=34+12+6+1), grammar event shapes and the content-vs-layout argument all confirmed; the native projection draws commit identity/order and never reads the key, so the toggle is layout-only *with* the disclosure. 1 MAJOR + 3 MINOR + 2 NIT: the 0039 ledger must be regenerated because the exclusions sentence is generator source and the registered `--check` compares whole-file text; the footer is 78 bytes for `false`, not 77; the 32-row rationale overclaimed (one default-valued no-op row) → softened to a conservative slice exclusion; the empty-namespace rejection is a gate check, not a parser one (`parse_envelope` emits the namespace event), so the explicit `(GitGraphNs && !Parallel)` test is now a mechanism bullet. All folded |
 | 2026-11-22 | r2 | agent:design-review | **APPROVE-TO-ACCEPT** | All r1 folds re-verified against the repository (the regenerated 0039 ledger changes only `selection.exclusions`; the footer is 78 bytes; the empty-namespace gate check is explicit; the 32-row exclusion is conservative). Two residual NITs folded: the Alternatives wording now carves out the default-only no-op row, and the closure order names the 0039 regeneration step. Gate: provisional → accepted |
+| 2026-11-22 | PRR | agent:prr-review | REQUEST-CHANGES | 2 MAJOR + 4 MINOR + 3 NIT. MAJOR: the footer contains the literal `gitGraph`, which three consumers use as a not-natively-drawn substring mnemonic → the gate is pinned to line-equality predicates and the audit names the hazard; the 0039 ledger's machine-readable `excluded[]` reasons would contradict the new sentence → `census_note` declares the list the frozen census. MINORs: stale "namespaced subtrees stay closed" comments/decisions/RFC 0039 sentence amended in the phase; README status; the twin extraction rule (delete the config line and every following indent≥2 line); the generator mirror enumerated to the RFC 0044 standard. NITs: hoist `mark()` and skip the scalar call on namespace events; `gitGraph: foo` is a leaf; CMake wiring and TIMEOUT 600 named, the stale d117 git row corrected. All folded |
 | 2026-11-22 | — | — | draft | Created provisional from D-415 |
 
 ## Implementation History

@@ -4475,7 +4475,9 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   inside the config block is validated against the family's closed corpus table
   and, when admitted, disclosed. A visual key anywhere else — top level, a
   folded `description:` payload line, indent 4 or deeper — keeps the
-  whole-source fallback, as does an in-body `%%{init … theme …}%%` line. Every
+  whole-source fallback, as does a **non-leading** `%%{init … theme …}%%` line
+  (RFC 0047 admits the leading directive block for timeline and journey only).
+  Every
   other key keeps the long-standing pass-through, which is what keeps the 11
   drawn rows carrying nested `config.gantt.*` / `config.journey.*` maps and a
   tab-bearing folded description drawing. A colon-less line is never a visual
@@ -4497,8 +4499,10 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   `art + 1 + n <= kHeightLimit` guard mirror the state/flow/git paths. A
   non-admitted visual key never emits a footer.
 - **Three family ledgers keep their row sets** (7 / 39 / 10) and gain a named
-  `admitted` partition (16 / 11 / 4) so each family is a four-way partition
-  (`rows + admitted + themed_excluded + fail_closed` = 30 / 52 / 18). Promotion
+  `admitted` partition (16 / 11 / 4); RFC 0047 adds an `init_admitted` bucket,
+  so each family is a five-way partition
+  (`rows + admitted + init_admitted + themed_excluded + fail_closed` =
+  7+16+5+2 / 39+11+0+0+2 / 10+4+4+0 = 30 / 52 / 18). Promotion
   goes through the sibling ledger `tools/mermaid/journeyfam-0040-cohort.json`,
   never by editing a family ledger or the pinned manifest. All four generators
   share one Python tables module loaded by explicit path (`python3 -I` implies
@@ -4508,6 +4512,47 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   admission), because `--self-test` pins `causality` to `category_counts` key
   equality. Without it, an admission that empties a category turns the roster
   self-test red after a green `--emit`.
+
+## journey-family in-body init directive admission (RFC 0047)
+
+- **One closed grammar, two enabled families.** The leading body-directive
+  block of timeline and journey is scanned structurally: blank and `%%`-comment
+  lines are skipped; a `%%{` line must be a single-line `%%{init…}%%` whose
+  inner text is the bare `init` no-op, an empty `{}`, or a flat object over
+  `logLevel`/`theme`, each at most once. A trailing `\r` is removed first (the
+  renderers tolerate CRLF); leading spaces are allowed. The quote state machine
+  (unterminated quote, control byte, backslash inside single quotes) mirrors
+  `normalize_directive_quotes`; keys and values are read with the family's
+  `journey_fam_scalar` (quotes, trailing `#` comment). A nested object, unknown
+  key, duplicate, out-of-table value, multi-line or trailing text gates.
+- **Gantt keeps the legacy switch.** `kFamilyInitDirectivesEnabled = false`
+  leaves gantt's "any body `%%{` line mentioning `theme` gates" rule verbatim:
+  0 of its 52 originals carry a directive, so enabling it would only tighten an
+  unrelated pass-through.
+- **Cross-channel asymmetry is deliberate.** The directive theme tables are
+  their own corpus-bounded surfaces: journey `{dark, default, forest,
+  neutral}`, timeline `{base, dark, default, forest, neutral}`. They differ
+  from the frontmatter tables on purpose (frontmatter is an existing pinned
+  contract; the directive corpus exercises other palettes), so `config: theme:
+  dark` gates for journey while `%%{init:{theme:'dark'}}%%` is admitted. Both
+  directions are pinned by literal probes.
+- **Frontmatter leaf + keyed directive is mutually exclusive** (G5): the two
+  disclosure channels cannot both speak, so no duplicate `config.theme=` line
+  can be emitted; a frontmatter leaf plus a bare `init` stays admitted.
+- **Footer:** header first, then `config.logLevel=<v> -> logger only; not
+  applied` and `config.theme=<v> -> colour palette; not applied` after the
+  frontmatter lines; 45-51 byte lines, under the 96-byte cap.
+- **Single-source boundary probes.** `tools/mermaid/journeyfam-init-0047-probes.json`
+  is read by both the Python mirror (`journeyfam_tables.classify`) and the C++
+  gate; `selection.probes_sha256` binds the review, so changing an expectation
+  forces a re-review (efficiency rule 37: one case list drives both sides).
+- **Roster/ledger migration:** timeline 7/16/5/2, journey 10/4/4/0, gantt
+  39/11/0/2; `family_residual:journey` empties (617 -> 608, 41 -> 40
+  categories). The matrix branch sits after the clean-only RFC 0031
+  journey/timeline/gantt branches (which return null for these fallback paths)
+  and before the RFC 0040 journey-family branch and the generic fallback; a
+  post-loop assertion proves every ledger row is observed through it
+  (rule 38).
 
 ## agentflow look and theme admission (RFC 0041)
 

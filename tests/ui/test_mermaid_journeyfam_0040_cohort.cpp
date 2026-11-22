@@ -511,12 +511,23 @@ TEST(MermaidJourneyFam0040Cohort, JourneyTablesAreClosed) {
                  {"redux", "redux-dark", "redux-color", "redux-dark-color"}, {},
                  {"dark", "default", "forest", "neutral", "neo", "neo-dark"},
                  {"classic", "neo", "handDrawn"}});
-    // The four remaining fallbacks arrive through an in-body initializer.
+    // RFC 0047 admitted the four remaining journey fallbacks (in-body init
+    // directives); they are now positive rows of the sibling cohort, which is
+    // also the frame oracle for them. The family bucket must be empty.
     const auto existing = parse_doc(kJourneyLedger);
-    existing.root().get("selection").get("themed_excluded").iter([&](JsonVal value) {
-        EXPECT_FALSE(draws(read_file(kCases / std::string(value.as_str())), kWide))
-            << value.as_str();
+    EXPECT_EQ(existing.root().get("selection").get_int("themed_excluded_count"), 0);
+    EXPECT_EQ(existing.root().get("selection").get_int("init_admitted_count"), 4);
+    const auto admitted_0047 = parse_doc(
+        fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/journeyfam-init-0047-cohort.json");
+    std::size_t journey_rows = 0;
+    admitted_0047.root().get("rows").iter([&](const JsonVal row) {
+        const auto rel = row.get_string("path");
+        if (!rel.starts_with("journey/")) return;
+        ++journey_rows;
+        ASSERT_TRUE(draws(read_file(kCases / rel), kWide)) << rel;
+        EXPECT_TRUE(native_frame(read_file(kCases / rel), kWide)) << rel;
     });
+    EXPECT_EQ(journey_rows, 4u);
 }
 
 // The three renderers must not drift: one probe battery, three hardcoded

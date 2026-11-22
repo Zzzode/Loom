@@ -178,8 +178,10 @@ def build(repo_root: pathlib.Path):
                             "to an admitted row",
             "pass_through": "every non-theme/look frontmatter key keeps the renderers' "
                             "long-standing pass-through (11 drawn rows rely on it)",
-            "exclusions": "in-body %%{init}%% theme directives (timeline 7, journey 4) and the "
-                          "two malformed-date gantt rows stay whole-source",
+            "exclusions": "RFC 0047 admits the inert leading %%{init}%% directives "
+                          "(timeline 5, journey 4) through the sibling cohort; the two "
+                          "remaining timeline directives (disableMulticolor, themeVariables) "
+                          "and the two malformed-date gantt rows stay whole-source",
             "width_policy": "wide_240 admission only; narrow_40 is measured per row.",
         },
         "review": {

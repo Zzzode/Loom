@@ -144,13 +144,39 @@ TEST(MermaidJourneyCohort, CleanJourneysDrawOnWholeAndBodyTracks) {
 
 // Theme/look is a visual contract the terminal does not have; a themed
 // journey must keep its whole source rather than silently drop the theme.
+// RFC 0047 moves the inert leading directives out of this bucket and into its
+// own admission, so the bucket loop is paired with literal positives over the
+// moved rows and with the directive negatives that still gate.
 TEST(MermaidJourneyCohort, ThemedJourneysStayWholeSource) {
     const auto ledger = parse_doc(kLedger);
     const auto excluded = ledger.root().get("selection").get("themed_excluded");
+    std::size_t remaining = 0;
     excluded.iter([&](JsonVal value) {
+        ++remaining;
         const auto rel = value.as_str();
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
     });
+    EXPECT_EQ(remaining, 0u);
+    std::size_t admitted = 0;
+    ledger.root().get("selection").get("init_admitted").iter([&](JsonVal value) {
+        ++admitted;
+        const auto rel = value.as_str();
+        ASSERT_TRUE(draws(read_file(kCases / rel), kWide)) << rel;
+        EXPECT_NE(capture(read_file(kCases / rel), "mermaid", kWide).text.find(
+                      "Journey native projection v1"),
+                  std::string::npos)
+            << rel;
+    });
+    EXPECT_EQ(admitted, 4u);
+    // The directive grammar is closed: an out-of-table theme, an unknown key
+    // and a keyed directive composed with a frontmatter leaf all gate.
+    EXPECT_FALSE(draws("%%{init: {'theme': 'neo'}}%%\njourney\n  section S\n    A: 1: Me\n",
+                       kWide));
+    EXPECT_FALSE(draws("%%{init: {'fontFamily': 'x'}}%%\njourney\n  section S\n    A: 1: Me\n",
+                       kWide));
+    EXPECT_FALSE(draws("---\nconfig:\n  theme: redux\n---\n"
+                       "%%{init: {'theme': 'dark'}}%%\njourney\n  section S\n    A: 1: Me\n",
+                       kWide));
 }
 
 // The theme gate is key-based: the literal word "theme" in a task label or a
@@ -167,7 +193,13 @@ TEST(MermaidJourneyCohort, ThemeWordInLabelIsNotAVisualGate) {
         "journey\n"
         "  section S\n"
         "    Discuss theming options: 3: Me\n";
-    EXPECT_TRUE(draws(with_log_comment, kWide));
+    ASSERT_TRUE(draws(with_log_comment, kWide));
+    // RFC 0047: a logLevel-only leading directive is now admitted and
+    // disclosed instead of silently ignored.
+    const auto frame = capture(with_log_comment, "mermaid", kWide).text;
+    EXPECT_NE(frame.find("Journey native projection v1"), std::string::npos);
+    EXPECT_NE(frame.find("config.logLevel=0 -> logger only; not applied"),
+              std::string::npos);
 }
 
 // An over-long score digit run must fail closed, never throw out_of_range.

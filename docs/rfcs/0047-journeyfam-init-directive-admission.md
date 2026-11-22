@@ -1,7 +1,7 @@
 ---
 rfc: 47
 title: journey-family in-body init directive admission
-status: implementable
+status: implemented
 owners: "@Zzzode"
 reviewers:
   - agent:design-review-evidence
@@ -242,10 +242,12 @@ The code of the three copies remains byte-identical; only these constants differ
   switch: a leading theme directive gates, a leading logLevel-only directive and a bare `init`
   draw with no footer (today's frames). The existing family batteries still hold; a literal
   partition.
-- Matrix branch `RFC-0047 journey-family init-directive reviewed cohort` placed **before all
-  family branches** (rule 38), reading per-row states and requiring `review.verdict ==
-  "approved"`. It is provably reached: the matrix test itself asserts, for each of the 9 ledger
-  paths, an original-track observation whose `reason` equals the branch reason.
+- Matrix branch `RFC-0047 journey-family init-directive reviewed cohort` placed after the
+  clean-only RFC 0031 journey/timeline/gantt branches (which return null for these fallback
+  paths) and before the RFC 0040 journey-family branch and the generic fallback (rule 38),
+  reading per-row states and requiring `review.verdict == "approved"`. It is provably reached:
+  the matrix test itself asserts, for each of the 9 ledger paths, an original-track observation
+  whose `reason` equals the branch reason, and that the branch matches nothing else.
 - `tests/ui/CMakeLists.txt`: add the `add_executable`/`target_link_libraries`/
   `gtest_discover_tests` block for the gate and the hermetic `add_test` running
   `generate_journeyfam_init_0047_cohort.py --check` (the +6 ctest delta).
@@ -274,7 +276,7 @@ The code of the three copies remains byte-identical; only these constants differ
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | journey-family init directive | 9 rows, 3 TUs, 2 enabled families + gantt disabled | proposed | red-first (all 9 in the roster at 617); journey 14/4 → 18/0; timeline 23/7 → 28/2; global 1528/617 → 1537/608; formal 1342 → 1351; gaps 48, integrity 0; dual-preset byte-identical sha recorded; full debug ctest with a durable log and exit code; branch-reach assertion green; independent P1 code review APPROVE |
+| P1 | journey-family init directive | 9 rows, 3 TUs, 2 enabled families + gantt disabled | done | red-first (all 9 in the roster at 617); journey 14/4 → 18/0; timeline 23/7 → 28/2; global 1528/617 → 1537/608; formal 1342 → 1351; gaps 48, integrity 0; dual-preset byte-identical sha recorded; full debug ctest with a durable log and exit code; branch-reach assertion green; independent P1 code review APPROVE |
 
 ## Production Readiness Review
 
@@ -289,7 +291,7 @@ The code of the three copies remains byte-identical; only these constants differ
   `journeyfam-init-0047-probes.json`; `tests/ui/test_mermaid_{journey,timeline,journeyfam_0040}_cohort.cpp`; new `tests/ui/test_mermaid_journeyfam_init_0047_cohort.cpp`; `tests/ui/test_mermaid_official.cpp`; `tests/ui/CMakeLists.txt`; `tools/mermaid/fallback_roster.json`; and the docs below. `generate_gantt_cohort.py`/`gantt-cohort.json` are absent by design. `git revert` of that single commit restores the 617 roster and every pin. |
 | **Protected pins** | No protected file is in the footprint (`tests/support/mermaid_er107_*`, the three `er107_*` proposals, `er206_native_whole_source_authority.config62.v1.json`, `tools/mermaid/e6c-mandatory-gap-roster.json`, `mermaid_relations_oracle.hpp`, `mermaid_gap_roster.hpp`). The only shared test file is `tests/ui/test_mermaid_official.cpp`, changed additively: the new loader + branch before every family branch, plus the branch-reach assertion; the 9 rows have no manifest `diagnostic`, so each replaces one `run_case` original observation 1:1 and the observation total (2738), 48-gap roster, ER107 107, ER206 and Class285 pins stay unchanged. |
 | **Observability** | No new diagnostics. The disclosure footer is the user-visible record of the substituted upstream behaviour, matching RFC 0040/0045/0046. Session traces are untouched. |
-| **Work meter / budgets** | The existing prepaid fee (`256 + source*8`) covers the source copy; the new leading-block scan pays its own linear charge (`body.size()*2 + 256`), so the pass is not free. That charge is a monotone tightening only: a 64 KB body costs ≈131 KB against the 1,000,000 `kWorkLimit`, so no outcome can flip. Notice lines keep the 96-byte cap, the `(1+n)×(4·sizeof(string)+256)+bytes·2+256` charge and the height guard; the new lines measure 45, 48, 49 or 51 bytes depending on the value, all under the cap. |
+| **Work meter / budgets** | The existing prepaid fee (`256 + source*8`) covers the source copy; the new leading-block scan pays a linear charge (`body.size()*2 + 256`), and each directive pays `inner.size()*4 + 128` on top. So a directives-dense body (≈2,400 bare directives inside the 64 KB `kSourceLimit`) can exhaust the meter and falls back — fail-closed, with no corpus impact (the 9 rows carry one directive each; measured headroom ≈131 KB + 9 small charges against 1,000,000). Notice lines keep the 96-byte cap, the `(1+n)×(4·sizeof(string)+256)+bytes·2+256` charge and the height guard; the new lines measure 45, 48, 49 or 51 bytes depending on the value, all under the cap. |
 | **Documentation** | design-decisions entry (directive admission, cross-channel asymmetry policy, gantt switch **and the updated four-way→five-way bucket counts at the RFC 0040 section**), README RFC index, d117 family rows, d419 selection, d420 closure, engineering-efficiency retro. |
 | **Deletion** | The legacy substring loop is **replaced** in the two enabled copies (not kept alongside); gantt retains it verbatim by design. No dead code added. |
 | **Deprecation** | None: no shape or module is replaced; the closed frontmatter contract is unchanged. |
@@ -379,6 +381,7 @@ settings change.
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-22 | r1 | agent:design-review-evidence | REQUEST-CHANGES | M1 CMake registration missing from the footprint → added; m1 gantt generator absence measured and stated; m2 probe log does not enumerate paths → claim rescoped, P1 gate is the authoritative proof; m3 summary scope over-wide (4 flowchart legacy rows) → requalified; n1 `prior_status` → added; n2 G5 definition → fixed to keyed directives; m3 d117 stale cells → documented |
+| 2026-11-22 | r2 | agent:p1-code-review | APPROVE (after r1 fixes) | r1 REQUEST-CHANGES: M1 the per-row oracle asserted only draw+footer, not frame = twin + footer → now composes twin art + literal footer and compares line by line; M2 the probe/cohort digests were `PENDING` (review binding inert) → hardcoded to the reviewed values and the escape hatch removed; m3 a directives-only body was re-gated by the tail scan → `tail_start = body.size()` after an admitted-only block; m4 unquoted key, comma-in-quote and directives-only cases added; m5 the work-meter claim was incomplete → PRR row corrected; m6 Python stripped all `\r` → exactly one; n7 gantt partition arithmetic; n8 matrix-branch comment. |
 | 2026-11-22 | r3 | agent:prr-review | APPROVE | PRR r3: the single-source probe artifact is a faithful rule-37 gate; the expectations are an authored reviewed oracle with a digest bound into the review, backed by the corpus frame gate and the RFC 0040 batteries. Folded at this revision: the probes file joins the rollback set, `selection.probes_sha256` binds the review, the assembly recipe and schema validation are stated, and the "exactly the boundary set" wording is qualified. |
 | 2026-11-22 | r2 | agent:prr-review | REQUEST-CHANGES | F1 remained open (one probe table that is not single-source) → replaced by `journeyfam-init-0047-probes.json` read by both sides, with a full kind→verdict mapping and the complete case list; F2–F5 NITs folded. |
 | 2026-11-22 | r1 | agent:prr-review | REQUEST-CHANGES | F1 mirror fidelity (rule 37) → probe table; F2 PRR checklist incomplete → expanded; F3 partition wording → implementation units; F4 rollback file set → enumerated; F5 protected pins + additive matrix change → stated; F6–F13 folded as listed in the doc impact. |
@@ -395,4 +398,5 @@ settings change.
 | 2026-11-22 | — | Accepted after two-lens design review r2 APPROVE | 50e4eb00 |
 | 2026-11-22 | — | PRR table added | f0dbb014 |
 | 2026-11-22 | — | PRR r1 findings folded (probe table, checklist, rollback set) | c98b51a5 |
-| 2026-11-22 | — | PRR r2 findings folded (single-source probe artifact) | (this commit) |
+| 2026-11-22 | — | PRR r2 findings folded (single-source probe artifact) | fdc8f7f8 |
+| 2026-11-22 | P1 | Implemented and verified: journey 14/4 → 18/0, timeline 23/7 → 28/2, global 1528/617 → 1537/608, formal 1342 → 1351, gaps 48, integrity empty; dual-preset matrix byte-identical `86e4942375205d111af0d39d868ba7cdf299502b0a4f3a9f152900e5ed368ffe`; `ctest -L mermaid` 1508/1508; full debug ctest and the isolated-rerun evidence recorded in D-420 | (this commit) |

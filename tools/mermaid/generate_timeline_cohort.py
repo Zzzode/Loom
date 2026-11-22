@@ -118,20 +118,24 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
-    clean, admitted, themed = set(), set(), set()
-    buckets = {"drawn": clean, "admitted": admitted, "themed": themed}
+    clean, admitted, themed, init_admitted = set(), set(), set(), set()
+    buckets = {"drawn": clean, "admitted": admitted, "themed": themed,
+               "init_admitted": init_admitted}
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
         rel = path.relative_to(repo_root / "tests/fixtures/mermaid_official/cases").as_posix()
         kind, _ = TABLES.classify("timeline", path.read_text())
         buckets[kind].add(rel)
 
-    # RFC 0040 four-way partition (timeline has no fail_closed rows).
-    if len(clean) != 7 or len(admitted) != 16 or len(themed) != 7:
+    # RFC 0040 four-way partition plus the RFC 0047 init-directive bucket
+    # (timeline has no fail_closed rows).
+    if (len(clean) != 7 or len(admitted) != 16 or len(themed) != 2
+            or len(init_admitted) != 5):
         raise ValueError(
             f"timeline partition drift: drawn={len(clean)} admitted={len(admitted)} "
-            f"themed={len(themed)} (expected 7/16/7)")
-    if len(clean) + len(admitted) + len(themed) != 30:
-        raise ValueError("timeline four-way partition does not sum to 30")
+            f"themed={len(themed)} init_admitted={len(init_admitted)} "
+            f"(expected 7/16/2/5)")
+    if len(clean) + len(admitted) + len(themed) + len(init_admitted) != 30:
+        raise ValueError("timeline five-way partition does not sum to 30")
 
     rows = []
     for rel in sorted(clean):
@@ -186,6 +190,8 @@ def build(repo_root):
             "clean_count": len(clean),
             "themed_excluded_count": len(themed),
             "themed_excluded": sorted(themed),
+            "init_admitted_count": len(init_admitted),
+            "init_admitted": sorted(init_admitted),
             "admitted_count": len(admitted),
             "admitted": sorted(admitted),
             "admitted_digest": admitted_digest(repo_root, admitted),

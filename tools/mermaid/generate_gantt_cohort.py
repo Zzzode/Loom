@@ -158,6 +158,10 @@ def build(repo_root):
             fail_closed.add(rel)
             continue
         kind, _ = TABLES.classify("gantt", path.read_text())
+        # RFC 0047 keeps the gantt directive switch disabled; a new kind here
+        # must fail closed rather than raise a bare KeyError later.
+        if kind not in buckets:
+            raise ValueError(f"gantt: unexpected classify kind {kind!r} for {rel}")
         buckets[kind].add(rel)
 
     # RFC 0040 four-way partition: the partition is a reviewed fact.

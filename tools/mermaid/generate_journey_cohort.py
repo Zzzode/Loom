@@ -120,20 +120,24 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
-    clean, admitted, themed = set(), set(), set()
-    buckets = {"drawn": clean, "admitted": admitted, "themed": themed}
+    clean, admitted, themed, init_admitted = set(), set(), set(), set()
+    buckets = {"drawn": clean, "admitted": admitted, "themed": themed,
+               "init_admitted": init_admitted}
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
         rel = path.relative_to(repo_root / "tests/fixtures/mermaid_official/cases").as_posix()
         kind, _ = TABLES.classify("journey", path.read_text())
         buckets[kind].add(rel)
 
-    # RFC 0040 four-way partition (journey has no fail_closed rows).
-    if len(clean) != 10 or len(admitted) != 4 or len(themed) != 4:
+    # RFC 0040 four-way partition plus the RFC 0047 init-directive bucket
+    # (journey has no fail_closed rows).
+    if (len(clean) != 10 or len(admitted) != 4 or len(themed) != 0
+            or len(init_admitted) != 4):
         raise ValueError(
             f"journey partition drift: drawn={len(clean)} admitted={len(admitted)} "
-            f"themed={len(themed)} (expected 10/4/4)")
-    if len(clean) + len(admitted) + len(themed) != 18:
-        raise ValueError("journey four-way partition does not sum to 18")
+            f"themed={len(themed)} init_admitted={len(init_admitted)} "
+            f"(expected 10/4/0/4)")
+    if len(clean) + len(admitted) + len(themed) + len(init_admitted) != 18:
+        raise ValueError("journey five-way partition does not sum to 18")
 
     rows = []
     for rel in sorted(clean):
@@ -186,6 +190,8 @@ def build(repo_root):
             "clean_count": len(clean),
             "themed_excluded_count": len(themed),
             "themed_excluded": sorted(themed),
+            "init_admitted_count": len(init_admitted),
+            "init_admitted": sorted(init_admitted),
             "admitted_count": len(admitted),
             "admitted": sorted(admitted),
             "admitted_digest": admitted_digest(repo_root, admitted),

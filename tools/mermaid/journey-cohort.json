@@ -18,8 +18,10 @@
       "journey"
     ],
     "clean_count": 10,
-    "themed_excluded_count": 4,
-    "themed_excluded": [
+    "themed_excluded_count": 0,
+    "themed_excluded": [],
+    "init_admitted_count": 4,
+    "init_admitted": [
       "journey/pr-check/dark-theme.mmd",
       "journey/pr-check/default-theme.mmd",
       "journey/pr-check/forest-theme.mmd",

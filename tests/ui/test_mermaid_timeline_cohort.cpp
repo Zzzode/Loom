@@ -144,6 +144,24 @@ TEST(MermaidTimelineCohort, ThemedTimelinesStayWholeSource) {
         const auto rel = value.as_str();
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
     });
+    // RFC 0047: the inert leading logLevel/theme directives are admitted and
+    // disclosed; the two content-key rows above stay whole-source.
+    const std::string directive =
+        "%%{init: { 'logLevel': 'debug', 'theme': 'forest' } }%%\n"
+        "timeline\n  title T\n  2024 : Event one\n";
+    ASSERT_TRUE(draws(directive, kWide));
+    const auto frame = capture(directive, "mermaid", kWide).text;
+    EXPECT_NE(frame.find("Timeline native projection v1"), std::string::npos);
+    EXPECT_NE(frame.find("config.logLevel=debug -> logger only; not applied"),
+              std::string::npos);
+    EXPECT_NE(frame.find("config.theme=forest -> colour palette; not applied"),
+              std::string::npos);
+    // A content key and an out-of-table theme still gate.
+    EXPECT_FALSE(draws("%%{init: { 'theme': 'base', 'timeline': {'disableMulticolor': true}}}%%\n"
+                       "timeline\n  title T\n  2024 : Event one\n",
+                       kWide));
+    EXPECT_FALSE(draws("%%{init: { 'theme': 'neo' }}%%\ntimeline\n  title T\n  2024 : Event one\n",
+                       kWide));
 }
 
 // Key-based gate: the word "theme" in a period/event must not be a false gate;

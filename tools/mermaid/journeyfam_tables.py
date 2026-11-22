@@ -38,6 +38,18 @@ NOTICE_HEADER = {
     "journey": "Journey native projection v1",
 }
 
+# RFC 0047: closed leading-directive admission. Gantt keeps the legacy
+# "%%{ line mentioning theme" rule only, so its table constant is empty and
+# never consulted (the mirror returns it for shape parity).
+INIT_ENABLED = {"timeline": True, "gantt": False, "journey": True}
+INIT_THEME_TABLE = {
+    "timeline": ("base", "dark", "default", "forest", "neutral"),
+    "gantt": (),
+    "journey": ("dark", "default", "forest", "neutral"),
+}
+LOG_LEVELS = ("0", "1", "2", "3", "4", "5",
+              "trace", "debug", "info", "warn", "error", "fatal")
+
 
 def sanitize_breaks(text):
     """Mirror the gantt renderer's `<br ...>` sanitizing (each tag -> one space)."""
@@ -102,9 +114,179 @@ def scalar(raw):
     return value
 
 
+def _quotes_ok(text):
+    """Mirror normalize_directive_quotes: balanced quotes, no control bytes,
+    no backslash inside a single-quoted string."""
+    at, size = 0, len(text)
+    while at < size:
+        quote = text[at]
+        if quote not in "'\"":
+            if ord(quote) < 0x20:
+                return False
+            at += 1
+            continue
+        at += 1
+        escape = False
+        while at < size:
+            char = text[at]
+            if quote == "'" and char == "\\":
+                return False
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == quote:
+                break
+            elif ord(char) < 0x20:
+                return False
+            at += 1
+        if at == size:
+            return False
+        at += 1
+    return True
+
+
+def _split_outside_quotes(text, sep):
+    parts, quote, start = [], "", 0
+    at = 0
+    while at < len(text):
+        char = text[at]
+        if quote:
+            if char == quote:
+                quote = ""
+        elif char in "'\"":
+            quote = char
+        elif char == sep:
+            parts.append(text[start:at])
+            start = at + 1
+        at += 1
+    parts.append(text[start:])
+    return parts
+
+
+def _first_colon(text):
+    quote, escape = "", False
+    for at, char in enumerate(text):
+        if quote:
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == quote:
+                quote = ""
+            continue
+        if char in "'\"":
+            quote = char
+        elif char == ":":
+            return at
+    return -1
+
+
+def parse_init_directive(line, theses):
+    """Return (admitted, log_level, theme) for one leading directive line.
+
+    `theses` is the family's closed directive theme table. A duplicated key
+    inside one payload is rejected here; duplicates across directives are the
+    caller's job.
+    """
+    text = line.rstrip(" \t")
+    if not text.startswith("%%{") or not text.endswith("}%%") or len(text) < 7:
+        return False, None, None
+    directive = text[3:-3].strip(" \t")
+    if directive == "init":
+        return True, None, None
+    if not directive.startswith("init:"):
+        return False, None, None
+    payload = directive[5:].strip(" \t")
+    if len(payload) < 2 or payload[0] != "{" or payload[-1] != "}":
+        return False, None, None
+    interior = payload[1:-1]
+    if any(ch in interior for ch in "{}[]"):
+        return False, None, None
+    if not _quotes_ok(interior):
+        return False, None, None
+    if not interior.strip(" \t"):
+        return True, None, None
+    log_level = theme = None
+    for entry in _split_outside_quotes(interior, ","):
+        colon = _first_colon(entry)
+        if colon < 0:
+            return False, None, None
+        key = scalar(entry[:colon])
+        value = scalar(entry[colon + 1:])
+        if key == "logLevel":
+            if log_level is not None or value not in LOG_LEVELS:
+                return False, None, None
+            log_level = value
+        elif key == "theme":
+            if theme is not None or value not in theses:
+                return False, None, None
+            theme = value
+        else:
+            return False, None, None
+    return True, log_level, theme
+
+
+def classify_init(family, body):
+    """Mirror the RFC 0047 leading-block scan.
+
+    Returns (kind, init_leaves) where kind is None when the body is clean,
+    "gate" when the block is rejected and "admit" when every leading directive
+    is inside the closed grammar. `init_leaves` carries any admitted values.
+    """
+    if not INIT_ENABLED[family]:
+        return None, {}
+    lines = body.split("\n")
+    leaves = {}
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if line.endswith("\r"):
+            line = line[:-1]
+        line = line.lstrip(" ")
+        if not line or (line.startswith("%%") and not line.startswith("%%{")):
+            index += 1
+            continue
+        if not line.startswith("%%{"):
+            break
+        ok, log_level, theme = parse_init_directive(line, INIT_THEME_TABLE[family])
+        if not ok:
+            return "gate", {}
+        if log_level is not None:
+            if "init_logLevel" in leaves:
+                return "gate", {}
+            leaves["init_logLevel"] = log_level
+        if theme is not None:
+            if "init_theme" in leaves:
+                return "gate", {}
+            leaves["init_theme"] = theme
+        index += 1
+    return "admit", leaves
+
+
 def body_has_theme_init(body):
+    """The legacy whole-body rule kept verbatim for the disabled families."""
     for line in body.split("\n"):
         stripped = line.lstrip(" \t")
+        if stripped.startswith("%%{") and "theme" in line:
+            return True
+    return False
+
+
+def tail_has_theme_init(body):
+    """The legacy rule from the first non-leading body line onward."""
+    lines = body.split("\n")
+    started = False
+    for line in lines:
+        stripped = line.lstrip(" \t")
+        if not stripped:
+            continue
+        if stripped.startswith("%%") and not stripped.startswith("%%{"):
+            continue
+        if not started:
+            if not stripped.startswith("%%{"):
+                started = True
+            continue
         if stripped.startswith("%%{") and "theme" in line:
             return True
     return False
@@ -155,18 +337,43 @@ def classify(family, text):
             if key in leaves or value not in table:
                 return "themed", {}
             leaves[key] = value
-    if body_has_theme_init(body):
+    if not INIT_ENABLED[family]:
+        if body_has_theme_init(body):
+            return "themed", {}
+        return ("admitted", leaves) if leaves else ("drawn", {})
+    init_kind, init_leaves = classify_init(family, body)
+    if init_kind == "gate":
         return "themed", {}
+    # G5: a frontmatter visual leaf and a keyed leading directive are
+    # mutually exclusive channels.
+    if leaves and init_leaves:
+        return "themed", {}
+    if tail_has_theme_init(body):
+        return "themed", {}
+    if init_leaves:
+        return "init_admitted", init_leaves
     return ("admitted", leaves) if leaves else ("drawn", {})
 
 
-def notice_lines(family, leaves):
-    """The literal disclosure footer the renderer appends below the art."""
+def notice_lines(family, leaves, init_leaves=None):
+    """The literal disclosure footer the renderer appends below the art.
+
+    `init_leaves` (RFC 0047) carries admitted directive values as
+    `init_logLevel` / `init_theme`, emitted after the frontmatter lines in the
+    canonical logLevel-before-theme order.
+    """
+    init_leaves = init_leaves or {}
     lines = []
     if "look" in leaves:
         lines.append(f"config.look={leaves['look']} -> source node style; not applied")
     if "theme" in leaves:
         lines.append(f"config.theme={leaves['theme']} -> colour palette; not applied")
+    if "init_logLevel" in init_leaves:
+        lines.append(
+            f"config.logLevel={init_leaves['init_logLevel']} -> logger only; not applied")
+    if "init_theme" in init_leaves:
+        lines.append(
+            f"config.theme={init_leaves['init_theme']} -> colour palette; not applied")
     return [NOTICE_HEADER[family]] + lines if lines else []
 
 

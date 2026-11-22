@@ -1,0 +1,937 @@
+{
+  "schema": "loom_journeyfam_init_0047_probes/v1",
+  "rfc": 47,
+  "rule": "One source drives the Python mirror and the C++ gate: each entry is assembled as frontmatter + '\\n'.join(body) + '\\n' and its expected_kind/expected_footer are asserted on both sides (init_admitted/admitted = draw + footer, drawn = draw without footer, themed = fallback).",
+  "entries": [
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "drawn",
+      "expected_footer": [],
+      "note": "bare init no-op"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "drawn",
+      "expected_footer": [],
+      "note": "empty payload no-op"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 0}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=0 -> logger only; not applied"
+      ],
+      "note": "logLevel only"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'dark'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "note": "theme only"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 0, 'theme': 'dark'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "note": "both keys canonical order"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {\"logLevel\": 0, \"theme\": \"dark\"}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "note": "double quotes"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "  %%{init: {'logLevel': 0, 'theme': 'dark'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "note": "indent 2"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "",
+        "   ",
+        "%%{init: {'theme': 'forest'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "note": "after blank lines"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%% leading comment",
+        "%%{init: {'theme': 'neutral'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.theme=neutral -> colour palette; not applied"
+      ],
+      "note": "after a comment"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'default'}}%%\r",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "note": "CRLF line"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 3}}%%",
+        "%%{init: {'theme': 'dark'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=3 -> logger only; not applied",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "note": "two directives, canonical footer"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'dark' # note}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "note": "value trailing comment"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'default'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "note": "admitted journey theme default"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'forest'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "note": "admitted journey theme forest"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'neutral'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.theme=neutral -> colour palette; not applied"
+      ],
+      "note": "admitted journey theme neutral"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': '1'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=1 -> logger only; not applied"
+      ],
+      "note": "admitted logLevel 1"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': '2'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=2 -> logger only; not applied"
+      ],
+      "note": "admitted logLevel 2"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': '3'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=3 -> logger only; not applied"
+      ],
+      "note": "admitted logLevel 3"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': '4'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=4 -> logger only; not applied"
+      ],
+      "note": "admitted logLevel 4"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': '5'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=5 -> logger only; not applied"
+      ],
+      "note": "admitted logLevel 5"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 'trace'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=trace -> logger only; not applied"
+      ],
+      "note": "admitted logLevel trace"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 'debug'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=debug -> logger only; not applied"
+      ],
+      "note": "admitted logLevel debug"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 'info'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=info -> logger only; not applied"
+      ],
+      "note": "admitted logLevel info"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 'warn'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=warn -> logger only; not applied"
+      ],
+      "note": "admitted logLevel warn"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 'error'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=error -> logger only; not applied"
+      ],
+      "note": "admitted logLevel error"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 'fatal'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.logLevel=fatal -> logger only; not applied"
+      ],
+      "note": "admitted logLevel fatal"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'fontFamily': 'x'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "unknown key"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'dark', 'theme': 'dark'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "duplicate key in one payload"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'dark'}}%%",
+        "%%{init: {'theme': 'dark'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "duplicate key across directives"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'neo'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "journey directive table excludes neo"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 6}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "logLevel out of range"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 'verbose'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "logLevel out of grammar"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'flowchart': {'htmlLabels': true}}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "nested object"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'dark',",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "multi-line directive"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'dark}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "unterminated quote"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'da\\rk'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "backslash inside single quotes"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'da\u0001rk'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "raw control byte"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'dark'}}%% trailing",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "trailing text after closer"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'dark'}}%% x }%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "second closer becomes interior"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init : {'theme': 'dark'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "space before init colon"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{wrap}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "non-init directive name"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'dark' # a,b}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "comma inside trailing comment"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'dark'}}%%",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me",
+        "%%{init: {'theme': 'dark'}}%%"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "non-leading theme directive gates"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "journey",
+        "  title Probe",
+        "%%{init}%%",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "drawn",
+      "expected_footer": [],
+      "note": "non-leading no-theme directive passes through"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "---\nconfig:\n  theme: redux\n---\n",
+      "body": [
+        "%%{init: {'theme': 'dark'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "G5: frontmatter leaf + keyed directive"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "---\nconfig:\n  theme: redux\n---\n",
+      "body": [
+        "%%{init}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "note": "G5: frontmatter leaf + bare init stays admitted"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "---\nconfig:\n  theme: dark\n---\n",
+      "body": [
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "journey frontmatter table excludes dark"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 'debug', 'theme': 'forest'}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Timeline native projection v1",
+        "config.logLevel=debug -> logger only; not applied",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "note": "timeline corpus shape"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'base'}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Timeline native projection v1",
+        "config.theme=base -> colour palette; not applied"
+      ],
+      "note": "base is directive-only in timeline"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'neo'}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "timeline directive table excludes neo"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'base', 'timeline': {'disableMulticolor': true}}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "content key disableMulticolor"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'default' , 'themeVariables': {",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "multi-line themeVariables"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "---\nconfig:\n  theme: base\n---\n",
+      "body": [
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "timeline frontmatter table excludes base"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "---\nconfig:\n  theme: neo\n---\n",
+      "body": [
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "admitted",
+      "expected_footer": [
+        "Timeline native projection v1",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "note": "timeline frontmatter admits neo"
+    },
+    {
+      "family": "gantt",
+      "frontmatter": "",
+      "body": [
+        "%%{init}%%",
+        "gantt",
+        "  dateFormat YYYY-MM-DD",
+        "  section S",
+        "  A task :a1, 2024-01-01, 30d"
+      ],
+      "expected_kind": "drawn",
+      "expected_footer": [],
+      "note": "gantt bare init unchanged"
+    },
+    {
+      "family": "gantt",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'logLevel': 0}}%%",
+        "gantt",
+        "  dateFormat YYYY-MM-DD",
+        "  section S",
+        "  A task :a1, 2024-01-01, 30d"
+      ],
+      "expected_kind": "drawn",
+      "expected_footer": [],
+      "note": "gantt logLevel-only stays undisclosed pass-through"
+    },
+    {
+      "family": "gantt",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'dark'}}%%",
+        "gantt",
+        "  dateFormat YYYY-MM-DD",
+        "  section S",
+        "  A task :a1, 2024-01-01, 30d"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "gantt theme directive stays gated"
+    },
+    {
+      "family": "gantt",
+      "frontmatter": "---\nconfig:\n  theme: dark\n---\n",
+      "body": [
+        "%%{init}%%",
+        "gantt",
+        "  dateFormat YYYY-MM-DD",
+        "  section S",
+        "  A task :a1, 2024-01-01, 30d"
+      ],
+      "expected_kind": "admitted",
+      "expected_footer": [
+        "Gantt native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "note": "gantt frontmatter leaf + bare init"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {theme: 'dark'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Journey native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "note": "unquoted key"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'da,rk'}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "comma inside a quoted value stays one entry"
+    }
+  ]
+}

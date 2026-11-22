@@ -134,6 +134,8 @@ constexpr std::size_t kJourneyFamNoticeLineLimit = 96u;
 constexpr std::string_view kFamilyNoticeHeader = "Timeline native projection v1";
 constexpr std::array<std::string_view, 2> kFamilyLookTable{"classic", "neo"};
 constexpr std::array<std::string_view, 10> kFamilyThemeTable{"dark", "default", "forest", "neo", "neo-dark", "neutral", "redux", "redux-dark", "redux-color", "redux-dark-color"};
+constexpr bool kFamilyInitDirectivesEnabled = true;
+constexpr std::array<std::string_view, 5> kFamilyInitThemeTable{"base", "dark", "default", "forest", "neutral"};
 
 std::optional<std::string> journey_fam_scalar(std::string_view raw, Work& work) {
     const auto trim_view = [](std::string_view value) {
@@ -175,12 +177,152 @@ bool journey_fam_notice_line(std::vector<std::string>& notices, std::string_view
     return true;
 }
 
+// RFC 0047: the leading body-directive block is a closed grammar. Only the
+// bare `init` no-op, an empty `{}`, and a flat object over
+// `logLevel`/`theme` are admitted. The split helpers honour single/double
+// quotes; a control byte, an unterminated quote or a backslash inside a
+// single-quoted string keeps the whole source (the same structural rule as
+// normalize_directive_quotes).
+constexpr std::array<std::string_view, 12> kJourneyFamLogLevels{
+    "0", "1", "2", "3", "4", "5", "trace", "debug", "info", "warn", "error", "fatal"};
+
+std::string_view journey_fam_rtrim(std::string_view value) {
+    while (!value.empty() && (value.back() == ' ' || value.back() == '\t')) value.remove_suffix(1);
+    return value;
+}
+
+std::string_view journey_fam_ltrim(std::string_view value) {
+    while (!value.empty() && value.front() == ' ') value.remove_prefix(1);
+    return value;
+}
+
+bool journey_fam_directive_quotes(std::string_view text) {
+    for (std::size_t at = 0; at < text.size();) {
+        const char quote = text[at];
+        if (quote != '\'' && quote != '"') {
+            if (static_cast<unsigned char>(quote) < 0x20) return false;
+            ++at;
+            continue;
+        }
+        ++at;
+        bool escape = false;
+        for (; at < text.size(); ++at) {
+            const char c = text[at];
+            if (quote == '\'' && c == '\\') return false;
+            if (escape) {
+                escape = false;
+                continue;
+            }
+            if (c == '\\') {
+                escape = true;
+                continue;
+            }
+            if (c == quote) break;
+            if (static_cast<unsigned char>(c) < 0x20) return false;
+        }
+        if (at == text.size()) return false;
+        ++at;
+    }
+    return true;
+}
+
+std::vector<std::string_view> journey_fam_split_commas(std::string_view text) {
+    std::vector<std::string_view> parts;
+    char quote = 0;
+    std::size_t start = 0;
+    for (std::size_t at = 0; at < text.size(); ++at) {
+        const char c = text[at];
+        if (quote) {
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == ',') {
+            parts.push_back(text.substr(start, at - start));
+            start = at + 1;
+        }
+    }
+    parts.push_back(text.substr(start));
+    return parts;
+}
+
+std::size_t journey_fam_colon(std::string_view text) {
+    char quote = 0;
+    bool escape = false;
+    for (std::size_t at = 0; at < text.size(); ++at) {
+        const char c = text[at];
+        if (quote) {
+            if (escape) {
+                escape = false;
+                continue;
+            }
+            if (c == '\\') {
+                escape = true;
+                continue;
+            }
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == ':') return at;
+    }
+    return std::string_view::npos;
+}
+
+// True when `line` is an admitted leading directive; the no-op forms fill
+// nothing. `log_level`/`theme` are shared across the whole block, so a key
+// repeated in a second directive is a duplicate and gates.
+bool journey_fam_init_directive(std::string_view line,
+                                std::span<const std::string_view> themes,
+                                std::optional<std::string>& log_level,
+                                std::optional<std::string>& theme, Work& work) {
+    line = journey_fam_rtrim(line);
+    if (!line.starts_with("%%{") || !line.ends_with("}%%") || line.size() < 7u) return false;
+    const std::string_view inner = line.substr(3u, line.size() - 6u);
+    if (!work.spend(inner.size() * 4u + 128u)) return false;
+    const std::string_view directive = journey_fam_rtrim(journey_fam_ltrim(inner));
+    if (directive == "init") return true;
+    if (!directive.starts_with("init:")) return false;
+    const std::string_view payload =
+        journey_fam_rtrim(journey_fam_ltrim(directive.substr(5u)));
+    if (payload.size() < 2u || payload.front() != '{' || payload.back() != '}') return false;
+    const std::string_view interior = payload.substr(1u, payload.size() - 2u);
+    if (interior.find_first_of("{}[]") != std::string_view::npos) return false;
+    if (!journey_fam_directive_quotes(interior)) return false;
+    if (journey_fam_rtrim(journey_fam_ltrim(interior)).empty()) return true;
+    for (const std::string_view entry : journey_fam_split_commas(interior)) {
+        const auto colon = journey_fam_colon(entry);
+        if (colon == std::string_view::npos) return false;
+        const auto key = journey_fam_scalar(entry.substr(0u, colon), work);
+        const auto value = journey_fam_scalar(entry.substr(colon + 1u), work);
+        if (!key || !value) return false;
+        if (*key == "logLevel") {
+            if (log_level ||
+                std::ranges::find(kJourneyFamLogLevels, *value) == kJourneyFamLogLevels.end())
+                return false;
+            log_level = *value;
+        } else if (*key == "theme") {
+            if (theme || std::ranges::find(themes, *value) == themes.end()) return false;
+            theme = *value;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
 // nullopt: the whole source stays whole-source. Otherwise the bounded
 // disclosure footer (possibly empty), emitted below the art by the caller.
 std::optional<std::vector<std::string>> journey_fam_visual_config(
     std::string_view source, std::string_view header,
     std::span<const std::string_view> looks, std::span<const std::string_view> themes,
-    Work& work) {
+    bool init_enabled, std::span<const std::string_view> init_themes, Work& work) {
     const auto matches = [](std::span<const std::string_view> table,
                             const std::string& value) {
         return std::ranges::find(table, value) != table.end();
@@ -242,12 +384,53 @@ std::optional<std::vector<std::string>> journey_fam_visual_config(
             }
         }
     }
-    // The in-body themed initializer stays a whole-source gate (unchanged).
+    // RFC 0047: the leading directive block is admitted for the enabled
+    // families; a frontmatter visual leaf and a keyed directive are mutually
+    // exclusive. The legacy "any body %%{ line that mentions theme keeps the
+    // whole source" rule still covers everything from the diagram header on.
+    std::optional<std::string> init_log_level, init_theme;
+    std::size_t tail_start = 0u;
+    if (init_enabled) {
+        if (!work.spend(body.size() * 2u + 256u)) return std::nullopt;
+        std::size_t pos = 0u;
+        bool saw_directive = false;
+        while (pos <= body.size()) {
+            const auto eol = body.find('\n', pos);
+            std::string_view line = body.substr(
+                pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
+            const std::size_t next =
+                eol == std::string_view::npos ? body.size() + 1u : eol + 1u;
+            if (!line.empty() && line.back() == '\r') line.remove_suffix(1u);
+            const std::string_view trimmed = journey_fam_ltrim(line);
+            if (trimmed.empty() || (trimmed.starts_with("%%") && !trimmed.starts_with("%%{"))) {
+                pos = next;
+                continue;
+            }
+            if (!trimmed.starts_with("%%{")) {
+                tail_start = pos;
+                break;
+            }
+            if (!journey_fam_init_directive(trimmed, init_themes, init_log_level, init_theme,
+                                            work))
+                return std::nullopt;
+            saw_directive = true;
+            pos = next;
+            if (eol == std::string_view::npos) {
+                tail_start = body.size();
+                break;
+            }
+        }
+        // A directives-only body has no header to start the tail scan; the
+        // admitted block must not be re-read by the legacy rule.
+        if (saw_directive && tail_start == 0u) tail_start = body.size();
+        if (fields != 0u && (init_log_level || init_theme)) return std::nullopt;
+    }
+    const std::string_view tail = body.substr(tail_start);
     for (std::size_t pos = 0;;) {
-        const auto eol = body.find('\n', pos);
-        const std::string_view line = body.substr(
+        const auto eol = tail.find('\n', pos);
+        const std::string_view line = tail.substr(
             pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
-        pos = eol == std::string_view::npos ? body.size() : eol + 1u;
+        pos = eol == std::string_view::npos ? tail.size() + 1u : eol + 1u;
         const auto trimmed = line.find_first_not_of(" \t");
         if (trimmed != std::string_view::npos && line.substr(trimmed).starts_with("%%{") &&
             line.find("theme") != std::string_view::npos)
@@ -255,7 +438,7 @@ std::optional<std::vector<std::string>> journey_fam_visual_config(
         if (eol == std::string_view::npos) break;
     }
     std::vector<std::string> notices;
-    if (fields != 0u) {
+    if (fields != 0u || init_log_level || init_theme) {
         if (!journey_fam_notice_line(notices, header, work)) return std::nullopt;
         if ((fields & Look) &&
             !journey_fam_notice_line(notices,
@@ -266,6 +449,18 @@ std::optional<std::vector<std::string>> journey_fam_visual_config(
         if ((fields & Theme) &&
             !journey_fam_notice_line(notices,
                                      "config.theme=" + theme_value +
+                                         " -> colour palette; not applied",
+                                     work))
+            return std::nullopt;
+        if (init_log_level &&
+            !journey_fam_notice_line(
+                notices, "config.logLevel=" + *init_log_level +
+                             " -> logger only; not applied",
+                work))
+            return std::nullopt;
+        if (init_theme &&
+            !journey_fam_notice_line(notices,
+                                     "config.theme=" + *init_theme +
                                          " -> colour palette; not applied",
                                      work))
             return std::nullopt;
@@ -287,7 +482,8 @@ std::optional<std::vector<std::string>> timeline_layout(std::string_view source,
 
     const std::string_view body = timeline_body(source);
     const auto visual = journey_fam_visual_config(
-        source, kFamilyNoticeHeader, kFamilyLookTable, kFamilyThemeTable, work);
+        source, kFamilyNoticeHeader, kFamilyLookTable, kFamilyThemeTable, kFamilyInitDirectivesEnabled,
+        kFamilyInitThemeTable, work);
     if (!visual) return {};
     const std::vector<std::string>& notices = *visual;
 

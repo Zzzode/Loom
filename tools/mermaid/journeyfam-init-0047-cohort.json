@@ -1,0 +1,381 @@
+{
+  "schema": "loom_mermaid_journeyfam_init_0047_cohort/v1",
+  "rfc": 47,
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "a single-line leading %%{init: {...}}%% directive over logLevel/theme with a value inside the family's closed directive table, no frontmatter visual leaf",
+    "roots": [
+      "journey",
+      "timeline",
+      "gantt"
+    ],
+    "phase": "P1-initializers",
+    "cohort_digest": "333fb8658fb91722fab9138a07190e93b3521b34fcf631686f41cf7e6c4ac960",
+    "probes_sha256": "0df2234cceafac1ebd743d4bdce785bdea5aaa958d031394ccdf63703788584a",
+    "families": {
+      "journey": 4,
+      "timeline": 5,
+      "gantt": 0
+    },
+    "exclusions": "timeline disableMulticolor (content key) and the multi-line themeVariables override stay whole-source",
+    "width_policy": "wide_240 admission only; narrow_40 is measured per row."
+  },
+  "review": {
+    "phases": {
+      "P1-initializers": {
+        "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, RFC 0047 journey-family init-directive admission, 2026-11-22)",
+        "date": "2026-11-22",
+        "verdict": "approved",
+        "note": "Filled at phase closure: the probe artifact review, the per-row frame = twin + footer evidence, and the paired flip/negative audit."
+      }
+    },
+    "probes_sha256": "0df2234cceafac1ebd743d4bdce785bdea5aaa958d031394ccdf63703788584a",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 9,
+    "predicted_draw": 9,
+    "journey": 4,
+    "timeline": 5,
+    "gantt": 0
+  },
+  "rows": [
+    {
+      "path": "journey/pr-check/dark-theme.mmd",
+      "family": "journey",
+      "phase": "P1-initializers",
+      "sha256": "a0389f0f169bc3b033b93b2944fb66ab0d7d759f7c60c549dde9e08dd342ddcc",
+      "manifest_sha256": "a0389f0f169bc3b033b93b2944fb66ab0d7d759f7c60c549dde9e08dd342ddcc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "directive": {
+        "logLevel": "0",
+        "theme": "dark"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the frontmatter and every leading %%{init...}%% line"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Journey native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0047 journey leading %%{init}%% admission; the directives are logger/palette-only and not applied, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "journey/pr-check/default-theme.mmd",
+      "family": "journey",
+      "phase": "P1-initializers",
+      "sha256": "411885ac4b9fec77df3fb4276bf47d8b268e75553bc5e666cf6a1b059697a684",
+      "manifest_sha256": "411885ac4b9fec77df3fb4276bf47d8b268e75553bc5e666cf6a1b059697a684",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "directive": {
+        "logLevel": "0",
+        "theme": "default"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the frontmatter and every leading %%{init...}%% line"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Journey native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0047 journey leading %%{init}%% admission; the directives are logger/palette-only and not applied, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "journey/pr-check/forest-theme.mmd",
+      "family": "journey",
+      "phase": "P1-initializers",
+      "sha256": "1f98db93ccb06c76b29b81368e8694ac226edf9fb38b1a00b993ff3c5a24c32a",
+      "manifest_sha256": "1f98db93ccb06c76b29b81368e8694ac226edf9fb38b1a00b993ff3c5a24c32a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "directive": {
+        "logLevel": "0",
+        "theme": "forest"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the frontmatter and every leading %%{init...}%% line"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Journey native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0047 journey leading %%{init}%% admission; the directives are logger/palette-only and not applied, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "journey/pr-check/neutral-theme.mmd",
+      "family": "journey",
+      "phase": "P1-initializers",
+      "sha256": "699f45872f83e12640d9d971e5870045dc26f5e4cc031ff5b211432feb73fa35",
+      "manifest_sha256": "699f45872f83e12640d9d971e5870045dc26f5e4cc031ff5b211432feb73fa35",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "directive": {
+        "logLevel": "0",
+        "theme": "neutral"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the frontmatter and every leading %%{init...}%% line"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Journey native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=neutral -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0047 journey leading %%{init}%% admission; the directives are logger/palette-only and not applied, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/10-should-render-a-simple-timeline-in-forest-theme.mmd",
+      "family": "timeline",
+      "phase": "P1-initializers",
+      "sha256": "d060671d199957559b5b1faa06114e1881ca4f5c0f28e2c227b502169a607639",
+      "manifest_sha256": "d060671d199957559b5b1faa06114e1881ca4f5c0f28e2c227b502169a607639",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "directive": {
+        "logLevel": "debug",
+        "theme": "forest"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the frontmatter and every leading %%{init...}%% line"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.logLevel=debug -> logger only; not applied",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0047 timeline leading %%{init}%% admission; the directives are logger/palette-only and not applied, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/nightly-check/9-should-render-a-simple-timeline-in-neutral-theme.mmd",
+      "family": "timeline",
+      "phase": "P1-initializers",
+      "sha256": "6d1379b7457b27657087393319a8125b4a48a1d005d5c6d325f091359370b261",
+      "manifest_sha256": "6d1379b7457b27657087393319a8125b4a48a1d005d5c6d325f091359370b261",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "directive": {
+        "logLevel": "debug",
+        "theme": "neutral"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the frontmatter and every leading %%{init...}%% line"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.logLevel=debug -> logger only; not applied",
+        "config.theme=neutral -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0047 timeline leading %%{init}%% admission; the directives are logger/palette-only and not applied, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/pr-check/6-should-render-a-simple-timeline-in-base-theme.mmd",
+      "family": "timeline",
+      "phase": "P1-initializers",
+      "sha256": "e8633c89d5389d8663578e67504ff54fff9d21fe0625a0bae16fb8d83552d245",
+      "manifest_sha256": "e8633c89d5389d8663578e67504ff54fff9d21fe0625a0bae16fb8d83552d245",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "directive": {
+        "logLevel": "debug",
+        "theme": "base"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the frontmatter and every leading %%{init...}%% line"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.logLevel=debug -> logger only; not applied",
+        "config.theme=base -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0047 timeline leading %%{init}%% admission; the directives are logger/palette-only and not applied, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/pr-check/7-should-render-a-simple-timeline-in-default-theme.mmd",
+      "family": "timeline",
+      "phase": "P1-initializers",
+      "sha256": "51e6f38debeee2702396a2683661fda9d8edd182221855310dec8aeea045e018",
+      "manifest_sha256": "51e6f38debeee2702396a2683661fda9d8edd182221855310dec8aeea045e018",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "directive": {
+        "logLevel": "debug",
+        "theme": "default"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the frontmatter and every leading %%{init...}%% line"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.logLevel=debug -> logger only; not applied",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0047 timeline leading %%{init}%% admission; the directives are logger/palette-only and not applied, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/pr-check/8-should-render-a-simple-timeline-in-dark-theme.mmd",
+      "family": "timeline",
+      "phase": "P1-initializers",
+      "sha256": "07c53016e564a3492ab893d86a8ca97c672611251e55ffda96bcdf23d3b842fa",
+      "manifest_sha256": "07c53016e564a3492ab893d86a8ca97c672611251e55ffda96bcdf23d3b842fa",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "directive": {
+        "logLevel": "debug",
+        "theme": "dark"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the frontmatter and every leading %%{init...}%% line"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.logLevel=debug -> logger only; not applied",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0047 timeline leading %%{init}%% admission; the directives are logger/palette-only and not applied, so the frame equals the directive-free twin's plus the bounded footer."
+    }
+  ]
+}

@@ -1874,3 +1874,46 @@ Attach a short efficiency section to each closure report, answering:
    invisible whenever the old and new ledgers happen to agree; and when a mirror and its
    gate can disagree about a *combination* of admitted leaves, pin the combination with
    one positive and two order-swapped negatives in the same battery.
+
+### 2026-11-22 — RFC 0047 (journey-family init directive) implementation retro
+
+1. **Gate wall-clock.** The new gate is ~7 s for 5 tests (58-60 probe entries driven
+   through the public renderer twice); timeline 1.4 s, journey 0.5 s, 0040 2 s;
+   `ctest -L mermaid` 1508/1508 in 535 s. Debug OfficialMatrix 259 s, release 34 s. Full
+   debug ctest in `/tmp/loom-logs/ctest-full-dbg-0047.log`.
+2. **False green/red.** Three self-inflicted, all caught before shipping: (a) the
+   selection scan used `%%\{[^}]*\}%%`, which cannot match a nested `init: { ... }%%`
+   payload, so it reported 17 directive rows and a 10-row slice — a structured line scan
+   and a render probe corrected it to 9; (b) a `nohup ... &` release build reported
+   "completed" when the wrapper shell exited while the real builder ran on, and the stale
+   release binary produced the *previous* RFC's matrix (1342/`10e819f8…`) — the release
+   matrix is now always confirmed by `pgrep -f '[c]make --build'` before it is trusted;
+   (c) the twin+footer composition initially double-counted the fenced block's trailing
+   blank row (false red), fixed by dropping it before splicing, the pie_0042 pattern.
+3. **Rework.** Two review round-trips were avoidable: PRR r1/r2 bounced the mirror-fidelity
+   probe because it was specified as "a table both sides assert" without a single-source
+   artifact or a review-bound digest — the third round needed a committed JSON file read
+   by both sides plus `selection.probes_sha256` hardcoded. Specify an oracle artifact with
+   its binding mechanism up front. The code review then caught that the digest was still
+   `PENDING` (inert binding) and that the per-row oracle only asserted draw+footer rather
+   than frame = twin + footer; both were test-only fixes.
+4. **Build fan-out.** Three `.cpp` body recompiles, archive + dependent relinks, no BMI
+   change; one new test executable and one hermetic ctest.
+5. **Cheaper approach evidence.** Focused gates ~11 s versus the 1508-test mermaid label
+   (535 s); release matrix byte-identical to debug (`86e49423…`), so the census used release.
+6. **Near-budget tests (measured, follow-up).** Three consecutive full runs each
+   timed out one of two mermaid tests that sit at 80-100% of their budgets:
+   `MermaidOfficialConfig110Native.EveryWholeSourceIsObservedBeforeDecodeAndAllProfilesRemainMandatory`
+   (300 s budget; 240.09 s in the RFC 0046 run; isolated 213/250/260 s) failed all
+   three runs, and `MermaidBlock58AdmissionJoin.RejectsUnreviewedIncompleteOrBorrowedVerdicts`
+   (60 s budget; 51.84 s in run1; isolated 25 s) failed once. Both are pre-existing
+   budget-margin marathons, not regressions, but they make a green full-suite run
+   load-dependent; a future slice should either cut their scope or calibrate the
+   budgets against measured isolated times.
+7. **New entry.** Rule 39: a selection scan over fixtures must strip the frontmatter first
+   and classify body lines structurally — a folded `description:` payload can contain
+   directive-looking prose (the journey theme fixtures do), and a regex that stops at the
+   first `}` undercounts nested `%%{init: {...}}%%` payloads. Rule 40: never trust a
+   background builder's wrapper exit; only the builder process's own exit (or its absence
+   via `pgrep -f '[c]make --build'`) proves a fresh binary, and a stale binary can silently
+   reproduce the previous milestone's matrix.

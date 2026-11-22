@@ -241,7 +241,15 @@ The code of the three copies remains byte-identical; only these constants differ
 
 ## Production Readiness Review
 
-To be completed at the `implementable` gate.
+| Area | Answer |
+|---|---|
+| **Correctness & tests** | New behaviour is covered by 5 gtests + 1 hermetic `--check` (registered in `tests/ui/CMakeLists.txt`), including a per-row twin/footer oracle and per-family positive/negative batteries; every migrated ledger bucket flip is paired with a positive on the same path and a new neighbouring negative. Known flakes (`ServerMain.DirectConnect*`) are unrelated roots and are respected by isolated reruns. Serial ctest is the signal; no CI gate. |
+| **Build system** | No module/interface change: the edit is inside the bodies of three existing `loom.ui.visual.mermaid` partitions, so only those objects (plus the module's dyndep consumers) rebuild. No new imports, no BMI growth beyond the TU-local helpers, no concurrency caps. `-Werror` debug and release both required. |
+| **Rollback** | One atomic commit; `git revert` restores the 617 roster and every ledger/test pin. No persisted data, wire format, CLI, config path or settings change. |
+| **Observability** | No new diagnostics. The disclosure footer is the user-visible record of the substituted upstream behaviour, matching RFC 0040/0045/0046. Session traces are untouched. |
+| **Documentation** | design-decisions entry (directive admission, cross-channel asymmetry, gantt switch), README RFC index, d117 family rows, d419 selection, d420 closure, engineering-efficiency retro. |
+| **Deletion** | The legacy substring loop is **replaced** in the two enabled copies (not kept alongside); gantt retains it verbatim by design. No dead code added. |
+| **Deprecation** | None: no shape or module is replaced; the closed frontmatter contract is unchanged. |
 
 ## Rollout and rollback
 

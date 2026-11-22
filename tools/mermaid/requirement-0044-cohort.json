@@ -1,0 +1,702 @@
+{
+  "schema": "loom_mermaid_requirement_0044_cohort/v1",
+  "rfc": 44,
+  "phase": "P1-layout",
+  "admission": {
+    "shape": "description envelope + config subtree carrying only the D-066 F0 / RFC 0037 leaves plus exactly one layout: elk",
+    "theme_tables": {
+      "logLevel": [
+        "0",
+        "1",
+        "2"
+      ],
+      "fontFamily": [
+        "courier"
+      ],
+      "htmlLabels": [
+        "false",
+        "true"
+      ],
+      "look": [
+        "classic",
+        "handDrawn",
+        "neo"
+      ],
+      "theme": [
+        "default",
+        "neo",
+        "neo-dark",
+        "redux",
+        "redux-color",
+        "redux-dark",
+        "redux-dark-color"
+      ],
+      "layout": [
+        "elk"
+      ]
+    },
+    "footer": {
+      "header": "Requirement native projection v1",
+      "leaf_order": [
+        "config.logLevel",
+        "config.fontFamily",
+        "config.htmlLabels",
+        "config.look",
+        "config.theme",
+        "config.layout"
+      ],
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "prefer a footer-free drawn twin (no config block); else a drawn twin whose footer block is a byte-prefix of the source footer; strip the twin footer, then append the source footer"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "requirement fallback rows whose only unsupported config leaf is layout: elk and whose body is byte-identical to a drawn non-ELK sibling",
+    "census": {
+      "rfc0037": 120,
+      "f0": 8,
+      "base": 4
+    },
+    "path_pin": [
+      "requirement/nightly-check/a-not-so-simple-requirement-diagram-elk-layout.mmd",
+      "requirement/nightly-check/a-not-so-simple-requirement-diagram-without-htmllabels-elk-layout.mmd",
+      "requirement/nightly-check/a-requirement-diagram-with-bt-direction-elk-layout.mmd",
+      "requirement/nightly-check/a-requirement-diagram-with-empty-information-elk-layout.mmd",
+      "requirement/nightly-check/a-requirement-diagram-with-lr-direction-elk-layout.mmd",
+      "requirement/nightly-check/a-requirement-diagram-with-rl-direction-elk-layout.mmd",
+      "requirement/nightly-check/a-requirement-diagram-with-tb-direction-elk-layout.mmd",
+      "requirement/nightly-check/a-simple-requirement-diagram-elk-layout.mmd",
+      "requirement/nightly-check/a-simple-requirement-diagram-without-htmllabels-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-and-without-information-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-without-htmllabels-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-markdown-text-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-markdown-text-without-htmllabels-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-quoted-text-for-spaces-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-without-htmllabels-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-without-htmllabels-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-without-htmllabels-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-elk-layout.mmd",
+      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-without-htmllabels-elk-layout.mmd"
+    ],
+    "cohort_digest": "a3b331aedfaface0b0f385d458410ad1b50f67d1f8eccaa9dcafeb5a81911c16",
+    "twin_kinds": {
+      "footer-free": 20,
+      "footer-prefix": 3
+    }
+  },
+  "counts": {
+    "originals": 172,
+    "drawn": 144,
+    "admitted": 23,
+    "remaining": 5
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, RFC 0044 requirement elk admission, 2026-11-22; r1 REQUEST-CHANGES on one MAJOR, fixed, then APPROVE)",
+    "date": "2026-11-22",
+    "verdict": "approved",
+    "note": "Reviewer ran the live gate and the two family tests. Verified the Layout bit and indent-2 branch, the append site's height/Work guards and the styled-row legend order, the three verdict flips (each with a layout: dagre negative), the matrix branch position, and the twin composition (footer_lines includes the header; strip then append). MAJOR fixed before approval: the generator's admits()/scalar mirror was naive (no indent check, no quote-aware comment/dequote) and would have misclassified on a corpus refresh; it now mirrors requirement_inert_scalar and rejects indent != 2, duplicates and namespaced entries, with direct probes matching every C++ battery verdict and all three --check entries reproducing byte-identically. Residual (documented, no action): admits() does not mirror the title ink/width rules, and no 0044 row carries a title."
+  },
+  "rows": [
+    {
+      "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "ef20afc9797b83935ef40701f00737a62463a3fafaea48a962612e848eb076fc",
+      "manifest_sha256": "ef20afc9797b83935ef40701f00737a62463a3fafaea48a962612e848eb076fc",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-default.mmd",
+        "sha256": "0d663c6f705c243b7938a610b414942ca159053a8ef3e4dd0338b5cd3e81528e",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-without-htmllabels-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "0c787dbdeae0587c8bd42a211823e8f60ba0350318e42efda64dd02a99dc1ac8",
+      "manifest_sha256": "0c787dbdeae0587c8bd42a211823e8f60ba0350318e42efda64dd02a99dc1ac8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.htmlLabels=false -> native text labels; not applied",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/a-not-so-simple-requirement-diagram-default.mmd",
+        "sha256": "0d663c6f705c243b7938a610b414942ca159053a8ef3e4dd0338b5cd3e81528e",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-bt-direction-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "8b84b3c0d762f86198f59f23e70d4d06ca0fc6e04c23a75e51b064ea5743ae87",
+      "manifest_sha256": "8b84b3c0d762f86198f59f23e70d4d06ca0fc6e04c23a75e51b064ea5743ae87",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/a-requirement-diagram-with-bt-direction-default.mmd",
+        "sha256": "4c5bd8f6e4d37eb38b652b44910fbcd19d341947439b5198dce072d98dba7062",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-empty-information-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "a571c71f597537475c754465dd443c40adeb8a42347353a42512effd80792403",
+      "manifest_sha256": "a571c71f597537475c754465dd443c40adeb8a42347353a42512effd80792403",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/a-requirement-diagram-with-empty-information-default.mmd",
+        "sha256": "29e1dbfc28307c32d863b8f87912d6009ed98a313a1fc19eb0fa2449dadc8321",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-lr-direction-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "568b94588b946ed1555a19f05988aae77c66d85729c10722c83b25eebe8b5a00",
+      "manifest_sha256": "568b94588b946ed1555a19f05988aae77c66d85729c10722c83b25eebe8b5a00",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/a-requirement-diagram-with-lr-direction-default.mmd",
+        "sha256": "f950ce72b3330c7d431c25159856576c6203f01cd7ea74f84ab37d6b681f8cd3",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-rl-direction-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "78f4a00c1cac255c179de5228731717d4bfc83af68a635fe5c74f6b3331d495d",
+      "manifest_sha256": "78f4a00c1cac255c179de5228731717d4bfc83af68a635fe5c74f6b3331d495d",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/a-requirement-diagram-with-rl-direction-default.mmd",
+        "sha256": "c80dcf6db0a78fd625b0518119ba53558fde7542866c72febebfdea924b29740",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/a-requirement-diagram-with-tb-direction-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "bcce382bebc6f97e175e3f771e76dc95ecbe7c8b7db118a8afdb08c46c921768",
+      "manifest_sha256": "bcce382bebc6f97e175e3f771e76dc95ecbe7c8b7db118a8afdb08c46c921768",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/a-requirement-diagram-with-tb-direction-default.mmd",
+        "sha256": "2c597fd583728204b1454c54f9645449c639e533b0c425085933360a0a86ecc6",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "b2ebf5891f7f110f3b7f8718e2107227835f6c42eed10b640b84e7f4dbf8e88b",
+      "manifest_sha256": "b2ebf5891f7f110f3b7f8718e2107227835f6c42eed10b640b84e7f4dbf8e88b",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+        "sha256": "33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/a-simple-requirement-diagram-without-htmllabels-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "4d811c385bc377327238a32c3ef58553833eb606b41cdbf4cea7a54c8ba0c807",
+      "manifest_sha256": "4d811c385bc377327238a32c3ef58553833eb606b41cdbf4cea7a54c8ba0c807",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.htmlLabels=false -> native text labels; not applied",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/a-simple-requirement-diagram-default.mmd",
+        "sha256": "33a883e2a8536ae5d42d3baa5c7e666602ea81435ae840b8e13c43ac5a5aab20",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-and-without-information-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "e2667ead6b86dcd8e34cf2e6a51b00bea1836fcfb8395b0a5c9fd21f70c1d968",
+      "manifest_sha256": "e2667ead6b86dcd8e34cf2e6a51b00bea1836fcfb8395b0a5c9fd21f70c1d968",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/requirements-and-elements-with-and-without-information-default.mmd",
+        "sha256": "de9241221c9e39174077a3ae6cd94f8b90e06efeb41388eed27ae5b6b0affd73",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "21243258b1b72270f6970de1b3c7f2f64b4c6e35ae819c7f603ae3d73998e0c2",
+      "manifest_sha256": "21243258b1b72270f6970de1b3c7f2f64b4c6e35ae819c7f603ae3d73998e0c2",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-default.mmd",
+        "sha256": "f1a7236f3f3ac0e6bf621046f1cced10c65535bdb7d265226999888a3278136c",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-without-htmllabels-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "0dbc2580bfe6910652d2d0c9c3f27a3c46a30262207235ed83dcda7f7a34a0ed",
+      "manifest_sha256": "0dbc2580bfe6910652d2d0c9c3f27a3c46a30262207235ed83dcda7f7a34a0ed",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.htmlLabels=false -> native text labels; not applied",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-default.mmd",
+        "sha256": "f1a7236f3f3ac0e6bf621046f1cced10c65535bdb7d265226999888a3278136c",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "45d690226263bf415318968858e489d4dac3dede46ff5914472f230356d31bf0",
+      "manifest_sha256": "45d690226263bf415318968858e489d4dac3dede46ff5914472f230356d31bf0",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd",
+        "sha256": "f6191d86b05c8b654c0ecb9de0fc7744d0e00b8f0a9fe681981e8f2d4f52d9c8",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-without-htmllabels-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "966b484df656e76a4425cb318c99f7dd909cbe6139911a4c594aae07ed5daea7",
+      "manifest_sha256": "966b484df656e76a4425cb318c99f7dd909cbe6139911a4c594aae07ed5daea7",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.htmlLabels=false -> native text labels; not applied",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/requirements-and-elements-with-markdown-text-default.mmd",
+        "sha256": "f6191d86b05c8b654c0ecb9de0fc7744d0e00b8f0a9fe681981e8f2d4f52d9c8",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-quoted-text-for-spaces-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "62ddcfe2d19fe18e6edc59c96ef6b59c3c187f284f8f609e2647cb02e0ea4dc0",
+      "manifest_sha256": "62ddcfe2d19fe18e6edc59c96ef6b59c3c187f284f8f609e2647cb02e0ea4dc0",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/requirements-and-elements-with-quoted-text-for-spaces-default.mmd",
+        "sha256": "1fbeae16c5c88aacc7dca198913f9e0278ef876c123274b6cb286035eb74d8b5",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "1c861f644571b77c5a1f6b92ccda8fd04a890e661cf7bf61365d4718b91ba748",
+      "manifest_sha256": "1c861f644571b77c5a1f6b92ccda8fd04a890e661cf7bf61365d4718b91ba748",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-default.mmd",
+        "sha256": "5f427a6fc1446482f144d9d50c18b7ab4b772509fb5ce60376e1c0c14d2b32e8",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-without-htmllabels-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "4c66189994f68f5a77cc1649bae3e0a4e38240cfe1a5705a091d729d9d2a5dd5",
+      "manifest_sha256": "4c66189994f68f5a77cc1649bae3e0a4e38240cfe1a5705a091d729d9d2a5dd5",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.htmlLabels=false -> native text labels; not applied",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-prefix",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-without-htmllabels-default.mmd",
+        "sha256": "ce8efef8eebb0aa282a629c0e735714ceed056ba77c677262ebe4ffe115bb0bc",
+        "footer_lines": [
+          "Requirement native projection v1",
+          "config.htmlLabels=false -> native text labels; not applied"
+        ]
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "7ea0c32b74514df8577c336b6ba30ec71ac80c3aeadfa8a17b633cef4d3b5d19",
+      "manifest_sha256": "7ea0c32b74514df8577c336b6ba30ec71ac80c3aeadfa8a17b633cef4d3b5d19",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-default.mmd",
+        "sha256": "820897c61fa254dba3aacf0c911d29d12868fa2a049ea774040e0a53a95dd6dd",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-without-htmllabels-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "4d96fe530303e8efea1ee8bc79f3081fffd68263a14650e1017fe585b783dbc9",
+      "manifest_sha256": "4d96fe530303e8efea1ee8bc79f3081fffd68263a14650e1017fe585b783dbc9",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.htmlLabels=false -> native text labels; not applied",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-default.mmd",
+        "sha256": "820897c61fa254dba3aacf0c911d29d12868fa2a049ea774040e0a53a95dd6dd",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "eac3a10448665d1e9274a4d0e41ae7238a8e2fd2196e6d9c91e7cbb897be42d1",
+      "manifest_sha256": "eac3a10448665d1e9274a4d0e41ae7238a8e2fd2196e6d9c91e7cbb897be42d1",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-default.mmd",
+        "sha256": "4dac25a71106ec55a1e13b4eac8e592d4d3e295bd425c96dfc12249d29a0e305",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-without-htmllabels-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "9e491609ac28b45c131ced75baf3e736d1f3e38005bad6f1132774d8c2cfaf28",
+      "manifest_sha256": "9e491609ac28b45c131ced75baf3e736d1f3e38005bad6f1132774d8c2cfaf28",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.htmlLabels=false -> native text labels; not applied",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-prefix",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-without-htmllabels-default.mmd",
+        "sha256": "510efb9e33dab0f96672e7dd60253558698e304384b8e444b33b9b37f9f89eef",
+        "footer_lines": [
+          "Requirement native projection v1",
+          "config.htmlLabels=false -> native text labels; not applied"
+        ]
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "128364b49a5f068ff6905de695e799ddaba7595718fb135698974e559f26a5f1",
+      "manifest_sha256": "128364b49a5f068ff6905de695e799ddaba7595718fb135698974e559f26a5f1",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-free",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-default.mmd",
+        "sha256": "6debb8435dfea933156117469e0716ab82eb2fbe5d6dab2af25647142e4fc262",
+        "footer_lines": []
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-without-htmllabels-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "228057ed4d5450920434493bab71cbf1d701abcbf70846a6c53c58c9d0d6d829",
+      "manifest_sha256": "228057ed4d5450920434493bab71cbf1d701abcbf70846a6c53c58c9d0d6d829",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.htmlLabels=false -> native text labels; not applied",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "footer-prefix",
+        "path": "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-without-htmllabels-default.mmd",
+        "sha256": "bc43bcc1865013887d1f8402ca3b244e0a218b9d68ea0d42fcd9b61205579b41",
+        "footer_lines": [
+          "Requirement native projection v1",
+          "config.htmlLabels=false -> native text labels; not applied"
+        ]
+      },
+      "ledger_note": "inert config.layout leaf admitted by RFC 0044; the native text projection draws no geometry, the engine is never applied, and the footer discloses it"
+    }
+  ]
+}

@@ -1,13 +1,13 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 663,
+  "total_fallback": 640,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
     "dagre_layout_tuning": 18,
     "edge_animation_metadata": 82,
-    "elk_layout_engine": 38,
+    "elk_layout_engine": 15,
     "family_residual:architecture": 4,
     "family_residual:c4": 9,
     "family_residual:class-diagram": 6,
@@ -95,8 +95,8 @@
   "predicate_sufficiency": {
     "classdef_styling": {
       "originals_matching_predicate": 147,
-      "drawn_among_matches": 41,
-      "fallback_among_matches": 106,
+      "drawn_among_matches": 47,
+      "fallback_among_matches": 100,
       "sufficient_blocker": false
     },
     "click_interactive_callback": {
@@ -119,8 +119,8 @@
     },
     "elk_layout_engine": {
       "originals_matching_predicate": 79,
-      "drawn_among_matches": 39,
-      "fallback_among_matches": 40,
+      "drawn_among_matches": 62,
+      "fallback_among_matches": 17,
       "sufficient_blocker": false
     },
     "git_cherry_pick": {
@@ -131,8 +131,8 @@
     },
     "htmllabels_false": {
       "originals_matching_predicate": 220,
-      "drawn_among_matches": 113,
-      "fallback_among_matches": 107,
+      "drawn_among_matches": 121,
+      "fallback_among_matches": 99,
       "sufficient_blocker": false
     },
     "icon_font_glyphs": {
@@ -412,30 +412,7 @@
       "flowchart/pr-check/3-layout-elk-subgraphs.mmd",
       "flowchart/visual-check/should-keep-the-true-entry-on-top-when-a-back-edge-feeds-it-79.mmd",
       "flowchart/visual-check/subgraph-titles-wider-than-children.mmd",
-      "requirement/nightly-check/a-not-so-simple-requirement-diagram-elk-layout.mmd",
-      "requirement/nightly-check/a-not-so-simple-requirement-diagram-without-htmllabels-elk-layout.mmd",
-      "requirement/nightly-check/a-requirement-diagram-with-bt-direction-elk-layout.mmd",
-      "requirement/nightly-check/a-requirement-diagram-with-empty-information-elk-layout.mmd",
-      "requirement/nightly-check/a-requirement-diagram-with-lr-direction-elk-layout.mmd",
-      "requirement/nightly-check/a-requirement-diagram-with-rl-direction-elk-layout.mmd",
-      "requirement/nightly-check/a-requirement-diagram-with-tb-direction-elk-layout.mmd",
-      "requirement/nightly-check/a-simple-requirement-diagram-elk-layout.mmd",
-      "requirement/nightly-check/a-simple-requirement-diagram-without-htmllabels-elk-layout.mmd",
       "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-and-without-information-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-long-and-short-text-without-htmllabels-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-markdown-text-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-markdown-text-without-htmllabels-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-quoted-text-for-spaces-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-class-statement-without-htmllabels-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-classes-with-shorthand-syntax-without-htmllabels-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-style-statement-without-htmllabels-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-elk-layout.mmd",
-      "requirement/nightly-check/requirements-and-elements-with-styles-applied-from-the-default-class-and-other-styles-without-htmllabels-elk-layout.mmd",
       "state-diagram-v2/nightly-check/elk/elk-composite-entry-default-centering.mmd",
       "state-diagram-v2/nightly-check/elk/elk-notes-keep-their-layout.mmd",
       "state-diagram-v2/nightly-check/elk/elk-start-end-edge-centering.mmd",

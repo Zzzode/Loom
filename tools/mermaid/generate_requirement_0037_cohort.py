@@ -8,7 +8,8 @@ rows into the four classes RFC 0037 measured:
     `config:` subtree carries only the F0 leaves (`htmlLabels`, `logLevel`,
     `fontFamily`) plus the admitted `look` (P1), `theme` (P2) and the top-level
     `title:` (P3);
-  * `config.layout` rows (elk layout engine) -- capability debt;
+  * `config.layout` rows (elk layout engine) -- RFC 0044 admits 23 of the 24
+    (the 24th has no drawn twin); the list below stays source-shape frozen;
   * `config.flowchart.*` (namespaced subtree) -- closed by the D-066 F0
     boundary;
   * malformed envelopes -- fail closed.
@@ -490,7 +491,8 @@ def build(repo_root: pathlib.Path):
             "phase_digests": {phase: phase_digest([
                 {"path": rel, "sha256": sha256_bytes((cases / rel).read_bytes())}
                 for rel, _, _ in sorted(buckets[phase])]) for phase in ALL_PHASES},
-            "exclusions": "layout: elk (24), namespaced config.flowchart.* (2) and malformed "
+            "exclusions": "layout: elk (23 admitted by RFC 0044, 1 remains without a "
+                          "drawn twin), namespaced config.flowchart.* (2) and malformed "
                           "envelopes (2) stay whole-source fallback",
             "width_policy": "wide_240 admission only; narrow_40 stays 'source'.",
         },

@@ -260,9 +260,11 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
     // semantic key keeps the whole source on fallback; an empty config block
     // stays rejected.
     bool config_seen = false;
-    enum : unsigned { Log = 1u, Font = 2u, Html = 4u, Look = 8u, Theme = 16u };
+    enum : unsigned {
+        Log = 1u, Font = 2u, Html = 4u, Look = 8u, Theme = 16u, Layout = 32u
+    };
     unsigned fields = 0u;
-    std::string log_value, html_value, look_value, theme_value;
+    std::string log_value, html_value, look_value, theme_value, layout_value;
     std::optional<std::string> title;
     for (const auto& event : envelope->events) {
         if (event.blank || event.comment) continue;
@@ -331,6 +333,13 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
                  text != "redux-dark" && text != "redux-color" && text != "redux-dark-color"))
                 return {};
             theme_value = std::move(text);
+        } else if (event.path == "layout" && event.indent == 2) {
+            // RFC 0044 P1: the native requirement projection is a text tree and
+            // draws no geometry, so the ELK layout engine selection is inert;
+            // the admitted rows are body-identical to already-drawn non-ELK
+            // twins. Disclosed only -- the engine is never applied.
+            if (!mark(Layout) || text != "elk") return {};
+            layout_value = std::move(text);
         } else {
             return {};
         }
@@ -359,6 +368,11 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
             return {};
         if ((fields & Theme) &&
             !push("config.theme=" + theme_value + " -> colour palette; not applied"))
+            return {};
+        // Appended last so the new rows' leaf order is htmlLabels then layout;
+        // no already-drawn frame can carry a layout leaf.
+        if ((fields & Layout) &&
+            !push("config.layout=" + layout_value + " -> external layout engine; not applied"))
             return {};
     }
     const auto& description = *envelope->description;

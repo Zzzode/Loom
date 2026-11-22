@@ -7,9 +7,10 @@
 // rows governed by requirement-f0-cohort.json, so the D-204+ F0 partition is
 // 172 total / 24 native / 148 gated. RFC 0037 then admits the config.look
 // table (P1), so a `look` row now draws; every unadmitted key (theme before
-// P2, title before P3, namespaced subtrees, layout) still keeps its
-// whole-source fallback. The live counts are asserted by
-// test_mermaid_requirement_0037_cohort.cpp and the official matrix.
+// P2, title before P3, namespaced subtrees) still keeps its whole-source
+// fallback; RFC 0044 admits the `config.layout: elk` rows and the live counts
+// are asserted by test_mermaid_requirement_0037_cohort.cpp and the official
+// matrix.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -334,8 +335,9 @@ TEST(MermaidRequirementCohort, FontWeightReachesBoldPixels) {
 // is asserted separately: drawn wide, still source-fallback narrow because the
 // disclosure footer exceeds the narrow budget.
 TEST(MermaidRequirementCohort, FrontmatterAndThemeGatesStayClosed) {
-    const std::array<std::string, 3> gated{{
-        "requirement/nightly-check/a-not-so-simple-requirement-diagram-elk-layout.mmd",
+    // RFC 0044 admitted the ELK row through the requirement envelope, so it is
+    // no longer part of this frozen negative set.
+    const std::array<std::string, 2> gated{{
         "requirement/visual-check/with-a-theme-default.mmd",
         "requirement/visual-check/with-a-title-default.mmd",
     }};
@@ -441,7 +443,9 @@ TEST(MermaidRequirementCohort, F0InertBoundaryKeepsVisualKeysClosed) {
     // stays rejected in every phase.
     EXPECT_FALSE(draws(with("  theme: dark\n"), kWide));
     EXPECT_TRUE(draws(with("  look: handDrawn\n"), kWide));
-    EXPECT_FALSE(draws(with("  layout: elk\n"), kWide));
+    // RFC 0044 admits exactly `layout: elk`; any other engine stays fallback.
+    EXPECT_TRUE(draws(with("  layout: elk\n"), kWide));
+    EXPECT_FALSE(draws(with("  layout: dagre\n"), kWide));
     EXPECT_FALSE(draws(with("  securityLevel: strict\n"), kWide));
     EXPECT_FALSE(draws(with("  flowchart:\n    curve: linear\n"), kWide));
     EXPECT_FALSE(draws(with("  logLevel: 7\n"), kWide));

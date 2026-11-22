@@ -410,8 +410,10 @@ TEST(MermaidRequirement0037Cohort, P1LookTableIsClosed) {
     EXPECT_FALSE(draws(with("    look: neo\n"), kWide));
     // A trailing YAML comment on an admitted leaf is accepted like D-066 F0.
     EXPECT_TRUE(draws(with("  look: neo # note\n"), kWide));
-    // Keys outside the admitted set keep the whole source on fallback.
-    EXPECT_FALSE(draws(with("  layout: elk\n"), kWide));
+    // Keys outside the admitted set keep the whole source on fallback. RFC
+    // 0044 admits `layout: elk` only; every other engine still rejects.
+    EXPECT_TRUE(draws(with("  layout: elk\n"), kWide));
+    EXPECT_FALSE(draws(with("  layout: dagre\n"), kWide));
     EXPECT_FALSE(draws(with("  handDrawnSeed: 1\n"), kWide));
     EXPECT_FALSE(draws(with("  securityLevel: strict\n"), kWide));
     EXPECT_FALSE(draws(with("  curve: linear\n"), kWide));

@@ -318,6 +318,27 @@ add_test(NAME MermaidSmallfam0043Cohort.RailroadLedgerIsReproducible
     COMMAND "${LOOM_UI_LINT_PYTHON}" -I
         "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_railroad_cohort.py" --check
         --repo-root "${CMAKE_SOURCE_DIR}")
+# RFC 0044: the requirement ELK admission ledger and the two requirement
+# ledgers it reconciles are generator constants; these hermetic checks fail on
+# drift or hand edits.
+add_test(NAME MermaidRequirement0044Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_requirement_0044_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+add_test(NAME MermaidRequirement0044Cohort.Cohort0037IsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_requirement_0037_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+add_test(NAME MermaidRequirement0044Cohort.BaseCohortIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_requirement_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(
+    MermaidRequirement0044Cohort.GeneratorIsReproducible
+    MermaidRequirement0044Cohort.Cohort0037IsReproducible
+    MermaidRequirement0044Cohort.BaseCohortIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 set_tests_properties(
     MermaidSmallfam0043Cohort.GeneratorIsReproducible
     MermaidSmallfam0043Cohort.IshikawaLedgerIsReproducible
@@ -1102,6 +1123,13 @@ add_executable(test_mermaid_requirement_cohort test_mermaid_requirement_cohort.c
 target_link_libraries(test_mermaid_requirement_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_requirement_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+add_executable(test_mermaid_requirement_0044_cohort test_mermaid_requirement_0044_cohort.cpp)
+target_link_libraries(test_mermaid_requirement_0044_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_requirement_0044_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 

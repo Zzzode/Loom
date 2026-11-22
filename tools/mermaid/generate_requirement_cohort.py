@@ -240,8 +240,9 @@ def build(repo_root):
                 "predate D-066 F0. Since D-395 the live envelope admits "
                 "description + config{htmlLabels|logLevel 0-2|fontFamily courier}; "
                 "the eight htmlLabels rows listed in gated are governed by "
-                "tools/mermaid/requirement-f0-cohort.json, and the live partition "
-                "is 172 total / 24 native / 148 gated."),
+                "tools/mermaid/requirement-f0-cohort.json; RFC 0037 admitted the "
+                "look/theme/title rows and RFC 0044 the 23 ELK rows with a drawn "
+                "twin, so the live partition is 172 total / 167 drawn / 5 fallback."),
         },
         "review": build_review(repo_root),
         "counts": {

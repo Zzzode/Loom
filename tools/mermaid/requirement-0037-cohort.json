@@ -23,7 +23,7 @@
       "P2-theme": "7aa1dc5b3dc81105227882699b94f3158f528116e9f7ad5a8497438e9d5c8842",
       "P3-title": "154086e874f2b27dd9972db91654f7fbad78a20b51209669aee6ed631a0fb8ea"
     },
-    "exclusions": "layout: elk (24), namespaced config.flowchart.* (2) and malformed envelopes (2) stay whole-source fallback",
+    "exclusions": "layout: elk (23 admitted by RFC 0044, 1 remains without a drawn twin), namespaced config.flowchart.* (2) and malformed envelopes (2) stay whole-source fallback",
     "width_policy": "wide_240 admission only; narrow_40 stays 'source'."
   },
   "review": {

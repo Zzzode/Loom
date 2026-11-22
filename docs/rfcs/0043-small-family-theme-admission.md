@@ -1,9 +1,9 @@
 ---
 rfc: 43
 title: ishikawa, venn and railroad theme admission
-status: provisional
+status: accepted
 owners: "@Zzzode"
-reviewers: ["agent:design-review-r1"]
+reviewers: ["agent:design-review"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -216,8 +216,9 @@ cap already counts. Refusal keeps the whole source on fallback.
   the same sentinel wrapper; narrow is a separate live measurement (rule 34) — the footer
   line is 48–60 characters, wider than a 40-column viewport, so the expected measured state is
   `source_fallback` on narrow for all 6: expected 0/6 until measured, from the RFC 0041
-  precedent (all 9 footer rows with the identical 48-character line measure narrow `source`),
-  and recorded from the live gate run — never asserted from the prediction.
+  precedent (the 9 agentflow footer rows, whose theme lines vary 48–60 characters, all
+  measure narrow `source`), and recorded from the live gate run — never asserted from the
+  prediction.
 - Gate `tests/ui/test_mermaid_smallfam_0043_cohort.cpp`: ledger pins (schema, review
   pins, the 6 literal paths with sha256); per-row twin inertness; one closed-table battery
   per family (every admitted value with the exact two-line footer; the rejects in §2);
@@ -341,6 +342,7 @@ data, no wire protocol, no CLI contract changes.
 |---|---|---|---|---|
 | 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | 2 BLOCKER + 5 MAJOR + 8 MINOR + 3 NIT. B1 venn `dark` row missing from the scope → added (6 rows, endpoints corrected); B2 the three existing family tests were unmentioned → named with pin deltas; MAJOR-1 "indented lines ignored" was wrong (the flat scan rejects indented visual keys) → grammar rewritten with the exact admitted position; MAJOR-2 venn partition arithmetic → 11+3+4+3; MAJOR-3 scalar semantics unpinned → `af_scalar` copy and the §2 verdict table; MAJOR-4 per-family behaviours → §3 table; MAJOR-5 "entire vein" overclaim → scoped with the conf-and-directives exclusion; MINORs: D-411 roster numbers (measured 4/7/1 → 2/4/0, 44→43), D-410 arithmetic recomputed structurally, live narrow assertion named, gate+footer in the layout body, exact footer literals, +10 test delta, graph unchanged, C++/Python table coupling, agentflow ledger field names; NITs: `config.ishikawa.*` naming, 44→43 comments, arithmetic note. All folded |
 | 2026-11-22 | r2 | agent:design-review | REQUEST-CHANGES | Scope (exactly 6), endpoints, roster, twins, scalar, +10 delta, protected files all confirmed. 2 MAJOR + 4 MINOR + 1 NIT: (1) venn partition is 11+3+3+4, not 11+3+4+3 — `explicit-set-style-over-redux-palette` reclassifies to body_style once its theme is admitted (this also refutes r1's folded "7→4" pin; correct pin 7→3, body 3→4); (2) the §2 row "config first, description after → rejected" contradicted the grammar (column-0 description closes the block) → relabeled and the positive added; MINORs: matrix commentary values are 4/7/0, agentflow has no `admitted` path list (kept the list and added a sibling↔family cross-check), venn footer cap must count title rows, missing unrelated-column-0 passthrough positive; NIT: narrow 0/6 is expectation-until-measured with the RFC 0041 precedent. All folded |
+| 2026-11-22 | r3 | agent:design-review | **APPROVE-TO-ACCEPT** | All r2 folds re-derived and confirmed (venn 11+3+3+4, §2 config/description semantics against `af_frontmatter_gated`, pin numbers 6→4/7→3/3→4/1→0, matrix commentary 4/7/0). One NIT: the RFC 0041 narrow precedent said "identical 48-character line"; the 9 rows' lines vary 48–60 and are all narrow `source` → reworded. Gate: provisional → accepted |
 | 2026-11-22 | — | — | draft | Created provisional from D-410's 5d bucket |
 
 ## Implementation History
@@ -348,4 +350,5 @@ data, no wire protocol, no CLI contract changes.
 | Date | Phase | Change | Commit |
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | — |
-| 2026-11-22 | — | Revised after design review r1; no code | — |
+| 2026-11-22 | — | Revised after design review r1; no code | 6c6d0993 |
+| 2026-11-22 | — | Folded design review r2; accepted; no code | 2f07e491 |

@@ -14,8 +14,8 @@
 
 | 候选 | 行数 | 键形状 | 去 config 可绘 | twin | 判定 |
 |---|---|---|---|---|---|
-| **ishikawa `ishikawa.useMaxWidth` + `diagramPadding`** | 3 | `config: ishikawa: useMaxWidth {true,false}` / `diagramPadding {50}` | 是（D-410 桶 5a） | 合成 | **选中** |
-| **architecture `architecture.randomize/seed/idealEdgeLengthMultiplier`** | 4 | 同一命名空间，三叶 | 是（5a） | 合成 | **选中** |
+| **ishikawa `ishikawa.useMaxWidth` + `diagramPadding`** | 3 | `config: ishikawa: useMaxWidth {true,false}` / `diagramPadding {50}` | 是（D-410 桶 5a） | 混合（diagramPadding 1 corpus + 其余 synthetic） | **选中** |
+| **architecture `architecture.randomize/seed/idealEdgeLengthMultiplier`** | 4 | 同一命名空间，三叶 | 是（5a） | 混合（idealEdgeLengthMultiplier 1 corpus + 其余 synthetic） | **选中** |
 | **state `state.useMaxWidth`（v1 2 + v2 2）** | 4 | `config: state: useMaxWidth {true,false}` | 是（5a） | 合成 | **选中** |
 | pie `donutHole`/`highlightSlice`/`textPosition` | 8 | 几何/内容 | 是（5a） | — | 排除：改变绘制内容（饼图 vs 环形、切片高亮） |
 | treemap `treemap.valueFormat` | 6 | 数值格式 | 是（5a） | — | 排除：改变标签文本 |
@@ -40,8 +40,14 @@
   4 条是 `config.state.useMaxWidth`（v1 2、v2 2）。既有 `state_source_envelope` 是
   `parse_envelope` 门，本片按 RFC 0045 的命名空间形状 admit（indent-2 `state` +
   indent-4 `useMaxWidth`），页脚追加在既有行之后。
-- 三个家族都没有 body 等价已绘制 twin（逐行实测 0/11），全部使用 synthetic
-  config-free twin（删除 `config:` 行及其后所有 indent ≥ 2 行，直到下一个列 0 键）。
+- twin 选取（设计评审 r1 更正）：**2 条有干净 corpus twin** —— ishikawa
+  `pr-check/9-…diagrampadding.mmd` 的 body 与已绘制的 `pr-check/1-…simple-ishikawa…`
+  逐字节相同（RFC 0043 已把 fixture 1 用作 theme 行的 corpus twin），architecture
+  `…increased-idealedgelengthmultiplier.mmd` 与已绘制的 `…default-fcose-knobs.mmd`
+  逐字节相同 → 这两条用 `kind: "corpus"`。其余 9 条用 synthetic config-free twin
+  （删除 `config:` 行及其后所有 indent ≥ 2 行，直到下一个列 0 键）；其中 state 4 条
+  确有 body 等价 fixture，但那些 twin 自带 E2b `logLevel`/`fontFamily` 页脚，不构成
+  干净 corpus twin。
 - 页脚统一文案：`config.<path>=<v> -> <display sizing|diagram padding|layout tuning>;
   not applied`，行宽均 < 96 字节。
 

@@ -1,9 +1,9 @@
 ---
 rfc: 46
 title: Layout and display tuning namespace admission (ishikawa, architecture, state)
-status: provisional
+status: accepted
 owners: "@Zzzode"
-reviewers: []
+reviewers: ["agent:design-review"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -25,7 +25,7 @@ was not applied. One phase, three TUs, no shared module.
 
 Target: global **1517 / 628 → 1528 / 617**; formal `drawn_at_240` **1331 → 1342**;
 ishikawa **9/4 → 12/1**, architecture **16/4 → 20/0**, state v1 **28/14 → 30/12**, state v2
-**52/51 → 54/49**.
+**52/51 → 54/49**; roster 628 → 617, categories **43 → 41**.
 
 ## Motivation
 
@@ -47,12 +47,32 @@ exact-bit surfaces stay untouched.
 - Every one of the 11 rows is `description` + a single `config:` block carrying only the
   namespace with its closed leaves; bodies draw natively at 240 columns once the config
   block is removed (D-410 bucket 5a: ishikawa 3, architecture 4, state 2 + 2).
-- No drawn fixture in any of the three families is body-equivalent (0/11 measured), so all
-  rows use the synthetic config-free twin.
+- **Twin selection (measured, corrected after design review r1):** two rows have a clean
+  corpus twin — `ishikawa/pr-check/9-should-render-with-custom-diagrampadding.mmd` is
+  body-identical to the drawn `ishikawa/pr-check/1-should-render-a-simple-ishikawa-diagram.mmd`
+  (the RFC 0043 ledger already uses fixture 1 as the corpus twin for rows 7/8), and
+  `architecture/visual-check/should-render-a-linear-chain-with-an-increased-idealedgelengthmultiplier.mmd`
+  is body-identical to the drawn
+  `architecture/visual-check/should-render-a-linear-chain-with-default-fcose-knobs.mmd`.
+  The other nine use the synthetic config-free twin: the four state rows do have
+  body-equal fixtures (`should-render-a-simple-state-diagrams.mmd` /
+  `v2-should-render-a-simple-state-diagrams.mmd`), but those twins already carry their own
+  E2b `logLevel`/`fontFamily` footer, so no clean corpus twin exists for them; the two
+  ishikawa `useMaxWidth` rows and the three architecture boolean/integer rows have no
+  body-equal drawn fixture. Corpus twins must be used where they exist.
 - Each key is a layout/display knob: `useMaxWidth` is upstream SVG responsive sizing,
   `diagramPadding` the drawn padding, and the architecture knobs select the fcose engine's
   determinism and edge length. The terminal renderers are deterministic text projections
   that never read them; the disclosure says so.
+- **Footprint is wider than three TUs.** The four families' existing admission ledgers and
+  cohort tests pin the current fallback verdicts and must be updated in the same atomic
+  phase (enumeration in Proposal §3): the architecture cohort ledger and its test
+  (`frontmatter_gated_count=4` and `GatedArchitecturesStayWholeSource` /
+  `VisualGateIsKeyBased`), the ishikawa cohort ledger and test (`frontmatter_gated_count=4`,
+  `admitted_count=2`), the RFC 0043 small-family ledger/test (ishikawa four-way partition
+  `13/7/2/4/0` and the `ishikawa.useMaxWidth` negative), the RFC 0038 state test
+  (`state.useMaxWidth` negative), and the E2a/E2b whole-source scans. The production
+  `.cppm` shared parser is untouched.
 
 ### Why admission is testable
 
@@ -69,11 +89,14 @@ only if the new namespace leaves do not disturb envelopes that carry none.
   structured config-block admission for exactly one `architecture` namespace with
   `randomize` (`true`/`false`), `seed` (`42`) and `idealEdgeLengthMultiplier` (`3`).
 - **G3.** state (v1 + v2): admit `state.useMaxWidth` (`true`/`false`) at indent 4 under a
-  `state` namespace at indent 2 in the existing `parse_envelope` gate.
+  `state` namespace at indent 2 **inside `state_source_envelope` only**; the shared
+  `detail::parse_envelope` already emits the namespace event, dotted path and indent and is
+  not modified.
 - **G4.** Disclose every admitted leaf with one footer line appended after the existing
   notices; the families that had no footer (architecture) gain the bounded channel.
-- **G5.** No regression: existing look/theme/ELK tables keep their verdicts; each family's
-  drawn rows keep their frames; dual-preset matrix byte-identical.
+- **G5.** No undetected regression: the existing family ledgers, cohort tests and E2a/E2b
+  scans are updated in the same atomic phase, every flipped verdict is paired with a new
+  negative, and no assertion is deleted or relaxed.
 
 ## Non-Goals
 
@@ -87,41 +110,109 @@ only if the new namespace leaves do not disturb envelopes that carry none.
 
 All three gates admit the same shape: a column-0 `config:` block, exactly one indent-2
 namespace of a fixed name, and indent-4 scalar leaves from a closed table, each at most
-once, everything else fails closed. Values are read through each TU's existing scalar
-helper (comment strip, dequote) so quoted and commented spellings normalize identically.
+once, everything else fails closed. Values are read through each TU's own scalar helper
+(comment strip, dequote) so quoted and commented spellings normalize identically; the
+architecture TU has no such helper today (only `trim_copy`/`trim_view`) and gains a
+TU-local copy mirroring `ishikawa_scalar`, not a shared one.
 
-- **ishikawa** (`ishikawa_frontmatter_gated`, line scan): a state machine gains
-  `namespace_seen` and a leaf set; `config:` without a leaf still falls back.
-- **architecture**: the frontmatter scan becomes a structural block scan; the body-side
-  gate (init/classDef/style/`:::`) is unchanged.
-- **state** (`state_source_envelope`, `parse_envelope`): a `StateNs` bit plus the
-  `state.useMaxWidth` leaf, mirroring RFC 0045's explicit
-  `(StateNs && !UseMaxWidth)` rejection.
+- **ishikawa** (`ishikawa_frontmatter_gated`, line scan): the scan gains a
+  `namespace_seen` flag and a closed leaf/value table for the `ishikawa` namespace; a
+  `config:` block without any admitted leaf still falls back, and the existing indent-2
+  `theme` leaf keeps its table.
+- **architecture**: the flat "any config key is a fallback" frontmatter scan becomes a
+  structural block scan in the same TU. It is deliberately hand-rolled rather than
+  switched to `detail::parse_envelope`: the 16 clean rows must keep their current verdict,
+  and `parse_envelope` adds description form/limit and duplicate-path rules that could
+  change them. The body-side gate (`%%{init`, `classDef`, `style `, `:::`) is untouched,
+  and the battery pins the hand-rolled scan's closure.
+- **state** (`state_source_envelope` only): a `StateNs` bit and the `state.useMaxWidth`
+  leaf, with the same namespace-without-leaf rejection pattern RFC 0045 applies
+  (`(GitGraphNs && !Parallel)` there; `(StateNs && !UseMaxWidth)` here).
+  `detail::parse_envelope` is unchanged.
+- **Composition inside one namespace** is admitted only in the corpus order: `useMaxWidth`
+  before `diagramPadding` (ishikawa), `randomize`/`seed`/`idealEdgeLengthMultiplier`
+  (architecture, each at most once, in source order), and the `useMaxWidth` leaf alone
+  (state). The battery pins admit-or-reject for each co-occurrence.
 
 ### 2. Footer
 
 Per family, appended last: `<Family> native projection v1` then one line per leaf, e.g.
 `config.ishikawa.useMaxWidth=false -> display sizing; not applied`,
-`config.architecture.idealEdgeLengthMultiplier=3 -> layout tuning; not applied`,
-`config.state.useMaxWidth=false -> display sizing; not applied`. All lines are under the
-96-byte cap; the emission and height guards mirror the existing family paths.
+`config.ishikawa.diagramPadding=50 -> diagram padding; not applied` (65 bytes),
+`config.architecture.idealEdgeLengthMultiplier=3 -> layout tuning; not applied` (77 bytes),
+`config.state.useMaxWidth=true -> display sizing; not applied`. All lines are under the
+96-byte cap; the emission and height guards mirror the existing family paths. Architecture
+has no footer channel today and gains one by appending the bounded rows to its output
+before the return; the 16 clean rows carry no `config:`, so no footer is appended and their
+frames stay byte-identical.
 
 ### 3. Reviewed cohort, twin gate and wiring
 
 - Sibling ledger `tools/mermaid/layouttuning-0046-cohort.json` (schema
-  `loom_mermaid_layouttuning_0046_cohort/v1`) with the 11 rows, each with its synthetic
-  config-free twin (delete `config:` and every following indent ≥ 2 line to the next
-  column-0 key), literal footer lines and measured per-width states.
+  `loom_mermaid_layouttuning_0046_cohort/v1`) with the 11 rows, a `family` field, literal
+  footer lines, measured per-width states, and a twin per row: `kind: "corpus"` for the two
+  rows above (pinned path + sha) and `kind: "synthetic"` (delete `config:` and every
+  following indent ≥ 2 line to the next column-0 key) for the other nine.
 - `generate_layouttuning_0046_cohort.py`, renderer-free, `--check`-reproducible; its
-  structure mirror asserts the namespace/leaf/indent/closed-value rules and the tab/init
-  rejections the gates apply.
-- Gate `tests/ui/test_mermaid_layouttuning_0046_cohort.cpp` (5 tests): ledger pins and
-  sibling-ledger agreement; per-row twin inertness and exact footer composition; a battery
-  per family (both booleans admitted, quotation/comment normalization, unknown namespace,
-  unknown leaf, out-of-table value, deeper indent, duplicate leaf, duplicate namespace,
-  empty namespace, empty config); existing-family batteries unchanged; literal partition.
+  structure mirror asserts the namespace/leaf/indent/closed-value rules, the tab and body
+  init rejections, and the corpus-twin body equivalence it claims.
+- Gate `tests/ui/test_mermaid_layouttuning_0046_cohort.cpp` (5 tests): ledger pins and the
+  corpus-twin pins; per-row inertness (corpus twin frame + footer, or synthetic twin frame
+  + footer); a battery per family (both booleans admitted, quotation/comment
+  normalization, unknown namespace, unknown leaf, out-of-table value, deeper indent,
+  duplicate leaf, duplicate namespace, empty namespace, empty config, and the
+  composition orders above); the existing-family batteries in their updated form; literal
+  partition.
 - Matrix branch reading per-row states from the ledger (`raw_active_schema` empty).
-- Roster and ledgers: `--emit` 628 → 617, categories remeasured.
+- **Existing ledgers, generators and tests updated in the same atomic phase** (each flip
+  paired with a new negative; nothing deleted or relaxed):
+  - `tools/mermaid/architecture-cohort.json` + `generate_architecture_cohort.py`:
+    `frontmatter_gated_count` 4 → 0, `selection.draw_count` 16 → 20,
+    `counts.total` / `counts.predicted_draw` / `counts.predicted_original_draw` 16 → 20,
+    the generator's partition pin `(16, 4, 0)` → `(20, 0, 0)` and its measured narrow
+    constants extended to the 4 new rows; the 4 rows move from the gated list into the
+    ledger's cohort rows.
+  - `tests/ui/test_mermaid_architecture_cohort.cpp`: counts; `GatedArchitecturesStayWholeSource`
+    runs over the remaining (empty) gated sets and over the new cohort rows with the
+    sibling ledger; `VisualGateIsKeyBased` flips its `config: architecture: randomize: false`
+    sample to a positive and keeps a paired negative (e.g. an out-of-table
+    `idealEdgeLengthMultiplier: 4`).
+  - `tools/mermaid/ishikawa-cohort.json` + `generate_ishikawa_cohort.py`:
+    `frontmatter_gated_count` 4 → 1 (`look: handDrawn`); the RFC 0043 `admitted` list and
+    its `admitted_digest` stay byte-identical (2 theme rows) and a new
+    `layout_admitted` bucket carries the 3 namespace rows with its own digest, so the
+    partition becomes five-way: 13 = 7 drawn + 2 admitted + 3 layout-admitted + 1
+    frontmatter + 0 body.
+  - `tests/ui/test_mermaid_ishikawa_cohort.cpp`: counts 4/2 → 1/2 with the new bucket
+    asserted; the admitted loop's `config.theme=` assertion stays, the layout bucket gets
+    its own `config.ishikawa.` assertion.
+  - `tests/ui/test_mermaid_smallfam_0043_cohort.cpp` (the generator
+    `generate_smallfam_0043_cohort.py` is unchanged: `admitted_count` stays 2 and its
+    `EXPECTED` stays 43/26/6/11):
+    the FamilySpec gains an `expected_layout_admitted` field (3 for ishikawa, 0 for venn
+    and railroad), the partition check becomes five-way
+    (`draw + admitted + layout_admitted + frontmatter + body == family_total`) and the
+    `ishikawa.useMaxWidth` negative flips for the ishikawa spec only (agentflow/railroad
+    keep it) with a paired out-of-table negative. **The RFC 0043 theme-only contract
+    stays**: the smallfam ledger keeps its 2 ishikawa rows, `counts.admitted=6` /
+    `counts.other=11`, `per_family["ishikawa"]==2`, `twin_kinds` (corpus 4 / synthetic 2),
+    the `:238`/`:245` theme requirements, the `:278-286` family-vs-smallfam admitted
+    equality and the `:561` row-count pin are all unchanged; only the ishikawa family
+    ledger's own five-way partition and the new FamilySpec field move.
+  - `tests/ui/test_mermaid_state_0038_cohort.cpp` + `generate_state_0038_cohort.py`: the
+    `state.useMaxWidth` negative flips, paired with a negative (e.g. `state.width`), and
+    the generator's "namespaced config.state.* stays closed" exclusion note is corrected.
+  - `tests/ui/test_mermaid_e2a_cohort.cpp`: the whole-source scan gains the RFC 0046 ledger
+    in its exclusion set (the git set equality is unchanged; the 4 state rows join the
+    exclusion set, with over-listing covered by the 0046 gate; 108 → 104 rows scanned).
+  - `tests/ui/test_mermaid_e2b_cohort.cpp`: the state scanned set drops the 4 rows
+    (`checked` 43 → 39) and the `skipped_by_rfc0038` set equality extends to the new
+    skipped-by-0046 set.
+- Roster and ledgers: `--emit` 628 → 617; roster categories
+  `family_residual:ishikawa` 2 → 0, `family_residual:architecture` 4 → 0,
+  `family_residual:state-diagram` 9 → 7, `family_residual:state-diagram-v2` 22 → 20,
+  `dagre_layout_tuning` 18 → 17; categories **43 → 41** (two emptied categories). The
+  matrix family fallbacks move by the same 11 (state v1 14 → 12, v2 51 → 49).
 
 ## Phases and graduation criteria
 
@@ -154,13 +245,15 @@ restores 628 and every pin. No persisted data, wire, CLI or settings change.
 
 - New gate (5 gtests) + one hermetic `--check`; `ctest -L mermaid` delta **+6**; full debug
   ctest 4681 → 4687 executed, with the complete stdout and exit code captured to a fixed
-  log path per the TL 2026-11-22 process requirement.
-- Each family's existing gates stay the drawn-row regression oracle.
+  log path per the TL 2026-11-22 process requirement
+  (`/tmp/loom-logs/ctest-full-dbg-0046.log`, cited with its sha256 in the closure doc).
+- The updated family gates (architecture, ishikawa, smallfam 0043, state 0038, E2a, E2b)
+  are the drawn-row regression oracles and must stay green.
 - Dual-preset matrix byte gate and roster `--emit`/`--self-test`/`--matrix` at closure.
 
 ## Documentation impact
 
-- [ ] `docs/dev/d417-next-family-layout-tuning.md` — selection
+- [ ] `docs/dev/d417-next-family-layout-tuning.md` — selection (twin evidence corrected)
 - [ ] `docs/dev/d418-layout-tuning-rfc0046-closure.md` — closure record
 - [ ] `docs/decisions/design-decisions.md` — namespace admission entry
 - [ ] `docs/README.md` — RFC index row
@@ -170,9 +263,9 @@ restores 628 and every pin. No persisted data, wire, CLI or settings change.
 
 | Question | Owner | Resolved by |
 |---|---|---|
-| OQ-1: one combined ledger vs three family ledgers? | design review | proposed: one sibling ledger with a `family` field (RFC 0040 precedent) |
-| OQ-2: are closed value tables (not "any boolean") right for `seed`/`diagramPadding`? | design review | proposed: closed literals only, as every prior cohort |
-| OQ-3: architecture gate rewrite scope | implementation | the frontmatter scan only; body gating unchanged |
+| OQ-1: one combined ledger vs three family ledgers? | design review | resolved: one sibling ledger with a `family` field (RFC 0040 precedent) |
+| OQ-2: are closed value tables (not "any boolean") right for `seed`/`diagramPadding`? | design review | resolved: closed literals only, as every prior cohort |
+| OQ-3: architecture mechanism — `parse_envelope` or hand-rolled? | design review r1 | resolved: hand-rolled structural scan in the TU (M3); `parse_envelope`'s description/limit rules could change the 16 clean rows |
 
 ## Gates and who confirms
 
@@ -185,6 +278,9 @@ restores 628 and every pin. No persisted data, wire, CLI or settings change.
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-22 | — | — | draft | Created provisional from D-417 |
+| 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | Census, row selection, closed value sets, arithmetic and the inertness argument all verified independently. 2 BLOCKER: the "no body-equivalent drawn twin (0/11)" evidence was false — ishikawa `diagramPadding` and architecture `idealEdgeLengthMultiplier` have clean corpus twins already used by sibling ledgers → corpus twins adopted for those two, synthetic for nine (the state four have body-equal fixtures but with their own E2b footers); and the "existing batteries unchanged" claim was false — the architecture/ishikawa/smallfam/state ledgers and tests, plus the E2a/E2b scans, pin the current fallbacks and are now enumerated as same-phase updates with paired negatives. 3 MAJOR: the state change is confined to `state_source_envelope` (`parse_envelope` untouched); architecture needs a new TU-local scalar helper; the architecture mechanism is resolved to a hand-rolled scan. 4 MINOR + 2 NIT folded (composition order, exact footer literals, 43→41 categories, reviewer record, log path). All folded |
+| 2026-11-22 | r2 | agent:design-review | REQUEST-CHANGES | Re-verified B1/M1-M3. One load-bearing item still open (B3): the ishikawa admitted bucket could not move from 2 to 5 without breaking the RFC 0043 theme-only contract (smallfam pins at `:238/:245/:263/:278-286/:561`); the folded text already used a separate `layout_admitted` bucket, and it is now explicit about every unchanged smallfam pin and the five-way partition. Two MINORs (roster category numbers 9→7 / 22→20 vs the matrix family fallbacks; architecture `draw_count`/`predicted_draw` enumeration) and three NITs folded |
+| 2026-11-22 | r3 | agent:design-review | **APPROVE-TO-ACCEPT** | Every consumer of the ishikawa/smallfam pins re-checked and consistent (partition 13 = 7 + 2 + 3 + 1 + 0; smallfam generator unchanged); roster/architecture numbers and all NITs verified; E2a 108→104 and E2b 43→39 reproduced exactly. Gate: provisional → accepted |
 
 ## Implementation History
 

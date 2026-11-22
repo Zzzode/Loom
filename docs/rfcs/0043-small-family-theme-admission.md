@@ -145,6 +145,15 @@ after the art.
 |---|---|---|---|---|
 | P1 | `theme` admission | 5 rows, 3 families | proposed | ishikawa 7/6 → **9/4**; venn 11/10 → **13/8**; railroad 8/1 → **9/0**; global 1476/669 → **1481/664**; formal **1290 → 1295**; gaps 48, integrity 0; narrow measured per row; dual-preset sha recorded |
 
+Closure: full debug ctest once (D-401 §7 discipline), dual-preset byte gate, RFC
+`implemented`, closure doc, design-decisions entry, efficiency retro.
+
+**Closure-report format (TL 2026-11-22):** every closure report states three numbers side
+by side and none may replace another — ① the absolute `source_fallback` total (expected
+**664**), ② the part of it beyond a certified profile or frozen/protected authority
+(expected **289 = 222 exact-bit + 67 protected/frozen**, unchanged by this phase), and
+③ this phase's net reduction (**5**).
+
 ## Production Readiness Review
 
 Completed at the `implementable` gate. Answers:

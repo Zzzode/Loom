@@ -248,6 +248,15 @@ add_test(NAME MermaidFallbackAttribution.RosterIsReproducibleAndTotal
 set_tests_properties(MermaidFallbackAttribution.RosterIsReproducibleAndTotal
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-425: the pie closed config-namespace cohort ledger is a generator constant;
+# the check fails on a hand edit or an unreviewed expectation change.
+add_test(NAME MermaidPieNamespaceD425Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_pie_ns_d425_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidPieNamespaceD425Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # RFC 0039: the reviewed gitGraph cohort pin is a generator constant; this
 # hermetic check fails if the ledger drifts from it or was hand-edited.
 add_test(NAME MermaidGit0039Cohort.GeneratorIsReproducible
@@ -1231,6 +1240,14 @@ gtest_discover_tests(test_mermaid_journeyfam_init_0047_cohort
 
 # RFC 0048: State concurrent-region cohort gate and its renderer-free ledger.
 # D-424: gitGraph closed-boolean namespace cohort gate and its ledger.
+# D-425: pie closed config-namespace cohort gate and its ledger.
+add_executable(test_mermaid_pie_ns_d425_cohort test_mermaid_pie_ns_d425_cohort.cpp)
+target_link_libraries(test_mermaid_pie_ns_d425_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_pie_ns_d425_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
 add_executable(test_mermaid_git_bool_d424_cohort test_mermaid_git_bool_d424_cohort.cpp)
 target_link_libraries(test_mermaid_git_bool_d424_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)

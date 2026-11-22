@@ -4554,6 +4554,31 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## Pie closed config namespace (D-425)
+
+- **One closed namespace, six leaves.** A reviewed folded description plus a
+  `config:` block carrying only `logLevel` (0…3 / trace…fatal) and
+  `pie.{donutHole, highlightSlice, legendPosition, textPosition, useMaxWidth}`
+  is admitted; `legendPosition` is the closed set `{bottom}`, `donutHole` is a
+  signed decimal (out-of-range values stay inert like in-range ones),
+  `textPosition` keeps the reviewed `[0,1]` range, `useMaxWidth` is a boolean,
+  `highlightSlice` an unquoted single token, and every other top-level key or
+  leaf stays whole-source. Quoted scalars are the same YAML value
+  (`chart_yaml_scalar` unquotes, mirroring git's `git_inert_scalar`), so a
+  quoted `"0.5"` is disclosed as `0.5`.
+- **Everything is inert, proven by twin equality.** The terminal pie is a
+  labelled bar projection; a highlight, legend side, donut hole, label radius
+  or responsive width cannot be expressed. The gate therefore asserts the
+  strongest form of inertness: the art above the footer is **line-identical**
+  to the config-free twin's art. Only the disclosure footer differs.
+- **Order is the compatibility surface.** The RFC 0042 theme profile runs
+  first (its five drawn rows keep byte-identical frames); the namespace profile
+  runs next and rejects a top-level `theme`, so a theme+namespace source stays
+  source instead of silently dropping the theme.
+- **Still gated.** The four pie theme rows carry body `accTitle:`/`accDescr:`
+  lines; they need the pie accessibility no-op (the State P2 grammar) and stay
+  whole-source until it lands.
+
 ## gitGraph closed boolean namespace (D-424)
 
 - **One namespace, four closed booleans.** `config.gitGraph` is admitted when

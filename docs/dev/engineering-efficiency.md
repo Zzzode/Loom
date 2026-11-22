@@ -1981,3 +1981,24 @@ Attach a short efficiency section to each closure report, answering:
    predicate is ~25 lines and distinguishes `●─┘1` from `*@main → 5`; a
    substring scan would have produced a false green for every
    `showCommitLabel: false` row that still prints a branch-head id.
+
+## D-425 pie namespace slice retro (2026-11-22)
+
+1. **The body-only census is the cheapest selection instrument found so far.**
+   Stripping the frontmatter and rendering all 565 fallbacks through
+   `render_mermaid` (one ~2 s probe build, ~1 s of rendering) classified every
+   row into "config-only blocker" (133) versus "body blocker" (432) and showed
+   that the roster's category label is often *not* the blocker: the seven
+   mindmap `look: neo` rows and all 17 sankey `family_residual` rows fall back
+   even with the frontmatter removed. Use it before writing any family slice;
+   it costs minutes and prevents a slice that cannot land.
+2. **A twin that has no footer changes the canvas helper.** `canvas_lines`
+   anchored on the footer header; a config-free twin has no footer, so the
+   comparison swallowed the sentinel row and every row "failed" identically.
+   Trim the sentinel as well as trailing blanks, and read one failure in full
+   before assuming the renderer is wrong.
+3. **Quoted scalars are values, not shapes.** The pie gate first listed
+   `textPosition: "0.5"` as a negative; `chart_yaml_scalar` unquotes it (as
+   git's `git_inert_scalar` does), so the negative was a false expectation —
+   flip it into a positive that pins the *normalized* footer value instead of
+   weakening the gate.

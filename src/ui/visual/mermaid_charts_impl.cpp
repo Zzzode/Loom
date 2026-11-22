@@ -756,6 +756,14 @@ std::optional<std::string_view> pie_theme_frontmatter(const Envelope& envelope) 
     return theme;
 }
 
+bool pie_notice_header(std::vector<std::string>& notices, Work& work) {
+    if (kPieNoticeHeader.size() > kPieNoticeLineLimit ||
+        !work.spend(kPieNoticeHeader.size() * 4u + sizeof(std::string) + 32u))
+        return false;
+    notices.emplace_back(kPieNoticeHeader);
+    return true;
+}
+
 bool pie_theme_notices(std::vector<std::string>& notices, std::string_view theme, Work& work) {
     const auto push = [&](std::string_view line) {
         if (line.size() > kPieNoticeLineLimit ||
@@ -769,6 +777,112 @@ bool pie_theme_notices(std::vector<std::string>& notices, std::string_view theme
     line += theme;
     line += " -> colour palette; not applied";
     return push(line);
+}
+
+// D-425: the closed `config.pie` namespace. Every leaf is a semantic source
+// state marker whose effect is a pixel-only presentation the terminal cannot
+// express (slice highlight, legend placement, donut hole radius, label radius,
+// responsive scaling) or a logger-only key, so each is disclosed and inert —
+// the same contract as the reviewed look/theme leaves. Values are
+// corpus-bounded: an unquoted single-token slice name, the closed
+// `legendPosition` set, a signed decimal donut hole (out-of-range values are
+// checked by upstream for graceful handling and stay inert here), the reviewed
+// `[0, 1]` label radius, a boolean, and the standard log level vocabulary.
+constexpr std::array<std::string_view, 6> kPieLogLevels{
+    {"0", "1", "2", "3", "4", "5"}};
+constexpr std::array<std::string_view, 6> kPieLogLevelWords{
+    {"trace", "debug", "info", "warn", "error", "fatal"}};
+
+bool pie_namespace_leaf_notice(std::string_view key, std::string_view value, Work& work,
+                               std::vector<std::string>& notices) {
+    std::string line = "config.pie.";
+    line += key;
+    line += "=";
+    line += value;
+    if (key == "highlightSlice")
+        line += " -> slice highlight; not applied";
+    else if (key == "legendPosition")
+        line += " -> legend placement; not applied";
+    else if (key == "donutHole")
+        line += " -> donut hole; not applied";
+    else if (key == "textPosition")
+        line += " -> label radius; not applied";
+    else
+        line += " -> responsive scaling; not applied";
+    if (line.size() > kPieNoticeLineLimit ||
+        !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+        return false;
+    notices.emplace_back(std::move(line));
+    return true;
+}
+
+std::optional<std::vector<std::string>> pie_namespace_frontmatter(const Envelope& envelope,
+                                                                  Work& work) {
+    bool config_seen = false;
+    if (!xy_description_shape(envelope, config_seen) || !config_seen) return std::nullopt;
+    std::optional<std::string_view> log_level, highlight, legend, donut, position, max_width;
+    for (const EnvelopeEvent& event : envelope.events) {
+        if (event.blank || event.comment) continue;
+        if (event.top_level) {
+            if (event.path != "description" && event.path != "config") return std::nullopt;
+            continue;
+        }
+        if (event.namespace_entry) {
+            if (event.path != "pie") return std::nullopt;
+            continue;
+        }
+        const auto value = chart_yaml_scalar(event.value);
+        if (!value) return std::nullopt;
+        if (event.path == "logLevel") {
+            if (event.indent != 2 || log_level) return std::nullopt;
+            if (std::ranges::find(kPieLogLevels, *value) == kPieLogLevels.end() &&
+                std::ranges::find(kPieLogLevelWords, *value) == kPieLogLevelWords.end())
+                return std::nullopt;
+            log_level = *value;
+        } else if (event.path == "pie.highlightSlice") {
+            if (event.indent != 4 || highlight) return std::nullopt;
+            if (value->empty() || value->size() > 64u ||
+                value->find_first_of(" \t") != std::string_view::npos)
+                return std::nullopt;
+            highlight = *value;
+        } else if (event.path == "pie.legendPosition") {
+            if (event.indent != 4 || legend || *value != "bottom") return std::nullopt;
+            legend = *value;
+        } else if (event.path == "pie.donutHole") {
+            if (event.indent != 4 || donut || !number(*value)) return std::nullopt;
+            donut = *value;
+        } else if (event.path == "pie.textPosition") {
+            if (event.indent != 4 || position) return std::nullopt;
+            const auto parsed = number(*value);
+            if (!parsed || *parsed < 0 || *parsed > 1) return std::nullopt;
+            position = *value;
+        } else if (event.path == "pie.useMaxWidth") {
+            if (event.indent != 4 || max_width || (*value != "true" && *value != "false"))
+                return std::nullopt;
+            max_width = *value;
+        } else {
+            return std::nullopt;
+        }
+    }
+    std::vector<std::string> notices;
+    if (log_level) {
+        std::string line = "config.logLevel=";
+        line += *log_level;
+        line += " -> logger only; not applied";
+        if (line.size() > kPieNoticeLineLimit ||
+            !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+            return std::nullopt;
+        notices.emplace_back(std::move(line));
+    }
+    for (const auto& [key, value] :
+         {std::pair{"donutHole", donut}, std::pair{"highlightSlice", highlight},
+          std::pair{"legendPosition", legend}, std::pair{"textPosition", position},
+          std::pair{"useMaxWidth", max_width}}) {
+        if (!value) continue;
+        if (!pie_namespace_leaf_notice(key, *value, work, notices)) return std::nullopt;
+    }
+    if (notices.empty()) return std::nullopt;
+    return notices;
 }
 
 // RFC 0031 D236: a description-only frontmatter envelope carries no
@@ -804,7 +918,15 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
         return {};
     const auto envelope = detail::parse_envelope(source, work);
     if (!envelope) return {};
-    enum class Profile { Plain, PieDescription, PieConfig, PieTheme, Xy, XyDescription }
+    enum class Profile {
+        Plain,
+        PieDescription,
+        PieConfig,
+        PieTheme,
+        PieNamespace,
+        Xy,
+        XyDescription
+    }
         profile = Profile::Plain;
     if (envelope->has_frontmatter) {
         const bool pie_config =
@@ -829,12 +951,21 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
             // envelope scan; description-only sources pay one extra pass.
             switch (chart_body_family(envelope->raw_body)) {
                 case ChartBodyFamily::Pie:
-                    if (pie_config) return {};
                     if (const auto theme = pie_theme_frontmatter(*envelope)) {
                         if (!pie_theme_notices(chart.notices, *theme, work)) return {};
                         profile = Profile::PieTheme;
                         break;
                     }
+                    // D-425: the closed `config.pie` namespace, validated
+                    // before the legacy textPosition-only guard so the
+                    // logLevel+textPosition row routes here.
+                    if (const auto leaves = pie_namespace_frontmatter(*envelope, work)) {
+                        if (!pie_notice_header(chart.notices, work)) return {};
+                        chart.notices.insert(chart.notices.end(), leaves->begin(), leaves->end());
+                        profile = Profile::PieNamespace;
+                        break;
+                    }
+                    if (pie_config) return {};
                     if (!pie_description_frontmatter(*envelope)) return {};
                     profile = Profile::PieDescription;
                     break;
@@ -889,7 +1020,7 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
     }
     if (lines.empty()) return {};
     if (profile == Profile::PieDescription || profile == Profile::PieConfig ||
-        profile == Profile::PieTheme) {
+        profile == Profile::PieTheme || profile == Profile::PieNamespace) {
         if (!lines.front().starts_with("pie")) return {};
     } else if (profile == Profile::Xy || profile == Profile::XyDescription) {
         if (!lines.front().starts_with("xychart")) return {};

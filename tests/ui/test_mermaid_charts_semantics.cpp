@@ -10602,10 +10602,13 @@ constexpr std::array<Pie7Supplement, 14> kPie7Supplementary{{
      "root\n\"A\": 1\n\"B\": 2\n",
      "c6564018c3fcf305fc171fc09f13bec729c8310466844c878580c24ba782e80c",
      Pie7SupplementKind::ValidUnsupported, Pie7SupplementModel::Inline},
+    // D-425 admits the closed `config.pie` namespace (textPosition included),
+    // so this envelope control uses a leaf outside the closed table; the
+    // admitted side is covered by test_mermaid_pie_ns_d425_cohort.
     {"config_root_is_valid_unsupported",
-     "---\ndescription: >-\n  opaque metadata\nconfig:\n  pie:\n    textPosition: 0.9\n---\npie "
+     "---\ndescription: >-\n  opaque metadata\nconfig:\n  pie:\n    showValues: true\n---\npie "
      "title Config remains pending\n\"A\": 1\n\"B\": 2\n",
-     "cf2c56f074b44ddda1c47ec844507521d05bb89f4c8f72170294bccbfef83cc4",
+     "07c930c948c7ebc2ad980959eca6048f3405568c32f7689143bbddb409d63ddb",
      Pie7SupplementKind::ValidUnsupported, Pie7SupplementModel::Inline},
     {"title_root_is_valid_unsupported",
      "---\ntitle: frontmatter title remains outside the Pie-only description profile\n---\npie "

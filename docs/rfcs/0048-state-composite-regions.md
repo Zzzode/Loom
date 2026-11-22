@@ -164,20 +164,27 @@ ER107).
   compared line by line.
 - Matrix branch `RFC-0048 state region cohort` must be placed **before** the E2a (`:10892`),
   E2b (`:10916`) and state-0038 (`:10939`) branches — 16 of the 19 rows have no blocker-ledger
-  entry and 11 overlap E2a/E2b, so a later branch would be shadowed (RFC 0046 r1 defect).
-  Reach is proven per row.
+  entry and **3** overlap E2a/E2b (`should-align-dividers-correctly` in E2a; v1/v2
+  `should-render-concurrency-states` in E2b), so a later branch would be shadowed (RFC 0046 r1
+  defect). Reach is proven per row.
 - **Conflicting negatives that must flip with paired new negatives**
   (`tests/ui/test_mermaid_relations_semantics.cpp`): `CompositeDividerStaysSource` (`:33456`)
   and `InitThemeFrontmatterStaysSource` (`:33340`); `ConfigFrontmatterStaysSource` (`:33328`)
   stays negative.
-- **E2a**: `tools/mermaid/generate_e2a_cohort.py:118` (`STATE_COMPOSITE_EXECUTION_DEBT`),
-  `:178-187` (`state_blocker`); `tools/mermaid/e2a-cohort.json` blocker rows;
-  `tests/ui/test_mermaid_e2a_cohort.cpp:148-153` (59/10), `:199-205`, `:304-320` (whole-source
-  scan). **E2b**: `tools/mermaid/generate_e2b_cohort.py:101` (`NATIVE_ROUTING_DEBT`),
-  `:183-210`; `tools/mermaid/e2b-cohort.json`; `tests/ui/test_mermaid_e2b_cohort.cpp:151-155`
-  (51/10), `:207-213`, `:311` (`checked == 39`).
+- **E2a**: only the `state_blocker` `--` detection branch
+  (`tools/mermaid/generate_e2a_cohort.py:186`) and the one `should-align-dividers-correctly`
+  JSON row change; the sha-pinned sets (`STATE_COMPOSITE_EXECUTION_DEBT`, `:118`) stay
+  **frozen** because they pin the deferred brace rows. Counts:
+  `tests/ui/test_mermaid_e2a_cohort.cpp:148-153` 59/10 → 60/9. **E2b**: only the
+  `state_blocker` `--` branch (`tools/mermaid/generate_e2b_cohort.py:190`) and the two
+  concurrency JSON rows; `NATIVE_ROUTING_DEBT` (`:101`) stays frozen (deferred routing rows).
+  Counts: `tests/ui/test_mermaid_e2b_cohort.cpp:151-155` 51/10 → 53/8, `:311`
+  `checked == 39` → 35. The new `state-region-0048-cohort.json` must be wired into **both**
+  whole-source scans (`test_mermaid_e2a_cohort.cpp:304-320`,
+  `test_mermaid_e2b_cohort.cpp:207-213`) as a skip set, or the 4 config rows and 8 init rows
+  fail `same_source_surface` after flipping.
 - **0046 ledger/test**: `tools/mermaid/generate_layouttuning_0046_cohort.py:51-60`
-  (`FAMILY_COUNTS`), `:442-454`; `tests/ui/test_mermaid_layouttuning_0046_cohort.cpp:229`,
+  (`FAMILY_COUNTS`), `:442-454`; `tests/ui/test_mermaid_layouttuning_0046_cohort.cpp:234` (`counts.drawn` 105 → 124),
   `:236` (remaining 62 → 43 after P1+P2), `:263-270` (state drawn 28 → 33, 52 → 66),
   `:587` (`? 12 : 49` → `? 7 : 35`), `:600` (remaining 44 → 25).
 - **state-0038 needs no migration**: its `excluded` list is frontmatter-shape based (117 rows,
@@ -208,7 +215,9 @@ routing Work budget.
 
 ## Production Readiness Review
 
-To be completed at the `implementable` gate.
+To be completed at the `implementable` gate. Must record: the `accTitle` no-op fidelity
+trade-off, the E2a/E2b frozen-set rationale, and the State-only side table's
+`sizeof(RelationEntity)` static assertion evidence.
 
 ## Rollout and rollback
 
@@ -225,6 +234,10 @@ wire, CLI or settings change.
 - The state init scanner is a fourth local directive grammar; the single-source probe artifact
   is the rule-37 guard.
 - The E2a/E2b whole-source scans fail if any flipped row is not migrated in the same commit.
+- `accTitle:` becoming a validated no-op is a deliberate fidelity trade-off: upstream treats it
+  as an accessibility name (not rendered ink), and the config-free-twin oracle stays exact only
+  if the frame is unchanged. The PRR records it explicitly so it is not read as a rendering
+  defect.
 
 ## Alternatives considered
 
@@ -251,6 +264,7 @@ wire, CLI or settings change.
 - [ ] `docs/README.md` — RFC index row
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — state rows
 - [ ] `docs/dev/mermaid-unsuccessful-cases.md`, `docs/dev/mermaid-failure-inventory.json`,
+      `docs/dev/mermaid-e2a-cohort.md`,
       `tests/fixtures/mermaid_native/direct_theme_source_audit.v1.json` — snapshot refresh
 - [ ] `docs/dev/engineering-efficiency.md` — per-task retro
 

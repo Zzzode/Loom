@@ -409,6 +409,17 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
     `NARROW_DRAW` from a twin. The PRR's "measure, never transcribe" requirement is
     what caught it before the closure.
 
+35. **A hand-copied fixture path is a silent trap; existence-check every pinned list and
+    share one list between the generator and the gate.** In RFC 0042 the Pie7 set typed into
+    the new gate test had `should-render-a-pie-diagram-with-capital-letters...` where the
+    corpus says `should-render-a-simple-pie-diagram-with-capital-letters...`. The gate then
+    reported "drawn row must draw" for a row it had never loaded (empty read → fallback),
+    and a throwaway diagnostic probe repeated the same typo, so the first diagnosis was
+    "the renderer does not draw this row" instead of "the path is wrong". Rule: every
+    hardcoded path list is asserted against the corpus (the generator already does
+    `PIE7 <= originals`), the gate recomputes the same check, and a diagnostic that reports
+    an empty source should print the byte size before any conclusion.
+
 ## Per-task efficiency retro (mandatory at every closure)
 
 Attach a short efficiency section to each closure report, answering:
@@ -1764,3 +1775,21 @@ Attach a short efficiency section to each closure report, answering:
    matrix byte-identical to debug (`326fb96f…`), so the census used release.
 6. **New entry.** Rule 34 (a footer changes the narrow predicate; re-measure, never
    inherit from the twin).
+
+### 2026-11-22 — RFC 0042 (pie) implementation retro
+
+1. **Gate wall-clock.** The new pie gate is ~15 s for 7 tests; the adjacent chart/family
+   guard sweep is 204 tests in 239 s; `ctest -L mermaid` is 1472/1472 at the phase gate;
+   the release OfficialMatrix is ~27 s.
+2. **False green/red.** One real self-inflicted red: the hand-copied Pie7 path typo made a
+   real drawn row look undrawn, and a diagnostic probe reused the typo (rule 35). No
+   product defect and no flake.
+3. **Rework.** The r1 design review's scalar-rule MAJOR (misattributed
+   `chart_yaml_scalar`) would have produced an untestable "trailing comment positive"; it
+   was fixed in the RFC before code. The PRR's emit-order MAJOR would have turned the
+   drift gate red by construction, also fixed before code.
+4. **Build fan-out.** One charts-TU body recompiled, archive + dependent relinks; no BMI
+   change; one new test executable and one hermetic ctest.
+5. **Cheaper approach evidence.** Focused pie gate 15 s vs 1472-test label; release matrix
+   byte-identical to debug (`b00ab2c3…`), so the census used release.
+6. **New entry.** Rule 35 (existence-check hand-copied fixture paths; share one list).

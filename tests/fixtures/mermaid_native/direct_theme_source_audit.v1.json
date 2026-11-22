@@ -6003,5 +6003,5 @@
     "drawing_credit_added": 0,
     "qualification": "Exact direct-key source census and current matrix arithmetic only; no theme, terminal projection, or drawing admission."
   },
-  "superseded_by": "RFC 0041 (2026-11-22) admits the 9 theme-only agentflow rows; this snapshot predates that admission and is kept as a point-in-time census. Its agentflow `source_fallback` cells are stale; the live matrix and the RFC 0041 cohort ledger are authoritative."
+  "superseded_by": "RFC 0041 (2026-11-22) admits the 9 theme-only agentflow rows; this snapshot predates that admission and is kept as a point-in-time census. Its agentflow `source_fallback` cells are stale; the live matrix and the RFC 0041 cohort ledger are authoritative. Additionally superseded for the 5 pie theme rows by RFC 0042 (2026-11-22); its pie `source_fallback` cells are stale and the live matrix plus tools/mermaid/pie-0042-cohort.json are authoritative."
 }

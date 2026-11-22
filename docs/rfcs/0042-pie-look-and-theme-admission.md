@@ -1,7 +1,7 @@
 ---
 rfc: 42
 title: pie look and theme admission
-status: implementable
+status: implemented
 owners: "@Zzzode"
 reviewers: ["agent:a91726bc2e6905718 rfc0042-design-review (r1 REQUEST-CHANGES -> r2 APPROVE-TO-ACCEPT)", "agent:ac41c7a527c6f43f6 rfc0042-prr (r1 REQUEST-CHANGES -> folded; see Review History)"]
 created: 2026-11-22
@@ -225,7 +225,7 @@ pinned in the battery.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `theme` admission | 5 rows | proposed | pie 7/17 → **12/12**; global 1471/674 → **1476/669**; formal `drawn_at_240` **1285 → 1290**; gaps 48, integrity 0; narrow_40 measured per row; dual-preset sha recorded |
+| P1 | `theme` admission | 5 rows | done | pie 7/17 → **12/12**; global 1471/674 → **1476/669**; formal `drawn_at_240` **1285 → 1290**; gaps 48, integrity 0; narrow_40 measured **0/5**; dual-preset sha `b00ab2c34b602c2aff4a2cae17e82d8a26dbad7aca35fa9a503d3d7cc4a0db8c` |
 
 Closure: full debug ctest once (D-401 §7 discipline), dual-preset byte gate, RFC
 `implemented`, closure doc, design-decisions entry, efficiency retro.
@@ -297,12 +297,12 @@ data, no wire protocol, no CLI contract changes.
 ## Documentation impact
 
 - [ ] `docs/dev/d408-next-family-pie.md` — selection record (already written)
-- [ ] `docs/dev/d409-pie-rfc0042-closure.md` — closure record
-- [ ] `docs/decisions/design-decisions.md` — pie config admission entry
-- [ ] `docs/README.md` — RFC index
-- [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — pie row 17/7 → 12/12
-- [ ] `docs/dev/engineering-efficiency.md` — per-task retro
-- [ ] `tests/fixtures/mermaid_native/direct_theme_source_audit.v1.json` — unconsumed
+- [x] `docs/dev/d409-pie-rfc0042-closure.md` — closure record
+- [x] `docs/decisions/design-decisions.md` — pie config admission entry
+- [x] `docs/README.md` — RFC index
+- [x] `docs/dev/mermaid-d117-family-fallback-counts.md` — pie row 17/7 → 12/12
+- [x] `docs/dev/engineering-efficiency.md` — per-task retro
+- [x] `tests/fixtures/mermaid_native/direct_theme_source_audit.v1.json` — unconsumed
       point-in-time census; annotate as superseded by RFC 0042 (it lists pie rows as
       `source_fallback` with a pre-phase `matrix_sha256`)
 
@@ -337,5 +337,7 @@ data, no wire protocol, no CLI contract changes.
 | 2026-11-22 | — | Draft created (provisional), no code | — |
 | 2026-11-22 | — | Accepted after design review r2 | — |
 | 2026-11-22 | — | Implementable after PRR r1 (MAJOR folded) | — |
+| 2026-11-22 | P1 | `PieTheme` profile + disclosure footer; 5 rows promoted; corpus/synthetic twin ledger (digest `3caa028a…`); 6 gtest + 1 hermetic `--check`; matrix branch after the Pie7 block; roster 674 → 669; narrow_40 measured 0/5 | `a1c5f93e` |
+| 2026-11-22 | — | Closure: full debug ctest, dual-preset byte gate, D-409 record, design-decisions and README entries, d117/audit census updates, efficiency retro | see D-409 |
 | 2026-11-22 | p1-code-r1 | independent read-only adversarial code-review agent (grammar/twins/footer/generators/matrix/hidden tests) | APPROVE | Zero BLOCKER/MAJOR. Verified live: the PieTheme profile matches the RFC shape exactly, PieConfig/PieDescription are byte-unchanged, the footer budget is byte-identical to the six sibling paths (emission after `pie_chart`, so the title-only chart discloses), the corpus/synthetic twin gate recomputes sha and body equivalence, the narrow 0/5 state is live-asserted, the matrix branch sits after the Pie7 special branch and credits the generic counter, and no protected file or exported interface changed. MINORs fixed: the RFC placement sentence now says "after the Pie7 block"; the generator strips CR before classifying. NITs fixed: the emission block re-checks the 96-byte cap for sibling parity, and the in-table no-description negative pins the body-family guard. |
 | 2026-11-22 | prr-r1 | independent PRR agent (production-readiness lens; graduation measurability, hidden tests, build/Work, false-green, rollback, couplings, precedent) | REQUEST-CHANGES -> folded | Every product-side number re-derived live (1471/674, 1285, gaps 48, integrity 0, pie 7/17; the five rows original-track `family_residual:pie`, absent from the protected gap roster; the +5 accounting path is the generic counter; a simulated promotion gives 669 / pie 12 / formal 1290 / `--self-test` green). Build is body-only, no BMI change; Work formulas byte-identical to five siblings; no shared-contract change; mixed corpus/synthetic twins match RFC 0037. **MAJOR**: the testing plan's fixed order put `--matrix` before `--emit`, which fails by construction (live 669 vs pinned 674) → folded: the only green order is review approved → full rebuild → both matrices → cohort gate green → `--emit` → `--self-test` → `--matrix` (and RFC 0041's identically worded sentence is corrected as a docs fix). MINORs folded: the footer now attaches whenever a leaf was accepted, including the title-only empty-slice chart (G2); `PieTheme` takes the stricter `xy_description_shape` rule for an indented comment inside the payload and pins exactly one space after `theme:`; the four body-blocked theme rows are explicit whole-source negatives in the gate; the point-in-time `direct_theme_source_audit` snapshot joins the documentation impact; D-408's footer length is corrected to 60 characters. |

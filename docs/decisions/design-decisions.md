@@ -4487,3 +4487,43 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   admitted set pinned by a digest that the sibling ledger
   `tools/mermaid/agentflow-0041-cohort.json` repeats; the matrix branch loads the
   sibling ledger before the family cohort branch and the generic fallback.
+
+## pie look and theme admission (RFC 0042)
+
+- **A new chart profile, not a widened one.** `chart_source_lines` routes a pie
+  body with a folded `description: >-` envelope to `PieDescription` today; a
+  `config:` line makes that profile reject. RFC 0042 adds `PieTheme` beside it:
+  the same literal header and two-space payload (stricter than the old profile:
+  no blank line, no indented comment), then exactly one `config:` block whose
+  sole leaf is a literal `  theme: <value>` (one space after the colon, one
+  occurrence, indent exactly 2). The scalar is read exactly like `PieConfig`
+  reads `pie.textPosition`: `chart_yaml_scalar` on the raw value with a leading
+  quote rejected, so quoted and comment-bearing values are negatives. `PieConfig`
+  and `PieDescription` stay byte-unchanged, and a theme leaf without the folded
+  description keeps today's rejection.
+- **Closed table:** {`dark`, `redux`, `redux-dark`, `redux-color`,
+  `redux-dark-color`} — the theme values on the reachable rows. The corpus also
+  uses `default`/`forest`/`neutral` on four rows whose `accTitle:`/`accDescr:`
+  bodies `parse_chart` rejects; those values are outside the table, and the four
+  fixtures are explicit whole-source negatives in the gate.
+- **Disclosure footer:** `Pie native projection v1` + one theme line, blank
+  separator first, appended in `charts_layout` (the single funnel) whenever the
+  gate accepted a leaf — including `pie_chart`'s title-only empty-slice return —
+  with the 96-byte cap, per-line/emission charges and the
+  `rows + 1 + n <= kHeightLimit (1024)` guard identical to the six sibling paths.
+- **Mixed twin kinds:** the `dark` sports row is body-identical to the drawn
+  `pie/pr-check/simple-sports.mmd` (corpus twin, pinned with sha and verified by
+  body equivalence); the four twelve-slice redux rows have no drawn
+  body-equivalent, so they use the config-free synthetic twin (RFC 0039
+  precedent). The frame composition is wide-only; narrow is a separate live
+  ledger assertion.
+- **Accounting and artifacts:** the matrix branch sits after the Pie7 special
+  branch (so it cannot shadow it) and leaves `raw_active_schema` empty, so the
+  generic `originals_drawn` counter credits the five rows; the published
+  `Pie7_native_whole_source` summary keeps its whole-scene arithmetic
+  (7 + 17 = 24) and names the RFC 0042 terminal cohort in its scope string.
+- **Emit ordering:** the only green roster order is review approved → full
+  rebuild → both preset matrices → cohort gate green → `--emit` → `--self-test`
+  → `--matrix`; `--matrix` before `--emit` fails by construction (live 669 vs
+  pinned 674) — the same correction applies to RFC 0041's identically worded
+  sentence.

@@ -945,12 +945,15 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
 
 // RFC 0031 E2a: gitGraph admits a description-only frontmatter envelope.
 // The description is documentation-only: validated and discarded, never
-// rendered. RFC 0039 adds a `config:` block whose only admitted leaves are the
-// closed `look` table ({neo}) and the closed `theme` palette table; both are
+// rendered. RFC 0039 adds a `config:` block whose only admitted flat leaves are
+// the closed `look` table ({neo}) and the closed `theme` palette table; both are
 // validated and disclosed through a footer below the art, never read by the
-// renderer. A namespaced `config.gitGraph.*` subtree, an empty config block,
-// any body init directive, any title (gitGraph has no title projection) or any
-// other key keeps the whole source.
+// renderer. RFC 0045 admits exactly one namespaced subtree, `gitGraph` with the
+// single boolean leaf `parallelCommits` (the upstream parallel-lane compaction
+// switch, inert here and disclosed in the same footer). Every other namespaced
+// `config.gitGraph.*` key, an empty config block, any body init directive, any
+// title (gitGraph has no title projection) or any other key keeps the whole
+// source.
 constexpr std::size_t kGitNoticeLineLimit = 96u;
 
 struct GitEnvelope {
@@ -981,9 +984,14 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
     const auto envelope = detail::parse_envelope(source, work);
     if (!envelope || !envelope->has_frontmatter || !envelope->init.empty()) return {};
     bool description_seen = false, config_seen = false;
-    enum : unsigned { Look = 1u, Theme = 2u };
+    enum : unsigned { Look = 1u, Theme = 2u, GitGraphNs = 4u, Parallel = 8u };
     unsigned fields = 0u;
-    std::string look_value, theme_value;
+    std::string look_value, theme_value, parallel_value;
+    const auto mark = [&](unsigned bit) -> bool {
+        if (fields & bit) return false;
+        fields |= bit;
+        return true;
+    };
     for (const auto& event : envelope->events) {
         if (event.blank || event.comment) continue;
         if (event.top_level) {
@@ -999,16 +1007,24 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
             }
             return {};
         }
-        // RFC 0039 config subtree: indent-2 scalar leaves only, no namespaced
-        // key, no nested map; unknown keys fail closed.
-        if (!config_seen || event.indent != 2 || event.path.find('.') != std::string_view::npos)
-            return {};
-        const auto mark = [&](unsigned bit) -> bool {
-            if (fields & bit) return false;
-            fields |= bit;
-            return true;
-        };
+        // RFC 0039 config subtree: indent-2 scalar leaves; RFC 0045 adds
+        // exactly one namespaced `gitGraph` subtree with one boolean leaf.
+        // Every other key or shape fails closed.
+        if (!config_seen) return {};
+        if (event.namespace_entry) {
+            // The parser emits a namespace event only for an empty value.
+            if (event.path != "gitGraph" || event.indent != 2 || !mark(GitGraphNs)) return {};
+            continue;
+        }
         const auto scalar = git_inert_scalar(event.value, work);
+        if (event.path == "gitGraph.parallelCommits" && event.indent == 4) {
+            if (!(fields & GitGraphNs) || !mark(Parallel) ||
+                (scalar != "true" && scalar != "false"))
+                return {};
+            parallel_value = scalar;
+            continue;
+        }
+        if (event.indent != 2 || event.path.find('.') != std::string_view::npos) return {};
         if (event.path == "look") {
             if (!mark(Look) || scalar != "neo") return {};
             look_value = scalar;
@@ -1041,6 +1057,9 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
     if (!payload) return {};
     // An empty config block was whole-source before RFC 0039 and stays so.
     if (config_seen && fields == 0u) return {};
+    // A namespace without its leaf: the namespace bit defeats the empty-config
+    // guard above, so the gate must reject it explicitly.
+    if ((fields & GitGraphNs) && !(fields & Parallel)) return {};
     GitEnvelope result{envelope->raw_body, {}};
     if (fields != 0u) {
         if (!git_notice_line(result.config_notices, "GitGraph native projection v1", work))
@@ -1053,6 +1072,14 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
             !git_notice_line(result.config_notices,
                              "config.theme=" + theme_value +
                                  " -> colour palette; not applied",
+                             work))
+            return {};
+        // Appended last: no already-drawn frame carries the namespace, so this
+        // only fixes the new rows' order after the flat look/theme leaves.
+        if ((fields & Parallel) &&
+            !git_notice_line(result.config_notices,
+                             "config.gitGraph.parallelCommits=" + parallel_value +
+                                 " -> parallel lane compaction; not applied",
                              work))
             return {};
     }

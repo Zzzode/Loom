@@ -232,7 +232,7 @@ N/A-with-reason claim and G3 auditable.
 | E2a negative `ConfigAndInitRowsKeepWholeSource` (`tests/ui/test_mermaid_e2a_cohort.cpp`) | iterates `git` + both state roots and excludes only the E2a/E2b/RFC 0038 ledgers (**132** rows today = git 71 + state-v2 47 + state-v1 14). The phase adds the git sibling ledger and asserts the **config/init-bearing git-root skipped set equals the git ledger**
 (12 rows; the 64 config-free E2a git rows are excluded separately and are not part of this
 set), so 59 config/init-bearing git rows remain scanned; `EXPECT_GT(checked, 100)` still holds at **120** = 59 + 47 + 14 |
-| surviving git negative `MermaidGitGraphEnvelope.ConfigFrontmatterStaysSource` (`tests/ui/test_mermaid_gitgraph_semantics.cpp`) | uses a namespaced `config.gitGraph.mainBranchName`; it survives **only because** namespaced subtrees stay closed — a future widening must revisit it |
+| surviving git negative `MermaidGitGraphEnvelope.ConfigFrontmatterStaysSource` (`tests/ui/test_mermaid_gitgraph_semantics.cpp`) | uses a namespaced `config.gitGraph.mainBranchName`; it survives because `mainBranchName` stays closed — RFC 0045 widened the namespace for exactly one key, the inert `parallelCommits` boolean, and left every content-bearing key (including this one) rejecting |
 | git title negative `TitleIsBlockedNotDropped` | unchanged: `title:` stays unadmitted |
 | census `expected`/`reason` | `tests/fixtures/mermaid_official/manifest.json` is SHA-pinned and never edited; promotion is a ledger-driven branch |
 | frozen partitions | `e6c-mandatory-gap-roster.json` has no git rows and is untouched |

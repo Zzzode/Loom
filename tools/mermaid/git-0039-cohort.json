@@ -16,7 +16,8 @@
     "cohort_digest": "46d27e97f208ebf508716a1c942a2ae3eec7090572568d70e97cc7d7c31225c5",
     "twin_rule": "the frame must equal the synthesized config-free twin's frame plus the recorded footer delta, line by line; both sides are rendered through the same sentinel-bearing wrapper",
     "corpus_twins": "none: no drawn git fixture is body-equivalent to a cohort row, so all 12 rows use the config-free twin",
-    "exclusions": "44 namespaced config.gitGraph.* rows (semantics debt) and 6 theme rows whose bodies exceed the branch/route density stay fallback",
+    "exclusions": "44 namespaced config.gitGraph.* rows (semantics debt; RFC 0045 later admitted the 12 parallelCommits-only rows) and 6 theme rows whose bodies exceed the branch/route density stay fallback",
+    "census_note": "the machine-readable excluded[] list is the frozen 2026-11-21 0039 census; RFC 0045 admitted the 12 gitGraph.parallelCommits-only rows classified there, and counts.namespaced stays 44 as a source-shape pin",
     "width_policy": "wide_240 admission only; narrow_40 stays 'source'."
   },
   "review": {

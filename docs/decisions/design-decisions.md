@@ -4372,9 +4372,11 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   `redux`, `redux-dark`, `redux-color`, `redux-dark-color`). Both are
   corpus-bounded: all 30 git look/theme rows carry `look: neo`, and the six
   palettes are exactly the corpus. A namespaced `config.gitGraph.*` subtree
-  (`mainBranchName`, `parallelCommits`, `showBranches`, `showCommitLabel`, …)
-  stays closed — those change branch naming, label visibility and commit
-  ordering, i.e. semantics, not inert style tables.
+  (`mainBranchName`, `mainBranchOrder`, `showBranches`, `showCommitLabel`,
+  `rotateCommitLabel`, …) stays closed — those change branch naming, label
+  visibility and commit ordering, i.e. semantics, not inert style tables. RFC
+  0045 later widened the namespace for exactly one key, `parallelCommits`,
+  which is a layout-only switch the renderer never reads (see below).
 - **Disclosure footer:** `GitGraph native projection v1` plus one line per
   accepted leaf, appended below the art with a blank separator, in the fixed
   order `look` then `theme`. The header is capitalised like the three existing
@@ -4403,6 +4405,39 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   `tools/mermaid/git-0039-cohort.json`, never through the pinned manifest and
   never by editing the E2a ledger. Both leaves land in one atomic phase;
   rollback is one revert.
+
+## gitGraph `parallelCommits` namespace admission (RFC 0045)
+
+- **One grammar position beyond RFC 0039:** `parse_envelope` emits a namespace
+  event (`namespace_entry`) for an empty structural value, so `config:` is a
+  namespace event at column 0 and `gitGraph:` one at indent 2. The gate admits
+  exactly that pair — `gitGraph` at indent 2, then `parallelCommits` at indent
+  4 whose scalar, read through `git_inert_scalar`, is the literal `true` or
+  `false`. Any other namespace name, any other leaf, and a leaf at any other
+  indent reject. `gitGraph: foo` is a leaf, not a namespace, and rejects.
+- **The empty-namespace rejection is the gate's, not the parser's.** A
+  namespace event sets a field bit, which defeats the "empty config block"
+  guard (`fields == 0`), so the gate must test `(GitGraphNs && !Parallel)`
+  explicitly: a namespace without its leaf keeps the whole source.
+- **The disclosure line contains the literal `gitGraph`:**
+  `config.gitGraph.parallelCommits=<v> -> parallel lane compaction; not applied`
+  (78 bytes for `false`, under the 96-byte cap), appended last after the
+  `look`/`theme` lines. Three consumers use `find("gitGraph") == npos` as a
+  not-natively-drawn mnemonic (the capitalised header exists for that reason);
+  a frame carrying this footer must never be judged by the substring mnemonic,
+  and the cohort gate uses line-equality native-frame predicates. No
+  already-drawn git frame can carry the namespace, so existing notice order is
+  unchanged.
+- **Synthetic twin only:** no drawn git fixture is body-equivalent, so each
+  row is proven against a config-free twin built by deleting the `config:` line
+  and every following line indented at least two spaces, up to the next
+  column-0 key. The RFC 0039 twin helper cannot be reused: it only skips flat
+  `look`/`theme` leaves and would leave the namespace in place.
+- **The 0039 `excluded[]` reasons are a frozen census.** They classify all 44
+  namespaced rows as "stay closed" and are not rewritten by this phase; the
+  0039 ledger's `selection.census_note` names the admitted class by count, and
+  `counts.namespaced == 44` stays a source-shape pin. A second 12-path literal
+  in that ledger would drift against the 0045 ledger.
 
 ## journey-family look and theme admission (RFC 0040)
 

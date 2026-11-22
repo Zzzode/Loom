@@ -1,0 +1,355 @@
+{
+  "schema": "loom_mermaid_git_0045_cohort/v1",
+  "rfc": 45,
+  "phase": "P1-parallel-commits",
+  "admission": {
+    "shape": "folded description envelope + one config block carrying exactly one gitGraph namespace with the parallelCommits boolean",
+    "table": {
+      "config.gitGraph.parallelCommits": [
+        "true",
+        "false"
+      ]
+    },
+    "footer": {
+      "header": "GitGraph native projection v1",
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "synthetic config-free twin (config line and every following indent>=2 line deleted); no drawn git fixture is body-equivalent (RFC 0039 precedent)"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "git fallback rows whose only unadmitted config leaf is the gitGraph.parallelCommits boolean",
+    "census": {
+      "rfc0039": 12,
+      "base": 58
+    },
+    "path_pin": [
+      "git/nightly-check/41-should-render-default-gitgraph-with-parallelcommits-set-to-false.mmd",
+      "git/nightly-check/42-should-render-gitgraph-with-parallel-commits.mmd",
+      "git/nightly-check/43-should-render-gitgraph-with-parallel-commits-vertical-branch.mmd",
+      "git/nightly-check/44-should-render-gitgraph-with-unconnected-branches-and-no-parallel-commits.mmd",
+      "git/nightly-check/45-should-render-gitgraph-with-unconnected-branches-and-parallel-commits.mmd",
+      "git/nightly-check/46-should-render-gitgraph-with-merge-back-and-merge-forward.mmd",
+      "git/nightly-check/46-should-render-gitgraph-with-unconnected-branches-and-parallel-commits-vertical-branch.mmd",
+      "git/pr-check/47-should-render-gitgraph-with-merge-back-and-merge-forward-vertical-branch.mmd",
+      "git/nightly-check/48-should-render-gitgraph-with-merge-on-a-new-branch-vertical-branch.mmd",
+      "git/nightly-check/49-should-render-gitgraph-with-merge-on-a-new-branch-vertical-branch.mmd",
+      "git/nightly-check/71-should-render-gitgraph-with-parallel-commits-vertical-branch-bottom-to-top.mmd",
+      "git/nightly-check/72-should-render-gitgraph-with-unconnected-branches-and-parallel-commits-vertical-branch-bottom-to-top.mmd"
+    ],
+    "cohort_digest": "9e47886797cfb90ffeb09d97ff65f53ed13a189e02a25003d6973942331ba7e2",
+    "remaining_by_category": {
+      "family_residual:git": 34,
+      "git_cherry_pick": 12,
+      "look_neo": 6,
+      "multiline_label": 1
+    }
+  },
+  "counts": {
+    "originals": 135,
+    "drawn": 70,
+    "admitted": 12,
+    "remaining": 53
+  },
+  "review": {
+    "reviewer_agent": "agent:code-review (independent adversarial, read-only)",
+    "date": "2026-11-22",
+    "verdict": "approved",
+    "note": "r1 REQUEST-CHANGES (BLOCKER: the twin assertion scanned the whole source for `parallelCommits`, which the folded description text legitimately contains; plus upstream-pin, mirror-fidelity, battery coverage and twin-rule-alignment findings) -> fixed -> r2 APPROVE, re-verified against the full gate binary."
+  },
+  "rows": [
+    {
+      "path": "git/nightly-check/41-should-render-default-gitgraph-with-parallelcommits-set-to-false.mmd",
+      "family": "git",
+      "sha256": "320bedc308327064d2993f78ae69866b2d58a472b46c942fc7c11bd4885fa2d6",
+      "manifest_sha256": "320bedc308327064d2993f78ae69866b2d58a472b46c942fc7c11bd4885fa2d6",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "d8720528093497f35213a4b59d9ddcb05ece2c329181a900cff24efa30efca0e"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    },
+    {
+      "path": "git/nightly-check/42-should-render-gitgraph-with-parallel-commits.mmd",
+      "family": "git",
+      "sha256": "818d1bb3844c9df0c1a7151d7ff390bb3a15d00cbcec8c108c336b7c7dfee4e8",
+      "manifest_sha256": "818d1bb3844c9df0c1a7151d7ff390bb3a15d00cbcec8c108c336b7c7dfee4e8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "77c143722382be4771d8e620ebaeca0f3123bf500e86079c6217bc2e2d1f52ed"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    },
+    {
+      "path": "git/nightly-check/43-should-render-gitgraph-with-parallel-commits-vertical-branch.mmd",
+      "family": "git",
+      "sha256": "b2fd78b0c4c39a5c2f131a641187c59c00ae2b20bc313e6c2e6fd0fc7aeb0276",
+      "manifest_sha256": "b2fd78b0c4c39a5c2f131a641187c59c00ae2b20bc313e6c2e6fd0fc7aeb0276",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "6ac781ed36ce1154802bf657de7f324e9e88ecbea30b3cdba33a8f7d7ab15b58"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    },
+    {
+      "path": "git/nightly-check/44-should-render-gitgraph-with-unconnected-branches-and-no-parallel-commits.mmd",
+      "family": "git",
+      "sha256": "4937e2d7a284bd3c8de8742f74c9592d3613e526ae490240794225120bd25f78",
+      "manifest_sha256": "4937e2d7a284bd3c8de8742f74c9592d3613e526ae490240794225120bd25f78",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "e6d85b5c89e50762d8b8f2a43a599d1a4eb9d85453b550c9f552c5a3d49ea69a"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    },
+    {
+      "path": "git/nightly-check/45-should-render-gitgraph-with-unconnected-branches-and-parallel-commits.mmd",
+      "family": "git",
+      "sha256": "7febe7f7afba63cba96d8606e54a2606bf3e22d7124be0ece650f3be5b02fbac",
+      "manifest_sha256": "7febe7f7afba63cba96d8606e54a2606bf3e22d7124be0ece650f3be5b02fbac",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "ba9ff9a115a76138ce51fd63469af6d2f3786ba2bd21bf2b49e7bd1f780ecb8c"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    },
+    {
+      "path": "git/nightly-check/46-should-render-gitgraph-with-merge-back-and-merge-forward.mmd",
+      "family": "git",
+      "sha256": "dd9cd797330e36e1370c0f9a670a0e42d4ffc085f5e261cb1e64b119c4a23d98",
+      "manifest_sha256": "dd9cd797330e36e1370c0f9a670a0e42d4ffc085f5e261cb1e64b119c4a23d98",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "f17002894f8c31605864a70d6431fae68cf81cdbdee2cc7b28b52d159aa23953"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    },
+    {
+      "path": "git/nightly-check/46-should-render-gitgraph-with-unconnected-branches-and-parallel-commits-vertical-branch.mmd",
+      "family": "git",
+      "sha256": "272d5f0888ba242a60359133ec213eda5256f9d774e7ea810c09268dee4f7f33",
+      "manifest_sha256": "272d5f0888ba242a60359133ec213eda5256f9d774e7ea810c09268dee4f7f33",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "74349600476890c5762b28a46038ce0aa2cd158b9eb439642071f6bb07a5f8e1"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    },
+    {
+      "path": "git/pr-check/47-should-render-gitgraph-with-merge-back-and-merge-forward-vertical-branch.mmd",
+      "family": "git",
+      "sha256": "915b52e441be216fe2c5a421e406436c3edb0b386815362c7b01af488ac031dc",
+      "manifest_sha256": "915b52e441be216fe2c5a421e406436c3edb0b386815362c7b01af488ac031dc",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "cd46a433c10bbfd0d724068e79bb592a68181b5da9f204d3c030d59da30f2a19"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    },
+    {
+      "path": "git/nightly-check/48-should-render-gitgraph-with-merge-on-a-new-branch-vertical-branch.mmd",
+      "family": "git",
+      "sha256": "3b2e8c17ee6c6159584882ababd4693b291170aabd068184274f10a34f93a3f3",
+      "manifest_sha256": "3b2e8c17ee6c6159584882ababd4693b291170aabd068184274f10a34f93a3f3",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "ae73aba2e1ee8c95804f491eefd4de5e84d54f5948dc028ed33f51f30ebf672c"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    },
+    {
+      "path": "git/nightly-check/49-should-render-gitgraph-with-merge-on-a-new-branch-vertical-branch.mmd",
+      "family": "git",
+      "sha256": "4d6f2be829911a6bb7181109f9e0f31dbc2f740e8f8c3ef0f0d3b80712af2bc2",
+      "manifest_sha256": "4d6f2be829911a6bb7181109f9e0f31dbc2f740e8f8c3ef0f0d3b80712af2bc2",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "d2104bf5a1abf4db80bab071fbd009b521393efa0ba04bf29857dee9901400cb"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    },
+    {
+      "path": "git/nightly-check/71-should-render-gitgraph-with-parallel-commits-vertical-branch-bottom-to-top.mmd",
+      "family": "git",
+      "sha256": "5de626135072b37f879be0d87ecab135fe3a65051a1d796e0ad72f779ffb9092",
+      "manifest_sha256": "5de626135072b37f879be0d87ecab135fe3a65051a1d796e0ad72f779ffb9092",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "514a021b1f11ea94a85ebdc686cff815d69e2d443305846070ed81b6a2c5001a"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    },
+    {
+      "path": "git/nightly-check/72-should-render-gitgraph-with-unconnected-branches-and-parallel-commits-vertical-branch-bottom-to-top.mmd",
+      "family": "git",
+      "sha256": "75236e67b639ba7880235c311d2a273bf883577fc25d7af9ec69e422a6925401",
+      "manifest_sha256": "75236e67b639ba7880235c311d2a273bf883577fc25d7af9ec69e422a6925401",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "a82fc9c6ad62b4230e3ee94f8afdc5f8756f08ddb0ed39de324441e233ad6dec"
+      },
+      "ledger_note": "inert gitGraph.parallelCommits boolean admitted by RFC 0045; the renderer never reads it, the upstream parallel-lane compaction is not applied, and the footer discloses it"
+    }
+  ]
+}

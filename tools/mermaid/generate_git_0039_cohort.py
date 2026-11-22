@@ -334,8 +334,13 @@ def build(repo_root: pathlib.Path):
                          "rendered through the same sentinel-bearing wrapper",
             "corpus_twins": "none: no drawn git fixture is body-equivalent to a cohort row, "
                             "so all 12 rows use the config-free twin",
-            "exclusions": "44 namespaced config.gitGraph.* rows (semantics debt) and 6 theme "
+            "exclusions": "44 namespaced config.gitGraph.* rows (semantics debt; RFC 0045 "
+                          "later admitted the 12 parallelCommits-only rows) and 6 theme "
                           "rows whose bodies exceed the branch/route density stay fallback",
+            "census_note": "the machine-readable excluded[] list is the frozen 2026-11-21 "
+                           "0039 census; RFC 0045 admitted the 12 gitGraph.parallelCommits-"
+                           "only rows classified there, and counts.namespaced stays 44 as "
+                           "a source-shape pin",
             "width_policy": "wide_240 admission only; narrow_40 stays 'source'.",
         },
         "review": {

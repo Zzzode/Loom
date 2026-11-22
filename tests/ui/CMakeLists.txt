@@ -250,6 +250,16 @@ add_test(NAME MermaidGit0039Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidGit0039Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# RFC 0045: the parallelCommits cohort pin and the synthetic-twin rule are
+# generator constants; this hermetic check fails if the ledger drifts from
+# them or was hand-edited.
+add_test(NAME MermaidGit0045Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_git_0045_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidGit0045Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # RFC 0040: the journey-family cohort ledger and the three family ledgers it
 # partitions are generator constants; these hermetic checks fail if any ledger
 # drifts from its generator or was hand-edited.
@@ -1144,6 +1154,13 @@ add_executable(test_mermaid_gitgraph_0039_cohort test_mermaid_gitgraph_0039_coho
 target_link_libraries(test_mermaid_gitgraph_0039_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_gitgraph_0039_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+add_executable(test_mermaid_git_0045_cohort test_mermaid_git_0045_cohort.cpp)
+target_link_libraries(test_mermaid_git_0045_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_git_0045_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

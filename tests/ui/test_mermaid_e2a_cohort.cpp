@@ -32,6 +32,7 @@ const fs::path kLedger = kTestsDir / "../tools/mermaid/e2a-cohort.json";
 const fs::path kE2bLedger = kTestsDir / "../tools/mermaid/e2b-cohort.json";
 const fs::path kRfc0038Ledger = kTestsDir / "../tools/mermaid/state-0038-cohort.json";
 const fs::path kRfc0039Ledger = kTestsDir / "../tools/mermaid/git-0039-cohort.json";
+const fs::path kRfc0045Ledger = kTestsDir / "../tools/mermaid/git-0045-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -271,6 +272,13 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     std::set<std::string> git_admitted;
     rfc0039->root().get("rows").iter(
         [&](const JsonVal row) { git_admitted.insert(row.get_string("path")); });
+    // RFC 0045 adds the reviewed gitGraph `parallelCommits` namespace cohort;
+    // the per-row gate is test_mermaid_git_0045_cohort. Same treatment: these
+    // config-bearing git rows leave the whole-source scan.
+    auto rfc0045 = json::parse(read_file(kRfc0045Ledger));
+    ASSERT_TRUE(rfc0045.has_value()) << "RFC 0045 cohort ledger must parse";
+    rfc0045->root().get("rows").iter(
+        [&](const JsonVal row) { git_admitted.insert(row.get_string("path")); });
     cohort.insert(git_admitted.begin(), git_admitted.end());
     std::set<std::string> git_skipped;
     static constexpr const char* kRoots[] = {"git", "state-diagram", "state-diagram-v2"};
@@ -299,6 +307,6 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     // Under-listing fails here (an admitted row that really changes surface is
     // scanned again); over-listing a missing or non-config-bearing path fails
     // the local set equality above, and an admitted-without-drawing row fails
-    // test_mermaid_gitgraph_0039_cohort.
+    // test_mermaid_gitgraph_0039_cohort (or test_mermaid_git_0045_cohort).
     EXPECT_EQ(git_skipped, git_admitted);
 }

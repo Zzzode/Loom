@@ -5824,6 +5824,36 @@ const JourneyCohortEntry* git_0039_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0045 gitGraph parallelCommits cohort: the 12 cold git fallbacks whose
+// only non-admitted input is a single `gitGraph` namespace carrying the
+// `parallelCommits` boolean. States are read per row from the ledger exactly as
+// the RFC 0039 cohort does. The per-row frame gate is
+// test_mermaid_git_0045_cohort.
+const std::map<std::string, JourneyCohortEntry>& git_0045_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/git-0045-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "Git 0045 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "Git 0045 cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* git_0045_cohort_row(std::string_view path) {
+    const auto& rows = git_0045_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0040 journey-family look/theme cohort: the 31 reviewed timeline/gantt/
 // journey originals promoted by the three families' closed look/theme tables.
 // States are read per row exactly as the three family ledgers do. The per-row
@@ -10829,6 +10859,33 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.source_sha256 = fixture.get_string("sha256");
                     row.expected = "drawn";
                     row.reason = "RFC-0039 gitGraph look/theme reviewed cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+            // RFC 0045 gitGraph parallelCommits admission: the 12 reviewed git
+            // originals promoted by the single `gitGraph` namespace carrying the
+            // inert `parallelCommits` boolean, states read per row. Placed before
+            // the generic fallback so these rows cannot fall through to the
+            // manifest's source expectation.
+            if (class_path.is_str()) {
+                const auto* cohort = git_0045_cohort_row(class_path.as_str());
+                if (cohort) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = (*fs::path(row.path).begin()).string();
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "RFC-0045 gitGraph parallelCommits reviewed cohort";
                     const auto state_status = [](const std::string& state) {
                         return state == "drawn" ? "drawn" : "source_fallback";
                     };

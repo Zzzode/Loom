@@ -1,7 +1,7 @@
 ---
 rfc: 45
 title: gitGraph parallelCommits admission
-status: implementable
+status: implemented
 owners: "@Zzzode"
 reviewers: ["agent:design-review", "agent:prr-review"]
 created: 2026-11-22
@@ -148,9 +148,14 @@ In `git_frontmatter` (the envelope gate used by the git renderer):
 - Roster and ledgers: regenerate `git-0039-cohort.json` (updated sentence and
   `selection.census_note`), then `--emit`
   640 → 628, `family_residual:git` 46 → 34, categories stay 43.
-- **Existing-assertion audit**: no current test pins `parallelCommits`; the two namespace
-  negatives that exist (`mainBranchName: trunk` in `test_mermaid_gitgraph_semantics.cpp` and
-  `test_mermaid_gitgraph_0039_cohort.cpp`) stay rejected and unchanged.
+- **Existing-assertion audit**: no current test names `parallelCommits`; the two namespace
+  negatives that exist (`mainBranchName` in `test_mermaid_gitgraph_semantics.cpp` and
+  `test_mermaid_gitgraph_0039_cohort.cpp`) stay rejected and unchanged. One whole-source
+  scan did pin these rows implicitly: `MermaidE2aCohort.ConfigAndInitRowsKeepWholeSource`
+  asserts every config-bearing git row outside the reviewed ledgers renders identically to
+  text. It is extended, not relaxed — the RFC 0045 ledger joins its ledger-driven exclusion
+  set and the `git_skipped == git_admitted` set equality still holds (the scan drops from
+  120 to 108 rows, above its `> 100` floor).
 - **The footer contains the literal `gitGraph`**, which three consumers use as a "not
   natively drawn" substring mnemonic (`test_mermaid_e2a_cohort.cpp`, the gitgraph
   semantics gate, `e2e_pty_shutdown.cpp`; `design-decisions.md` records that the RFC 0039
@@ -168,7 +173,7 @@ In `git_frontmatter` (the envelope gate used by the git renderer):
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `parallelCommits` admission | 12 rows, 1 family | proposed | red-first: the 12 rows are `source_fallback` on wide/narrow/restored before the change; then git 70/65 → **82/53**; global 1505/640 → **1517/628**; formal **1319 → 1331**; gaps 48, integrity 0; narrow measured per row; dual-preset sha recorded; independent P1 code review APPROVE |
+| P1 | `parallelCommits` admission | 12 rows, 1 family | **done** | red-first measured (all 12 manifest `source`/`frontmatter`); git **70/65 → 82/53**; global **1505/640 → 1517/628**; formal **1319 → 1331**; gaps 48, integrity 0; narrow **0/12** live; dual-preset matrix byte-identical sha `ca24369e…`; full debug ctest 4681/4681 executed (two known `ServerMain.DirectConnect*` flakes and one `E2E_Pty_Handoff_HupStress` under load, each clean on 3 isolated reruns); independent P1 code review APPROVE (r2) |
 
 Closure: full debug ctest once, dual-preset byte gate, RFC `implemented`, closure doc,
 design-decisions entry, efficiency retro.
@@ -211,7 +216,7 @@ Completed at the `implementable` gate by an independent PRR agent.
 |---|---|---|---|
 | Design | agent:design-review | 2026-11-22 | approve (r2) |
 | Production readiness | agent:prr-review | 2026-11-22 | approve (2 MAJOR + 4 MINOR + 3 NIT folded) |
-| Code (per phase) | pending | — | — |
+| Code (per phase) | agent:code-review | 2026-11-22 | approve (r2) |
 
 ## Rollout and rollback
 
@@ -236,8 +241,10 @@ persisted data, wire protocol, CLI, or settings change.
 
 ## Testing and verification plan
 
-- New gate (5 gtests) + one hermetic `--check` for the new generator: expected
-  `ctest -L mermaid` delta **+6**; full debug ctest **4675 → 4681**. The executable is
+- New gate (5 gtests) + one hermetic `--check` for the new generator: measured
+  `ctest -L mermaid` **+6** (1496 after the registration); full debug ctest **4675 → 4681**
+  executed (`ctest -N` reports 4683 including the two `DISABLED_` layout tests). The
+  executable is
   registered like its siblings (`add_executable` / `target_link_libraries` /
   `gtest_discover_tests ... LABELS "mermaid"`) with `TIMEOUT 600` (the 0039 gate's
   five-capture × 12-row cost).
@@ -250,13 +257,13 @@ persisted data, wire protocol, CLI, or settings change.
 
 ## Documentation impact
 
-- [ ] `docs/dev/d415-next-family-git-parallel-commits.md` — selection (already written)
-- [ ] `docs/dev/d416-git-parallel-commits-rfc0045-closure.md` — closure record
-- [ ] `docs/decisions/design-decisions.md` — gitGraph namespace admission entry
-- [ ] `docs/README.md` — RFC index (0045 row; the RFC 0039 row's "44 namespaced" clause)
-- [ ] `tools/mermaid/git-0039-cohort.json` — regenerated with the updated exclusions
+- [x] `docs/dev/d415-next-family-git-parallel-commits.md` — selection (already written)
+- [x] `docs/dev/d416-git-parallel-commits-rfc0045-closure.md` — closure record
+- [x] `docs/decisions/design-decisions.md` — gitGraph namespace admission entry
+- [x] `docs/README.md` — RFC index (0045 row; the RFC 0039 row's "44 namespaced" clause)
+- [x] `tools/mermaid/git-0039-cohort.json` — regenerated with the updated exclusions
       sentence and `selection.census_note`
-- [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — the git row is stale at 77/58 and
+- [x] `docs/dev/mermaid-d117-family-fallback-counts.md` — the git row was stale at 77/58 and
       is corrected to 53/82 with the new headline
 
 ## Open questions
@@ -281,6 +288,9 @@ persisted data, wire protocol, CLI, or settings change.
 | 2026-11-22 | r2 | agent:design-review | **APPROVE-TO-ACCEPT** | All r1 folds re-verified against the repository (the regenerated 0039 ledger changes only `selection.exclusions`; the footer is 78 bytes; the empty-namespace gate check is explicit; the 32-row exclusion is conservative). Two residual NITs folded: the Alternatives wording now carves out the default-only no-op row, and the closure order names the 0039 regeneration step. Gate: provisional → accepted |
 | 2026-11-22 | PRR | agent:prr-review | REQUEST-CHANGES | 2 MAJOR + 4 MINOR + 3 NIT. MAJOR: the footer contains the literal `gitGraph`, which three consumers use as a not-natively-drawn substring mnemonic → the gate is pinned to line-equality predicates and the audit names the hazard; the 0039 ledger's machine-readable `excluded[]` reasons would contradict the new sentence → `census_note` declares the list the frozen census. MINORs: stale "namespaced subtrees stay closed" comments/decisions/RFC 0039 sentence amended in the phase; README status; the twin extraction rule (delete the config line and every following indent≥2 line); the generator mirror enumerated to the RFC 0044 standard. NITs: hoist `mark()` and skip the scalar call on namespace events; `gitGraph: foo` is a leaf; CMake wiring and TIMEOUT 600 named, the stale d117 git row corrected. All folded |
 | 2026-11-22 | — | — | draft | Created provisional from D-415 |
+| 2026-11-22 | correction | agent:code-review-r1 | — | The r2 row's "changes only `selection.exclusions`" understates the regenerated 0039 ledger diff: it also adds `selection.census_note` (PRR fold). No code or ledger change; the record is corrected here, not rewritten |
+| 2026-11-22 | code r1 | agent:code-review | REQUEST-CHANGES | BLOCKER: the ledger gate's twin assertion scanned the whole source for `parallelCommits`, which the folded description prose legitimately contains → 12/12 false failures; replaced with the structural `twin_is_config_free`. Plus: upstream manifest pins missing; the generator mirror lacked tab-indent and body-init rejection; the battery lacked duplicate-namespace/`mainBranchOrder` negatives; the twin rule diverged C++/Python at indent 1; the r2 wording correction. All fixed |
+| 2026-11-22 | code r2 | agent:code-review | **APPROVE** | Re-verified against the full gate binary (4/5 green; the only red is the verdict placeholder, written after this approval); all fixes confirmed by code: structural twin predicate, upstream pins, mirror tab/init rejection with the stricter-direction docstring, added negatives, aligned twin rule, E2a scan extension. Four non-blocking NITs (closure record, README/d117 sync, init edge shape, `look`/`theme` residual) dispositioned |
 
 ## Implementation History
 
@@ -289,3 +299,4 @@ persisted data, wire protocol, CLI, or settings change.
 | 2026-11-22 | — | Draft created (provisional), no code | de989294 |
 | 2026-11-22 | — | Folded design r1/r2; accepted after r2; no code | 9752cec5 |
 | 2026-11-22 | — | PRR folded (mnemonic audit, frozen census, twin rule, mirror); implementable; no code | 4ad9bb70 |
+| 2026-11-22 | P1 | 12 rows admitted: one namespaced `gitGraph` subtree with the boolean `parallelCommits` leaf, footer line appended last, sibling ledger + generator + 5-test gate + hermetic `--check`, matrix branch, E2a scan extension, roster 640→628; git 82/53, global 1517/628, formal 1331; dual-preset sha `ca24369e…`; full debug ctest 4681 executed (3 environmental flake reruns clean) | (this commit) |

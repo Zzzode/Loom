@@ -28,8 +28,8 @@
     "git": 64,
     "state_v2": 5,
     "state_v1_qualified": 0,
-    "predicted_draw": 59,
-    "predicted_blocked": 10
+    "predicted_draw": 60,
+    "predicted_blocked": 9
   },
   "blocker_vocabulary": [
     "gitgraph-title-not-projected",
@@ -1844,19 +1844,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-composite-divider",
-        "site": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
-        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
-        "detail": "A standalone '--' region divider reaches edge parsing where identifier('--') is rejected."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd",

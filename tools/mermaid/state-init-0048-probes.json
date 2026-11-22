@@ -1,0 +1,206 @@
+{
+  "schema": "loom_state_init_0048_probes/v1",
+  "description": "Single-source boundary cases for the RFC 0048 P2 State leading in-body directive grammar and its accessibility no-ops. tests/ui/test_mermaid_state_region_0048_cohort.cpp renders every entry through the public API; tools/mermaid/generate_state_region_0048_cohort.py runs the entries whose `mirror` is `directive` through state_init_tables.parse_directive. Both sides must agree, so an expectation edit fails until it is reviewed.",
+  "entries": [
+    {
+      "label": "leading logLevel+theme, single quotes",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: { 'logLevel': 0, 'theme': 'dark'} }%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "admitted",
+      "expected_footer": ["", "State native projection v1", "config.logLevel=0 -> logger only; not applied", "config.theme=dark -> colour palette; not applied"]
+    },
+    {
+      "label": "leading logLevel+theme, double quotes",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {\"logLevel\": \"1\", \"theme\": \"forest\"}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "admitted",
+      "expected_footer": ["", "State native projection v1", "config.logLevel=1 -> logger only; not applied", "config.theme=forest -> colour palette; not applied"]
+    },
+    {
+      "label": "bare init no-op",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "admitted",
+      "expected_footer": ["", "State native projection v1"]
+    },
+    {
+      "label": "empty object no-op",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "admitted",
+      "expected_footer": ["", "State native projection v1"]
+    },
+    {
+      "label": "theme only",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'theme': 'neutral'}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "admitted",
+      "expected_footer": ["", "State native projection v1", "config.theme=neutral -> colour palette; not applied"]
+    },
+    {
+      "label": "logLevel named trace",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'logLevel': 'trace'}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "admitted",
+      "expected_footer": ["", "State native projection v1", "config.logLevel=trace -> logger only; not applied"]
+    },
+    {
+      "label": "logLevel numeric 5",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'logLevel': 5}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "admitted",
+      "expected_footer": ["", "State native projection v1", "config.logLevel=5 -> logger only; not applied"]
+    },
+    {
+      "label": "comment inside the object",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'theme': 'default' # note}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "admitted",
+      "expected_footer": ["", "State native projection v1", "config.theme=default -> colour palette; not applied"]
+    },
+    {
+      "label": "two leading directives",
+      "mirror": null,
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'theme': 'dark'}}%%", "%%{init: {'logLevel': 1}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "non-leading directive",
+      "mirror": null,
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["stateDiagram-v2", "%%{init: {'theme': 'dark'}}%%", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "frontmatter visual leaf plus directive",
+      "mirror": null,
+      "frontmatter": ["description: >-", "  probe.", "config:", "  theme: neo"],
+      "body": ["%%{init: {'theme': 'dark'}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "unknown key",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'foo': 'bar'}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "nested object",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'theme': {'x': 1}}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "duplicate theme",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'theme': 'dark', 'theme': 'dark'}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "theme outside the table",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'theme': 'neo'}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "logLevel outside the table",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'logLevel': 6}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "unterminated quote",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'theme': 'dark}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "missing directive close",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'theme': 'dark'}}%% tail", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "backslash inside single quotes",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'theme': 'da\\rk'}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "key without a colon",
+      "mirror": "directive",
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'theme'}}%%", "stateDiagram-v2", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "accTitle and accDescr scalars with a directive",
+      "mirror": null,
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["%%{init: {'logLevel': 0, 'theme': 'dark'} }%%", "stateDiagram-v2", "  accTitle: This is a title", "  accDescr: This is a description", "  [*] --> A"],
+      "expected_kind": "admitted",
+      "expected_footer": ["", "State native projection v1", "config.logLevel=0 -> logger only; not applied", "config.theme=dark -> colour palette; not applied"]
+    },
+    {
+      "label": "accDescr block form",
+      "mirror": null,
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["stateDiagram-v2", "  accDescr {", "  text", "  }", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "duplicate accTitle",
+      "mirror": null,
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["stateDiagram-v2", "  accTitle: one", "  accTitle: two", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "empty accTitle payload",
+      "mirror": null,
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["stateDiagram-v2", "  accTitle:", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    },
+    {
+      "label": "bare accTitle state name",
+      "mirror": null,
+      "frontmatter": ["description: >-", "  probe."],
+      "body": ["stateDiagram-v2", "  accTitle", "  [*] --> A"],
+      "expected_kind": "fallback",
+      "expected_footer": []
+    }
+  ]
+}

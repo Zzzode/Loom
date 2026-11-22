@@ -34,6 +34,7 @@ const fs::path kRfc0038Ledger = kTestsDir / "../tools/mermaid/state-0038-cohort.
 const fs::path kRfc0039Ledger = kTestsDir / "../tools/mermaid/git-0039-cohort.json";
 const fs::path kRfc0045Ledger = kTestsDir / "../tools/mermaid/git-0045-cohort.json";
 const fs::path kRfc0046Ledger = kTestsDir / "../tools/mermaid/layouttuning-0046-cohort.json";
+const fs::path kRfc0048Ledger = kTestsDir / "../tools/mermaid/state-region-0048-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -149,8 +150,8 @@ TEST(MermaidE2aCohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(counts.get_int("git"), 64);
     EXPECT_EQ(counts.get_int("state_v2"), 5);
     EXPECT_EQ(counts.get_int("state_v1_qualified"), 0);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 59);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 10);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 60);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 9);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -201,8 +202,8 @@ TEST(MermaidE2aCohort, EveryDrawRowDrawsAndEveryBlockedRowKeepsSourceAt240) {
         }
         EXPECT_EQ(row.wide, is_drawn ? "drawn" : "source");
     }
-    EXPECT_EQ(drawn, 59);
-    EXPECT_EQ(blocked, 10);
+    EXPECT_EQ(drawn, 60);
+    EXPECT_EQ(blocked, 9);
 }
 
 TEST(MermaidE2aCohort, DescriptionIsNeverRendered) {
@@ -281,6 +282,18 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     rfc0045->root().get("rows").iter(
         [&](const JsonVal row) { git_admitted.insert(row.get_string("path")); });
     cohort.insert(git_admitted.begin(), git_admitted.end());
+    // RFC 0048 admits the reviewed State concurrent-region cohort; the per-row
+    // gate is test_mermaid_state_region_0048_cohort. Only the config/init-bearing
+    // subset is scanned here (the divider-only row declares neither), so the
+    // skip-set pin below is over that subset, never the full ledger.
+    auto rfc0048 = json::parse(read_file(kRfc0048Ledger));
+    ASSERT_TRUE(rfc0048.has_value()) << "RFC 0048 cohort ledger must parse";
+    std::set<std::string> region_admitted;
+    rfc0048->root().get("rows").iter([&](const JsonVal row) {
+        const auto rel = row.get_string("path");
+        cohort.insert(rel);
+        if (rel.rfind("state-diagram", 0) == 0) region_admitted.insert(rel);
+    });
     // RFC 0046 admits the 4 state `state.useMaxWidth` tuning rows; the state
     // side of the skip set is pinned to the ledger below.
     auto rfc0046 = json::parse(read_file(kRfc0046Ledger));
@@ -293,6 +306,7 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     });
     std::set<std::string> git_skipped;
     std::set<std::string> state_skipped;
+    std::set<std::string> skipped_by_rfc0048;
     static constexpr const char* kRoots[] = {"git", "state-diagram", "state-diagram-v2"};
     int checked = 0;
     for (const char* root_name : kRoots) {
@@ -303,6 +317,7 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
             const auto source = read_file(it->path());
             if (!source.starts_with("---\n") || !has_config_or_init(source)) continue;
             if (cohort.contains(rel)) {
+                if (region_admitted.contains(rel)) skipped_by_rfc0048.insert(rel);
                 if (std::string_view(root_name) == "git" && git_admitted.contains(rel))
                     git_skipped.insert(rel);
                 if (std::string_view(root_name) != "git" && state_admitted.contains(rel))
@@ -317,7 +332,13 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
             ++checked;
         }
     }
-    EXPECT_GT(checked, 100);
+    // RFC 0048 population migration: the bound is replaced by the exact
+    // post-promotion value, which is strictly stronger than the old 100 bound.
+    // Measured 80 = 104 - 24: 16 config-bearing rows leave at P1 (the two E2b
+    // concurrency rows are themselves cohort members, so they are counted
+    // once, not twice) and the 8 init-bearing P2 rows leave at P2.
+    EXPECT_EQ(checked, 80);
+    EXPECT_EQ(skipped_by_rfc0048.size(), 24u);
     // Under-listing fails here (an admitted row that really changes surface is
     // scanned again); over-listing a missing or non-config-bearing path fails
     // the local set equality above, and an admitted-without-drawing row fails

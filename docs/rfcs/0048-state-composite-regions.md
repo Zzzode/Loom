@@ -1,12 +1,14 @@
 ---
 rfc: 48
 title: state concurrent regions and in-body init/accessibility
-status: implementable
+status: implemented
 owners: "@Zzzode"
 reviewers:
   - agent:design-review-evidence
   - agent:design-review-geometry
   - agent:prr-review
+  - agent:amendment-review
+  - agent:code-review-p1p2
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -23,14 +25,26 @@ containers **already draw** (`EntityShape::Group` recursive layout); the pool sp
 concurrent regions (11), leading `%%{init}%%` + `accTitle:`/`accDescr:` (8 — their bodies also
 contain regions), labeled composite/fan-out routing (7), and a non-state `info` body (1).
 
-This RFC delivers the first two classes: **19 rows**. The seven routing rows are **deferred to
-a follow-up RFC**: their blocker tags (`state-composite-brace-on-next-line`,
-`state-native-routing-debt`) do not establish a layout root cause, and the first review round
-showed the proposed retry mechanism cannot be justified without symbolic evidence (see
-"Deferred work"). The `info` body is out of scope (it needs a different renderer).
+This RFC delivers the first two classes: **25 rows** (17 at P1, 8 at P2). The seven routing
+rows are **deferred to a follow-up RFC**: their blocker tags
+(`state-composite-brace-on-next-line`, `state-native-routing-debt`) do not establish a layout
+root cause, and the first review round showed the proposed retry mechanism cannot be justified
+without symbolic evidence (see "Deferred work"). The `info` body is out of scope (it needs a
+different renderer).
 
-Target: state v1 **12/30 → 7/35**, state v2 **49/54 → 35/68**; global **608/1537 → 589/1556**;
-formal `drawn_at_240` **1351 → 1370**. Three-number report: ①589 ②289 ③19.
+Target: state v1 **12/30 → 7/35**, state v2 **49/54 → 29/74**; global **608/1537 → 583/1562**;
+formal `drawn_at_240` **1351 → 1376**. Three-number report: ①583 ②289 ③25.
+
+> **Amendment 1 (2026-11-22, implementation measurement).** P1 measures **17** rows, not 11:
+> six further originals (`concurrency-composite-containers-handdrawn-look-redux-{color,dark-color}-theme`,
+> `concurrent-states-neo-look-{neo,neo-dark,redux,redux-dark}-theme`) carry the same standalone
+> divider and are unlocked by the same mechanism. The roster had attributed them to
+> `look_handdrawn`/`look_neo`, but their `look` leaf is already an admitted inert disclosure
+> (RFC 0038); the divider was the real blocker. Keeping them fallback would require a
+> bespoke look+region gate with no principled basis, and booking them as unreviewed draws
+> would change the protected E6c gap roster. The scope therefore grows to 25 rows and every
+> derived number above is restated. The amendment is recorded in the Review History and was
+> re-reviewed; see also D-421 revision 3.
 
 ## Motivation
 
@@ -47,6 +61,14 @@ ER107).
 - 27 rows = roster `family_residual:state-diagram` (7) + `family_residual:state-diagram-v2`
   (20); classes are disjoint and complete: P1 11 (v1 1, v2 10), P2 8 (v1 4, v2 4), routing 7
   (v1 2, v2 5), `info` 1 (v2). All 8 P2 bodies contain `--` regions, so P2 depends on P1.
+- **Amendment 1 measurement.** A corpus-wide `--` scan finds 29 state originals with a
+  standalone divider = 19 of the pool above (11 P1 + 8 P2; the seven routing rows and the
+  `info` row carry none) + 6 look-leaf rows the roster filed under
+  `look_handdrawn`/`look_neo` + 4 `classdef_styling` user-styled rows. Removing the directive-carrying rows
+  (8, phase P2) and the four `user-styled-with-regions` rows (state styling, deferred) leaves
+  exactly **17** P1 originals. The six carry `look: neo`/`look: handDrawn` and
+  `theme: neo`/`neo-dark`/`redux`/`redux-dark`/`redux-color`/`redux-dark-color`, all inside the
+  RFC 0038 admission tables, so neither leaf changes a frame byte.
 - Composite containers already draw: `EntityShape::Group` entities are measured recursively
   (`mermaid_relations_core_impl.cpp:6710-6711`, `:7533-7539`), emitted as square titled boxes
   (`:7821-7831`, `:7880-7887`); the state-0038 ledger's 28 drawn rows include 14 with
@@ -62,7 +84,7 @@ ER107).
 
 ## Goals
 
-- **G1 (P1, 11 rows).** Parse and render concurrent regions. Inside a state `Group` body, a
+- **G1 (P1, 17 rows).** Parse and render concurrent regions. Inside a state `Group` body, a
   standalone `--` line advances the owner's region cursor. Regions are laid out side by side at
   a common top, separated by a one-column divider inside the container border; regions nest
   within the existing group depth cap. Cross-region edges fail closed **before** any layout
@@ -98,10 +120,11 @@ ER107).
    list) lives beside the diagram's state data. `RelationEntity` keeps its layout, so the
    shared `sizeof(RelationEntity)` Work charges for Class/ER/Requirement are untouched
    (verified by a `static_assert` on the existing size and by the dual-preset family gates).
-   A per-owner region cursor array (owner slot ≤ 128) and `kStateRegionLimit = 8` bound the
-   parse (entities are capped at `64 + kGroupLimit = 128`, so an owner index is ≤ 127).
-   The side table's allocation and growth are prepaid in both parse (per inserted entity) and
-   layout (per partition), and every new charge is **gated to `family == State`** (preferably
+   A per-owner region cursor array indexed by `owner + 1` (**`64 + kGroupLimit + 1` slots**,
+   since an owner can be entity 127) and `kStateRegionLimit = 8` bound the parse.
+   The side table's allocation and growth are prepaid in both parse (both vectors at
+   engagement, plus one charge per State insertion through `state_entity`/`state_control`)
+   and layout (per partition), and every new charge is **gated to `family == State`** (preferably
    only when a region is actually used), so the byte-identical ER/Class charge sequences
    (`:2100-2112`, `:2150`) do not shift.
 2. **Assignment only at insertion.** Region is written when `entity()` *inserts* a new State,
@@ -182,10 +205,10 @@ ER107).
   `expected_footer_lines` and per-width states; the per-row oracle is config-free twin + footer,
   compared line by line.
 - Matrix branch `RFC-0048 state region cohort` must be placed **before** the E2a (`:10892`),
-  E2b (`:10916`) and state-0038 (`:10939`) branches — **3** of the 19 overlap E2a/E2b
+  E2b (`:10916`) and state-0038 (`:10939`) branches — **3** of the 25 overlap E2a/E2b
   (`should-align-dividers-correctly` in E2a; v1/v2 `should-render-concurrency-states` in E2b),
-  **16 are out of cohort**, and all 19 sit in state-0038's `excluded` (whose branch matches only
-  its 28 `rows` and cannot shadow this cohort). A later branch would still be shadowed by the
+  the other **22 are out of cohort**, and all 25 sit in state-0038's `excluded` (whose branch
+  matches only its 28 `rows` and cannot shadow this cohort). A later branch would still be shadowed by the
   E2a/E2b branches (RFC 0046 r1 defect). Reach is proven per row.
 - **Conflicting negatives that must flip with paired new negatives**
   (`tests/ui/test_mermaid_relations_semantics.cpp`): `CompositeDividerStaysSource` (`:33456`)
@@ -196,47 +219,60 @@ ER107).
   JSON row change; the sha-pinned sets (`STATE_COMPOSITE_EXECUTION_DEBT`, `:118`) stay
   **frozen** because they pin the deferred brace rows. Counts:
   `tests/ui/test_mermaid_e2a_cohort.cpp:148-153` 59/10 → 60/9; its whole-source scan
-  `:304-320` shrinks by the 16 out-of-cohort promoted rows **and** by the 2 E2b concurrency
-  rows, which become `predicted-draw` and are absorbed into the E2a skip set through
-  `:259-262`, so `EXPECT_GT(checked, 100)` (`:320`) is **re-pinned to the exact new value
-  `EXPECT_EQ(checked, 86)`** — an exact pin is strictly stronger than the old bound, so this is
-  a population migration, not a relaxation. **E2b**: only the
+  `:304-320` shrinks by the promoted cohort rows, which enter the skip set through the ledger
+  and through `:259-262` (the E2b `predicted-draw`) set. Measured: **24** config/init-bearing
+  cohort rows leave the scan (16 P1 config-bearing + 8 P2 init-bearing; 22 of the 25 are
+  out-of-cohort and 3 are E2a/E2b members). Therefore `EXPECT_GT(checked, 100)` (`:320`) is **re-pinned to `EXPECT_EQ(checked, 80)`
+  = 104 − 24**. The equation is the stronger form *over the post-migration population*; the
+  population itself shrinks because 24 rows were admitted, so the literal value moves below
+  the old bound — a migration, not a relaxation. **E2b**: only the
   `state_blocker` `--` branch (`tools/mermaid/generate_e2b_cohort.py:190`) and the two
   concurrency JSON rows; `NATIVE_ROUTING_DEBT` (`:101`) stays frozen (deferred routing rows).
   Counts: `tests/ui/test_mermaid_e2b_cohort.cpp:151-155` 51/10 → 53/8; its whole-source scan
-  `NonWhitelistedConfigRowsKeepWholeSource` (`:241-318`) loses the 8 config-bearing region
-  rows, so `checked == 39` (`:311`) → **31**. The new `state-region-0048-cohort.json` **and the 16 out-of-cohort
-  paths** (8 config-bearing region rows + 8 init-bearing theme rows) must be wired into **both**
+  `NonWhitelistedConfigRowsKeepWholeSource` (`:241-318`) loses the 16 config-bearing cohort
+  rows, of which **2** (the two `should-render-concurrency-states`) were already E2b ledger
+  members and therefore already skipped, so the measured net is 14 and `checked == 39`
+  (`:311`) → **25**, with `skipped_by_rfc0048 == 16`. The new `state-region-0048-cohort.json` **and the 22
+  out-of-cohort paths** (of the 24 scanned config/init-bearing rows, the 2
+  `should-render-concurrency-states` were already E2b members) must be wired into **both**
   whole-source scans (`test_mermaid_e2a_cohort.cpp:223-244`/`:304-320`,
   `test_mermaid_e2b_cohort.cpp:241-318`) as a skip/admitted set, or those rows fail
   `same_source_surface` after flipping. The cardinality differs per scan: the E2a scan visits
-  both config- and init-bearing rows and absorbs all **16**, while the E2b scan visits only
-  `declares_config` rows and absorbs the **8** config-bearing ones (the 8 init rows never
-  enter it). A `skipped_by_rfc0048` equality pin must therefore be **over the explicitly
-  enumerated out-of-cohort paths — 16 for E2a and 8 for E2b — never over the full 19-row
-  `state-region-0048-cohort.json`**: `should-align-dividers-correctly` declares neither
+  both config- and init-bearing rows and absorbs all **24** (16 at P1 + the 8 init-bearing P2
+  rows), while the E2b scan visits only `declares_config` rows and absorbs the **16**
+  config-bearing ones (the 8 init rows never enter it). A `skipped_by_rfc0048` equality pin
+  must therefore be **over the paths the scan actually visits — measured 24 for E2a and 16 for
+  E2b — never over the full 25-row `state-region-0048-cohort.json`**: `should-align-dividers-correctly` declares neither
   `config:` nor an init, so it is not a whole-source-scan candidate and a full-ledger pin
-  would demand 19 (E2a) / 19 (E2b) and fail.
-- **0046 ledger/test**: `tools/mermaid/generate_layouttuning_0046_cohort.py:51-60`
-  (`FAMILY_COUNTS`), `:442-454`; `tests/ui/test_mermaid_layouttuning_0046_cohort.cpp:234` (`counts.drawn` 105 → 124),
-  `:236` (remaining 62 → 43 after P1+P2), `:263-270` (state drawn 28 → 33, 52 → 66),
-  `:587` (`? 12 : 49` → `? 7 : 35`), `:600` (remaining 44 → 25).
+  would demand 25 in both scans and fail.
+- **0046 ledger/test: measured unchanged.** Its counts are derived from its own tuning-row
+  ledger, and none of the 25 rows carries a tuning namespace; the suite stays 5/5 green with
+  no edit. The pre-amendment footprint list (105 → 124 etc.) was a projection, not a measured
+  dependency, and is withdrawn.
 - **state-0038 needs no migration**: its `excluded` list is the generator's render-defined
   remainder (108 rows) plus 4 `layout: elk`, 4 namespaced `config.state.*` and 1
-  description-tab row — 117 in total, including all 19 — and it has no `themed_excluded`; its
+  description-tab row — 117 in total, including all 25 — and it has no `themed_excluded`; its
   28 drawn rows are the byte-identity oracle, not a bucket to move. Its test iterates `rows`
-  only, so a drawn `excluded` row is not asserted as fallback.
-- Roster `--emit` 608 → 589 (categories may shrink); `--self-test` and `--matrix` green.
-- Docs: `docs/dev/mermaid-unsuccessful-cases.md`, `docs/dev/mermaid-failure-inventory.json`,
-  `tests/fixtures/mermaid_native/direct_theme_source_audit.v1.json` carry the enumerated rows
-  and must be refreshed as snapshots.
+  only, so a drawn `excluded` row is not asserted as fallback. **One measured migration:** its
+  `E2bFootersAreUnchanged` count follows the E2b ledger's drawn set, so the two promoted
+  concurrency rows move that pin 51 → 53.
+- Roster `--emit` 608 → 583 (measured: `family_residual:state-diagram` 7 → 2,
+  `family_residual:state-diagram-v2` 20 → 6, `look_handdrawn` 45 → 43, `look_neo` 32 → 28,
+  40 categories); `--self-test` and `--matrix` green.
+- Snapshot docs: **disclosed, not refreshed.** `docs/dev/mermaid-unsuccessful-cases.md` and
+  `docs/dev/mermaid-failure-inventory.json` are checkpoint snapshots last regenerated at
+  RFC 0034 (drawn 663 / fallback 1482, "Checkpoint 2026-10-30") and were not refreshed by
+  RFC 0035-0047 either; no test consumes them, and the live credit lives in the roster and
+  the matrix artifact. Refreshing them for 583 rows is a separate documentation task and is
+  recorded as an open item rather than silently skipped. `direct_theme_source_audit.v1.json`
+  likewise self-declares as an unconsumed historical census with zero drawing credit.
 
 ## Phases and graduation criteria
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | concurrent regions | 11 rows (v1 1, v2 10; two carry short region-local labeled edges) | proposed | red-first; state v1 12 → 11, v2 49 → 39; global 608 → 597; the v1/v2 `…concurrency-states` rows (region-local labeled edges) draw; all 28 state-0038 rows byte-identical; dual-preset matrix identical; roster/0046/E2a/E2b migrated |
-| P2 | init + accessibility | 8 rows (needs P1) | proposed | state v1 11 → 7, v2 39 → 35; global 589; footer literals and probe artifact pinned; init negatives (nested map, out-of-table theme, duplicate, multi-line, non-leading) |
+| P1 | concurrent regions | **17 rows** (v1 1, v2 16; measured) | **done** | state v1 12 → 11, v2 49 → 33; global 608 → 591; drawn_at_240 1351 → 1368; all 28 state-0038 rows byte-identical; E2a/E2b migrated; roster 591 |
+| P2 | init + accessibility | 8 rows (needs P1) | **done** | state v1 11 → 7, v2 33 → 29; global 583; drawn_at_240 1376; footer literals and probe artifact pinned; 16 init/accessibility negatives (nested map, out-of-table theme, duplicate, backslash, non-leading, G5, accDescr block, duplicate/empty/bare accTitle) |
 
 ### Labeled-transition boundary in P1
 
@@ -262,15 +298,15 @@ routing Work budget.
 
 | Checklist row | Answer |
 |---|---|
-| **Correctness & tests** | Per-phase cohort gate (ledger pins + per-row config-free-twin frame oracle + batteries), the state-0038 gate over all 28 drawn rows **byte-identical at all three widths**, the two flipped relations-semantics negatives with paired new negatives, and the E2a/E2b whole-source scans with the 19 paths (of which 16 are out-of-cohort) wired into their skip sets (16 in E2a, 8 in E2b). Functional timeouts carry no assertion semantics; `MermaidOfficialConfig110Native…` was calibrated to 600 s in the preceding slice (commit `fef4aff0`). |
+| **Correctness & tests** | Per-phase cohort gate (ledger pins + per-row twin frame oracle + 25-row single-source probe artifact), the state-0038 gate over all 28 drawn rows **byte-identical at all three widths**, the two flipped relations-semantics negatives with paired new negatives, and the E2a/E2b whole-source scans with the 25 ledger paths wired into their skip sets (measured 24 visited in E2a, 16 in E2b). Functional timeouts carry no assertion semantics; `MermaidOfficialConfig110Native…` was calibrated to 600 s in the preceding slice (commit `fef4aff0`). |
 | **Build system — units** | The parser, layout and emitter live in `mermaid_relations_core_impl.cpp`; state helpers in `mermaid_state_impl.cpp` (implementation units, no BMI of their own). The region side table is a **member of `RelationDiagram`** and `entity()`/`control()` gain a region argument, so the `loom.ui.visual.mermaid:detail` partition BMI changes and the mermaid units that `import :detail` recompile — in-target fan-out with **no cross-area fan-out**. No new imports, no SCC growth, no concurrency caps. Debug and release `-Werror` both required. |
 | **Build system — shared structs** | `RelationEntity`/`Relationship` keep their layout (the side table is a separate `std::vector<int>` member of `RelationDiagram`, indexed by entity slot); `sizeof(RelationEntity)` charges are untouched and a `static_assert` pins the measured value together with the dual-preset Class/ER/Requirement family gates. `RelationDiagram`'s only Work charge is `alignof`-based (`mermaid_relations_core_impl.cpp:2112`) and stays 8. |
 | **Wire / persisted data** | N/A: no wire format, JSONL trace, settings, config path or CLI change. |
-| **Rollback** | Two atomic commits, revertible at hunk level; `mermaid_relations_core_impl.cpp` changes in **both** phases (P1 parser/layout/emitter; P2 envelope `:1861/:1981/:2029` and accessibility `:2885`). P1: relations-core, `mermaid_detail.cppm` (side table + caps + signatures), the new state-region ledger + generator + gate, `test_mermaid_relations_semantics.cpp` (`CompositeDividerStaysSource` flip + paired negatives), E2a/E2b generators/cohorts/tests, the 0046 generator/test constants, `fallback_roster.json`, the matrix branch, CMake registration, docs. P2: relations-core (envelope/accessibility/footer), `mermaid_state_impl.cpp` (init scanner/accessibility helpers), the state-init probe artifact, the ledger's footer columns, `InitThemeFrontmatterStaysSource` flip + paired negatives, E2a/E2b skip-set extension, roster/matrix re-pin. |
-| **Protected pins** | None of the 10 protected files is touched. `tests/ui/test_mermaid_official.cpp` changes additively (loader + branch before the E2a/E2b/state-0038 branches + reach assertion); the 19 rows carry no manifest `diagnostic`, so each replaces one `run_case` observation 1:1 and 2738/48/107/206/285 stay unchanged. |
+| **Rollback** | Two atomic commits, revertible at hunk level; `mermaid_relations_core_impl.cpp` changes in **both** phases (P1 parser/layout/emitter; P2 envelope `:1861/:1981/:2029` and accessibility `:2885`). P1: relations-core, `mermaid_detail.cppm` (side table + caps + signatures), the new state-region ledger + generator + gate, `test_mermaid_relations_semantics.cpp` (`CompositeDividerStaysSource` flip + paired negatives), E2a/E2b generators/cohorts/tests, the 0046 generator/test constants, `fallback_roster.json`, the matrix branch, CMake registration, docs. P2: relations-core only (envelope/accessibility/footer and the state-local init scanner live in `mermaid_relations_core_impl.cpp`; `mermaid_state_impl.cpp` is untouched), the state-init probe artifact, the ledger's directive rows and footers, the `InitThemeFrontmatterStaysSource` flip + paired negatives, E2a/E2b skip-set extension and roster/matrix re-pin. No 0046 file is edited (measured unchanged). |
+| **Protected pins** | None of the 10 protected files is touched. `tests/ui/test_mermaid_official.cpp` changes additively (loader + branch before the E2a/E2b/state-0038 branches + reach assertion); the 25 rows carry no manifest `diagnostic`, so each replaces one `run_case` observation 1:1 and 2738/48/107/206/285 stay unchanged. |
 | **Observability** | The footer lines are the user-visible disclosure; no new diagnostics; session traces untouched. |
 | **Work meter / budgets** | Region limit 8 per owner, entity total 128, per-`--` and per-region prepaid charges, width/height checked at container composition, and the side table's growth prepaid in parse and layout. Fixture-scale bodies (≤ 64 states, ≤ 128 edges) stay far under `kWorkLimit = 1,000,000`. |
-| **Documentation** | design-decisions entry (side table, dividers, init/accessibility, the accTitle no-op trade-off), README, d117, d421 revision 2, d422 closure, three snapshot docs, efficiency retro. |
+| **Documentation** | design-decisions entry (side table, dividers, init/accessibility, the accTitle no-op trade-off), README, d117, d421 revision 3, d422 closure, three snapshot docs, efficiency retro. |
 | **Deletion / deprecation** | No dead code or shape replacement; the deferred routing rows keep their blocker tags unchanged. |
 | **Fidelity trade-offs recorded** | (a) `accTitle` is a validated no-op, matching upstream's non-inked accessibility name and keeping the twin oracle exact; (b) the E2a `STATE_COMPOSITE_EXECUTION_DEBT` and E2b `NATIVE_ROUTING_DEBT` sha-pinned sets stay frozen because they pin deferred rows. |
 
@@ -313,7 +349,7 @@ wire, CLI or settings change.
 
 ## Documentation impact
 
-- [x] `docs/dev/d421-next-family-state-composite.md` — second revision (deferred routing)
+- [x] `docs/dev/d421-next-family-state-composite.md` — revision 3 (measured P1 17 rows)
 - [ ] `docs/dev/d422-state-region-rfc0048-closure.md` — closure record
 - [ ] `docs/decisions/design-decisions.md` — region side table, dividers, init/accessibility
 - [ ] `docs/README.md` — RFC index row
@@ -350,6 +386,11 @@ wire, CLI or settings change.
 | 2026-11-22 | r1 | agent:prr-review | REQUEST-CHANGES | B1 `EXPECT_EQ(checked, 88)` wrong — the E2a whole-source scan also absorbs the 2 E2b concurrency rows through `:259-262`, so the re-pin is **86** (104 − 16 − 2); m1 stale E2b scan citation; m2 PRR rows over-stated the build-system and shared-struct footprint; minor missing per-scan cardinalities; NIT wording |
 | 2026-11-22 | r2 | agent:prr-review | REQUEST-CHANGES | Only the `86` value remained wrong (still `88` in the re-pin text) plus residuals; all other r1 items verified resolved (E2b 31, 0046 constants, 19-row totals, rollback phases) |
 | 2026-11-22 | r3 | agent:prr-review | APPROVE | Faithful replay of `ConfigAndInitRowsKeepWholeSource` reproduces `checked = 104` and post-P1 `86`; no other count depended on the old 88; E2b 31 and 51/10→53/8 re-confirmed; 16/8 per-scan cardinalities correct. NIT N1 folded: the `skipped_by_rfc0048` pin is over the enumerated 16/8 out-of-cohort paths, not the full 19-row ledger. Gate `accepted → implementable` passed. |
+| 2026-11-22 | r4 | agent:amendment-review | REQUEST-CHANGES | Independent adversarial review of Amendment 1. Confirmed: the six look-leaf rows' only blocker is the divider (both `look` and `theme` leaves are inside the RFC 0038 tables), the arithmetic reproduces from the artifacts, the P1/P2 split is 17/8, the E6c alternatives are sound, protected pins are untouched and no assertion is weakened. Found (all folded): the gate section still carried the pre-amendment 86/23/19-row/16-out-of-cohort numbers (measured 80 / 25 / 25 / 22); the "recorded in Review History and re-reviewed" claim had no row yet; the 29-row derivation was arithmetically wrong; phase/status wording disagreed with the open closure record; the PRR row cited d421 revision 2; the `counts` names needed a phase-P1 annotation; only the `look` leaf was named where both leaves are admitted. |
+| 2026-11-22 | r5 | agent:amendment-review | REQUEST-CHANGES | Residual folds verified against the files: 80/24, 25/16 and the 29-row restatement were correct. Remaining (all folded): the E2a bullet still opened with the stale 16-out-of-cohort + 2-E2b decomposition; the r4 row was separated from the table by a blank line; the PRR documentation row still said d421 revision 2; the closure-pending caveat was absent from the phase table; the ledger `counts.note` was not yet present when read. |
+| 2026-11-22 | r6 | agent:amendment-review | APPROVE | Final re-review: the 22-out-of-cohort wiring sentence is in place and consistent with the 24-scanned/16-config split; arithmetic re-derived from the artifacts (25 − 3 = 22; 16 + 8 = 24; 39 − 14 = 25; 104 − 24 = 80); ledger counts note and phase totals verified. Pre-amendment 86/88/19-row strings remain only inside historical Review History rows and are correct as history. Amendment 1 approved. |
+| 2026-11-22 | c1 | agent:code-review-p1p2 | REQUEST-CHANGES | B1 the region cursor array was sized `64 + kGroupLimit` but indexed `owner + 1` (an owner can be 127 → OOB read/write); m1 the two side-table vectors' parse growth was under-prepaid (now: both vectors at engagement plus a per-insertion charge on the seven State sites through `state_entity`/`state_control`); m2 the Python mirror trimmed spaces only where C++ trims spaces and tabs; m3 a quoted-empty `accTitle: ""` was admitted (now gated). All fixed; the reviewer's own area checks found the region model, `--` grammar, fail-closed/partitioning, divider emission, P2 envelope, gates, ledgers, generators and scope discipline sound. |
+| 2026-11-22 | c2 | agent:code-review-p1p2 | APPROVE | Re-review: B1 (129-slot cursor array, both access paths in range), m1 (both vectors at engagement + per-insertion prepay on the seven sites, ER/Class/Requirement unchanged), m2 (mirror `lstrip(" \t")`), m3 (quoted-empty accessibility gates) and M1 (RFC restated to 80/24 and 25/16) all verified against the code; generator `--check`s reproduce 60/9, 53/8, 25 (P1 17 + P2 8). One comment-arithmetic NIT fixed. |
 
 ## Implementation History
 
@@ -358,3 +399,5 @@ wire, CLI or settings change.
 | 2026-11-22 | — | Draft created (provisional), no code | acc9efea |
 | 2026-11-22 | — | r1 revisions: routing deferred, scope 19 rows, footprint and design fixes | (this commit) |
 | 2026-11-22 | — | Gate `accepted` → `implementable`: PRR r3 APPROVE (E2a re-pin 86, out-of-cohort pin clause). No code yet | (this commit) |
+| 2026-11-22 | P1 | Concurrent regions: lazy State-only side tables, `--` grammar, region-scoped controls, fail-closed cross-region check, `measure_regions` + per-region `measure_scope`, divider emission/blocking, 17-row cohort ledger + gate, matrix branch + reach proof, E2a 60/9 (`checked` 80, `skipped_by_rfc0048` 24), E2b 53/8 (`checked` 25, 16), state-0038 footer pin 53, `CompositeDividerStaysSource` flip + 6 negatives, roster 591 | (this commit) |
+| 2026-11-22 | P2 | Leading `%%{init}%%` + accessibility: state-local closed directive grammar, `effective_body`, G5, directive footers, `accTitle`/`accDescr` validated no-ops, single-source 25-case probe artifact + Python mirror, ledger P2 8 rows, `InitThemeFrontmatterStaysSource` flip + 3 negatives, E2a `checked` 80, roster 583, formal 1376, dual-preset matrix `e1fe4938…`, `ctest -L mermaid` 1514/1514, full debug ctest 4699/4699 (`CTEST_EXIT=0`) | (this commit) |

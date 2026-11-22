@@ -363,7 +363,26 @@ int RelationDiagram::class_namespace(std::string_view id, std::string_view label
     return static_cast<int>(entities.size() - 1);
 }
 
-int RelationDiagram::control(EntityShape shape, int owner, Work& work) {
+namespace {
+// RFC 0048: the side tables are engaged by the first `--` divider and then
+// track every State insertion. Region 0 is implicit, so a table whose size is
+// behind the entity list still answers "region 0" for the missing slots.
+int region_slot(const std::vector<int>& table, int index) {
+    return index >= 0 && static_cast<std::size_t>(index) < table.size()
+               ? table[static_cast<std::size_t>(index)]
+               : 0;
+}
+}  // namespace
+
+int RelationDiagram::state_region(int index) const {
+    return region_slot(state_region_by_entity, index);
+}
+
+int RelationDiagram::state_region_count(int owner) const {
+    return owner < 0 ? 1 : std::max(1, region_slot(state_region_count_by_entity, owner));
+}
+
+int RelationDiagram::control(EntityShape shape, int owner, Work& work, int region) {
     // Anonymous [*] is one start or final per non-concurrent State scope.
     // Its private NUL-prefixed identity cannot match an authored state ID.
     if (!work.spend(4u * sizeof(int) + 4u * sizeof(std::size_t) + 64u)) return -1;
@@ -372,8 +391,10 @@ int RelationDiagram::control(EntityShape shape, int owner, Work& work) {
         // or full string scan is needed to distinguish anonymous controls.
         if (!work.spend(6u * sizeof(int) + 2u * sizeof(std::string_view) + 32u)) return -1;
         const auto& entity = entities[n];
+        // RFC 0048: a concurrent region owns its own anonymous pair, so the
+        // dedupe key carries the region as well as the owner and shape.
         if (entity.owner == owner && entity.shape == shape && !entity.id.empty() &&
-            entity.id.front() == '\0')
+            entity.id.front() == '\0' && state_region(static_cast<int>(n)) == region)
             return static_cast<int>(n);
     }
     if (entities.size() >= 64 + kGroupLimit) return -1;
@@ -382,10 +403,14 @@ int RelationDiagram::control(EntityShape shape, int owner, Work& work) {
     std::string id(1, '\0');
     id += std::to_string(entities.size());
     entities.push_back({std::move(id), {}, {}, shape, owner, {}, false});
+    if (!state_region_by_entity.empty()) {
+        state_region_by_entity.push_back(region);
+        state_region_count_by_entity.push_back(1);
+    }
     return static_cast<int>(entities.size() - 1);
 }
 
-int RelationDiagram::entity(std::string id, int owner, Work* er_work) {
+int RelationDiagram::entity(std::string id, int owner, Work* er_work, int region) {
     const int old = find(id);
     if (old >= 0) return old;
     if (entities.size() >= 64 + kGroupLimit) return -1;
@@ -399,6 +424,10 @@ int RelationDiagram::entity(std::string id, int owner, Work* er_work) {
                         owner,
                         {},
                         false});
+    if (!state_region_by_entity.empty()) {
+        state_region_by_entity.push_back(region);
+        state_region_count_by_entity.push_back(1);
+    }
     return static_cast<int>(entities.size() - 1);
 }
 
@@ -1855,10 +1884,238 @@ bool state_notice_line(std::vector<std::string>& notices, std::string_view line,
     return true;
 }
 
+// RFC 0048 P2: the leading in-body `%%{init: {...}}%%` block is a closed
+// grammar. Only the bare `init` no-op, an empty `{}`, and a flat object over
+// `logLevel`/`theme` are admitted; the journey helper is not importable across
+// impl units, so this is the state-local copy driven by the single-source
+// probe artifact tools/mermaid/state-init-0048-probes.json.
+constexpr std::array<std::string_view, 12> kStateInitLogLevels{
+    "0", "1", "2", "3", "4", "5", "trace", "debug", "info", "warn", "error", "fatal"};
+constexpr std::array<std::string_view, 4> kStateInitThemes{"dark", "default", "forest",
+                                                           "neutral"};
+
+std::string_view state_init_rtrim(std::string_view value) {
+    while (!value.empty() && (value.back() == ' ' || value.back() == '\t')) value.remove_suffix(1);
+    return value;
+}
+
+std::string_view state_init_ltrim(std::string_view value) {
+    while (!value.empty() && value.front() == ' ') value.remove_prefix(1);
+    return value;
+}
+
+bool state_init_quotes(std::string_view text) {
+    for (std::size_t at = 0; at < text.size();) {
+        const char quote = text[at];
+        if (quote != '\'' && quote != '"') {
+            if (static_cast<unsigned char>(quote) < 0x20) return false;
+            ++at;
+            continue;
+        }
+        ++at;
+        bool escape = false;
+        for (; at < text.size(); ++at) {
+            const char c = text[at];
+            if (quote == '\'' && c == '\\') return false;
+            if (escape) {
+                escape = false;
+                continue;
+            }
+            if (c == '\\') {
+                escape = true;
+                continue;
+            }
+            if (c == quote) break;
+            if (static_cast<unsigned char>(c) < 0x20) return false;
+        }
+        if (at == text.size()) return false;
+        ++at;
+    }
+    return true;
+}
+
+std::vector<std::string_view> state_init_split_commas(std::string_view text) {
+    std::vector<std::string_view> parts;
+    char quote = 0;
+    std::size_t start = 0;
+    for (std::size_t at = 0; at < text.size(); ++at) {
+        const char c = text[at];
+        if (quote) {
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == ',') {
+            parts.push_back(text.substr(start, at - start));
+            start = at + 1;
+        }
+    }
+    parts.push_back(text.substr(start));
+    return parts;
+}
+
+std::size_t state_init_colon(std::string_view text) {
+    char quote = 0;
+    bool escape = false;
+    for (std::size_t at = 0; at < text.size(); ++at) {
+        const char c = text[at];
+        if (quote) {
+            if (escape) {
+                escape = false;
+                continue;
+            }
+            if (c == '\\') {
+                escape = true;
+                continue;
+            }
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == ':') return at;
+    }
+    return std::string_view::npos;
+}
+
+std::optional<std::string> state_init_scalar(std::string_view raw, Work& work) {
+    const auto trim_view = [](std::string_view value) {
+        const auto first = value.find_first_not_of(" \t");
+        if (first == std::string_view::npos) return std::string_view{};
+        const auto last = value.find_last_not_of(" \t");
+        return value.substr(first, last - first + 1u);
+    };
+    auto value = trim_view(raw);
+    char quote = 0;
+    for (std::size_t n = 0; n < value.size(); ++n) {
+        const char c = value[n];
+        if (quote) {
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == '#' && (n == 0u || value[n - 1u] == ' ' || value[n - 1u] == '\t')) {
+            value = trim_view(value.substr(0, n));
+            break;
+        }
+    }
+    if (!work.spend(value.size() + 1u)) return std::nullopt;
+    if (value.size() >= 2u &&
+        ((value.front() == '"' && value.back() == '"') ||
+         (value.front() == '\'' && value.back() == '\'')))
+        value = value.substr(1u, value.size() - 2u);
+    return std::string(value);
+}
+
+// True when `line` is one admitted directive line; the no-op forms fill
+// nothing. A key repeated across the block is a duplicate and gates.
+bool state_init_directive(std::string_view line, std::optional<std::string>& log_level,
+                          std::optional<std::string>& theme, Work& work) {
+    line = state_init_rtrim(line);
+    if (!line.starts_with("%%{") || !line.ends_with("}%%") || line.size() < 7u) return false;
+    const std::string_view inner = line.substr(3u, line.size() - 6u);
+    if (!work.spend(inner.size() * 4u + 128u)) return false;
+    const std::string_view directive = state_init_rtrim(state_init_ltrim(inner));
+    if (directive == "init") return true;
+    if (!directive.starts_with("init:")) return false;
+    const std::string_view payload =
+        state_init_rtrim(state_init_ltrim(directive.substr(5u)));
+    if (payload.size() < 2u || payload.front() != '{' || payload.back() != '}') return false;
+    const std::string_view interior = payload.substr(1u, payload.size() - 2u);
+    if (interior.find_first_of("{}[]") != std::string_view::npos) return false;
+    if (!state_init_quotes(interior)) return false;
+    if (state_init_rtrim(state_init_ltrim(interior)).empty()) return true;
+    for (const std::string_view entry : state_init_split_commas(interior)) {
+        const auto colon = state_init_colon(entry);
+        if (colon == std::string_view::npos) return false;
+        const auto key = state_init_scalar(entry.substr(0u, colon), work);
+        const auto value = state_init_scalar(entry.substr(colon + 1u), work);
+        if (!key || !value) return false;
+        if (*key == "logLevel") {
+            if (log_level ||
+                std::ranges::find(kStateInitLogLevels, *value) == kStateInitLogLevels.end())
+                return false;
+            log_level = *value;
+        } else if (*key == "theme") {
+            if (theme || std::ranges::find(kStateInitThemes, *value) == kStateInitThemes.end())
+                return false;
+            theme = *value;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Only blank or `%%` comment lines may precede a leading directive.
+bool state_init_only_trivia(std::string_view prefix) {
+    while (!prefix.empty()) {
+        const auto at = prefix.find('\n');
+        auto line = prefix.substr(0, at);
+        prefix = at == std::string_view::npos ? std::string_view{} : prefix.substr(at + 1u);
+        if (line.ends_with('\r')) line.remove_suffix(1u);
+        line = state_init_ltrim(line);
+        if (!line.empty() && !line.starts_with("%%")) return false;
+    }
+    return true;
+}
+
+// RFC 0048 P2: `accTitle:`/`accDescr:` scalar payload is a validated no-op for
+// State. Block form, empty payload, control bytes and duplicates gate.
+bool state_accessibility_noop(std::string_view line, int kind, unsigned& seen, Work& work) {
+    const unsigned bit = kind == 1 ? 1u : 2u;
+    if (seen & bit) return false;
+    auto rest = trim_relation(line.substr(8u));
+    if (!rest.starts_with(':') || !work.spend(rest.size() * 2u + 32u)) return false;
+    auto value = trim_relation(rest.substr(1u));
+    // A quoted-empty payload is empty; it must not be read as two characters.
+    if (value.size() >= 2u &&
+        ((value.front() == '"' && value.back() == '"') ||
+         (value.front() == '\'' && value.back() == '\'')))
+        value = trim_relation(value.substr(1u, value.size() - 2u));
+    if (value.empty() || value.size() > static_cast<std::size_t>(kLabelLimit) ||
+        value.find_first_of("\r\n\t") != std::string_view::npos || !unicode_text(value))
+        return false;
+    seen |= bit;
+    return true;
+}
+
 std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work& work) {
     if (!source.starts_with("---") || !work.spend(4u * sizeof(bool) + 16u)) return {};
     const auto parsed = detail::parse_envelope(source, work);
-    if (!parsed || !parsed->has_frontmatter || !parsed->init.empty()) return {};
+    if (!parsed || !parsed->has_frontmatter) return {};
+    // RFC 0048 P2: exactly one leading in-body directive may be admitted
+    // through the closed state-local grammar; anything else keeps whole source.
+    std::optional<std::string> init_log_level, init_theme;
+    const bool has_init = !parsed->init.empty();
+    if (has_init) {
+        if (parsed->init.size() != 1u) return {};
+        const auto& init = parsed->init.front();
+        const std::size_t body_start =
+            static_cast<std::size_t>(parsed->raw_body.data() - source.data());
+        if (init.begin < body_start || init.end > source.size()) return {};
+        if (!state_init_only_trivia(source.substr(body_start, init.begin - body_start)))
+            return {};
+        std::size_t at = 0;
+        const std::string_view raw = source.substr(init.begin, init.end - init.begin);
+        while (at <= raw.size()) {
+            const auto newline = raw.find('\n', at);
+            const auto line = raw.substr(at, newline == std::string_view::npos
+                                                 ? std::string_view::npos
+                                                 : newline - at);
+            if (!state_init_directive(line, init_log_level, init_theme, work)) return {};
+            if (newline == std::string_view::npos) break;
+            at = newline + 1u;
+        }
+    }
     bool description_seen = false, title_seen = false, config_seen = false;
     // One bit per accepted leaf; the accepted value set is exact.
     enum : unsigned {
@@ -1959,6 +2216,9 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
             return {};
         }
     }
+    // RFC 0048 G5: a keyed in-body directive and any frontmatter visual leaf
+    // are mutually exclusive, so no config line can be emitted twice.
+    if (has_init && fields != 0u) return {};
     if (!description_seen || !parsed->description) return {};
     const auto& description = *parsed->description;
     if (description.form != EnvelopeScalarForm::Folded || description.header != ">-") return {};
@@ -1978,7 +2238,8 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
         content = true;
     }
     if (!content) return {};
-    if (!parsed->raw_body.starts_with("stateDiagram")) return {};
+    if (!(has_init ? parsed->effective_body : parsed->raw_body).starts_with("stateDiagram"))
+        return {};
     // A present config map must carry at least one accepted leaf; an empty
     // config block was whole-source before E2b and stays rejected.
     if (config_seen && fields == 0u) return {};
@@ -2025,6 +2286,24 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
             line += " -> display sizing; not applied";
             if (!state_notice_line(result.config_notices, line, work)) return {};
         }
+    }
+    if (has_init) {
+        // The directive footer follows the (empty) frontmatter footer block.
+        if (!state_notice_line(result.config_notices, kStateNoticeHeader, work)) return {};
+        if (init_log_level) {
+            std::string line = "config.logLevel=";
+            line += *init_log_level;
+            line += " -> logger only; not applied";
+            if (!state_notice_line(result.config_notices, line, work)) return {};
+        }
+        if (init_theme) {
+            std::string line = "config.theme=";
+            line += *init_theme;
+            line += " -> colour palette; not applied";
+            if (!state_notice_line(result.config_notices, line, work)) return {};
+        }
+        result.body = parsed->effective_body;
+        return result;
     }
     result.body = parsed->raw_body;
     return result;
@@ -2130,6 +2409,8 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
     bool state_source_lines_checked = false;
     if (!work.spend(8u * sizeof(bool) + alignof(bool) + 16u)) return {};
     bool state_block_note_seen = false;
+    // RFC 0048 P2: the accessibility scalars are root-scope, one each.
+    unsigned state_accessibility_seen = 0;
     // The local predicate exists for every invocation; pay its real lifetime
     // before either the unchanged ER early branch or Class/State construction.
     if (!work.spend(8u * sizeof(bool) + 4u * sizeof(std::size_t) + 32u)) return {};
@@ -2247,6 +2528,39 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
         scopes.reserve(kGroupDepthLimit);
     }
     auto owner = [&] { return scopes.empty() ? -1 : scopes.back(); };
+    // RFC 0048: the concurrent-region cursor is per composite owner and is
+    // engaged lazily by the first `--` line, so a region-free State document
+    // pays nothing new and keeps its byte-identical charge sequence.
+    // Indexed by owner + 1: an owner can be entity 64 + kGroupLimit - 1 = 127,
+    // so the array needs 64 + kGroupLimit + 1 slots.
+    std::array<int, 64 + kGroupLimit + 1> state_region_cursor{};
+    auto engage_regions = [&]() -> bool {
+        if (!diagram.state_region_by_entity.empty()) return true;
+        if (!work.spend(sizeof(state_region_cursor) + 2u * sizeof(std::vector<int>) +
+                        2u * alignof(std::vector<int>) +
+                        2u * diagram.entities.size() * sizeof(int) + 64u))
+            return false;
+        diagram.state_region_by_entity.assign(diagram.entities.size(), 0);
+        diagram.state_region_count_by_entity.assign(diagram.entities.size(), 1);
+        return true;
+    };
+    auto current_region = [&](int at) -> int {
+        return at >= 0 && static_cast<std::size_t>(at + 1) < state_region_cursor.size()
+                   ? state_region_cursor[static_cast<std::size_t>(at + 1)]
+                   : 0;
+    };
+    // RFC 0048: while the side tables are engaged, every State entity/control
+    // insertion pays its two region slots before the insertion runs.
+    auto state_entity = [&](const std::string& id, int at) -> int {
+        if (!diagram.state_region_by_entity.empty() && !work.spend(2u * sizeof(int) + 8u))
+            return -1;
+        return diagram.entity(id, at, nullptr, current_region(at));
+    };
+    auto state_control = [&](EntityShape shape, int at) -> int {
+        if (!diagram.state_region_by_entity.empty() && !work.spend(2u * sizeof(int) + 8u))
+            return -1;
+        return diagram.control(shape, at, work, current_region(at));
+    };
     auto add_member = [&](int target, std::string_view text) {
         if (target < 0 || text.empty()) return false;
         auto& entity = diagram.entities[static_cast<std::size_t>(target)];
@@ -2383,6 +2697,11 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
                 if (owner < 0 || static_cast<std::size_t>(owner) >= diagram.entities.size() ||
                     diagram.entities[static_cast<std::size_t>(owner)].shape != EntityShape::Group)
                     return {};
+                // RFC 0048: a region-local direction has no region-scoped
+                // rotation, and the corpus carries none. A direction declared
+                // after a divider would rotate the whole composite, so it
+                // fails closed instead.
+                if (state_region_cursor[static_cast<std::size_t>(owner + 1)] > 0) return {};
                 for (const auto& entry : diagram.state_scope_directions) {
                     if (!work.spend(sizeof(StateScopeDirection) + 8u) || entry.owner == owner)
                         return {};
@@ -2761,6 +3080,35 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
             if (line.empty() || line == "{}") continue;
             return {};
         }
+        if (diagram.family == RelationFamily::State) {
+            // RFC 0048 P2: scalar accTitle/accDescr are validated no-ops for
+            // State. They must be consumed before the description/edge paths,
+            // which would otherwise create states named accTitle/accDescr.
+            const int metadata = class_accessibility_kind(line);
+            if (metadata != 0) {
+                if (!scopes.empty() ||
+                    !state_accessibility_noop(line, metadata, state_accessibility_seen, work))
+                    return {};
+                continue;
+            }
+        }
+        if (diagram.family == RelationFamily::State && line == "--") {
+            // RFC 0048: a standalone divider advances the enclosing composite's
+            // region cursor. Top-level dividers and `A -- B` stay invalid; the
+            // region count is recorded so an empty region can be rejected by
+            // the layout gate rather than silently collapsed.
+            if (scopes.empty() || !engage_regions() || !work.spend(3u * sizeof(int) + 64u))
+                return {};
+            const int group = owner();
+            if (group < 0 || static_cast<std::size_t>(group) >= diagram.entities.size() ||
+                diagram.entities[static_cast<std::size_t>(group)].shape != EntityShape::Group)
+                return {};
+            auto& cursor = state_region_cursor[static_cast<std::size_t>(group + 1)];
+            if (cursor + 1 >= kStateRegionLimit) return {};
+            ++cursor;
+            diagram.state_region_count_by_entity[static_cast<std::size_t>(group)] = cursor + 1;
+            continue;
+        }
         if (diagram.family == RelationFamily::State && line.starts_with("state ")) {
             // The initial identifier allocation precedes all alias/suffix probes.
             if (!work.spend(line.size() *
@@ -2805,7 +3153,7 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
                 }
             } else if (id->front() == '"')
                 *id = id->substr(1, id->size() - 2);
-            const int target = diagram.entity(*id, owner());
+            const int target = state_entity(*id, owner());
             if (target < 0) return {};
             auto& entity = diagram.entities[static_cast<std::size_t>(target)];
             // A composite opener may occupy the next statement line. Consume
@@ -2892,7 +3240,7 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
             for (const auto& existing : diagram.entities)
                 if (!work.spend(existing.id.size() + from->size() + sizeof(std::string) + 8u))
                     return {};
-            const int target = diagram.entity(*from, owner());
+            const int target = state_entity(*from, owner());
             if (target < 0 || !diagram.state_fragment(target, std::move(*text), work)) return {};
             continue;
         }
@@ -2913,13 +3261,13 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
                             (diagram.entities.size() * 3u + 1u) * sizeof(RelationEntity) +
                             diagram.entities.size() * (from->size() + 1u) + 256u))
                 return {};
-            if (diagram.entity(*from, owner()) < 0) return {};
+            if (state_entity(*from, owner()) < 0) return {};
             continue;  // A declaration never allocates a Relationship payload.
         }
-        const int a = from_control ? diagram.control(EntityShape::Start, owner(), work)
+        const int a = from_control ? state_control(EntityShape::Start, owner())
                       : diagram.family == RelationFamily::Class
                           ? diagram.class_entity(*from, owner(), work, false, from_type)
-                          : diagram.entity(*from, owner());
+                          : state_entity(*from, owner());
         if (a < 0) return {};
         if (diagram.family == RelationFamily::Class && rest.starts_with(":")) {
             // STYLE_SEPARATOR is source syntax, not two leading member colons.
@@ -3025,10 +3373,10 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
         } else
             to = identifier(rest);
         if (!to) return {};
-        edge.to = to_control ? diagram.control(EntityShape::Final, owner(), work)
+        edge.to = to_control ? state_control(EntityShape::Final, owner())
                   : diagram.family == RelationFamily::Class
                       ? diagram.class_entity(*to, owner(), work, false, to_type)
-                      : diagram.entity(*to, owner());
+                      : state_entity(*to, owner());
         if (edge.to < 0) return {};
         if (!rest.empty()) {
             // Mermaid inline endpoint class syntax (Node:::class, also after
@@ -6181,6 +6529,8 @@ RelationLayout::RelationLayout(const RelationDiagram& d, Work& budget)
     , children(d.entities.size() + 1)
     , scope_edges(d.entities.size() + 1)
     , ordered(d.entities.size() + 1)
+    , region_dividers(d.entities.size() + 1)
+    , region_top(d.entities.size() + 1)
     , degrees(d.entities.size())
     , compound_scope(d.class_namespaces) {}
 
@@ -6243,6 +6593,27 @@ bool RelationLayout::prepare() {
                 diagram.entities[static_cast<std::size_t>(edge.to)].owner) {
                 compound_scope = true;
                 break;
+            }
+        }
+        // RFC 0048: the region side table must cover the whole entity list, and
+        // no edge may cross a region divider inside any scope. Both checks run
+        // before any partition, so no scope list can ever hold an edge whose
+        // endpoints would land in different region subsets.
+        if (!diagram.state_region_by_entity.empty()) {
+            if (diagram.state_region_by_entity.size() != diagram.entities.size() ||
+                diagram.state_region_count_by_entity.size() != diagram.entities.size())
+                return false;
+            for (std::size_t group = 0; group < diagram.entities.size(); ++group) {
+                if (!work.spend(4u * sizeof(int) + 8u)) return false;
+                if (diagram.entities[group].shape != EntityShape::Group) continue;
+                const auto scope = static_cast<int>(group);
+                for (const auto& edge : diagram.edges) {
+                    if (!work.spend(8u * sizeof(int) + 8u)) return false;
+                    const int from = scope_child(edge.from, scope);
+                    const int to = scope_child(edge.to, scope);
+                    if (from < 0 || to < 0) continue;
+                    if (diagram.state_region(from) != diagram.state_region(to)) return false;
+                }
             }
         }
     }
@@ -6520,9 +6891,102 @@ RelationLayout::compound_class_columns(const std::vector<std::vector<bool>>& roo
 }
 
 bool RelationLayout::measure(int owner, std::size_t depth) {
+    // RFC 0048: a State composite that declared concurrent regions composes
+    // one single-column body per region; every other scope stays one call with
+    // its complete child list, byte-identically.
+    if (diagram.family == RelationFamily::State && diagram.state_region_count(owner) > 1)
+        return measure_regions(owner, depth);
+    const auto slot = static_cast<std::size_t>(owner + 1);
+    return measure_scope(owner, depth, children[slot], scope_edges[slot], ordered[slot], false,
+                         nullptr, nullptr);
+}
+
+bool RelationLayout::measure_regions(int owner, std::size_t depth) {
+    // Region composition is State-gated by the caller. The partition, the two
+    // subset families and the divider table are prepaid here; every region
+    // then pays the unchanged single-column body once.
+    const int regions = diagram.state_region_count(owner);
+    if (regions < 2 || regions > kStateRegionLimit) return false;
+    if (!work.spend(static_cast<std::size_t>(regions) *
+                        (4u * sizeof(std::vector<int>) + 4u * sizeof(int) +
+                         8u * sizeof(std::vector<int>) * 2u + 64u) +
+                    sizeof(std::vector<int>) + 256u))
+        return false;
+    const auto slot = static_cast<std::size_t>(owner + 1);
+    std::vector<std::vector<int>> members(static_cast<std::size_t>(regions));
+    std::vector<std::vector<int>> member_edges(static_cast<std::size_t>(regions));
+    for (const int index : children[slot]) {
+        if (!work.spend(2u * sizeof(int) + 8u)) return false;
+        const int region = diagram.state_region(index);
+        if (region < 0 || region >= regions) return false;
+        members[static_cast<std::size_t>(region)].push_back(index);
+    }
+    for (const int edge_index : scope_edges[slot]) {
+        const auto& edge = diagram.edges[static_cast<std::size_t>(edge_index)];
+        if (!work.spend(6u * sizeof(int) + 8u)) return false;
+        const int from = scope_child(edge.from, owner), to = scope_child(edge.to, owner);
+        if (from < 0 || to < 0) return false;
+        const int region = diagram.state_region(from);
+        if (region != diagram.state_region(to)) return false;
+        member_edges[static_cast<std::size_t>(region)].push_back(edge_index);
+    }
+    for (const auto& region : members)
+        if (region.empty()) return false;  // An empty region has no frame.
+    int x = 0, tallest = 0;
+    std::vector<int> dividers;
+    for (int region = 0; region < regions; ++region) {
+        std::vector<int> order;
+        int width = 0, height = 0;
+        if (!measure_scope(owner, depth, members[static_cast<std::size_t>(region)],
+                           member_edges[static_cast<std::size_t>(region)], order, true, &width,
+                           &height))
+            return false;
+        if (width < 1 || height < 1 || width > kWidthLimit - x) return false;
+        for (const int index : members[static_cast<std::size_t>(region)])
+            translate(index, boxes[static_cast<std::size_t>(index)].x + x,
+                      boxes[static_cast<std::size_t>(index)].y);
+        if (region + 1 < regions) {
+            // One divider column separates adjacent regions.
+            dividers.push_back(x + width);
+            if (x + width >= kWidthLimit - 1) return false;
+            x += width + 1;
+        } else
+            x += width;
+        tallest = std::max(tallest, height);
+    }
+    const auto& e = diagram.entities[static_cast<std::size_t>(owner)];
+    if (!work.spend(e.label.size() * (4u * sizeof(std::string_view) + 8u) +
+                    2u * sizeof(std::vector<std::string_view>) + 64u) ||
+        !work.spend(e.label.size() * 4 + 1))
+        return false;
+    const int header_rows = static_cast<int>(label_rows(e.label).size());
+    // Regions are one complete scope high, header band included; the container
+    // takes the tallest region and never adds a band of its own. A title wider
+    // than the composed regions widens the frame and leaves the regions left
+    // aligned, so the divider offsets are unchanged.
+    const int top = std::max(6, header_rows + 3);
+    const int width = std::max(x, label_width(e.label) + 4);
+    if (width < 1 || width > kWidthLimit || tallest < 1 || tallest > kHeightLimit ||
+        top >= tallest)
+        return false;
+    auto& box = boxes[static_cast<std::size_t>(owner)];
+    box.x = 0;
+    box.y = 0;
+    box.w = width;
+    box.h = tallest;
+    region_dividers[slot] = std::move(dividers);
+    region_top[slot] = top;
+    return true;
+}
+
+bool RelationLayout::measure_scope(int owner, std::size_t depth, const std::vector<int>& list,
+                                   const std::vector<int>& scope_edge_list,
+                                   std::vector<int>& order, bool region, int* region_width,
+                                   int* region_height) {
     // New scalar/flag storage exists even on unchanged family branches.
     if (!work.spend(3u * sizeof(std::string_view) + alignof(std::string_view) + 8u * sizeof(bool)))
         return false;
+    if (region && diagram.family != RelationFamily::State) return false;
     const bool state_scoped = !diagram.state_scope_directions.empty();
     std::string_view scope_direction;
     if (state_scoped) {
@@ -6531,8 +6995,6 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
         scope_direction = *selected;
     }
     if (depth > kGroupDepthLimit) return false;
-    const auto slot = static_cast<std::size_t>(owner + 1);
-    const auto& list = children[slot];
     if (list.empty()) {
         if (diagram.family == RelationFamily::Er && !work.spend(4u * sizeof(bool) + 8u))
             return false;
@@ -6555,15 +7017,15 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
     }
     const std::size_t count = list.size();
     if (diagram.family == RelationFamily::Er && compound_scope) {
-        if (count > 64u || scope_edges[slot].size() > 128u ||
+        if (count > 64u || scope_edge_list.size() > 128u ||
             !work.spend(count * count * (8u + 2u * sizeof(int)) + count * count * count * 4u +
                         count * (8u * sizeof(std::vector<bool>) + 16u * sizeof(int) + 32u) +
-                        scope_edges[slot].size() * (count * 2u * sizeof(int) + 32u) + 256u))
+                        scope_edge_list.size() * (count * 2u * sizeof(int) + 32u) + 256u))
             return false;
     }
     std::vector<std::vector<bool>> reach(count, std::vector<bool>(count));
     std::vector<std::vector<bool>> adjacent(count, std::vector<bool>(count));
-    for (const int index : scope_edges[slot]) {
+    for (const int index : scope_edge_list) {
         const auto& e = diagram.edges[static_cast<std::size_t>(index)];
         int from = e.from, to = e.to;
         if (compound_scope) {
@@ -6578,7 +7040,11 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
             std::swap(from, to);
         const auto a = static_cast<std::size_t>(std::ranges::find(list, from) - list.begin());
         const auto b = static_cast<std::size_t>(std::ranges::find(list, to) - list.begin());
-        if (compound_scope && (a >= count || b >= count)) return false;
+        // RFC 0048 makes this guard unconditional: a concurrent-region
+        // partition can leave a scope edge whose endpoint is not in the
+        // current subset, and an out-of-range index must fail closed rather
+        // than write past the reach matrix.
+        if (a >= count || b >= count) return false;
         reach[a][b] = true;
         adjacent[a][b] = true;
     }
@@ -6600,9 +7066,9 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                     if (next == count) next = a;
                     // Prefer consecutive endpoints for a direct two-state cycle,
                     // reducing space for unrelated vertices between its legs.
-                    if (!ordered[slot].empty()) {
+                    if (!order.empty()) {
                         const auto previous = static_cast<std::size_t>(
-                            std::ranges::find(list, ordered[slot].back()) - list.begin());
+                            std::ranges::find(list, order.back()) - list.begin());
                         if (adjacent[previous][a] && adjacent[a][previous]) {
                             next = a;
                             break;
@@ -6612,7 +7078,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
             }
         if (next == count) return false;
         placed[next] = true;
-        ordered[slot].push_back(list[next]);
+        order.push_back(list[next]);
     }
     int maximum = 0, total = 0;
     const bool horizontal = state_scoped ? (scope_direction == "LR" || scope_direction == "RL")
@@ -6624,10 +7090,10 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
         // each actual neighbour gap; RL reverses child order, not sides.
         if (!work.spend(12u * sizeof(int) + 128u)) return false;
         const bool reverse = state_scoped ? scope_direction == "RL" : diagram.direction == "RL";
-        for (std::size_t n = 1; n < ordered[slot].size(); ++n) {
+        for (std::size_t n = 1; n < order.size(); ++n) {
             if (!work.spend(8u * sizeof(int) + 32u)) return false;
-            const int left = ordered[slot][reverse ? n : n - 1],
-                      right = ordered[slot][reverse ? n - 1 : n];
+            const int left = order[reverse ? n : n - 1],
+                      right = order[reverse ? n - 1 : n];
             int left_room = 0, right_room = 0;
             for (const auto& note : diagram.notes) {
                 if (!work.spend(24u)) return false;
@@ -6645,7 +7111,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
         }
     }
     if (diagram.family == RelationFamily::Er)
-        for (const int edge_index : scope_edges[slot]) {
+        for (const int edge_index : scope_edge_list) {
             const auto& edge = diagram.edges[static_cast<std::size_t>(edge_index)];
             if (!work.spend(edge.label.size() + 1)) return false;
             // Label placement reserves two blank columns on each side of its
@@ -6666,7 +7132,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
             }
         }
     if (diagram.family == RelationFamily::Class)
-        for (const int edge_index : scope_edges[slot]) {
+        for (const int edge_index : scope_edge_list) {
             const auto& edge = diagram.edges[static_cast<std::size_t>(edge_index)];
             if (!work.spend(edge.label.size() + 1)) return false;
             if (!horizontal && !work.spend(edge.label.size() + 1)) return false;
@@ -6689,7 +7155,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
             }
         }
     int first_self_extra = 0, last_self_extra = 0, self_margin = 0;
-    for (const int index : ordered[slot]) {
+    for (const int index : order) {
         if (!work.spend(sizeof(EntityShape) + 1u)) return false;
         const auto& e = diagram.entities[static_cast<std::size_t>(index)];
         auto& box = boxes[static_cast<std::size_t>(index)];
@@ -6797,7 +7263,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                 degrees[static_cast<std::size_t>(index)] > 1) {
                 if (!work.spend(3u * sizeof(int) + 8u)) return false;
                 int captions = 0, caption_rows = 0;
-                for (const int edge_index : scope_edges[slot]) {
+                for (const int edge_index : scope_edge_list) {
                     if (!work.spend(4u)) return false;
                     const auto& edge = diagram.edges[static_cast<std::size_t>(edge_index)];
                     for (const bool source : {true, false}) {
@@ -6830,7 +7296,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
         if (diagram.family == RelationFamily::Er && header_self_edges >= 2 &&
             e.er_attributes.empty()) {
             int count = 0, room = 0;
-            for (const int edge_index : scope_edges[slot]) {
+            for (const int edge_index : scope_edge_list) {
                 if (!work.spend()) return false;
                 const auto& edge = diagram.edges[static_cast<std::size_t>(edge_index)];
                 if (edge.from != index || edge.to != index) continue;
@@ -6844,9 +7310,9 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                 // Both exterior faces admit a complete parallel-self label.
                 // Reserve only source-measured deficits in the outer lanes.
                 if (horizontal) {
-                    if (index == ordered[slot].front())
+                    if (index == order.front())
                         first_self_extra = std::max(0, room - (owner < 0 ? 4 : 6));
-                    if (index == ordered[slot].back())
+                    if (index == order.back())
                         last_self_extra = std::max(0, room - (owner < 0 ? 14 : 16));
                 } else
                     self_margin = std::max(self_margin, room);
@@ -6861,10 +7327,10 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
     // Every scope reserves routing lanes outside its child frames. These
     // are real geometry, independent of source labels or fixture identity.
     int margin = std::max(
-        {owner < 0 ? 12 : 6, static_cast<int>(scope_edges[slot].size()) * 2 + 6, self_margin});
+        {owner < 0 ? 12 : 6, static_cast<int>(scope_edge_list.size()) * 2 + 6, self_margin});
     if (class_endpoint_active) {
         int old_offset = 1, caption_offset = 1;
-        for (const int edge_index : scope_edges[slot]) {
+        for (const int edge_index : scope_edge_list) {
             if (!work.spend(12)) return false;
             const auto& edge = diagram.edges[static_cast<std::size_t>(edge_index)];
             old_offset =
@@ -6928,7 +7394,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
             const bool from_first =
                 (state_scoped ? scope_direction == "LR" : diagram.direction == "LR") ? !note.right
                                                                                      : note.right;
-            if (note.target != (from_first ? ordered[slot].front() : ordered[slot].back()))
+            if (note.target != (from_first ? order.front() : order.back()))
                 continue;
             if (!work.spend(note.text.size() * (4u * sizeof(std::string_view) + 8u) + 64u))
                 return false;
@@ -7016,14 +7482,14 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                 }
         // Active ER routes every original edge separately, including
         // repeated pairs. Legacy ranked profiles retain their exclusion.
-        if (links_count != scope_edges[slot].size() && !diagram.er_presentation) layered = false;
+        if (links_count != scope_edge_list.size() && !diagram.er_presentation) layered = false;
         if (layered) {
             if (!work.spend(3 * count)) return false;
             std::vector<std::size_t> rank(count), position(count), topological(count);
             for (std::size_t n = 0; n < count; ++n) {
                 if (!work.spend(count)) return false;
                 topological[n] = static_cast<std::size_t>(
-                    std::ranges::find(list, ordered[slot][n]) - list.begin());
+                    std::ranges::find(list, order[n]) - list.begin());
             }
             std::size_t levels = 1;
             for (std::size_t n = 0; n < count; ++n) {
@@ -7042,7 +7508,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                 return false;
             bool peers = false,
                  relaxed_ranked_topology =
-                     diagram.er_presentation && links_count != scope_edges[slot].size(),
+                     diagram.er_presentation && links_count != scope_edge_list.size(),
                  has_rank_skip = false;
             for (std::size_t a = 0; a < count; ++a)
                 for (std::size_t b = 0; b < count; ++b) {
@@ -7163,7 +7629,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                     }
                 }
                 int peer_gap = 10;
-                for (const int index : scope_edges[slot]) {
+                for (const int index : scope_edge_list) {
                     const auto& edge = diagram.edges[static_cast<std::size_t>(index)];
                     if (!work.spend(edge.label.size() + 1)) return false;
                     if (diagram.er_presentation &&
@@ -7173,7 +7639,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                     // The relaxed plan reserves marker lanes here; labels
                     // still prove their complete clearance between ranks.
                     if (relaxed_ranked_topology && !has_rank_skip &&
-                        links_count != scope_edges[slot].size())
+                        links_count != scope_edge_list.size())
                         peer_gap = std::max(
                             peer_gap,
                             2 * std::max(marker_size(edge.start), marker_size(edge.end)) + 4);
@@ -7199,7 +7665,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                     !work.spend(4u * sizeof(int) + 4u * sizeof(bool) + 16u))
                     return false;
                 const bool compact_workspace = relaxed_ranked_topology && has_rank_skip &&
-                                               links_count == scope_edges[slot].size();
+                                               links_count == scope_edge_list.size();
                 // A forward, flat DAG keeps its measured body spacing.
                 // Bound only its temporary exterior workspace; the router
                 // still proves every path inside the resulting canvas.
@@ -7284,7 +7750,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
         bool compact = diagram.family == RelationFamily::Er && owner < 0 && !horizontal &&
                        diagram.direction == "TB" && !compound_scope && diagram.notes.empty() &&
                        count >= 4u && count <= 64u && count == diagram.entities.size() &&
-                       count % 2u == 0u && scope_edges[slot].size() == count / 2u;
+                       count % 2u == 0u && scope_edge_list.size() == count / 2u;
         if (compact)
             for (const int index : list) {
                 if (!work.spend(8u * sizeof(bool) + 4u * sizeof(int) + 32u)) return false;
@@ -7306,10 +7772,10 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                 if (!work.spend(count * (2u * sizeof(int) + 8u) + 8u * sizeof(std::size_t) +
                                 8u * sizeof(bool) + 32u))
                     return {};
-                const auto a = static_cast<std::size_t>(std::ranges::find(list, ordered[slot][n]) -
+                const auto a = static_cast<std::size_t>(std::ranges::find(list, order[n]) -
                                                         list.begin());
                 const auto b = static_cast<std::size_t>(
-                    std::ranges::find(list, ordered[slot][n + 1u]) - list.begin());
+                    std::ranges::find(list, order[n + 1u]) - list.begin());
                 if (a >= count || b >= count) return {};
                 return adjacent[a][b] || adjacent[b][a] ? gap : 1;
             };
@@ -7320,7 +7786,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                 const auto separation = boundary_gap(n);
                 if (!separation) return false;
                 if (!work.spend(8u * sizeof(int) + 32u)) return false;
-                const auto& box = boxes[static_cast<std::size_t>(ordered[slot][n])];
+                const auto& box = boxes[static_cast<std::size_t>(order[n])];
                 if (box.h < 1 || box.h > kHeightLimit - compact_height ||
                     *separation > kHeightLimit - compact_height - box.h)
                     fits = false;
@@ -7335,7 +7801,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                     const auto separation = boundary_gap(n);
                     if (!separation) return false;
                     if (!work.spend(12u * sizeof(int) + 32u)) return false;
-                    const int index = ordered[slot][n];
+                    const int index = order[n];
                     const auto& box = boxes[static_cast<std::size_t>(index)];
                     const int x = (compact_width - box.w) / 2, height = box.h;
                     translate(index, x, advance);
@@ -7351,7 +7817,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
     int width = horizontal ? total + 8 + first_self_extra + last_self_extra : maximum + 2 * margin;
     const int height = horizontal ? maximum + 2 * margin : total + 8 + (owner < 0 ? 0 : top - 6);
     width = std::max(width, er_role_envelope);
-    if (owner >= 0)
+    if (owner >= 0 && !region)
         width = std::max(width,
                          label_width(diagram.entities[static_cast<std::size_t>(owner)].label) + 4);
     // Pay the new eligibility predicate on every final linear scope.
@@ -7362,7 +7828,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                         4u * sizeof(const Relationship*) + 128u))
             return false;
         if (width < 1 || width > kWidthLimit) return false;
-        for (const int edge_index : scope_edges[slot]) {
+        for (const int edge_index : scope_edge_list) {
             if (!work.spend(16u)) return false;
             const auto& edge = diagram.edges[static_cast<std::size_t>(edge_index)];
             if (edge.from != edge.to) continue;
@@ -7393,8 +7859,8 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
         width > kWidthLimit) {
         // Condense only the existing strict reach order. Mutually reachable
         // nodes and incomparable peers can share one complete column.
-        if (count == 0u || count > 64u || ordered[slot].size() != count ||
-            scope_edges[slot].size() > 128u)
+        if (count == 0u || count > 64u || order.size() != count ||
+            scope_edge_list.size() > 128u)
             return false;
         if (!work.spend(64u * (10u * sizeof(int) + sizeof(Point) + sizeof(bool)) +
                         count * count * 128u + 1024u))
@@ -7404,11 +7870,11 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
         std::array<Point, 64> positions{};
         std::array<bool, 64> seen{};
         if (!work.spend(64u * 64u * sizeof(unsigned char) +
-                        scope_edges[slot].size() * (8u * sizeof(int) + 32u) + 128u))
+                        scope_edge_list.size() * (8u * sizeof(int) + 32u) + 128u))
             return false;
         std::array<std::array<unsigned char, 64>, 64> parallel_counts{};
         int label_w = 0, label_h = 0, marker_room = 0, parallel = 1;
-        for (const int edge_index : scope_edges[slot]) {
+        for (const int edge_index : scope_edge_list) {
             const auto& edge = diagram.edges[static_cast<std::size_t>(edge_index)];
             if (edge.from < 0 || edge.to < 0 || edge.from >= 64 || edge.to >= 64) return false;
             auto& multiplicity = parallel_counts[static_cast<std::size_t>(edge.from)]
@@ -7434,7 +7900,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
         if (column_margin > kWidthLimit / 2 || column_margin > kHeightLimit / 2) return false;
         int columns = 0;
         for (std::size_t n = 0; n < count; ++n) {
-            const int index = ordered[slot][n];
+            const int index = order[n];
             const auto at = std::ranges::find(list, index);
             if (at == list.end()) return false;
             const auto position = static_cast<std::size_t>(at - list.begin());
@@ -7485,7 +7951,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
         for (std::size_t n = 0; n < count; ++n) {
             const auto position = static_cast<std::size_t>(local[n]),
                        col = static_cast<std::size_t>(rank[position]);
-            const auto& box = boxes[static_cast<std::size_t>(ordered[slot][n])];
+            const auto& box = boxes[static_cast<std::size_t>(order[n])];
             int x = column_x[col] + (column_width[col] - box.w) / 2;
             const int y = next_y[col];
             if (diagram.direction == "RL") x = plan_width - x - box.w;
@@ -7515,7 +7981,7 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
     }
     if (width > kWidthLimit || height > kHeightLimit) return false;
     int advance = horizontal ? (owner < 0 ? 4 : 6) + first_self_extra : top;
-    for (const int index : ordered[slot]) {
+    for (const int index : order) {
         auto& box = boxes[static_cast<std::size_t>(index)];
         const int x = horizontal
                           ? ((state_scoped ? scope_direction == "RL" : diagram.direction == "RL")
@@ -7529,6 +7995,13 @@ bool RelationLayout::measure(int owner, std::size_t depth) {
                                  : advance);
         translate(index, x, y);
         advance += (horizontal ? box.w : box.h) + gap;
+    }
+    if (region) {
+        // A region never writes its owner's box or the canvas: the container
+        // composes both after every region has been laid out.
+        if (region_width) *region_width = width;
+        if (region_height) *region_height = height;
+        return true;
     }
     if (owner >= 0) {
         boxes[static_cast<std::size_t>(owner)].w = width;
@@ -7925,12 +8398,18 @@ bool draw_entity(Canvas& canvas, const RelationEntity& entity, const RelationBox
 }  // namespace
 
 std::vector<EndpointPort> ports_for(const RelationEntity& entity, const RelationBox& box,
-                                    Marker marker, const RouteSearch& search) {
+                                    Marker marker, const RouteSearch& search,
+                                    const std::vector<int>& dividers) {
     std::vector<EndpointPort> ports;
     const bool prepaid = search.layout.diagram.er_presentation != nullptr;
     if (prepaid && !search.work.spend(4u * sizeof(std::vector<EndpointPort>) + 64u)) return {};
     auto add = [&](Point border, Point normal) {
         if (prepaid && !search.work.spend(16u)) return;
+        // RFC 0048: a concurrent-region divider junction on this box's border
+        // is not a routing port.
+        for (const int divider : dividers)
+            if (border.x == box.x + divider && (border.y == box.y || border.y == box.bottom()))
+                return;
         if (er_cardinality_marker(marker) && normal.y) return;
         const int size = marker_size(marker);
         const Point route{border.x + normal.x * (size + 1), border.y + normal.y * (size + 1)};
@@ -8359,10 +8838,13 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
         const auto ports = static_cast<std::size_t>(2 * (a.w + a.h + b.w + b.h));
         if (!canvas.work.spend(ports * (4u * sizeof(EndpointPort) + 16u) + 256u)) return false;
     }
-    auto from = ports_for(diagram.entities[static_cast<std::size_t>(edge.from)],
-                          layout.boxes[static_cast<std::size_t>(edge.from)], edge.start, search);
+    auto from =
+        ports_for(diagram.entities[static_cast<std::size_t>(edge.from)],
+                  layout.boxes[static_cast<std::size_t>(edge.from)], edge.start, search,
+                  layout.region_dividers[static_cast<std::size_t>(edge.from) + 1u]);
     auto to = ports_for(diagram.entities[static_cast<std::size_t>(edge.to)],
-                        layout.boxes[static_cast<std::size_t>(edge.to)], edge.end, search);
+                        layout.boxes[static_cast<std::size_t>(edge.to)], edge.end, search,
+                        layout.region_dividers[static_cast<std::size_t>(edge.to) + 1u]);
     if (er_paint && canvas.work.available() == 0u) return false;
     if (retry_storage && edge.endpoint_texts) {
         // Endpoint captions require horizontal normals. Removing impossible
@@ -9150,6 +9632,33 @@ relations_layout(std::string_view source, Work& work, bool class_envelope, bool 
                 for (int x = b.x + 1; x < b.right(); ++x)
                     canvas.at({x, y}).blocked = true;
         }
+    // RFC 0048: concurrent-region dividers. They are container-local, join the
+    // header band's bottom border (`┬`), run through the region body and meet
+    // the container's bottom border (`┴`). Every cell is blocked before notes
+    // and routing, so an overlap fails closed instead of being painted over.
+    if (diagram->family == RelationFamily::State) {
+        for (std::size_t n = 0; n < layout.region_dividers.size(); ++n) {
+            const auto& dividers = layout.region_dividers[n];
+            if (dividers.empty()) continue;
+            const int owner = static_cast<int>(n) - 1;
+            if (owner < 0) return {};
+            if (!work.spend(sizeof(RelationBox) + 8u * sizeof(int) + 8u * sizeof(std::size_t) +
+                            dividers.size() * (4u * sizeof(int) + 64u) + 128u))
+                return {};
+            const auto& b = layout.boxes[static_cast<std::size_t>(owner)];
+            const int band = b.y + layout.region_top[n] - 1;
+            if (b.w < 3 || band <= b.y || band >= b.bottom() - 1) return {};
+            if (!canvas.segment({b.x + 1, band}, {b.right() - 1, band})) return {};
+            for (const int offset : dividers) {
+                const int x = b.x + offset;
+                if (x <= b.x || x >= b.right()) return {};
+                if (!canvas.put({x, band}, "┬")) return {};
+                for (int y = band + 1; y < b.bottom(); ++y)
+                    if (!canvas.put({x, y}, "│")) return {};
+                if (!canvas.put({x, b.bottom()}, "┴")) return {};
+            }
+        }
+    }
     std::vector<RelationBox> note_boxes;
     for (const auto& note : diagram->notes) {
         const auto& target = layout.boxes[static_cast<std::size_t>(note.target)];

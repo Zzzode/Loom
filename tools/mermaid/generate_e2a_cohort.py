@@ -182,9 +182,11 @@ def state_blocker(rel, source_sha256, body_lines):
         return "state-composite-brace-on-next-line"
     if any(line.strip() == "{" for line in body_lines):
         raise ValueError(f"Unreviewed next-line-brace source; independent review required: {rel}")
-    for line in body_lines:
-        if line.strip() == "--":
-            return "state-composite-divider"
+    # RFC 0048 retires the standalone-divider blocker: a concurrent-region
+    # body now parses and draws (the reviewed cohort is the RFC 0048 ledger).
+    # Region-local shapes that still fail closed (cross-region edges, empty
+    # regions, a direction after a divider, more than eight regions) are
+    # guarded by the renderer's own gates, not by a source-shape detector.
     return None
 
 

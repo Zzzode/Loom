@@ -186,9 +186,11 @@ def state_blocker(rel, source_sha256, body_lines):
     first = real[0] if real else ""
     if first not in ("stateDiagram", "stateDiagram-v2"):
         return "state-non-state-body"
-    for line in (l.strip() for l in body_lines):
-        if line == "--":
-            return "state-composite-divider"
+    # RFC 0048 retires the standalone-divider blocker: a concurrent-region
+    # body now parses and draws (the reviewed cohort is the RFC 0048 ledger).
+    # Region-local shapes that still fail closed (cross-region edges, empty
+    # regions, a direction after a divider, more than eight regions) are
+    # guarded by the renderer's own gates, not by a source-shape detector.
     for line in (l.strip() for l in body_lines):
         if line.startswith("click") and (len(line) == 5 or line[5] in (" ", "\t")):
             return "state-click-statement"

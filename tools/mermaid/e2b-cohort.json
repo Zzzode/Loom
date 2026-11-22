@@ -40,8 +40,8 @@
     "total": 61,
     "state_v2": 38,
     "state_v1": 23,
-    "predicted_draw": 51,
-    "predicted_blocked": 10
+    "predicted_draw": 53,
+    "predicted_blocked": 8
   },
   "blocker_vocabulary": [
     "state-non-state-body",
@@ -1261,19 +1261,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-composite-divider",
-        "site": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
-        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
-        "detail": "A standalone '--' concurrency-region divider reaches edge parsing and is rejected."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram-v2/pr-check/v2-states-can-have-a-class-applied.mmd",
@@ -1941,19 +1936,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-composite-divider",
-        "site": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
-        "evidence": "src/ui/visual/mermaid_relations_impl.cpp (state edge parse; identifier('--') rejected)",
-        "detail": "A standalone '--' concurrency-region divider reaches edge parsing and is rejected."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram/pr-check/should-render-forks-and-joins.mmd",

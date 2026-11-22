@@ -5912,6 +5912,34 @@ const JourneyCohortEntry* journeyfam_init_0047_cohort_row(std::string_view path)
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0048 State concurrent-region cohort: the 17 reviewed state originals
+// whose only unadmitted input was a standalone `--` divider, states read per
+// row. The per-row frame gate is test_mermaid_state_region_0048_cohort.
+const std::map<std::string, JourneyCohortEntry>& state_region_0048_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/state-region-0048-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "State region 0048 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "State region 0048 cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* state_region_0048_cohort_row(std::string_view path) {
+    const auto& rows = state_region_0048_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0040 journey-family look/theme cohort: the 31 reviewed timeline/gantt/
 // journey originals promoted by the three families' closed look/theme tables.
 // States are read per row exactly as the three family ledgers do. The per-row
@@ -10886,6 +10914,35 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // RFC 0048 State concurrent-region admission: the 17 reviewed
+            // state originals whose only unadmitted input was a standalone `--`
+            // divider, states read per row. Three of the rows are also E2a/E2b
+            // ledger members (their `--` blocker is what kept them fallback);
+            // this branch precedes those branches and the RFC 0038 state
+            // look/theme branch, and the post-loop reach proof below asserts
+            // every ledger row is observed here (rule 38).
+            if (class_path.is_str()) {
+                const auto* cohort = state_region_0048_cohort_row(class_path.as_str());
+                if (cohort) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = (*fs::path(row.path).begin()).string();
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "RFC-0048 state concurrent-region reviewed cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
             // RFC 0031 E2a: config-free gitGraph/state originals are governed
             // by the independently reviewed cohort ledger, not the manifest's
             // source expectation. The per-row pixel gate is test_mermaid_e2a_cohort;
@@ -12005,6 +12062,25 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_0047 == expected_0047,
                     "RFC 0047 branch reach set must equal its ledger");
+        }
+        // RFC 0048 rule-38 reach proof: every ledger row must be observed
+        // through its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_0048 = json::parse(read_file(
+                kRoot / "../../../tools/mermaid/state-region-0048-cohort.json"));
+            require(ledger_0048.has_value(), "RFC 0048 cohort ledger must parse");
+            std::set<std::string> expected_0048;
+            ledger_0048->root().get("rows").iter([&](const JsonVal row) {
+                expected_0048.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_0048;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "RFC-0048 state concurrent-region reviewed cohort")
+                    reached_0048.insert(row.path);
+            }
+            require(reached_0048 == expected_0048,
+                    "RFC 0048 branch reach set must equal its ledger");
         }
         require(std::ranges::all_of(er107_selected, [](bool selected) { return selected; }),
                 "ER107 Matrix exactly107 selected originals consumed");

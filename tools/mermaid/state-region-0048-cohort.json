@@ -1,0 +1,860 @@
+{
+  "schema": "loom_mermaid_state_region_0048_cohort/v1",
+  "rfc": 48,
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "state-diagram or state-diagram-v2 original whose body declares a standalone `--` divider line, with no in-body directive line and no classDef/class/style/cssClass statement",
+    "roots": [
+      "state-diagram",
+      "state-diagram-v2"
+    ],
+    "phase": "P1-concurrent-regions",
+    "cohort_digest": "4829fdb19a13c050d6996cc015de9c06d239b8f91ff874969046d4313ba37171",
+    "families": {
+      "state-diagram": 1,
+      "state-diagram-v2": 16
+    },
+    "families_p2": {
+      "state-diagram": 4,
+      "state-diagram-v2": 4
+    },
+    "probes_sha256": "12b0921684396e8d6c6db41ce84002974cb42fb047703b92b8c8aad46694251a",
+    "exclusions": "the four {dark,default,forest,neutral}-theme rows carry a leading %%{init}%% directive and belong to phase P2; the four user-styled-with-regions rows carry state styling and stay whole-source",
+    "width_policy": "wide_240 admission only; narrow_40 is measured per row."
+  },
+  "review": {
+    "phases": {
+      "P1-concurrent-regions": {
+        "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, RFC 0048 State concurrent regions, 2026-11-22)",
+        "date": "2026-11-22",
+        "verdict": "approved",
+        "note": "Filled at phase closure: the frame = twin + footer evidence, the paired negative audit and the cross-region fail-closed gate."
+      }
+    },
+    "verdict": "approved"
+  },
+  "counts": {
+    "note": "state_diagram/state_diagram_v2 are the phase-P1 per-family counts; phase_p1/phase_p2 are the authoritative phase totals and families_p2 holds the phase-P2 per-family counts",
+    "total": 25,
+    "predicted_draw": 25,
+    "state_diagram": 1,
+    "state_diagram_v2": 16,
+    "phase_p1": 17,
+    "phase_p2": 8
+  },
+  "rows": [
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-handdrawn-look-redux-color-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "8dd9b20bb5d0ea3831034dfec9608e61af37567209a9e66d38dd3f879a6b444a",
+      "manifest_sha256": "8dd9b20bb5d0ea3831034dfec9608e61af37567209a9e66d38dd3f879a6b444a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "theme": "redux-color",
+        "look": "handDrawn"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram composite-container colouring under the handDrawn look (roughjs\n  shapes, not rects — a separate style codepath from the classic look): three\n  concurrency regions (NumLock/CapsLock/ScrollLock) in one composite state.\n  Rendered under the \"redux-color\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=handDrawn -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-handdrawn-look-redux-dark-color-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "14eebdd68a1881c082449841bb8d59cbf3468508440f4ef384873eace6d0f1fe",
+      "manifest_sha256": "14eebdd68a1881c082449841bb8d59cbf3468508440f4ef384873eace6d0f1fe",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "theme": "redux-dark-color",
+        "look": "handDrawn"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram composite-container colouring under the handDrawn look (roughjs\n  shapes, not rects — a separate style codepath from the classic look): three\n  concurrency regions (NumLock/CapsLock/ScrollLock) in one composite state.\n  Rendered under the \"redux-dark-color\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=handDrawn -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-redux-color-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "9142a91ee07856b2e886170a580e02a4fd575ae242d6ab5fbf27c4fb5a217b59",
+      "manifest_sha256": "9142a91ee07856b2e886170a580e02a4fd575ae242d6ab5fbf27c4fb5a217b59",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "theme": "redux-color"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram composite-container colouring: three concurrency regions\n  (NumLock/CapsLock/ScrollLock) in one composite state. Rendered under the\n  \"redux-color\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-redux-dark-color-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "258cc7e206babd4f3e8e51b534a5b6eab30d2c7867dda9a90cdf716058595bc0",
+      "manifest_sha256": "258cc7e206babd4f3e8e51b534a5b6eab30d2c7867dda9a90cdf716058595bc0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "theme": "redux-dark-color"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram composite-container colouring: three concurrency regions\n  (NumLock/CapsLock/ScrollLock) in one composite state. Rendered under the\n  \"redux-dark-color\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-redux-dark-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "fc3cfea53492cbece9cf4030d48e783acfd174b8740e4ba8c5cd44505bb19f5d",
+      "manifest_sha256": "fc3cfea53492cbece9cf4030d48e783acfd174b8740e4ba8c5cd44505bb19f5d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "theme": "redux-dark"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram composite-container colouring: three concurrency regions\n  (NumLock/CapsLock/ScrollLock) in one composite state. Rendered under the\n  \"redux-dark\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrency-composite-containers-redux-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "fcc69778c4c37f5a19e36e0311b30861baf83c41a6940cceaeccabff902303ab",
+      "manifest_sha256": "fcc69778c4c37f5a19e36e0311b30861baf83c41a6940cceaeccabff902303ab",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "theme": "redux"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram composite-container colouring: three concurrency regions\n  (NumLock/CapsLock/ScrollLock) in one composite state. Rendered under the\n  \"redux\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrent-states-neo-look-neo-dark-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "700abce76809f56189f842deb1f182a72879447b0891e179efa5e10d74185108",
+      "manifest_sha256": "700abce76809f56189f842deb1f182a72879447b0891e179efa5e10d74185108",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "look": "neo",
+        "theme": "neo-dark"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram covering a composite state (Active) with two independent\n  concurrent regions (NumLock/CapsLock), separated by `--`, rendered under the\n  \"neo\" look with the \"neo-dark\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrent-states-neo-look-neo-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "35557671593ead7661757a8a03a7b975d645c14deeb3fc75ad99a46e22abf123",
+      "manifest_sha256": "35557671593ead7661757a8a03a7b975d645c14deeb3fc75ad99a46e22abf123",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "look": "neo",
+        "theme": "neo"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram covering a composite state (Active) with two independent\n  concurrent regions (NumLock/CapsLock), separated by `--`, rendered under the\n  \"neo\" look with the \"neo\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrent-states-neo-look-redux-dark-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "228b590985dec9fa7d9b6ece2a6fbc96fd1850f0c721b1288a6a0e10daedea01",
+      "manifest_sha256": "228b590985dec9fa7d9b6ece2a6fbc96fd1850f0c721b1288a6a0e10daedea01",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "look": "neo",
+        "theme": "redux-dark"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram covering a composite state (Active) with two independent\n  concurrent regions (NumLock/CapsLock), separated by `--`, rendered under the\n  \"neo\" look with the \"redux-dark\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/concurrent-states-neo-look-redux-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "63d4cfab7a5d0e8dee6c498b3246633a9cee6a7d1f213604643d04a685debdbf",
+      "manifest_sha256": "63d4cfab7a5d0e8dee6c498b3246633a9cee6a7d1f213604643d04a685debdbf",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "look": "neo",
+        "theme": "redux"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram covering a composite state (Active) with two independent\n  concurrent regions (NumLock/CapsLock), separated by `--`, rendered under the\n  \"neo\" look with the \"redux\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/dark-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P2-init-accessibility",
+      "sha256": "792f771d5398df4ff027105ceb9a0e0cd4cbbea59481ac49cca0b7cb4e04fd35",
+      "manifest_sha256": "792f771d5398df4ff027105ceb9a0e0cd4cbbea59481ac49cca0b7cb4e04fd35",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {},
+      "directive": {
+        "logLevel": "0",
+        "theme": "dark"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the leading %%{init}%% directive line; keep frontmatter and body",
+        "frontmatter": "description: >-\n  \"stateDiagram-v2\" syntax, the v2-syntax sibling of the legacy-stateDiagram\n  theme fixture: same two composite states (one with three parallel concurrent\n  regions, one a simple cycle), accTitle/accDescr, and a note, rendered under\n  the \"dark\" theme via an in-body %%{init}%% directive."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 leading in-body directive + accessibility admission: the directive is logger/palette only and the accessibility scalars are validated no-ops, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/default-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P2-init-accessibility",
+      "sha256": "6e33ef7a4e3a6a0513037091db5a82080052f14528e543edbca67ae56d34cca2",
+      "manifest_sha256": "6e33ef7a4e3a6a0513037091db5a82080052f14528e543edbca67ae56d34cca2",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {},
+      "directive": {
+        "logLevel": "0",
+        "theme": "default"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the leading %%{init}%% directive line; keep frontmatter and body",
+        "frontmatter": "description: >-\n  \"stateDiagram-v2\" syntax, the v2-syntax sibling of the legacy-stateDiagram\n  theme fixture: same two composite states (one with three parallel concurrent\n  regions, one a simple cycle), accTitle/accDescr, and a note, rendered under\n  the \"default\" theme via an in-body %%{init}%% directive."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 leading in-body directive + accessibility admission: the directive is logger/palette only and the accessibility scalars are validated no-ops, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/forest-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P2-init-accessibility",
+      "sha256": "b2fdf720676ca84668f3c65dbe53b8eb7c0f18f72f402b934189feec7289dd75",
+      "manifest_sha256": "b2fdf720676ca84668f3c65dbe53b8eb7c0f18f72f402b934189feec7289dd75",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {},
+      "directive": {
+        "logLevel": "0",
+        "theme": "forest"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the leading %%{init}%% directive line; keep frontmatter and body",
+        "frontmatter": "description: >-\n  \"stateDiagram-v2\" syntax, the v2-syntax sibling of the legacy-stateDiagram\n  theme fixture: same two composite states (one with three parallel concurrent\n  regions, one a simple cycle), accTitle/accDescr, and a note, rendered under\n  the \"forest\" theme via an in-body %%{init}%% directive."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 leading in-body directive + accessibility admission: the directive is logger/palette only and the accessibility scalars are validated no-ops, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/neutral-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P2-init-accessibility",
+      "sha256": "e65e2a77fc12fd4fc7b0e29193224cbd31983a7f4f783e8a370833871978dd31",
+      "manifest_sha256": "e65e2a77fc12fd4fc7b0e29193224cbd31983a7f4f783e8a370833871978dd31",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {},
+      "directive": {
+        "logLevel": "0",
+        "theme": "neutral"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the leading %%{init}%% directive line; keep frontmatter and body",
+        "frontmatter": "description: >-\n  \"stateDiagram-v2\" syntax, the v2-syntax sibling of the legacy-stateDiagram\n  theme fixture: same two composite states (one with three parallel concurrent\n  regions, one a simple cycle), accTitle/accDescr, and a note, rendered under\n  the \"neutral\" theme via an in-body %%{init}%% directive."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=neutral -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 leading in-body directive + accessibility admission: the directive is logger/palette only and the accessibility scalars are validated no-ops, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/regions-inside-nesting-composite-containers-redux-color-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "11c251bd82893de5979b9345d8cfddd447eba7a83b3e684dff3b899918dc4d44",
+      "manifest_sha256": "11c251bd82893de5979b9345d8cfddd447eba7a83b3e684dff3b899918dc4d44",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "theme": "redux-color"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram composite-container colouring: a concurrency region (Concurrent)\n  nested inside a composite (Machine), alongside a separately-nested composite\n  (Finish > Deep) — verifies concurrent regions get matching colours while\n  unrelated composites stay distinct. Rendered under the \"redux-color\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/regions-inside-nesting-composite-containers-redux-dark-color-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "2eb9b375393d022d8a3703900a244a4cef517ac21801d0dbd9ebb5b71a431861",
+      "manifest_sha256": "2eb9b375393d022d8a3703900a244a4cef517ac21801d0dbd9ebb5b71a431861",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "theme": "redux-dark-color"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram composite-container colouring: a concurrency region (Concurrent)\n  nested inside a composite (Machine), alongside a separately-nested composite\n  (Finish > Deep) — verifies concurrent regions get matching colours while\n  unrelated composites stay distinct. Rendered under the \"redux-dark-color\"\n  theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/regions-inside-nesting-composite-containers-redux-dark-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "3121bc85ec2ed77ba233a42a80e531bfbadfd7f0c6eb171d5e0e05d20b5140fe",
+      "manifest_sha256": "3121bc85ec2ed77ba233a42a80e531bfbadfd7f0c6eb171d5e0e05d20b5140fe",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "theme": "redux-dark"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram composite-container colouring: a concurrency region (Concurrent)\n  nested inside a composite (Machine), alongside a separately-nested composite\n  (Finish > Deep) — verifies concurrent regions get matching colours while\n  unrelated composites stay distinct. Rendered under the \"redux-dark\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/regions-inside-nesting-composite-containers-redux-theme.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "2eecbc1b1f96ea0f1ac92354cf9944ec1b2204cb2ff2f5878f0f15c49f356c5b",
+      "manifest_sha256": "2eecbc1b1f96ea0f1ac92354cf9944ec1b2204cb2ff2f5878f0f15c49f356c5b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "theme": "redux"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  State diagram composite-container colouring: a concurrency region (Concurrent)\n  nested inside a composite (Machine), alongside a separately-nested composite\n  (Finish > Deep) — verifies concurrent regions get matching colours while\n  unrelated composites stay distinct. Rendered under the \"redux\" theme."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-align-dividers-correctly.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "b668fcb64597d4d5909bf296e768fd92e789bd8660850fcf91b8661cb01d6c83",
+      "manifest_sha256": "b668fcb64597d4d5909bf296e768fd92e789bd8660850fcf91b8661cb01d6c83",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {},
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  Composite state s2 split into three concurrent regions via two `--`\n  dividers (s3, s4, and 55), checking that the divider lines align\n  correctly across all regions including one named with a numeric-looking\n  id."
+      },
+      "expected_footer_lines": [],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-should-render-concurrency-states.mmd",
+      "family": "state-diagram-v2",
+      "phase": "P1-concurrent-regions",
+      "sha256": "d7d7b46a1767502b7845e12e3ed4d58ba15ab54dbde445cafd7e65da88b6f9e4",
+      "manifest_sha256": "d7d7b46a1767502b7845e12e3ed4d58ba15ab54dbde445cafd7e65da88b6f9e4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "logLevel": "0",
+        "fontFamily": "courier"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  Composite state \"Active\" split into three concurrent regions via the `--`\n  divider syntax (NumLock, CapsLock, ScrollLock toggles), exercising\n  concurrency/orthogonal region rendering."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.logLevel=0 -> logger only; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/dark-theme.mmd",
+      "family": "state-diagram",
+      "phase": "P2-init-accessibility",
+      "sha256": "19cd9dc3964b60cc9c58684c05772450e93471c010786e1c2e89a14e22cf6cc9",
+      "manifest_sha256": "19cd9dc3964b60cc9c58684c05772450e93471c010786e1c2e89a14e22cf6cc9",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {},
+      "directive": {
+        "logLevel": "0",
+        "theme": "dark"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the leading %%{init}%% directive line; keep frontmatter and body",
+        "frontmatter": "description: >-\n  Legacy \"stateDiagram\" (v1) syntax with two composite states — one holding\n  three parallel concurrent regions (\"--\" dividers), the other a simple two-node\n  cycle — with an accTitle/accDescr pair and a note, rendered under the \"dark\"\n  theme via an in-body %%{init}%% directive."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 leading in-body directive + accessibility admission: the directive is logger/palette only and the accessibility scalars are validated no-ops, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/default-theme.mmd",
+      "family": "state-diagram",
+      "phase": "P2-init-accessibility",
+      "sha256": "c2aff2a9f9ce460e067c8e9aedf4ad4d714050b4581a6366fb2aff4a3b2e2d6b",
+      "manifest_sha256": "c2aff2a9f9ce460e067c8e9aedf4ad4d714050b4581a6366fb2aff4a3b2e2d6b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {},
+      "directive": {
+        "logLevel": "0",
+        "theme": "default"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the leading %%{init}%% directive line; keep frontmatter and body",
+        "frontmatter": "description: >-\n  Legacy \"stateDiagram\" (v1) syntax with two composite states — one holding\n  three parallel concurrent regions (\"--\" dividers), the other a simple two-node\n  cycle — with an accTitle/accDescr pair and a note, rendered under the\n  \"default\" theme via an in-body %%{init}%% directive."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 leading in-body directive + accessibility admission: the directive is logger/palette only and the accessibility scalars are validated no-ops, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/forest-theme.mmd",
+      "family": "state-diagram",
+      "phase": "P2-init-accessibility",
+      "sha256": "0f46b0cad0417c1ae114323857fe3e9b0a90202497ddb5fb430cee47f26505dd",
+      "manifest_sha256": "0f46b0cad0417c1ae114323857fe3e9b0a90202497ddb5fb430cee47f26505dd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {},
+      "directive": {
+        "logLevel": "0",
+        "theme": "forest"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the leading %%{init}%% directive line; keep frontmatter and body",
+        "frontmatter": "description: >-\n  Legacy \"stateDiagram\" (v1) syntax with two composite states — one holding\n  three parallel concurrent regions (\"--\" dividers), the other a simple two-node\n  cycle — with an accTitle/accDescr pair and a note, rendered under the \"forest\"\n  theme via an in-body %%{init}%% directive."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 leading in-body directive + accessibility admission: the directive is logger/palette only and the accessibility scalars are validated no-ops, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/nightly-check/neutral-theme.mmd",
+      "family": "state-diagram",
+      "phase": "P2-init-accessibility",
+      "sha256": "09754da60830cad66539ebeaf86ee8cd295e579dc7b85bec75a43701e6bd3324",
+      "manifest_sha256": "09754da60830cad66539ebeaf86ee8cd295e579dc7b85bec75a43701e6bd3324",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {},
+      "directive": {
+        "logLevel": "0",
+        "theme": "neutral"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the leading %%{init}%% directive line; keep frontmatter and body",
+        "frontmatter": "description: >-\n  Legacy \"stateDiagram\" (v1) syntax with two composite states — one holding\n  three parallel concurrent regions (\"--\" dividers), the other a simple two-node\n  cycle — with an accTitle/accDescr pair and a note, rendered under the\n  \"neutral\" theme via an in-body %%{init}%% directive."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.logLevel=0 -> logger only; not applied",
+        "config.theme=neutral -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 leading in-body directive + accessibility admission: the directive is logger/palette only and the accessibility scalars are validated no-ops, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "state-diagram/pr-check/should-render-concurrency-states.mmd",
+      "family": "state-diagram",
+      "phase": "P1-concurrent-regions",
+      "sha256": "cdde17d1b4ec8625178b26f02e51b81defeed533272e7e9b1fbb97fd6c484d90",
+      "manifest_sha256": "cdde17d1b4ec8625178b26f02e51b81defeed533272e7e9b1fbb97fd6c484d90",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "config": {
+        "logLevel": "0",
+        "fontFamily": "courier"
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the whole `config:` block from the frontmatter; keep description and both fences",
+        "frontmatter": "description: >-\n  Legacy v1 state diagram with a composite state (Active) split into three\n  concurrent regions via \"--\" dividers (NumLock, CapsLock, ScrollLock\n  toggles), exercising fork-less concurrency/parallel-region rendering."
+      },
+      "expected_footer_lines": [
+        "",
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.logLevel=0 -> logger only; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0048 concurrent-region admission: the config leaves are inert (RFC 0031 E2b / RFC 0038 tables), so the frame equals the config-free twin's plus the bounded disclosure footer."
+    }
+  ]
+}

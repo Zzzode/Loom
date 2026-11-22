@@ -33337,7 +33337,9 @@ TEST(MermaidStateEnvelope, ConfigFrontmatterStaysSource) {
     EXPECT_FALSE(e2a_state::draws(source));
 }
 
-TEST(MermaidStateEnvelope, InitThemeFrontmatterStaysSource) {
+TEST(MermaidStateEnvelope, InitThemeDirectiveDrawsAndUnreviewedDirectivesStaySource) {
+    // RFC 0048 P2 flips the former leading-directive negative: a closed
+    // logLevel/theme directive over a state body now draws with its footer.
     const std::string source = "---\n"
                                "description: >-\n"
                                "  d\n"
@@ -33345,7 +33347,21 @@ TEST(MermaidStateEnvelope, InitThemeFrontmatterStaysSource) {
                                "%%{init: {\"theme\": \"dark\"}}%%\n"
                                "stateDiagram-v2\n"
                                "  [*] --> State1\n";
-    EXPECT_FALSE(e2a_state::draws(source));
+    ASSERT_TRUE(e2a_state::draws(source));
+    const auto frame = e2a_state::surface(source, "mermaid");
+    EXPECT_NE(frame.find("config.theme=dark -> colour palette; not applied"),
+              std::string::npos);
+    // Paired negatives: an unadmitted theme, an unknown key and a non-leading
+    // directive all keep the whole source.
+    for (const std::string body : {
+             "---\ndescription: >-\n  d\n---\n%%{init: {\"theme\": \"neo\"}}%%\n"
+             "stateDiagram-v2\n  [*] --> State1\n",
+             "---\ndescription: >-\n  d\n---\n%%{init: {\"foo\": 1}}%%\n"
+             "stateDiagram-v2\n  [*] --> State1\n",
+             "---\ndescription: >-\n  d\n---\nstateDiagram-v2\n"
+             "%%{init: {\"theme\": \"dark\"}}%%\n  [*] --> State1\n",
+         })
+        EXPECT_FALSE(e2a_state::draws(body)) << body;
 }
 
 TEST(MermaidStateEnvelope, CompositeBraceOnNextLineKeepsWholeScene) {
@@ -33453,7 +33469,10 @@ TEST(MermaidStateEnvelope, CompositeNextLineOpenerKeepsAliasesAndRejectsIncomple
     }
 }
 
-TEST(MermaidStateEnvelope, CompositeDividerStaysSource) {
+TEST(MermaidStateEnvelope, CompositeDividerDrawsAndRejectsCrossRegion) {
+    // RFC 0048 flips the former divider negative: a `--` region body now
+    // draws, with one divider column and both junctions on the frame. The
+    // paired negatives below cover the region shapes that still fail closed.
     const std::string source = "---\n"
                                "description: >-\n"
                                "  d\n"
@@ -33464,7 +33483,34 @@ TEST(MermaidStateEnvelope, CompositeDividerStaysSource) {
                                "  --\n"
                                "  s4\n"
                                "  }\n";
-    EXPECT_FALSE(e2a_state::draws(source));
+    ASSERT_TRUE(e2a_state::draws(source));
+    const auto frame = e2a_state::surface(source, "mermaid");
+    EXPECT_NE(frame.find("┬"), std::string::npos);
+    EXPECT_NE(frame.find("┴"), std::string::npos);
+    EXPECT_NE(frame.find("│"), std::string::npos);
+    const std::string three = "stateDiagram-v2\n  state A {\n  a\n  --\n  b\n  --\n  c\n  }\n";
+    ASSERT_TRUE(e2a_state::draws(three));
+    // Two boundaries, two junctions on each border.
+    const auto three_frame = e2a_state::surface(three, "mermaid");
+    const auto glyph_count = [](const std::string& haystack, std::string_view needle) {
+        std::size_t count = 0;
+        for (auto at = haystack.find(needle); at != std::string::npos;
+             at = haystack.find(needle, at + needle.size()))
+            ++count;
+        return count;
+    };
+    EXPECT_EQ(glyph_count(three_frame, "┬"), 2u);
+    EXPECT_EQ(glyph_count(three_frame, "┴"), 2u);
+    // Paired negatives: the divider grammar is closed.
+    for (const std::string body : {
+             "stateDiagram-v2\n  --\n  [*] --> A\n",
+             "stateDiagram-v2\n  A -- B\n",
+             "stateDiagram-v2\n  state A {\n  --\n  b\n  }\n",
+             "stateDiagram-v2\n  state A {\n  a\n  --\n  }\n",
+             "stateDiagram-v2\n  state A {\n  a\n  --\n  b\n  a --> b\n  }\n",
+             "stateDiagram-v2\n  state A {\n  a\n  --\n  direction LR\n  b\n  }\n",
+         })
+        EXPECT_FALSE(e2a_state::draws(body)) << body;
 }
 
 // D223: HTML-entity pseudo-state markers are the v1 corpus spelling of the

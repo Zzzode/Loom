@@ -59,8 +59,20 @@ useMaxWidth/logLevel/themeVariables）的只有 **9 行**，且集中为：
 > state v1 **12 → 7**、v2 **49 → 35**，全局 **608 → 589**，formal **1351 → 1370**；
 > 三数 ①**589** ②**289** ③**19**。P3 与 `info` 行留给后续 RFC。
 
-若后续 RFC 承接 7 行布线 + `info`（26 行）时的终态：state v2 **49 → 30/73**、
-v1 **12 → 5/37**，全局 **582**，formal **1377**（本片不含此行；见上方修订 2）。
+> 修订 3（2026-11-22，RFC 0048 P1 实现实测）：P1 实测为 **17** 行，不是 11 行——
+> 另有 6 条 `concurrency-composite-containers-handdrawn-look-redux-{color,dark-color}-theme`
+> 与 `concurrent-states-neo-look-{neo,neo-dark,redux,redux-dark}-theme` 携带同样的独立
+> `--` 分隔符；名单此前把它们归到 `look_handdrawn`/`look_neo`，但它们的 `look` 叶早已在
+> RFC 0038 的惰性披露表内（`neo`/`handDrawn`），真正的阻断就是分隔符。保持回退需要一条
+> 无原则依据的 look+region 门；把它们当作未审核绘制记入受保护 E6c 缺口账本又会改冻结文件。
+> 因此本片范围 = **P1 17 + P2 8 = 25 行**：state v1 **12 → 7**、v2 **49 → 29**，
+> 全局 **608 → 583**，formal **1351 → 1376**；三数 ①**583** ②**289** ③**25**。
+> 类别：`family_residual:state-diagram` 7 → 2、`:state-diagram-v2` 20 → 6、
+> `look_handdrawn` 45 → 43、`look_neo` 32 → 28（40 类不变）。
+> 参见 RFC 0048 "Amendment 1" 与 D-422。
+
+若后续 RFC 承接 7 行布线 + `info`（8 行）时的终态：state v2 **29 → 23/80**、
+v1 **7 → 5/37**，全局 **575**，formal **1384**（本片不含此行；见修订 2/3）。
 
 ## 4. #2621 预算（已完成，独立提交 `fef4aff0`）
 

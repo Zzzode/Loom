@@ -4554,6 +4554,71 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## State concurrent regions and in-body init/accessibility (RFC 0048)
+
+- **State-only region side tables.** `state_region_by_entity` and
+  `state_region_count_by_entity` (both indexed by entity slot) live beside the
+  diagram's state data; `RelationEntity` keeps its layout so the shared
+  `sizeof(RelationEntity)` Work charges for Class/ER/Requirement do not move.
+  Both tables are **engaged lazily by the first `--`**, so a region-free State
+  document (including all 28 state-0038 rows) pays nothing new and keeps a
+  byte-identical frame and charge sequence. Every insertion site that can run
+  while the tables are engaged (`entity()`, `control()`) pushes one slot for
+  each table; `prepare()` fails closed if the sizes ever disagree.
+- **Region is assigned only at insertion.** `entity()`/`control()` take an
+  optional `region` argument (default 0) that is consulted solely on the insert
+  path, so an existing state keeps its first region. The seven State creation
+  sites pass the current owner's cursor.
+- **`--` grammar.** A trimmed `--` line inside a State `Group` advances that
+  owner's region cursor (`kStateRegionLimit = 8`); a top-level `--`, `A -- B`,
+  an empty region, a cross-region edge, and a `direction` declared after a
+  divider all stay whole-source. An edge whose endpoints map to different
+  regions of any scope fails closed in `prepare()` **before** partitioning, and
+  the reach-matrix bounds guard is unconditional so no partition can index out
+  of range.
+- **Region-scoped controls.** `control()` dedupes `[*]` by owner+shape+region,
+  so each region owns its own anonymous start/final pair.
+- **One shared single-column body.** `measure()` dispatches a region composite
+  to `measure_regions()`, which partitions the child list and the scope's edge
+  list by region and then calls the unchanged `measure_scope()` once per region
+  in a region mode that returns `(w, h)` and never writes the owner's box.
+  The container width is the sum of region widths plus one divider column per
+  boundary, the height is the tallest region (each region's height already
+  includes the single header band), and a title wider than the regions widens
+  the frame with the regions **left** aligned so the divider offsets do not
+  move. `RelationLayout::ordered` stays per scope for the Class reciprocal
+  planner; region subsets keep a local order.
+- **Divider geometry.** Dividers are stored as container-local x offsets plus
+  the local first-body row. The emitter draws a header-band bottom border at
+  that row with `┬` junctions, a `│` column through the body, and `┴` where it
+  meets the container's bottom border. All those cells are blocked before notes
+  and routing (an overlapping note fails closed) and the junction cells are
+  excluded from `ports_for`.
+- **P2 envelope.** Exactly one **leading** in-body `%%{init: …}%%` is admitted
+  through a State-local copy of the RFC 0047 closed grammar (bare `init`, empty
+  `{}`, flat `logLevel`/`theme`; `logLevel` ∈ {0…5, trace, debug, info, warn,
+  error, fatal}, `theme` ∈ {dark, default, forest, neutral}). The envelope
+  returns `effective_body`, and a keyed in-body directive plus any frontmatter visual
+  leaf is mutually exclusive (G5), so no config line can be emitted twice.
+  The disclosure footer appends `config.logLevel=<v>` and
+  `config.theme=<v>` after any frontmatter lines.
+- **Accessibility no-ops.** Scalar `accTitle:`/`accDescr:` are validated
+  (non-empty, bounded, control-free, unicode, one occurrence each) and
+  consumed as **no-ops**: they never become states and never set the diagram
+  title. Block-form `accDescr { … }`, duplicates, empty payloads and a bare
+  `accTitle` identifier gate.
+- **Single-source probes.** `tools/mermaid/state-init-0048-probes.json` drives
+  both the C++ gate and the Python mirror (`tools/mermaid/state_init_tables.py`);
+  `selection.probes_sha256` binds the review (efficiency rule 37).
+- **Cohort/gate.** `tools/mermaid/state-region-0048-cohort.json` (25 rows:
+  P1 17, P2 8) is generated renderer-free with pinned digest, manifest sha and
+  probes sha; the per-row oracle is config/directive-free twin + literal
+  footer, line by line. The matrix branch sits **before** the E2a, E2b and
+  state-0038 branches (the 25 rows are state-0038 `excluded` members and three
+  are E2a/E2b members) and a post-loop assertion proves every ledger row is
+  observed through it (rule 38). Roster 608 -> 583 (40 categories); the E6c
+  mandatory-gap roster stays frozen at 48.
+
 ## agentflow look and theme admission (RFC 0041)
 
 - **One strict gate, no pass-through.** `af_frontmatter_gated` accepts only a

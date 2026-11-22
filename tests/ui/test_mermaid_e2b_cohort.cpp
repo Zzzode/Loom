@@ -31,6 +31,7 @@ const fs::path kManifest = kTestsDir / "fixtures/mermaid_official/manifest.json"
 const fs::path kLedger = kTestsDir / "../tools/mermaid/e2b-cohort.json";
 const fs::path kRfc0038Ledger = kTestsDir / "../tools/mermaid/state-0038-cohort.json";
 const fs::path kRfc0046Ledger = kTestsDir / "../tools/mermaid/layouttuning-0046-cohort.json";
+const fs::path kRfc0048Ledger = kTestsDir / "../tools/mermaid/state-region-0048-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 constexpr std::string_view kFooterHeader = "State native projection v1";
@@ -151,8 +152,8 @@ TEST(MermaidE2bCohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(counts.get_int("total"), 61);
     EXPECT_EQ(counts.get_int("state_v2"), 38);
     EXPECT_EQ(counts.get_int("state_v1"), 23);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 51);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 10);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 53);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 8);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -209,8 +210,8 @@ TEST(MermaidE2bCohort, EveryDrawRowDrawsWithFooterAndBlockedRowKeepsSourceAt240)
         }
         EXPECT_EQ(row.wide, is_drawn ? "drawn" : "source");
     }
-    EXPECT_EQ(drawn, 51);
-    EXPECT_EQ(blocked, 10);
+    EXPECT_EQ(drawn, 53);
+    EXPECT_EQ(blocked, 8);
 }
 
 TEST(MermaidE2bCohort, DescriptionIsNeverRendered) {
@@ -254,6 +255,17 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
     std::set<std::string> admitted;
     rfc0038->root().get("rows").iter(
         [&](const JsonVal row) { admitted.insert(row.get_string("path")); });
+    // RFC 0048 admits the reviewed State concurrent-region cohort; the per-row
+    // gate is test_mermaid_state_region_0048_cohort. The skip-set pin below is
+    // over the config-bearing subset this scan actually visits.
+    auto rfc0048 = json::parse(read_file(kRfc0048Ledger));
+    ASSERT_TRUE(rfc0048.has_value()) << "RFC 0048 cohort ledger must parse";
+    std::set<std::string> region_admitted;
+    rfc0048->root().get("rows").iter([&](const JsonVal row) {
+        const auto rel = row.get_string("path");
+        cohort.insert(rel);
+        if (rel.rfind("state-diagram", 0) == 0) region_admitted.insert(rel);
+    });
     // RFC 0046 admits the 4 `state.useMaxWidth` tuning rows; they leave this
     // scan and their skip set is pinned below.
     auto rfc0046 = json::parse(read_file(kRfc0046Ledger));
@@ -267,6 +279,7 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
     cohort.insert(admitted.begin(), admitted.end());
     std::set<std::string> skipped_by_rfc0038;
     std::set<std::string> skipped_by_rfc0046;
+    std::set<std::string> skipped_by_rfc0048;
     auto declares_config = [](const std::string& source) {
         if (!source.starts_with("---\n")) return false;
         std::istringstream in(source);
@@ -298,6 +311,7 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
             const auto source = read_file(it->path());
             if (!declares_config(source)) continue;
             if (cohort.contains(rel)) {
+                if (region_admitted.contains(rel)) skipped_by_rfc0048.insert(rel);
                 if (admitted.contains(rel)) skipped_by_rfc0038.insert(rel);
                 if (state_admitted.contains(rel)) skipped_by_rfc0046.insert(rel);
                 continue;
@@ -308,7 +322,8 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
             ++checked;
         }
     }
-    EXPECT_EQ(checked, 39);
+    EXPECT_EQ(checked, 25);
+    EXPECT_EQ(skipped_by_rfc0048.size(), 16u);
     // Under-listing fails here (an admitted row that really changes surface is
     // no longer excluded, so the whole-source assertion above goes red);
     // over-listing fails in test_mermaid_state_0038_cohort (a wrongly admitted

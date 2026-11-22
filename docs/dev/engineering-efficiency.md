@@ -1917,3 +1917,41 @@ Attach a short efficiency section to each closure report, answering:
    background builder's wrapper exit; only the builder process's own exit (or its absence
    via `pgrep -f '[c]make --build'`) proves a fresh binary, and a stale binary can silently
    reproduce the previous milestone's matrix.
+
+## Retro: RFC 0048 State concurrent regions + in-body init/accessibility (2026-11-22)
+
+1. **Selection rerun cost, not waste.** The D-421 pool (19 rows) was a roster-category
+   reading; the first implementation run of the matrix exposed **17** P1 rows instead of 11
+   through the E6c gap diff (14 "unexpected (renderer-only)" rows), which is the fastest
+   possible measurement: the frozen gap ledger is itself the completeness check. Treat a
+   gap-diff surprise as a **scope measurement**, not a test failure to silence — the honest
+   responses were admit (scope amendment) or book into a protected roster, and only the
+   former preserves the invariants.
+2. **Dead probes.** Two of my synthetic negatives were over-strict rather than real rules
+   (a `direction` inside a *nested* child, and an empty-frontmatter footer expectation); both
+   were caught by running the gate against the contract before asking for review. Write the
+   negative from the RFC sentence, then re-read the sentence before pinning it.
+3. **Measured vs projected pins (rework).** Three RFC-projections did not survive contact:
+   the E2a `checked` re-pin was **80**, not the reviewed **86** (the two E2b rows are
+   themselves config-bearing cohort members, counted once, not twice); the E2b scan lost
+   **16** rows, not 8; and the 0046 constants needed **no** migration at all because that
+   suite's counts derive from its own tuning ledger. Lesson: a PRR §"footprint" that lists
+   "file:line → new constant" is a hypothesis; only the suite's own output is evidence.
+   Record the measured value and the derivation delta in the RFC amendment, never silently.
+4. **Build fan-out.** One BMI change (`mermaid_detail.cppm`: two side tables, a region-aware
+   `entity`/`control`, the `measure` split) recompiled the `:detail` importers; body-only
+   churn after that was archive + relink. One new test executable plus one hermetic
+   generator check.
+5. **Cheaper approach evidence.** The 25-row cohort gate (frame oracle + 12 grammar
+   negatives + 25 probe cases) runs in ~19 s; the full mermaid label is 274 s wall
+   (1515 tests). Region probes were validated with a temporary single-TU render test that
+   was deleted before commit — cheaper than adding a harness binary.
+6. **Discovery shortcut worth keeping.** `test_mermaid_probe.cpp` (a tiny TU that imports the
+   public render entry point) is the cheapest way to inspect a frame during development:
+   build one target (~2 s) instead of the 240 s matrix, and the matrix is then used only to
+   confirm the census.
+7. **New entry, rule 41:** a *source-shape* blocker detector in a renderer-free ledger must
+   be retired in the same commit that admits the shape, and its vocabulary entry may stay
+   (a closed set is a compatibility surface) while its branch goes. Otherwise the ledger
+   predicts a fallback the renderer no longer produces, and the failure surfaces as a
+   mysterious per-row "registered blocked row rendered" much later.

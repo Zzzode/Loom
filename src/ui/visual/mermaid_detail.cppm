@@ -64,6 +64,10 @@ constexpr int kHeightLimit = 1024;
 constexpr int kLabelLimit = 256;
 constexpr std::size_t kGroupLimit = 64;
 constexpr std::size_t kGroupDepthLimit = 16;
+// RFC 0048: concurrent regions per State composite. The bound keeps the
+// side-by-side composition (one divider column per boundary) inside the
+// existing width limit for the smallest admissible region.
+constexpr int kStateRegionLimit = 8;
 
 bool unicode_text(std::string_view text);
 std::optional<std::string> validated_plain_label(std::string_view text);
@@ -440,7 +444,16 @@ struct RelationDiagram {
     // D-066 F0: the same disclosure channel for accepted non-terminal
     // requirement frontmatter leaves (htmlLabels, logLevel 0-2, fontFamily).
     std::vector<std::string> requirement_config_notices;
+    // RFC 0048: State concurrent-region membership. Both tables stay empty
+    // unless the source actually uses a `--` divider, so every region-free
+    // diagram keeps its byte-identical model and Work charge sequence.
+    // `state_region_by_entity` is indexed by entity slot; the count table is
+    // read only for composite owners.
+    std::vector<int> state_region_by_entity;
+    std::vector<int> state_region_count_by_entity;
     std::unique_ptr<ClassDirectStyles> direct_styles;
+    int state_region(int index) const;
+    int state_region_count(int owner) const;
     std::optional<std::string_view> state_direction(int owner, Work& work) const;
     std::optional<std::size_t> state_text_index(int target, Work& work) const;
     bool state_fragment(int target, std::string&& text, Work& work);
@@ -451,8 +464,8 @@ struct RelationDiagram {
                      std::optional<std::string_view> type = {});
     int class_namespace(std::string_view id, std::string_view label, int owner, Work& work,
                         bool declared);
-    int control(EntityShape shape, int owner, Work& work);
-    int entity(std::string id, int owner, Work* er_work = nullptr);
+    int control(EntityShape shape, int owner, Work& work, int region = 0);
+    int entity(std::string id, int owner, Work* er_work = nullptr, int region = 0);
 };
 
 struct ErTableGeometry {
@@ -665,7 +678,13 @@ struct RelationLayout {
     std::vector<RelationBox> boxes;
     std::vector<std::vector<int>> children;
     std::vector<std::vector<int>> scope_edges;
+    // Per-scope strict reach order. The Class reciprocal planner reads the root
+    // row after layout; region subsets keep their own local order instead.
     std::vector<std::vector<int>> ordered;
+    // RFC 0048: container-local divider columns and the local first body row
+    // for each composite that laid out concurrent regions (index = owner + 1).
+    std::vector<std::vector<int>> region_dividers;
+    std::vector<int> region_top;
     std::vector<int> degrees;
     bool class_endpoint_active = false;
     bool compound_scope = false;
@@ -676,6 +695,13 @@ struct RelationLayout {
     bool prepare();
     std::optional<bool> compound_class_columns(const std::vector<std::vector<bool>>& root_reach);
     bool measure(int owner, std::size_t depth);
+    bool measure_regions(int owner, std::size_t depth);
+    // The shared single-column scope body. `region` selects the region mode:
+    // children are placed in the region's own frame and the computed extents
+    // are returned instead of committing the owner's box or the canvas.
+    bool measure_scope(int owner, std::size_t depth, const std::vector<int>& list,
+                       const std::vector<int>& scope_edge_list, std::vector<int>& order,
+                       bool region, int* region_width, int* region_height);
     void translate(int index, int x, int y);
     int canvas_width = 0, canvas_height = 0;
     bool ranked_peers = false;
@@ -718,8 +744,11 @@ struct RouteSearch {
 };
 
 bool draw_box(Canvas& canvas, const RelationBox& box, bool rounded);
+// RFC 0048: `dividers` are container-local columns whose border junctions on
+// this box are not routing ports.
 std::vector<EndpointPort> ports_for(const RelationEntity& entity, const RelationBox& box,
-                                    Marker marker, const RouteSearch& search);
+                                    Marker marker, const RouteSearch& search,
+                                    const std::vector<int>& dividers = {});
 bool paint_path(Canvas& canvas, std::span<const Point> path, Point before, Point after, bool dotted,
                 const CompoundScopeRoute* compound_route = nullptr);
 bool paint_port(Canvas& canvas, const EndpointPort& port, bool attach_er = false);

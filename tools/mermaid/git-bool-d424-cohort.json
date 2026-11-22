@@ -1,0 +1,795 @@
+{
+  "schema": "loom_mermaid_git_bool_d424_cohort/v1",
+  "decision": "D-424",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "gitGraph original whose frontmatter config.gitGraph block carries exactly the four closed boolean leaves {showBranches, showCommitLabel, rotateCommitLabel, parallelCommits}",
+    "cohort_digest": "87d27aeb777b2ccf86a99bd90caaeeabe3d61265dbea9521fd036d5309c1fce2",
+    "table": {
+      "config.gitGraph.showBranches": [
+        "true",
+        "false"
+      ],
+      "config.gitGraph.showCommitLabel": [
+        "true",
+        "false"
+      ],
+      "config.gitGraph.rotateCommitLabel": [
+        "true",
+        "false"
+      ],
+      "config.gitGraph.parallelCommits": [
+        "true",
+        "false"
+      ]
+    },
+    "exclusions": "mainBranchName/mainBranchOrder (content keys) and the cherry-pick statement rows stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice opened without a design gate; the gate is this test document plus the semantic oracle it pins",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 18,
+    "hidden_branches": 4,
+    "hidden_labels": 4
+  },
+  "rows": [
+    {
+      "path": "git/nightly-check/77-should-show-branch-lines-when-showbranches-is-true-default.mmd",
+      "sha256": "b61455339a84c97c6feeba5941ad8328a20a7ba84c0e96d2baa2f14785784d84",
+      "manifest_sha256": "b61455339a84c97c6feeba5941ad8328a20a7ba84c0e96d2baa2f14785784d84",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/78-should-hide-branch-lines-when-showbranches-is-false.mmd",
+      "sha256": "8b94cc569c1e7ad89ac7806aa74b5730e511ec0562716f28f6d0ce01a3656ce8",
+      "manifest_sha256": "8b94cc569c1e7ad89ac7806aa74b5730e511ec0562716f28f6d0ce01a3656ce8",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "false",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=false -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/79-should-show-commit-labels-when-showcommitlabel-is-true-default.mmd",
+      "sha256": "c89af2cca5842c18749fa7b7f89323b5a06511f499212f6d0a475ae42e164be4",
+      "manifest_sha256": "c89af2cca5842c18749fa7b7f89323b5a06511f499212f6d0a475ae42e164be4",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/80-should-hide-commit-labels-when-showcommitlabel-is-false.mmd",
+      "sha256": "bac0433dc2d748091bff43bed6eb70bd30c3b7e94480e85fb6cc978b5e1c77eb",
+      "manifest_sha256": "bac0433dc2d748091bff43bed6eb70bd30c3b7e94480e85fb6cc978b5e1c77eb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "false",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=false -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/81-should-show-both-branches-and-commit-labels-when-both-directives-are-true-default.mmd",
+      "sha256": "06e30738d23f80919d3771e2149526cbc407f49c932fb3363f8624625dc2d4a6",
+      "manifest_sha256": "06e30738d23f80919d3771e2149526cbc407f49c932fb3363f8624625dc2d4a6",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/82-should-hide-both-branches-and-commit-labels-when-both-directives-are-false.mmd",
+      "sha256": "ac8f91b1f498e654373ca1e727c4eb340124648c330c538c327b62226420d4b0",
+      "manifest_sha256": "ac8f91b1f498e654373ca1e727c4eb340124648c330c538c327b62226420d4b0",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "false",
+        "showCommitLabel": "false",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=false -> branch reference labels",
+        "config.gitGraph.showCommitLabel=false -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/83-should-show-branch-lines-with-merge-commits-when-showbranches-is-true.mmd",
+      "sha256": "872459da000c5c653a5279f95d25b8715639c3e7672be785d18e127371de251a",
+      "manifest_sha256": "872459da000c5c653a5279f95d25b8715639c3e7672be785d18e127371de251a",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/84-should-hide-branch-lines-with-merge-commits-when-showbranches-is-false.mmd",
+      "sha256": "1fee438441a6ec829d9b6081ff4260c44e92a1f5cf8dfc876e9563db05f05004",
+      "manifest_sha256": "1fee438441a6ec829d9b6081ff4260c44e92a1f5cf8dfc876e9563db05f05004",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "false",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=false -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/85-should-show-commit-labels-with-tags-when-showcommitlabel-is-true.mmd",
+      "sha256": "bc4090ea27332bd9dd8a2692cb2b2c25f5c6bcf27a54da22a3a636058d71ebdd",
+      "manifest_sha256": "bc4090ea27332bd9dd8a2692cb2b2c25f5c6bcf27a54da22a3a636058d71ebdd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/86-should-hide-commit-labels-with-tags-when-showcommitlabel-is-false.mmd",
+      "sha256": "c416abd1306886d9bf0afeb977ebd3dcd7acea0ff528ff6846da973af6973688",
+      "manifest_sha256": "c416abd1306886d9bf0afeb977ebd3dcd7acea0ff528ff6846da973af6973688",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "false",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=false -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/87-should-show-branches-with-tb-orientation-when-showbranches-is-true.mmd",
+      "sha256": "0ea599b4f341cddbe24b4af20ae22558f8ee76ac23e4bd3d5930df90eef0585b",
+      "manifest_sha256": "0ea599b4f341cddbe24b4af20ae22558f8ee76ac23e4bd3d5930df90eef0585b",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/88-should-hide-branches-with-tb-orientation-when-showbranches-is-false.mmd",
+      "sha256": "a246359fbef122041e4f2edc49080443782894ad0a0eb97afdf3161b961872e5",
+      "manifest_sha256": "a246359fbef122041e4f2edc49080443782894ad0a0eb97afdf3161b961872e5",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "false",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=false -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/89-should-show-commit-labels-with-bt-orientation-when-showcommitlabel-is-true.mmd",
+      "sha256": "9b46d3cd531ad79d9d7a15b5b100a38b36bf6c80af12deeb7ce727eafebad09c",
+      "manifest_sha256": "9b46d3cd531ad79d9d7a15b5b100a38b36bf6c80af12deeb7ce727eafebad09c",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/90-should-hide-commit-labels-with-bt-orientation-when-showcommitlabel-is-false.mmd",
+      "sha256": "8a868ad49b8ab5d21911f3de8263f1425a79412bdc3e90bc713c9a1e4adfc2cc",
+      "manifest_sha256": "8a868ad49b8ab5d21911f3de8263f1425a79412bdc3e90bc713c9a1e4adfc2cc",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "false",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=false -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/91-should-render-with-rotatecommitlabel-set-to-true.mmd",
+      "sha256": "01e8d4397dd9af0b12c3d52d9493b0842f19e6c503317c6351b61c9321d0f3df",
+      "manifest_sha256": "01e8d4397dd9af0b12c3d52d9493b0842f19e6c503317c6351b61c9321d0f3df",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "true",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=true -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "Alpha",
+          "Beta",
+          "Gamma",
+          "Delta",
+          "Epsilon"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/92-should-render-with-rotatecommitlabel-set-to-false.mmd",
+      "sha256": "93c9b30c48918d76cc87ebe6b120b1525588c56a19dbee2b8a394cc1964b6159",
+      "manifest_sha256": "93c9b30c48918d76cc87ebe6b120b1525588c56a19dbee2b8a394cc1964b6159",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "Alpha",
+          "Beta",
+          "Gamma",
+          "Delta",
+          "Epsilon"
+        ],
+        "branch_names": [
+          "develop",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/93-should-render-with-parallelcommits-set-to-true.mmd",
+      "sha256": "a29ef52317ab7306a99568fb800bd1ac3aa3459242f2958e13b64c09c80d1e1d",
+      "manifest_sha256": "a29ef52317ab7306a99568fb800bd1ac3aa3459242f2958e13b64c09c80d1e1d",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "true"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7"
+        ],
+        "branch_names": [
+          "develop",
+          "feature",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    },
+    {
+      "path": "git/nightly-check/94-should-render-with-parallelcommits-set-to-false.mmd",
+      "sha256": "3685d949dc44f923759880c808c0a41afad3654e6a1dc7c77a87c43b0d39ad57",
+      "manifest_sha256": "3685d949dc44f923759880c808c0a41afad3654e6a1dc7c77a87c43b0d39ad57",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter"
+      },
+      "booleans": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "semantics": {
+        "commit_ids": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7"
+        ],
+        "branch_names": [
+          "develop",
+          "feature",
+          "main"
+        ]
+      },
+      "ledger_note": "D-424 closed gitGraph boolean namespace: showBranches and showCommitLabel hide real elements; rotateCommitLabel and parallelCommits are inert and disclosed only."
+    }
+  ]
+}

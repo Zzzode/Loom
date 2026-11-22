@@ -5795,6 +5795,35 @@ const JourneyCohortEntry* state_0038_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-424 gitGraph closed-boolean namespace cohort: the 18 cold git fallbacks
+// whose only non-admitted input is the four-leaf `config.gitGraph` boolean
+// namespace. States are read per row from the ledger. The per-row frame and
+// semantic gate is test_mermaid_git_bool_d424_cohort.
+const std::map<std::string, JourneyCohortEntry>& git_d424_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/git-bool-d424-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-424 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-424 cohort ledger must be approved (TL review exemption recorded in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* git_d424_cohort_row(std::string_view path) {
+    const auto& rows = git_d424_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0039 gitGraph look/theme cohort: the 12 cold git fallbacks whose only
 // non-admitted input is the frontmatter config.look/config.theme tables. Per-row
 // states come from the ledger exactly as the Journey cohort does. The per-row
@@ -11015,6 +11044,36 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     continue;
                 }
             }
+            // D-424 gitGraph closed-boolean namespace admission: the 18 git
+            // originals promoted by the four-leaf boolean namespace under the
+            // TL's review exemption (recorded in the ledger), states read per
+            // row. Placed before the RFC 0039 and
+            // RFC 0045 git branches (their cohorts carry different leaves, so
+            // the sets are disjoint) and before the generic fallback; the
+            // post-loop reach proof below asserts every ledger row is observed
+            // here (rule 38).
+            if (class_path.is_str()) {
+                const auto* cohort = git_d424_cohort_row(class_path.as_str());
+                if (cohort) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = (*fs::path(row.path).begin()).string();
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-424 gitGraph closed-boolean cohort (TL review-exempt)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
             // RFC 0039 gitGraph look/theme admission: the 12 reviewed git
             // originals promoted by the closed look/theme tables, states read
             // per row. Placed before the generic fallback so these rows cannot
@@ -12062,6 +12121,25 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_0047 == expected_0047,
                     "RFC 0047 branch reach set must equal its ledger");
+        }
+        // D-424 rule-38 reach proof: every ledger row must be observed
+        // through its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d424 = json::parse(read_file(
+                kRoot / "../../../tools/mermaid/git-bool-d424-cohort.json"));
+            require(ledger_d424.has_value(), "D-424 cohort ledger must parse");
+            std::set<std::string> expected_d424;
+            ledger_d424->root().get("rows").iter([&](const JsonVal row) {
+                expected_d424.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d424;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-424 gitGraph closed-boolean cohort (TL review-exempt)")
+                    reached_d424.insert(row.path);
+            }
+            require(reached_d424 == expected_d424,
+                    "D-424 branch reach set must equal its ledger");
         }
         // RFC 0048 rule-38 reach proof: every ledger row must be observed
         // through its own branch, and the branch must not match anything else.

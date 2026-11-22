@@ -1955,3 +1955,29 @@ Attach a short efficiency section to each closure report, answering:
    (a closed set is a compatibility surface) while its branch goes. Otherwise the ledger
    predicts a fallback the renderer no longer produces, and the failure surfaces as a
    mysterious per-row "registered blocked row rendered" much later.
+
+## D-424 gitGraph closed-boolean slice retro (2026-11-22)
+
+1. **A calm gate surface still needs one measurement run.** The slice looked
+   trivial (one envelope branch plus two `if`s), yet the first gate run found
+   three distinct defects: a duplicated footer header in the test's own
+   composition helper, an older gate whose *negative* case used the exact shape
+   being admitted (RFC 0045's `showBranches` unknown-leaf probe), and a
+   5-row/1-row body grouping the 18 fixtures actually form. The corpus is the
+   only source for the third; write the group shape from the ledger, never from
+   the fixture names.
+2. **Off-by-one in footer composition is invisible in the art.** Assert the
+   frame tail with the ledger block as a unit (blank separator + ledger lines)
+   rather than rebuilding it by hand; the duplicated header produced a
+   ten-minute detour because the assertion diff printed the *art* line as the
+   first mismatch. Read the whole tail once when the arithmetic disagrees.
+3. **Renaming a slice id is cheap; inventing a phantom RFC number is not.**
+   This slice was opened under a TL review exemption ("no design doc, put the
+   rationale in the commit/test doc"). Using `RFC 0049` in file names and
+   reason strings would have pointed readers at a nonexistent RFC, so the slice
+   is named by its decision id (`D-424`) everywhere — ledger schema, generator,
+   test suite, matrix reason string.
+4. **The semantic oracle costs less than it looks.** The caption-adjacency
+   predicate is ~25 lines and distinguishes `●─┘1` from `*@main → 5`; a
+   substring scan would have produced a false green for every
+   `showCommitLabel: false` row that still prints a branch-head id.

@@ -407,7 +407,10 @@ TEST(MermaidGit0045Cohort, NamespaceBattery) {
              "  gitGraph: foo\n",
              "  gitGraph:\n    mainBranchName: trunk\n",
              "  gitGraph:\n    mainBranchOrder: 2\n",
-             "  gitGraph:\n    parallelCommits: true\n    showBranches: false\n",
+             // D-424 admits the four closed booleans, so the unknown-leaf
+             // negative here must use a leaf outside that table; the D-424
+             // gate owns the showBranches positive/negative pair.
+             "  gitGraph:\n    parallelCommits: true\n    showTags: false\n",
              "  gitGraph:\n    nested:\n      parallelCommits: true\n",
              "  mainBranchName: trunk\n",
              "  gitGraph.parallelCommits: true\n",

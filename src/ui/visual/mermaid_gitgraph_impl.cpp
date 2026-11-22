@@ -542,10 +542,12 @@ std::optional<ParentRoutePlan>
 plan_parent_routes(const GitGraph& graph, const std::vector<Point>& positions,
                    const std::vector<std::pair<std::size_t, std::size_t>>& parents,
                    const std::vector<std::string>& captions,
+                   const std::vector<std::string>& branch_labels,
                    const std::vector<Point>& branch_guides, int width, int height, Work& work,
-                   bool use_ascii, bool horizontal_flow) {
+                   bool horizontal_flow) {
     if (width <= 0 || height <= 0 || positions.size() != graph.commits.size() ||
-        captions.size() != graph.commits.size() || branch_guides.size() != graph.branches.size())
+        captions.size() != graph.commits.size() || branch_labels.size() != graph.branches.size() ||
+        branch_guides.size() != graph.branches.size())
         return {};
     const auto grid_cells = static_cast<std::size_t>(width) * static_cast<std::size_t>(height);
     constexpr std::size_t kWorkspaceUnit = 2u * sizeof(unsigned char) + 2u * sizeof(int) + 16u;
@@ -582,7 +584,9 @@ plan_parent_routes(const GitGraph& graph, const std::vector<Point>& positions,
         }
         for (std::size_t index = 0u; index < graph.commits.size(); ++index) {
             const auto marker = positions[index];
-            if (!reserve_parent_span(occupied, width, height, {marker.x + 3, marker.y},
+            // D-424: a hidden commit id reserves no caption span.
+            if (!captions[index].empty() &&
+                !reserve_parent_span(occupied, width, height, {marker.x + 3, marker.y},
                                      cells(captions[index])))
                 return {};
             for (std::size_t tag = 0u; tag < graph.commits[index].tags.size(); ++tag) {
@@ -593,12 +597,17 @@ plan_parent_routes(const GitGraph& graph, const std::vector<Point>& positions,
                     return {};
             }
         }
-        for (std::size_t index = 0u; index < graph.branches.size(); ++index) {
-            const auto body = branch_caption(graph.branches[index], graph, use_ascii);
+        for (std::size_t index = 0u; index < branch_labels.size(); ++index) {
+            const auto body = branch_labels[index];
             const auto guide = branch_guides[index];
             const Point caption{guide.x + 3, guide.y};
             // Keep parent paths out of the lane guide, separator and complete ref.
-            if (!reserve_parent_span(occupied, width, height, {caption.x - 3, caption.y}, 3) ||
+            // D-424: a hidden reference reserves only its guide cell; an
+            // empty span is not a reservation (and reserve_parent_span rejects
+            // a zero count).
+            if (!reserve_parent_span(occupied, width, height, {caption.x - 3, caption.y}, 3))
+                return {};
+            if (!body.empty() &&
                 !reserve_parent_span(occupied, width, height, caption, cells(body)))
                 return {};
         }
@@ -764,20 +773,31 @@ bool draw_parent_routes(Canvas& canvas, const ParentRoutePlan& plan, bool use_as
     return true;
 }
 
-bool draw_branch_refs(Canvas& canvas, const GitGraph& graph,
+// D-424: the closed `config.gitGraph` boolean namespace. showBranches and
+// showCommitLabel are honoured (they hide real elements); rotateCommitLabel has
+// no terminal analogue and parallelCommits is inert (RFC 0045), so both are
+// disclosed only.
+struct GitBooleanConfig {
+    bool show_branches = true;
+    bool show_commit_label = true;
+};
+
+bool draw_branch_refs(Canvas& canvas, const std::vector<std::string>& branch_labels,
                       const std::vector<Point>& branch_guides, Work& work, bool use_ascii) {
-    for (std::size_t index = 0u; index < graph.branches.size(); ++index) {
+    for (std::size_t index = 0u; index < branch_labels.size(); ++index) {
         if (!work.spend(128u)) return false;
-        const auto body = branch_caption(graph.branches[index], graph, use_ascii);
         const auto guide = branch_guides[index];
         const Point caption{guide.x + 3, guide.y};
-        if (!canvas.put(guide, use_ascii ? "|" : "│") || !canvas.text(caption, body)) return false;
+        if (!canvas.put(guide, use_ascii ? "|" : "│") ||
+            (!branch_labels[index].empty() && !canvas.text(caption, branch_labels[index])))
+            return false;
     }
     return true;
 }
 
 std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, Work& work,
-                                                        bool use_ascii) {
+                                                        bool use_ascii,
+                                                        const GitBooleanConfig& flags) {
     if (graph.commits.empty()) return std::vector<std::string>{std::string{}};
     if (!work.spend(graph.commits.size() * (sizeof(Point) + 256u) +
                     graph.branches.size() * (sizeof(int) + sizeof(Point) + 128u)))
@@ -816,12 +836,19 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
     std::vector<int> caption_width;
     caption_width.reserve(graph.commits.size());
     int max_tags = 0, max_branch_width = 0;
-    for (const auto& branch : graph.branches)
-        max_branch_width =
-            std::max(max_branch_width, cells(branch_caption(branch, graph, use_ascii)));
+    // D-424: a hidden branch reference / commit id contributes no cells, so
+    // the geometry shrinks exactly as the source asks.
+    std::vector<std::string> branch_labels;
+    branch_labels.reserve(graph.branches.size());
+    for (const auto& branch : graph.branches) {
+        branch_labels.push_back(flags.show_branches ? branch_caption(branch, graph, use_ascii)
+                                                    : std::string{});
+        max_branch_width = std::max(max_branch_width, cells(branch_labels.back()));
+    }
     for (const auto& commit : graph.commits) {
-        const auto caption = commit_caption(commit);
-        if (!git_label(caption) || cells(caption) > kLabelLimit) return {};
+        const auto caption =
+            flags.show_commit_label ? commit_caption(commit) : std::string{};
+        if (!caption.empty() && (!git_label(caption) || cells(caption) > kLabelLimit)) return {};
         captions.push_back(caption);
         int extent = cells(caption);
         for (const auto& tag : commit.tags)
@@ -872,8 +899,8 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
                                planned_width, planned_height, work))
             return {};
         const auto route_plan =
-            plan_parent_routes(graph, positions, parents, captions, branch_guides, planned_width,
-                               planned_height, work, use_ascii, true);
+            plan_parent_routes(graph, positions, parents, captions, branch_labels, branch_guides,
+                               planned_width, planned_height, work, true);
         if (!route_plan) return {};
         Canvas canvas(planned_width, planned_height, work);
         if (!draw_parent_routes(canvas, *route_plan, use_ascii)) return {};
@@ -887,7 +914,7 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
                         "[" + graph.commits[index].tags[tag] + "]"))
                     return {};
         }
-        if (!draw_branch_refs(canvas, graph, branch_guides, work, use_ascii)) return {};
+        if (!draw_branch_refs(canvas, branch_labels, branch_guides, work, use_ascii)) return {};
         return canvas.lines();
     }
 
@@ -913,8 +940,7 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
     for (std::size_t index = 0u; index < graph.branches.size(); ++index) {
         branch_guides.push_back(
             {route_columns + lane[index] * lane_width, state_y + static_cast<int>(index)});
-        width = std::max(width, branch_guides.back().x + 3 +
-                                    cells(branch_caption(graph.branches[index], graph, use_ascii)));
+        width = std::max(width, branch_guides.back().x + 3 + cells(branch_labels[index]));
     }
     height = std::max(height, state_y + static_cast<int>(graph.branches.size()));
     int planned_width = 0, planned_height = 0;
@@ -922,8 +948,8 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
                            planned_width, planned_height, work))
         return {};
     const auto route_plan =
-        plan_parent_routes(graph, positions, parents, captions, branch_guides, planned_width,
-                           planned_height, work, use_ascii, false);
+        plan_parent_routes(graph, positions, parents, captions, branch_labels, branch_guides,
+                           planned_width, planned_height, work, false);
     if (!route_plan) return {};
     Canvas canvas(planned_width, planned_height, work);
     if (!draw_parent_routes(canvas, *route_plan, use_ascii)) return {};
@@ -937,7 +963,7 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
                     "[" + graph.commits[index].tags[tag] + "]"))
                 return {};
     }
-    if (!draw_branch_refs(canvas, graph, branch_guides, work, use_ascii)) return {};
+    if (!draw_branch_refs(canvas, branch_labels, branch_guides, work, use_ascii)) return {};
     return canvas.lines();
 }
 
@@ -959,6 +985,7 @@ constexpr std::size_t kGitNoticeLineLimit = 96u;
 struct GitEnvelope {
     std::string_view body;
     std::vector<std::string> config_notices;
+    GitBooleanConfig flags;
 };
 
 // Mirrors state_scalar_text exactly: parse_envelope already trimmed the value.
@@ -984,9 +1011,18 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
     const auto envelope = detail::parse_envelope(source, work);
     if (!envelope || !envelope->has_frontmatter || !envelope->init.empty()) return {};
     bool description_seen = false, config_seen = false;
-    enum : unsigned { Look = 1u, Theme = 2u, GitGraphNs = 4u, Parallel = 8u };
+    enum : unsigned {
+        Look = 1u,
+        Theme = 2u,
+        GitGraphNs = 4u,
+        Parallel = 8u,
+        ShowBranches = 16u,
+        ShowCommitLabel = 32u,
+        RotateCommitLabel = 64u
+    };
     unsigned fields = 0u;
-    std::string look_value, theme_value, parallel_value;
+    std::string look_value, theme_value, parallel_value, show_branches_value,
+        show_commit_label_value, rotate_commit_label_value;
     const auto mark = [&](unsigned bit) -> bool {
         if (fields & bit) return false;
         fields |= bit;
@@ -1017,11 +1053,24 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
             continue;
         }
         const auto scalar = git_inert_scalar(event.value, work);
-        if (event.path == "gitGraph.parallelCommits" && event.indent == 4) {
-            if (!(fields & GitGraphNs) || !mark(Parallel) ||
-                (scalar != "true" && scalar != "false"))
+        if (event.path.starts_with("gitGraph.") && event.indent == 4) {
+            if (!(fields & GitGraphNs)) return {};
+            const auto boolean = scalar == "true" || scalar == "false";
+            if (event.path == "gitGraph.parallelCommits") {
+                if (!boolean || !mark(Parallel)) return {};
+                parallel_value = scalar;
+            } else if (event.path == "gitGraph.showBranches") {
+                if (!boolean || !mark(ShowBranches)) return {};
+                show_branches_value = scalar;
+            } else if (event.path == "gitGraph.showCommitLabel") {
+                if (!boolean || !mark(ShowCommitLabel)) return {};
+                show_commit_label_value = scalar;
+            } else if (event.path == "gitGraph.rotateCommitLabel") {
+                if (!boolean || !mark(RotateCommitLabel)) return {};
+                rotate_commit_label_value = scalar;
+            } else {
                 return {};
-            parallel_value = scalar;
+            }
             continue;
         }
         if (event.indent != 2 || event.path.find('.') != std::string_view::npos) return {};
@@ -1059,8 +1108,12 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
     if (config_seen && fields == 0u) return {};
     // A namespace without its leaf: the namespace bit defeats the empty-config
     // guard above, so the gate must reject it explicitly.
-    if ((fields & GitGraphNs) && !(fields & Parallel)) return {};
-    GitEnvelope result{envelope->raw_body, {}};
+    if ((fields & GitGraphNs) &&
+        !(fields & (Parallel | ShowBranches | ShowCommitLabel | RotateCommitLabel)))
+        return {};
+    GitEnvelope result{envelope->raw_body, {}, {}};
+    if (fields & ShowBranches) result.flags.show_branches = show_branches_value == "true";
+    if (fields & ShowCommitLabel) result.flags.show_commit_label = show_commit_label_value == "true";
     if (fields != 0u) {
         if (!git_notice_line(result.config_notices, "GitGraph native projection v1", work))
             return {};
@@ -1072,6 +1125,27 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
             !git_notice_line(result.config_notices,
                              "config.theme=" + theme_value +
                                  " -> colour palette; not applied",
+                             work))
+            return {};
+        // D-424 appends the three recognised booleans between the flat
+        // look/theme leaves and the RFC 0045 parallelCommits line, so every
+        // already-drawn RFC 0045 footer keeps its byte-identical order.
+        if ((fields & ShowBranches) &&
+            !git_notice_line(result.config_notices,
+                             "config.gitGraph.showBranches=" + show_branches_value +
+                                 " -> branch reference labels",
+                             work))
+            return {};
+        if ((fields & ShowCommitLabel) &&
+            !git_notice_line(result.config_notices,
+                             "config.gitGraph.showCommitLabel=" + show_commit_label_value +
+                                 " -> commit id labels",
+                             work))
+            return {};
+        if ((fields & RotateCommitLabel) &&
+            !git_notice_line(result.config_notices,
+                             "config.gitGraph.rotateCommitLabel=" + rotate_commit_label_value +
+                                 " -> label rotation; not applied",
                              work))
             return {};
         // Appended last: no already-drawn frame carries the namespace, so this
@@ -1090,15 +1164,17 @@ std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source,
                                                         bool use_ascii) {
     std::string_view body = source;
     std::vector<std::string> notices;
+    GitBooleanConfig flags;
     if (!use_ascii && source.starts_with("---")) {
         const auto admitted = git_frontmatter(source, work);
         if (!admitted) return {};
         body = admitted->body;
         notices = std::move(admitted->config_notices);
+        flags = admitted->flags;
     }
     const auto graph = detail::parse_gitgraph(body, work);
     if (!graph) return {};
-    auto lines = layout_gitgraph(*graph, work, use_ascii);
+    auto lines = layout_gitgraph(*graph, work, use_ascii, flags);
     if (!lines) return {};
     // RFC 0039: the bounded disclosure footer is part of the returned art
     // (blank separator, then the header and one line per accepted leaf) so the

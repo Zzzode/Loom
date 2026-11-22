@@ -35,6 +35,7 @@ const fs::path kRfc0039Ledger = kTestsDir / "../tools/mermaid/git-0039-cohort.js
 const fs::path kRfc0045Ledger = kTestsDir / "../tools/mermaid/git-0045-cohort.json";
 const fs::path kRfc0046Ledger = kTestsDir / "../tools/mermaid/layouttuning-0046-cohort.json";
 const fs::path kRfc0048Ledger = kTestsDir / "../tools/mermaid/state-region-0048-cohort.json";
+const fs::path kD424Ledger = kTestsDir / "../tools/mermaid/git-bool-d424-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -281,6 +282,14 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     ASSERT_TRUE(rfc0045.has_value()) << "RFC 0045 cohort ledger must parse";
     rfc0045->root().get("rows").iter(
         [&](const JsonVal row) { git_admitted.insert(row.get_string("path")); });
+    // D-424 admits the reviewed gitGraph closed-boolean namespace cohort; the
+    // per-row gate is test_mermaid_git_bool_d424_cohort. Same treatment: these
+    // config-bearing git rows leave the whole-source scan, and the set
+    // equality below pins them exactly.
+    auto d424 = json::parse(read_file(kD424Ledger));
+    ASSERT_TRUE(d424.has_value()) << "D-424 cohort ledger must parse";
+    d424->root().get("rows").iter(
+        [&](const JsonVal row) { git_admitted.insert(row.get_string("path")); });
     cohort.insert(git_admitted.begin(), git_admitted.end());
     // RFC 0048 admits the reviewed State concurrent-region cohort; the per-row
     // gate is test_mermaid_state_region_0048_cohort. Only the config/init-bearing
@@ -337,7 +346,9 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     // Measured 80 = 104 - 24: 16 config-bearing rows leave at P1 (the two E2b
     // concurrency rows are themselves cohort members, so they are counted
     // once, not twice) and the 8 init-bearing P2 rows leave at P2.
-    EXPECT_EQ(checked, 80);
+    // D-424 population migration: 18 config-bearing git rows leave for the
+    // closed-boolean cohort, so the exact value drops 80 -> 62.
+    EXPECT_EQ(checked, 62);
     EXPECT_EQ(skipped_by_rfc0048.size(), 24u);
     // Under-listing fails here (an admitted row that really changes surface is
     // scanned again); over-listing a missing or non-config-bearing path fails

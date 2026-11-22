@@ -4554,6 +4554,37 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## gitGraph closed boolean namespace (D-424)
+
+- **One namespace, four closed booleans.** `config.gitGraph` is admitted when
+  it carries only `showBranches`, `showCommitLabel`, `rotateCommitLabel` and
+  `parallelCommits`, each with an exact `true`/`false` value (quoted and
+  trailing-comment forms normalized by `git_inert_scalar`). Any other leaf
+  (`mainBranchName`, `mainBranchOrder`, …), a non-boolean value, a duplicate, a
+  wrong indent or a leaf outside the namespace stays whole-source. The RFC 0045
+  `parallelCommits`-only rows keep their branch and footer byte order.
+- **`showBranches`/`showCommitLabel` are honoured, not inert.** A hidden
+  branch reference or commit id contributes **no cells** to the layout: the
+  caption string is empty, `plan_parent_routes` reserves no caption span
+  (a zero-length reservation would otherwise reject the plan), and
+  `draw_branch_refs` draws only the lane guide. The geometry therefore shrinks
+  exactly as the source asks instead of leaving blank label gutters, and the
+  frame is not the visible frame with text erased.
+- **`rotateCommitLabel`/`parallelCommits` stay inert and disclosed.** The
+  terminal has no rotated text and RFC 0045 established `parallelCommits`
+  inertness; both appear in the footer as `-> … not applied` and their
+  true/false pairs must render identical canvases.
+- **Footer order is a compatibility surface.** The new lines sit between the
+  flat look/theme leaves and the RFC 0045 `parallelCommits` line, so every
+  already-drawn git frame keeps its byte-identical disclosure block.
+- **Semantic gate, not a render-difference proxy.** A commit label is text
+  drawn adjacent to a commit marker (walking left across hatch glyphs and
+  spaces reaches `●`); a branch reference such as `*@main → 5` carries a
+  commit id that is *not* caption-adjacent, so a naive digit scan would
+  misjudge it. Hidden rows must show no caption, the visible twin of the same
+  body must show every explicit id, hidden branch names must be absent
+  entirely, and inert pairs must be canvas-identical.
+
 ## State concurrent regions and in-body init/accessibility (RFC 0048)
 
 - **State-only region side tables.** `state_region_by_entity` and

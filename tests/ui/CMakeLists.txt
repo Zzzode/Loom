@@ -172,9 +172,14 @@ target_link_libraries(test_mermaid_sequence_semantics
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 target_compile_definitions(test_mermaid_sequence_semantics PRIVATE
     LOOM_MERMAID_REPORT_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+# Measured: MermaidOfficialConfig110Native.EveryWholeSourceIsObservedBeforeDecodeAndAllProfilesRemainMandatory
+# runs 213-260 s in isolation and exceeded the old 300 s budget under a
+# 28-way full-suite load in three consecutive closures. The budget is raised
+# for the binary (functional timeouts carry no assertion semantics) so a
+# loaded machine reports the real verdict instead of a timeout.
 gtest_discover_tests(test_mermaid_sequence_semantics
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
-    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
 
 add_executable(test_mermaid_relations_semantics
     test_mermaid_relations_semantics.cpp
@@ -213,8 +218,10 @@ gtest_discover_tests(test_mermaid_block_semantics
 add_test(NAME MermaidBlock58AdmissionJoin.RejectsUnreviewedIncompleteOrBorrowedVerdicts
     COMMAND "${LOOM_UI_LINT_PYTHON}" -I
         "${CMAKE_SOURCE_DIR}/tools/mermaid/verify_block58_admission.py" --self-test)
+# Measured: the self-test finishes in ~25 s in isolation but reached 51.84 s
+# (and once timed out) under full-suite load; 180 s keeps a real failure legible.
 set_tests_properties(MermaidBlock58AdmissionJoin.RejectsUnreviewedIncompleteOrBorrowedVerdicts
-    PROPERTIES LABELS "mermaid" TIMEOUT 60)
+    PROPERTIES LABELS "mermaid" TIMEOUT 180)
 
 # RFC 0030 ER107: current source/projection pins plus fail-closed join controls.
 add_test(NAME MermaidEr107AdmissionJoin.RejectsUnreviewedIncompleteOrBorrowedVerdicts

@@ -6537,6 +6537,35 @@ const JourneyCohortEntry* agentflow_0041_cohort_row(std::string_view path) {
 
 // RFC 0042 pie look/theme admission: the 5 reviewed theme-only rows promoted by
 // the closed five-value table, states read per row. The per-row frame gate is
+// D-426 pie accessibility-no-op cohort: the 4 baseline-theme pie fallbacks
+// whose only non-admitted input is the body scalar accTitle/accDescr pair.
+// States are read per row. The per-row equivalence gate is
+// test_mermaid_pie_acc_d426_cohort.
+const std::map<std::string, JourneyCohortEntry>& pie_d426_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/pie-acc-d426-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-426 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-426 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* pie_d426_cohort_row(std::string_view path) {
+    const auto& rows = pie_d426_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-425 pie closed config-namespace cohort: the 8 cold pie fallbacks whose
 // only non-admitted input is the closed `config.pie` namespace (plus one
 // logger-only `config.logLevel`). States are read per row from the ledger. The
@@ -11440,6 +11469,32 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                         observations.capacity()));
                     continue;
                 }
+            // D-426 pie accessibility-no-op admission: the 4 baseline-theme pie
+            // originals promoted by the validated accTitle/accDescr no-op under
+            // the TL's review exemption, states read per row. Placed before the
+            // D-425 and RFC 0042 branches (the sets are disjoint); the post-loop
+            // reach proof asserts every ledger row is observed here (rule 38).
+            if (class_path.is_str()) {
+                if (const auto* cohort = pie_d426_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "pie";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-426 pie accessibility no-op cohort (TL review-exempt)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
             // D-425 pie closed config-namespace admission: the 8 pie originals
             // promoted by the closed namespace under the TL's review exemption
             // (recorded in the ledger), states read per row. Placed before the
@@ -12178,6 +12233,25 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_0047 == expected_0047,
                     "RFC 0047 branch reach set must equal its ledger");
+        }
+        // D-426 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d426 = json::parse(read_file(
+                kRoot / "../../../tools/mermaid/pie-acc-d426-cohort.json"));
+            require(ledger_d426.has_value(), "D-426 cohort ledger must parse");
+            std::set<std::string> expected_d426;
+            ledger_d426->root().get("rows").iter([&](const JsonVal row) {
+                expected_d426.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d426;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-426 pie accessibility no-op cohort (TL review-exempt)")
+                    reached_d426.insert(row.path);
+            }
+            require(reached_d426 == expected_d426,
+                    "D-426 branch reach set must equal its ledger");
         }
         // D-425 rule-38 reach proof: every ledger row must be observed through
         // its own branch, and the branch must not match anything else.

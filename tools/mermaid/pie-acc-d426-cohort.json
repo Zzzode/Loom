@@ -1,0 +1,107 @@
+{
+  "schema": "loom_mermaid_pie_acc_d426_cohort/v1",
+  "decision": "D-426",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "pie original with a reviewed folded description, exactly one closed-table theme leaf and one scalar accTitle plus one scalar accDescr in the body",
+    "cohort_digest": "d0618087dabc24d2d7086b925076cb0cc732580ade49f5276fa25e591926b9c3",
+    "theme_table": [
+      "dark",
+      "redux",
+      "redux-dark",
+      "redux-color",
+      "redux-dark-color",
+      "default",
+      "forest",
+      "neutral"
+    ],
+    "exclusions": "block-form accDescr, duplicates, empty or oversized payloads and control bytes stay whole-source; the D-425 config namespace rows keep their own ledger"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice opened without a design gate; the gate is this test document plus the twin-equality oracle it pins",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 4,
+    "themes": {
+      "dark": 1,
+      "default": 1,
+      "forest": 1,
+      "neutral": 1
+    }
+  },
+  "rows": [
+    {
+      "path": "pie/nightly-check/dark-theme.mmd",
+      "sha256": "169d9c74c13d91f95be65f8fc8791b9de0b55e8af079baa7c3668746b8e87747",
+      "manifest_sha256": "169d9c74c13d91f95be65f8fc8791b9de0b55e8af079baa7c3668746b8e87747",
+      "theme": "dark",
+      "expected_footer_lines": [
+        "Pie native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "twin_sha256": "701bdcf72586c1dde00fa2a031ab8d2cd20f7b2581c16b3bc651a9ab7d4aecc3",
+      "ledger_note": "D-426 pie accessibility no-op: scalar accTitle/accDescr are validated and consumed; the drawn frame must equal the acc-line-deleted twin byte for byte."
+    },
+    {
+      "path": "pie/nightly-check/default-theme.mmd",
+      "sha256": "660e763f9e719d096f9602e717a427260d601fdaaa867e48565cc67547ca3c77",
+      "manifest_sha256": "660e763f9e719d096f9602e717a427260d601fdaaa867e48565cc67547ca3c77",
+      "theme": "default",
+      "expected_footer_lines": [
+        "Pie native projection v1",
+        "config.theme=default -> colour palette; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "twin_sha256": "dcae50fe8b475de46b2cef82947efd195fb0d3fe9d3e7b36758f9fa28cbf3864",
+      "ledger_note": "D-426 pie accessibility no-op: scalar accTitle/accDescr are validated and consumed; the drawn frame must equal the acc-line-deleted twin byte for byte."
+    },
+    {
+      "path": "pie/nightly-check/forest-theme.mmd",
+      "sha256": "d83240151078b015d3466fc3033ce94f1fda2025f0c5e58e9c612a6aeb36f6a2",
+      "manifest_sha256": "d83240151078b015d3466fc3033ce94f1fda2025f0c5e58e9c612a6aeb36f6a2",
+      "theme": "forest",
+      "expected_footer_lines": [
+        "Pie native projection v1",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "twin_sha256": "9e5a0ecd28d08aa84f244c5c78113ca87e855266db8a8f964c392e8d963b0688",
+      "ledger_note": "D-426 pie accessibility no-op: scalar accTitle/accDescr are validated and consumed; the drawn frame must equal the acc-line-deleted twin byte for byte."
+    },
+    {
+      "path": "pie/nightly-check/neutral-theme.mmd",
+      "sha256": "a92fa52da7d79cee8fc071c09763cbfb2276dfbbb2d1d116264e3a46ca4c086c",
+      "manifest_sha256": "a92fa52da7d79cee8fc071c09763cbfb2276dfbbb2d1d116264e3a46ca4c086c",
+      "theme": "neutral",
+      "expected_footer_lines": [
+        "Pie native projection v1",
+        "config.theme=neutral -> colour palette; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "twin_sha256": "be4359a585672292fb9b4004fc99b61f492642ef0934c3c5649e19e2b5a94f0b",
+      "ledger_note": "D-426 pie accessibility no-op: scalar accTitle/accDescr are validated and consumed; the drawn frame must equal the acc-line-deleted twin byte for byte."
+    }
+  ]
+}

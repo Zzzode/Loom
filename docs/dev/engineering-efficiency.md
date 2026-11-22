@@ -2002,3 +2002,20 @@ Attach a short efficiency section to each closure report, answering:
    git's `git_inert_scalar` does), so the negative was a false expectation —
    flip it into a positive that pins the *normalized* footer value instead of
    weakening the gate.
+
+## D-426 pie accessibility slice retro (2026-11-23)
+
+1. **A "known blocker" written a day earlier can be half-wrong.** The D-425
+   closure said the last four pie rows needed only the acc no-op; probing one
+   row showed `neutral` still falls back because three of the four themes were
+   never in the RFC 0042 table. Probe the *whole* candidate set before sizing a
+   slice — the first row that works does not prove the others.
+2. **Closed-table extensions collide with older "out-of-table" negatives.** The
+   RFC 0042 gate listed `default`/`forest`/`neutral` as must-reject values; the
+   right migration is to move those three into a positive (covered by the new
+   gate) and keep an equally sized negative list of values that stay outside,
+   not to delete the negative loop.
+3. **Twin equality is the cheapest no-op proof.** Deleting the acc lines from
+   the source and requiring the entire frame — art *and* footer — to be
+   identical needs no new oracle machinery and catches any leak of the metadata
+   into layout, labels, or the footer block.

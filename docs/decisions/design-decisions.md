@@ -4554,6 +4554,25 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## Pie accessibility no-ops (D-426)
+
+- **`accTitle:`/`accDescr:` are metadata, not content.** Mermaid renders the
+  scalar pair only into the accessibility DOM; a text terminal has no separate
+  accessibility tree, so the pie body loop validates and consumes them as
+  no-ops (the RFC 0048 State P2 contract): exactly one each, a quote pair
+  stripped before the emptiness test, non-empty, at most 256 bytes, no control
+  bytes. Block form, duplicates, empty payloads and a bare identifier stay
+  whole-source.
+- **The oracle is exact.** The gate asserts the drawn frame equals the frame
+  of the same source with the two acc lines deleted — byte for byte, art and
+  footer. Any future parser path that lets the metadata leak into the drawing
+  fails immediately.
+- **Closed theme table extended.** `default`/`forest`/`neutral` join the
+  RFC 0042 table (eight values now) purely as inert disclosures, because those
+  are the baseline names these rows pair with the acc pair. The RFC 0042 gate's
+  out-of-table negatives move to values that stay outside the table, and its
+  four "body-blocked" rows flip to drawing-with-footer assertions.
+
 ## Pie closed config namespace (D-425)
 
 - **One closed namespace, six leaves.** A reviewed folded description plus a

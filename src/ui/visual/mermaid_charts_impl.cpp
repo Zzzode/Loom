@@ -704,8 +704,12 @@ bool pie_config_frontmatter(const Envelope& envelope) {
 // value; the caller discloses it through a bounded footer.
 constexpr std::size_t kPieNoticeLineLimit = 96u;
 constexpr std::string_view kPieNoticeHeader = "Pie native projection v1";
-constexpr std::array<std::string_view, 5> kPieThemeTable{
-    {"dark", "redux", "redux-dark", "redux-color", "redux-dark-color"}};
+// D-426 extends the table with the three baseline theme names that the corpus
+// pairs with the accessibility no-op rows; every value is closed, inert and
+// disclosed exactly like the RFC 0042 set.
+constexpr std::array<std::string_view, 8> kPieThemeTable{
+    {"dark", "redux", "redux-dark", "redux-color", "redux-dark-color", "default", "forest",
+     "neutral"}};
 
 std::optional<std::string_view> pie_theme_frontmatter(const Envelope& envelope) {
     const auto& description = envelope.description;
@@ -1028,6 +1032,25 @@ std::optional<std::vector<std::string_view>> chart_source_lines(std::string_view
     return lines;
 }
 
+// D-426: scalar `accTitle:`/`accDescr:` are accessibility metadata, not chart
+// content. A text terminal has no separate accessibility tree, so they are
+// validated and consumed as no-ops — the same contract as the RFC 0048 State
+// P2 grammar. A quote pair is stripped before the emptiness test; empty or
+// oversized payloads and control bytes fail closed, and the pie body loop
+// rejects a duplicate or block-form occurrence.
+bool pie_accessibility_value(std::string_view value, Work& work) {
+    if (!work.spend(64u + value.size() * 2u)) return false;
+    value = trim_chart(value);
+    if (value.size() >= 2u && (value.front() == '"' || value.front() == '\'') &&
+        value.back() == value.front())
+        value = value.substr(1u, value.size() - 2u);
+    if (value.empty() || value.size() > 256u) return false;
+    for (const char c : value)
+        if (static_cast<unsigned char>(c) < 0x20u || static_cast<unsigned char>(c) == 0x7fu)
+            return false;
+    return true;
+}
+
 std::optional<Chart> parse_chart(std::string_view source, Work& work) {
     Chart chart;
     const auto lines = chart_source_lines(source, chart, work);
@@ -1059,6 +1082,7 @@ std::optional<Chart> parse_chart(std::string_view source, Work& work) {
     } else
         return {};
     if (!header.empty()) return {};
+    bool acc_title_seen = false, acc_descr_seen = false;
     std::string_view xy_title;
     int bars = 0, line_series = 0;
     for (std::size_t n = 1; n < lines->size(); ++n) {
@@ -1078,6 +1102,13 @@ std::optional<Chart> parse_chart(std::string_view source, Work& work) {
             auto title = pie_title(rest);
             if (!title) return {};
             chart.title = std::move(*title);
+            continue;
+        }
+        if (chart.pie && (rest.starts_with("accTitle:") || rest.starts_with("accDescr:"))) {
+            const bool title = rest.starts_with("accTitle:");
+            bool& seen = title ? acc_title_seen : acc_descr_seen;
+            if (seen || !pie_accessibility_value(rest.substr(9u), work)) return {};
+            seen = true;
             continue;
         }
         if (chart.pie) {

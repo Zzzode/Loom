@@ -298,9 +298,12 @@ TEST(MermaidPie0042Cohort, ThemeTableIsClosed) {
         ASSERT_TRUE(native_frame(source, kWide)) << value;
         expect_footer(source, value, std::string("theme: ") + value);
     }
-    // Out-of-table, sibling-blocked, case and empty values reject.
-    for (const auto* value : {"default", "forest", "neutral", "neo", "base", "chartreuse", "Dark",
-                              ""}) {
+    // Out-of-table, sibling-blocked, case and empty values reject. D-426 moved
+    // `default`/`forest`/`neutral` into the table (their positives live in
+    // test_mermaid_pie_acc_d426_cohort), so the negative list uses values that
+    // stay outside it.
+    for (const auto* value : {"night", "reduced", "redux-base", "neo", "base", "chartreuse",
+                              "Dark", ""}) {
         EXPECT_FALSE(draws(config_probe(std::string("  theme: ") + value + "\n"), kWide)) << value;
     }
     for (const auto* config :
@@ -347,12 +350,17 @@ TEST(MermaidPie0042Cohort, GrammarBattery) {
                        "%%{init: {\"theme\": \"redux\"}}%%\n" +
                            std::string(kBody),
                        kWide));
-    // The four body-blocked theme rows stay whole source: dark is in-table and
-    // excluded only by its accTitle:/accDescr: body; the rest also by value.
-    for (const auto* rel :
-         {"pie/nightly-check/dark-theme.mmd", "pie/nightly-check/default-theme.mmd",
-          "pie/nightly-check/forest-theme.mmd", "pie/nightly-check/neutral-theme.mmd"}) {
-        EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
+    // D-426 admits the four body-blocked theme rows through the validated
+    // accTitle/accDescr no-op; this battery now pins them as drawing with the
+    // theme footer, and test_mermaid_pie_acc_d426_cohort pins their frames
+    // against the acc-line-deleted twin.
+    for (const auto& [rel, theme] :
+         {std::pair{"pie/nightly-check/dark-theme.mmd", "dark"},
+          std::pair{"pie/nightly-check/default-theme.mmd", "default"},
+          std::pair{"pie/nightly-check/forest-theme.mmd", "forest"},
+          std::pair{"pie/nightly-check/neutral-theme.mmd", "neutral"}}) {
+        ASSERT_TRUE(draws(read_file(kCases / rel), kWide)) << rel;
+        expect_footer(read_file(kCases / rel), theme, rel);
     }
     // The degenerate title-only chart (no slices) still discloses.
     const auto title_only =

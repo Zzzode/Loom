@@ -1,6 +1,7 @@
 {
   "schema": "loom_mermaid_direct_theme_source_audit/v1",
   "review_status": "SOURCE_CENSUS_APPROVED_ZERO_DRAWING_CREDIT",
+  "superseded_note": "Historical snapshot only (RFC 0037-0043 have since admitted theme rows directly; this file is unconsumed and retains zero drawing credit).",
   "qualification": "Conservative direct config.theme key census, not a YAML parser, renderer execution or drawing admission. Excludes init directives, quoted keys, inline maps and all keys not exactly two spaces below an exact top-level config: line. Source and matrix hashes bind the snapshot; no terminal projection is implied.",
   "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
   "matrix_sha256": "81366f10e97d941d24b430a54e5d4afdf62c1d12ece50fdca91c5d6457bac885",

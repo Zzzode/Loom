@@ -1,7 +1,7 @@
 ---
 rfc: 47
 title: journey-family in-body init directive admission
-status: provisional
+status: accepted
 owners: "@Zzzode"
 reviewers:
   - agent:design-review-evidence
@@ -22,8 +22,9 @@ D-419 selects the next slice from the remaining capability debt: 9 journey-famil
 journey-family gate (RFC 0040, three byte-identical TU-local copies) today rejects any body
 `%%{` line that mentions `theme`; this RFC replaces that substring rule — for the two enabled
 families only — with a closed structural admission of the *leading* directive block, discloses
-the admitted keys through the existing family footer, and leaves every other directive gated.
-The renderers skip `%%` lines and never read either key.
+the admitted keys through the existing family footer, and leaves every other **theme-bearing**
+directive gated (a non-leading directive without `theme`, and a leading one outside the closed
+grammar, is covered by G2). The renderers skip `%%` lines and never read either key.
 
 (4 further flowchart rows carry the same inert logLevel-only directive, but they belong to the
 exact-bit reserved surface and are excluded as reserved, not because their directive is
@@ -69,9 +70,10 @@ The repository already owns this grammar and disclosure vocabulary, but not a sh
 implementation to import: `flow_init_directive` (`mermaid_impl.cpp`) admits one-key
 `{logLevel: <0..5|trace|debug|info|warn|error|fatal>}` and `{flowchart:{htmlLabels:bool}}` by
 quote-normalizing into **strict JSON**; `class_init_meta` (`mermaid_class_impl.cpp`) parses a
-single leading `%%{init:…}%%` with a quote state machine. This RFC shares their **value set and
-footer wording**, not their parsers: the journey-family copies use the YAML-scalar grammar they
-already own (`journey_fam_scalar`: quotes and trailing `#` comments).
+single leading `%%{init:…}%%` with a quote state machine. This RFC shares their **value set,
+footer wording and quote-state-machine structure rule** (implemented as a local mirror, not an
+import); keys and values are read with the YAML-scalar helper the journey-family copies already
+own (`journey_fam_scalar`), which additionally tolerates single quotes and trailing `#` comments.
 
 ## Goals
 
@@ -80,31 +82,40 @@ already own (`journey_fam_scalar`: quotes and trailing `#` comments).
   1. The scan starts after the frontmatter split, walks body lines, and skips blank lines and
      `%%`-comment lines; the leading block ends at the first line that is neither.
   2. A leading line whose trimmed text starts with `%%{` is a directive candidate. A trailing
-     `\r` is removed first (the renderers tolerate CRLF). Leading spaces/tabs are allowed
-     (the renderers trim).
-  3. The candidate must end with `}%%`; text after that closer may contain only spaces/tabs.
-     The directive body is the text between the first `%%{` and that closer.
+     `\r` is removed first (the renderers tolerate CRLF); leading spaces are allowed. A leading
+     tab never reaches the gate: the renderers reject a tab anywhere in the source before
+     layout.
+  3. After removing the `\r` and trailing spaces/tabs, the candidate must end with `}%%`; that
+     final closer is the directive's end (`flow_init_directive`'s ends-with shape). The
+     directive body is the text between the first `%%{` and that final closer, so a second
+     `}%%` inside it becomes interior text and fails G1.5.
   4. Trimmed body `init` is a no-op (bare directive, no footer). Otherwise the trimmed body must
      begin with the literal `init:` (no space before the colon) followed by a payload.
   5. The payload, trimmed, must be a single `{…}` object. Its interior is validated by a quote
      state machine mirroring `normalize_directive_quotes`: an unterminated quote, a raw control
      byte, or a backslash inside a single-quoted string gates. The interior must contain no
      `{`, `}`, `[`, or `]` (a nested object gates).
-  6. The interior is split on commas; each entry is split on its first colon; key and value are
-     read with `journey_fam_scalar`. Keys must be `logLevel` or `theme`, at most once each.
+  6. The interior is split on commas **outside quotes** (the same state machine decides; a
+     trailing `#` comment is not recognized during this split, so a comma inside a comment
+     splits and the fragment then fails G1.6/G1.7). Each entry is split on its first colon
+     outside quotes; key and value are then read with `journey_fam_scalar`, which does strip a
+     trailing `#` comment. Keys must be `logLevel` or `theme`, at most once each.
   7. Closed values. `logLevel` ∈ {`0`,`1`,`2`,`3`,`4`,`5`,`trace`,`debug`,`info`,`warn`,
      `error`,`fatal`} (the `flow_init_directive` value set; integer spelling or quoted name).
      `theme` ∈ the family's closed directive table: journey `{dark, default, forest, neutral}`,
-     timeline `{base, dark, default, forest, neutral}` (gantt's table is empty; see G4).
+     timeline `{base, dark, default, forest, neutral}`. Gantt is not enabled (G4); its table
+     constant stays empty and is unused.
   8. `{}` (empty payload, no entries) is admitted as a no-op equal to bare `init`, with no
      footer. Multiple leading directives are admitted independently; a key repeated across two
-     directives is a duplicate and gates.
-- **G2.** Keep every other directive gated or pass-through, exactly as today: a **non-leading**
-  `%%{` line that mentions `theme` gates; every other non-leading line (including directives
-  without `theme`, non-`init` directive names, and directives not in the leading block) keeps
-  the long-standing pass-through. A leading directive with an unknown key, an out-of-table
-  value, a duplicate key, a nested object, a malformed/partial payload, trailing text, or a
-  non-`init` directive name gates the whole source.
+     directives is a duplicate and gates. A body that contains only directives and no diagram
+     header passes this gate (it is config-only) but the renderer then fails closed, so the
+     matrix verdict is fallback.
+- **G2.** Keep every other directive gated or pass-through, with non-leading lines **exactly as
+  today**: a non-leading `%%{` line that mentions `theme` gates; every other non-leading line
+  (including directives without `theme`, non-`init` directive names, and directives not in the
+  leading block) keeps the long-standing pass-through. A leading directive with an unknown key,
+  an out-of-table value, a duplicate key, a nested object, a malformed/partial payload, trailing
+  text, or a non-`init` directive name gates the whole source.
 - **G3.** Disclose each admitted directive key with one footer line, after the frontmatter
   lines, in canonical order — `config.logLevel=<v> -> logger only; not applied`, then
   `config.theme=<v> -> colour palette; not applied` — the exact wording `flow_init_directive`
@@ -178,19 +189,25 @@ The code of the three copies remains byte-identical; only these constants differ
   independent `review` block.
 - `generate_journeyfam_init_0047_cohort.py`: renderer-free, `--check`-reproducible; drives
   `journeyfam_tables.classify` (extended with the `init_admitted` kind and a directive parser
-  mirroring G1 steps 2–4, i.e. the same switch, tables, grammar and the legacy tail rule) and
-  pins the cohort path+sha digest and per-family counts.
+  mirroring **G1.1–G1.8, Proposal step 3 (the legacy tail) and G5** — the same switch, tables,
+  grammar, tail rule and frontmatter-leaf composition) and pins the cohort path+sha digest and
+  per-family counts, so a mirror/gate disagreement on any bucket fails the hermetic check.
 - Gate `tests/ui/test_mermaid_journeyfam_init_0047_cohort.cpp` (5 tests): ledger schema,
   `prior_status`, digest and count pins; per-row twin inertness and literal footer composition;
-  a battery per family (bare `init`; `{}`; theme and logLevel alone and together; single and
-  double quotes; every admitted value; indent 2; CRLF; unknown key; nested
-  `flowchart`/`timeline`/`themeVariables`; duplicate key within and across directives;
-  out-of-table theme; out-of-grammar logLevel; multi-line; unterminated quote; trailing text
-  after `}%%`; `init :` with a space; a non-`init` leading directive name; a non-leading
-  no-theme directive that stays pass-through; a non-leading theme directive that gates;
-  frontmatter-less source; frontmatter leaf + keyed directive = gate; frontmatter leaf + bare
-  `init` = admit; and the cross-channel asymmetry literals from G1); the existing family
-  batteries still hold; a literal partition.
+  a battery per family (bare `init`; `{}`; theme and logLevel alone and together; two separate
+  directives with footer order logLevel→theme; single and double quotes; quoted and unquoted
+  keys; every admitted value; indent 2; CRLF; a directive after a blank line and after a
+  comment; unknown key; nested `flowchart`/`timeline`/`themeVariables`; duplicate key within
+  and across directives; out-of-table theme; out-of-grammar logLevel; multi-line; unterminated
+  quote; trailing text after `}%%`; `init :` with a space; a non-`init` leading directive name;
+  a value with a trailing comment; a comment containing a comma (gates); a body of directives
+  only (gate admits, renderer falls back); a non-leading no-theme directive that stays
+  pass-through; a non-leading theme directive that gates; frontmatter-less source; frontmatter
+  leaf + keyed directive = gate; frontmatter leaf + bare `init` = admit; and the cross-channel
+  asymmetry literals from the section above). A **gantt legacy battery** pins the disabled
+  switch: a leading theme directive gates, a leading logLevel-only directive and a bare `init`
+  draw with no footer (today's frames). The existing family batteries still hold; a literal
+  partition.
 - Matrix branch `RFC-0047 journey-family init-directive reviewed cohort` placed **before all
   family branches** (rule 38), reading per-row states and requiring `review.verdict ==
   "approved"`. It is provably reached: the matrix test itself asserts, for each of the 9 ledger
@@ -309,6 +326,8 @@ settings change.
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-22 | r1 | agent:design-review-evidence | REQUEST-CHANGES | M1 CMake registration missing from the footprint → added; m1 gantt generator absence measured and stated; m2 probe log does not enumerate paths → claim rescoped, P1 gate is the authoritative proof; m3 summary scope over-wide (4 flowchart legacy rows) → requalified; n1 `prior_status` → added; n2 G5 definition → fixed to keyed directives; m3 d117 stale cells → documented |
+| 2026-11-22 | r2 | agent:design-review-evidence | APPROVE | All r1 fixes verified in place and not weakened; drawn_at_240 1342→1351 and roster 608/40 re-verified. Three non-blocking wording items folded into this revision: the Motivation "not their parsers" sentence (quote state machine is shared as a local mirror), G1.2's tab wording (the renderers reject any tab before layout), and the Summary "every other directive" vs G2 pass-through tension (now "every other theme-bearing directive", G2 limited to non-leading lines). |
+| 2026-11-22 | r2 | agent:design-review-grammar | APPROVE | B1 and all six r1 MAJORs verified resolved; gantt KeyError unreachable via the mirror switch; no unreachable grammar step. Non-blocking items folded in: quote-aware comma/colon splitting with the comment-comma gate (G1.6), the closer fixed to the final `}%%` (G1.3), a gantt legacy battery, a mirror spec covering G1.1–G1.8 + step 3 + G5, five added battery cases, G1.2 tab and G1.7 gantt wording. |
 | 2026-11-22 | r1 | agent:design-review-grammar | REQUEST-CHANGES | B1 gantt empty-table contradiction → explicit `kFamilyInitDirectivesEnabled` switch; M2 cross-channel table asymmetry → policy paragraph + both-direction pins; M3 CRLF → strip `\r` (G1.2); M4 unterminated quote → quote state machine (G1.5); M5 edge cases → normative clauses and battery list; M6 G5 mechanism + logLevel-only tightening → Proposal step 2 and Drawbacks; m7 logLevel-only test source → footer assertion; m8 rule-38 reach proof → reason assertion in the matrix test; m9 drift wording → softened; n10 tables enumerated; n11 indentation → G1.2; n12 mirror steps 2–4 → stated |
 
 ## Implementation History

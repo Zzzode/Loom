@@ -53,8 +53,9 @@ ER107).
 - `--` has no grammar: the statement loop falls through at `:2863-2884`; `identifier` rejects
   `-` (`:83-90`); the edge table keeps `A -- B` invalid (`:3001`).
 - The state envelope rejects every in-body init (`:1861`, `:1981`) and the body split rejects a
-  remaining `%%{` line (`:2202`). `accTitle:`/`accDescr:` reach the generic edge parse and fail
-  the source (`:3001`/`:3009`) — they never become states.
+  remaining `%%{` line (`:2202`). `accTitle: text` / `accDescr: text` reach the State
+  **description** path (`:2885-2897`) and create a state named `accTitle`/`accDescr`, so the
+  fix must consume them before that branch (the paired negative targets the description path).
 - State layout is one linear `ordered` row per scope (`:7517-7532`); labels/ports for State are
   constrained by a free-region prefilter (`:8389-8391`, `:8496-8498`, `:8082-8084`).
 
@@ -97,8 +98,11 @@ ER107).
    shared `sizeof(RelationEntity)` Work charges for Class/ER/Requirement are untouched
    (verified by a `static_assert` on the existing size and by the dual-preset family gates).
    A per-owner region cursor array (owner slot ≤ 128) and `kStateRegionLimit = 8` bound the
-   parse. The side table's allocation and growth are prepaid in both parse (per inserted
-   entity) and layout (per partition), per the project Work discipline.
+   parse (entities are capped at `64 + kGroupLimit = 128`, so an owner index is ≤ 127).
+   The side table's allocation and growth are prepaid in both parse (per inserted entity) and
+   layout (per partition), and every new charge is **gated to `family == State`** (preferably
+   only when a region is actually used), so the byte-identical ER/Class charge sequences
+   (`:2100-2112`, `:2150`) do not shift.
 2. **Assignment only at insertion.** Region is written when `entity()` *inserts* a new State,
    at exactly these seven creation sites: declaration `:2808`, description-implicit `:2895`,
    bare declaration `:2916`, Start `:2919`, edge source `:2922`, Final `:3028`, edge target
@@ -112,15 +116,20 @@ ER107).
    `Group`, increments the owner's region cursor. Top-level `--` and `A -- B` stay invalid. An
    empty region (no state between two dividers, or after the last divider) and an empty
    composite gate explicitly, with a per-`--` prepaid Work charge.
-5. **Fail closed before partitioning.** For every State scope, iterate its edges and require
-   both endpoints' regions to be equal; a cross-region edge returns the whole source to
-   fallback. Independently, make the `reach` bounds guard unconditional (`:6579-6583`) so a
+5. **Fail closed before partitioning.** For every State scope, map each edge endpoint to its
+   **direct child of that scope** (`scope_child`, `:6210-6220`) and require the two mapped
+   children's regions to be equal; a cross-region edge returns the whole source to fallback.
+   The mapped-child form is required because a nested `compound_scope` edge's endpoints carry
+   regions relative to their own owners. Independently, make the `reach` bounds guard unconditional (`:6579-6583`) so a
    future partition bug cannot index out of range.
 6. **Layout.** After the per-scope child list is built (`:6535`) and **before**
    reach/adjacency (`:6556-6590`), partition a State owner's children by region. Extract the
-   whole per-region body — ordering (`:6591-6829`), placement (`:7517-7532`), width/height
-   checks (`:7516`, `:7351-7356`) and `boxes[owner].w/h` assignment (`:7533-7535`) — into a
-   helper operating on one child list. Each region's height is its **complete** scope height,
+   whole per-region body — the margin/top/header block (`:6830-6995`, including the State
+   horizontal-note margin `:6919-6943`), ordering (`:6591-6829`), placement (`:7517-7532`) and
+   the width/height checks (`:7516`, `:7351-7356`) — into a helper operating on **one region's
+   child and edge subsets** and returning that region's `(w, h)`. `boxes[owner].w/h`
+   (`:7533-7535`) stays with the container, which composes the final size (the helper must
+   never write the owner's box). Each region's height is its **complete** scope height,
    which already includes the single header band (`top` at `:6953`, full-height formula
    `:7352`); the container height is `max(region heights)` and **never adds a header again**.
    Container width = Σ region widths + one divider column per boundary, checked against
@@ -128,12 +137,14 @@ ER107).
    than the summed regions keeps the regions **left-aligned** (divider offsets unchanged, slack
    on the right) and the widened header width participates in the `kWidthLimit` check.
 7. **Dividers.** Store divider positions as **container-local offsets**; the emitter draws them
-   at `boxes[owner].x + offset`, starting below the header band (`b.y + label_rows + 1`,
-   `:9144-9145`) through the bottom border, with `┬`/`┴` at the border rows. Mark those cells
+   at `boxes[owner].x + offset`, starting at the layout's first body row (`top`, `:6953`)
+   through the bottom border, with `┬`/`┴` at the border rows. Mark those cells
    blocked **before notes** (`:9153`) and routing (`:9186`) so an overlapping note fails closed
    rather than being overwritten, and exclude divider columns from `ports_for` (`:7966-7973`).
    Do not rely on the compound-header blocking loop (`:9133-9152`), which runs only when
-   `compound_scope` is set (it is not for same-owner edges).
+   `compound_scope` is set (it is not for same-owner edges). Divider cells are ordinary
+   `blocked` canvas cells, which `RouteSearch::free` (`:7688-7689`) and the port search
+   (`:7943`) already honor.
 8. **Region-local direction.** A `direction` statement inside a region rotates the whole owner
    today (`state_scope_directions`, `:2382-2400`). The corpus has no region-local direction; the
    gate rejects a `direction` inside a container that already has a region cursor > 0.
@@ -154,7 +165,9 @@ ER107).
 3. **Disclosure.** The state footer gains `config.logLevel=<v> -> logger only; not applied`
    and `config.theme=<v> -> colour palette; not applied`, after any frontmatter lines, with the
    admitted scalar printed verbatim (`trace`…`fatal` as strings, not reformatted to int).
-   A frontmatter `theme`/`look` leaf plus a keyed directive gates (mutual exclusion, RFC 0047).
+   A frontmatter leaf from the **whole state table** (`theme`, `look`, `logLevel`,
+   `fontFamily`, `securityLevel`, `useMaxWidth`) plus a keyed directive gates (mutual
+   exclusion), so no config line can be emitted twice.
 4. **Accessibility.** Before the description/edge paths (`:2885`, `:3001`), consume scalar
    `accTitle: <text>` and `accDescr: <text>` as validated no-ops: non-empty, bounded, unicode
    text, one occurrence each; duplicates, empty payloads and block-form `accDescr {` gate. They
@@ -181,11 +194,15 @@ ER107).
   (`tools/mermaid/generate_e2a_cohort.py:186`) and the one `should-align-dividers-correctly`
   JSON row change; the sha-pinned sets (`STATE_COMPOSITE_EXECUTION_DEBT`, `:118`) stay
   **frozen** because they pin the deferred brace rows. Counts:
-  `tests/ui/test_mermaid_e2a_cohort.cpp:148-153` 59/10 → 60/9. **E2b**: only the
+  `tests/ui/test_mermaid_e2a_cohort.cpp:148-153` 59/10 → 60/9; its whole-source scan
+  `:304-320` shrinks by the 16 promoted rows, so `EXPECT_GT(checked, 100)` (`:320`) is
+  **re-pinned to the exact new value `EXPECT_EQ(checked, 88)`** — an exact pin is strictly
+  stronger than the old bound, so this is a population migration, not a relaxation. **E2b**: only the
   `state_blocker` `--` branch (`tools/mermaid/generate_e2b_cohort.py:190`) and the two
   concurrency JSON rows; `NATIVE_ROUTING_DEBT` (`:101`) stays frozen (deferred routing rows).
-  Counts: `tests/ui/test_mermaid_e2b_cohort.cpp:151-155` 51/10 → 53/8, `:311`
-  `checked == 39` → 35. The new `state-region-0048-cohort.json` **and the 16 out-of-cohort
+  Counts: `tests/ui/test_mermaid_e2b_cohort.cpp:151-155` 51/10 → 53/8; its whole-source scan
+  `NonWhitelistedConfigRowsKeepWholeSource` (`:241-318`) loses the 8 config-bearing region
+  rows, so `checked == 39` (`:311`) → **31**. The new `state-region-0048-cohort.json` **and the 16 out-of-cohort
   paths** (8 config-bearing region rows + 8 init-bearing theme rows) must be wired into **both**
   whole-source scans (`test_mermaid_e2a_cohort.cpp:223-244`/`:304-320`,
   `test_mermaid_e2b_cohort.cpp:207-213`) as a skip/admitted set, or those rows fail
@@ -236,10 +253,10 @@ routing Work budget.
 | Checklist row | Answer |
 |---|---|
 | **Correctness & tests** | Per-phase cohort gate (ledger pins + per-row config-free-twin frame oracle + batteries), the state-0038 gate over all 28 drawn rows **byte-identical at all three widths**, the two flipped relations-semantics negatives with paired new negatives, and the E2a/E2b whole-source scans with the 19 paths + 16 out-of-cohort rows wired into their skip sets. Functional timeouts carry no assertion semantics; `MermaidOfficialConfig110Native…` was calibrated to 600 s in the preceding slice (commit `fef4aff0`). |
-| **Build system — units** | The parser, layout and emitter live in `mermaid_relations_core_impl.cpp`; state helpers in `mermaid_state_impl.cpp`. Both are **implementation units** of `loom.ui.visual.mermaid` (no BMI), so a change rebuilds those objects + archive + dependent relinks. No new imports (the region side table is `std::vector<int>`; the init scanner is hand-rolled), no interface/partition change, no SCC growth, no concurrency caps. Debug and release `-Werror` both required. |
-| **Build system — shared structs** | `RelationEntity`/`Relationship`/`RelationDiagram` keep their layout: the region model is a State-only side table. A `static_assert(sizeof(RelationEntity) == <measured>)` lands with P1 together with the dual-preset Class/ER/Requirement family gates, proving the shared Work charges are untouched (the `alignof(RelationDiagram)` charge is unchanged by a vector member). |
+| **Build system — units** | The parser, layout and emitter live in `mermaid_relations_core_impl.cpp`; state helpers in `mermaid_state_impl.cpp` (implementation units, no BMI of their own). The region side table is a **member of `RelationDiagram`** and `entity()`/`control()` gain a region argument, so the `loom.ui.visual.mermaid:detail` partition BMI changes and the mermaid units that `import :detail` recompile — in-target fan-out with **no cross-area fan-out**. No new imports, no SCC growth, no concurrency caps. Debug and release `-Werror` both required. |
+| **Build system — shared structs** | `RelationEntity`/`Relationship` keep their layout (the side table is a separate `std::vector<int>` member of `RelationDiagram`, indexed by entity slot); `sizeof(RelationEntity)` charges are untouched and a `static_assert` pins the measured value together with the dual-preset Class/ER/Requirement family gates. `RelationDiagram`'s only Work charge is `alignof`-based (`mermaid_relations_core_impl.cpp:2112`) and stays 8. |
 | **Wire / persisted data** | N/A: no wire format, JSONL trace, settings, config path or CLI change. |
-| **Rollback** | Two atomic commits (P1, P2). P1: `mermaid_relations_core_impl.cpp`, `mermaid_detail.cppm` (side table + caps), the new state-region ledger + generator + gate, `test_mermaid_relations_semantics.cpp` (two flips), E2a/E2b generators/cohorts/tests, the 0046 generator/test constants, `fallback_roster.json`, the matrix branch, CMake registration, docs. P2 adds `mermaid_state_impl.cpp` (init/accessibility helpers), the state-init probe artifact, the ledger's footer columns and the footer tests. `git revert` of either restores its counts. |
+| **Rollback** | Two atomic commits, revertible at hunk level; `mermaid_relations_core_impl.cpp` changes in **both** phases (P1 parser/layout/emitter; P2 envelope `:1861/:1981/:2029` and accessibility `:2885`). P1: relations-core, `mermaid_detail.cppm` (side table + caps + signatures), the new state-region ledger + generator + gate, `test_mermaid_relations_semantics.cpp` (`CompositeDividerStaysSource` flip + paired negatives), E2a/E2b generators/cohorts/tests, the 0046 generator/test constants, `fallback_roster.json`, the matrix branch, CMake registration, docs. P2: relations-core (envelope/accessibility/footer), `mermaid_state_impl.cpp` (init scanner/accessibility helpers), the state-init probe artifact, the ledger's footer columns, `InitThemeFrontmatterStaysSource` flip + paired negatives, E2a/E2b skip-set extension, roster/matrix re-pin. |
 | **Protected pins** | None of the 10 protected files is touched. `tests/ui/test_mermaid_official.cpp` changes additively (loader + branch before the E2a/E2b/state-0038 branches + reach assertion); the 19 rows carry no manifest `diagnostic`, so each replaces one `run_case` observation 1:1 and 2738/48/107/206/285 stay unchanged. |
 | **Observability** | The footer lines are the user-visible disclosure; no new diagnostics; session traces untouched. |
 | **Work meter / budgets** | Region limit 8 per owner, entity total 128, per-`--` and per-region prepaid charges, width/height checked at container composition, and the side table's growth prepaid in parse and layout. Fixture-scale bodies (≤ 64 states, ≤ 128 edges) stay far under `kWorkLimit = 1,000,000`. |

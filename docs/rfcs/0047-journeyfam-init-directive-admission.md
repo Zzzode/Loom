@@ -104,7 +104,8 @@ own (`journey_fam_scalar`), which additionally tolerates single quotes and trail
      `error`,`fatal`} (the `flow_init_directive` value set; integer spelling or quoted name).
      `theme` ∈ the family's closed directive table: journey `{dark, default, forest, neutral}`,
      timeline `{base, dark, default, forest, neutral}`. Gantt is not enabled (G4); its table
-     constant stays empty and is unused.
+     constant stays empty and is not consulted at runtime (the shared scan signature references
+     it, so `-Werror` sees a use).
   8. `{}` (empty payload, no entries) is admitted as a no-op equal to bare `init`, with no
      footer. Multiple leading directives are admitted independently; a key repeated across two
      directives is a duplicate and gates. A body that contains only directives and no diagram
@@ -190,8 +191,16 @@ The code of the three copies remains byte-identical; only these constants differ
 - `generate_journeyfam_init_0047_cohort.py`: renderer-free, `--check`-reproducible; drives
   `journeyfam_tables.classify` (extended with the `init_admitted` kind and a directive parser
   mirroring **G1.1–G1.8, Proposal step 3 (the legacy tail) and G5** — the same switch, tables,
-  grammar, tail rule and frontmatter-leaf composition) and pins the cohort path+sha digest and
-  per-family counts, so a mirror/gate disagreement on any bucket fails the hermetic check.
+  grammar, tail rule and frontmatter-leaf composition) and `journeyfam_tables.notice_lines`
+  (extended with the directive footer in canonical order). It pins the cohort path+sha digest
+  and per-family counts, and it **runs a literal `PROBE_TABLE`**: one entry per boundary shape
+  (`(family, body line, expected kind, expected leaves)`), covering bare `init`, `{}`,
+  logLevel-only, theme-only, both keys, CRLF, quotes, unknown key, nested object, duplicate,
+  out-of-table theme, out-of-grammar logLevel, trailing text, `init :`, non-`init` name,
+  non-leading theme and no-theme lines, and the mirror/gate boundary. The C++ gate asserts the
+  same literal table through the public renderer (admit rows draw with the exact footer, gate
+  rows fall back), so **both sides are driven by one probe table** (efficiency rule 37) rather
+  than by corpus stability alone.
 - Gate `tests/ui/test_mermaid_journeyfam_init_0047_cohort.cpp` (5 tests): ledger schema,
   `prior_status`, digest and count pins; per-row twin inertness and literal footer composition;
   a battery per family (bare `init`; `{}`; theme and logLevel alone and together; two separate
@@ -201,7 +210,8 @@ The code of the three copies remains byte-identical; only these constants differ
   and across directives; out-of-table theme; out-of-grammar logLevel; multi-line; unterminated
   quote; trailing text after `}%%`; `init :` with a space; a non-`init` leading directive name;
   a value with a trailing comment; a comment containing a comma (gates); a body of directives
-  only (gate admits, renderer falls back); a non-leading no-theme directive that stays
+  only (fallback: the public seam cannot distinguish gate-admit from gate-reject here, so the
+  case asserts the user-visible fallback only); a non-leading no-theme directive that stays
   pass-through; a non-leading theme directive that gates; frontmatter-less source; frontmatter
   leaf + keyed directive = gate; frontmatter leaf + bare `init` = admit; and the cross-channel
   asymmetry literals from the section above). A **gantt legacy battery** pins the disabled
@@ -219,8 +229,9 @@ The code of the three copies remains byte-identical; only these constants differ
   `generate_timeline_cohort.py` + `timeline-cohort.json` (partition 7/16/7 →
   drawn 7, admitted 16, `init_admitted` 5, `themed_excluded` 2),
   `generate_journey_cohort.py` + `journey-cohort.json` (10/4/4 → 10/4/4/0),
-  `generate_journeyfam_0040_cohort.py` + `journeyfam-0040-cohort.json` (exclusions sentence +
-  `selection.census_note`; admitted sets and digests unchanged), and the three tests that
+  `generate_journeyfam_0040_cohort.py` + `journeyfam-0040-cohort.json` (`selection.exclusions`
+  sentence; admitted sets and digests unchanged — that ledger has no `census_note` field), and
+  the three tests that
   consume the shrunk buckets: `test_mermaid_timeline_cohort.cpp` (the loop keeps the 2
   content-key rows and gains an admitted-directive positive), `test_mermaid_journey_cohort.cpp`
   (the now-empty loop is paired with new directive negatives in the same test, and the existing
@@ -241,15 +252,21 @@ The code of the three copies remains byte-identical; only these constants differ
 
 ## Production Readiness Review
 
-| Area | Answer |
+| Checklist row | Answer |
 |---|---|
-| **Correctness & tests** | New behaviour is covered by 5 gtests + 1 hermetic `--check` (registered in `tests/ui/CMakeLists.txt`), including a per-row twin/footer oracle and per-family positive/negative batteries; every migrated ledger bucket flip is paired with a positive on the same path and a new neighbouring negative. Known flakes (`ServerMain.DirectConnect*`) are unrelated roots and are respected by isolated reruns. Serial ctest is the signal; no CI gate. |
-| **Build system** | No module/interface change: the edit is inside the bodies of three existing `loom.ui.visual.mermaid` partitions, so only those objects (plus the module's dyndep consumers) rebuild. No new imports, no BMI growth beyond the TU-local helpers, no concurrency caps. `-Werror` debug and release both required. |
-| **Rollback** | One atomic commit; `git revert` restores the 617 roster and every ledger/test pin. No persisted data, wire format, CLI, config path or settings change. |
+| **Correctness & tests** | 5 gtests + 1 hermetic `--check` (registered in `tests/ui/CMakeLists.txt`), a per-row twin/footer oracle, per-family positive/negative batteries, and a literal `PROBE_TABLE` driving both the Python mirror and the C++ gate on the same boundary shapes. Every migrated ledger bucket flip is paired with a positive on the same path and a new neighbouring negative. Existing golden/truecolor suites are untouched (no palette path). Known flake `ServerMain.DirectConnect*` is an unrelated root; isolated reruns are the documented handling. Serial ctest is the signal; CI is not a gate. |
+| **Build system — BMI PSS** | N/A by construction: the three edited files are **implementation units** (`module loom.ui.visual.mermaid;`, no partition name), which produce no BMI. Their bodies' change rebuilds exactly those three objects, re-archives `libloom_ui_visual.a`, and relinks dependent binaries; no importer recompiles. No interface/partition declaration, no god-interface change, no new textual include, no new named partition, no SCC growth. BMI PSS before/after is therefore unchanged (not merely bounded). |
+| **Build system — imports and concurrency** | No new imports: the scanner uses `std::string_view`/`std::array`/`std::optional` already imported by each unit; no `json` import (the scanner is hand-rolled and closed, unlike `flow_init_directive`). Ninja default parallelism is untouched; no `-j` caps. Debug and release `-Werror` are both required. |
+| **Build system — platforms** | Linux dev box only; macOS is not a gate. No new FetchContent/download/offline-cache dependency. |
+| **Wire / persisted data** | N/A: no wire format, JSONL trace, settings, config path or CLI change. |
+| **Rollback** | One atomic commit. It must contain: `src/ui/visual/mermaid_{journey,timeline,gantt}_impl.cpp`; `tools/mermaid/journeyfam_tables.py`; `generate_{journey,timeline,journeyfam_0040}_cohort.py` + `{journey,timeline,journeyfam-0040}-cohort.json`; new `generate_journeyfam_init_0047_cohort.py` + `journeyfam-init-0047-cohort.json`; `tests/ui/test_mermaid_{journey,timeline,journeyfam_0040}_cohort.cpp`; new `tests/ui/test_mermaid_journeyfam_init_0047_cohort.cpp`; `tests/ui/test_mermaid_official.cpp`; `tests/ui/CMakeLists.txt`; `tools/mermaid/fallback_roster.json`; and the docs below. `generate_gantt_cohort.py`/`gantt-cohort.json` are absent by design. `git revert` of that single commit restores the 617 roster and every pin. |
+| **Protected pins** | No protected file is in the footprint (`tests/support/mermaid_er107_*`, the three `er107_*` proposals, `er206_native_whole_source_authority.config62.v1.json`, `tools/mermaid/e6c-mandatory-gap-roster.json`, `mermaid_relations_oracle.hpp`, `mermaid_gap_roster.hpp`). The only shared test file is `tests/ui/test_mermaid_official.cpp`, changed additively: the new loader + branch before every family branch, plus the branch-reach assertion; the 9 rows have no manifest `diagnostic`, so each replaces one `run_case` original observation 1:1 and the observation total (2738), 48-gap roster, ER107 107, ER206 and Class285 pins stay unchanged. |
 | **Observability** | No new diagnostics. The disclosure footer is the user-visible record of the substituted upstream behaviour, matching RFC 0040/0045/0046. Session traces are untouched. |
-| **Documentation** | design-decisions entry (directive admission, cross-channel asymmetry, gantt switch), README RFC index, d117 family rows, d419 selection, d420 closure, engineering-efficiency retro. |
+| **Work meter / budgets** | The leading-block scan is covered by the existing prepaid fee (`256 + source*8` in each layout entry); a new per-scan `work.spend(body.size()*2 + 256)` bound is added anyway. Notice lines keep the 96-byte cap, the `(1+n)×(4·sizeof(string)+256)+bytes·2+256` charge and the height guard; the new lines measure 45, 48, 49 or 51 bytes depending on the value, all under the cap. |
+| **Documentation** | design-decisions entry (directive admission, cross-channel asymmetry policy, gantt switch **and the updated four-way→five-way bucket counts at the RFC 0040 section**), README RFC index, d117 family rows, d419 selection, d420 closure, engineering-efficiency retro. |
 | **Deletion** | The legacy substring loop is **replaced** in the two enabled copies (not kept alongside); gantt retains it verbatim by design. No dead code added. |
 | **Deprecation** | None: no shape or module is replaced; the closed frontmatter contract is unchanged. |
+| **Rollback observability** | Every flipped verdict is visible in the matrix JSON `reason` and in `fallback_roster.json`; a partial revert would fail the ledger digests and the roster self-test, so a silent half-rollback is not possible. |
 
 ## Rollout and rollback
 

@@ -59,6 +59,122 @@ bool is_leaf_value(std::string_view token) {
     return token.front() != '.' && token.back() != '.';
 }
 
+// D-427: the closed `config.treemap.valueFormat` decimal formatter. Mermaid
+// exposes d3-format strings here; the corpus uses exactly five shapes —
+// `$0,0`, `.1%`, `.2f`, `$.2f`, `$,.2f` — so the grammar is closed to an
+// optional `$`, the no-op d3 `0` zero-pad flag (there is no width), an
+// optional `,`, an optional `.N` precision (0..6) and the optional `%`/`f`
+// type. Anything else keeps the whole source. Formatting is exact decimal
+// string arithmetic: leaf values are non-negative plain decimals, so no
+// floating point ever touches the drawn text.
+struct TreemapFormat {
+    bool dollar = false;
+    bool group = false;
+    bool percent = false;
+    int precision = 0;
+};
+
+std::optional<TreemapFormat> treemap_format(std::string_view spec) {
+    // A matching quote pair is the same YAML scalar (mirrors chart_yaml_scalar).
+    if (spec.size() >= 2u && (spec.front() == '\'' || spec.front() == '"') &&
+        spec.back() == spec.front()) {
+        spec = spec.substr(1u, spec.size() - 2u);
+        if (spec.find('\'') != std::string_view::npos || spec.find('"') != std::string_view::npos)
+            return std::nullopt;
+    }
+    if (spec.empty()) return std::nullopt;
+    TreemapFormat format;
+    std::size_t at = 0;
+    if (at < spec.size() && spec[at] == '$') {
+        format.dollar = true;
+        ++at;
+    }
+    if (at < spec.size() && spec[at] == '0') ++at;
+    if (at < spec.size() && spec[at] == ',') {
+        format.group = true;
+        ++at;
+    }
+    if (at < spec.size() && spec[at] == '.') {
+        ++at;
+        int digits = 0;
+        while (at < spec.size() && spec[at] >= '0' && spec[at] <= '9') {
+            format.precision = format.precision * 10 + (spec[at] - '0');
+            if (format.precision > 6) return std::nullopt;
+            ++at;
+            ++digits;
+        }
+        if (digits == 0) return std::nullopt;
+    }
+    if (at < spec.size() && spec[at] == '%') {
+        format.percent = true;
+        ++at;
+    } else if (at < spec.size() && spec[at] == 'f') {
+        ++at;
+    }
+    // The corpus spells the d3 zero-pad flag on both sides of the group
+    // separator (`$0,0`); with no width it has no effect, so one literal `0`
+    // is accepted in each position and nothing else.
+    if (at < spec.size() && spec[at] == '0') ++at;
+    if (at != spec.size()) return std::nullopt;
+    return format;
+}
+
+std::string treemap_group(std::string_view integer) {
+    std::string out;
+    const auto count = integer.size();
+    for (std::size_t i = 0; i < count; ++i) {
+        if (i != 0 && (count - i) % 3 == 0) out.push_back(',');
+        out.push_back(integer[i]);
+    }
+    return out;
+}
+
+std::string treemap_format_value(std::string_view raw, const TreemapFormat& format) {
+    const auto dot = raw.find('.');
+    std::string integer(raw.substr(0, dot == std::string_view::npos ? raw.size() : dot));
+    std::string fraction = dot == std::string_view::npos ? std::string{}
+                                                         : std::string(raw.substr(dot + 1));
+    if (format.percent) {
+        while (fraction.size() < 2u) fraction.push_back('0');
+        integer += fraction.substr(0, 2);
+        fraction = fraction.substr(2);
+    }
+    while (integer.size() > 1u && integer.front() == '0') integer.erase(integer.begin());
+    while (fraction.size() < static_cast<std::size_t>(format.precision) + 1u)
+        fraction.push_back('0');
+    const char next = fraction[static_cast<std::size_t>(format.precision)];
+    fraction.resize(static_cast<std::size_t>(format.precision));
+    if (next >= '5') {
+        int carry = 1;
+        for (std::size_t i = fraction.size(); i-- > 0 && carry == 1;) {
+            if (fraction[i] == '9') {
+                fraction[i] = '0';
+            } else {
+                ++fraction[i];
+                carry = 0;
+            }
+        }
+        for (std::size_t i = integer.size(); i-- > 0 && carry == 1;) {
+            if (integer[i] == '9') {
+                integer[i] = '0';
+            } else {
+                ++integer[i];
+                carry = 0;
+            }
+        }
+        if (carry == 1) integer.insert(integer.begin(), '1');
+    }
+    std::string out;
+    if (format.dollar) out.push_back('$');
+    out += format.group ? treemap_group(integer) : integer;
+    if (!fraction.empty()) {
+        out.push_back('.');
+        out += fraction;
+    }
+    if (format.percent) out.push_back('%');
+    return out;
+}
+
 bool treemap_wrap(const std::string& label, Work& work, std::vector<std::string>& out) {
     std::size_t byte = 0;
     std::string current;
@@ -103,32 +219,62 @@ std::optional<std::vector<std::string>> treemap_layout(std::string_view source, 
     }
 
     const std::string_view body = treemap_body(source);
-    // No color/text-format contract. A frontmatter theme/look/config leaf
-    // (the only treemap config is the valueFormat number formatter, which
-    // changes visible leaf text) or an in-body classDef / ::: style keeps the
-    // whole source on ordinary fallback. Key-based, so the word "theme" inside
-    // a description or node name is never a false gate.
+    // A frontmatter theme/look leaf or an in-body classDef / ::: style keeps
+    // the whole source on ordinary fallback. D-427 admits exactly one config
+    // shape — `config:` > `treemap:` > `valueFormat:` with a closed-form
+    // formatter — which is honoured in the drawn leaf labels; any other key or
+    // shape still gates. Key-based, so the word "theme" inside a description
+    // or node name is never a false gate.
+    std::optional<TreemapFormat> value_format;
     {
         bool visual_gate = false;
         if (source.starts_with("---\n")) {
             const auto close = source.find("\n---\n", 4);
             if (close != std::string_view::npos) {
                 const std::string_view frontmatter(source.data(), close);
+                enum class Section { Description, Config, Treemap } section = Section::Description;
+                bool description_seen = false, treemap_seen = false, format_seen = false;
                 for (std::size_t pos = 0;;) {
                     const auto eol = frontmatter.find('\n', pos);
-                    std::string_view line = frontmatter.substr(
-                        pos, eol == std::string_view::npos ? std::string_view::npos
-                                                           : eol - pos);
-                    pos = eol == std::string_view::npos ? frontmatter.size() : eol + 1;
+                    const auto end =
+                        eol == std::string_view::npos ? frontmatter.size() : eol;
+                    const std::string_view line = frontmatter.substr(pos, end - pos);
+                    const bool last = eol == std::string_view::npos;
+                    pos = last ? frontmatter.size() + 1u : eol + 1u;
                     const auto key_start = line.find_first_not_of(' ');
                     if (key_start != std::string_view::npos) {
-                        std::string_view key = line.substr(key_start);
-                        const auto colon = key.find(':');
-                        if (colon != std::string_view::npos) key = key.substr(0, colon);
-                        if (key == "theme" || key == "look" || key == "config")
+                        const std::string_view content = line.substr(key_start);
+                        // The frontmatter view starts with the opening fence.
+                        if (key_start == 0u && content == "---") {
+                            // opening fence
+                        } else if (key_start == 0u) {
+                            if (content.starts_with("description:")) {
+                                if (description_seen) visual_gate = true;
+                                description_seen = true;
+                                section = Section::Description;
+                            } else if (content == "config:") {
+                                if (section != Section::Description) visual_gate = true;
+                                section = Section::Config;
+                            } else {
+                                visual_gate = true;
+                            }
+                        } else if (section == Section::Description) {
+                            // folded payload
+                        } else if (section == Section::Config) {
+                            if (key_start != 2u || content != "treemap:" || treemap_seen)
+                                visual_gate = true;
+                            treemap_seen = true;
+                            section = Section::Treemap;
+                        } else if (key_start != 4u || !content.starts_with("valueFormat: ") ||
+                                   format_seen) {
                             visual_gate = true;
+                        } else {
+                            value_format = treemap_format(content.substr(13u));
+                            if (!value_format) visual_gate = true;
+                            format_seen = true;
+                        }
                     }
-                    if (eol == std::string_view::npos) break;
+                    if (last) break;
                 }
             }
         }
@@ -231,7 +377,11 @@ std::optional<std::vector<std::string>> treemap_layout(std::string_view source, 
     for (const auto& node : nodes) {
         const std::string indent(static_cast<std::size_t>(node.depth) * 2, ' ');
         const std::string label =
-            node.value.empty() ? node.name : node.name + ": " + node.value;
+            node.value.empty()
+                ? node.name
+                : node.name + ": " +
+                      (value_format ? treemap_format_value(node.value, *value_format)
+                                    : node.value);
         std::vector<std::string> wrapped;
         if (!treemap_wrap(label, work, wrapped)) return {};
         for (std::size_t i = 0; i < wrapped.size(); ++i) {

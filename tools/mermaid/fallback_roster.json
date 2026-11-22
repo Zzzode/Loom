@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 553,
+  "total_fallback": 547,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -26,7 +26,6 @@
     "family_residual:state-diagram-v2": 6,
     "family_residual:timeline": 2,
     "family_residual:tree-view": 4,
-    "family_residual:treemap": 6,
     "family_residual:venn": 4,
     "family_residual:wardley": 4,
     "family_residual:xychart": 11,
@@ -78,7 +77,6 @@
     "family_residual:state-diagram": "family-scoped-debt",
     "family_residual:timeline": "family-scoped-debt",
     "family_residual:tree-view": "family-scoped-debt",
-    "family_residual:treemap": "family-scoped-debt",
     "family_residual:venn": "family-scoped-debt",
     "family_residual:wardley": "family-scoped-debt",
     "family_residual:xychart": "family-scoped-debt",
@@ -546,14 +544,6 @@
       "tree-view/nightly-check/should-resolve-unprefixed-icon-overrides-via-default-icon-pack.mmd",
       "tree-view/pr-check/should-render-bare-unquoted-labels-with-icons.mmd",
       "tree-view/pr-check/should-render-with-custom-config-and-quoted-labels.mmd"
-    ],
-    "family_residual:treemap": [
-      "treemap/nightly-check/8-should-handle-dollar-value-formatting-with-thousands-separator.mmd",
-      "treemap/nightly-check/8a-should-handle-percentage-formatting.mmd",
-      "treemap/nightly-check/8b-should-handle-decimal-formatting.mmd",
-      "treemap/nightly-check/8c-should-handle-dollar-sign-with-decimal-places.mmd",
-      "treemap/nightly-check/8f-should-handle-valueformat-set-via-directive-with-dollar-and-thousands-separator.mmd",
-      "treemap/pr-check/8d-should-handle-dollar-sign-with-thousands-separator-and-decimal-places.mmd"
     ],
     "family_residual:venn": [
       "venn/nightly-check/13-should-render-a-complex-venn-with-labels-text-nodes-and-styles.mmd",

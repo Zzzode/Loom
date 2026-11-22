@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -29,6 +30,8 @@ using json::JsonVal;
 const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases";
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treemap-cohort.json";
+const fs::path kD427Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treemap-fmt-d427-cohort.json";
 constexpr int kWide = 240;
 constexpr int kNarrow = 40;
 constexpr int kHeight = 1600;
@@ -140,12 +143,27 @@ TEST(MermaidTreemapCohort, PlainTreemapsDrawOnWholeAndBodyTracks) {
 TEST(MermaidTreemapCohort, StyledAndConfigTreemapsStayWholeSource) {
     const auto ledger = parse_doc(kLedger);
     const auto& selection = ledger.root().get("selection");
-    for (const auto* key : {"styled_excluded", "config_excluded"}) {
-        selection.get(key).iter([&](JsonVal value) {
-            const auto rel = value.as_str();
-            EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
-        });
-    }
+    selection.get("styled_excluded").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
+    });
+    // D-427 admits every `config_excluded` row through the closed
+    // `config.treemap.valueFormat` grammar (the spec is honoured in the
+    // labels). The partition is preserved: each excluded row must be a D-427
+    // ledger member, and that gate owns the positive assertions.
+    std::set<std::string> value_format_rows;
+    auto format_ledger = json::parse(read_file(kD427Ledger));
+    ASSERT_TRUE(format_ledger.has_value()) << "D-427 cohort ledger must parse";
+    format_ledger->root().get("rows").iter(
+        [&](const JsonVal row) { value_format_rows.insert(row.get_string("path")); });
+    int config_rows = 0;
+    selection.get("config_excluded").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        EXPECT_TRUE(value_format_rows.contains(std::string(rel))) << rel;
+        ++config_rows;
+    });
+    EXPECT_EQ(config_rows, 6);
+    EXPECT_EQ(value_format_rows.size(), 6u);
 }
 
 // Key-based gate: the word "theme" inside a description or node name is not a
@@ -161,8 +179,10 @@ TEST(MermaidTreemapCohort, VisualGateIsKeyBased) {
         "treemap-beta\n  \"Root\"\n    \"Leaf\": 1\n";
     EXPECT_FALSE(draws(with_look, kWide));
 
+    // D-427 admits the closed valueFormat shape; its positive lives in
+    // test_mermaid_treemap_fmt_d427_cohort. Every other config key still gates.
     const std::string with_config =
-        "---\ndescription:\n  x\nconfig:\n  treemap:\n    valueFormat: '$0,0'\n---\n"
+        "---\ndescription:\n  x\nconfig:\n  treemap:\n    color: red\n---\n"
         "treemap\n  \"Root\"\n    \"Leaf\": 1\n";
     EXPECT_FALSE(draws(with_config, kWide));
 

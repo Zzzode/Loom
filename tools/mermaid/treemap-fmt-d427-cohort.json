@@ -1,0 +1,147 @@
+{
+  "schema": "loom_mermaid_treemap_fmt_d427_cohort/v1",
+  "decision": "D-427",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "treemap original whose frontmatter is exactly a folded description plus config: > treemap: > valueFormat: in the closed grammar",
+    "cohort_digest": "0b00a3fa1d3d112f066ce7674d5e0c1fbb5a2c474a22855b6f853046466aafaa",
+    "grammar": "optional '$', no-op d3 '0' flag, optional ',', optional '.N' (0..6), optional '%' or 'f'",
+    "formats": {
+      "'$0,0'": 2,
+      "'.1%'": 1,
+      "'.2f'": 1,
+      "'$.2f'": 1,
+      "'$,.2f'": 1
+    },
+    "exclusions": "theme/look leaves, any other config key, classDef/::: styles and inline specs outside the grammar stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice opened without a design gate; the gate is this test document plus the formatted-label oracle it pins",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 6,
+    "formats": {
+      "'$0,0'": 2,
+      "'.1%'": 1,
+      "'.2f'": 1,
+      "'$.2f'": 1,
+      "'$,.2f'": 1
+    }
+  },
+  "rows": [
+    {
+      "path": "treemap/nightly-check/8-should-handle-dollar-value-formatting-with-thousands-separator.mmd",
+      "sha256": "cbfbae19bf3556eac1d614b6cc728749da14520b040bf0a09a12581805a38ce7",
+      "manifest_sha256": "cbfbae19bf3556eac1d614b6cc728749da14520b040bf0a09a12581805a38ce7",
+      "value_format": "'$0,0'",
+      "expected_labels": [
+        "Salaries: $700,000",
+        "Equipment: $200,000",
+        "Supplies: $100,000",
+        "Advertising: $400,000",
+        "Events: $100,000"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "D-427 closed treemap valueFormat grammar: the spec is honoured in the drawn leaf labels by exact decimal string arithmetic."
+    },
+    {
+      "path": "treemap/nightly-check/8a-should-handle-percentage-formatting.mmd",
+      "sha256": "27b80ce42095556f2ebb2194eb79e4e6534329d802e1490138394544e7d8ea15",
+      "manifest_sha256": "27b80ce42095556f2ebb2194eb79e4e6534329d802e1490138394544e7d8ea15",
+      "value_format": "'.1%'",
+      "expected_labels": [
+        "Company A: 35.0%",
+        "Company B: 25.0%",
+        "Company C: 15.0%",
+        "Others: 25.0%"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "D-427 closed treemap valueFormat grammar: the spec is honoured in the drawn leaf labels by exact decimal string arithmetic."
+    },
+    {
+      "path": "treemap/nightly-check/8b-should-handle-decimal-formatting.mmd",
+      "sha256": "923294d4de5fa94a91668ba3d02c14b433966d21a849756b3e36300be7a1e68e",
+      "manifest_sha256": "923294d4de5fa94a91668ba3d02c14b433966d21a849756b3e36300be7a1e68e",
+      "value_format": "'.2f'",
+      "expected_labels": [
+        "Conversion Rate: 0.06",
+        "Bounce Rate: 0.67",
+        "Click-through Rate: 0.13",
+        "Engagement: 0.45"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "D-427 closed treemap valueFormat grammar: the spec is honoured in the drawn leaf labels by exact decimal string arithmetic."
+    },
+    {
+      "path": "treemap/nightly-check/8c-should-handle-dollar-sign-with-decimal-places.mmd",
+      "sha256": "e0a7836e6a1b12344cdd1ce5e9e5e4042d8b90b3541766554e9145613f993fe3",
+      "manifest_sha256": "e0a7836e6a1b12344cdd1ce5e9e5e4042d8b90b3541766554e9145613f993fe3",
+      "value_format": "'$.2f'",
+      "expected_labels": [
+        "Basic: $19.99",
+        "Standard: $49.99",
+        "Premium: $99.99",
+        "Enterprise: $199.99"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "D-427 closed treemap valueFormat grammar: the spec is honoured in the drawn leaf labels by exact decimal string arithmetic."
+    },
+    {
+      "path": "treemap/nightly-check/8f-should-handle-valueformat-set-via-directive-with-dollar-and-thousands-separator.mmd",
+      "sha256": "1427c8c1069fe9de166cdcaff872d2c8cd13b5c1c6c4c82769ed94e42e30a7de",
+      "manifest_sha256": "1427c8c1069fe9de166cdcaff872d2c8cd13b5c1c6c4c82769ed94e42e30a7de",
+      "value_format": "'$0,0'",
+      "expected_labels": [
+        "North: $1,234,567",
+        "South: $7,654,321",
+        "East: $4,567,890",
+        "West: $9,876,543"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "D-427 closed treemap valueFormat grammar: the spec is honoured in the drawn leaf labels by exact decimal string arithmetic."
+    },
+    {
+      "path": "treemap/pr-check/8d-should-handle-dollar-sign-with-thousands-separator-and-decimal-places.mmd",
+      "sha256": "e5d4a6dfe612f3efa9e4f9a0b3647f86e5b942565c4ec2171f8bf52b5f6bcff1",
+      "manifest_sha256": "e5d4a6dfe612f3efa9e4f9a0b3647f86e5b942565c4ec2171f8bf52b5f6bcff1",
+      "value_format": "'$,.2f'",
+      "expected_labels": [
+        "Q1: $1,250,345.75",
+        "Q2: $1,645,789.25",
+        "Q3: $1,845,123.50",
+        "Q4: $2,145,678.75"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "D-427 closed treemap valueFormat grammar: the spec is honoured in the drawn leaf labels by exact decimal string arithmetic."
+    }
+  ]
+}

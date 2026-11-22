@@ -4554,6 +4554,25 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## Treemap valueFormat (D-427)
+
+- **The formatter is honoured, not disclosed.** Treemap leaf labels carry the
+  value text, so `config.treemap.valueFormat` must appear in the drawing. The
+  admitted grammar is the closed corpus subset of d3-format: optional `$`, the
+  no-op d3 `0` zero-pad flag (no width exists), optional `,`, optional `.N`
+  (0..6), optional `%`/`f`; anything else, or any other config key, keeps the
+  whole source. A matching quote pair around the scalar is the same YAML value.
+- **Exact decimal string arithmetic.** Leaf values are non-negative plain
+  decimals, so formatting (precision rounding with carry, percent scaling,
+  thousands grouping) is done on the digit strings; no floating point ever
+  touches the drawn text. The renderer-free ledger generator mirrors the
+  function line for line and pins every expected label, so the two
+  implementations cannot drift silently.
+- **The style gate is unchanged.** `classDef`/`:::` still gate, with or without
+  a formatter. The frontmatter scan is now a strict state machine
+  (description payload → `config:` → `treemap:` → `valueFormat:`) instead of a
+  blunt "any config key gates" test; any unexpected key or indent gates.
+
 ## Pie accessibility no-ops (D-426)
 
 - **`accTitle:`/`accDescr:` are metadata, not content.** Mermaid renders the

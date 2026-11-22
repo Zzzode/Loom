@@ -58,6 +58,7 @@ are not whole-original errors).
 | After D-424 gitGraph closed-boolean namespace (18 rows, after RFC 0047/0048) | 2026-11-22 | local | 1580 | 565 | 0 |
 | After D-425 pie closed config namespace (8 rows) | 2026-11-22 | local | 1588 | 557 | 0 |
 | After D-426 pie accessibility no-op (4 rows, pie family closed) | 2026-11-23 | local | 1592 | 553 | 0 |
+| After D-427 treemap valueFormat (6 rows) | 2026-11-23 | local | 1598 | 547 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -80,7 +81,7 @@ disposition (fix or documented infeasibility).
 | er-diagram | 31 | 13 | |
 | timeline | 2 | 28 | renderer added 2026-11-11; RFC 0040 admitted 16 look/theme rows and RFC 0047 admits the 5 inert leading `%%{init}%%` theme directives (footer-disclosed, synthetic directive-free twins); the 2 remaining are the `disableMulticolor` content key and the multi-line `themeVariables` override; live census 28/2/0 from 30 |
 | class-diagram | 25 | 260 | |
-| treemap | 16 | 10 | renderer added 2026-11-12; 10 classDef/::: style + 6 frontmatter config rows stay source (no color/number-format contract) |
+| treemap | 10 | 24 | RFC 0031 treemap reviewed renderer admits the 10 plain originals; D-427 (2026-11-23, TL review-exempt) admits the 6 `config.treemap.valueFormat` rows through the closed d3-format subset (`$0,0`, `.1%`, `.2f`, `$.2f`, `$,.2f`), honoured in the drawn leaf labels by exact decimal string arithmetic (renderer-free Python mirror in the ledger generator; negative values are not in the corpus). The 10 remaining are all `classdef_styling` rows; measured narrow_40 is 6/24 (the six formatted rows wrap instead of falling back) |
 | architecture | 0 | 20 | renderer added 2026-11-13; RFC 0046 (2026-11-22) admits the 4 `config.architecture.*` fcose knobs (randomize/seed/idealEdgeLengthMultiplier) through the closed tuning namespace with a disclosure footer (two corpus twins, two synthetic); live census 20/0/0 from 20 |
 | sankey | 17 | 1 | renderer added 2026-11-14; the single description-only `sankey-beta` original has its three-field CSV link rows (`source,target,value`) validated against a closed grammar (printable labels, no quotes/embedded commas/control bytes, bounded positive integer) and transcribed as a bounded native outline rather than an approximate flow graph; the 17 plain-`sankey` dialect originals all carry `config.sankey` layout/color contracts and stay source; live census 1/17/0 from 18, the reachable row draws at 40 columns |
 | journey | 0 | 18 | renderer added 2026-11-11; RFC 0040 admitted the 4 `config: theme: redux*` rows and RFC 0047 admits the 4 inert leading `%%{init}%%` theme directives (footer-disclosed, synthetic twin); live census 18/0/0 from 18 |

@@ -2019,3 +2019,26 @@ Attach a short efficiency section to each closure report, answering:
    the source and requiring the entire frame — art *and* footer — to be
    identical needs no new oracle machinery and catches any leak of the metadata
    into layout, labels, or the footer block.
+
+## D-427 treemap valueFormat slice retro (2026-11-23)
+
+1. **A wait loop that greps for a build command matches its own wrapper.** The
+   D-423 reachability self-proof said "condition reachable", but
+   `while pgrep -f 'cmake --build'; do sleep; done` never exits: the background
+   shell's *command line* contains the literal text, so the waiter sees itself.
+   Match on a unique sentinel (a log marker) or on the pid of the process you
+   started, and re-check that the condition can become false before waiting.
+   Cost: ~40 minutes of idle wall clock.
+2. **Production-file edits invalidate the probe shortcut.** `test_mermaid_probe`
+   is a two-second build only while its own TU is the change; touching
+   `mermaid_treemap_impl.cpp` rebuilds every importer. Group probe-driven
+   measurement before the production edit, or expect a full closure rebuild per
+   iteration.
+3. **A closed grammar must accept the corpus spelling, not the textbook one.**
+   `$0,0` carries d3 zero-pad flags on *both* sides of the group separator; the
+   first grammar accepted only the leading one and every fixture fell back.
+   Write the grammar from the corpus strings, then let negatives prove
+   closedness (`$00,0`, `.7f`, `2d`).
+4. **Quoted YAML scalars appear in config values too.** `valueFormat: '$0,0'`
+   is quoted; both the C++ parser and the Python mirror must strip a matching
+   quote pair, or the mirror and the renderer disagree silently.

@@ -2086,3 +2086,25 @@ Attach a short efficiency section to each closure report, answering:
 3. **A family close needs the roster to shrink by the exact number.** After
    D-431, `--emit` moved total 542 → 537 and dropped `family_residual:cynefin`;
    after D-432, c4 goes 9 → 8. Diff the category map, not just the total.
+
+## D-433 tree-view namespace retro (2026-11-23)
+
+1. **A renderer-free generator must mirror the reachable set, not only the
+   grammar.** The tree-view parser accepts a `---      ` closing fence, but the
+   shared classify probe closes frontmatter only on a line exactly `---`, so
+   that source never reaches any family renderer. The generator therefore
+   splits fronts strictly and the gate pins the unreachable shape as a
+   negative. Check *which* component owns reachability before admitting a row.
+2. **Never rewrite `return result;` by regex across a whole function.** A
+   debug pass that replaced every return inside the parser also rewrote the
+   success return, so the bisect showed "rejections" on successful parses and
+   sent the diagnosis down two wrong paths. Scope debug edits to explicitly
+   tagged regions, and delete them before the gate run.
+3. **Write body negatives at the shape the gate actually recognizes.** A
+   `classDef` appended to an existing node line is not a statement; the gate is
+   key-based on a node line's first token. The negative must start its own
+   line, otherwise it tests something the production rule never claimed.
+4. **Indentation stack beats fixed columns when one corpus uses several.**
+   `treeView:` children sit at indent 4 and 6, and the theme block nests one
+   level deeper; a fixed-column state machine would have to special-case each
+   file. Pop to the nearest lower indent and compare canonical paths.

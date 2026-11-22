@@ -1,0 +1,57 @@
+{
+  "schema": "loom_mermaid_treeview_ns_d433_cohort/v1",
+  "decision": "D-433",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "treeView original whose frontmatter is a folded description plus the closed config.treeView / config.themeVariables.treeView leaves",
+    "cohort_digest": "91c436b5eddef34232eddf7d5190f139ab5c101cd3d5c77a7e15156e6ead6688",
+    "exclusions": "look/theme keys, nested config maps (filenameIcons, extensionIcons), unknown leaves and style statements stay whole-source; a `---      ` closing fence never reaches a family renderer through the shared classify probe"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice without a design gate; the gate is the test document plus the twin oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 2
+  },
+  "rows": [
+    {
+      "path": "tree-view/nightly-check/should-resolve-unprefixed-icon-overrides-via-default-icon-pack.mmd",
+      "sha256": "db10bf1af34c581ac1845f095d5c64297518041aacda21a01048a99745c9da05",
+      "manifest_sha256": "db10bf1af34c581ac1845f095d5c64297518041aacda21a01048a99745c9da05",
+      "leaves": {
+        "config.treeView.defaultIconPack": "fa"
+      },
+      "expected_footer_lines": [
+        "TreeView native projection v1",
+        "config.treeView.defaultIconPack=fa -> icon pack resolution; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "tree-view/pr-check/should-render-bare-unquoted-labels-with-icons.mmd",
+      "sha256": "f2dd75d784d6ae13ccebdea0073f9fdaf45ee39ae8ad292bcfddbc64808c87a7",
+      "manifest_sha256": "f2dd75d784d6ae13ccebdea0073f9fdaf45ee39ae8ad292bcfddbc64808c87a7",
+      "leaves": {
+        "config.treeView.showIcons": "true"
+      },
+      "expected_footer_lines": [
+        "TreeView native projection v1",
+        "config.treeView.showIcons=true -> icons are not drawn; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

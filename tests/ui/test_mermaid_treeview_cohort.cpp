@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -28,6 +29,8 @@ using json::JsonVal;
 const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases";
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treeview-cohort.json";
+const fs::path kD433Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treeview-ns-d433-cohort.json";
 constexpr int kWide = 240;
 constexpr int kNarrow = 40;
 constexpr int kHeight = 1600;
@@ -138,12 +141,30 @@ TEST(MermaidTreeviewCohort, CleanTreeviewsDrawOnWholeAndBodyTracks) {
 TEST(MermaidTreeviewCohort, GatedTreeviewsStayWholeSource) {
     const auto ledger = parse_doc(kLedger);
     const auto& selection = ledger.root().get("selection");
-    for (const auto* key : {"frontmatter_gated", "body_style_gated"}) {
-        selection.get(key).iter([&](JsonVal value) {
-            const auto rel = value.as_str();
-            EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
-        });
-    }
+    // D-433 admits the two closed `config.treeView` rows through the namespace
+    // parser; their positives live in test_mermaid_treeview_ns_d433_cohort.
+    // The partition is preserved: each admitted row must be a D-433 ledger
+    // member, every other gated row stays whole source.
+    std::set<std::string> namespace_rows;
+    auto ns_ledger = json::parse(read_file(kD433Ledger));
+    ASSERT_TRUE(ns_ledger.has_value()) << "D-433 cohort ledger must parse";
+    ns_ledger->root().get("rows").iter(
+        [&](const JsonVal row) { namespace_rows.insert(row.get_string("path")); });
+    int admitted = 0;
+    selection.get("frontmatter_gated").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        if (namespace_rows.contains(std::string(rel))) {
+            ++admitted;
+            return;
+        }
+        EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
+    });
+    EXPECT_EQ(admitted, 2);
+    EXPECT_EQ(namespace_rows.size(), 2u);
+    selection.get("body_style_gated").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
+    });
 }
 
 // Key-based gate: prose mentioning "config"/"theme" is not a gate; a
@@ -152,8 +173,11 @@ TEST(MermaidTreeviewCohort, VisualGateIsKeyBased) {
     const std::string plain = "treeView-beta\n  theme/\n      config.ts\n";
     EXPECT_TRUE(draws(plain, kWide));
 
+    // D-433 admits the closed `config.treeView` namespace (showIcons,
+    // defaultIconPack, rowIndent, lineThickness); an out-of-table leaf still
+    // closes the renderer (the positive is owned by the D-433 gate).
     EXPECT_FALSE(draws(
-        "---\nconfig:\n  treeView:\n    rowIndent: 80\n---\ntreeView-beta\n  \"root\"\n",
+        "---\nconfig:\n  treeView:\n    colour: red\n---\ntreeView-beta\n  \"root\"\n",
         kWide));
     EXPECT_FALSE(draws("---\ntheme: dark\n---\ntreeView-beta\n  \"root\"\n", kWide));
     // A trailing-whitespace closing fence still carries the frontmatter gate.

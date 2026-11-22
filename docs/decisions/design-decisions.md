@@ -4554,6 +4554,33 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## tree-view closed config namespace (D-433)
+
+- **The tree-view namespace parser is indentation-stack based, not column-fixed.**
+  The corpus puts `treeView:` children at indent 4 in one file and 6 in another,
+  and the theme block nests `themeVariables.treeView` two levels deeper, so a
+  fixed-column state machine would mis-file half the cohort. The stack pops to
+  the nearest lower indent and the closed key transitions are path-based.
+- **Closed leaves are inert and disclosed.** The projection draws no icons,
+  colour, line weight or pixel indentation, so
+  `config.treeView.{showIcons, defaultIconPack, rowIndent, lineThickness}` and
+  `config.themeVariables.treeView.{labelFontSize, labelColor, lineColor}` are
+  disclosed in a fixed order under `TreeView native projection v1`; the art
+  equals the config-stripped twin's. Quote pairs on string values are stripped
+  in both the renderer and the Python generator.
+- **Two rows are unreachable without a shared change.** The classify probe in
+  `mermaid_impl.cpp` closes frontmatter only on a line that is exactly `---`
+  (`line == "---"`), so a `---      ` close never leaves the peeking phase and
+  no family renderer sees the source; the custom-config row with that fence
+  stays whole-source even though the tree-view parser itself tolerates it, and
+  the gate pins the boundary as a negative. A row whose body spells `icon()`
+  with an empty argument is likewise rejected by `validate_node`, independent
+  of the frontmatter.
+- **Accounting.** The D-433 branch precedes the RFC 0031 tree-view cohort
+  (disjoint sets) with a rule-38 reach proof; the RFC 0031 gate keeps its three
+  remaining frontmatter negatives and its body-style rows, and asserts the two
+  admitted rows are D-433 ledger members.
+
 ## c4 config.wrap admission (D-432)
 
 - **The frontmatter parser is tri-state, not optional.** A plain source, a

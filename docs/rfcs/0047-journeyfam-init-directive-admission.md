@@ -1,11 +1,12 @@
 ---
 rfc: 47
 title: journey-family in-body init directive admission
-status: accepted
+status: implementable
 owners: "@Zzzode"
 reviewers:
   - agent:design-review-evidence
   - agent:design-review-grammar
+  - agent:prr-review
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -186,8 +187,10 @@ The code of the three copies remains byte-identical; only these constants differ
   `manifest_sha256`, `prior_status` (+ its manifest `raw` expectation, which is `source` for
   the red-first pin), directive keys/values, the literal `expected_footer_lines`, measured
   per-width states, and the synthetic twin rule "delete the frontmatter and every leading
-  `%%{init…}%%` line"; plus `selection` (rule, roots, cohort digest, `census_note`) and an
-  independent `review` block.
+  `%%{init…}%%` line"; plus `selection` (rule, roots, cohort digest, `probes_sha256`) and an
+  independent `review` block **bound to `probes_sha256`**: the generator's `--check` fails if the
+  probe file's sha256 does not match the reviewed value, so editing an expectation forces a
+  re-review rather than silently passing under `verdict: approved`.
 - `generate_journeyfam_init_0047_cohort.py`: renderer-free, `--check`-reproducible; drives
   `journeyfam_tables.classify` (extended with the `init_admitted` kind and a directive parser
   mirroring **G1.1–G1.8, Proposal step 3 (the legacy tail) and G5** — the same switch, tables,
@@ -196,15 +199,18 @@ The code of the three copies remains byte-identical; only these constants differ
   and per-family counts.
 - **Single-source probe artifact** `tools/mermaid/journeyfam-init-0047-probes.json` (review
   record + digest pinned in the ledger): a reviewed array whose entries are
-  `{family, frontmatter, body[], expected_kind, expected_footer[]}`. `body` holds the diagram
+  `{family, frontmatter, body[], expected_kind, expected_footer[]}`. Assembly is fixed:
+  `frontmatter` is the literal block **including its `---` fences** (empty string when absent),
+  `body` is joined with `\n`, and the source is `frontmatter + "\n".join(body) + "\n"`; both
+  sides use that one recipe. `body` holds the diagram
   header and any leading/comment/blank lines in order, so placement, frontmatter and
   frontmatter-less shapes are all encodable. The Python generator assembles each entry and
   asserts `classify` → `expected_kind` (and `notice_lines` → `expected_footer`); the C++
   gate assembles the same string and asserts the user-visible verdict:
   `init_admitted` and `admitted` → draws and ends with `expected_footer`;
   `drawn` → draws and has no footer; `themed` → falls back. Both sides read **the same file**;
-  neither hand-copies the other. The case list is exactly the boundary set and includes every
-  shape the batteries use plus efficiency rule 37's named classes (indent, quoting, comments,
+  neither hand-copies the other. The case list is the classified boundary set and includes
+  every shape the batteries use plus efficiency rule 37's named classes (indent, quoting, comments,
   duplicates): bare `init`, `{}`, logLevel-only, theme-only, both keys, each admitted theme and
   logLevel value, two directives (footer order logLevel→theme), CRLF, single/double quotes,
   quoted key, indent 2, after a blank line, after a comment, unknown key, nested
@@ -213,8 +219,12 @@ The code of the three copies remains byte-identical; only these constants differ
   comma, trailing text after `}%%`, a second `}%%`, `init :`, non-`init` name, unterminated
   quote, raw control byte, backslash in a single-quoted string, non-leading theme and no-theme
   lines, frontmatter-less, frontmatter leaf + keyed directive, frontmatter leaf + bare `init`,
-  and the gantt legacy trio. (The directives-only body is excluded here: it is a renderer
-  boundary, not a gate classification, and the gate test asserts its fallback directly.)
+  and the gantt legacy trio. (The directives-only body is excluded from the classified set: it
+  is a renderer boundary, not a gate classification; the gate test asserts its fallback
+  directly and the mirror's classification of it is intentionally not corpus-relevant.)
+  The generator validates the artifact: `family` ∈ {journey, timeline, gantt},
+  `expected_kind` ∈ {init_admitted, admitted, drawn, themed}, admitted kinds must carry a
+  non-empty `expected_footer`, and unknown fields are rejected.
 - Gate `tests/ui/test_mermaid_journeyfam_init_0047_cohort.cpp` (5 tests): ledger schema,
   `prior_status`, digest and count pins; per-row twin inertness and literal footer composition;
   a battery per family (bare `init`; `{}`; theme and logLevel alone and together; two separate
@@ -270,12 +280,13 @@ The code of the three copies remains byte-identical; only these constants differ
 
 | Checklist row | Answer |
 |---|---|
-| **Correctness & tests** | 5 gtests + 1 hermetic `--check` (registered in `tests/ui/CMakeLists.txt`), a per-row twin/footer oracle, per-family positive/negative batteries, and a literal `PROBE_TABLE` driving both the Python mirror and the C++ gate on the same boundary shapes. Every migrated ledger bucket flip is paired with a positive on the same path and a new neighbouring negative. Existing golden/truecolor suites are untouched (no palette path). Known flake `ServerMain.DirectConnect*` is an unrelated root; isolated reruns are the documented handling. Serial ctest is the signal; CI is not a gate. |
+| **Correctness & tests** | 5 gtests + 1 hermetic `--check` (registered in `tests/ui/CMakeLists.txt`), a per-row twin/footer oracle, per-family positive/negative batteries, and the single-source `journeyfam-init-0047-probes.json` driving both the Python mirror and the C++ gate on the same boundary shapes. Every migrated ledger bucket flip is paired with a positive on the same path and a new neighbouring negative. Existing golden/truecolor suites are untouched (no palette path). Known flake `ServerMain.DirectConnect*` is an unrelated root; isolated reruns are the documented handling. Serial ctest is the signal; CI is not a gate. |
 | **Build system — BMI PSS** | N/A by construction: the three edited files are **implementation units** (`module loom.ui.visual.mermaid;`, no partition name), which produce no BMI. Their bodies' change rebuilds exactly those three objects, re-archives `libloom_ui_visual.a`, and relinks dependent binaries; no importer recompiles. No interface/partition declaration, no god-interface change, no new textual include, no new named partition, no SCC growth. BMI PSS before/after is therefore unchanged (not merely bounded). |
 | **Build system — imports and concurrency** | No new imports: the scanner uses `std::string_view`/`std::array`/`std::optional` already imported by each unit; no `json` import (the scanner is hand-rolled and closed, unlike `flow_init_directive`). Ninja default parallelism is untouched; no `-j` caps. Debug and release `-Werror` are both required. |
 | **Build system — platforms** | Linux dev box only; macOS is not a gate. No new FetchContent/download/offline-cache dependency. |
 | **Wire / persisted data** | N/A: no wire format, JSONL trace, settings, config path or CLI change. |
-| **Rollback** | One atomic commit. It must contain: `src/ui/visual/mermaid_{journey,timeline,gantt}_impl.cpp`; `tools/mermaid/journeyfam_tables.py`; `generate_{journey,timeline,journeyfam_0040}_cohort.py` + `{journey,timeline,journeyfam-0040}-cohort.json`; new `generate_journeyfam_init_0047_cohort.py` + `journeyfam-init-0047-cohort.json`; `tests/ui/test_mermaid_{journey,timeline,journeyfam_0040}_cohort.cpp`; new `tests/ui/test_mermaid_journeyfam_init_0047_cohort.cpp`; `tests/ui/test_mermaid_official.cpp`; `tests/ui/CMakeLists.txt`; `tools/mermaid/fallback_roster.json`; and the docs below. `generate_gantt_cohort.py`/`gantt-cohort.json` are absent by design. `git revert` of that single commit restores the 617 roster and every pin. |
+| **Rollback** | One atomic commit. It must contain: `src/ui/visual/mermaid_{journey,timeline,gantt}_impl.cpp`; `tools/mermaid/journeyfam_tables.py`; `generate_{journey,timeline,journeyfam_0040}_cohort.py` + `{journey,timeline,journeyfam-0040}-cohort.json`; new `generate_journeyfam_init_0047_cohort.py` + `journeyfam-init-0047-cohort.json` +
+  `journeyfam-init-0047-probes.json`; `tests/ui/test_mermaid_{journey,timeline,journeyfam_0040}_cohort.cpp`; new `tests/ui/test_mermaid_journeyfam_init_0047_cohort.cpp`; `tests/ui/test_mermaid_official.cpp`; `tests/ui/CMakeLists.txt`; `tools/mermaid/fallback_roster.json`; and the docs below. `generate_gantt_cohort.py`/`gantt-cohort.json` are absent by design. `git revert` of that single commit restores the 617 roster and every pin. |
 | **Protected pins** | No protected file is in the footprint (`tests/support/mermaid_er107_*`, the three `er107_*` proposals, `er206_native_whole_source_authority.config62.v1.json`, `tools/mermaid/e6c-mandatory-gap-roster.json`, `mermaid_relations_oracle.hpp`, `mermaid_gap_roster.hpp`). The only shared test file is `tests/ui/test_mermaid_official.cpp`, changed additively: the new loader + branch before every family branch, plus the branch-reach assertion; the 9 rows have no manifest `diagnostic`, so each replaces one `run_case` original observation 1:1 and the observation total (2738), 48-gap roster, ER107 107, ER206 and Class285 pins stay unchanged. |
 | **Observability** | No new diagnostics. The disclosure footer is the user-visible record of the substituted upstream behaviour, matching RFC 0040/0045/0046. Session traces are untouched. |
 | **Work meter / budgets** | The existing prepaid fee (`256 + source*8`) covers the source copy; the new leading-block scan pays its own linear charge (`body.size()*2 + 256`), so the pass is not free. That charge is a monotone tightening only: a 64 KB body costs ≈131 KB against the 1,000,000 `kWorkLimit`, so no outcome can flip. Notice lines keep the 96-byte cap, the `(1+n)×(4·sizeof(string)+256)+bytes·2+256` charge and the height guard; the new lines measure 45, 48, 49 or 51 bytes depending on the value, all under the cap. |
@@ -368,6 +379,9 @@ settings change.
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-22 | r1 | agent:design-review-evidence | REQUEST-CHANGES | M1 CMake registration missing from the footprint → added; m1 gantt generator absence measured and stated; m2 probe log does not enumerate paths → claim rescoped, P1 gate is the authoritative proof; m3 summary scope over-wide (4 flowchart legacy rows) → requalified; n1 `prior_status` → added; n2 G5 definition → fixed to keyed directives; m3 d117 stale cells → documented |
+| 2026-11-22 | r3 | agent:prr-review | APPROVE | PRR r3: the single-source probe artifact is a faithful rule-37 gate; the expectations are an authored reviewed oracle with a digest bound into the review, backed by the corpus frame gate and the RFC 0040 batteries. Folded at this revision: the probes file joins the rollback set, `selection.probes_sha256` binds the review, the assembly recipe and schema validation are stated, and the "exactly the boundary set" wording is qualified. |
+| 2026-11-22 | r2 | agent:prr-review | REQUEST-CHANGES | F1 remained open (one probe table that is not single-source) → replaced by `journeyfam-init-0047-probes.json` read by both sides, with a full kind→verdict mapping and the complete case list; F2–F5 NITs folded. |
+| 2026-11-22 | r1 | agent:prr-review | REQUEST-CHANGES | F1 mirror fidelity (rule 37) → probe table; F2 PRR checklist incomplete → expanded; F3 partition wording → implementation units; F4 rollback file set → enumerated; F5 protected pins + additive matrix change → stated; F6–F13 folded as listed in the doc impact. |
 | 2026-11-22 | r2 | agent:design-review-evidence | APPROVE | All r1 fixes verified in place and not weakened; drawn_at_240 1342→1351 and roster 608/40 re-verified. Three non-blocking wording items folded into this revision: the Motivation "not their parsers" sentence (quote state machine is shared as a local mirror), G1.2's tab wording (the renderers reject any tab before layout), and the Summary "every other directive" vs G2 pass-through tension (now "every other theme-bearing directive", G2 limited to non-leading lines). |
 | 2026-11-22 | r2 | agent:design-review-grammar | APPROVE | B1 and all six r1 MAJORs verified resolved; gantt KeyError unreachable via the mirror switch; no unreachable grammar step. Non-blocking items folded in: quote-aware comma/colon splitting with the comment-comma gate (G1.6), the closer fixed to the final `}%%` (G1.3), a gantt legacy battery, a mirror spec covering G1.1–G1.8 + step 3 + G5, five added battery cases, G1.2 tab and G1.7 gantt wording. |
 | 2026-11-22 | r1 | agent:design-review-grammar | REQUEST-CHANGES | B1 gantt empty-table contradiction → explicit `kFamilyInitDirectivesEnabled` switch; M2 cross-channel table asymmetry → policy paragraph + both-direction pins; M3 CRLF → strip `\r` (G1.2); M4 unterminated quote → quote state machine (G1.5); M5 edge cases → normative clauses and battery list; M6 G5 mechanism + logLevel-only tightening → Proposal step 2 and Drawbacks; m7 logLevel-only test source → footer assertion; m8 rule-38 reach proof → reason assertion in the matrix test; m9 drift wording → softened; n10 tables enumerated; n11 indentation → G1.2; n12 mirror steps 2–4 → stated |

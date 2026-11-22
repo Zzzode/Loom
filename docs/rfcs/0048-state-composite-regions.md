@@ -1,155 +1,210 @@
 ---
 rfc: 48
-title: state concurrent regions, init/accessibility, and labeled composite routing
+title: state concurrent regions and in-body init/accessibility
 status: provisional
 owners: "@Zzzode"
-reviewers: []
+reviewers:
+  - agent:design-review-evidence
+  - agent:design-review-geometry
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
 tracking: local
 ---
 
-# RFC 0048 — state diagram concurrent regions, in-body init/accessibility, and labeled composite routing
+# RFC 0048 — state diagram concurrent regions and in-body init/accessibility
 
 ## Summary
 
-D-421 measured the post-RFC-0047 census: the inert-config well is nearly exhausted, and the
-largest non-frozen coherent body pool is 27 state-family fallbacks (v1 7, v2 20). Rendering
-composite "titled box" containers **already works** (`EntityShape::Group` recursive layout);
-the 27 rows are blocked by three distinct capabilities plus one out-of-scope body:
+D-421 measured the post-RFC-0047 census: the inert-config well is nearly exhausted and the
+largest non-frozen coherent body pool is 27 state-family fallbacks. Composite "titled box"
+containers **already draw** (`EntityShape::Group` recursive layout); the pool splits into
+concurrent regions (11), leading `%%{init}%%` + `accTitle:`/`accDescr:` (8 — their bodies also
+contain regions), labeled composite/fan-out routing (7), and a non-state `info` body (1).
 
-| class | rows | blocker today |
-|---|---|---|
-| concurrent regions (`--` dividers inside a container) | 11 | no `--` parse branch; no region model; no divider emitter |
-| leading in-body `%%{init}%%` + `accTitle:`/`accDescr:` | 8 (bodies also have regions) | the state envelope rejects any `parsed->init`; `accTitle` would parse as a state |
-| labeled composite/fan-out edge routing | 7 | State has no label clearance and a free-region prefilter that rejects fan-out |
-| `info` directive body | 1 | not a state diagram (explicitly out of scope) |
+This RFC delivers the first two classes: **19 rows**. The seven routing rows are **deferred to
+a follow-up RFC**: their blocker tags (`state-composite-brace-on-next-line`,
+`state-native-routing-debt`) do not establish a layout root cause, and the first review round
+showed the proposed retry mechanism cannot be justified without symbolic evidence (see
+"Deferred work"). The `info` body is out of scope (it needs a different renderer).
 
-Target after the three phases: state v1 **12/30 → 5/37**, state v2 **49/54 → 29/74**; global
-**608/1537 → 582/1563**; formal `drawn_at_240` **1351 → 1377**.
+Target: state v1 **12/30 → 7/35**, state v2 **49/54 → 35/68**; global **608/1537 → 589/1556**;
+formal `drawn_at_240` **1351 → 1370**. Three-number report: ①589 ②289 ③19.
 
 ## Motivation
 
 ### Measured selection (D-421, 2026-11-22)
 
 A two-variant strip probe over all 608 fallback rows showed no row is gated by a non-config
-frontmatter key alone, and the all-inert-leaf tail is 9 rows — 7 of them inside the frozen
-ER107 whole-null accounting and 1 ishikawa row. The state pool below is the largest coherent
-body capability outside the excluded surfaces (flowchart exact-bit 222, swimlanes 46, ER107).
+frontmatter key alone, and the all-inert-leaf tail is 9 rows — 7 inside the frozen ER107
+whole-null accounting, 1 ishikawa row, 1 non-family root. The state pool is the largest
+coherent body capability outside the excluded surfaces (flowchart exact-bit 222, swimlanes 46,
+ER107).
 
-### Evidence (renderer survey)
+### Evidence
 
+- 27 rows = roster `family_residual:state-diagram` (7) + `family_residual:state-diagram-v2`
+  (20); classes are disjoint and complete: P1 11 (v1 1, v2 10), P2 8 (v1 4, v2 4), routing 7
+  (v1 2, v2 5), `info` 1 (v2). All 8 P2 bodies contain `--` regions, so P2 depends on P1.
 - Composite containers already draw: `EntityShape::Group` entities are measured recursively
-  (`mermaid_relations_core_impl.cpp:6710-6711`, `:7533-7539`) and emitted as square titled
-  boxes (`:7821-7831`, `:7880-7887`); the state-0038 ledger pins 28 such rows as drawn.
-- `--` has no grammar: the statement loop falls through at `:2869-2884`, `identifier` rejects
-  `-` (`:83-90`), and the edge operator table keeps `A -- B` invalid for State (`:3001`).
-- The state envelope rejects every in-body init (`:1861`, `:1981`) and the body split rejects
-  any remaining `%%{` line (`:2202`); `accTitle:`/`accDescr:` would fall into the description
-  statement (`:2885`) and become states.
-- State layout is one linear `ordered` row per scope (`:7517-7532`) with no rank planner
-  (gated to ER/Class at `:6998`); labeled-edge clearance exists only for ER (`:6647-6667`) and
-  Class (`:6668-6690`), and the State prefilter requires both ports and both label anchors in
-  one free region (`:8389-8391`, `:8496-8498`, `:8082-8084`).
+  (`mermaid_relations_core_impl.cpp:6710-6711`, `:7533-7539`), emitted as square titled boxes
+  (`:7821-7831`, `:7880-7887`); the state-0038 ledger's 28 drawn rows include 14 with
+  `state X {` composite bodies.
+- `--` has no grammar: the statement loop falls through at `:2863-2884`; `identifier` rejects
+  `-` (`:83-90`); the edge table keeps `A -- B` invalid (`:3001`).
+- The state envelope rejects every in-body init (`:1861`, `:1981`) and the body split rejects a
+  remaining `%%{` line (`:2202`). `accTitle:`/`accDescr:` reach the generic edge parse and fail
+  the source (`:3001`/`:3009`) — they never become states.
+- State layout is one linear `ordered` row per scope (`:7517-7532`); labels/ports for State are
+  constrained by a free-region prefilter (`:8389-8391`, `:8496-8498`, `:8082-8084`).
 
 ## Goals
 
-- **G1 (P1).** Parse and render concurrent regions: inside a state `Group`, a standalone `--`
-  line starts a new region. Each region is laid out as its own state group; regions are placed
-  side by side at a common top, separated by a one-column divider drawn inside the container
-  box. Regions nest arbitrarily within the existing group depth cap.
-- **G2 (P2).** Consume the leading in-body `%%{init: {...}}%%` block for the state family
-  through the shared envelope split, admitting only the closed subset `logLevel`
-  ∈ {0…5, trace, debug, info, warn, error, fatal} and `theme` ∈ the family's existing closed
-  table, disclosed in the footer; also consume scalar `accTitle:` (sets the diagram title) and
-  `accDescr:` (validated, not rendered) instead of parsing them as states. Block-form
-  `accDescr { … }` stays gated (class precedent).
-- **G3 (P3).** Route labeled edges for composite and fan-out bodies: add State label clearance
-  to the existing gap/margin computation (mirroring the ER/Class branches) and make the
-  free-region prefilter a retry fallback rather than a hard requirement.
-- **G4.** Every admitted row must be frame-exact against its reviewed ledger (config-free twin
-  + literal footer) and must keep the 28 already-drawn state-0038 rows byte-identical.
-- **G5.** No assertion is deleted or relaxed: the E2a/E2b blocker ledgers, the 0046 ledger
-  remaining counts, the roster and the matrix all migrate in place with paired positives and
-  negatives.
+- **G1 (P1, 11 rows).** Parse and render concurrent regions. Inside a state `Group` body, a
+  standalone `--` line advances the owner's region cursor. Regions are laid out side by side at
+  a common top, separated by a one-column divider inside the container border; regions nest
+  within the existing group depth cap. Cross-region edges fail closed **before** any layout
+  partition (no partition may create an edge whose endpoints sit in different lists).
+- **G2 (P2, 8 rows).** Consume the **leading** in-body `%%{init: {...}}%%` block through the
+  shared envelope split (`effective_body`), admitting only `logLevel` ∈ {0…5, trace, debug,
+  info, warn, error, fatal} and `theme` ∈ `{dark, default, forest, neutral}` (**the journey init
+  table, not the state frontmatter table** — the frontmatter tables and their negative tests do
+  not change). Consume scalar `accTitle:` and `accDescr:` as **validated no-ops** (never
+  rendered), so they cannot be parsed as states and the config-free-twin oracle stays exact.
+  Block-form `accDescr { … }` stays gated.
+- **G3.** Every admitted row is frame-exact against a reviewed ledger (config-free twin +
+  literal footer); the 28 already-drawn state-0038 rows stay byte-identical at all three
+  widths; the frontmatter gate and its negative tests are unchanged.
+- **G4.** No assertion is deleted or relaxed: the two state negatives in
+  `test_mermaid_relations_semantics.cpp` flip to positive with paired new negatives, and the
+  E2a/E2b ledgers, 0046 counts, roster and matrix migrate in the same phase.
 
 ## Non-Goals
 
-- `v2-should-render-a-simple-info` (a non-state `info` body; needs a different renderer).
-- Switching the State family to the ranked/layered planner.
-- Edges that cross a region divider (the corpus has none; the layout fails closed if one would
-  be required).
-- Any change to the frontmatter look/theme tables, the journey-family directive helper, ER107,
-  flowchart exact-bit, or the three standing debts.
+- The 7 labeled composite/fan-out rows and the `info` row (deferred / out of scope).
+- Extending the frontmatter look/theme tables (their negatives stay).
+- Switching State to the ranked planner; edges crossing a region divider (fail closed).
+- Any change to `RelationEntity`'s layout or size (the region model is a State-only side
+  table), to ER107, flowchart exact-bit, swimlanes, or the three standing debts.
 
 ## Proposal
 
 ### P1 — concurrent regions
 
-1. **Model.** Append `int region = 0` to `RelationEntity` (`mermaid_detail.cppm:290-299`). Every
-   state/control creation site assigns the owner's current region; the region cursor is a
-   per-owner counter under a new `kStateRegionLimit = 8`.
-2. **Parse.** A trimmed line `--` inside a `state X { ... }` body (State family, non-empty
-   scope stack, current owner is a `Group`) increments the owner's region cursor; anything
-   else keeps the current fall-through. `A -- B` stays invalid. An empty region or an empty
-   composite gates.
-3. **Layout.** In `measure`, partition a State owner's children by `region` before
-   reach/adjacency (`:6564-6590`); factor the existing ordering + box-measure body
-   (`:6591-6829`) into a per-region helper; place region frames left to right at a common top.
-   A container's width = Σ region widths + one divider column per boundary; height = max region
-   height + the existing title/header rows (`:6948-6953`). Divider x positions are stored on the
-   layout; `translate` shifts descendants as today (`:7543-7556`).
-4. **Emit.** Draw `│` (and `┴`/`┬` junctions at the top/bottom border) at each stored x inside
-   the container, and mark those cells blocked before `route_scope` (`:9186`). `draw_box` and
-   `ports_for` are untouched (region bodies share the container's border).
-5. **Caps.** Enforce region count, per-region child count, the summed width (`kWidthLimit`) and
-   the summed height (`kHeightLimit`) before committing, with a per-`--` prepaid Work charge.
+1. **Model (no shared-struct change).** A State-only side table
+   `std::vector<int> state_region_by_entity` (indexed by entity slot, sized with the entity
+   list) lives beside the diagram's state data. `RelationEntity` keeps its layout, so the
+   shared `sizeof(RelationEntity)` Work charges for Class/ER/Requirement are untouched
+   (verified by a `static_assert` on the existing size and by the dual-preset family gates).
+   A per-owner region cursor array (owner slot ≤ 128) and `kStateRegionLimit = 8` bound the
+   parse.
+2. **Assignment only at insertion.** Region is written when `entity()` *inserts* a new State
+   (7 sites: declaration `:2808`, description-implicit `:2895`, bare declaration `:2916`,
+   Start `:2919`, edge source `:3022-3031`, Final `:3028`, edge target); an existing entity
+   keeps its first region. Notes (`:2455-2523`) and classDef/class/style targets
+   (`mermaid_state_impl.cpp:447-451`) never create entities and never set a region.
+3. **Controls are region-scoped.** `control()` (`:366-386`) dedupes by owner+shape today, which
+   would collapse three `[*]` starts inside three regions into one. The dedupe key gains the
+   region, so each region has its own `[*]` pair.
+4. **Parse `--`.** A trimmed `--` line, State family, non-empty scope stack, current owner is a
+   `Group`, increments the owner's region cursor. Top-level `--` and `A -- B` stay invalid. An
+   empty region (no state between two dividers, or after the last divider) and an empty
+   composite gate explicitly, with a per-`--` prepaid Work charge.
+5. **Fail closed before partitioning.** For every State scope, iterate its edges and require
+   both endpoints' regions to be equal; a cross-region edge returns the whole source to
+   fallback. Independently, make the `reach` bounds guard unconditional (`:6579-6583`) so a
+   future partition bug cannot index out of range.
+6. **Layout.** After the per-scope child list is built (`:6535`) and **before**
+   reach/adjacency (`:6556-6590`), partition a State owner's children by region. Extract the
+   whole per-region body — ordering (`:6591-6829`), placement (`:7517-7532`), width/height
+   checks (`:7516`, `:7351-7356`) and `boxes[owner].w/h` assignment (`:7533-7535`) — into a
+   helper operating on one child list. Each region's height is its **complete** scope height
+   (header included); the container is `max(region heights) + one header band`, never a second
+   header. Container width = Σ region widths + one divider column per boundary, checked
+   against `kWidthLimit`; total height checked against `kHeightLimit` before committing.
+7. **Dividers.** Store divider positions as **container-local offsets**; the emitter draws them
+   at `boxes[owner].x + offset`, starting below the header band (`b.y + label_rows + 1`,
+   `:9144-9145`) through the bottom border, with `┬`/`┴` at the border rows. Mark those cells
+   blocked **before notes** (`:9153`) and routing (`:9186`) so an overlapping note fails closed
+   rather than being overwritten, and exclude divider columns from `ports_for` (`:7966-7973`).
+   Do not rely on the compound-header blocking loop (`:9133-9152`), which runs only when
+   `compound_scope` is set (it is not for same-owner edges).
+8. **Region-local direction.** A `direction` statement inside a region rotates the whole owner
+   today (`state_scope_directions`, `:2382-2400`). The corpus has no region-local direction; the
+   gate rejects a `direction` inside a container that already has a region cursor > 0.
 
 ### P2 — init and accessibility
 
 1. **Envelope.** Replace the blanket init rejection (`:1861`, `:1981`) with the shared split
-   (`mermaid_envelope_impl.cpp:232-278`): `parsed->init` must be empty or a single directive
-   whose payload is a flat object over `logLevel`/`theme` with closed values (the RFC 0047
-   grammar, re-expressed in this TU; the journey helper is not importable). Anything else keeps
-   the whole source. The effective body starts at the diagram header, so the `%%{` body split
-   (`:2202`) no longer sees the admitted block.
-2. **Disclosure.** The existing state footer gains `config.logLevel=<v> -> logger only; not
-   applied` and `config.theme=<v> -> colour palette; not applied` in canonical order, with the
-   frontmatter leaves first (frontmatter leaf + keyed directive stays mutually exclusive, as
-   in RFC 0047).
-3. **Accessibility.** Before the description statement (`:2885`), consume scalar
-   `accTitle: <text>` (sets `diagram_title`, which the emitter already prints at `:9206-9216`
-   with its own width guard) and `accDescr: <text>` (validated no-op). Duplicates, empty
-   payloads, non-scalar forms and block-form `accDescr {` gate.
-
-### P3 — labeled composite routing
-
-1. Add State to the label-clearance branches (`:6647-6690`) so a labeled edge reserves label
-   rows/columns in the gap computation.
-2. Keep the free-region prefilter as a fast path; on failure, retry routing without it (still
-   bounded by the A* budget and the final width/height caps), then fail closed.
-3. Do not enable the ranked planner for State (`:6998` unchanged).
+   (`mermaid_envelope_impl.cpp:232-278`): `parsed->init` must be empty or exactly one **leading**
+   directive whose payload is a flat object over `logLevel`/`theme` with the closed values
+   above. The envelope's returned body becomes `effective_body`, while the existing `:2202`
+   non-leading `%%{` rejection, the frontmatter pass-through and the frontmatter tables stay
+   untouched (a non-leading directive is still rejected).
+2. **State-local closed grammar.** The directive scanner is a state-local copy (the journey
+   helper is not importable): quote state machine, no nested objects, one occurrence per key,
+   CRLF strip, trailing-text and multi-line gates. It reuses the RFC 0047 single-source probe
+   pattern: `tools/mermaid/state-init-0048-probes.json` drives both this gate and its Python
+   mirror, with `probes_sha256` bound into the ledger review.
+3. **Disclosure.** The state footer gains `config.logLevel=<v> -> logger only; not applied`
+   and `config.theme=<v> -> colour palette; not applied`, after any frontmatter lines, with the
+   admitted scalar printed verbatim (`trace`…`fatal` as strings, not reformatted to int).
+   A frontmatter `theme`/`look` leaf plus a keyed directive gates (mutual exclusion, RFC 0047).
+4. **Accessibility.** Before the description/edge paths (`:2885`, `:3001`), consume scalar
+   `accTitle: <text>` and `accDescr: <text>` as validated no-ops: non-empty, bounded, unicode
+   text, one occurrence each; duplicates, empty payloads and block-form `accDescr {` gate. They
+   never set `diagram_title`, so the frontmatter `title` behaviour and the twin oracle are
+   unchanged.
 
 ### Gates and ledger footprint
 
-- New reviewed ledger `tools/mermaid/state-composite-0048-cohort.json` + renderer-free
-  generator with `--check`, in the state-0038 style: per-row sha, `prior_status`, expected
-  footer, and per-width states; the per-row frame oracle is config-free twin + footer.
-- Matrix branch `RFC-0048 state composite cohort` placed with the other cohort branches and
-  proven reached per row.
-- Migrations in the same phase: E2a/E2b blocker ledgers and skip sets (the 26 paths move from
-  `state-composite-divider`/`state-initializer-gated`/`state-native-routing-debt` to admitted),
-  `layouttuning-0046` remaining counts, roster `--emit`, and the state-0038 ledger's
-  `themed_excluded` bookkeeping where the init rows leave it.
+- New reviewed ledger `tools/mermaid/state-region-0048-cohort.json` + renderer-free generator
+  with `--check` (state-0038 style): per-row `prior_status`, sha, literal
+  `expected_footer_lines` and per-width states; the per-row oracle is config-free twin + footer,
+  compared line by line.
+- Matrix branch `RFC-0048 state region cohort` must be placed **before** the E2a (`:10892`),
+  E2b (`:10916`) and state-0038 (`:10939`) branches — 16 of the 19 rows have no blocker-ledger
+  entry and 11 overlap E2a/E2b, so a later branch would be shadowed (RFC 0046 r1 defect).
+  Reach is proven per row.
+- **Conflicting negatives that must flip with paired new negatives**
+  (`tests/ui/test_mermaid_relations_semantics.cpp`): `CompositeDividerStaysSource` (`:33456`)
+  and `InitThemeFrontmatterStaysSource` (`:33340`); `ConfigFrontmatterStaysSource` (`:33328`)
+  stays negative.
+- **E2a**: `tools/mermaid/generate_e2a_cohort.py:118` (`STATE_COMPOSITE_EXECUTION_DEBT`),
+  `:178-187` (`state_blocker`); `tools/mermaid/e2a-cohort.json` blocker rows;
+  `tests/ui/test_mermaid_e2a_cohort.cpp:148-153` (59/10), `:199-205`, `:304-320` (whole-source
+  scan). **E2b**: `tools/mermaid/generate_e2b_cohort.py:101` (`NATIVE_ROUTING_DEBT`),
+  `:183-210`; `tools/mermaid/e2b-cohort.json`; `tests/ui/test_mermaid_e2b_cohort.cpp:151-155`
+  (51/10), `:207-213`, `:311` (`checked == 39`).
+- **0046 ledger/test**: `tools/mermaid/generate_layouttuning_0046_cohort.py:51-60`
+  (`FAMILY_COUNTS`), `:442-454`; `tests/ui/test_mermaid_layouttuning_0046_cohort.cpp:229`,
+  `:236` (remaining 62 → 43 after P1+P2), `:263-270` (state drawn 28 → 33, 52 → 66),
+  `:587` (`? 12 : 49` → `? 7 : 35`), `:600` (remaining 44 → 25).
+- **state-0038 needs no migration**: its `excluded` list is frontmatter-shape based (117 rows,
+  including all 19) and it has no `themed_excluded`; its 28 drawn rows are the byte-identity
+  oracle, not a bucket to move.
+- Roster `--emit` 608 → 589 (categories may shrink); `--self-test` and `--matrix` green.
+- Docs: `docs/dev/mermaid-unsuccessful-cases.md`, `docs/dev/mermaid-failure-inventory.json`,
+  `tests/fixtures/mermaid_native/direct_theme_source_audit.v1.json` carry the enumerated rows
+  and must be refreshed as snapshots.
 
 ## Phases and graduation criteria
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | concurrent regions | 11 rows | proposed | red-first; state v2 49 → 39, v1 12 → 11; global 608 → 597; frame-exact ledger; no change to the 28 drawn rows |
-| P2 | init + accessibility | 8 rows (needs P1) | proposed | state v1 11 → 7, v2 39 → 35; footer literals pinned; init negatives (nested map, out-of-table theme, duplicate, multi-line) |
-| P3 | labeled composite routing | 7 rows | proposed | state v1 7 → 5, v2 35 → 29; global 582; every previously drawn width-240 row byte-identical |
+| P1 | concurrent regions | 11 rows (v1 1, v2 10) | proposed | red-first; state v1 12 → 11, v2 49 → 39; global 608 → 597; the v1/v2 `…concurrency-states` rows (region-local labeled edges) draw; all 28 state-0038 rows byte-identical; dual-preset matrix identical; roster/0046/E2a/E2b migrated |
+| P2 | init + accessibility | 8 rows (needs P1) | proposed | state v1 11 → 7, v2 39 → 35; global 589; footer literals and probe artifact pinned; init negatives (nested map, out-of-table theme, duplicate, multi-line, non-leading) |
+
+## Deferred work (explicit)
+
+Seven rows — the three `should-render-edge-labels-correctly*` (blocker tag
+`state-composite-brace-on-next-line`, whose own detail says it "does not assert a lexical
+rejection or establish a layout root cause"), the two `…composite-states` and the two
+`…simple-state-diagrams-with-labels` — and the `info` body stay on fallback. A follow-up RFC
+must first establish a symbolic root cause per row (ports/label anchors vs gap capacity vs
+fan-out multiplicity), then propose a mechanism; the r1 proposal (State label clearance +
+free-region retry) is withdrawn because it was not proven to be the blocker and doubles the
+routing Work budget.
 
 ## Production Readiness Review
 
@@ -157,54 +212,57 @@ To be completed at the `implementable` gate.
 
 ## Rollout and rollback
 
-Each phase is one atomic commit; reverting a phase restores its ledger counts. No persisted
-data, wire, CLI or settings change.
+One atomic commit per phase; reverting a phase restores its ledger counts. No persisted data,
+wire, CLI or settings change.
 
 ## Drawbacks and risks
 
-- A new region model touches every state creation site; a missed site silently places a state
-  in region 0. The per-row frame gate and the E2a/E2b ledgers are the guards.
-- Divider cells must be blocked before routing, or edges cross them invisibly.
-- The init grammar becomes a fourth local copy (journey-family, flow, class, state); the
-  single-source probe artifact pattern (RFC 0047) should be reused for the state copy.
-- P3 changes routing heuristics and is the likeliest source of byte-differences in
-  already-drawn rows; it is a separate phase for that reason.
+- A missed insertion site silently places a state in region 0; the per-row frame gate and the
+  E2a/E2b ledgers are the guards, plus a debug `static_assert`-style invariant check in the
+  gate.
+- Divider cells must be blocked before notes/routing, and dividers must start below the header
+  band.
+- The state init scanner is a fourth local directive grammar; the single-source probe artifact
+  is the rule-37 guard.
+- The E2a/E2b whole-source scans fail if any flipped row is not migrated in the same commit.
 
 ## Alternatives considered
 
-1. Do nothing — leaves 26 rows on fallback and keeps the state families' geometry debt.
-2. Reuse `CompoundScopeRoute` only (no regions) — cannot express side-by-side regions.
-3. Render regions as nested full boxes — doubles borders, changes the corpus look, and the
-   terminal has no borderless nested box today.
-4. Enable the ranked planner for State in P3 — much larger blast radius; only attempted if the
-   label-clearance fix and the prefilter retry prove insufficient.
+1. Do nothing — leaves the state geometry debt.
+2. Append `int region` to `RelationEntity` — rejected: changes the shared `sizeof` and ripples
+   the Work charges of Class/ER/Requirement, including frozen rows.
+3. Render regions as nested full boxes — doubles borders and changes the corpus look.
+4. Bundle the routing rows into this RFC — rejected on the r1 evidence: no proven root cause,
+   and the retry mechanism doubles the routing Work budget.
 
 ## Testing and verification plan
 
-- Per phase: the new gate (ledger pins + frame oracle + batteries), the state-0038 gate and
-  the smallfam/relations resource tests, `ctest -L mermaid`, and the debug/release dual-preset
-  matrix at phase closure, with the full debug ctest logged to a durable path and its exit code
-  recorded (TL 2026-11-22 process).
+- Per phase: the new gate (ledger pins + frame oracle + batteries), the relations resource
+  tests, the two flipped (and paired) relations-semantics negatives, the state-0038 gate, the
+  E2a/E2b gates, `ctest -L mermaid`, and the dual-preset matrix at phase closure; the full
+  debug ctest logged to a durable path with its exit code (TL 2026-11-22 process).
 - Roster `--emit` + `--self-test` + `--matrix` after each phase.
 
 ## Documentation impact
 
-- [ ] `docs/dev/d421-next-family-state-composite.md` — selection (RFC 0048 phase split)
-- [ ] `docs/dev/d422-state-composite-rfc0048-closure.md` — closure record
-- [ ] `docs/decisions/design-decisions.md` — region model, init/accessibility, routing
+- [ ] `docs/dev/d421-next-family-state-composite.md` — second revision (deferred routing)
+- [ ] `docs/dev/d422-state-region-rfc0048-closure.md` — closure record
+- [ ] `docs/decisions/design-decisions.md` — region side table, dividers, init/accessibility
 - [ ] `docs/README.md` — RFC index row
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — state rows
+- [ ] `docs/dev/mermaid-unsuccessful-cases.md`, `docs/dev/mermaid-failure-inventory.json`,
+      `tests/fixtures/mermaid_native/direct_theme_source_audit.v1.json` — snapshot refresh
 - [ ] `docs/dev/engineering-efficiency.md` — per-task retro
 
 ## Open questions
 
 | Question | Owner | Resolved by |
 |---|---|---|
-| OQ-1: region field on `RelationEntity` vs a parallel map | design review | proposed: append-only `int region` |
-| OQ-2: divider glyphs and blocking | design review | proposed: `│` with `┬`/`┴` junctions; blocked cells; fail closed on cross-divider edges |
-| OQ-3: accTitle semantics | design review | proposed: sets `diagram_title`; accDescr validated no-op; block form gates |
-| OQ-4: init grammar locus | design review | proposed: a state-local closed copy plus the RFC 0047 single-source probe pattern |
-| OQ-5: P3 heuristic | design review | proposed: label clearance + prefilter retry |
+| OQ-1: region model | design review | resolved: State-only side table (no shared struct change) |
+| OQ-2: divider glyphs/blocking | design review | resolved: local offsets, `│`+junctions, block before notes/routing, header band start |
+| OQ-3: accTitle semantics | design review | resolved: validated no-op |
+| OQ-4: init grammar locus | design review | resolved: state-local copy + single-source probe artifact |
+| OQ-5: routing rows | design review | resolved: deferred with a written evidence gate |
 
 ## Gates and who confirms
 
@@ -216,10 +274,12 @@ data, wire, CLI or settings change.
 
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
-| 2026-11-22 | — | — | draft | Created provisional from D-421 and the renderer survey |
+| 2026-11-22 | r1 | agent:design-review-geometry | REQUEST-CHANGES | B1 cross-region edges reach UB → fail closed before partitioning + unconditional bounds; B2 `control()` dedupe missing region → key gains region; M1 insertion-only assignment (7 sites enumerated); M2 shared `sizeof` ripple → State-only side table; M3 helper extraction range corrected; M4 header double count → region height is complete, header once; M5 divider coordinate space → local offsets; M6 header band/compound interaction → explicit start + blocking; M7 accTitle title → validated no-op; M8 init theme table → journey table; M9–M11 routing mechanism unproven and Work-doubling → routing deferred; m1–m9/n1–n2 folded |
+| 2026-11-22 | r1 | agent:design-review-evidence | REQUEST-CHANGES | BLOCKER initializer theme table → explicit `{dark,default,forest,neutral}`; arithmetic → v2 30/73 (and, with routing deferred, v1 7/35, v2 35/68, global 589/1556, formal 1370); the two `test_mermaid_relations_semantics.cpp` negatives added to the flip set; E2a/E2b generators/tests/constants enumerated; matrix branch ordered before the state branches; state-0038 no-migration fact; 0046 constants enumerated; composite-row count corrected (14 of 28); snapshot docs added |
 
 ## Implementation History
 
 | Date | Phase | Change | Commit |
 |---|---|---|---|
-| 2026-11-22 | — | Draft created (provisional), no code | (this commit) |
+| 2026-11-22 | — | Draft created (provisional), no code | acc9efea |
+| 2026-11-22 | — | r1 revisions: routing deferred, scope 19 rows, footprint and design fixes | (this commit) |

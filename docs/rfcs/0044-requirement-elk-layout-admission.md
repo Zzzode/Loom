@@ -1,9 +1,9 @@
 ---
 rfc: 44
 title: requirement elk layout admission
-status: provisional
+status: accepted
 owners: "@Zzzode"
-reviewers: []
+reviewers: ["agent:design-review"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -70,7 +70,8 @@ does not disturb an envelope that carries no `layout`.
 - **G1.** Admit exactly `config.layout: elk` at envelope indent 2, once, in a closed
   one-value table.
 - **G2.** Disclose it as `config.layout=elk -> external layout engine; not applied`,
-  appended after every existing notice line so already-drawn frames keep their byte order.
+  appended after every existing notice line — no already-drawn frame can carry a `layout`
+  leaf, so the position only fixes the new rows' leaf order (`htmlLabels` then `layout`).
 - **G3.** Promote exactly 23 rows; every other verdict is unchanged (the five other leaves
   keep their tables; any other `layout` value rejects; the nested `config.flowchart.*`
   map keeps rejecting).
@@ -224,10 +225,12 @@ persisted data, wire protocol, CLI, or settings change.
 |---|---|---|---|---|
 | 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | Scope, twin bytes, arithmetic, inertness and wiring all confirmed. BLOCKER: three existing assertions pin `layout: elk` as fallback (`test_mermaid_requirement_cohort.cpp` gated array + single-leaf battery, `test_mermaid_requirement_0037_cohort.cpp` keys battery) and were outside the plan → named as in-scope edits, each flip paired with a `layout: dagre` negative. MAJOR: the two remaining rows' stated causes were wrong (indented closing fence = malformed envelope; leading blank line = no `---\n` at offset 0), and nested maps total 3, not 2 → rewritten. MINOR: the 0037 generator's `EXCLUDED_EXPECTED["layout: elk"]` stays 24 (source-shape) with only the human sentence changing; the 0037 `--check` is a newly registered entry, not an existing one; NITs: scalar trims spaces only and dequotes an outer same-char pair (tabs rejected upstream), the notice-order claim is vacuous for old frames and pinned only for the new rows, and the roster is fallback-only so the category cannot mix. All folded |
 | 2026-11-22 | r2 | agent:design-review | REQUEST-CHANGES | r1 folds confirmed faithful (three assertion edits, 0037 generator constant, +7 registry, scalar/order/roster wording). New MAJOR introduced by the r1 rewrite: the nested-map attribution said "two ELK rows" and "only the ELK one", which is self-contradictory — the correct partition is 1 ELK nested row (also htmlLabels, no twin) + 2 non-ELK nested rows (one plain, one `look`) → fixed. MINORs: Non-Goals still used the retracted descriptors → aligned; the `superseded_note` is generator-authored, so the generator is added to the doc-impact list; the family test's header comment is added to the in-scope edits. All folded |
+| 2026-11-22 | r3 | agent:design-review | **APPROVE-TO-ACCEPT** | All r2 fixes verified against fixtures and roster; all recomputed numbers consistent (172/144/28; 24 elk = 15+8+1; 23 promoted; 5 remaining; 38→15; 640/289/23). One optional NIT: G2's causal clause was loose → softened. Gate: provisional → accepted |
 | 2026-11-22 | — | — | draft | Created provisional from D-413 |
 
 ## Implementation History
 
 | Date | Phase | Change | Commit |
 |---|---|---|---|
-| 2026-11-22 | — | Draft created (provisional), no code | — |
+| 2026-11-22 | — | Draft created (provisional), no code | e06c993d |
+| 2026-11-22 | — | Folded design r1/r2; accepted after r3; no code | 33459cfe |

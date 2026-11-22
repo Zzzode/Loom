@@ -195,9 +195,11 @@ ER107).
   JSON row change; the sha-pinned sets (`STATE_COMPOSITE_EXECUTION_DEBT`, `:118`) stay
   **frozen** because they pin the deferred brace rows. Counts:
   `tests/ui/test_mermaid_e2a_cohort.cpp:148-153` 59/10 → 60/9; its whole-source scan
-  `:304-320` shrinks by the 16 promoted rows, so `EXPECT_GT(checked, 100)` (`:320`) is
-  **re-pinned to the exact new value `EXPECT_EQ(checked, 88)`** — an exact pin is strictly
-  stronger than the old bound, so this is a population migration, not a relaxation. **E2b**: only the
+  `:304-320` shrinks by the 16 out-of-cohort promoted rows **and** by the 2 E2b concurrency
+  rows, which become `predicted-draw` and are absorbed into the E2a skip set through
+  `:259-262`, so `EXPECT_GT(checked, 100)` (`:320`) is **re-pinned to the exact new value
+  `EXPECT_EQ(checked, 86)`** — an exact pin is strictly stronger than the old bound, so this is
+  a population migration, not a relaxation. **E2b**: only the
   `state_blocker` `--` branch (`tools/mermaid/generate_e2b_cohort.py:190`) and the two
   concurrency JSON rows; `NATIVE_ROUTING_DEBT` (`:101`) stays frozen (deferred routing rows).
   Counts: `tests/ui/test_mermaid_e2b_cohort.cpp:151-155` 51/10 → 53/8; its whole-source scan
@@ -205,8 +207,11 @@ ER107).
   rows, so `checked == 39` (`:311`) → **31**. The new `state-region-0048-cohort.json` **and the 16 out-of-cohort
   paths** (8 config-bearing region rows + 8 init-bearing theme rows) must be wired into **both**
   whole-source scans (`test_mermaid_e2a_cohort.cpp:223-244`/`:304-320`,
-  `test_mermaid_e2b_cohort.cpp:207-213`) as a skip/admitted set, or those rows fail
-  `same_source_surface` after flipping.
+  `test_mermaid_e2b_cohort.cpp:241-318`) as a skip/admitted set, or those rows fail
+  `same_source_surface` after flipping. The cardinality differs per scan: the E2a scan visits
+  both config- and init-bearing rows and absorbs all **16**, while the E2b scan visits only
+  `declares_config` rows and absorbs the **8** config-bearing ones (the 8 init rows never
+  enter it). A `skipped_by_rfc0048` equality pin must therefore be 16 (E2a) and 8 (E2b).
 - **0046 ledger/test**: `tools/mermaid/generate_layouttuning_0046_cohort.py:51-60`
   (`FAMILY_COUNTS`), `:442-454`; `tests/ui/test_mermaid_layouttuning_0046_cohort.cpp:234` (`counts.drawn` 105 → 124),
   `:236` (remaining 62 → 43 after P1+P2), `:263-270` (state drawn 28 → 33, 52 → 66),
@@ -252,7 +257,7 @@ routing Work budget.
 
 | Checklist row | Answer |
 |---|---|
-| **Correctness & tests** | Per-phase cohort gate (ledger pins + per-row config-free-twin frame oracle + batteries), the state-0038 gate over all 28 drawn rows **byte-identical at all three widths**, the two flipped relations-semantics negatives with paired new negatives, and the E2a/E2b whole-source scans with the 19 paths + 16 out-of-cohort rows wired into their skip sets. Functional timeouts carry no assertion semantics; `MermaidOfficialConfig110Native…` was calibrated to 600 s in the preceding slice (commit `fef4aff0`). |
+| **Correctness & tests** | Per-phase cohort gate (ledger pins + per-row config-free-twin frame oracle + batteries), the state-0038 gate over all 28 drawn rows **byte-identical at all three widths**, the two flipped relations-semantics negatives with paired new negatives, and the E2a/E2b whole-source scans with the 19 paths (of which 16 are out-of-cohort) wired into their skip sets (16 in E2a, 8 in E2b). Functional timeouts carry no assertion semantics; `MermaidOfficialConfig110Native…` was calibrated to 600 s in the preceding slice (commit `fef4aff0`). |
 | **Build system — units** | The parser, layout and emitter live in `mermaid_relations_core_impl.cpp`; state helpers in `mermaid_state_impl.cpp` (implementation units, no BMI of their own). The region side table is a **member of `RelationDiagram`** and `entity()`/`control()` gain a region argument, so the `loom.ui.visual.mermaid:detail` partition BMI changes and the mermaid units that `import :detail` recompile — in-target fan-out with **no cross-area fan-out**. No new imports, no SCC growth, no concurrency caps. Debug and release `-Werror` both required. |
 | **Build system — shared structs** | `RelationEntity`/`Relationship` keep their layout (the side table is a separate `std::vector<int>` member of `RelationDiagram`, indexed by entity slot); `sizeof(RelationEntity)` charges are untouched and a `static_assert` pins the measured value together with the dual-preset Class/ER/Requirement family gates. `RelationDiagram`'s only Work charge is `alignof`-based (`mermaid_relations_core_impl.cpp:2112`) and stays 8. |
 | **Wire / persisted data** | N/A: no wire format, JSONL trace, settings, config path or CLI change. |

@@ -35,10 +35,11 @@
 - 24 条中：15 条只有 `layout`，8 条 `layout + htmlLabels: false`（`htmlLabels` 已由
   D-066 F0 准入），1 条为 `config.flowchart.htmlLabels` 嵌套映射（无 corpus twin，
   且 `requirement_envelope` 现规则拒绝 namespaced entry）→ **本片不做，保留回退**。
-- 本片之后 requirement 剩 5 条 fallback：2 条 `config.flowchart.htmlLabels` 嵌套映射
-  （含 1 条同时带 `look`；`requirement_envelope` 拒绝 namespaced entry）、1 条仅 `title:`
-  （envelope 现要求 description）、1 条无 frontmatter 的 body 能力债、1 条无 corpus twin
-  的 elk 行（本片明确排除）。
+- 本片之后 requirement 剩 5 条 fallback：3 条 `config.flowchart.htmlLabels` 嵌套映射
+  （2 条 ELK 行——其中 1 条同时带 `look`，1 条非 ELK；`requirement_envelope` 拒绝
+  namespaced entry）、1 条首行是空行（门要求 offset 0 为 `---\n`）、1 条闭合围栏缩进
+  两格（`parse_envelope` 只在 column 0 闭合，envelope 判为 malformed）。3 条嵌套行里
+  只有 1 条是 ELK 行，即 24 条中的无 twin 那条，本片明确排除。
 - `layout: elk` 对 requirement 文本投影是惰性的：原生投影只输出 requirements/
   elements/connections 的文本树，不绘制 ELK 几何；23 条 body 与已绘制非 elk 行逐字节
   相同。披露页脚声明 `external layout engine; not applied`。

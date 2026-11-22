@@ -48,9 +48,13 @@ c4 `wrap` 1). git `gitGraph.parallelCommits` (12) is the runner-up.
   F0), so the two leaves compose in one envelope. One row carries the nested
   `config.flowchart.htmlLabels` map and has **no** corpus twin; the envelope rejects
   namespaced entries, so that row stays exclusive — **23 rows promoted**.
-- The remaining 5 fallbacks stay: 2 nested `config.flowchart.*` maps (one also `look`),
-  1 title-only envelope (the gate requires a description), 1 body-capability row with no
-  frontmatter, 1 ELK row without a twin.
+- The remaining 5 fallbacks stay: 3 nested `config.flowchart.htmlLabels` maps (two ELK
+  rows — one also carries `look` — and one non-ELK row; the gate rejects namespaced
+  entries), 1 source whose leading line is blank before the opening fence (the gate
+  requires `---\n` at offset 0), and 1 row whose closing fence is indented two spaces
+  (`parse_envelope` closes only at column 0, so the envelope is malformed). Of the three
+  nested-map rows, only the ELK one is the 24th ELK row; it stays because it lacks a
+  corpus twin.
 - The native requirement projection is a text tree of requirements/elements/connections;
   it draws no geometry, so the layout engine selection cannot change the frame. The 23
   body-identical twins prove it frame by frame.
@@ -89,11 +93,15 @@ In `requirement_envelope` (the event-driven gate used by all requirement admissi
 
 - Extend the field bitset with `Layout = 32u`.
 - Inside the config block, at indent 2: `layout` is admitted exactly once and only when its
-  scalar (the existing `requirement_inert_scalar`: comment strip, trim, matched-pair
-  dequote) is `elk`. Any other value rejects the whole source.
+  scalar (the existing `requirement_inert_scalar`: `er_strip_comment`, then trim of leading
+  and trailing **spaces** only, then dequoting of an outer same-character pair) is `elk`.
+  Tabs are rejected upstream by the envelope parser, so they never reach this scalar. Any
+  other value rejects the whole source.
 - The notice list gains, **last**:
-  `config.layout=elk -> external layout engine; not applied`. Appending last is required:
-  existing frames (e.g. `htmlLabels` + `look`) must keep their current line order.
+  `config.layout=elk -> external layout engine; not applied` (56 characters, under the
+  96-byte cap). Appending last matters only for the new 23 rows — an `htmlLabels` +
+  `layout` row emits html then layout — because no currently-drawn frame can carry a
+  `layout` leaf; it is still pinned by the composed-order battery.
 - `config_seen && fields == 0` still rejects; a second `layout` leaf rejects; a `layout`
   at any other indent rejects; namespaced entries still reject.
 
@@ -103,12 +111,21 @@ In `requirement_envelope` (the event-driven gate used by all requirement admissi
   `loom_mermaid_requirement_0044_cohort/v1`) with the 23 rows, each with its corpus twin
   path + sha (body equivalence verified by the generator), literal footer lines, and the
   measured per-width states.
-- `generate_requirement_0044_cohort.py`, renderer-free, `--check`-reproducible; the RFC
-  0037 generator's `exclusions` sentence is updated (24 → 23 admitted + 1 remaining) and
-  regenerated; its 120 rows do not change.
+- `generate_requirement_0044_cohort.py`, renderer-free, `--check`-reproducible. The RFC
+  0037 generator is source-shape based: its `EXCLUDED_EXPECTED["layout: elk"] = 24` stays
+  24 (the fixture shape has not changed) and only its human-readable `exclusions` sentence
+  is updated to name RFC 0044; its 120 rows and counts do not change.
 - Partition arithmetic is literal against the filesystem: 172 = 144 drawn + 23 admitted +
   5 remaining, with the drawn 144 split 120 (0037) + 8 (F0) + 4 (base cohort) + 12
   pre-existing.
+- **Existing tests that pin the old verdict and change in the same commit** (the RFC
+  0037 gate cannot stay green otherwise):
+  `tests/ui/test_mermaid_requirement_cohort.cpp` — the `FrontmatterAndThemeGatesStayClosed`
+  array drops the ELK fixture, and the single-leaf battery's `layout: elk` negative
+  becomes an admitted positive (with its footer line) beside a new out-of-table
+  `layout: dagre` reject; `tests/ui/test_mermaid_requirement_0037_cohort.cpp` — the
+  `Keys outside the admitted set` battery flips `layout: elk` to the admitted positive and
+  keeps a `layout: dagre` reject. Nothing is deleted; each flip is paired with a negative.
 - Gate `tests/ui/test_mermaid_requirement_0044_cohort.cpp` (5 tests): ledger schema/review/
   pins and sibling↔0037 agreement; per-row twin inertness + exact footer composition; the
   closed table (elk admitted; `dagre`/`elk-layout`/case variants/empty/duplicate/indent 4/
@@ -148,10 +165,12 @@ persisted data, wire protocol, CLI, or settings change.
 - **A disclosed leaf the renderer cannot paint** — stated by the footer.
 - **Ordering sensitivity**: appending the new notice last is what keeps the RFC 0037
   frames byte-identical; the composed-order battery pins it.
-- **Category causality**: `elk_layout_engine` is labelled `foreign-engine`; this RFC does
-  not change the label — the admitted rows are inert *in this family's text projection*
-  (proven by twins), while the remaining 15 rows across other families keep the engine
-  debt. The roster's `predicate_sufficiency` recomputes on emit.
+- **Category causality**: the roster is fallback-only, so the 23 admitted rows leave
+  `elk_layout_engine` and the remaining 15 rows keep the `foreign-engine` label — the
+  category is never mixed. The admitted rows are inert *in this family's text projection*
+  (proven by twins); other families' ELK rows keep the engine debt. On emit
+  `predicate_sufficiency` becomes 79 matches / 62 drawn / 17 fallback and
+  `sufficient_blocker` stays false.
 
 ## Alternatives considered
 
@@ -165,8 +184,9 @@ persisted data, wire protocol, CLI, or settings change.
 
 ## Testing and verification plan
 
-- New gate (5 gtests) + two hermetic `--check` entries (new generator + the existing RFC
-  0037 generator): expected `ctest -L mermaid` delta **+7**.
+- New gate (5 gtests) + two hermetic `--check` entries — one for the new generator and one
+  **newly registered** for `generate_requirement_0037_cohort.py` (which supports `--check`
+  but has no ctest entry today): expected `ctest -L mermaid` delta **+7**.
 - The RFC 0037 gate is the drawn-row regression oracle (120 rows) and must stay green.
 - Targeted `ctest -L mermaid`; release matrix; dual-preset byte gate at closure; full
   debug ctest once.
@@ -180,6 +200,9 @@ persisted data, wire protocol, CLI, or settings change.
 - [ ] `docs/decisions/design-decisions.md` — requirement layout admission entry
 - [ ] `docs/README.md` — RFC index
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — requirement row
+- [ ] `tools/mermaid/requirement-cohort.json` — the frozen D-204 snapshot keeps its rows
+      and counts; its `superseded_note` live-partition sentence is refreshed to the
+      post-RFC-0044 numbers
 
 ## Open questions
 
@@ -198,6 +221,7 @@ persisted data, wire protocol, CLI, or settings change.
 
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
+| 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | Scope, twin bytes, arithmetic, inertness and wiring all confirmed. BLOCKER: three existing assertions pin `layout: elk` as fallback (`test_mermaid_requirement_cohort.cpp` gated array + single-leaf battery, `test_mermaid_requirement_0037_cohort.cpp` keys battery) and were outside the plan → named as in-scope edits, each flip paired with a `layout: dagre` negative. MAJOR: the two remaining rows' stated causes were wrong (indented closing fence = malformed envelope; leading blank line = no `---\n` at offset 0), and nested maps total 3, not 2 → rewritten. MINOR: the 0037 generator's `EXCLUDED_EXPECTED["layout: elk"]` stays 24 (source-shape) with only the human sentence changing; the 0037 `--check` is a newly registered entry, not an existing one; NITs: scalar trims spaces only and dequotes an outer same-char pair (tabs rejected upstream), the notice-order claim is vacuous for old frames and pinned only for the new rows, and the roster is fallback-only so the category cannot mix. All folded |
 | 2026-11-22 | — | — | draft | Created provisional from D-413 |
 
 ## Implementation History

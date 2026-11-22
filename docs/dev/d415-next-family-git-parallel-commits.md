@@ -15,7 +15,7 @@ exact-bit。
 | 候选 | 行数 | 机制面 | twin | 判定 |
 |---|---|---|---|---|
 | **git `config.gitGraph.parallelCommits`** | **12**（false 2、true 10） | git 既有 `git_frontmatter` 准入通道，新增一个命名空间子树（`gitGraph` + 一个布尔叶） | 12/12 synthetic（无 corpus twin，RFC 0039 同例） | **选中** |
-| git 其余 `gitGraph.*` 组合（showBranches / showCommitLabel / rotateCommitLabel / mainBranchOrder / mainBranchName） | 32 | 同一通道但多叶 | — | 拒绝：改变渲染内容（隐藏分支/标签、改主分支名、改车道顺序） |
+| git 其余 `gitGraph.*` 组合（showBranches / showCommitLabel / rotateCommitLabel / mainBranchOrder / mainBranchName） | 32 | 同一通道但多叶 | — | 保守整体排除：除 1 条全默认值的 no-op 行外，其余改变渲染内容（隐藏分支/标签、改主分支名、改车道顺序） |
 | pie `donutHole` + `highlightSlice` | 5 | charts TU 新 profile | 部分 | 次选：行数少、两个叶子 |
 | ishikawa `useMaxWidth`/`diagramPadding` | 3 | 命名空间子树 | 待测 | 次选：行数少 |
 | state/venn/mindmap/tree-view/xychart/c4 零散 | 2–4 各 | 各族 TU | 部分 | 暂缓：机制面分散 |

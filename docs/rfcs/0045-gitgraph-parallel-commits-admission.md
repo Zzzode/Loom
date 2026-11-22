@@ -35,8 +35,10 @@ git is 135 originals, **70 drawn / 65 fallback**. The 65 fallbacks split by shap
 `mainBranchOrder`), plain-description rows 14 (body capability), look+theme rows 6 (body
 density, an RFC 0039 exception), title 1. The 12 `parallelCommits`-only rows are the
 largest clean slice in the remaining debt and reuse the family's existing admission
-channel; the 32 content-key rows are rejected (they change what is drawn), as are the
-smaller pie (5), ishikawa (3) and state/venn/mindmap slices.
+channel. The 32 content-key rows are excluded **conservatively as one slice**: they carry
+`showBranches`/`showCommitLabel`/`rotateCommitLabel`/`mainBranchName`/`mainBranchOrder`,
+and all but one default-valued no-op row change what is drawn. The smaller pie (5),
+ishikawa (3) and state/venn/mindmap slices are deferred.
 
 ### Evidence
 
@@ -92,10 +94,14 @@ In `git_frontmatter` (the envelope gate used by the git renderer):
   parser's).
 - Anything else — a different namespace name, a deeper leaf, a colon-less entry — rejects,
   as today.
-- The namespace without its leaf rejects (no empty `gitGraph:` block).
+- The namespace without its leaf rejects (**an explicit gate check**: `parse_envelope`
+  *emits* the namespace event for an empty `gitGraph:` block, and marking the namespace
+  sets a field bit that defeats the empty-config guard, so the gate must test
+  `(fields & GitGraphNs) && !(fields & Parallel)` itself). A colon-less entry is rejected
+  earlier by the parser (`colon == npos`).
 - The notice list gains, **last**:
   `config.gitGraph.parallelCommits=<value> -> parallel lane compaction; not applied`
-  (77 characters at most, under the 96-byte cap). Existing sequences are unchanged because
+  (78 bytes at most — the `false` variant — under the 96-byte cap). Existing sequences are unchanged because
   no already-drawn frame can carry the namespace.
 
 ### 2. Reviewed cohort, twin gate and wiring
@@ -109,7 +115,11 @@ In `git_frontmatter` (the envelope gate used by the git renderer):
   namespace + leaf, scalar normalization).
 - The RFC 0039 generator's `counts.namespaced` stays **44** and its `EXCLUDED`-style pins
   are source-shape; only the human `exclusions` sentence changes to "12 parallelCommits
-  rows admitted by RFC 0045, 32 namespaced rows remain". Its 12 rows do not change.
+  rows admitted by RFC 0045, 32 namespaced rows remain". That sentence is generator
+  source, so `tools/mermaid/git-0039-cohort.json` is **regenerated** (its 12 rows, counts
+  and pins do not change) — editing the sentence without regenerating would turn the
+  registered `MermaidGit0039Cohort.GeneratorIsReproducible` check red. The ledger file is
+  part of the phase commit.
 - Partition arithmetic is literal against the filesystem: 135 = 70 drawn + 12 admitted + 53
   remaining; the remaining split by roster category (34 `family_residual:git` +
   12 `git_cherry_pick` + 6 `look_neo` + 1 `multiline_label`).
@@ -122,7 +132,8 @@ In `git_frontmatter` (the envelope gate used by the git renderer):
 - Matrix branch before the RFC 0039 git branch and the generic fallback, reason
   `RFC-0045 gitGraph parallelCommits reviewed cohort`, `raw_active_schema` empty so the
   generic `originals_drawn` counter credits +12.
-- Roster: `--emit` 640 → 628, `family_residual:git` 46 → 34, categories stay 43.
+- Roster and ledgers: regenerate `git-0039-cohort.json` (sentence only), then `--emit`
+  640 → 628, `family_residual:git` 46 → 34, categories stay 43.
 - **Existing-assertion audit**: no current test pins `parallelCommits`; the two namespace
   negatives that exist (`mainBranchName: trunk` in `test_mermaid_gitgraph_semantics.cpp` and
   `test_mermaid_gitgraph_0039_cohort.cpp`) stay rejected and unchanged.
@@ -180,6 +191,7 @@ persisted data, wire protocol, CLI, or settings change.
 - [ ] `docs/dev/d416-git-parallel-commits-rfc0045-closure.md` — closure record
 - [ ] `docs/decisions/design-decisions.md` — gitGraph namespace admission entry
 - [ ] `docs/README.md` — RFC index (0045 row; the RFC 0039 row's "44 namespaced" clause)
+- [ ] `tools/mermaid/git-0039-cohort.json` — regenerated with the updated exclusions sentence
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — git row and headline
 
 ## Open questions
@@ -200,6 +212,7 @@ persisted data, wire protocol, CLI, or settings change.
 
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
+| 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | Scope (exactly 12), arithmetic (135=70+12+53; 53=34+12+6+1), grammar event shapes and the content-vs-layout argument all confirmed; the native projection draws commit identity/order and never reads the key, so the toggle is layout-only *with* the disclosure. 1 MAJOR + 3 MINOR + 2 NIT: the 0039 ledger must be regenerated because the exclusions sentence is generator source and the registered `--check` compares whole-file text; the footer is 78 bytes for `false`, not 77; the 32-row rationale overclaimed (one default-valued no-op row) → softened to a conservative slice exclusion; the empty-namespace rejection is a gate check, not a parser one (`parse_envelope` emits the namespace event), so the explicit `(GitGraphNs && !Parallel)` test is now a mechanism bullet. All folded |
 | 2026-11-22 | — | — | draft | Created provisional from D-415 |
 
 ## Implementation History

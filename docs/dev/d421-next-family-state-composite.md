@@ -44,12 +44,18 @@ useMaxWidth/logLevel/themeVariables）的只有 **9 行**，且集中为：
 
 | 阶段 | 形状 | 行数 | 代表 |
 |---|---|---|---|
-| P1 | 复合容器（`state X { … }`，单区域） | 5 | `v2-should-render-composite-states`、`…edge-labels…multiple-transitions`、`state/should-render-composite-states` |
-| P2 | 并发区域（容器内 `--` 分隔） | 19 | `concurrency-composite-containers-*`（4）、`regions-inside-nesting-*`（4）、v1/v2 `*-theme`（8）、`should-align-dividers-correctly`（1）、`v2/v1-should-render-concurrency-states`（2） |
-| P3 | 残余 3 行 | 3 | `v2-should-render-a-simple-info`、v1/v2 `…simple-state-diagrams-with-labels` |
+| P1 | 并发区域（`--` 分隔列） | 11 | `concurrency-composite-containers-*`（4）、`regions-inside-nesting-*`（4）、`should-align-dividers-correctly`（1）、v1/v2 `should-render-concurrency-states`（2） |
+| P2 | 前导 `%%{init}%%` + `accTitle`/`accDescr`（body 同样含区域，依赖 P1） | 8 | v1+v2 `{dark,default,forest,neutral}-theme` |
+| P3 | 带标签边的复合/fan-out 布线 | 7 | 3 个 next-line-brace 复合、v1/v2 `…simple-state-diagrams-with-labels`、v1/v2 pr `composite-states` |
+| 排除 | 非 state 体（`info` 指令） | 1 | `v2-should-render-a-simple-info` |
 
-目标（若三阶段全部落地）：state v2 **49 → 29**、state v1 **12 → 5**，全局
-608 → **581**；formal 1351 → **1378**。三数预测：①**581** ②**289** ③**27**。
+> 修订 2026-11-22（同日，RFC 起草时）：初版把“复合容器（titled box）”当作待建能力，
+> 经渲染管线勘察确认 **复合容器几何已存在并已绘制**（`EntityShape::Group` 递归布局，
+> state-0038 账本已钉 28 行），27 条残余的真实阻断是上表四类。
+
+目标（P1–P3 全部落地）：state v2 **49 → 29**、state v1 **12 → 5**，全局
+608 → **582**；formal 1351 → **1377**。三数预测：①**582** ②**289** ③**26**
+（`info` 行移出本 RFC 范围）。
 
 ## 4. #2621 预算（已完成，独立提交 `fef4aff0`）
 

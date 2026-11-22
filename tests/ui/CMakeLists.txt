@@ -300,6 +300,31 @@ add_test(NAME MermaidPie0042Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidPie0042Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# RFC 0043: the small-family admission ledger and the three family ledgers it
+# partitions are generator constants; these hermetic checks fail on drift.
+add_test(NAME MermaidSmallfam0043Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_smallfam_0043_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+add_test(NAME MermaidSmallfam0043Cohort.IshikawaLedgerIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_ishikawa_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+add_test(NAME MermaidSmallfam0043Cohort.VennLedgerIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_venn_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+add_test(NAME MermaidSmallfam0043Cohort.RailroadLedgerIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_railroad_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(
+    MermaidSmallfam0043Cohort.GeneratorIsReproducible
+    MermaidSmallfam0043Cohort.IshikawaLedgerIsReproducible
+    MermaidSmallfam0043Cohort.VennLedgerIsReproducible
+    MermaidSmallfam0043Cohort.RailroadLedgerIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # RFC 0030 Flow400 Extra7: metadata-only post-CTest admission join.
 add_test(NAME MermaidFlow400Extra7AdmissionJoin.RejectsIncompleteOrBorrowedVerdicts
     COMMAND "${LOOM_UI_LINT_PYTHON}" -I
@@ -972,6 +997,13 @@ add_executable(test_mermaid_c4_cohort test_mermaid_c4_cohort.cpp)
 target_link_libraries(test_mermaid_c4_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_c4_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+add_executable(test_mermaid_smallfam_0043_cohort test_mermaid_smallfam_0043_cohort.cpp)
+target_link_libraries(test_mermaid_smallfam_0043_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_smallfam_0043_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
 

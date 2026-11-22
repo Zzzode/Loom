@@ -56,13 +56,103 @@ def sha256_file(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+
+# RFC 0043: the admitted frontmatter shape is exactly one column-0 `config:`
+# block whose sole leaf is an indent-2 `theme` in this family's closed table.
+THEME_TABLE = {"dark", "redux-color", "redux-dark-color"}
+TRIM_COLUMN0_KEY = False
+
+
+def _theme_scalar(raw):
+    """Mirror the C++ TU-local af_scalar copy (renderer-free)."""
+    value = raw.strip(" \t")
+    quote = None
+    cut = None
+    for n, c in enumerate(value):
+        if quote is not None:
+            if c == quote:
+                quote = None
+            continue
+        if c in ("'", '"'):
+            quote = c
+            continue
+        if c == "#" and (n == 0 or value[n - 1] in " \t"):
+            cut = n
+            break
+    if cut is not None:
+        value = value[:cut].strip(" \t")
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        value = value[1:-1]
+    return value
+
+
+def frontmatter_theme(frontmatter):
+    """Return ('none' | 'admitted' | 'gated', theme).
+
+    Mirrors the C++ gate: a column-0 config block admits exactly one indent-2
+    theme leaf from the closed table; every other visual key gates.
+    """
+    if frontmatter is None:
+        return "none", None
+    in_config = False
+    saw_config = False
+    theme = None
+    for line in frontmatter.split("\n"):
+        # Blank means spaces/tabs only. The renderers pre-reject any tab in the
+        # source, so the C++ space-only key scan and this predicate agree on
+        # every reachable input; no fixture in the three families has a tab.
+        if line.strip(" \t") == "":
+            continue
+        key_start = len(line) - len(line.lstrip(" "))
+        if key_start != 0:
+            leaf = line[key_start:]
+            if in_config:
+                if leaf.startswith("#"):
+                    continue
+                colon = leaf.find(":")
+                if colon < 0 or leaf[:colon] != "theme" or key_start != 2 or theme is not None:
+                    return "gated", None
+                value = _theme_scalar(leaf[colon + 1:])
+                if value not in THEME_TABLE:
+                    return "gated", None
+                theme = value
+            else:
+                colon = leaf.find(":")
+                key = leaf[:colon] if colon >= 0 else leaf
+                if TRIM_COLUMN0_KEY:
+                    key = key.strip(" ")
+                if key in ("theme", "look", "config"):
+                    return "gated", None
+            continue
+        if line.startswith("#"):
+            continue
+        colon = line.find(":")
+        key = line[:colon] if colon >= 0 else line
+        if TRIM_COLUMN0_KEY:
+            key = key.strip(" ")
+        if key == "config":
+            if saw_config:
+                return "gated", None
+            saw_config = True
+            in_config = True
+        else:
+            if key in ("theme", "look"):
+                return "gated", None
+            in_config = False
+    if saw_config and theme is None:
+        return "gated", None
+    return ("admitted", theme) if theme is not None else ("none", None)
+
+
 def gate_kind(text, frontmatter, body):
-    """Return 'frontmatter', 'body_style' or None."""
-    if frontmatter is not None and re.search(r"^\s*(theme|look|config)\s*:",
-                                             frontmatter, re.M):
+    """Return 'frontmatter', 'admitted', 'body_style' or None."""
+    verdict, _theme = frontmatter_theme(frontmatter)
+    if verdict == "gated":
         return "frontmatter"
     if re.search(r"^\s*style\s+\w", body, re.M) or "classDef" in body or ":::" in body:
         return "body_style"
+    if verdict == "admitted":
+        return "admitted"
     return None
 
 
@@ -101,7 +191,7 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
-    draw, fm_gate, body_gate = set(), set(), set()
+    draw, admitted, fm_gate, body_gate = set(), set(), set(), set()
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
         text = path.read_text()
         rel = path.relative_to(
@@ -112,13 +202,20 @@ def build(repo_root):
             fm_gate.add(rel)
         elif kind == "body_style":
             body_gate.add(rel)
+        elif kind == "admitted":
+            admitted.add(rel)
         else:
             draw.add(rel)
 
-    if (len(draw), len(fm_gate), len(body_gate)) != (11, 7, 3):
+    if (len(draw), len(admitted), len(fm_gate), len(body_gate)) != (11, 3, 3, 4):
         raise ValueError(
-            f"venn partition drift: draw={len(draw)} frontmatter={len(fm_gate)} "
-            f"body_style={len(body_gate)} (expected 11/7/3)")
+            f"venn partition drift: draw={len(draw)} "
+            f"admitted={len(admitted)} frontmatter={len(fm_gate)} "
+            f"body_style={len(body_gate)} (expected 11/3/3/4)")
+
+    admitted_digest = hashlib.sha256("".join(
+        f"{rel}\t{manifest_rows[rel]['sha256']}\n" for rel in sorted(admitted)
+    ).encode()).hexdigest()
 
     rows = []
     for rel in sorted(draw):
@@ -169,7 +266,12 @@ def build(repo_root):
         "selection": {
             "rule": "venn fixtures with no frontmatter gate and no body style statement",
             "roots": ["venn"],
+            "admission_rfc": 43,
             "draw_count": len(draw),
+            "admitted_count": len(admitted),
+            "admitted": sorted(admitted),
+            "admitted_digest": admitted_digest,
+            "family_total": len(draw) + len(admitted) + len(fm_gate) + len(body_gate),
             "frontmatter_gated_count": len(fm_gate),
             "frontmatter_gated": sorted(fm_gate),
             "body_style_gated_count": len(body_gate),

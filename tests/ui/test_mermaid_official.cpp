@@ -6390,6 +6390,35 @@ const JourneyCohortEntry* pie_0042_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0043 small-family theme admission: the six reviewed theme-only rows of
+// ishikawa, venn and railroad promoted by their three closed tables, states
+// read per row. The per-row frame gate is
+// test_mermaid_smallfam_0043_cohort.
+const std::map<std::string, JourneyCohortEntry>& smallfam_0043_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/smallfam-0043-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "Small-family 0043 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "Small-family 0043 cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* smallfam_0043_cohort_row(std::string_view path) {
+    const auto& rows = smallfam_0043_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0031 D-211 sankey-family cohort: the single description-only sankey-beta
 // original admitted by mermaid_sankey_impl. The 17 config-gated fixtures have
 // no ledger row and keep their default source disposition.
@@ -10154,10 +10183,42 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // RFC 0043 small-family theme admission: the six reviewed
+            // theme-only originals promoted by the three closed tables, states
+            // read per row. Placed before every family cohort branch and the
+            // generic fallback so these rows cannot fall through to the
+            // manifest's source expectation.
+            if (class_path.is_str()) {
+                if (const auto* cohort = smallfam_0043_cohort_row(class_path.as_str())) {
+                    const std::string path_text(class_path.as_str());
+                    std::string type = "ishikawa";
+                    if (path_text.starts_with("venn/")) type = "venn";
+                    else if (path_text.starts_with("railroad/")) type = "railroad";
+                    Observation row;
+                    row.path = path_text;
+                    row.track = "original";
+                    row.type = type;
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "RFC-0043 small-family theme reviewed cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // RFC 0031 venn-family renderer: the eleven clean venn originals
             // are governed by their reviewed cohort ledger; the per-row pixel
-            // gate is test_mermaid_venn_cohort. The ten gated fixtures have no
-            // ledger row and keep their default source disposition.
+            // gate is test_mermaid_venn_cohort. The seven remaining gated fixtures
+            // have no ledger row and keep their default source disposition; the
+            // three admitted theme rows are credited by the RFC 0043 branch.
             if (class_path.is_str() && class_path.as_str().starts_with("venn/")) {
                 if (const auto* cohort = venn_cohort_row(class_path.as_str())) {
                     Observation row;
@@ -10321,9 +10382,10 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
 
             // RFC 0031 ishikawa-family renderer: the seven clean ishikawa
             // originals are governed by their reviewed cohort ledger; the
-            // per-row pixel gate is test_mermaid_ishikawa_cohort. The six
+            // per-row pixel gate is test_mermaid_ishikawa_cohort. The four
             // gated fixtures have no ledger row and keep their default source
-            // disposition.
+            // disposition; the two admitted theme rows are credited by the
+            // RFC 0043 branch.
             if (class_path.is_str() &&
                 class_path.as_str().starts_with("ishikawa/")) {
                 if (const auto* cohort = ishikawa_cohort_row(class_path.as_str())) {
@@ -10406,8 +10468,8 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             // RFC 0031 railroad-family renderer: the eight clean railroad
             // originals (four dialects) are governed by their reviewed
             // cohort ledger; the per-row pixel gate is
-            // test_mermaid_railroad_cohort. The one gated fixture has no
-            // ledger row and keeps its default source disposition.
+            // test_mermaid_railroad_cohort. No gated fixture remains; the one
+            // admitted theme row is credited by the RFC 0043 branch.
             if (class_path.is_str() &&
                 class_path.as_str().starts_with("railroad/")) {
                 if (const auto* cohort = railroad_cohort_row(class_path.as_str())) {

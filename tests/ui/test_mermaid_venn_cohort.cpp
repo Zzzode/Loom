@@ -83,8 +83,10 @@ TEST(MermaidVennCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_venn_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 11);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 11);
-    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 7);
-    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 3);
+    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 3);
+    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 4);
+    EXPECT_EQ(root.get("selection").get_int("admitted_count"), 3);
+    EXPECT_EQ(root.get("selection").get_int("family_total"), 21);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     const auto manifest = parse_doc(kManifest);
@@ -139,12 +141,35 @@ TEST(MermaidVennCohort, CleanVennsDrawOnWholeAndBodyTracks) {
 TEST(MermaidVennCohort, GatedVennsStayWholeSource) {
     const auto ledger = parse_doc(kLedger);
     const auto& selection = ledger.root().get("selection");
-    for (const auto* key : {"frontmatter_gated", "body_style_gated"}) {
-        selection.get(key).iter([&](JsonVal value) {
-            const auto rel = value.as_str();
-            EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
-        });
-    }
+    // RFC 0043: the partition sizes are asserted explicitly so a shrinking
+    // gate list cannot turn this loop vacuous. `explicit-set-style` moved to
+    // body_style because its admitted theme no longer explains its fallback.
+    int frontmatter = 0;
+    selection.get("frontmatter_gated").iter([&](JsonVal value) {
+        ++frontmatter;
+        EXPECT_FALSE(draws(read_file(kCases / value.as_str()), kWide)) << value.as_str();
+    });
+    EXPECT_EQ(frontmatter, 3);
+    int body_style = 0;
+    selection.get("body_style_gated").iter([&](JsonVal value) {
+        ++body_style;
+        EXPECT_FALSE(draws(read_file(kCases / value.as_str()), kWide)) << value.as_str();
+    });
+    EXPECT_EQ(body_style, 4);
+    int admitted = 0;
+    selection.get("admitted").iter([&](JsonVal value) {
+        ++admitted;
+        const auto rel = value.as_str();
+        const auto source = read_file(kCases / rel);
+        EXPECT_TRUE(draws(source, kWide)) << rel;
+        EXPECT_NE(capture(source, "mermaid", kWide).text.find("Venn native projection v1"),
+                  std::string::npos)
+            << rel;
+        EXPECT_NE(capture(source, "mermaid", kWide).text.find("config.theme="),
+                  std::string::npos)
+            << rel;
+    });
+    EXPECT_EQ(admitted, 3);
 }
 
 // Key-based gate: prose mentioning "style"/"theme" is not a gate; a frontmatter

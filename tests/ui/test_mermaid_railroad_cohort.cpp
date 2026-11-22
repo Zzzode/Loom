@@ -83,7 +83,9 @@ TEST(MermaidRailroadCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_railroad_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 8);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 8);
-    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 1);
+    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 0);
+    EXPECT_EQ(root.get("selection").get_int("admitted_count"), 1);
+    EXPECT_EQ(root.get("selection").get_int("family_total"), 9);
     EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 0);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
@@ -138,12 +140,36 @@ TEST(MermaidRailroadCohort, CleanRailroadsDrawOnWholeAndBodyTracks) {
 TEST(MermaidRailroadCohort, GatedRailroadStaysWholeSource) {
     const auto ledger = parse_doc(kLedger);
     const auto& selection = ledger.root().get("selection");
-    for (const auto* key : {"frontmatter_gated", "body_style_gated"}) {
-        selection.get(key).iter([&](JsonVal value) {
-            const auto rel = value.as_str();
-            EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
-        });
-    }
+    // RFC 0043: the gate lists are now empty, so a "must not draw" loop would
+    // pass on nothing. Assert the empty partition explicitly and pin the one
+    // admitted theme row as a draw plus its disclosure footer.
+    int frontmatter = 0;
+    selection.get("frontmatter_gated").iter([&](JsonVal value) {
+        ++frontmatter;
+        EXPECT_FALSE(draws(read_file(kCases / value.as_str()), kWide)) << value.as_str();
+    });
+    EXPECT_EQ(frontmatter, 0);
+    int body_style = 0;
+    selection.get("body_style_gated").iter([&](JsonVal value) {
+        ++body_style;
+        EXPECT_FALSE(draws(read_file(kCases / value.as_str()), kWide)) << value.as_str();
+    });
+    EXPECT_EQ(body_style, 0);
+    int admitted = 0;
+    selection.get("admitted").iter([&](JsonVal value) {
+        ++admitted;
+        const auto rel = value.as_str();
+        const auto source = read_file(kCases / rel);
+        EXPECT_TRUE(draws(source, kWide)) << rel;
+        EXPECT_NE(capture(source, "mermaid", kWide).text.find(
+                      "Railroad native projection v1"),
+                  std::string::npos)
+            << rel;
+        EXPECT_NE(capture(source, "mermaid", kWide).text.find("config.theme="),
+                  std::string::npos)
+            << rel;
+    });
+    EXPECT_EQ(admitted, 1);
 }
 
 TEST(MermaidRailroadCohort, VisualGateIsKeyBased) {

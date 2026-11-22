@@ -307,6 +307,145 @@ bool is_railroad_header(std::string_view header, Dialect& dialect) {
     return false;
 }
 
+// RFC 0043: a column-0 `config:` block whose sole leaf is an indent-2 `theme`
+// inside the closed corpus table is accepted and disclosed through a bounded
+// footer; every other frontmatter shape keeps the previous whole-source
+// fallback. The renderer never reads `theme`, so the footer states that the
+// palette was not applied.
+constexpr std::size_t kRailroadNoticeLineLimit = 96u;
+constexpr std::string_view kRailroadNoticeHeader = "Railroad native projection v1";
+constexpr std::array<std::string_view, 1> kRailroadThemeTable{{"dark"}};
+
+// Trim, strip a trailing YAML comment outside quotes, then dequote a matched
+// pair; an unmatched quote is a mismatch, never a value. TU-local copy of the
+// agentflow helper (RFC 0041) so no shared module is widened.
+std::optional<std::string> railroad_scalar(std::string_view raw, Work& work) {
+    const auto trim_view = [](std::string_view value) {
+        const auto first = value.find_first_not_of(" \t");
+        if (first == std::string_view::npos) return std::string_view{};
+        const auto last = value.find_last_not_of(" \t");
+        return value.substr(first, last - first + 1u);
+    };
+    auto value = trim_view(raw);
+    char quote = 0;
+    for (std::size_t n = 0; n < value.size(); ++n) {
+        const char c = value[n];
+        if (quote) {
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == '#' && (n == 0u || value[n - 1u] == ' ' || value[n - 1u] == '\t')) {
+            value = trim_view(value.substr(0, n));
+            break;
+        }
+    }
+    if (!work.spend(value.size() + 1u)) return std::nullopt;
+    if (value.size() >= 2u &&
+        ((value.front() == '"' && value.back() == '"') ||
+         (value.front() == '\'' && value.back() == '\'')))
+        value = value.substr(1u, value.size() - 2u);
+    return std::string(value);
+}
+
+bool railroad_notice_line(std::vector<std::string>& notices, std::string_view line,
+                          Work& work) {
+    if (line.size() > kRailroadNoticeLineLimit ||
+        !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+        return false;
+    notices.emplace_back(line);
+    return true;
+}
+
+// Returns true when the whole source must fall back. Otherwise `notices` holds
+// the bounded disclosure footer (empty when no theme leaf was admitted).
+bool railroad_frontmatter_gated(std::string_view source, std::vector<std::string>& notices,
+                                Work& work) {
+    if (!source.starts_with("---\n")) return false;
+    bool in_config = false;
+    bool saw_config = false;
+    std::optional<std::string> theme;
+    std::size_t search = 4;
+    while (search < source.size()) {
+        const auto nl = source.find('\n', search);
+        const std::string_view line =
+            source.substr(search, nl == std::string_view::npos ? std::string_view::npos
+                                                               : nl - search);
+        std::size_t i = 0;
+        bool is_fence = false;
+        if (line.size() >= 3 && line[0] == '-' && line[1] == '-' && line[2] == '-') {
+            i = 3;
+            while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) ++i;
+            is_fence = i == line.size();
+        }
+        if (is_fence) break;
+        const auto key_start = line.find_first_not_of(' ');
+        if (key_start == std::string_view::npos) {  // blank line
+            if (nl == std::string_view::npos) break;
+            search = nl + 1;
+            continue;
+        }
+        if (key_start != 0) {
+            const std::string_view leaf = line.substr(key_start);
+            if (in_config) {
+                if (!leaf.starts_with('#')) {  // YAML comment
+                    const auto colon = leaf.find(':');
+                    // The leaf key is compared raw in every family; the
+                    // column-0 trim below never widens this position.
+                    if (colon == std::string_view::npos ||
+                        leaf.substr(0, colon) != "theme" || key_start != 2u || theme)
+                        return true;
+                    auto value = railroad_scalar(leaf.substr(colon + 1u), work);
+                    if (!value ||
+                        std::ranges::find(kRailroadThemeTable, *value) ==
+                            kRailroadThemeTable.end())
+                        return true;
+                    theme = std::move(*value);
+                }
+            } else {
+                // Outside a config block the previous flat scan still gates
+                // every indented visual key (trimmed, as that scan did).
+                const auto colon = leaf.find(':');
+                const auto key = trim_spaces(leaf.substr(0, colon));
+                if (key == "theme" || key == "look" || key == "config") return true;
+            }
+            if (nl == std::string_view::npos) break;
+            search = nl + 1;
+            continue;
+        }
+        const std::string_view column0 = line;
+        if (column0.starts_with('#')) {  // YAML comment
+            if (nl == std::string_view::npos) break;
+            search = nl + 1;
+            continue;
+        }
+        const auto colon = column0.find(':');
+        // Preserve the previous trimmed column-0 key comparison so the
+        // YAML-legal "config : 42" spacing shape still gates.
+        const auto key = trim_spaces(column0.substr(0, colon));
+        if (key == "config") {
+            if (saw_config) return true;
+            saw_config = true;
+            in_config = true;
+        } else {
+            if (key == "theme" || key == "look") return true;
+            in_config = false;
+        }
+        if (nl == std::string_view::npos) break;
+        search = nl + 1;
+    }
+    if (saw_config && !theme) return true;
+    if (!theme) return false;
+    if (!railroad_notice_line(notices, kRailroadNoticeHeader, work)) return true;
+    std::string line = "config.theme=";
+    line += *theme;
+    line += " -> colour palette; not applied";
+    return !railroad_notice_line(notices, line, work);
+}
+
 }  // namespace
 
 std::optional<std::vector<std::string>> railroad_layout(std::string_view source,
@@ -323,58 +462,25 @@ std::optional<std::vector<std::string>> railroad_layout(std::string_view source,
     const std::string_view body = railroad_body(source);
     // No track/color contract: a frontmatter theme/look/config key, an
     // %%{init}%% directive or a classDef/:::/style statement keeps the whole
-    // source on fallback. Trim the key before comparing so the YAML-legal
-    // "config : 42" spacing shape still gates.
-    {
-        bool visual_gate = false;
-        if (source.starts_with("---\n")) {
-            std::size_t search = 4;
-            while (search < source.size()) {
-                const auto nl = source.find('\n', search);
-                const std::string_view line =
-                    source.substr(search, nl == std::string_view::npos
-                                                      ? std::string_view::npos
-                                                      : nl - search);
-                std::size_t i = 0;
-                bool is_fence = false;
-                if (line.size() >= 3 && line[0] == '-' && line[1] == '-' && line[2] == '-') {
-                    i = 3;
-                    while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) ++i;
-                    is_fence = i == line.size();
-                }
-                const auto key_start = line.find_first_not_of(' ');
-                if (!is_fence && key_start != std::string_view::npos) {
-                    std::string_view key = line.substr(key_start);
-                    const auto colon = key.find(':');
-                    if (colon != std::string_view::npos)
-                        key = trim_spaces(key.substr(0, colon));
-                    if (key == "theme" || key == "look" || key == "config")
-                        visual_gate = true;
-                }
-                if (is_fence) break;
-                if (nl == std::string_view::npos) break;
-                search = nl + 1;
-            }
+    // source on fallback. The single admitted exception is RFC 0043's
+    // config-block theme leaf, disclosed through `notices`.
+    std::vector<std::string> notices;
+    if (railroad_frontmatter_gated(source, notices, work)) return {};
+    for (std::size_t pos = 0;;) {
+        const auto eol = body.find('\n', pos);
+        std::string_view line = body.substr(
+            pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
+        pos = eol == std::string_view::npos ? body.size() : eol + 1;
+        const auto trimmed = line.find_first_not_of(' ');
+        if (trimmed != std::string_view::npos) {
+            const std::string_view content = line.substr(trimmed);
+            if (content.starts_with("%%{init") ||
+                content.starts_with("classDef") ||
+                content.starts_with("style ") ||
+                content.find(":::") != std::string_view::npos)
+                return {};
         }
-        if (!visual_gate) {
-            for (std::size_t pos = 0;;) {
-                const auto eol = body.find('\n', pos);
-                std::string_view line = body.substr(
-                    pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
-                pos = eol == std::string_view::npos ? body.size() : eol + 1;
-                const auto trimmed = line.find_first_not_of(' ');
-                if (trimmed != std::string_view::npos) {
-                    const std::string_view content = line.substr(trimmed);
-                    if (content.starts_with("%%{init") ||
-                        content.starts_with("classDef") ||
-                        content.starts_with("style ") ||
-                        content.find(":::") != std::string_view::npos)
-                        visual_gate = true;
-                }
-                if (eol == std::string_view::npos) break;
-            }
-        }
-        if (visual_gate) return {};
+        if (eol == std::string_view::npos) break;
     }
 
     bool saw_header = false;
@@ -458,6 +564,18 @@ std::optional<std::vector<std::string>> railroad_layout(std::string_view source,
         combined.push_back(header_text);
         combined.insert(combined.end(), out.begin(), out.end());
         out = std::move(combined);
+    }
+    // RFC 0043: disclose the validated, not-applied theme leaf below the art,
+    // with one blank separator, under the same row/Work budget.
+    if (!notices.empty()) {
+        std::size_t bytes = 0;
+        for (const auto& notice : notices) bytes += notice.size();
+        if (out.size() + 1u + notices.size() > kRailroadMaxRows ||
+            !work.spend((1u + notices.size()) * (4u * sizeof(std::string) + 256u) +
+                        bytes * 2u + 256u))
+            return {};
+        out.emplace_back();
+        for (const auto& notice : notices) out.push_back(notice);
     }
     return out;
 }

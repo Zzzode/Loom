@@ -17,14 +17,20 @@
     "roots": [
       "ishikawa"
     ],
+    "admission_rfc": 43,
     "draw_count": 7,
-    "frontmatter_gated_count": 6,
+    "admitted_count": 2,
+    "admitted": [
+      "ishikawa/pr-check/7-should-render-with-forest-theme.mmd",
+      "ishikawa/pr-check/8-should-render-with-dark-theme.mmd"
+    ],
+    "admitted_digest": "86bc351b0d6a32a82049f4d6c847ef0aba687d4a96edfd9f416fff2918773c37",
+    "family_total": 13,
+    "frontmatter_gated_count": 4,
     "frontmatter_gated": [
       "ishikawa/nightly-check/should-render-usemaxwidth-false.mmd",
       "ishikawa/nightly-check/should-render-usemaxwidth-true.mmd",
       "ishikawa/pr-check/6-should-render-with-handdrawn-look.mmd",
-      "ishikawa/pr-check/7-should-render-with-forest-theme.mmd",
-      "ishikawa/pr-check/8-should-render-with-dark-theme.mmd",
       "ishikawa/pr-check/9-should-render-with-custom-diagrampadding.mmd"
     ],
     "body_style_gated_count": 0,

@@ -17,11 +17,16 @@
     "roots": [
       "railroad"
     ],
+    "admission_rfc": 43,
     "draw_count": 8,
-    "frontmatter_gated_count": 1,
-    "frontmatter_gated": [
+    "admitted_count": 1,
+    "admitted": [
       "railroad/pr-check/ir-dark-theme.mmd"
     ],
+    "admitted_digest": "6a3dfedf2b6d0683978a138b77feb4369158eaf4f1689557bc01689693d3cc28",
+    "family_total": 9,
+    "frontmatter_gated_count": 0,
+    "frontmatter_gated": [],
     "body_style_gated_count": 0,
     "body_style_gated": []
   },

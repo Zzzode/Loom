@@ -81,7 +81,9 @@ class Detector:
 
 
 # Causality value assigned to every family_residual:* category. Kept as a
-# constant so the self-test can prove all 44 categories carry exactly one label.
+# constant so the self-test can prove every category carries exactly one label
+# (the category count is dynamic: a family_residual bucket disappears when its
+# rows are all admitted, e.g. railroad under RFC 0043).
 FAMILY_RESIDUAL_CAUSALITY = "family-scoped-debt"
 
 

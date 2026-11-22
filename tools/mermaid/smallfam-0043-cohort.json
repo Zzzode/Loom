@@ -1,0 +1,234 @@
+{
+  "schema": "loom_mermaid_smallfam_0043_cohort/v1",
+  "rfc": 43,
+  "phase": "P1-theme-admission",
+  "admission": {
+    "shape": "exactly one column-0 `config:` block whose sole leaf is an indent-2 `theme` in the family's closed table",
+    "theme_tables": {
+      "ishikawa": [
+        "dark",
+        "forest"
+      ],
+      "venn": [
+        "dark",
+        "redux-color",
+        "redux-dark-color"
+      ],
+      "railroad": [
+        "dark"
+      ]
+    },
+    "footer": {
+      "headers": {
+        "ishikawa": "Ishikawa native projection v1",
+        "venn": "Venn native projection v1",
+        "railroad": "Railroad native projection v1"
+      },
+      "line_template": "config.theme=<value> -> colour palette; not applied",
+      "line_limit_bytes": 96,
+      "per_line_charge": "size*4 + sizeof(std::string) + 32",
+      "emission_charge": "(1 + n) * (4*sizeof(std::string) + 256) + bytes*2 + 256"
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "theme-only frontmatter rows of the three key-gated small families, admitted through one closed per-family table",
+    "families": [
+      "ishikawa",
+      "railroad",
+      "venn"
+    ],
+    "census": {
+      "ishikawa": {
+        "drawn": 7,
+        "admitted": 2,
+        "other": 4
+      },
+      "venn": {
+        "drawn": 11,
+        "admitted": 3,
+        "other": 7
+      },
+      "railroad": {
+        "drawn": 8,
+        "admitted": 1,
+        "other": 0
+      }
+    },
+    "path_pin": [
+      "ishikawa/pr-check/7-should-render-with-forest-theme.mmd",
+      "ishikawa/pr-check/8-should-render-with-dark-theme.mmd",
+      "venn/nightly-check/9-should-render-with-dark-theme.mmd",
+      "venn/nightly-check/three-sets-redux-color-theme.mmd",
+      "venn/nightly-check/three-sets-redux-dark-color-theme.mmd",
+      "railroad/pr-check/ir-dark-theme.mmd"
+    ],
+    "cohort_digest": "de0e0cedc4e360665b4d781fd658483c76271da715af11d2ba314d31af1bc7bc",
+    "twin_rule": "wide-only frame equality = twin frame + the literal footer delta through the same sentinel wrapper; narrow measured live, never inherited from the twin"
+  },
+  "counts": {
+    "originals": 43,
+    "drawn": 26,
+    "admitted": 6,
+    "other": 11
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, RFC 0043 small-family theme admission, 2026-11-22; APPROVE with zero BLOCKER/MAJOR; 3 MINOR + 1 NIT resolved before the phase commit and re-verified by the gate)",
+    "date": "2026-11-22",
+    "verdict": "approved",
+    "note": "Reviewer ran the live binaries: the gate, the three family cohort tests and the four hermetic --check entries; the only red was the intentionally pending review verdict this record now supplies. Verified gate fidelity against git diff and af_frontmatter_gated (indented visual keys still gate, column-0 passthrough closes the block, folded payload before/after config, fence rules, railroad column-0 trim only, tabs pre-rejected), af_scalar parity and Work charges, footer budgets with venn's 512-row cap including title rows, generator/C++ verdict parity, digest order, non-vacuous tests, and matrix branch placement. Items fixed: the quoted/comment/blank scalar positives now run for every family, dead census code removed from the four generators, the venn signature line restored, and the generator's tab-blank parity documented."
+  },
+  "rows": [
+    {
+      "path": "ishikawa/pr-check/7-should-render-with-forest-theme.mmd",
+      "family": "ishikawa",
+      "theme": "forest",
+      "sha256": "fd79a57bc23e3c35f6685e16e4d6c335dfabd778173d93cac1579a3927e46f76",
+      "manifest_sha256": "fd79a57bc23e3c35f6685e16e4d6c335dfabd778173d93cac1579a3927e46f76",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Ishikawa native projection v1",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "twin": {
+        "kind": "corpus",
+        "path": "ishikawa/pr-check/1-should-render-a-simple-ishikawa-diagram.mmd",
+        "sha256": "5b1ddb57e8867d7c6ad4fb957025397469414a5187d55e4e0169bd3f6f6d5c1c"
+      },
+      "ledger_note": "inert config.theme leaf admitted by the RFC 0043 closed table; the renderer never reads the value and the footer discloses it"
+    },
+    {
+      "path": "ishikawa/pr-check/8-should-render-with-dark-theme.mmd",
+      "family": "ishikawa",
+      "theme": "dark",
+      "sha256": "a08ef984b8e4dba6ab27271c9e0a7590b7203a24723888e34c2659bd217e72c4",
+      "manifest_sha256": "a08ef984b8e4dba6ab27271c9e0a7590b7203a24723888e34c2659bd217e72c4",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Ishikawa native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "twin": {
+        "kind": "corpus",
+        "path": "ishikawa/pr-check/1-should-render-a-simple-ishikawa-diagram.mmd",
+        "sha256": "5b1ddb57e8867d7c6ad4fb957025397469414a5187d55e4e0169bd3f6f6d5c1c"
+      },
+      "ledger_note": "inert config.theme leaf admitted by the RFC 0043 closed table; the renderer never reads the value and the footer discloses it"
+    },
+    {
+      "path": "venn/nightly-check/9-should-render-with-dark-theme.mmd",
+      "family": "venn",
+      "theme": "dark",
+      "sha256": "7f879b5156f88b884703e369f48dc98ea9278b15ec8bc3abe4baa6ce65f47471",
+      "manifest_sha256": "7f879b5156f88b884703e369f48dc98ea9278b15ec8bc3abe4baa6ce65f47471",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Venn native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic"
+      },
+      "ledger_note": "inert config.theme leaf admitted by the RFC 0043 closed table; the renderer never reads the value and the footer discloses it"
+    },
+    {
+      "path": "venn/nightly-check/three-sets-redux-color-theme.mmd",
+      "family": "venn",
+      "theme": "redux-color",
+      "sha256": "dfb83d14867d6b1bac388a8339deb994e9a8a67f12408484b962ecde3b213002",
+      "manifest_sha256": "dfb83d14867d6b1bac388a8339deb994e9a8a67f12408484b962ecde3b213002",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Venn native projection v1",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "twin": {
+        "kind": "corpus",
+        "path": "venn/pr-check/16-should-render-a-venn-diagram-with-a-3-set-union-without-explicit-pairwise-subsets.mmd",
+        "sha256": "3cbe87be26598706bc0ffbcef0c9614659a7e36ee53c03ebd6a094f727e9c03c"
+      },
+      "ledger_note": "inert config.theme leaf admitted by the RFC 0043 closed table; the renderer never reads the value and the footer discloses it"
+    },
+    {
+      "path": "venn/nightly-check/three-sets-redux-dark-color-theme.mmd",
+      "family": "venn",
+      "theme": "redux-dark-color",
+      "sha256": "3951e97074399db7f458a8a69238f9c83a14e21fc58cdfae4aeb2052d84f943a",
+      "manifest_sha256": "3951e97074399db7f458a8a69238f9c83a14e21fc58cdfae4aeb2052d84f943a",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Venn native projection v1",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "twin": {
+        "kind": "corpus",
+        "path": "venn/pr-check/16-should-render-a-venn-diagram-with-a-3-set-union-without-explicit-pairwise-subsets.mmd",
+        "sha256": "3cbe87be26598706bc0ffbcef0c9614659a7e36ee53c03ebd6a094f727e9c03c"
+      },
+      "ledger_note": "inert config.theme leaf admitted by the RFC 0043 closed table; the renderer never reads the value and the footer discloses it"
+    },
+    {
+      "path": "railroad/pr-check/ir-dark-theme.mmd",
+      "family": "railroad",
+      "theme": "dark",
+      "sha256": "320d5234dfd5cdef1d8e4c0fa521faea7cebcc35ac339d0ef0fcb32b8c7609cb",
+      "manifest_sha256": "320d5234dfd5cdef1d8e4c0fa521faea7cebcc35ac339d0ef0fcb32b8c7609cb",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Railroad native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic"
+      },
+      "ledger_note": "inert config.theme leaf admitted by the RFC 0043 closed table; the renderer never reads the value and the footer discloses it"
+    }
+  ]
+}

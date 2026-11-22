@@ -157,6 +157,135 @@ bool venn_wrap(const std::string& label, Work& work, std::vector<std::string>& o
     return flush();
 }
 
+// RFC 0043: a column-0 `config:` block whose sole leaf is an indent-2 `theme`
+// inside the closed corpus table is accepted and disclosed through a bounded
+// footer; every other frontmatter shape keeps the previous whole-source
+// fallback. The renderer never reads `theme`, so the footer states that the
+// palette was not applied.
+constexpr std::size_t kVennNoticeLineLimit = 96u;
+constexpr std::string_view kVennNoticeHeader = "Venn native projection v1";
+constexpr std::array<std::string_view, 3> kVennThemeTable{
+    {"dark", "redux-color", "redux-dark-color"}};
+
+// Trim, strip a trailing YAML comment outside quotes, then dequote a matched
+// pair; an unmatched quote is a mismatch, never a value. TU-local copy of the
+// agentflow helper (RFC 0041) so no shared module is widened.
+std::optional<std::string> venn_scalar(std::string_view raw, Work& work) {
+    const auto trim_view = [](std::string_view value) {
+        const auto first = value.find_first_not_of(" \t");
+        if (first == std::string_view::npos) return std::string_view{};
+        const auto last = value.find_last_not_of(" \t");
+        return value.substr(first, last - first + 1u);
+    };
+    auto value = trim_view(raw);
+    char quote = 0;
+    for (std::size_t n = 0; n < value.size(); ++n) {
+        const char c = value[n];
+        if (quote) {
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == '#' && (n == 0u || value[n - 1u] == ' ' || value[n - 1u] == '\t')) {
+            value = trim_view(value.substr(0, n));
+            break;
+        }
+    }
+    if (!work.spend(value.size() + 1u)) return std::nullopt;
+    if (value.size() >= 2u &&
+        ((value.front() == '"' && value.back() == '"') ||
+         (value.front() == '\'' && value.back() == '\'')))
+        value = value.substr(1u, value.size() - 2u);
+    return std::string(value);
+}
+
+bool venn_notice_line(std::vector<std::string>& notices, std::string_view line, Work& work) {
+    if (line.size() > kVennNoticeLineLimit ||
+        !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+        return false;
+    notices.emplace_back(line);
+    return true;
+}
+
+// Returns true when the whole source must fall back. Otherwise `notices` holds
+// the bounded disclosure footer (empty when no theme leaf was admitted).
+bool venn_frontmatter_gated(std::string_view source, std::vector<std::string>& notices,
+                            Work& work) {
+    if (!source.starts_with("---\n")) return false;
+    // The venn fence rule is exact "\n---\n"; an unclosed envelope does not
+    // gate, exactly as before.
+    const auto close = source.find("\n---\n", 4);
+    if (close == std::string_view::npos) return false;
+    const std::string_view frontmatter = source.substr(4, close - 4);
+    bool in_config = false;
+    bool saw_config = false;
+    std::optional<std::string> theme;
+    for (std::size_t pos = 0;;) {
+        const auto eol = frontmatter.find('\n', pos);
+        const std::string_view line = frontmatter.substr(
+            pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
+        pos = eol == std::string_view::npos ? frontmatter.size() : eol + 1;
+        const auto key_start = line.find_first_not_of(' ');
+        if (key_start == std::string_view::npos) {  // blank line
+            if (eol == std::string_view::npos) break;
+            continue;
+        }
+        if (key_start != 0) {
+            const std::string_view leaf = line.substr(key_start);
+            if (in_config) {
+                if (!leaf.starts_with('#')) {  // YAML comment
+                    const auto colon = leaf.find(':');
+                    if (colon == std::string_view::npos ||
+                        leaf.substr(0, colon) != "theme" || key_start != 2u || theme)
+                        return true;
+                    auto value = venn_scalar(leaf.substr(colon + 1u), work);
+                    if (!value ||
+                        std::ranges::find(kVennThemeTable, *value) == kVennThemeTable.end())
+                        return true;
+                    theme = std::move(*value);
+                }
+            } else {
+                // Outside a config block the previous flat scan still gates
+                // every indented visual key; other indented lines are ignored.
+                const auto colon = leaf.find(':');
+                const auto key = leaf.substr(0, colon);
+                if (key == "theme" || key == "look" || key == "config") return true;
+            }
+            if (eol == std::string_view::npos) break;
+            continue;
+        }
+        const std::string_view column0 = line;
+        if (column0.starts_with('#')) {  // YAML comment
+            if (eol == std::string_view::npos) break;
+            continue;
+        }
+        const auto colon = column0.find(':');
+        const auto key = column0.substr(0, colon);
+        if (key == "config") {
+            if (saw_config) return true;
+            saw_config = true;
+            in_config = true;
+        } else {
+            // `description` and every other column-0 key keep the previous
+            // passthrough and close an open config block; a bare visual key
+            // still gates.
+            if (key == "theme" || key == "look") return true;
+            in_config = false;
+        }
+        if (eol == std::string_view::npos) break;
+    }
+    if (saw_config && !theme) return true;
+    if (!theme) return false;
+    if (!venn_notice_line(notices, kVennNoticeHeader, work)) return true;
+    std::string line = "config.theme=";
+    line += *theme;
+    line += " -> colour palette; not applied";
+    return !venn_notice_line(notices, line, work);
+}
+
 }  // namespace
 
 std::optional<std::vector<std::string>> venn_layout(std::string_view source, Work& work) {
@@ -173,48 +302,22 @@ std::optional<std::vector<std::string>> venn_layout(std::string_view source, Wor
     // No color/layout contract: a frontmatter theme/look/config key, an in-body
     // style assignment, classDef or ::: tag keeps the whole source on fallback.
     // Key-based so the words "style"/"theme" in prose or a name are not gates.
-    {
-        bool visual_gate = false;
-        if (source.starts_with("---\n")) {
-            const auto close = source.find("\n---\n", 4);
-            if (close != std::string_view::npos) {
-                const std::string_view frontmatter(source.data(), close);
-                for (std::size_t pos = 0;;) {
-                    const auto eol = frontmatter.find('\n', pos);
-                    std::string_view line = frontmatter.substr(
-                        pos, eol == std::string_view::npos ? std::string_view::npos
-                                                           : eol - pos);
-                    pos = eol == std::string_view::npos ? frontmatter.size() : eol + 1;
-                    const auto key_start = line.find_first_not_of(' ');
-                    if (key_start != std::string_view::npos) {
-                        std::string_view key = line.substr(key_start);
-                        const auto colon = key.find(':');
-                        if (colon != std::string_view::npos) key = key.substr(0, colon);
-                        if (key == "theme" || key == "look" || key == "config")
-                            visual_gate = true;
-                    }
-                    if (eol == std::string_view::npos) break;
-                }
-            }
+    // The single admitted exception is RFC 0043's config-block theme leaf.
+    std::vector<std::string> notices;
+    if (venn_frontmatter_gated(source, notices, work)) return {};
+    for (std::size_t pos = 0;;) {
+        const auto eol = body.find('\n', pos);
+        std::string_view line = body.substr(
+            pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
+        pos = eol == std::string_view::npos ? body.size() : eol + 1;
+        const auto trimmed = line.find_first_not_of(' ');
+        if (trimmed != std::string_view::npos) {
+            const std::string_view content = line.substr(trimmed);
+            if (content.starts_with("style ") || content.starts_with("classDef") ||
+                content.find(":::") != std::string_view::npos)
+                return {};
         }
-        if (!visual_gate) {
-            for (std::size_t pos = 0;;) {
-                const auto eol = body.find('\n', pos);
-                std::string_view line = body.substr(
-                    pos, eol == std::string_view::npos ? std::string_view::npos
-                                                       : eol - pos);
-                pos = eol == std::string_view::npos ? body.size() : eol + 1;
-                const auto trimmed = line.find_first_not_of(' ');
-                if (trimmed != std::string_view::npos) {
-                    const std::string_view content = line.substr(trimmed);
-                    if (content.starts_with("style ") || content.starts_with("classDef") ||
-                        content.find(":::") != std::string_view::npos)
-                        visual_gate = true;
-                }
-                if (eol == std::string_view::npos) break;
-            }
-        }
-        if (visual_gate) return {};
+        if (eol == std::string_view::npos) break;
     }
 
     bool saw_header = false;
@@ -368,6 +471,18 @@ std::optional<std::vector<std::string>> venn_layout(std::string_view source, Wor
         out = std::move(combined);
     }
     if (out.empty()) return {};
+    // RFC 0043: disclose the validated, not-applied theme leaf below the art,
+    // after the title combine so the cap counts the same rows it always did.
+    if (!notices.empty()) {
+        std::size_t bytes = 0;
+        for (const auto& notice : notices) bytes += notice.size();
+        if (out.size() + 1u + notices.size() > kVennMaxRows ||
+            !work.spend((1u + notices.size()) * (4u * sizeof(std::string) + 256u) +
+                        bytes * 2u + 256u))
+            return {};
+        out.emplace_back();
+        for (const auto& notice : notices) out.push_back(notice);
+    }
     return out;
 }
 

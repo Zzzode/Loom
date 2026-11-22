@@ -1,9 +1,9 @@
 ---
 rfc: 43
 title: ishikawa, venn and railroad theme admission
-status: implementable
+status: implemented
 owners: "@Zzzode"
-reviewers: ["agent:design-review", "agent:prr-review"]
+reviewers: ["agent:design-review", "agent:prr-review", "agent:code-review"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -246,7 +246,7 @@ the whole source on fallback.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | `theme` admission | 6 rows, 3 families | proposed | ishikawa 7/6 → **9/4**; venn 11/10 → **14/7**; railroad 8/1 → **9/0**; global 1476/669 → **1482/663**; formal **1290 → 1296**; gaps 48, integrity 0; narrow measured per row; dual-preset sha recorded |
+| P1 | `theme` admission | 6 rows, 3 families | **done** | measured: ishikawa **9/4**; venn **14/7**; railroad **9/0**; global **1482/663**; formal **1290 → 1296**; gaps 48, integrity 0; narrow **0/6** live; dual-preset sha `8de4c546…`; full debug ctest 4667/4667 |
 
 Closure: full debug ctest once (D-401 §7 discipline), dual-preset byte gate, RFC
 `implemented`, closure doc, design-decisions entry, efficiency retro.
@@ -314,7 +314,7 @@ design reviewer). The questionnaire rows:
 |---|---|---|---|
 | Design | agent:design-review | 2026-11-22 | approve (r3) |
 | Production readiness | agent:prr-review | 2026-11-22 | approve (6 MINOR + 2 NIT folded) |
-| Code (per phase) | pending | — | — |
+| Code (per phase) | agent:code-review | 2026-11-22 | approve (3 MINOR + 1 NIT folded) |
 
 ## Rollout and rollback
 
@@ -372,9 +372,9 @@ data, no wire protocol, no CLI contract changes.
 
 ## Documentation impact
 
-- [ ] `docs/dev/d410-fallback-root-cause-bill.md` — measured 5a/5b/5c/5d split (done)
-- [ ] `docs/dev/d411-next-family-ishikawa-venn-railroad.md` — selection (done)
-- [ ] `docs/dev/d412-small-family-rfc0043-closure.md` — closure record
+- [x] `docs/dev/d410-fallback-root-cause-bill.md` — measured 5a/5b/5c/5d split
+- [x] `docs/dev/d411-next-family-ishikawa-venn-railroad.md` — selection
+- [x] `docs/dev/d412-small-family-rfc0043-closure.md` — closure record
 - [ ] `docs/decisions/design-decisions.md` — small-family admission entry
 - [ ] `docs/README.md` — RFC index
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — ishikawa/venn/railroad rows
@@ -407,6 +407,7 @@ data, no wire protocol, no CLI contract changes.
 | 2026-11-22 | r2 | agent:design-review | REQUEST-CHANGES | Scope (exactly 6), endpoints, roster, twins, scalar, +10 delta, protected files all confirmed. 2 MAJOR + 4 MINOR + 1 NIT: (1) venn partition is 11+3+3+4, not 11+3+4+3 — `explicit-set-style-over-redux-palette` reclassifies to body_style once its theme is admitted (this also refutes r1's folded "7→4" pin; correct pin 7→3, body 3→4); (2) the §2 row "config first, description after → rejected" contradicted the grammar (column-0 description closes the block) → relabeled and the positive added; MINORs: matrix commentary values are 4/7/0, agentflow has no `admitted` path list (kept the list and added a sibling↔family cross-check), venn footer cap must count title rows, missing unrelated-column-0 passthrough positive; NIT: narrow 0/6 is expectation-until-measured with the RFC 0041 precedent. All folded |
 | 2026-11-22 | r3 | agent:design-review | **APPROVE-TO-ACCEPT** | All r2 folds re-derived and confirmed (venn 11+3+3+4, §2 config/description semantics against `af_frontmatter_gated`, pin numbers 6→4/7→3/3→4/1→0, matrix commentary 4/7/0). One NIT: the RFC 0041 narrow precedent said "identical 48-character line"; the 9 rows' lines vary 48–60 and are all narrow `source` → reworded. Gate: provisional → accepted |
 | 2026-11-22 | PRR | agent:prr-review | **APPROVE-TO-IMPLEMENT** | Independently confirmed: corpus twins byte-identical, endpoints/roster/partition arithmetic, footer lengths, inline-gate reachability (no interface change), matrix branch placement cannot shadow, generators green pre-registration, roster category removal clean, one-revert rollback, protected ten untouched. 6 MINOR + 2 NIT folded: venn footer append point + `art_rows = out.size()` after the title combine; nested leaf key compared raw (`  theme : dark` rejects everywhere); digest defined (`path\tsha256\n`); partition check is literal arithmetic against the filesystem total; red-first baseline step; PRR questionnaire filled; six TEST names + `LABELS "mermaid"`; audit/d394 doc edits named. Gate: accepted → implementable |
+| 2026-11-22 | P1 | agent:code-review | **APPROVE** | Independent read-only review ran the live binaries: gate, three family cohort tests and four hermetic checks. Verified gate fidelity against `git diff` and `af_frontmatter_gated`, af_scalar/Work parity, footer budgets with venn's 512-row cap including title rows, generator/C++ verdict parity, digest order, non-vacuous tests, matrix branch placement. 3 MINOR + 1 NIT folded: scalar normalizations now run for every family, dead census/`case_base` code removed, venn signature line restored, tab-blank parity documented |
 | 2026-11-22 | — | — | draft | Created provisional from D-410's 5d bucket |
 
 ## Implementation History
@@ -417,3 +418,4 @@ data, no wire protocol, no CLI contract changes.
 | 2026-11-22 | — | Revised after design review r1; no code | 6c6d0993 |
 | 2026-11-22 | — | Folded design review r2; accepted; no code | 2f07e491 |
 | 2026-11-22 | — | Accepted after design r3; PRR folded; implementable; no code | a7953e42 |
+| 2026-11-22 | P1 | theme admission implemented: three TU gates + footers, six rows promoted, sibling ledger, gate + hermetic checks, matrix branch, roster 669→663 | 7aa711a3 |

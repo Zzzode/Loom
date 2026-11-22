@@ -51,6 +51,10 @@
 
 合计校验：819（16 大族）+ 87（尾部）= 906 ✓。工作流曾报 912——原因是尾部两组 agent 把 c4 9 行双计并漏掉 conf-and-directives 3 行（评审与收益排序器均独立发现此错）；本表以实测逐族数校正。
 
+> **历史快照说明（2026-11-22）**：本表是 D-394 时点（2026-11-21）的盘点，此后 RFC 0039–0043
+> 已晋升 git/journey/gantt/timeline/agentflow/pie/ishikawa/venn/railroad 的 63 行；表中 ishikawa 6、
+> venn 10、railroad 1 等数字不再代表当前状态，当前数字以 D-117 台账与 `fallback_roster.json` 为准。
+
 ## 4. 布局算法 / 外部库结论（"参考成熟实现"的落地形态）
 
 | 选项 | 判定 | 依据 |

@@ -4527,3 +4527,46 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   → `--matrix`; `--matrix` before `--emit` fails by construction (live 669 vs
   pinned 674) — the same correction applies to RFC 0041's identically worded
   sentence.
+
+## small-family theme admission (RFC 0043)
+
+- **Scope.** Six frontmatter-only rows across ishikawa (2), venn (3) and railroad (1)
+  were the last fallbacks whose sole blocker was an inert `config.theme` leaf. The
+  seventh row of the same shape (`conf-and-directives/...settings-from-initialize-nodes`)
+  belongs to the flowchart mechanism and stays out. Each family's gate is widened TU-locally
+  in its own `.cpp` body unit; no shared helper (the three-copy drift risk is accepted and
+  gated by one verdict battery applied per family).
+- **The admitted position is exact.** A column-0 `config:` block, exactly one per
+  frontmatter, whose single non-comment leaf is an indent-2 `theme` read through a
+  TU-local copy of agentflow's `af_scalar` (trim, trailing-comment strip outside quotes,
+  matched-pair dequote, unmatched quote never matches) and must be a member of the
+  family's closed table. Every other verdict is preserved: an indented
+  `theme`/`look`/`config` key anywhere else still gates (the legacy flat scan stripped
+  leading spaces, so a folded-description payload line that looks like a visual key is a
+  gate, not documentation); a column-0 non-visual key passes through and closes an open
+  block; venn keeps its exact `\n---\n` fence and has no `%%{init` body gate; railroad
+  keeps its column-0 key trim only — the nested leaf key is compared raw in all three, so
+  `  theme : dark` rejects everywhere.
+- **Disclosure footer.** `<Family> native projection v1` + one
+  `config.theme=<value> -> colour palette; not applied` line, blank separator first,
+  appended inside each `*_layout` (no parser seam) with the 96-byte line cap, the
+  `size*4+sizeof(std::string)+32` per-line charge and the
+  `(1+n)*(4*sizeof(std::string)+256)+bytes*2+256` emission charge used by the six sibling
+  paths. The height check uses each family's own row cap — venn's 512 counts title rows,
+  so the footer is appended after the title combine where `out.size()` already includes
+  them.
+- **Generators reclassify, never subtract.** Once venn's
+  `explicit-set-style-over-redux-palette` admits its theme, the gate that fires is the
+  body `style` gate, so the four-way partition is 11 draw + 3 admitted + 3 frontmatter +
+  4 body. Subtraction would have left the row labeled frontmatter while a different gate
+  actually rejected it.
+- **Twin kinds.** Four rows are body-identical to drawn family rows (corpus twin, pinned
+  with sha and verified by body equality); venn `dark` and railroad `dark` have no drawn
+  body-equivalent and use the config-free synthetic twin. Frame composition is wide-only;
+  narrow is a separate live measurement (`0/6` here — the 48–60 character footer line
+  exceeds a 40-column viewport).
+- **Accounting.** The matrix branch precedes all three family branches, derives `type`
+  from the path, and leaves `raw_active_schema` empty so the generic `originals_drawn`
+  counter credits +6. The roster's `family_residual:railroad` category disappears
+  (44 → 43); dynamic `family_residual:*` categories are derived from counts, so
+  `--self-test`'s causality/key-set equality shrinks with it and stays green.

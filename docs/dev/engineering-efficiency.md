@@ -1793,3 +1793,29 @@ Attach a short efficiency section to each closure report, answering:
 5. **Cheaper approach evidence.** Focused pie gate 15 s vs 1472-test label; release matrix
    byte-identical to debug (`b00ab2c3…`), so the census used release.
 6. **New entry.** Rule 35 (existence-check hand-copied fixture paths; share one list).
+
+### 2026-11-22 — RFC 0043 (small-family theme) implementation retro
+
+1. **Gate wall-clock.** The new gate is ~17 s for 6 tests; the three family cohort tests
+   are 10/13/13 s; the four hermetic `--check` entries total 0.25 s; the debug
+   OfficialMatrix is 239 s, release 27 s. Full debug ctest 4667/4667 in 545 s.
+2. **False green/red.** Two self-inflicted reds, both caught by the gate rather than
+   shipped: the expected footer composition did not account for the source's own trailing
+   blank row (fixed by making the composition tail-blank-count-insensitive), and the
+   scalar battery initially reused `families()[0]` only. A third red was a stale-binary
+   artifact: the gate printed 6/6 while the build had actually failed on that file — the
+   `-Werror` string concat (`const char* + const char[8]`) only surfaced on the next
+   build. Lesson: after editing a test file, treat the build exit as part of the gate.
+3. **Rework.** The bill itself was wrong once: D-410's 5d was 5 rows because the D-402
+   probe's `keys=` field folds description payload continuation lines into the key set.
+   Recomputing structurally found the sixth row (venn night9) and re-bucketed 5a/5b/5c.
+   The design gate then caught two more arithmetic/semantic defects before code (venn
+   11+3+3+4 and the description-after-config verdict), which would each have produced a
+   red or a wrongly-labeled ledger row had they shipped.
+4. **Build fan-out.** Three `.cpp` bodies recompiled, archive + dependent relinks; no BMI
+   change; one new test executable and four hermetic ctests.
+5. **Cheaper approach evidence.** Focused gate 17 s vs 4667-test full suite; release
+   matrix byte-identical to debug (`8de4c546…`), so the census used release.
+6. **New entry.** Rule 36: a probe's key-set field that concatenates payload continuation
+   lines is not a classifier — parse the frontmatter structurally, and re-derive a bill
+   subgroup before pinning scope on it.

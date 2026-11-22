@@ -51,6 +51,7 @@ are not whole-original errors).
 | After D228 state classDef/class/style group (4 representable state style originals) | 2026-11-14 | local | 1218 | 927 | 0 |
 | After D235 gitGraph empty quoted-tag group (3 representable git originals) | 2026-11-14 | local | 1221 | 924 | 0 |
 | After D236 xychart folded-description envelope group (11 representable xy originals) | 2026-11-15 | local | 1232 | 913 | 0 |
+| After RFC 0043 small-family theme (6 rows) | 2026-11-22 | 7aa711a3 | 1482 | 663 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -81,12 +82,12 @@ disposition (fix or documented infeasibility).
 | state-diagram | 23 | 19 | D223 batch one: +3 (HTML-entity fork/join top-level and nested, edge literal `\n`); the v1 note twin stays gated by a real tab in its folded description (shared unicode_text contract), plus labels/composite/concurrency geometry debt |
 | tree-view | 7 | 8 | renderer added 2026-11-13; 5 frontmatter layout/icon-config + 2 body :::class rows stay source (no icon/color contract); live census 8/5/2 corrected an older 9/4/2 via a trailing-whitespace fence |
 | quadrant-chart | 7 | 7 | renderer added 2026-11-13; 5 %%{init}%% visual directives (axis position/sizing/theme colors) + 2 inline point-style rows stay source (no geometry/color contract) |
-| ishikawa | 6 | 7 | renderer added 2026-11-13; 6 frontmatter theme/look/config rows stay source (no fishbone geometry/color contract); live census 7/6/0 from a candidate pool of 13 |
+| ishikawa | 4 | 9 | renderer added 2026-11-13; RFC 0043 (2026-11-22) admits the forest/dark theme rows through a closed two-value table with a disclosure footer (both body-identical to `pr-check/1`); the 3 `useMaxWidth`/`diagramPadding` rows and the handdrawn-look row stay source; live census 9/4/0 from 13; measured narrow_40 is 0/2 |
 | kanban | 0 | 11 | renderer added 2026-11-13; all eleven originals clean (description-only frontmatter; cards with optional @{...} structural metadata, no color contract) |
 | mindmap | 19 | 14 | |
-| venn | 10 | 11 | renderer added 2026-11-12; 7 frontmatter theme/look/config + 3 body style/classDef rows stay source (no circle/color contract) |
+| venn | 7 | 14 | renderer added 2026-11-12; RFC 0043 (2026-11-22) admits the dark/redux-color/redux-dark-color theme rows through a closed three-value table (the redux pair body-identical to `pr-check/16`, `dark` synthetic); 3 look/handDrawnSeed frontmatter rows and 4 body style/classDef rows stay source; live census 14/7/0 from 21; measured narrow_40 is 0/3 |
 | wardley | 4 | 6 | renderer added 2026-11-13; 4 frontmatter theme-test rows stay source (no map-canvas/color contract); live census 6/4/0 from a candidate pool of 10; the only non-ASCII byte in the family is inside one frontmatter description |
-| railroad | 1 | 8 | renderer added 2026-11-13; first multi-dialect family (railroad-beta IR + abnf/ebnf/peg-beta); 1 frontmatter theme row stays source (no track/color contract); live census 8/1/0 from a candidate pool of 9; only non-ASCII byte is in one frontmatter description |
+| railroad | 0 | 9 | renderer added 2026-11-13; first multi-dialect family (railroad-beta IR + abnf/ebnf/peg-beta); RFC 0043 (2026-11-22) admits the single dark-theme row through a closed one-value table (synthetic twin), so no frontmatter-gated row remains; live census 9/0/0 from 9; measured narrow_40 is 0/1; only non-ASCII byte is in one frontmatter description |
 | block | 0 | 58 | complete (B0a/B6) |
 | sequence | 0 | 193 | complete |
 | cynefin | 5 | 7 | renderer added 2026-11-13; 5 frontmatter config/theme/look rows stay source (no boundary-geometry/color contract); live census 7/5/0 from a candidate pool of 12 |

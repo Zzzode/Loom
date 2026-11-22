@@ -280,7 +280,9 @@ TEST(MermaidTreeviewNamespaceD433Cohort, ClosedNamespaceNegativesStayWholeSource
              "config:\n  treeView:\n    showIcons: true\n    showIcons: false\n",
              "config:\n  treeView:\n    showIcons: true\n  treeView:\n    showIcons: false\n",
              "config:\n  showIcons: true\n",
-             "config:\n  treeView:\n    filenameIcons:\n      README.md: 'fa:bell'\n",
+             // Icon-map entries are owned by D-434; an out-of-table boolean
+             // leaf still closes the renderer here.
+             "config:\n  treeView:\n    icons: true\n",
              "config:\n  themeVariables:\n    treeView:\n      labelColor: red\n",
              "config:\n  themeVariables:\n    treeView:\n      labelFontSize: 20\n",
              "theme: dark\n",

@@ -132,13 +132,16 @@ struct TreeNamespace {
     std::optional<std::string> font_size;
     std::optional<std::string> label_colour;
     std::optional<std::string> line_colour;
+    // D-434: closed icon maps; entries stay in source order.
+    std::vector<std::pair<std::string, std::string>> filename_icons;
+    std::vector<std::pair<std::string, std::string>> extension_icons;
 };
 
 bool tree_key_word(std::string_view value) {
     if (value.empty() || value.size() > 64) return false;
     for (const char c : value)
         if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
-              c == '-' || c == '_'))
+              c == '-' || c == '_' || c == '.'))  // '.' for icon-map entry keys
             return false;
     return true;
 }
@@ -179,6 +182,27 @@ bool tree_px_value(std::string_view value) {
     for (std::size_t i = 0; i + 2 < text.size(); ++i)
         if (text[i] < '0' || text[i] > '9') return false;
     return text[0] != '0';
+}
+
+// D-434: a map entry key is a file name or extension token.
+bool tree_entry_key(std::string_view key) {
+    if (key.empty() || key.size() > 64) return false;
+    for (const char c : key)
+        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+              c == '.' || c == '-' || c == '_'))
+            return false;
+    return true;
+}
+
+// An icon reference: `none` or a bare pack name with an optional `:name`.
+bool tree_icon_ref(std::string_view value) {
+    if (value.empty() || value.size() > 64) return false;
+    const auto colon = value.find(':');
+    const std::string_view pack = colon == std::string_view::npos ? value : value.substr(0, colon);
+    const std::string_view name =
+        colon == std::string_view::npos ? std::string_view{} : value.substr(colon + 1u);
+    if (!tree_word(pack)) return false;
+    return colon == std::string_view::npos || (!name.empty() && tree_word(name));
 }
 
 bool tree_hex_value(std::string_view value) {
@@ -222,6 +246,7 @@ TreeNamespace tree_namespace(std::string_view source) {
     std::vector<std::pair<std::size_t, std::string_view>> stack;  // (indent, path)
     bool description_seen = false, config_seen = false;
     bool tree_view_seen = false, theme_vars_seen = false, theme_tree_seen = false;
+    bool filename_map_seen = false, extension_map_seen = false;
     int leaves = 0;
     bool first = true;
     for (std::size_t pos = 0; pos <= frontmatter.size();) {
@@ -289,6 +314,20 @@ TreeNamespace tree_namespace(std::string_view source) {
                     slot = &result.line_thickness;
                     ok = tree_uint_value(value);
                 }
+            } else if (parent == "config.treeView.filenameIcons" ||
+                       parent == "config.treeView.extensionIcons") {
+                auto unquoted = tree_unquote(value);
+                if (!tree_entry_key(key) || !unquoted || !tree_icon_ref(*unquoted))
+                    return result;
+                auto& map = parent == "config.treeView.filenameIcons"
+                                ? result.filename_icons
+                                : result.extension_icons;
+                if (map.size() >= 16u) return result;
+                for (const auto& entry : map)
+                    if (entry.first == key) return result;
+                map.emplace_back(std::string{key}, std::move(*unquoted));
+                ++leaves;
+                continue;
             } else if (parent == "config.themeVariables.treeView") {
                 if (key == "labelFontSize") {
                     slot = &result.font_size;
@@ -319,6 +358,14 @@ TreeNamespace tree_namespace(std::string_view source) {
             if (theme_vars_seen) return result;
             theme_vars_seen = true;
             stack.push_back({key_start, "config.themeVariables"});
+        } else if (parent == "config.treeView" && key == "filenameIcons") {
+            if (filename_map_seen) return result;
+            filename_map_seen = true;
+            stack.push_back({key_start, "config.treeView.filenameIcons"});
+        } else if (parent == "config.treeView" && key == "extensionIcons") {
+            if (extension_map_seen) return result;
+            extension_map_seen = true;
+            stack.push_back({key_start, "config.treeView.extensionIcons"});
         } else if (parent == "config.themeVariables" && key == "treeView") {
             if (theme_tree_seen) return result;
             theme_tree_seen = true;
@@ -348,6 +395,12 @@ std::vector<std::string> tree_namespace_notices(const TreeNamespace& ns) {
     if (ns.line_thickness)
         out.push_back("config.treeView.lineThickness=" + *ns.line_thickness +
                       " -> branch line weight; not applied");
+    for (const auto& [key, value] : ns.filename_icons)
+        out.push_back("config.treeView.filenameIcons[" + key + "]=" + value +
+                      " -> icon mapping; not applied");
+    for (const auto& [key, value] : ns.extension_icons)
+        out.push_back("config.treeView.extensionIcons[" + key + "]=" + value +
+                      " -> icon mapping; not applied");
     if (ns.font_size)
         out.push_back("config.themeVariables.treeView.labelFontSize=" + *ns.font_size +
                       " -> label font size; not applied");

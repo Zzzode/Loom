@@ -10,8 +10,8 @@
   （与既有 43 类同墙，不可取），venn/ishikawa 同理；tree-view 还剩 4 条，其中 2 条
   只卡一个封闭 frontmatter 形状（`config.treeView.showIcons` 或
   `defaultIconPack`），是本轮最干净的一片。
-- **预期降幅**：2 行（tree-view 4 → 2，全局 536 → 534，formal `drawn_at_240`
-  1423 → 1425）。
+- **预期降幅**：2 行（tree-view fallback 6 → 4；roster 桶 `family_residual:tree-view`
+  4 → 2，全局 536 → 534，formal `drawn_at_240` 1423 → 1425）。
 - **判据（语义，D-412）**：终端投影逐行转写节点、不画图标/颜色/线宽/像素缩进，
   所以这些叶惰性且必须披露（`TreeView native projection v1`）；画面文字与 `config`
   剥离后的孪生逐行相等。`showIcons` 与 `defaultIconPack` 是源自身状态标记，不是
@@ -68,7 +68,8 @@
 - 矩阵（debug，直接跑 `test_mermaid_official`）：64/64 通过，`drawn_at_240`
   **1425**、error 0、`mandatory_gaps` 48、`integrity_errors` 空、reach proof 通过
   （`/tmp/loom-logs/matrix-d433.log`）。
-- roster `--emit`：**534 / 36 类**（`family_residual:tree-view` 4 → 2），
+- roster `--emit`：**534 / 36 类**（`family_residual:tree-view` 4 → 2；tree-view
+  总 fallback 6 → 4，row 5 仍在 `icon_font_glyphs` 桶），
   `--self-test` / `--matrix` 绿；E6c 未动。
 - release 预设编译（`-Werror`）通过；全量 ctest 与双预设字节比对留到主线收口。
 - 三数并列：①绝对 source_fallback **534** ②超出认证 profile/冻结权威 **289**

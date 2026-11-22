@@ -4554,6 +4554,26 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## tree-view closed icon maps (D-434)
+
+- **Icon maps are inert and disclosed per entry.** The projection draws no
+  icons, so `config.treeView.{filenameIcons, extensionIcons}` are closed
+  scalar maps (≤ 16 entries per map, unique keys, keys allow `.` for
+  `README.md` / `.ts`, values are `none` or lowercase `pack[:name]`), each
+  disclosed as `config.treeView.<map>[<key>]=<value> -> icon mapping; not
+  applied` after the scalar leaves and before the theme leaves.
+- **Two ordering bugs this slice fixed, both worth remembering.**
+  (1) A map value must be unquoted *before* lexical validation; validating
+  `'fa:bell'` as a bare word rejects the corpus spelling. (2) The "a config
+  block must carry at least one leaf" guard counted only scalar leaves, so a
+  map-only config was rejected as empty; map entries must increment the same
+  counter. The strict "unknown leaf under a known parent rejects" guard was
+  briefly relaxed while adding the map branch and is restored.
+- **Accounting.** The D-434 branch sits beside D-433 before the RFC 0031
+  tree-view cohort with its own rule-38 reach proof; the RFC 0031 gate's
+  frontmatter partition now asserts the union of the two ledgers (3 rows) with
+  the remaining rows still whole-source.
+
 ## tree-view closed config namespace (D-433)
 
 - **The tree-view namespace parser is indentation-stack based, not column-fixed.**

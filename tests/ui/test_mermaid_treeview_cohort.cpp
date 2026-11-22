@@ -31,6 +31,8 @@ const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treeview-cohort.json";
 const fs::path kD433Ledger =
     fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treeview-ns-d433-cohort.json";
+const fs::path kD434Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treeview-icons-d434-cohort.json";
 constexpr int kWide = 240;
 constexpr int kNarrow = 40;
 constexpr int kHeight = 1600;
@@ -141,15 +143,17 @@ TEST(MermaidTreeviewCohort, CleanTreeviewsDrawOnWholeAndBodyTracks) {
 TEST(MermaidTreeviewCohort, GatedTreeviewsStayWholeSource) {
     const auto ledger = parse_doc(kLedger);
     const auto& selection = ledger.root().get("selection");
-    // D-433 admits the two closed `config.treeView` rows through the namespace
-    // parser; their positives live in test_mermaid_treeview_ns_d433_cohort.
+    // D-433 admits two closed `config.treeView` rows and D-434 the closed
+    // icon-map row; their positives live in the two namespace gates.
     // The partition is preserved: each admitted row must be a D-433 ledger
     // member, every other gated row stays whole source.
     std::set<std::string> namespace_rows;
-    auto ns_ledger = json::parse(read_file(kD433Ledger));
-    ASSERT_TRUE(ns_ledger.has_value()) << "D-433 cohort ledger must parse";
-    ns_ledger->root().get("rows").iter(
-        [&](const JsonVal row) { namespace_rows.insert(row.get_string("path")); });
+    for (const auto& path : {kD433Ledger, kD434Ledger}) {
+        auto ns_ledger = json::parse(read_file(path));
+        ASSERT_TRUE(ns_ledger.has_value()) << "namespace cohort ledger must parse";
+        ns_ledger->root().get("rows").iter(
+            [&](const JsonVal row) { namespace_rows.insert(row.get_string("path")); });
+    }
     int admitted = 0;
     selection.get("frontmatter_gated").iter([&](JsonVal value) {
         const auto rel = value.as_str();
@@ -159,8 +163,8 @@ TEST(MermaidTreeviewCohort, GatedTreeviewsStayWholeSource) {
         }
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
     });
-    EXPECT_EQ(admitted, 2);
-    EXPECT_EQ(namespace_rows.size(), 2u);
+    EXPECT_EQ(admitted, 3);
+    EXPECT_EQ(namespace_rows.size(), 3u);
     selection.get("body_style_gated").iter([&](JsonVal value) {
         const auto rel = value.as_str();
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;

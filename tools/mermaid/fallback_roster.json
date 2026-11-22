@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 534,
+  "total_fallback": 533,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -30,7 +30,7 @@
     "family_residual:zenuml": 1,
     "git_cherry_pick": 12,
     "htmllabels_false": 44,
-    "icon_font_glyphs": 29,
+    "icon_font_glyphs": 28,
     "linkstyle_directive": 12,
     "look_classic_other": 0,
     "look_handdrawn": 43,
@@ -123,8 +123,8 @@
     },
     "icon_font_glyphs": {
       "originals_matching_predicate": 61,
-      "drawn_among_matches": 23,
-      "fallback_among_matches": 38,
+      "drawn_among_matches": 24,
+      "fallback_among_matches": 37,
       "sufficient_blocker": false
     },
     "linkstyle_directive": {
@@ -640,8 +640,7 @@
       "flowchart/visual-check/default-theme-legacy-graph.mmd",
       "flowchart/visual-check/forest-theme-legacy-graph.mmd",
       "flowchart/visual-check/neutral-theme-legacy-graph.mmd",
-      "tree-view/nightly-check/should-render-combined-annotations.mmd",
-      "tree-view/pr-check/should-pick-file-icons-from-filename-and-extension-config-maps.mmd"
+      "tree-view/nightly-check/should-render-combined-annotations.mmd"
     ],
     "linkstyle_directive": [
       "flowchart/nightly-check/dagre/59-dagre-handle-styling-of-subgraphs-and-links.mmd",

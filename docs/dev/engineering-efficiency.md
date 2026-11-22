@@ -2108,3 +2108,23 @@ Attach a short efficiency section to each closure report, answering:
    `treeView:` children sit at indent 4 and 6, and the theme block nests one
    level deeper; a fixed-column state machine would have to special-case each
    file. Pop to the nearest lower indent and compare canonical paths.
+
+## D-434 tree-view icon-map retro (2026-11-23)
+
+1. **A guard that stops rejecting is a silent admission.** While adding the map
+   branch, the leaf guard became `if (slot != nullptr) {...}` so an unknown
+   leaf under a known parent was accepted as a leaf and counted. The gate's
+   `filenameIcons + colour: red` negative caught it. When a new branch shares a
+   guard, re-read the guard as a closed question: which inputs must still be
+   rejected?
+2. **Validate after normalizing, not before.** The map value `'fa:bell'` failed
+   the bare-word check because the quote pair was stripped later. Any
+   value grammar with optional quotes must unquote first, then validate.
+3. **A "config must carry a leaf" counter must count every leaf kind.** Map
+   entries did not increment the scalar `leaves` counter, so a map-only config
+   was rejected as empty; the probe showed `showIcons + map` drawing while
+   `map` alone fell back, which isolated it in one run.
+4. **A family register row can silently miss its history entry.** The D-433
+   d117 history row was never written even though the same script updated the
+   family row; the D-434 commit carries the missing row. Verify the grep, not
+   just the script's exit status.

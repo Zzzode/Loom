@@ -1,0 +1,56 @@
+{
+  "schema": "loom_mermaid_treeview_icons_d434_cohort/v1",
+  "decision": "D-434",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "treeView original whose frontmatter is a folded description plus the closed config.treeView / config.themeVariables.treeView leaves including the filenameIcons / extensionIcons maps",
+    "cohort_digest": "8811e7d5edd752f0ce56083ab254bf6af5c7913e234f21ae6bf34d811f3c616a",
+    "exclusions": "look/theme keys, unknown leaves, unknown map entries and style statements stay whole-source; a `---      ` closing fence never reaches a family renderer through the shared classify probe"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice without a design gate; the gate is the test document plus the twin oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 1
+  },
+  "rows": [
+    {
+      "path": "tree-view/pr-check/should-pick-file-icons-from-filename-and-extension-config-maps.mmd",
+      "sha256": "c6071943517bbafca828bfc0c74b99bcf38440a7d14e43a8728a5527afd46ced",
+      "manifest_sha256": "c6071943517bbafca828bfc0c74b99bcf38440a7d14e43a8728a5527afd46ced",
+      "leaves": {
+        "config.treeView.showIcons": "true",
+        "config.treeView.defaultIconPack": "material-icon-theme"
+      },
+      "icon_maps": {
+        "filenameIcons": {
+          "README.md": "fa:bell"
+        },
+        "extensionIcons": {
+          ".ts": "typescript",
+          ".py": "none",
+          ".xyz": "javascript"
+        }
+      },
+      "expected_footer_lines": [
+        "TreeView native projection v1",
+        "config.treeView.showIcons=true -> icons are not drawn; not applied",
+        "config.treeView.defaultIconPack=material-icon-theme -> icon pack resolution; not applied",
+        "config.treeView.filenameIcons[README.md]=fa:bell -> icon mapping; not applied",
+        "config.treeView.extensionIcons[.ts]=typescript -> icon mapping; not applied",
+        "config.treeView.extensionIcons[.py]=none -> icon mapping; not applied",
+        "config.treeView.extensionIcons[.xyz]=javascript -> icon mapping; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

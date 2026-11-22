@@ -233,9 +233,19 @@ routing Work budget.
 
 ## Production Readiness Review
 
-To be completed at the `implementable` gate. Must record: the `accTitle` no-op fidelity
-trade-off, the E2a/E2b frozen-set rationale, and the State-only side table's
-`sizeof(RelationEntity)` static assertion evidence.
+| Checklist row | Answer |
+|---|---|
+| **Correctness & tests** | Per-phase cohort gate (ledger pins + per-row config-free-twin frame oracle + batteries), the state-0038 gate over all 28 drawn rows **byte-identical at all three widths**, the two flipped relations-semantics negatives with paired new negatives, and the E2a/E2b whole-source scans with the 19 paths + 16 out-of-cohort rows wired into their skip sets. Functional timeouts carry no assertion semantics; `MermaidOfficialConfig110Native…` was calibrated to 600 s in the preceding slice (commit `fef4aff0`). |
+| **Build system — units** | The parser, layout and emitter live in `mermaid_relations_core_impl.cpp`; state helpers in `mermaid_state_impl.cpp`. Both are **implementation units** of `loom.ui.visual.mermaid` (no BMI), so a change rebuilds those objects + archive + dependent relinks. No new imports (the region side table is `std::vector<int>`; the init scanner is hand-rolled), no interface/partition change, no SCC growth, no concurrency caps. Debug and release `-Werror` both required. |
+| **Build system — shared structs** | `RelationEntity`/`Relationship`/`RelationDiagram` keep their layout: the region model is a State-only side table. A `static_assert(sizeof(RelationEntity) == <measured>)` lands with P1 together with the dual-preset Class/ER/Requirement family gates, proving the shared Work charges are untouched (the `alignof(RelationDiagram)` charge is unchanged by a vector member). |
+| **Wire / persisted data** | N/A: no wire format, JSONL trace, settings, config path or CLI change. |
+| **Rollback** | Two atomic commits (P1, P2). P1: `mermaid_relations_core_impl.cpp`, `mermaid_detail.cppm` (side table + caps), the new state-region ledger + generator + gate, `test_mermaid_relations_semantics.cpp` (two flips), E2a/E2b generators/cohorts/tests, the 0046 generator/test constants, `fallback_roster.json`, the matrix branch, CMake registration, docs. P2 adds `mermaid_state_impl.cpp` (init/accessibility helpers), the state-init probe artifact, the ledger's footer columns and the footer tests. `git revert` of either restores its counts. |
+| **Protected pins** | None of the 10 protected files is touched. `tests/ui/test_mermaid_official.cpp` changes additively (loader + branch before the E2a/E2b/state-0038 branches + reach assertion); the 19 rows carry no manifest `diagnostic`, so each replaces one `run_case` observation 1:1 and 2738/48/107/206/285 stay unchanged. |
+| **Observability** | The footer lines are the user-visible disclosure; no new diagnostics; session traces untouched. |
+| **Work meter / budgets** | Region limit 8 per owner, entity total 128, per-`--` and per-region prepaid charges, width/height checked at container composition, and the side table's growth prepaid in parse and layout. Fixture-scale bodies (≤ 64 states, ≤ 128 edges) stay far under `kWorkLimit = 1,000,000`. |
+| **Documentation** | design-decisions entry (side table, dividers, init/accessibility, the accTitle no-op trade-off), README, d117, d421 revision 2, d422 closure, three snapshot docs, efficiency retro. |
+| **Deletion / deprecation** | No dead code or shape replacement; the deferred routing rows keep their blocker tags unchanged. |
+| **Fidelity trade-offs recorded** | (a) `accTitle` is a validated no-op, matching upstream's non-inked accessibility name and keeping the twin oracle exact; (b) the E2a `STATE_COMPOSITE_EXECUTION_DEBT` and E2b `NATIVE_ROUTING_DEBT` sha-pinned sets stay frozen because they pin deferred rows. |
 
 ## Rollout and rollback
 

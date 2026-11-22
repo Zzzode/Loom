@@ -1,9 +1,9 @@
 ---
 rfc: 45
 title: gitGraph parallelCommits admission
-status: accepted
+status: implementable
 owners: "@Zzzode"
-reviewers: ["agent:design-review"]
+reviewers: ["agent:design-review", "agent:prr-review"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -123,12 +123,15 @@ In `git_frontmatter` (the envelope gate used by the git renderer):
 - The RFC 0039 generator's `counts.namespaced` stays **44** and its `EXCLUDED`-style pins
   are source-shape; only the human `exclusions` sentence changes to "12 parallelCommits
   rows admitted by RFC 0045, 32 namespaced rows remain". That sentence is generator
-  source, so `tools/mermaid/git-0039-cohort.json` is **regenerated** (its 12 rows, counts
-  and pins do not change) — editing the sentence without regenerating would turn the
+  source, so `tools/mermaid/git-0039-cohort.json` is **regenerated with the updated
+  exclusions sentence and the new `selection.census_note`** (its 12 rows, counts and pins
+  do not change) — editing the sentence without regenerating would turn the
   registered `MermaidGit0039Cohort.GeneratorIsReproducible` check red. The ledger file is
   part of the phase commit. Its machine-readable `excluded[]` per-row reasons predate this
   phase, so `selection.census_note` declares that list the **frozen 0039 census** and names
-  the 12 admitted rows; `counts.namespaced == 44` stays the source-shape pin.
+  the admitted class by count ("the 12 `gitGraph.parallelCommits`-only rows admitted by RFC
+  0045") — never a second 12-path literal, which would drift against the 0045 ledger;
+  `counts.namespaced == 44` stays the source-shape pin.
 - Partition arithmetic is literal against the filesystem: 135 = 70 drawn + 12 admitted + 53
   remaining; the remaining split by roster category (34 `family_residual:git` +
   12 `git_cherry_pick` + 6 `look_neo` + 1 `multiline_label`).
@@ -142,7 +145,8 @@ In `git_frontmatter` (the envelope gate used by the git renderer):
 - Matrix branch before the RFC 0039 git branch and the generic fallback, reason
   `RFC-0045 gitGraph parallelCommits reviewed cohort`, `raw_active_schema` empty so the
   generic `originals_drawn` counter credits +12.
-- Roster and ledgers: regenerate `git-0039-cohort.json` (sentence only), then `--emit`
+- Roster and ledgers: regenerate `git-0039-cohort.json` (updated sentence and
+  `selection.census_note`), then `--emit`
   640 → 628, `family_residual:git` 46 → 34, categories stay 43.
 - **Existing-assertion audit**: no current test pins `parallelCommits`; the two namespace
   negatives that exist (`mainBranchName: trunk` in `test_mermaid_gitgraph_semantics.cpp` and
@@ -177,6 +181,38 @@ design-decisions entry, efficiency retro.
 
 Completed at the `implementable` gate by an independent PRR agent.
 
+### 1. Correctness and tests
+
+- Every new behaviour has a new test: the five-test cohort gate and one hermetic
+  `--check`; no existing assertion flips (the `mainBranchName` negatives stay rejected).
+- The `gitGraph` substring-mnemonic hazard is named and the gate uses line-equality
+  native-frame predicates.
+- Flakes: none added. Serial ctest total: **4675 → 4681**.
+
+### 2. Build system and module discipline
+
+- N/A for BMI: one `.cpp` body unit; `GitEnvelope` already carries `config_notices`.
+  No concurrency, module or import change.
+
+### 3. Rollback and compatibility
+
+- One atomic commit including the roster and both ledgers; a revert restores 640 and every
+  pin. No persisted data, wire, CLI or settings change.
+
+### 4. Observability / 5. Documentation / 6. Platform
+
+- The existing git footer channel; no new diagnostics or ticker. The phase amends the stale
+  "namespaced subtrees stay closed" comments/decisions/RFC 0039 sentence. Debug + release
+  `-Werror` on the Linux box; ASCII output; macos-14 CI is not a gate; no new fetch.
+
+### Review sign-off
+
+| Role | Reviewer | Date | Verdict |
+|---|---|---|---|
+| Design | agent:design-review | 2026-11-22 | approve (r2) |
+| Production readiness | agent:prr-review | 2026-11-22 | approve (2 MAJOR + 4 MINOR + 3 NIT folded) |
+| Code (per phase) | pending | — | — |
+
 ## Rollout and rollback
 
 One phase, one atomic commit; rollback is one revert plus a rebuild/re-measure. No
@@ -208,8 +244,8 @@ persisted data, wire protocol, CLI, or settings change.
 - The RFC 0039 git gate stays the drawn-row regression oracle and must stay green.
 - Targeted `ctest -L mermaid`; release matrix; dual-preset byte gate at closure; full debug
   ctest once.
-- Ordered at closure: review approved → regenerate `git-0039-cohort.json` (sentence
-  only) → full rebuild → both matrices → cohort gate green → `--emit` → `--self-test` →
+- Ordered at closure: review approved → regenerate `git-0039-cohort.json` (updated
+  sentence and `selection.census_note`) → full rebuild → both matrices → cohort gate green → `--emit` → `--self-test` →
   `--matrix`.
 
 ## Documentation impact
@@ -218,7 +254,8 @@ persisted data, wire protocol, CLI, or settings change.
 - [ ] `docs/dev/d416-git-parallel-commits-rfc0045-closure.md` — closure record
 - [ ] `docs/decisions/design-decisions.md` — gitGraph namespace admission entry
 - [ ] `docs/README.md` — RFC index (0045 row; the RFC 0039 row's "44 namespaced" clause)
-- [ ] `tools/mermaid/git-0039-cohort.json` — regenerated with the updated exclusions sentence
+- [ ] `tools/mermaid/git-0039-cohort.json` — regenerated with the updated exclusions
+      sentence and `selection.census_note`
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — the git row is stale at 77/58 and
       is corrected to 53/82 with the new headline
 
@@ -251,3 +288,4 @@ persisted data, wire protocol, CLI, or settings change.
 |---|---|---|---|
 | 2026-11-22 | — | Draft created (provisional), no code | de989294 |
 | 2026-11-22 | — | Folded design r1/r2; accepted after r2; no code | 9752cec5 |
+| 2026-11-22 | — | PRR folded (mnemonic audit, frozen census, twin rule, mirror); implementable; no code | 4ad9bb70 |

@@ -17,7 +17,7 @@
     "cohort_digest": "5e855cf9eae7d82c2864732789835bfb8136646f06b33c321841299cad1593c5",
     "twin_rule": "the frame must equal the synthesized config-free twin's frame plus the recorded footer delta, line by line",
     "corpus_twins": "none: every body-equivalent drawn state fixture carries logLevel/fontFamily disclosure lines that are not a prefix of the source footer, so all 28 rows use the config-free twin",
-    "exclusions": "layout: elk (4), namespaced config.state.* (4), the folded description carrying a literal tab (1); the remaining rows are body-capability fallbacks",
+    "exclusions": "layout: elk (4), namespaced config.state.* (4 — admitted by the RFC 0046 layout-tuning ledger, not this cohort), the folded description carrying a literal tab (1); the remaining rows are body-capability fallbacks",
     "width_policy": "wide_240 admission only; narrow_40 stays 'source'."
   },
   "review": {
@@ -397,12 +397,12 @@
     {
       "path": "state-diagram-v2/nightly-check/v2-usemaxwidth-false.mmd",
       "class": "namespaced config.state.*",
-      "reason": "namespaced state subtree stays closed"
+      "reason": "namespaced state subtree is outside this cohort; the RFC 0046 tuning ledger admits it"
     },
     {
       "path": "state-diagram-v2/nightly-check/v2-usemaxwidth-true.mmd",
       "class": "namespaced config.state.*",
-      "reason": "namespaced state subtree stays closed"
+      "reason": "namespaced state subtree is outside this cohort; the RFC 0046 tuning ledger admits it"
     },
     {
       "path": "state-diagram-v2/nightly-check/v2-width-of-compound-state-should-grow-with-title-if-title-is-wider.mmd",
@@ -567,12 +567,12 @@
     {
       "path": "state-diagram/nightly-check/usemaxwidth-false.mmd",
       "class": "namespaced config.state.*",
-      "reason": "namespaced state subtree stays closed"
+      "reason": "namespaced state subtree is outside this cohort; the RFC 0046 tuning ledger admits it"
     },
     {
       "path": "state-diagram/nightly-check/usemaxwidth-true.mmd",
       "class": "namespaced config.state.*",
-      "reason": "namespaced state subtree stays closed"
+      "reason": "namespaced state subtree is outside this cohort; the RFC 0046 tuning ledger admits it"
     },
     {
       "path": "state-diagram/pr-check/should-render-a-simple-state-diagrams-with-labels.mmd",

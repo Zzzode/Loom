@@ -1844,3 +1844,33 @@ Attach a short efficiency section to each closure report, answering:
 6. **New entry.** Rule 37: when a ledger generator claims to mirror a live gate, drive the
    same shapes through both (indent, quoting, comments, duplicates) as a probe table; a
    `--check` that reproduces proves stability, not fidelity.
+
+### 2026-11-22 — RFC 0046 (layout/display tuning) implementation retro
+
+1. **Gate wall-clock.** The new gate is ~12.5 s for 5 tests; the architecture cohort gate
+   grew from ~9 s to ~20 s (the 4 new rows plus the new whole-vs-body frame-identity
+   assertion); ishikawa 2 s, smallfam 6 s, state-0038 65 s, E2a 6.5 s, E2b 4 s. Debug
+   OfficialMatrix 273 s, release 27 s. Full debug ctest 4687 executed (the `-N`
+   denominator is 4689 because of two `DISABLED_` layout tests).
+2. **False green/red.** Two: the architecture cohort gate reded because two tuning rows
+   draw on the *body* track at 40 columns while their whole sources (footer included)
+   stay source — the ledger needed the body-track narrow constants, not a whole-track
+   guess. And the 0046 matrix branch was initially placed after the per-family branches,
+   so the architecture cohort branch silently swallowed 4/11 rows; the matrix stayed
+   green because the two ledgers agreed, which is exactly the "shadowed branch" false
+   green the code review caught.
+3. **Rework.** The first mirror pass in this phase repeated the RFC 0045 class of defect
+   in a new place: the architecture mirror skipped folded-description payload lines while
+   the production scan still gated payload lines that *begin* with a visual key, and the
+   ishikawa mirror and gate disagreed on theme+namespace co-occurrence. Both were fixed
+   by making the two sides literally the same rule and adding the paired positives and
+   negatives to the battery.
+4. **Build fan-out.** Three `.cpp` body recompiles (`ishikawa`, `architecture`,
+   `relations_core`), no BMI change, one new test executable and one hermetic ctest.
+5. **Cheaper approach evidence.** Focused gates ~110 s versus the 4687-test full suite;
+   release matrix byte-identical to debug (`10e819f8…`), so the census used release.
+6. **New entry.** Rule 38: place a new cohort's matrix branch before every per-family
+   branch and prove it is reached (a per-row ledger read), because a shadowing branch is
+   invisible whenever the old and new ledgers happen to agree; and when a mirror and its
+   gate can disagree about a *combination* of admitted leaves, pin the combination with
+   one positive and two order-swapped negatives in the same battery.

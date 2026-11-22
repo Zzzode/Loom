@@ -4337,8 +4337,9 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   corpus row and stay rejected. The surviving whole-source negative
   `MermaidStateEnvelope.ConfigFrontmatterStaysSource` uses `theme: dark` and is
   correct only because of that bound — a future widening must revisit it.
-  `layout: elk`, `state.useMaxWidth`, `curve`, `themeVariables.*` and
-  `handDrawnSeed` remain closed.
+  `layout: elk`, `curve`, `themeVariables.*` and `handDrawnSeed` remain closed.
+  RFC 0046 widened the namespace for exactly one leaf, the inert
+  `state.useMaxWidth` boolean (see below).
 - **Inertness proof:** the state renderer never reads `look` or `theme` — the
   shared relations core consults `theme` only in the ER source-model seam and
   paint. The proof is a per-row twin gate: the frame must equal the config-free
@@ -4438,6 +4439,30 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   0039 ledger's `selection.census_note` names the admitted class by count, and
   `counts.namespaced == 44` stays a source-shape pin. A second 12-path literal
   in that ledger would drift against the 0045 ledger.
+
+## Layout/display tuning namespace admission (RFC 0046)
+
+- **Three families, one shape:** ishikawa (`ishikawa.useMaxWidth` {true,false},
+  `.diagramPadding` {50}), architecture (`architecture.randomize` {true,false},
+  `.seed` {42}, `.idealEdgeLengthMultiplier` {3}) and state (`state.useMaxWidth`
+  {true,false}) each admit exactly one indent-2 namespace with closed-value
+  indent-4 leaves; everything else fails closed. ishikawa's theme leaf and the
+  tuning namespace are mutually exclusive; architecture's flat "any config key
+  gates" scan became a structural scan and only a literal `config:` opens the
+  block.
+- **Disclosure footer:** the three family headers with one line per leaf, in a
+  fixed canonical order independent of source order, all under the 96-byte cap;
+  architecture had no footer channel and gains one. The architecture cohort test
+  now asserts, as a new oracle, that every `config`-less row renders
+  byte-identically with and without its frontmatter and carries no footer.
+- **Twin rule:** two rows use clean corpus twins (`ishikawa/pr-check/1-…` and
+  `architecture/…default-fcose-knobs.mmd`); the other nine use the synthetic
+  config-free twin, checked structurally (the descriptions mention the key
+  names in prose).
+- **The RFC 0043 small-family cohort stays theme-only:** the three ishikawa
+  tuning rows live in the ishikawa ledger's separate `layout_admitted` bucket
+  with its own digest; the RFC 0043 `admitted` set, digest, smallfam ledger and
+  generator are unchanged.
 
 ## journey-family look and theme admission (RFC 0040)
 

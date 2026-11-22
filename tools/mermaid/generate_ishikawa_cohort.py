@@ -63,6 +63,9 @@ def sha256_file(path):
 # RFC 0043: the admitted frontmatter shape is exactly one column-0 `config:`
 # block whose sole leaf is an indent-2 `theme` in this family's closed table.
 THEME_TABLE = {"dark", "forest"}
+# RFC 0046: the same block may instead carry exactly one `ishikawa` namespace
+# with these closed tuning leaves.
+LAYOUT_TABLE = {"useMaxWidth": {"true", "false"}, "diagramPadding": {"50"}}
 TRIM_COLUMN0_KEY = False
 
 
@@ -89,21 +92,26 @@ def _theme_scalar(raw):
     return value
 
 
-def frontmatter_theme(frontmatter):
-    """Return ('none' | 'admitted' | 'gated', theme).
+def frontmatter_shape(frontmatter):
+    """Return (verdict, theme, layout_leaves).
 
-    Mirrors the C++ gate: a column-0 config block admits exactly one indent-2
-    theme leaf from the closed table; every other visual key gates.
+    verdict is 'none' | 'admitted' (RFC 0043 theme leaf) | 'layout' (RFC 0046
+    namespace leaves) | 'gated'. Mirrors the C++ gate: a column-0 config block
+    admits exactly one indent-2 theme leaf from the closed table and/or exactly
+    one indent-2 `ishikawa` namespace with closed indent-4 tuning leaves; every
+    other visual key or shape gates.
     """
     if frontmatter is None:
-        return "none", None
+        return "none", None, {}
     in_config = False
     saw_config = False
+    saw_namespace = False
     theme = None
+    leaves = {}
     for line in frontmatter.split("\n"):
         # Blank means spaces/tabs only. The renderers pre-reject any tab in the
         # source, so the C++ space-only key scan and this predicate agree on
-        # every reachable input; no fixture in the three families has a tab.
+        # every reachable input; no fixture in the family has a tab.
         if line.strip(" \t") == "":
             continue
         key_start = len(line) - len(line.lstrip(" "))
@@ -113,19 +121,31 @@ def frontmatter_theme(frontmatter):
                 if leaf.startswith("#"):
                     continue
                 colon = leaf.find(":")
-                if colon < 0 or leaf[:colon] != "theme" or key_start != 2 or theme is not None:
-                    return "gated", None
+                if colon < 0:
+                    return "gated", None, {}
+                key = leaf[:colon]
                 value = _theme_scalar(leaf[colon + 1:])
-                if value not in THEME_TABLE:
-                    return "gated", None
-                theme = value
+                if key_start == 2 and key == "theme":
+                    if theme is not None or value not in THEME_TABLE:
+                        return "gated", None, {}
+                    theme = value
+                elif key_start == 2 and key == "ishikawa" and value == "":
+                    if saw_namespace:
+                        return "gated", None, {}
+                    saw_namespace = True
+                elif key_start == 4 and saw_namespace and key in LAYOUT_TABLE:
+                    if key in leaves or value not in LAYOUT_TABLE[key]:
+                        return "gated", None, {}
+                    leaves[key] = value
+                else:
+                    return "gated", None, {}
             else:
                 colon = leaf.find(":")
                 key = leaf[:colon] if colon >= 0 else leaf
                 if TRIM_COLUMN0_KEY:
                     key = key.strip(" ")
                 if key in ("theme", "look", "config"):
-                    return "gated", None
+                    return "gated", None, {}
             continue
         if line.startswith("#"):
             continue
@@ -135,30 +155,48 @@ def frontmatter_theme(frontmatter):
             key = key.strip(" ")
         if key == "config":
             if saw_config:
-                return "gated", None
+                return "gated", None, {}
             saw_config = True
             in_config = True
         else:
             if key in ("theme", "look"):
-                return "gated", None
+                return "gated", None, {}
             in_config = False
-    if saw_config and theme is None:
-        return "gated", None
-    return ("admitted", theme) if theme is not None else ("none", None)
+    if saw_config and theme is None and not leaves:
+        return "gated", None, {}
+    if saw_namespace and not leaves:
+        return "gated", None, {}
+    if theme is not None and leaves:
+        return "gated", None, {}
+    if theme is not None:
+        return "admitted", theme, {}
+    if leaves:
+        return "layout", None, leaves
+    return "none", None, {}
 
 
 def gate_kind(frontmatter, body):
-    """Return 'frontmatter', 'admitted', 'body_style' or None."""
-    verdict, _theme = frontmatter_theme(frontmatter)
+    """Return 'frontmatter', 'admitted', 'layout', 'body_style' or None."""
+    verdict, _theme, _leaves = frontmatter_shape(frontmatter)
     if verdict == "gated":
         return "frontmatter"
     if re.search(r"^\s*%%\{init", body, re.M) or \
             re.search(r"^\s*classDef", body, re.M) or ":::" in body or \
             re.search(r"^\s*style\s", body, re.M):
         return "body_style"
-    if verdict == "admitted":
-        return "admitted"
+    if verdict in ("admitted", "layout"):
+        return verdict
     return None
+
+
+REVIEW_NOTE = (
+    "APPROVE with zero MAJOR at the 2026-11-13 census (7 clean / 2 "
+    "theme-admitted / 4 frontmatter-gated / 0 body-gated; the reviewer "
+    "reproduced the partition, ported the renderer to a Python simulator, ran "
+    "32 adversarial probes with no fail-open and applied every MINOR). RFC "
+    "0043 admitted the 2 theme rows and RFC 0046 (2026-11-22) the 3 closed "
+    "`config.ishikawa.*` tuning rows, so the live partition is "
+    "13 = 7 + 2 + 3 + 1 + 0.")
 
 
 def build_review(repo_root):
@@ -168,25 +206,6 @@ def build_review(repo_root):
                            "cohort, 2026-11-13, task aa67aef2934adf864)"),
         "date": "2026-11-13",
         "verdict": "approved",
-        "note": ("APPROVE with zero MAJOR. The reviewer independently "
-                 "reproduced the exact 7/6/0 partition with a "
-                 "trailing-whitespace-tolerant fence parser, confirmed every "
-                 "clean body node is spaces + [A-Za-z0-9 _.-] with no "
-                 "quote/bracket/edge/comment, and verified fixture 13's "
-                 "relative (non-grid) indentation. It ported the renderer to "
-                 "a Python simulator and ran 32 adversarial probes with no "
-                 "fail-open, and confirmed the single guarded push path and "
-                 "the frozen contracts. All four MINOR test/comment items "
-                 "were applied: the misleading 'unicode' comment was "
-                 "corrected and non-ASCII/emoji fail-closed regression pins "
-                 "added; the header-only frame branch is now tested; the "
-                 "%%{init and style body-gate predicates are covered; and the "
-                 "indent-1 boundary is asserted. The remaining NITs "
-                 "(unreachable byte cap, defense-in-depth unicode_text, the "
-                 "shared empty _BODY_SOURCE generator branch) are harmless "
-                 "and match the approved tree-view sibling. The inherited "
-                 "CRLF-frontmatter and indented-header observations are "
-                 "fail-closed/safe-direction and left unchanged."),
     }
     existing = repo_root / LEDGER
     if existing.exists():
@@ -197,6 +216,10 @@ def build_review(repo_root):
                 review = prior["review"]
         except json.JSONDecodeError:
             pass
+    # The reviewer/date/verdict are preserved; the note always states the
+    # current live partition so it cannot go stale as cohorts are admitted.
+    review = dict(review)
+    review["note"] = REVIEW_NOTE
     return review
 
 
@@ -204,7 +227,7 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
-    draw, admitted, fm_gate, body_gate = set(), set(), set(), set()
+    draw, admitted, layout, fm_gate, body_gate = set(), set(), set(), set(), set()
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
         text = path.read_text()
         rel = path.relative_to(
@@ -217,14 +240,23 @@ def build(repo_root):
             body_gate.add(rel)
         elif kind == "admitted":
             admitted.add(rel)
+        elif kind == "layout":
+            layout.add(rel)
         else:
             draw.add(rel)
 
-    if (len(draw), len(admitted), len(fm_gate), len(body_gate)) != (7, 2, 4, 0):
+    # RFC 0046 admitted the 3 tuning rows: 13 = 7 + 2 + 3 + 1 + 0.
+    if (len(draw), len(admitted), len(layout), len(fm_gate), len(body_gate)) != \
+            (7, 2, 3, 1, 0):
         raise ValueError(
             f"ishikawa partition drift: draw={len(draw)} "
-            f"admitted={len(admitted)} frontmatter={len(fm_gate)} "
-            f"body_style={len(body_gate)} (expected 7/2/4/0)")
+            f"admitted={len(admitted)} layout={len(layout)} "
+            f"frontmatter={len(fm_gate)} body_style={len(body_gate)} "
+            f"(expected 7/2/3/1/0)")
+
+    layout_digest = hashlib.sha256("".join(
+        f"{rel}\t{manifest_rows[rel]['sha256']}\n" for rel in sorted(layout)
+    ).encode()).hexdigest()
 
     admitted_digest = hashlib.sha256("".join(
         f"{rel}\t{manifest_rows[rel]['sha256']}\n" for rel in sorted(admitted)
@@ -272,9 +304,11 @@ def build(repo_root):
             "module": "src/ui/visual/mermaid_ishikawa_impl.cpp",
             "grammar": "ishikawa-beta; relative-indented bare cause labels",
             "theme_gate": (
-                "a frontmatter theme/look/config key, an %%{init}%% directive "
-                "or a body style/classDef/::: statement keeps the whole "
-                "original on source fallback"),
+                "an unrecognized frontmatter theme/look/config shape, an "
+                "%%{init}%% directive or a body style/classDef/::: statement "
+                "keeps the whole original on source fallback; RFC 0043 admits "
+                "the closed theme table and RFC 0046 the closed "
+                "`ishikawa` tuning namespace, both footer-disclosed"),
         },
         "upstream": {
             "tag": manifest["upstream"]["tag"],
@@ -283,14 +317,20 @@ def build(repo_root):
                 (repo_root / MANIFEST).read_bytes()).hexdigest(),
         },
         "selection": {
-            "rule": "ishikawa fixtures with no frontmatter gate and no body style",
+            "rule": ("ishikawa fixtures with no frontmatter gate (the RFC 0043 "
+                     "theme and RFC 0046 tuning cohorts are admitted) and no "
+                     "body style"),
             "roots": ["ishikawa"],
             "admission_rfc": 43,
             "draw_count": len(draw),
             "admitted_count": len(admitted),
             "admitted": sorted(admitted),
             "admitted_digest": admitted_digest,
-            "family_total": len(draw) + len(admitted) + len(fm_gate) + len(body_gate),
+            "layout_admitted_count": len(layout),
+            "layout_admitted": sorted(layout),
+            "layout_admitted_digest": layout_digest,
+            "family_total": (len(draw) + len(admitted) + len(layout) +
+                             len(fm_gate) + len(body_gate)),
             "frontmatter_gated_count": len(fm_gate),
             "frontmatter_gated": sorted(fm_gate),
             "body_style_gated_count": len(body_gate),

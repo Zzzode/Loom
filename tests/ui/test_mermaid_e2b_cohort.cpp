@@ -30,6 +30,7 @@ const fs::path kCases = kTestsDir / "fixtures/mermaid_official/cases";
 const fs::path kManifest = kTestsDir / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger = kTestsDir / "../tools/mermaid/e2b-cohort.json";
 const fs::path kRfc0038Ledger = kTestsDir / "../tools/mermaid/state-0038-cohort.json";
+const fs::path kRfc0046Ledger = kTestsDir / "../tools/mermaid/layouttuning-0046-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 constexpr std::string_view kFooterHeader = "State native projection v1";
@@ -253,8 +254,19 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
     std::set<std::string> admitted;
     rfc0038->root().get("rows").iter(
         [&](const JsonVal row) { admitted.insert(row.get_string("path")); });
+    // RFC 0046 admits the 4 `state.useMaxWidth` tuning rows; they leave this
+    // scan and their skip set is pinned below.
+    auto rfc0046 = json::parse(read_file(kRfc0046Ledger));
+    ASSERT_TRUE(rfc0046.has_value()) << "RFC 0046 cohort ledger must parse";
+    std::set<std::string> state_admitted;
+    rfc0046->root().get("rows").iter([&](const JsonVal row) {
+        const auto rel = row.get_string("path");
+        cohort.insert(rel);
+        if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
+    });
     cohort.insert(admitted.begin(), admitted.end());
     std::set<std::string> skipped_by_rfc0038;
+    std::set<std::string> skipped_by_rfc0046;
     auto declares_config = [](const std::string& source) {
         if (!source.starts_with("---\n")) return false;
         std::istringstream in(source);
@@ -287,6 +299,7 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
             if (!declares_config(source)) continue;
             if (cohort.contains(rel)) {
                 if (admitted.contains(rel)) skipped_by_rfc0038.insert(rel);
+                if (state_admitted.contains(rel)) skipped_by_rfc0046.insert(rel);
                 continue;
             }
             EXPECT_TRUE(same_source_surface(capture_cells(source, "mermaid"),
@@ -295,10 +308,11 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
             ++checked;
         }
     }
-    EXPECT_EQ(checked, 43);
+    EXPECT_EQ(checked, 39);
     // Under-listing fails here (an admitted row that really changes surface is
     // no longer excluded, so the whole-source assertion above goes red);
     // over-listing fails in test_mermaid_state_0038_cohort (a wrongly admitted
     // row cannot draw or misses its footer). This equality is the set pin.
     EXPECT_EQ(skipped_by_rfc0038, admitted);
+    EXPECT_EQ(skipped_by_rfc0046, state_admitted);
 }

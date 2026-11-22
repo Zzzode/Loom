@@ -225,6 +225,63 @@ bool validate_align(std::string_view rest) {
 
 }  // namespace
 
+// RFC 0046: a column-0 `config:` block may carry exactly one `architecture`
+// namespace (indent 2, empty value) with `randomize` ({true,false}), `seed`
+// ({42}) and `idealEdgeLengthMultiplier` ({3}) leaves at indent 4. The
+// renderer reads none of them; the bounded footer discloses that the layout
+// tuning was not applied. Every other config/theme/look shape keeps the whole
+// source on fallback.
+constexpr std::size_t kArchNoticeLineLimit = 96u;
+constexpr std::string_view kArchNoticeHeader = "Architecture native projection v1";
+
+struct ArchTuning {
+    std::optional<std::string> randomize;
+    std::optional<std::string> seed;
+    std::optional<std::string> edge_multiplier;
+};
+
+// Trim, strip a trailing YAML comment outside quotes, then dequote a matched
+// pair; an unmatched quote is a mismatch, never a value. TU-local copy of the
+// ishikawa helper (RFC 0043/0046) so no shared module is widened.
+std::optional<std::string> arch_scalar(std::string_view raw, Work& work) {
+    const auto trim_view = [](std::string_view value) {
+        const auto first = value.find_first_not_of(" \t");
+        if (first == std::string_view::npos) return std::string_view{};
+        const auto last = value.find_last_not_of(" \t");
+        return value.substr(first, last - first + 1u);
+    };
+    auto value = trim_view(raw);
+    char quote = 0;
+    for (std::size_t n = 0; n < value.size(); ++n) {
+        const char c = value[n];
+        if (quote) {
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == '#' && (n == 0u || value[n - 1u] == ' ' || value[n - 1u] == '\t')) {
+            value = trim_view(value.substr(0, n));
+            break;
+        }
+    }
+    if (!work.spend(value.size() + 1u)) return std::nullopt;
+    if (value.size() >= 2u &&
+        ((value.front() == '"' && value.back() == '"') ||
+         (value.front() == '\'' && value.back() == '\'')))
+        value = value.substr(1u, value.size() - 2u);
+    return std::string(value);
+}
+
+bool arch_notice_line(std::vector<std::string>& notices, std::string_view line, Work& work) {
+    if (line.size() > kArchNoticeLineLimit ||
+        !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+        return false;
+    notices.emplace_back(line);
+    return true;
+}
 std::optional<std::vector<std::string>> architecture_layout(std::string_view source, Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
     std::size_t fee = 256;
@@ -239,12 +296,20 @@ std::optional<std::vector<std::string>> architecture_layout(std::string_view sou
     // No layout/color contract: a frontmatter theme/look/config key, an
     // %%{init}%% directive or a classDef/:::/style statement keeps the whole
     // source on fallback. Key-based so prose words are not false gates.
+    // RFC 0046: the one admitted frontmatter shape is a column-0 `config:`
+    // block carrying exactly one `architecture` namespace with its closed
+    // tuning leaves; the disclosure footer is appended below the art.
+    ArchTuning tuning;
     {
         bool visual_gate = false;
         if (source.starts_with("---\n")) {
             const auto close = source.find("\n---\n", 4);
             if (close != std::string_view::npos) {
                 const std::string_view frontmatter(source.data(), close);
+                bool in_config = false, saw_config = false, saw_namespace = false;
+                const auto has_tuning = [&] {
+                    return tuning.randomize || tuning.seed || tuning.edge_multiplier;
+                };
                 for (std::size_t pos = 0;;) {
                     const auto eol = frontmatter.find('\n', pos);
                     std::string_view line = frontmatter.substr(
@@ -252,15 +317,86 @@ std::optional<std::vector<std::string>> architecture_layout(std::string_view sou
                                                            : eol - pos);
                     pos = eol == std::string_view::npos ? frontmatter.size() : eol + 1;
                     const auto key_start = line.find_first_not_of(' ');
-                    if (key_start != std::string_view::npos) {
-                        std::string_view key = line.substr(key_start);
-                        const auto colon = key.find(':');
-                        if (colon != std::string_view::npos) key = key.substr(0, colon);
-                        if (key == "theme" || key == "look" || key == "config")
+                    if (key_start == std::string_view::npos ||
+                        line.substr(key_start).starts_with('#')) {
+                        if (eol == std::string_view::npos) break;
+                        continue;  // blank or YAML comment
+                    }
+                    if (key_start != 0 && !in_config) {
+                        // Outside the config block the previous flat scan still
+                        // gates every indented visual key; other indented lines
+                        // are ignored.
+                        std::string_view leaf = line.substr(key_start);
+                        const auto colon = leaf.find(':');
+                        if (colon != std::string_view::npos) leaf = leaf.substr(0, colon);
+                        if (leaf == "theme" || leaf == "look" || leaf == "config")
                             visual_gate = true;
+                    } else if (key_start != 0) {
+                        std::string_view leaf = line.substr(key_start);
+                        const auto colon = leaf.find(':');
+                        if (colon == std::string_view::npos) {
+                            visual_gate = true;
+                        } else {
+                            const std::string_view key = leaf.substr(0, colon);
+                            auto value = arch_scalar(leaf.substr(colon + 1u), work);
+                            if (!value) {
+                                visual_gate = true;
+                            } else if (key_start == 2u && key == "architecture" &&
+                                       value->empty()) {
+                                if (saw_namespace) visual_gate = true;
+                                saw_namespace = true;
+                            } else if (key_start == 4u && saw_namespace &&
+                                       key == "randomize") {
+                                if (tuning.randomize ||
+                                    (*value != "true" && *value != "false"))
+                                    visual_gate = true;
+                                else
+                                    tuning.randomize = std::move(*value);
+                            } else if (key_start == 4u && saw_namespace && key == "seed") {
+                                if (tuning.seed || *value != "42")
+                                    visual_gate = true;
+                                else
+                                    tuning.seed = std::move(*value);
+                            } else if (key_start == 4u && saw_namespace &&
+                                       key == "idealEdgeLengthMultiplier") {
+                                if (tuning.edge_multiplier || *value != "3")
+                                    visual_gate = true;
+                                else
+                                    tuning.edge_multiplier = std::move(*value);
+                            } else {
+                                visual_gate = true;
+                            }
+                        }
+                    } else {
+                        const auto colon = line.find(':');
+                        const std::string_view key =
+                            colon == std::string_view::npos ? line : line.substr(0, colon);
+                        in_config = false;
+                        if (key == "config" && colon == std::string_view::npos) {
+                            // Only the literal `config:` opens a block.
+                            visual_gate = true;
+                        } else if (key == "config") {
+                            if (saw_config) {
+                                visual_gate = true;
+                            } else {
+                                saw_config = true;
+                                auto value = arch_scalar(line.substr(colon + 1u), work);
+                                // Only an empty value opens a config block.
+                                if (!value || !value->empty())
+                                    visual_gate = true;
+                                else
+                                    in_config = true;
+                            }
+                        } else if (key == "theme" || key == "look") {
+                            visual_gate = true;
+                        }
                     }
                     if (eol == std::string_view::npos) break;
                 }
+                // A namespace without a leaf, and an empty config block, both
+                // keep the whole source.
+                if (saw_namespace && !has_tuning()) visual_gate = true;
+                if (saw_config && !saw_namespace && !has_tuning()) visual_gate = true;
             }
         }
         if (!visual_gate) {
@@ -368,6 +504,38 @@ std::optional<std::vector<std::string>> architecture_layout(std::string_view sou
         combined.insert(combined.end(), title_rows.begin(), title_rows.end());
         combined.insert(combined.end(), out.begin(), out.end());
         out = std::move(combined);
+        // The title rows are now part of `out`; clear them so the shared guard
+        // below does not count them twice.
+        title_rows.clear();
+    }
+    // RFC 0046 disclosure footer: a blank separator, the header and one line
+    // per admitted leaf, appended below the art (the 16 clean rows carry no
+    // config block and therefore no footer).
+    if (tuning.randomize || tuning.seed || tuning.edge_multiplier) {
+        std::vector<std::string> notices;
+        if (!arch_notice_line(notices, kArchNoticeHeader, work)) return {};
+        if (tuning.randomize &&
+            !arch_notice_line(notices,
+                              "config.architecture.randomize=" + *tuning.randomize +
+                                  " -> layout tuning; not applied",
+                              work))
+            return {};
+        if (tuning.seed &&
+            !arch_notice_line(notices,
+                              "config.architecture.seed=" + *tuning.seed +
+                                  " -> layout tuning; not applied",
+                              work))
+            return {};
+        if (tuning.edge_multiplier &&
+            !arch_notice_line(notices,
+                              "config.architecture.idealEdgeLengthMultiplier=" +
+                                  *tuning.edge_multiplier +
+                                  " -> layout tuning; not applied",
+                              work))
+            return {};
+        if (!push_guarded(out, std::string{})) return {};
+        for (auto& notice : notices)
+            if (!push_guarded(out, notice)) return {};
     }
     if (out.empty()) return {};
     return out;

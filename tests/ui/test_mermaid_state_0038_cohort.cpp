@@ -367,8 +367,19 @@ TEST(MermaidState0038Cohort, LookTableIsClosed) {
     EXPECT_FALSE(draws(state_probe("  themeVariables:\n    primaryColor: \"#ff0000\"\n"), kWide));
     // The one E2b leaf outside its exact value table still fails closed.
     EXPECT_FALSE(draws(state_probe("  fontFamily: fira\n"), kWide));
-    // A namespaced state.* subtree stays closed (the D-066 F0 boundary).
-    EXPECT_FALSE(draws(state_probe("  state:\n    useMaxWidth: true\n"), kWide));
+    // RFC 0046 admits exactly the closed `state` tuning namespace and
+    // discloses it; every other `state.*` shape stays gated.
+    {
+        const auto tuned = state_probe("  state:\n    useMaxWidth: true\n");
+        ASSERT_TRUE(draws(tuned, kWide));
+        const auto text = capture(tuned, "mermaid", kWide).text;
+        EXPECT_NE(text.find("State native projection v1"), std::string::npos);
+        EXPECT_NE(text.find("config.state.useMaxWidth=true -> display sizing; not applied"),
+                  std::string::npos);
+        EXPECT_FALSE(draws(state_probe("  state:\n    useMaxWidth: maybe\n"), kWide));
+        EXPECT_FALSE(draws(state_probe("  state:\n    width: 100\n"), kWide));
+        EXPECT_FALSE(draws(state_probe("  state:\n"), kWide));
+    }
     // The envelope contract is unchanged: a non-folded or tab-bearing
     // description still fails closed even with an admitted leaf beside it.
     const std::string body = "stateDiagram-v2\n  [*] --> State1\n  State1 --> [*]\n";

@@ -49,6 +49,7 @@ struct FamilySpec {
     int expected_originals;
     int expected_draw;
     int expected_admitted;
+    int expected_layout_admitted;
     int expected_frontmatter_gated;
     int expected_body_style_gated;
 };
@@ -60,19 +61,19 @@ const std::vector<FamilySpec>& families() {
          {"dark", "forest"},
          "Ishikawa native projection v1",
          "ishikawa-beta\n  Effect\n      Cause\n",
-         13, 7, 2, 4, 0},
+         13, 7, 2, 3, 1, 0},
         {"venn",
          fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/venn-cohort.json",
          {"dark", "redux-color", "redux-dark-color"},
          "Venn native projection v1",
          "venn-beta\n  set A\n  set B\n  union A, B\n",
-         21, 11, 3, 3, 4},
+         21, 11, 3, 0, 3, 4},
         {"railroad",
          fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/railroad-cohort.json",
          {"dark"},
          "Railroad native projection v1",
          "railroad-beta\nvalue = terminal(\"x\") ;\n",
-         9, 8, 1, 0, 0},
+         9, 8, 1, 0, 0, 0},
     };
     return specs;
 }
@@ -422,8 +423,21 @@ TEST(MermaidSmallfam0043Cohort, OutOfTableAndShapeRejects) {
         EXPECT_FALSE(draws(config_probe(spec, "  theme: dark\n  handDrawnSeed: 1\n"), kWide))
             << spec.name;
         EXPECT_FALSE(draws(config_probe(spec, "  htmlLabels: false\n"), kWide)) << spec.name;
-        EXPECT_FALSE(draws(config_probe(spec, "  ishikawa:\n    useMaxWidth: false\n"), kWide))
-            << spec.name;
+        // RFC 0046 admits the closed ishikawa tuning namespace for the
+        // ishikawa spec only; the sibling families keep it gated, and an
+        // out-of-table value stays gated everywhere.
+        if (std::string_view(spec.name) == "ishikawa") {
+            EXPECT_TRUE(draws(config_probe(spec, "  ishikawa:\n    useMaxWidth: false\n"),
+                              kWide))
+                << spec.name;
+            EXPECT_FALSE(draws(config_probe(spec, "  ishikawa:\n    useMaxWidth: maybe\n"),
+                               kWide))
+                << spec.name;
+        } else {
+            EXPECT_FALSE(
+                draws(config_probe(spec, "  ishikawa:\n    useMaxWidth: false\n"), kWide))
+                << spec.name;
+        }
         EXPECT_FALSE(draws(probe(spec, "config:\n"), kWide)) << spec.name;
         EXPECT_FALSE(draws(probe(spec, "config: {theme: dark}\n"), kWide)) << spec.name;
         // Indented config is not a column-0 block header.
@@ -481,7 +495,7 @@ TEST(MermaidSmallfam0043Cohort, OutOfTableAndShapeRejects) {
     EXPECT_TRUE(draws("%%{init: {\"theme\": \"dark\"}}%%\n" + families()[1].body, kWide));
 }
 
-TEST(MermaidSmallfam0043Cohort, FamilyLedgersPartitionFourWays) {
+TEST(MermaidSmallfam0043Cohort, FamilyLedgersPartitionFiveWays) {
     // Literal arithmetic against the filesystem enumeration, not a
     // recomputation from the ledger's own lists: a row dropped from every list
     // must be caught.
@@ -501,8 +515,12 @@ TEST(MermaidSmallfam0043Cohort, FamilyLedgersPartitionFourWays) {
         EXPECT_EQ(selection.get_int("body_style_gated_count"),
                   spec.expected_body_style_gated)
             << spec.name;
+        EXPECT_EQ(selection.get_int("layout_admitted_count"),
+                  spec.expected_layout_admitted)
+            << spec.name;
         EXPECT_EQ(selection.get_int("family_total"), spec.expected_originals) << spec.name;
         EXPECT_EQ(selection.get_int("draw_count") + selection.get_int("admitted_count") +
+                      selection.get_int("layout_admitted_count") +
                       selection.get_int("frontmatter_gated_count") +
                       selection.get_int("body_style_gated_count"),
                   spec.expected_originals)
@@ -517,7 +535,8 @@ TEST(MermaidSmallfam0043Cohort, FamilyLedgersPartitionFourWays) {
             covered.insert(row.get_string("path"));
         });
         EXPECT_EQ(drawn, spec.expected_draw) << spec.name;
-        for (const auto* key : {"admitted", "frontmatter_gated", "body_style_gated"}) {
+        for (const auto* key : {"admitted", "layout_admitted", "frontmatter_gated",
+                                "body_style_gated"}) {
             int listed = 0;
             selection.get(key).iter([&](JsonVal value) {
                 ++listed;
@@ -526,6 +545,8 @@ TEST(MermaidSmallfam0043Cohort, FamilyLedgersPartitionFourWays) {
             });
             if (std::string_view(key) == "admitted")
                 EXPECT_EQ(listed, spec.expected_admitted) << spec.name;
+            if (std::string_view(key) == "layout_admitted")
+                EXPECT_EQ(listed, spec.expected_layout_admitted) << spec.name;
             if (std::string_view(key) == "frontmatter_gated")
                 EXPECT_EQ(listed, spec.expected_frontmatter_gated) << spec.name;
             if (std::string_view(key) == "body_style_gated")

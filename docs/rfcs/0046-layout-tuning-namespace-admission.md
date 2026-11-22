@@ -1,7 +1,7 @@
 ---
 rfc: 46
 title: Layout and display tuning namespace admission (ishikawa, architecture, state)
-status: implementable
+status: implemented
 owners: "@Zzzode"
 reviewers: ["agent:design-review", "agent:prr-review"]
 created: 2026-11-22
@@ -76,10 +76,11 @@ exact-bit surfaces stay untouched.
 
 ### Why admission is testable
 
-The established two-part oracle: per-row twin inertness (config-free twin frame plus exactly
-the ledger's footer delta) and each family's existing drawn-row gates (RFC 0043 small-family
-gate for ishikawa; the architecture family tests; the RFC 0038 state gates), which stay green
-only if the new namespace leaves do not disturb envelopes that carry none.
+The established two-part oracle: per-row twin inertness (config-free corpus or synthetic
+twin frame plus exactly the ledger's footer delta) and the drawn-row gates — including a
+**new** frame-identity assertion for the architecture family's 16 `config`-less rows
+(`same_surface(whole, body)` and no footer), which the existing tests did not provide —
+that stay green only if the new namespace leaves do not disturb envelopes that carry none.
 
 ## Goals
 
@@ -180,10 +181,12 @@ frames stay byte-identical.
     (`renderer.theme_gate`, the review note's "16 draw / 4 frontmatter-gated") are rewritten
     so they do not become false statements.
   - `tests/ui/test_mermaid_architecture_cohort.cpp`: counts; **a new frame-identity
-    assertion** in `CleanArchitecturesDrawOnWholeAndBodyTracks` — for every drawn row,
-    `same_surface(whole_wide, body_wide)` plus the absence of the `Architecture native
-    projection v1` header and any `config.architecture.` line (the 16 clean rows carry no
-    `config:` and must stay footer-free); `GatedArchitecturesStayWholeSource` asserts the
+    assertion** in `CleanArchitecturesDrawOnWholeAndBodyTracks` — for each of the 16
+    `config`-less clean rows (the rows without a footer, never the 4 new footer-bearing
+    rows) `same_surface(whole_wide, body_wide)` plus the absence of the `Architecture
+    native projection v1` header and any `config.architecture.` line; the 4 new rows'
+    whole = twin + footer composition is covered by the 0046 gate;
+    `GatedArchitecturesStayWholeSource` asserts the
     gated lists are *empty* (non-vacuously, by `EXPECT_EQ(count, 0)` for each list) and the
     4 new rows' inertness is covered by the 0046 gate; `VisualGateIsKeyBased` flips its
     `config: architecture: randomize: false` sample to a positive and keeps a paired
@@ -241,7 +244,7 @@ frames stay byte-identical.
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | layout/display tuning namespaces | 11 rows, 3 families | proposed | red-first (11 rows in the current roster as `family_residual`/`dagre_layout_tuning`); then global 1517/628 → 1528/617; formal 1331 → 1342; gaps 48, integrity 0; narrow measured per row; dual-preset sha recorded; independent P1 code review APPROVE |
+| P1 | layout/display tuning namespaces | 11 rows, 3 families | **done** | red-first measured (all 11 in the current roster); global **1517/628 → 1528/617**; formal **1331 → 1342**; gaps 48, integrity 0; narrow **0/11** whole (two rows draw on the body track at 40); dual-preset matrix byte-identical sha `10e819f8…`; roster 628 → 617, categories 43 → 41; full debug ctest `100% out of 4687`, `CTEST_EXIT=0`, durable log `/tmp/loom-logs/ctest-full-dbg-0046-run3.log` sha256 `4cda1d44…` (two earlier runs hit load-driven timing flakes, each clean on 3 isolated reruns); independent P1 code review APPROVE (r2) |
 
 ## Production Readiness Review
 
@@ -286,7 +289,7 @@ Completed at the `implementable` gate by an independent PRR agent.
 |---|---|---|---|
 | Design | agent:design-review | 2026-11-22 | approve (r3) |
 | Production readiness | agent:prr-review | 2026-11-22 | approve (1 MAJOR + 9 MINOR + 7 NIT folded) |
-| Code (per phase) | pending | — | — |
+| Code (per phase) | agent:code-review | 2026-11-22 | approve (r2) |
 
 ## Rollout and rollback
 
@@ -322,15 +325,15 @@ restores 628 and every pin. No persisted data, wire, CLI or settings change.
 
 ## Documentation impact
 
-- [ ] `docs/dev/d417-next-family-layout-tuning.md` — selection (twin evidence corrected)
-- [ ] `docs/dev/d418-layout-tuning-rfc0046-closure.md` — closure record
-- [ ] `docs/decisions/design-decisions.md` — namespace admission entry, and the existing
+- [x] `docs/dev/d417-next-family-layout-tuning.md` — selection (twin evidence corrected)
+- [x] `docs/dev/d418-layout-tuning-rfc0046-closure.md` — closure record
+- [x] `docs/decisions/design-decisions.md` — namespace admission entry, and the existing
       "`state.useMaxWidth` stays closed" sentence is amended
-- [ ] `docs/README.md` — RFC index row status
-- [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — ishikawa/architecture/state rows
+- [x] `docs/README.md` — RFC index row status
+- [x] `docs/dev/mermaid-d117-family-fallback-counts.md` — ishikawa/architecture/state rows
       corrected **from the current census** (the state rows are stale at 70/33 and 23/19,
       not derived by subtracting from them)
-- [ ] `docs/dev/engineering-efficiency.md` — per-task retro (capture cost of the new gate
+- [x] `docs/dev/engineering-efficiency.md` — per-task retro (capture cost of the new gate
       and any rework loop)
 
 ## Open questions
@@ -355,10 +358,15 @@ restores 628 and every pin. No persisted data, wire, CLI or settings change.
 | 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | Census, row selection, closed value sets, arithmetic and the inertness argument all verified independently. 2 BLOCKER: the "no body-equivalent drawn twin (0/11)" evidence was false — ishikawa `diagramPadding` and architecture `idealEdgeLengthMultiplier` have clean corpus twins already used by sibling ledgers → corpus twins adopted for those two, synthetic for nine (the state four have body-equal fixtures but with their own E2b footers); and the "existing batteries unchanged" claim was false — the architecture/ishikawa/smallfam/state ledgers and tests, plus the E2a/E2b scans, pin the current fallbacks and are now enumerated as same-phase updates with paired negatives. 3 MAJOR: the state change is confined to `state_source_envelope` (`parse_envelope` untouched); architecture needs a new TU-local scalar helper; the architecture mechanism is resolved to a hand-rolled scan. 4 MINOR + 2 NIT folded (composition order, exact footer literals, 43→41 categories, reviewer record, log path). All folded |
 | 2026-11-22 | r2 | agent:design-review | REQUEST-CHANGES | Re-verified B1/M1-M3. One load-bearing item still open (B3): the ishikawa admitted bucket could not move from 2 to 5 without breaking the RFC 0043 theme-only contract (smallfam pins at `:238/:245/:263/:278-286/:561`); the folded text already used a separate `layout_admitted` bucket, and it is now explicit about every unchanged smallfam pin and the five-way partition. Two MINORs (roster category numbers 9→7 / 22→20 vs the matrix family fallbacks; architecture `draw_count`/`predicted_draw` enumeration) and three NITs folded |
 | 2026-11-22 | r3 | agent:design-review | **APPROVE-TO-ACCEPT** | Every consumer of the ishikawa/smallfam pins re-checked and consistent (partition 13 = 7 + 2 + 3 + 1 + 0; smallfam generator unchanged); roster/architecture numbers and all NITs verified; E2a 108→104 and E2b 43→39 reproduced exactly. Gate: provisional → accepted |
-| 2026-11-22 | PRR | agent:prr-review | REQUEST-CHANGES | 1 MAJOR: the 16 clean architecture rows' byte-identical frames were not guarded by any test (the existing gate computed both surfaces without comparing them; the matrix only counts verdicts) → a new frame-identity assertion is specified. 9 MINOR: the smallfam disjoint-list coverage loop; the architecture generator's flat `gate_kind` regex; stale narrative fields in both family ledgers; the empty-gated-list disposition; the E2a state-side over-listing pin; README/d117 staleness; the CMake registration and timeouts; the state 0038 `EXCLUDED_EXPECTED` count must stay 4. 7 NIT: venn/railroad naming, canonical footer order, structural twin check, footer assertion on the state flip, stale test names/comments, efficiency retro, complete family-fallback list. All folded |
+| 2026-11-22 | PRR | agent:prr-review | REQUEST-CHANGES | 1 MAJOR: the 16 clean architecture rows' byte-identical frames were not guarded by any test (the existing gate computed both surfaces without comparing them; the matrix only counts verdicts) → a new frame-identity assertion is specified. 9 MINOR: the smallfam disjoint-list coverage loop; the architecture generator's flat `gate_kind` regex; stale narrative fields in both family ledgers; the empty-gated-list disposition; the E2a state-side over-listing pin; README/d117 staleness; the CMake registration and timeouts; the state 0038 `EXCLUDED_EXPECTED` count must stay 4. 7 NIT: venn/railroad naming, canonical footer order, structural twin check, footer assertion on the state flip, stale test names/comments, efficiency retro, complete family-fallback list. All folded; the re-check added 1 MINOR + 1 NIT as implementation-time instructions (the clean-row scope of the new frame assertion; the rewritten "why testable" paragraph) |
+| 2026-11-22 | code r1 | agent:code-review | REQUEST-CHANGES | Real defects: the 0046 matrix branch was shadowed by the architecture branch for 4/11 rows; the ishikawa gate and its generator mirror disagreed on theme+namespace exclusivity; the architecture mirror skipped description payload lines the gate inspects; a bare `config` without a colon opened the block; the design-decisions "`state.useMaxWidth` stays closed" sentence was unamended; title rows were double-counted by the shared guard; stale comments; mirror-boundary and composition-coverage NITs. All fixed |
+| 2026-11-22 | code r2 | agent:code-review | **APPROVE** | Every fold re-verified against the code and the affected suites; only the pending verdict remained (recorded after this approval); the two remaining NITs (isolated bare-config negative, bare-key mirror edge) were folded before the record |
 
 ## Implementation History
 
 | Date | Phase | Change | Commit |
 |---|---|---|---|
-| 2026-11-22 | — | Draft created (provisional), no code | (this commit) |
+| 2026-11-22 | — | Draft created (provisional), no code | ec1610d9 |
+| 2026-11-22 | — | Design r1-r3 folded; accepted; PRR folded; no code | 52637402 |
+| 2026-11-22 | — | PRR folded (frame-identity oracle, footprint); implementable; no code | c8696d7b |
+| 2026-11-22 | P1 | 11 rows admitted through three family gates + footers; sibling ledger (2 corpus + 9 synthetic twins), generator, 5-test gate, hermetic check, matrix branch placed before every family branch; architecture/ishikawa/smallfam/state-0038/E2a/E2b updated with paired negatives and a new 16-row frame-identity assertion; roster 628→617; code review r1→r2 APPROVE | (this commit) |

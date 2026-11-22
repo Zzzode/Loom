@@ -5,7 +5,7 @@
   "renderer": {
     "module": "src/ui/visual/mermaid_architecture_impl.cpp",
     "grammar": "architecture-beta; group/service/junction with optional icon/label and in-containment, L/R/T/B directed/undirected/labeled edges, align row/column",
-    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+    "theme_gate": "an unrecognized frontmatter theme/look/config shape, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback; RFC 0046 admits exactly one `architecture` tuning namespace, disclosed through a footer"
   },
   "upstream": {
     "tag": "mermaid@12.2.0",
@@ -13,18 +13,13 @@
     "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
   },
   "selection": {
-    "rule": "architecture fixtures with no frontmatter gate and no body style statement",
+    "rule": "architecture fixtures with no frontmatter gate (the RFC 0046 tuning namespace is admitted) and no body style statement",
     "roots": [
       "architecture"
     ],
-    "draw_count": 16,
-    "frontmatter_gated_count": 4,
-    "frontmatter_gated": [
-      "architecture/pr-check/should-render-a-deterministic-layout-for-a-complex-deeply-nested-diagram.mmd",
-      "architecture/pr-check/should-render-a-deterministic-layout-with-an-explicit-seed-override.mmd",
-      "architecture/pr-check/should-render-with-randomize-true-without-errors.mmd",
-      "architecture/visual-check/should-render-a-linear-chain-with-an-increased-idealedgelengthmultiplier.mmd"
-    ],
+    "draw_count": 20,
+    "frontmatter_gated_count": 0,
+    "frontmatter_gated": [],
     "body_style_gated_count": 0,
     "body_style_gated": []
   },
@@ -32,13 +27,13 @@
     "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, architecture renderer cohort, 2026-11-13, task a5602134897c4359d)",
     "date": "2026-11-13",
     "verdict": "approved",
-    "note": "APPROVE with zero MAJOR. The reviewer independently reproduced the exact 16 draw / 4 frontmatter-gated / 0 body-gated partition, enumerated 18 body statement shapes (187 statements, zero false rejects on clean fixtures), ported the validators and ran 64 targeted probes, 22 final probes and 60000 fuzz cases with no fail-open or crash. MINOR 1 (source/target endpoint order, missing target port, empty edge label regression pins), MINOR 2 (icon-only declaration coverage) and the NIT 6 arrow-in-label case were applied in the cohort test. MINOR 3 (conservative classDef/::: prefix gating inherited from the quadrant renderer) only ever forces a safe source fallback, matches the approved sibling behavior and is deferred to a shared hardening batch; NIT 4 (whitespace tolerance) and NIT 5 (frontmatter block-scalar false-positive) are safe-direction, zero-corpus-impact and the Python/C++ gates stay identical."
+    "note": "APPROVE with zero MAJOR at the 2026-11-13 census (16 draw / 4 frontmatter-gated / 0 body-gated; the reviewer independently reproduced the partition, ported the validators and ran targeted, final and 60000 fuzz probes with no fail-open or crash; MINOR 1/2 and NIT 6 applied, MINOR 3/NIT 4/NIT 5 safe-direction). RFC 0046 (2026-11-22) later admitted the 4 `config.architecture.*` tuning rows through the closed namespace gate with a disclosure footer, so the live partition is 20 draw / 0 frontmatter-gated / 0 body-gated."
   },
   "counts": {
-    "total": 16,
-    "predicted_draw": 16,
+    "total": 20,
+    "predicted_draw": 20,
     "predicted_blocked": 0,
-    "predicted_original_draw": 16
+    "predicted_original_draw": 20
   },
   "rows": [
     {
@@ -258,6 +253,60 @@
       "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
     },
     {
+      "path": "architecture/pr-check/should-render-a-deterministic-layout-for-a-complex-deeply-nested-diagram.mmd",
+      "family": "architecture",
+      "sha256": "e62172ca7ddfbd9cc08729564376281b7ad7c531c92c5b363c108df0e7fa8efb",
+      "manifest_sha256": "e62172ca7ddfbd9cc08729564376281b7ad7c531c92c5b363c108df0e7fa8efb",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/pr-check/should-render-a-deterministic-layout-with-an-explicit-seed-override.mmd",
+      "family": "architecture",
+      "sha256": "5632241778db8005d4bdca8c1b888d5a824925160560d47b63fb465fe5ad3298",
+      "manifest_sha256": "5632241778db8005d4bdca8c1b888d5a824925160560d47b63fb465fe5ad3298",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
       "path": "architecture/pr-check/should-render-a-simple-architecture-diagram-with-groups.mmd",
       "family": "architecture",
       "sha256": "7e6ce912500f8a29c6abf021376ff40ca48062da66bc6a487d36420769427144",
@@ -437,6 +486,60 @@
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/pr-check/should-render-with-randomize-true-without-errors.mmd",
+      "family": "architecture",
+      "sha256": "75f29a101b163df98dd9af1684b5ab412e4997ccd55c48b7570e5aaf180b18cd",
+      "manifest_sha256": "75f29a101b163df98dd9af1684b5ab412e4997ccd55c48b7570e5aaf180b18cd",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_body_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "architecture renderer projects groups/services/junctions/edges/aligns to a bounded native outline; no visual gate is present so it draws"
+    },
+    {
+      "path": "architecture/visual-check/should-render-a-linear-chain-with-an-increased-idealedgelengthmultiplier.mmd",
+      "family": "architecture",
+      "sha256": "8305b7356df4ddc22f6ea47cbb728d5cd3444295b2f6bffac68442b529241337",
+      "manifest_sha256": "8305b7356df4ddc22f6ea47cbb728d5cd3444295b2f6bffac68442b529241337",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "prediction": "predicted-draw",
+      "track_scope": "whole-and-body",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
         "restored_240": "drawn"
       },
       "expected_body_states": {

@@ -5854,6 +5854,35 @@ const JourneyCohortEntry* git_0045_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// RFC 0046 layout/display tuning cohort: the 11 cold ishikawa/architecture/
+// state fallbacks whose only unadmitted input is a closed-value tuning
+// namespace. States are read per row from the ledger. The per-row frame gate
+// is test_mermaid_layouttuning_0046_cohort.
+const std::map<std::string, JourneyCohortEntry>& layouttuning_0046_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/layouttuning-0046-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "Layout-tuning 0046 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "Layout-tuning 0046 cohort ledger must be independently approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* layouttuning_0046_cohort_row(std::string_view path) {
+    const auto& rows = layouttuning_0046_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0040 journey-family look/theme cohort: the 31 reviewed timeline/gantt/
 // journey originals promoted by the three families' closed look/theme tables.
 // States are read per row exactly as the three family ledgers do. The per-row
@@ -6024,7 +6053,7 @@ const JourneyCohortEntry* quadrant_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
-// RFC 0031 architecture-family renderer cohort: the sixteen clean (no
+// RFC 0031 architecture-family renderer cohort: the twenty (no
 // frontmatter gate and no body style statement) architecture-beta originals
 // admitted by mermaid_architecture_impl, with per-width states.
 const std::map<std::string, JourneyCohortEntry>& architecture_cohort_map() {
@@ -10354,12 +10383,37 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
-            // RFC 0031 architecture-family renderer: the sixteen clean
+            // RFC 0046 layout/display tuning admission: the 11 reviewed
+            // ishikawa/architecture/state originals promoted by the closed
+            // tuning namespaces, states read per row.
+            if (class_path.is_str()) {
+                const auto* cohort = layouttuning_0046_cohort_row(class_path.as_str());
+                if (cohort) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = (*fs::path(row.path).begin()).string();
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "RFC-0046 layout-tuning reviewed cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
+            // RFC 0031 architecture-family renderer: all twenty
             // architecture-beta originals are governed by their reviewed
-            // cohort ledger; the per-row pixel gate is
-            // test_mermaid_architecture_cohort. The four frontmatter-gated
-            // fixtures have no ledger row and keep their default source
-            // disposition.
+            // cohort ledger (the four RFC 0046 tuning rows are matched by the
+            // branch above, which reads their states from the 0046 ledger);
+            // the per-row pixel gate is test_mermaid_architecture_cohort.
             if (class_path.is_str() &&
                 class_path.as_str().starts_with("architecture/")) {
                 if (const auto* cohort = architecture_cohort_row(class_path.as_str())) {

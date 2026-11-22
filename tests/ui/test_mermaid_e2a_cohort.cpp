@@ -33,6 +33,7 @@ const fs::path kE2bLedger = kTestsDir / "../tools/mermaid/e2b-cohort.json";
 const fs::path kRfc0038Ledger = kTestsDir / "../tools/mermaid/state-0038-cohort.json";
 const fs::path kRfc0039Ledger = kTestsDir / "../tools/mermaid/git-0039-cohort.json";
 const fs::path kRfc0045Ledger = kTestsDir / "../tools/mermaid/git-0045-cohort.json";
+const fs::path kRfc0046Ledger = kTestsDir / "../tools/mermaid/layouttuning-0046-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -280,7 +281,18 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     rfc0045->root().get("rows").iter(
         [&](const JsonVal row) { git_admitted.insert(row.get_string("path")); });
     cohort.insert(git_admitted.begin(), git_admitted.end());
+    // RFC 0046 admits the 4 state `state.useMaxWidth` tuning rows; the state
+    // side of the skip set is pinned to the ledger below.
+    auto rfc0046 = json::parse(read_file(kRfc0046Ledger));
+    ASSERT_TRUE(rfc0046.has_value()) << "RFC 0046 cohort ledger must parse";
+    std::set<std::string> state_admitted;
+    rfc0046->root().get("rows").iter([&](const JsonVal row) {
+        const auto rel = row.get_string("path");
+        cohort.insert(rel);
+        if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
+    });
     std::set<std::string> git_skipped;
+    std::set<std::string> state_skipped;
     static constexpr const char* kRoots[] = {"git", "state-diagram", "state-diagram-v2"};
     int checked = 0;
     for (const char* root_name : kRoots) {
@@ -293,6 +305,8 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
             if (cohort.contains(rel)) {
                 if (std::string_view(root_name) == "git" && git_admitted.contains(rel))
                     git_skipped.insert(rel);
+                if (std::string_view(root_name) != "git" && state_admitted.contains(rel))
+                    state_skipped.insert(rel);
                 continue;
             }
             // Out-of-E2a-scope frontmatter rows must not be admitted by the
@@ -309,4 +323,5 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     // the local set equality above, and an admitted-without-drawing row fails
     // test_mermaid_gitgraph_0039_cohort (or test_mermaid_git_0045_cohort).
     EXPECT_EQ(git_skipped, git_admitted);
+    EXPECT_EQ(state_skipped, state_admitted);
 }

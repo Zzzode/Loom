@@ -1,7 +1,8 @@
 // RFC 0031 ishikawa-family renderer durable cohort gate. Public API only:
 // enforces tools/mermaid/ishikawa-cohort.json against the live renderer and
-// the pinned manifest. The seven clean ishikawa originals render natively;
-// the six frontmatter-gated fixtures stay on source.
+// the pinned manifest. Thirteen originals: seven clean rows render natively,
+// two RFC 0043 theme rows and three RFC 0046 `config.ishikawa.*` tuning rows
+// are admitted with a footer, and one (`look: handDrawn`) stays on source.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -83,8 +84,9 @@ TEST(MermaidIshikawaCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_ishikawa_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 7);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 7);
-    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 4);
+    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 1);
     EXPECT_EQ(root.get("selection").get_int("admitted_count"), 2);
+    EXPECT_EQ(root.get("selection").get_int("layout_admitted_count"), 3);
     EXPECT_EQ(root.get("selection").get_int("family_total"), 13);
     EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 0);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
@@ -148,7 +150,7 @@ TEST(MermaidIshikawaCohort, GatedIshikawasStayWholeSource) {
         const auto rel = value.as_str();
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
     });
-    EXPECT_EQ(frontmatter, 4);
+    EXPECT_EQ(frontmatter, 1);
     int body_style = 0;
     selection.get("body_style_gated").iter([&](JsonVal value) {
         ++body_style;
@@ -171,6 +173,20 @@ TEST(MermaidIshikawaCohort, GatedIshikawasStayWholeSource) {
             << rel;
     });
     EXPECT_EQ(admitted, 2);
+    // RFC 0046: the three tuning rows draw, disclose the family header and
+    // their `config.ishikawa.` line, and stay outside the theme cohort.
+    int layout = 0;
+    selection.get("layout_admitted").iter([&](JsonVal value) {
+        ++layout;
+        const auto rel = value.as_str();
+        const auto source = read_file(kCases / rel);
+        EXPECT_TRUE(draws(source, kWide)) << rel;
+        const auto text = capture(source, "mermaid", kWide).text;
+        EXPECT_NE(text.find("Ishikawa native projection v1"), std::string::npos) << rel;
+        EXPECT_NE(text.find("config.ishikawa."), std::string::npos) << rel;
+        EXPECT_EQ(text.find("config.theme="), std::string::npos) << rel;
+    });
+    EXPECT_EQ(layout, 3);
 }
 
 // Key-based gate: prose mentioning "theme"/"config" is not a gate; a

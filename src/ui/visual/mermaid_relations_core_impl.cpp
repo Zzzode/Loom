@@ -1823,6 +1823,8 @@ namespace {
 // projects them as a user-visible disclosure footer.
 // RFC 0038: the closed look and theme tables join that whitelist, disclosed
 // after every existing line so the E2b footers stay byte-identical.
+// RFC 0046: exactly one namespaced subtree, `state` with the `useMaxWidth`
+// boolean leaf, joins the whitelist and is disclosed after every other line.
 // layout, init, nested state.* maps and every other key stay whole-source.
 struct StateEnvelope {
     std::string_view body;
@@ -1859,10 +1861,18 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
     if (!parsed || !parsed->has_frontmatter || !parsed->init.empty()) return {};
     bool description_seen = false, title_seen = false, config_seen = false;
     // One bit per accepted leaf; the accepted value set is exact.
-    enum : unsigned { Log = 1u, Font = 2u, Security = 4u, Look = 8u, Theme = 16u };
+    enum : unsigned {
+        Log = 1u,
+        Font = 2u,
+        Security = 4u,
+        Look = 8u,
+        Theme = 16u,
+        StateNs = 32u,
+        UseMax = 64u
+    };
     unsigned fields = 0u;
     int log_value = 0;
-    std::string security_value, look_value, theme_value;
+    std::string security_value, look_value, theme_value, use_max_value;
     StateEnvelope result;
     for (const auto& event : parsed->events) {
         if (event.blank || event.comment) continue;
@@ -1897,12 +1907,28 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
         }
         // E2b config subtree: indent-2 scalar leaves only, no nested maps,
         // whitelist membership with exact values; everything else fails closed.
-        if (!config_seen || event.indent != 2 || event.namespace_entry) return {};
+        // RFC 0046 adds exactly one namespaced subtree, `state` (indent 2,
+        // empty value) with the `useMaxWidth` boolean leaf at indent 4.
         const auto mark = [&](unsigned bit) -> bool {
             if (fields & bit) return false;
             fields |= bit;
             return true;
         };
+        if (event.namespace_entry) {
+            if (!config_seen || event.path != "state" || event.indent != 2) return {};
+            if (!mark(StateNs)) return {};
+            continue;
+        }
+        if (!config_seen) return {};
+        if (event.indent == 4) {
+            if (event.path != "state.useMaxWidth" || !(fields & StateNs)) return {};
+            const auto tuning = state_scalar_text(event.value, work);
+            if (!tuning || !mark(UseMax) || (*tuning != "true" && *tuning != "false"))
+                return {};
+            use_max_value = std::move(*tuning);
+            continue;
+        }
+        if (event.indent != 2) return {};
         const auto scalar = state_scalar_text(event.value, work);
         if (!scalar) return {};
         if (event.path == "logLevel") {
@@ -1956,6 +1982,8 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
     // A present config map must carry at least one accepted leaf; an empty
     // config block was whole-source before E2b and stays rejected.
     if (config_seen && fields == 0u) return {};
+    // RFC 0046: a namespace without its leaf also fails closed.
+    if ((fields & StateNs) && !(fields & UseMax)) return {};
     // Assemble the disclosure footer in the fixed alphabetical leaf order.
     if (fields != 0u) {
         if (!state_notice_line(result.config_notices, kStateNoticeHeader, work)) return {};
@@ -1987,6 +2015,14 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
             std::string line = "config.theme=";
             line += theme_value;
             line += " -> colour palette; not applied";
+            if (!state_notice_line(result.config_notices, line, work)) return {};
+        }
+        // RFC 0046 appends the display-tuning line after every existing leaf so
+        // no already-drawn frame's footer changes.
+        if ((fields & UseMax)) {
+            std::string line = "config.state.useMaxWidth=";
+            line += use_max_value;
+            line += " -> display sizing; not applied";
             if (!state_notice_line(result.config_notices, line, work)) return {};
         }
     }

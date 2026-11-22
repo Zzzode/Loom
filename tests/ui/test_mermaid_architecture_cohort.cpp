@@ -1,7 +1,8 @@
 // RFC 0031 architecture-family renderer durable cohort gate. Public API only:
 // enforces tools/mermaid/architecture-cohort.json against the live renderer
-// and the pinned manifest. The sixteen clean architecture originals render
-// natively; the four frontmatter-gated fixtures stay on source.
+// and the pinned manifest. All twenty architecture originals render natively:
+// sixteen clean rows and the four RFC 0046 `config.architecture.*` tuning rows,
+// whose footer-disclosed namespace is the only admitted frontmatter shape.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -81,9 +82,9 @@ TEST(MermaidArchitectureCohort, LedgerSchemaReviewCountsAndManifest) {
     const auto ledger = parse_doc(kLedger);
     const auto& root = ledger.root();
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_architecture_cohort/v1");
-    EXPECT_EQ(root.get("counts").get_int("total"), 16);
-    EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 16);
-    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 4);
+    EXPECT_EQ(root.get("counts").get_int("total"), 20);
+    EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 20);
+    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 0);
     EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 0);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
@@ -129,6 +130,37 @@ TEST(MermaidArchitectureCohort, CleanArchitecturesDrawOnWholeAndBodyTracks) {
         const CellCapture body_wide_cap = capture(body, "mermaid", kWide);
         EXPECT_TRUE(same_surface(body_wide_cap, capture(body, "mermaid", kWide)))
             << rel << " body restored determinism";
+        // RFC 0046 frame-identity oracle: a row without a config block must be
+        // byte-identical with and without its frontmatter and carry no footer.
+        // Structural check: a clean row has no column-0 `config:` line.
+        bool clean = true;
+        if (whole.starts_with("---\n")) {
+            const auto close = whole.find("\n---\n", 4);
+            if (close != std::string::npos) {
+                std::size_t pos = 4;
+                while (pos < close) {
+                    const auto eol = whole.find('\n', pos);
+                    const auto end = eol == std::string::npos || eol > close ? close : eol;
+                    if (whole.substr(pos, end - pos).starts_with("config:")) clean = false;
+                    pos = end + 1;
+                }
+            }
+        }
+        if (clean) {
+            EXPECT_TRUE(same_surface(whole_wide_cap, body_wide_cap))
+                << rel << " clean row whole == body";
+            EXPECT_EQ(whole_wide_cap.text.find("Architecture native projection v1"),
+                      std::string::npos)
+                << rel << " clean row has no footer";
+            EXPECT_EQ(whole_wide_cap.text.find("config.architecture."), std::string::npos)
+                << rel << " clean row has no tuning line";
+        } else {
+            EXPECT_NE(whole_wide_cap.text.find("Architecture native projection v1"),
+                      std::string::npos)
+                << rel << " tuning row discloses its footer";
+            EXPECT_NE(whole_wide_cap.text.find("config.architecture."), std::string::npos)
+                << rel << " tuning row discloses its line";
+        }
         EXPECT_EQ(body_wide, body_states[0] == "drawn") << rel << " body wide ledger";
         EXPECT_EQ(body_narrow, body_states[1] == "drawn") << rel << " body narrow ledger";
         EXPECT_EQ(body_wide, body_states[2] == "drawn") << rel << " body restored ledger";
@@ -138,11 +170,19 @@ TEST(MermaidArchitectureCohort, CleanArchitecturesDrawOnWholeAndBodyTracks) {
 TEST(MermaidArchitectureCohort, GatedArchitecturesStayWholeSource) {
     const auto ledger = parse_doc(kLedger);
     const auto& selection = ledger.root().get("selection");
+    // RFC 0046 admitted the last four frontmatter-gated rows, so both gated
+    // lists are empty; the zero counts are asserted explicitly so the check
+    // cannot pass vacuously.
+    EXPECT_EQ(selection.get_int("frontmatter_gated_count"), 0);
+    EXPECT_EQ(selection.get_int("body_style_gated_count"), 0);
     for (const auto* key : {"frontmatter_gated", "body_style_gated"}) {
+        int listed = 0;
         selection.get(key).iter([&](JsonVal value) {
+            ++listed;
             const auto rel = value.as_str();
             EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
         });
+        EXPECT_EQ(listed, 0) << key;
     }
 }
 
@@ -153,10 +193,17 @@ TEST(MermaidArchitectureCohort, VisualGateIsKeyBased) {
         "architecture-beta\n  service Theme(config)[Node]\n  group cfg\n";
     EXPECT_TRUE(draws(plain, kWide));
 
+    // RFC 0046: the closed tuning namespace is admitted (footer-disclosed);
+    // an out-of-table value beside it still closes the renderer.
     const std::string with_config =
         "---\ndescription:\n  x\nconfig:\n  architecture:\n    randomize: false\n---\n"
         "architecture-beta\n  service a(server)[A]\n";
-    EXPECT_FALSE(draws(with_config, kWide));
+    EXPECT_TRUE(draws(with_config, kWide));
+    const std::string out_of_table =
+        "---\ndescription:\n  x\nconfig:\n  architecture:\n"
+        "    idealEdgeLengthMultiplier: 4\n---\n"
+        "architecture-beta\n  service a(server)[A]\n";
+    EXPECT_FALSE(draws(out_of_table, kWide));
 
     const std::string with_theme =
         "---\ntheme: dark\n---\narchitecture-beta\n  service a(server)[A]\n";

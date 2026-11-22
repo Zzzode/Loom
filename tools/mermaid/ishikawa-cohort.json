@@ -5,7 +5,7 @@
   "renderer": {
     "module": "src/ui/visual/mermaid_ishikawa_impl.cpp",
     "grammar": "ishikawa-beta; relative-indented bare cause labels",
-    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+    "theme_gate": "an unrecognized frontmatter theme/look/config shape, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback; RFC 0043 admits the closed theme table and RFC 0046 the closed `ishikawa` tuning namespace, both footer-disclosed"
   },
   "upstream": {
     "tag": "mermaid@12.2.0",
@@ -13,7 +13,7 @@
     "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
   },
   "selection": {
-    "rule": "ishikawa fixtures with no frontmatter gate and no body style",
+    "rule": "ishikawa fixtures with no frontmatter gate (the RFC 0043 theme and RFC 0046 tuning cohorts are admitted) and no body style",
     "roots": [
       "ishikawa"
     ],
@@ -25,13 +25,17 @@
       "ishikawa/pr-check/8-should-render-with-dark-theme.mmd"
     ],
     "admitted_digest": "86bc351b0d6a32a82049f4d6c847ef0aba687d4a96edfd9f416fff2918773c37",
-    "family_total": 13,
-    "frontmatter_gated_count": 4,
-    "frontmatter_gated": [
+    "layout_admitted_count": 3,
+    "layout_admitted": [
       "ishikawa/nightly-check/should-render-usemaxwidth-false.mmd",
       "ishikawa/nightly-check/should-render-usemaxwidth-true.mmd",
-      "ishikawa/pr-check/6-should-render-with-handdrawn-look.mmd",
       "ishikawa/pr-check/9-should-render-with-custom-diagrampadding.mmd"
+    ],
+    "layout_admitted_digest": "5e1971fa60de5d7b99194888f885cbd366ed22d26fc35b2db405dc30bd08096d",
+    "family_total": 13,
+    "frontmatter_gated_count": 1,
+    "frontmatter_gated": [
+      "ishikawa/pr-check/6-should-render-with-handdrawn-look.mmd"
     ],
     "body_style_gated_count": 0,
     "body_style_gated": []
@@ -40,7 +44,7 @@
     "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, ishikawa renderer cohort, 2026-11-13, task aa67aef2934adf864)",
     "date": "2026-11-13",
     "verdict": "approved",
-    "note": "APPROVE with zero MAJOR. The reviewer independently reproduced the exact 7/6/0 partition with a trailing-whitespace-tolerant fence parser, confirmed every clean body node is spaces + [A-Za-z0-9 _.-] with no quote/bracket/edge/comment, and verified fixture 13's relative (non-grid) indentation. It ported the renderer to a Python simulator and ran 32 adversarial probes with no fail-open, and confirmed the single guarded push path and the frozen contracts. All four MINOR test/comment items were applied: the misleading 'unicode' comment was corrected and non-ASCII/emoji fail-closed regression pins added; the header-only frame branch is now tested; the %%{init and style body-gate predicates are covered; and the indent-1 boundary is asserted. The remaining NITs (unreachable byte cap, defense-in-depth unicode_text, the shared empty _BODY_SOURCE generator branch) are harmless and match the approved tree-view sibling. The inherited CRLF-frontmatter and indented-header observations are fail-closed/safe-direction and left unchanged."
+    "note": "APPROVE with zero MAJOR at the 2026-11-13 census (7 clean / 2 theme-admitted / 4 frontmatter-gated / 0 body-gated; the reviewer reproduced the partition, ported the renderer to a Python simulator, ran 32 adversarial probes with no fail-open and applied every MINOR). RFC 0043 admitted the 2 theme rows and RFC 0046 (2026-11-22) the 3 closed `config.ishikawa.*` tuning rows, so the live partition is 13 = 7 + 2 + 3 + 1 + 0."
   },
   "counts": {
     "total": 7,

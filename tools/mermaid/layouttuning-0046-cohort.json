@@ -1,0 +1,377 @@
+{
+  "schema": "loom_mermaid_layouttuning_0046_cohort/v1",
+  "rfc": 46,
+  "phase": "P1-layout-tuning",
+  "admission": {
+    "shape": "folded description envelope + one config block carrying exactly one tuning namespace and its closed leaves",
+    "tables": {
+      "config.ishikawa.useMaxWidth": [
+        "true",
+        "false"
+      ],
+      "config.ishikawa.diagramPadding": [
+        "50"
+      ],
+      "config.architecture.randomize": [
+        "true",
+        "false"
+      ],
+      "config.architecture.seed": [
+        "42"
+      ],
+      "config.architecture.idealEdgeLengthMultiplier": [
+        "3"
+      ],
+      "config.state.useMaxWidth": [
+        "true",
+        "false"
+      ]
+    },
+    "footer": {
+      "headers": [
+        "Architecture native projection v1",
+        "Ishikawa native projection v1",
+        "State native projection v1"
+      ],
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "corpus twin where a body-identical drawn fixture exists (2 rows); synthetic config-free twin otherwise (9 rows)"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "fallback rows whose only unadmitted config leaf is a closed-value layout/display tuning namespace",
+    "families": {
+      "ishikawa": {
+        "originals": 13,
+        "drawn_before": 9,
+        "admitted": 3
+      },
+      "architecture": {
+        "originals": 20,
+        "drawn_before": 16,
+        "admitted": 4
+      },
+      "state-diagram": {
+        "originals": 42,
+        "drawn_before": 28,
+        "admitted": 2
+      },
+      "state-diagram-v2": {
+        "originals": 103,
+        "drawn_before": 52,
+        "admitted": 2
+      }
+    },
+    "global": {
+      "originals": 2145,
+      "drawn_before": 1517,
+      "admitted": 11,
+      "fallback_before": 628,
+      "fallback_after": 617
+    },
+    "path_pin": [
+      "ishikawa/nightly-check/should-render-usemaxwidth-false.mmd",
+      "ishikawa/nightly-check/should-render-usemaxwidth-true.mmd",
+      "ishikawa/pr-check/9-should-render-with-custom-diagrampadding.mmd",
+      "architecture/pr-check/should-render-a-deterministic-layout-for-a-complex-deeply-nested-diagram.mmd",
+      "architecture/pr-check/should-render-a-deterministic-layout-with-an-explicit-seed-override.mmd",
+      "architecture/pr-check/should-render-with-randomize-true-without-errors.mmd",
+      "architecture/visual-check/should-render-a-linear-chain-with-an-increased-idealedgelengthmultiplier.mmd",
+      "state-diagram/nightly-check/usemaxwidth-false.mmd",
+      "state-diagram/nightly-check/usemaxwidth-true.mmd",
+      "state-diagram-v2/nightly-check/v2-usemaxwidth-false.mmd",
+      "state-diagram-v2/nightly-check/v2-usemaxwidth-true.mmd"
+    ],
+    "cohort_digest": "a39bb4da80736c05215561a90dbd97caf32fa4044f53b47fb21b999be785f116",
+    "remaining_by_category": {
+      "family_residual:ishikawa": 0,
+      "family_residual:architecture": 0,
+      "family_residual:state-diagram": 7,
+      "family_residual:state-diagram-v2": 20,
+      "dagre_layout_tuning": 17
+    }
+  },
+  "counts": {
+    "originals": 178,
+    "drawn": 105,
+    "admitted": 11,
+    "remaining": 62
+  },
+  "review": {
+    "reviewer_agent": "agent:code-review (independent adversarial, read-only)",
+    "date": "2026-11-22",
+    "verdict": "approved",
+    "note": "r1 REQUEST-CHANGES (the 0046 matrix branch was shadowed by the architecture branch for 4/11 rows; the ishikawa gate and mirror disagreed on theme+namespace exclusivity; the architecture mirror skipped description payload lines the gate inspects; a bare `config` without a colon opened the block; stale design-decisions and matrix comments; title double-count; mirror-boundary, structural clean-row detection and composition-coverage NITs) -> fixed -> r2 APPROVE, re-verified against the affected suites."
+  },
+  "rows": [
+    {
+      "path": "ishikawa/nightly-check/should-render-usemaxwidth-false.mmd",
+      "family": "ishikawa",
+      "sha256": "b095790cd385f7184c5ff1270eba9cbade3b9a61fe872640f7ab807a51cd8d48",
+      "manifest_sha256": "b095790cd385f7184c5ff1270eba9cbade3b9a61fe872640f7ab807a51cd8d48",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Ishikawa native projection v1",
+        "config.ishikawa.useMaxWidth=false -> display sizing; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "242f86e980bffd3a238ba658bba3a4c336fcac8f13620937ba098551356f64dd"
+      },
+      "ledger_note": "closed-value layout/display tuning namespace admitted by RFC 0046; the renderer never reads the key and the footer discloses that the tuning was not applied"
+    },
+    {
+      "path": "ishikawa/nightly-check/should-render-usemaxwidth-true.mmd",
+      "family": "ishikawa",
+      "sha256": "960827415b7defd8a1113c03af569a8e97565889fbeccbd524e135b67dd42de8",
+      "manifest_sha256": "960827415b7defd8a1113c03af569a8e97565889fbeccbd524e135b67dd42de8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Ishikawa native projection v1",
+        "config.ishikawa.useMaxWidth=true -> display sizing; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "d5be298c0487aec08d81769f37a99332da338e4bd3fd79d47fbf201a3e1d6a90"
+      },
+      "ledger_note": "closed-value layout/display tuning namespace admitted by RFC 0046; the renderer never reads the key and the footer discloses that the tuning was not applied"
+    },
+    {
+      "path": "ishikawa/pr-check/9-should-render-with-custom-diagrampadding.mmd",
+      "family": "ishikawa",
+      "sha256": "02b34639f68db3e4662ec74a3a759d2fbf2b1415167ffcb3632075d823342ff3",
+      "manifest_sha256": "02b34639f68db3e4662ec74a3a759d2fbf2b1415167ffcb3632075d823342ff3",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Ishikawa native projection v1",
+        "config.ishikawa.diagramPadding=50 -> diagram padding; not applied"
+      ],
+      "twin": {
+        "kind": "corpus",
+        "path": "ishikawa/pr-check/1-should-render-a-simple-ishikawa-diagram.mmd",
+        "sha256": "5b1ddb57e8867d7c6ad4fb957025397469414a5187d55e4e0169bd3f6f6d5c1c"
+      },
+      "ledger_note": "closed-value layout/display tuning namespace admitted by RFC 0046; the renderer never reads the key and the footer discloses that the tuning was not applied"
+    },
+    {
+      "path": "architecture/pr-check/should-render-a-deterministic-layout-for-a-complex-deeply-nested-diagram.mmd",
+      "family": "architecture",
+      "sha256": "e62172ca7ddfbd9cc08729564376281b7ad7c531c92c5b363c108df0e7fa8efb",
+      "manifest_sha256": "e62172ca7ddfbd9cc08729564376281b7ad7c531c92c5b363c108df0e7fa8efb",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Architecture native projection v1",
+        "config.architecture.randomize=false -> layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "b8dbdedf98aa227576b231f6d035aaab0bbe8cc75426744c0f95d51cf21ace05"
+      },
+      "ledger_note": "closed-value layout/display tuning namespace admitted by RFC 0046; the renderer never reads the key and the footer discloses that the tuning was not applied"
+    },
+    {
+      "path": "architecture/pr-check/should-render-a-deterministic-layout-with-an-explicit-seed-override.mmd",
+      "family": "architecture",
+      "sha256": "5632241778db8005d4bdca8c1b888d5a824925160560d47b63fb465fe5ad3298",
+      "manifest_sha256": "5632241778db8005d4bdca8c1b888d5a824925160560d47b63fb465fe5ad3298",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Architecture native projection v1",
+        "config.architecture.seed=42 -> layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "1c6730619323c8dc35d2d0069be7d949aaef7513473a9a14d378aa2e30e1adbe"
+      },
+      "ledger_note": "closed-value layout/display tuning namespace admitted by RFC 0046; the renderer never reads the key and the footer discloses that the tuning was not applied"
+    },
+    {
+      "path": "architecture/pr-check/should-render-with-randomize-true-without-errors.mmd",
+      "family": "architecture",
+      "sha256": "75f29a101b163df98dd9af1684b5ab412e4997ccd55c48b7570e5aaf180b18cd",
+      "manifest_sha256": "75f29a101b163df98dd9af1684b5ab412e4997ccd55c48b7570e5aaf180b18cd",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Architecture native projection v1",
+        "config.architecture.randomize=true -> layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "1b6b4485275613417d2ca59fbea36140d2e64bb2c63693b217ab7ad833aeb12e"
+      },
+      "ledger_note": "closed-value layout/display tuning namespace admitted by RFC 0046; the renderer never reads the key and the footer discloses that the tuning was not applied"
+    },
+    {
+      "path": "architecture/visual-check/should-render-a-linear-chain-with-an-increased-idealedgelengthmultiplier.mmd",
+      "family": "architecture",
+      "sha256": "8305b7356df4ddc22f6ea47cbb728d5cd3444295b2f6bffac68442b529241337",
+      "manifest_sha256": "8305b7356df4ddc22f6ea47cbb728d5cd3444295b2f6bffac68442b529241337",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Architecture native projection v1",
+        "config.architecture.idealEdgeLengthMultiplier=3 -> layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "corpus",
+        "path": "architecture/visual-check/should-render-a-linear-chain-with-default-fcose-knobs.mmd",
+        "sha256": "deac3d66c4d3fc15fafd31f77ca6ba45ce3687a88d0a1c5c248ed2c09ae1d464"
+      },
+      "ledger_note": "closed-value layout/display tuning namespace admitted by RFC 0046; the renderer never reads the key and the footer discloses that the tuning was not applied"
+    },
+    {
+      "path": "state-diagram/nightly-check/usemaxwidth-false.mmd",
+      "family": "state-diagram",
+      "sha256": "d8fe45b00c79125273631364b61040b1b295b538e7b396627a3989eda940a5f8",
+      "manifest_sha256": "d8fe45b00c79125273631364b61040b1b295b538e7b396627a3989eda940a5f8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.state.useMaxWidth=false -> display sizing; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "1cf86365510ba70c0bf3cbb34807c156d128d4f08bbbd75f9c101a77661b8b60"
+      },
+      "ledger_note": "closed-value layout/display tuning namespace admitted by RFC 0046; the renderer never reads the key and the footer discloses that the tuning was not applied"
+    },
+    {
+      "path": "state-diagram/nightly-check/usemaxwidth-true.mmd",
+      "family": "state-diagram",
+      "sha256": "8ff2c968f20728cf5a88a63020b66ceb76d014fc2aa9b2f0594a79ed5c30c07f",
+      "manifest_sha256": "8ff2c968f20728cf5a88a63020b66ceb76d014fc2aa9b2f0594a79ed5c30c07f",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.state.useMaxWidth=true -> display sizing; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "dee622fb80788b9c6b5fb17b3524d1ee5b8c43524101921af7ff81b4d5e63714"
+      },
+      "ledger_note": "closed-value layout/display tuning namespace admitted by RFC 0046; the renderer never reads the key and the footer discloses that the tuning was not applied"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-usemaxwidth-false.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "7aa04220c714242c6ef96fbafc7db1c3b336e0d93194cd1ebbdebbf5bc81a27b",
+      "manifest_sha256": "7aa04220c714242c6ef96fbafc7db1c3b336e0d93194cd1ebbdebbf5bc81a27b",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.state.useMaxWidth=false -> display sizing; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "cb8950dd4e92d667dde8e32679bff5a536a61960b5d9a66c3cbaaaddce2725c6"
+      },
+      "ledger_note": "closed-value layout/display tuning namespace admitted by RFC 0046; the renderer never reads the key and the footer discloses that the tuning was not applied"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-usemaxwidth-true.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "4a327203e4bd9008a3f449c599626cad3c5603da6f82a6be945b42e2e2e622ba",
+      "manifest_sha256": "4a327203e4bd9008a3f449c599626cad3c5603da6f82a6be945b42e2e2e622ba",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.state.useMaxWidth=true -> display sizing; not applied"
+      ],
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the config: line and every following indent>=2 line up to the next column-0 key",
+        "sha256": "c07ec71001bdbc022c880fff35a9238d68b2459c3064248677a6547a546360b7"
+      },
+      "ledger_note": "closed-value layout/display tuning namespace admitted by RFC 0046; the renderer never reads the key and the footer discloses that the tuning was not applied"
+    }
+  ]
+}

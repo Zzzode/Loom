@@ -71,12 +71,19 @@ bool is_bare_label(std::string_view label) {
 
 // RFC 0043: a column-0 `config:` block whose sole leaf is an indent-2 `theme`
 // inside the closed corpus table is accepted and disclosed through a bounded
-// footer; every other frontmatter shape keeps the previous whole-source
-// fallback. The renderer never reads `theme`, so the footer states that the
-// palette was not applied.
+// footer. RFC 0046: the same block may instead carry exactly one `ishikawa`
+// namespace (indent 2, empty value) with `useMaxWidth` ({true,false}) and
+// `diagramPadding` ({50}) leaves at indent 4 (the two shapes are mutually
+// exclusive). Every other frontmatter shape keeps the whole-source fallback.
+// The renderer reads none of these keys; the footer states so.
 constexpr std::size_t kIshikawaNoticeLineLimit = 96u;
 constexpr std::string_view kIshikawaNoticeHeader = "Ishikawa native projection v1";
 constexpr std::array<std::string_view, 2> kIshikawaThemeTable{{"dark", "forest"}};
+
+struct IshikawaTuning {
+    std::optional<std::string> use_max_width;
+    std::optional<std::string> diagram_padding;
+};
 
 // Trim, strip a trailing YAML comment outside quotes, then dequote a matched
 // pair; an unmatched quote is a mismatch, never a value. TU-local copy of the
@@ -122,13 +129,15 @@ bool ishikawa_notice_line(std::vector<std::string>& notices, std::string_view li
 }
 
 // Returns true when the whole source must fall back. Otherwise `notices` holds
-// the bounded disclosure footer (empty when no theme leaf was admitted).
+// the bounded disclosure footer (empty when no leaf was admitted).
 bool ishikawa_frontmatter_gated(std::string_view source, std::vector<std::string>& notices,
                                 Work& work) {
     if (!source.starts_with("---\n")) return false;
     bool in_config = false;
     bool saw_config = false;
+    bool saw_namespace = false;
     std::optional<std::string> theme;
+    IshikawaTuning tuning;
     std::size_t search = 4;
     while (search < source.size()) {
         const auto nl = source.find('\n', search);
@@ -154,15 +163,35 @@ bool ishikawa_frontmatter_gated(std::string_view source, std::vector<std::string
             if (in_config) {
                 if (!leaf.starts_with('#')) {  // YAML comment
                     const auto colon = leaf.find(':');
-                    if (colon == std::string_view::npos ||
-                        leaf.substr(0, colon) != "theme" || key_start != 2u || theme)
-                        return true;
+                    if (colon == std::string_view::npos) return true;
+                    const std::string_view key = leaf.substr(0, colon);
                     auto value = ishikawa_scalar(leaf.substr(colon + 1u), work);
-                    if (!value ||
-                        std::ranges::find(kIshikawaThemeTable, *value) ==
-                            kIshikawaThemeTable.end())
+                    if (!value) return true;
+                    if (key_start == 2u && key == "theme") {
+                        // RFC 0046: the theme leaf and the tuning namespace are
+                        // mutually exclusive shapes of the same block.
+                        if (theme || saw_namespace ||
+                            std::ranges::find(kIshikawaThemeTable, *value) ==
+                                kIshikawaThemeTable.end())
+                            return true;
+                        theme = std::move(*value);
+                    } else if (key_start == 2u && key == "ishikawa" && value->empty()) {
+                        // The namespace shape: an empty value at indent 2 opens
+                        // the tuning block exactly once, never beside theme.
+                        if (saw_namespace || theme) return true;
+                        saw_namespace = true;
+                    } else if (key_start == 4u && saw_namespace && key == "useMaxWidth") {
+                        if (tuning.use_max_width ||
+                            (*value != "true" && *value != "false"))
+                            return true;
+                        tuning.use_max_width = std::move(*value);
+                    } else if (key_start == 4u && saw_namespace &&
+                               key == "diagramPadding") {
+                        if (tuning.diagram_padding || *value != "50") return true;
+                        tuning.diagram_padding = std::move(*value);
+                    } else {
                         return true;
-                    theme = std::move(*value);
+                    }
                 }
             } else {
                 // Outside a config block the previous flat scan still gates
@@ -197,13 +226,28 @@ bool ishikawa_frontmatter_gated(std::string_view source, std::vector<std::string
         if (nl == std::string_view::npos) break;
         search = nl + 1;
     }
-    if (saw_config && !theme) return true;
-    if (!theme) return false;
+    // A namespace without any admitted leaf is whole-source (RFC 0046).
+    if (saw_namespace && !tuning.use_max_width && !tuning.diagram_padding) return true;
+    if (saw_config && !theme && !tuning.use_max_width && !tuning.diagram_padding) return true;
+    if (!theme && !tuning.use_max_width && !tuning.diagram_padding) return false;
     if (!ishikawa_notice_line(notices, kIshikawaNoticeHeader, work)) return true;
-    std::string line = "config.theme=";
-    line += *theme;
-    line += " -> colour palette; not applied";
-    return !ishikawa_notice_line(notices, line, work);
+    if (theme) {
+        std::string line = "config.theme=";
+        line += *theme;
+        line += " -> colour palette; not applied";
+        if (!ishikawa_notice_line(notices, line, work)) return true;
+    }
+    if (tuning.use_max_width) {
+        const std::string line = "config.ishikawa.useMaxWidth=" + *tuning.use_max_width +
+                                 " -> display sizing; not applied";
+        if (!ishikawa_notice_line(notices, line, work)) return true;
+    }
+    if (tuning.diagram_padding) {
+        const std::string line = "config.ishikawa.diagramPadding=" + *tuning.diagram_padding +
+                                 " -> diagram padding; not applied";
+        if (!ishikawa_notice_line(notices, line, work)) return true;
+    }
+    return false;
 }
 
 }  // namespace

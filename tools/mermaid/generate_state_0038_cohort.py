@@ -318,7 +318,8 @@ def build(repo_root: pathlib.Path):
             excluded.append({"path": rel, "class": "layout: elk", "reason": "layout leaf"})
         elif any(key.startswith("state.") for key in leaves):
             excluded.append({"path": rel, "class": "namespaced config.state.*",
-                             "reason": "namespaced state subtree stays closed"})
+                             "reason": "namespaced state subtree is outside this cohort; "
+                                       "the RFC 0046 tuning ledger admits it"})
         elif description_has_tab(frontmatter):
             excluded.append({"path": rel, "class": "description tab",
                              "reason": "description payload carries a literal tab"})
@@ -365,9 +366,10 @@ def build(repo_root: pathlib.Path):
             "corpus_twins": "none: every body-equivalent drawn state fixture carries "
                             "logLevel/fontFamily disclosure lines that are not a prefix of "
                             "the source footer, so all 28 rows use the config-free twin",
-            "exclusions": "layout: elk (4), namespaced config.state.* (4), the folded "
-                          "description carrying a literal tab (1); the remaining rows are "
-                          "body-capability fallbacks",
+            "exclusions": "layout: elk (4), namespaced config.state.* (4 — admitted by "
+                          "the RFC 0046 layout-tuning ledger, not this cohort), the "
+                          "folded description carrying a literal tab (1); the remaining "
+                          "rows are body-capability fallbacks",
             "width_policy": "wide_240 admission only; narrow_40 stays 'source'.",
         },
         "review": {

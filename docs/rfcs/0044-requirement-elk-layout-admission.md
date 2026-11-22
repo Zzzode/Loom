@@ -48,13 +48,12 @@ c4 `wrap` 1). git `gitGraph.parallelCommits` (12) is the runner-up.
   F0), so the two leaves compose in one envelope. One row carries the nested
   `config.flowchart.htmlLabels` map and has **no** corpus twin; the envelope rejects
   namespaced entries, so that row stays exclusive — **23 rows promoted**.
-- The remaining 5 fallbacks stay: 3 nested `config.flowchart.htmlLabels` maps (two ELK
-  rows — one also carries `look` — and one non-ELK row; the gate rejects namespaced
-  entries), 1 source whose leading line is blank before the opening fence (the gate
-  requires `---\n` at offset 0), and 1 row whose closing fence is indented two spaces
-  (`parse_envelope` closes only at column 0, so the envelope is malformed). Of the three
-  nested-map rows, only the ELK one is the 24th ELK row; it stays because it lacks a
-  corpus twin.
+- The remaining 5 fallbacks stay: 3 nested `config.flowchart.htmlLabels` maps — **one ELK
+  row** (which also carries `htmlLabels` and lacks a corpus twin: the 24th ELK row) and
+  **two non-ELK rows** (one plain, one also `look`; the gate rejects namespaced entries) —
+  plus 1 source whose leading line is blank before the opening fence (the gate requires
+  `---\n` at offset 0) and 1 row whose closing fence is indented two spaces
+  (`parse_envelope` closes only at column 0, so the envelope is malformed).
 - The native requirement projection is a text tree of requirements/elements/connections;
   it draws no geometry, so the layout engine selection cannot change the frame. The 23
   body-identical twins prove it frame by frame.
@@ -80,7 +79,8 @@ does not disturb an envelope that carries no `layout`.
 
 ## Non-Goals
 
-- The nested `config.flowchart.htmlLabels` map, the title-only envelope, the body row.
+- The three nested `config.flowchart.htmlLabels` maps (one ELK without a twin, two
+  non-ELK), the leading-blank source, and the indented-fence malformed envelope.
 - Other layout engines, `layoutEngine`, ELK geometry.
 - flowchart's 222 exact-bit rows and the 67 protected/frozen rows.
 - narrow_40 drawing; the ER107 B3 gates.
@@ -121,9 +121,9 @@ In `requirement_envelope` (the event-driven gate used by all requirement admissi
 - **Existing tests that pin the old verdict and change in the same commit** (the RFC
   0037 gate cannot stay green otherwise):
   `tests/ui/test_mermaid_requirement_cohort.cpp` — the `FrontmatterAndThemeGatesStayClosed`
-  array drops the ELK fixture, and the single-leaf battery's `layout: elk` negative
-  becomes an admitted positive (with its footer line) beside a new out-of-table
-  `layout: dagre` reject; `tests/ui/test_mermaid_requirement_0037_cohort.cpp` — the
+  array drops the ELK fixture, the single-leaf battery's `layout: elk` negative becomes an
+  admitted positive (with its footer line) beside a new out-of-table `layout: dagre`
+  reject, and the file's header comment no longer lists `layout` as a fallback cause; `tests/ui/test_mermaid_requirement_0037_cohort.cpp` — the
   `Keys outside the admitted set` battery flips `layout: elk` to the admitted positive and
   keeps a `layout: dagre` reject. Nothing is deleted; each flip is paired with a negative.
 - Gate `tests/ui/test_mermaid_requirement_0044_cohort.cpp` (5 tests): ledger schema/review/
@@ -200,9 +200,10 @@ persisted data, wire protocol, CLI, or settings change.
 - [ ] `docs/decisions/design-decisions.md` — requirement layout admission entry
 - [ ] `docs/README.md` — RFC index
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — requirement row
-- [ ] `tools/mermaid/requirement-cohort.json` — the frozen D-204 snapshot keeps its rows
-      and counts; its `superseded_note` live-partition sentence is refreshed to the
-      post-RFC-0044 numbers
+- [ ] `tools/mermaid/generate_requirement_cohort.py` + `requirement-cohort.json` — the
+      frozen D-204 snapshot keeps its rows and counts; the generator-authored
+      `superseded_note` live-partition sentence is refreshed to the post-RFC-0044 numbers
+      (edit the generator string, then regenerate, so `--check` stays honest)
 
 ## Open questions
 
@@ -222,6 +223,7 @@ persisted data, wire protocol, CLI, or settings change.
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | Scope, twin bytes, arithmetic, inertness and wiring all confirmed. BLOCKER: three existing assertions pin `layout: elk` as fallback (`test_mermaid_requirement_cohort.cpp` gated array + single-leaf battery, `test_mermaid_requirement_0037_cohort.cpp` keys battery) and were outside the plan → named as in-scope edits, each flip paired with a `layout: dagre` negative. MAJOR: the two remaining rows' stated causes were wrong (indented closing fence = malformed envelope; leading blank line = no `---\n` at offset 0), and nested maps total 3, not 2 → rewritten. MINOR: the 0037 generator's `EXCLUDED_EXPECTED["layout: elk"]` stays 24 (source-shape) with only the human sentence changing; the 0037 `--check` is a newly registered entry, not an existing one; NITs: scalar trims spaces only and dequotes an outer same-char pair (tabs rejected upstream), the notice-order claim is vacuous for old frames and pinned only for the new rows, and the roster is fallback-only so the category cannot mix. All folded |
+| 2026-11-22 | r2 | agent:design-review | REQUEST-CHANGES | r1 folds confirmed faithful (three assertion edits, 0037 generator constant, +7 registry, scalar/order/roster wording). New MAJOR introduced by the r1 rewrite: the nested-map attribution said "two ELK rows" and "only the ELK one", which is self-contradictory — the correct partition is 1 ELK nested row (also htmlLabels, no twin) + 2 non-ELK nested rows (one plain, one `look`) → fixed. MINORs: Non-Goals still used the retracted descriptors → aligned; the `superseded_note` is generator-authored, so the generator is added to the doc-impact list; the family test's header comment is added to the in-scope edits. All folded |
 | 2026-11-22 | — | — | draft | Created provisional from D-413 |
 
 ## Implementation History

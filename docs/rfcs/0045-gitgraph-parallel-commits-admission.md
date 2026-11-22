@@ -1,9 +1,9 @@
 ---
 rfc: 45
 title: gitGraph parallelCommits admission
-status: provisional
+status: accepted
 owners: "@Zzzode"
-reviewers: []
+reviewers: ["agent:design-review"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -171,7 +171,8 @@ persisted data, wire protocol, CLI, or settings change.
 ## Alternatives considered
 
 1. **Do nothing** — leaves 12 twin-proven rows on fallback.
-2. **Admit the 32 content-key rows** — rejected: they change drawn labels/branches/order.
+2. **Admit the 32 content-key rows** — rejected: all but one default-valued no-op row
+   change drawn labels/branches/order; the slice is excluded conservatively as a whole.
 3. **pie `donutHole` + `highlightSlice` (5) or ishikawa `useMaxWidth` (3)** — smaller;
    deferred as the next slices.
 
@@ -182,8 +183,9 @@ persisted data, wire protocol, CLI, or settings change.
 - The RFC 0039 git gate stays the drawn-row regression oracle and must stay green.
 - Targeted `ctest -L mermaid`; release matrix; dual-preset byte gate at closure; full debug
   ctest once.
-- Roster order: review approved → full rebuild → both matrices → cohort gate green →
-  `--emit` → `--self-test` → `--matrix`.
+- Ordered at closure: review approved → regenerate `git-0039-cohort.json` (sentence
+  only) → full rebuild → both matrices → cohort gate green → `--emit` → `--self-test` →
+  `--matrix`.
 
 ## Documentation impact
 
@@ -213,10 +215,12 @@ persisted data, wire protocol, CLI, or settings change.
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | Scope (exactly 12), arithmetic (135=70+12+53; 53=34+12+6+1), grammar event shapes and the content-vs-layout argument all confirmed; the native projection draws commit identity/order and never reads the key, so the toggle is layout-only *with* the disclosure. 1 MAJOR + 3 MINOR + 2 NIT: the 0039 ledger must be regenerated because the exclusions sentence is generator source and the registered `--check` compares whole-file text; the footer is 78 bytes for `false`, not 77; the 32-row rationale overclaimed (one default-valued no-op row) → softened to a conservative slice exclusion; the empty-namespace rejection is a gate check, not a parser one (`parse_envelope` emits the namespace event), so the explicit `(GitGraphNs && !Parallel)` test is now a mechanism bullet. All folded |
+| 2026-11-22 | r2 | agent:design-review | **APPROVE-TO-ACCEPT** | All r1 folds re-verified against the repository (the regenerated 0039 ledger changes only `selection.exclusions`; the footer is 78 bytes; the empty-namespace gate check is explicit; the 32-row exclusion is conservative). Two residual NITs folded: the Alternatives wording now carves out the default-only no-op row, and the closure order names the 0039 regeneration step. Gate: provisional → accepted |
 | 2026-11-22 | — | — | draft | Created provisional from D-415 |
 
 ## Implementation History
 
 | Date | Phase | Change | Commit |
 |---|---|---|---|
-| 2026-11-22 | — | Draft created (provisional), no code | — |
+| 2026-11-22 | — | Draft created (provisional), no code | de989294 |
+| 2026-11-22 | — | Folded design r1/r2; accepted after r2; no code | 9752cec5 |

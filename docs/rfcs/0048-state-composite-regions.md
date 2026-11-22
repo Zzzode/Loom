@@ -1,7 +1,7 @@
 ---
 rfc: 48
 title: state concurrent regions and in-body init/accessibility
-status: provisional
+status: accepted
 owners: "@Zzzode"
 reviewers:
   - agent:design-review-evidence
@@ -97,11 +97,13 @@ ER107).
    shared `sizeof(RelationEntity)` Work charges for Class/ER/Requirement are untouched
    (verified by a `static_assert` on the existing size and by the dual-preset family gates).
    A per-owner region cursor array (owner slot ≤ 128) and `kStateRegionLimit = 8` bound the
-   parse.
-2. **Assignment only at insertion.** Region is written when `entity()` *inserts* a new State
-   (7 sites: declaration `:2808`, description-implicit `:2895`, bare declaration `:2916`,
-   Start `:2919`, edge source `:3022-3031`, Final `:3028`, edge target); an existing entity
-   keeps its first region. Notes (`:2455-2523`) and classDef/class/style targets
+   parse. The side table's allocation and growth are prepaid in both parse (per inserted
+   entity) and layout (per partition), per the project Work discipline.
+2. **Assignment only at insertion.** Region is written when `entity()` *inserts* a new State,
+   at exactly these seven creation sites: declaration `:2808`, description-implicit `:2895`,
+   bare declaration `:2916`, Start `:2919`, edge source `:2922`, Final `:3028`, edge target
+   `:3031`. An existing entity keeps its first region (the region argument is consulted only on
+   the insert path). Notes (`:2455-2523`) and classDef/class/style targets
    (`mermaid_state_impl.cpp:447-451`) never create entities and never set a region.
 3. **Controls are region-scoped.** `control()` (`:366-386`) dedupes by owner+shape today, which
    would collapse three `[*]` starts inside three regions into one. The dedupe key gains the
@@ -118,10 +120,13 @@ ER107).
    reach/adjacency (`:6556-6590`), partition a State owner's children by region. Extract the
    whole per-region body — ordering (`:6591-6829`), placement (`:7517-7532`), width/height
    checks (`:7516`, `:7351-7356`) and `boxes[owner].w/h` assignment (`:7533-7535`) — into a
-   helper operating on one child list. Each region's height is its **complete** scope height
-   (header included); the container is `max(region heights) + one header band`, never a second
-   header. Container width = Σ region widths + one divider column per boundary, checked
-   against `kWidthLimit`; total height checked against `kHeightLimit` before committing.
+   helper operating on one child list. Each region's height is its **complete** scope height,
+   which already includes the single header band (`top` at `:6953`, full-height formula
+   `:7352`); the container height is `max(region heights)` and **never adds a header again**.
+   Container width = Σ region widths + one divider column per boundary, checked against
+   `kWidthLimit`; total height checked against `kHeightLimit` before committing. A title wider
+   than the summed regions keeps the regions **left-aligned** (divider offsets unchanged, slack
+   on the right) and the widened header width participates in the `kWidthLimit` check.
 7. **Dividers.** Store divider positions as **container-local offsets**; the emitter draws them
    at `boxes[owner].x + offset`, starting below the header band (`b.y + label_rows + 1`,
    `:9144-9145`) through the bottom border, with `┬`/`┴` at the border rows. Mark those cells
@@ -163,10 +168,11 @@ ER107).
   `expected_footer_lines` and per-width states; the per-row oracle is config-free twin + footer,
   compared line by line.
 - Matrix branch `RFC-0048 state region cohort` must be placed **before** the E2a (`:10892`),
-  E2b (`:10916`) and state-0038 (`:10939`) branches — 16 of the 19 rows have no blocker-ledger
-  entry and **3** overlap E2a/E2b (`should-align-dividers-correctly` in E2a; v1/v2
-  `should-render-concurrency-states` in E2b), so a later branch would be shadowed (RFC 0046 r1
-  defect). Reach is proven per row.
+  E2b (`:10916`) and state-0038 (`:10939`) branches — **3** of the 19 overlap E2a/E2b
+  (`should-align-dividers-correctly` in E2a; v1/v2 `should-render-concurrency-states` in E2b),
+  **16 are out of cohort**, and all 19 sit in state-0038's `excluded` (whose branch matches only
+  its 28 `rows` and cannot shadow this cohort). A later branch would still be shadowed by the
+  E2a/E2b branches (RFC 0046 r1 defect). Reach is proven per row.
 - **Conflicting negatives that must flip with paired new negatives**
   (`tests/ui/test_mermaid_relations_semantics.cpp`): `CompositeDividerStaysSource` (`:33456`)
   and `InitThemeFrontmatterStaysSource` (`:33340`); `ConfigFrontmatterStaysSource` (`:33328`)
@@ -179,17 +185,20 @@ ER107).
   `state_blocker` `--` branch (`tools/mermaid/generate_e2b_cohort.py:190`) and the two
   concurrency JSON rows; `NATIVE_ROUTING_DEBT` (`:101`) stays frozen (deferred routing rows).
   Counts: `tests/ui/test_mermaid_e2b_cohort.cpp:151-155` 51/10 → 53/8, `:311`
-  `checked == 39` → 35. The new `state-region-0048-cohort.json` must be wired into **both**
-  whole-source scans (`test_mermaid_e2a_cohort.cpp:304-320`,
-  `test_mermaid_e2b_cohort.cpp:207-213`) as a skip set, or the 4 config rows and 8 init rows
-  fail `same_source_surface` after flipping.
+  `checked == 39` → 35. The new `state-region-0048-cohort.json` **and the 16 out-of-cohort
+  paths** (8 config-bearing region rows + 8 init-bearing theme rows) must be wired into **both**
+  whole-source scans (`test_mermaid_e2a_cohort.cpp:223-244`/`:304-320`,
+  `test_mermaid_e2b_cohort.cpp:207-213`) as a skip/admitted set, or those rows fail
+  `same_source_surface` after flipping.
 - **0046 ledger/test**: `tools/mermaid/generate_layouttuning_0046_cohort.py:51-60`
   (`FAMILY_COUNTS`), `:442-454`; `tests/ui/test_mermaid_layouttuning_0046_cohort.cpp:234` (`counts.drawn` 105 → 124),
   `:236` (remaining 62 → 43 after P1+P2), `:263-270` (state drawn 28 → 33, 52 → 66),
   `:587` (`? 12 : 49` → `? 7 : 35`), `:600` (remaining 44 → 25).
-- **state-0038 needs no migration**: its `excluded` list is frontmatter-shape based (117 rows,
-  including all 19) and it has no `themed_excluded`; its 28 drawn rows are the byte-identity
-  oracle, not a bucket to move.
+- **state-0038 needs no migration**: its `excluded` list is the generator's render-defined
+  remainder (108 rows) plus 4 `layout: elk`, 4 namespaced `config.state.*` and 1
+  description-tab row — 117 in total, including all 19 — and it has no `themed_excluded`; its
+  28 drawn rows are the byte-identity oracle, not a bucket to move. Its test iterates `rows`
+  only, so a drawn `excluded` row is not asserted as fallback.
 - Roster `--emit` 608 → 589 (categories may shrink); `--self-test` and `--matrix` green.
 - Docs: `docs/dev/mermaid-unsuccessful-cases.md`, `docs/dev/mermaid-failure-inventory.json`,
   `tests/fixtures/mermaid_native/direct_theme_source_audit.v1.json` carry the enumerated rows
@@ -199,8 +208,17 @@ ER107).
 
 | Phase | Title | Scope | Status | Graduation criteria (measured) |
 |---|---|---|---|---|
-| P1 | concurrent regions | 11 rows (v1 1, v2 10) | proposed | red-first; state v1 12 → 11, v2 49 → 39; global 608 → 597; the v1/v2 `…concurrency-states` rows (region-local labeled edges) draw; all 28 state-0038 rows byte-identical; dual-preset matrix identical; roster/0046/E2a/E2b migrated |
+| P1 | concurrent regions | 11 rows (v1 1, v2 10; two carry short region-local labeled edges) | proposed | red-first; state v1 12 → 11, v2 49 → 39; global 608 → 597; the v1/v2 `…concurrency-states` rows (region-local labeled edges) draw; all 28 state-0038 rows byte-identical; dual-preset matrix identical; roster/0046/E2a/E2b migrated |
 | P2 | init + accessibility | 8 rows (needs P1) | proposed | state v1 11 → 7, v2 39 → 35; global 589; footer literals and probe artifact pinned; init negatives (nested map, out-of-table theme, duplicate, multi-line, non-leading) |
+
+### Labeled-transition boundary in P1
+
+P1 includes two rows with **short region-local labeled transitions** (`v1/v2
+should-render-concurrency-states`), the same geometry class as the four already-drawn redux
+rows; the deferred seven are the *fan-out/composite* labeled cases. These two are a named
+red-first risk: if they turn out to need the label-clearance mechanism, P1's count drops to 9
+and they join the deferred RFC — the phase gate reports the measured number rather than
+assuming.
 
 ## Deferred work (explicit)
 
@@ -258,7 +276,7 @@ wire, CLI or settings change.
 
 ## Documentation impact
 
-- [ ] `docs/dev/d421-next-family-state-composite.md` — second revision (deferred routing)
+- [x] `docs/dev/d421-next-family-state-composite.md` — second revision (deferred routing)
 - [ ] `docs/dev/d422-state-region-rfc0048-closure.md` — closure record
 - [ ] `docs/decisions/design-decisions.md` — region side table, dividers, init/accessibility
 - [ ] `docs/README.md` — RFC index row
@@ -289,6 +307,8 @@ wire, CLI or settings change.
 | Date | Round | Reviewer | Verdict | Findings and disposition |
 |---|---|---|---|---|
 | 2026-11-22 | r1 | agent:design-review-geometry | REQUEST-CHANGES | B1 cross-region edges reach UB → fail closed before partitioning + unconditional bounds; B2 `control()` dedupe missing region → key gains region; M1 insertion-only assignment (7 sites enumerated); M2 shared `sizeof` ripple → State-only side table; M3 helper extraction range corrected; M4 header double count → region height is complete, header once; M5 divider coordinate space → local offsets; M6 header band/compound interaction → explicit start + blocking; M7 accTitle title → validated no-op; M8 init theme table → journey table; M9–M11 routing mechanism unproven and Work-doubling → routing deferred; m1–m9/n1–n2 folded |
+| 2026-11-22 | r2 | agent:design-review-geometry | APPROVE | All r1 dispositions verified against code; arithmetic and ledger constants re-derived and self-consistent. Folded: header formula (region height already includes the header; never add one), the exact seven insertion sites, the 3-overlap/16-out-of-cohort matrix wording, state-0038's real excluded composition, the 16 out-of-cohort paths wired into both whole-source scans, the title-wider-than-regions policy, the labeled-transition boundary with the two P1 rows as a named red-first risk, and the side-table Work prepay. |
+| 2026-11-22 | r2 | agent:design-review-evidence | APPROVE | All r1 findings verified resolved; 19-row range and every target number self-consistent. Folded: D-421 stale block, 3-overlap wording, E2a/E2b frozen-set precision with counts, 0046 `counts.drawn` 105→124, the e2a cohort snapshot doc, and the accTitle no-op trade-off recorded for the PRR. |
 | 2026-11-22 | r1 | agent:design-review-evidence | REQUEST-CHANGES | BLOCKER initializer theme table → explicit `{dark,default,forest,neutral}`; arithmetic → v2 30/73 (and, with routing deferred, v1 7/35, v2 35/68, global 589/1556, formal 1370); the two `test_mermaid_relations_semantics.cpp` negatives added to the flip set; E2a/E2b generators/tests/constants enumerated; matrix branch ordered before the state branches; state-0038 no-migration fact; 0046 constants enumerated; composite-row count corrected (14 of 28); snapshot docs added |
 
 ## Implementation History

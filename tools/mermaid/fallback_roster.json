@@ -1,11 +1,11 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 545,
+  "total_fallback": 542,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
-    "dagre_layout_tuning": 17,
+    "dagre_layout_tuning": 14,
     "edge_animation_metadata": 82,
     "elk_layout_engine": 15,
     "family_residual:c4": 9,
@@ -95,8 +95,8 @@
     },
     "dagre_layout_tuning": {
       "originals_matching_predicate": 167,
-      "drawn_among_matches": 105,
-      "fallback_among_matches": 62,
+      "drawn_among_matches": 108,
+      "fallback_among_matches": 59,
       "sufficient_blocker": false
     },
     "edge_animation_metadata": {
@@ -299,9 +299,6 @@
       "flowchart/nightly-check/dagre/wrapping-long-text-with-a-new-line-2.mmd",
       "flowchart/nightly-check/dagre/wrapping-long-text-with-a-new-line.mmd",
       "flowchart/visual-check/7213-should-render-edges-with-rounded-curve-right-angles-with-rounded-corners.mmd",
-      "radar/pr-check/should-handle-radar-diagram-with-radar-style-override.mmd",
-      "radar/pr-check/should-parse-radar-diagram-with-theme-override.mmd",
-      "radar/pr-check/should-render-radar-diagram-with-config-override.mmd",
       "usecase/nightly-check/10-configuration-and-accessibility.mmd"
     ],
     "edge_animation_metadata": [

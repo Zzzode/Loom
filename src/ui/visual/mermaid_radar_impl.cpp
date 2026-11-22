@@ -205,6 +205,151 @@ bool is_scalar_directive(std::string_view content) {
 
 }  // namespace
 
+// D-430: the closed radar frontmatter tables. The native projection draws a
+// transcribed outline, never a polygon, colour or font size, so every admitted
+// leaf is inert and disclosed. The shapes are the three corpus rows:
+// `theme: base`; `themeVariables` with `fontSize`, `cScale0` and a nested
+// `radar.axisColor`; `config.radar` with `marginTop` / `axisScaleFactor`.
+struct RadarFrontmatter {
+    std::vector<std::string> notices;
+};
+
+std::optional<std::string_view> radar_hex_colour(std::string_view value) {
+    if (value.size() >= 2u && (value.front() == '\'' || value.front() == '"') &&
+        value.back() == value.front())
+        value = value.substr(1u, value.size() - 2u);
+    if (value.size() != 7u || value.front() != '#') return std::nullopt;
+    if (!std::ranges::all_of(value.substr(1u), [](char c) {
+            return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
+                   (c >= 'A' && c <= 'F');
+        }))
+        return std::nullopt;
+    return value;
+}
+
+bool radar_number(std::string_view value, double low, double high) {
+    if (value.empty() || value.size() > 16u) return false;
+    char* end = nullptr;
+    const std::string copy{value};
+    const double parsed = std::strtod(copy.c_str(), &end);
+    return end == copy.c_str() + copy.size() && parsed >= low && parsed <= high;
+}
+
+std::optional<std::vector<std::string>> radar_frontmatter(std::string_view source) {
+    std::vector<std::string> notices;
+    if (!source.starts_with("---\n")) return notices;
+    const auto close = source.find("\n---\n", 4);
+    if (close == std::string_view::npos) return notices;
+    const std::string_view frontmatter = source.substr(0, close);
+    enum class Section { Description, Config, ThemeVars, RadarVars } section =
+        Section::Description;
+    bool description_seen = false, config_seen = false;
+    bool theme_seen = false, vars_seen = false, radar_vars_seen = false;
+    std::optional<std::string> theme, font_size, scale0, axis_colour, margin_top,
+        scale_factor;
+    for (std::size_t pos = 0;;) {
+        const auto eol = frontmatter.find('\n', pos);
+        const auto end = eol == std::string_view::npos ? frontmatter.size() : eol;
+        const std::string_view line = frontmatter.substr(pos, end - pos);
+        const bool last = eol == std::string_view::npos;
+        pos = last ? frontmatter.size() + 1u : eol + 1u;
+        const auto key_start = line.find_first_not_of(' ');
+        if (key_start != std::string_view::npos) {
+            const std::string_view content = line.substr(key_start);
+            if (key_start == 0u) {
+                if (content == "---") {
+                    // opening fence
+                } else if (content.starts_with("description:")) {
+                    if (description_seen || config_seen) return std::nullopt;
+                    description_seen = true;
+                    section = Section::Description;
+                } else if (content == "config:") {
+                    if (config_seen) return std::nullopt;
+                    config_seen = true;
+                    section = Section::Config;
+                } else {
+                    return std::nullopt;
+                }
+            } else if (section == Section::Description) {
+                // folded payload
+            } else if (section == Section::Config) {
+                if (key_start != 2u) return std::nullopt;
+                if (content == "themeVariables:" && !vars_seen) {
+                    vars_seen = true;
+                    section = Section::ThemeVars;
+                } else if (content == "radar:" && !radar_vars_seen) {
+                    radar_vars_seen = true;
+                    section = Section::RadarVars;
+                } else if (content.starts_with("theme: ") && !theme_seen) {
+                    const auto value = content.substr(7u);
+                    if (value != "base") return std::nullopt;
+                    theme = std::string{value};
+                    theme_seen = true;
+                } else {
+                    return std::nullopt;
+                }
+            } else if (section == Section::ThemeVars) {
+                if (key_start != 4u) return std::nullopt;
+                if (content == "radar:" && !radar_vars_seen) {
+                    radar_vars_seen = true;
+                    section = Section::RadarVars;
+                } else if (content.starts_with("fontSize: ") && !font_size) {
+                    const auto value = trim_spaces(content.substr(10u));
+                    if (!is_uint(value) || value.size() > 3u) return std::nullopt;
+                    font_size = std::string{value};
+                } else if (content.starts_with("cScale0: ") && !scale0) {
+                    const auto colour = radar_hex_colour(trim_spaces(content.substr(9u)));
+                    if (!colour) return std::nullopt;
+                    scale0 = std::string{*colour};
+                } else {
+                    return std::nullopt;
+                }
+            } else {
+                if (!radar_vars_seen) return std::nullopt;
+                if (key_start == 6u && content.starts_with("axisColor: ") && !axis_colour) {
+                    const auto colour =
+                        radar_hex_colour(trim_spaces(content.substr(11u)));
+                    if (!colour) return std::nullopt;
+                    axis_colour = std::string{*colour};
+                } else if (key_start == 4u && content.starts_with("marginTop: ") &&
+                           !margin_top) {
+                    const auto value = trim_spaces(content.substr(11u));
+                    if (!is_uint(value) || value.size() > 5u) return std::nullopt;
+                    margin_top = std::string{value};
+                } else if (key_start == 4u &&
+                           content.starts_with("axisScaleFactor: ") && !scale_factor) {
+                    const auto value = trim_spaces(content.substr(17u));
+                    if (!radar_number(value, 0.0, 10.0)) return std::nullopt;
+                    scale_factor = std::string{value};
+                } else {
+                    return std::nullopt;
+                }
+            }
+        }
+        if (last) break;
+    }
+    // A nested `radar:` under themeVariables uses indent 4; a top-level config
+    // `radar:` uses indent 2. Both land in RadarVars; the leaf indent then
+    // decides which key set applies, so the two corpus shapes never mix.
+    if (theme) notices.push_back("config.theme=" + *theme + " -> colour palette; not applied");
+    if (font_size)
+        notices.push_back("config.themeVariables.fontSize=" + *font_size +
+                          " -> label font size; not applied");
+    if (scale0)
+        notices.push_back("config.themeVariables.cScale0=" + *scale0 +
+                          " -> series palette colour; not applied");
+    if (axis_colour)
+        notices.push_back("config.themeVariables.radar.axisColor=" + *axis_colour +
+                          " -> axis colour; not applied");
+    if (margin_top)
+        notices.push_back("config.radar.marginTop=" + *margin_top +
+                          " -> layout margin; not applied");
+    if (scale_factor)
+        notices.push_back("config.radar.axisScaleFactor=" + *scale_factor +
+                          " -> axis scale factor; not applied");
+    return notices;
+}
+
 std::optional<std::vector<std::string>> radar_layout(std::string_view source,
                                                      Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
@@ -217,41 +362,13 @@ std::optional<std::vector<std::string>> radar_layout(std::string_view source,
     }
 
     const std::string_view body = radar_body(source);
-    // No polygon/color contract: a frontmatter theme/look/config key, an
-    // %%{init}%% directive or a classDef/:::/style statement keeps the whole
-    // source on fallback. Trim the key before comparing so the YAML-legal
-    // "config : 42" spacing shape still gates.
+    // D-430: the closed frontmatter tables own the admitted shape; anything
+    // else returns std::nullopt. An %%{init}%% directive or a
+    // classDef/:::/style statement still gates (no colour/polygon contract).
+    const auto frontmatter = radar_frontmatter(source);
+    if (!frontmatter) return {};
     {
         bool visual_gate = false;
-        if (source.starts_with("---\n")) {
-            std::size_t search = 4;
-            while (search < source.size()) {
-                const auto nl = source.find('\n', search);
-                const std::string_view line =
-                    source.substr(search, nl == std::string_view::npos
-                                                      ? std::string_view::npos
-                                                      : nl - search);
-                std::size_t i = 0;
-                bool is_fence = false;
-                if (line.size() >= 3 && line[0] == '-' && line[1] == '-' && line[2] == '-') {
-                    i = 3;
-                    while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) ++i;
-                    is_fence = i == line.size();
-                }
-                const auto key_start = line.find_first_not_of(' ');
-                if (!is_fence && key_start != std::string_view::npos) {
-                    std::string_view key = line.substr(key_start);
-                    const auto colon = key.find(':');
-                    if (colon != std::string_view::npos)
-                        key = trim_spaces(key.substr(0, colon));
-                    if (key == "theme" || key == "look" || key == "config")
-                        visual_gate = true;
-                }
-                if (is_fence) break;
-                if (nl == std::string_view::npos) break;
-                search = nl + 1;
-            }
-        }
         if (!visual_gate) {
             for (std::size_t pos = 0;;) {
                 const auto eol = body.find('\n', pos);
@@ -354,6 +471,18 @@ std::optional<std::vector<std::string>> radar_layout(std::string_view source,
         combined.push_back("radar-beta");
         combined.insert(combined.end(), out.begin(), out.end());
         out = std::move(combined);
+    }
+    if (!frontmatter->empty()) {
+        const auto push_notice = [&](const std::string& line) -> bool {
+            if (line.size() > 96u || !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+                return false;
+            out.push_back(line);
+            return true;
+        };
+        if (!push_guarded("")) return {};
+        if (!push_notice("Radar native projection v1")) return {};
+        for (const auto& line : *frontmatter)
+            if (!push_notice(line)) return {};
     }
     return out;
 }

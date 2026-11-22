@@ -60,6 +60,7 @@ are not whole-original errors).
 | After D-426 pie accessibility no-op (4 rows, pie family closed) | 2026-11-23 | local | 1592 | 553 | 0 |
 | After D-427 treemap valueFormat (6 rows) | 2026-11-23 | local | 1598 | 547 | 0 |
 | After D-429 packet closed namespace (2 rows, packet family closed) | 2026-11-23 | local | 1600 | 545 | 0 |
+| After D-430 radar closed frontmatter (3 rows, radar family closed) | 2026-11-23 | local | 1603 | 542 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -101,7 +102,7 @@ disposition (fix or documented infeasibility).
 | cynefin | 5 | 7 | renderer added 2026-11-13; 5 frontmatter config/theme/look rows stay source (no boundary-geometry/color contract); live census 7/5/0 from a candidate pool of 12 |
 | eventmodeling | 0 | 6 | renderer added 2026-11-14; first whole-pool-clean family (6/0/0); column-0 frames/data blocks, dotted names, ->> relations; all bodies pure ASCII, no frontmatter gate in the family |
 | packet | 0 | 6 | renderer added 2026-11-14; packet/packet-beta alias, single-bit and ranged fields; D-429 (2026-11-23) admits the last 2 rows through the closed `config.packet` namespace (`showBits`/`bitOrder`/`bitsPerRow` are inert because the native projection transcribes fields, never a bit grid) and honours the frontmatter `title:` as the body's own `title <text>` form; art equals the config-stripped twin; live census 6/0/0 from a candidate pool of 6; all bodies pure ASCII |
-| radar | 3 | 3 | renderer added 2026-11-14; 3 frontmatter config/theme/themeVariables rows stay source (no polygon/color contract); live census 3/3/0 from a candidate pool of 6; only non-ASCII bytes are in a gated frontmatter |
+| radar | 0 | 6 | renderer added 2026-11-14 (transcribed outline, no polygon/colour); D-430 (2026-11-23) admits the last 3 rows through a closed frontmatter table: `theme: base`, `themeVariables.{fontSize, cScale0, radar.axisColor}` and `config.radar.{marginTop, axisScaleFactor}`, all inert and disclosed under `Radar native projection v1`; art equals the config-stripped twin; live census 6/0/0 from a candidate pool of 6 |
 | conf-and-directives | 3 | 1 | |
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |

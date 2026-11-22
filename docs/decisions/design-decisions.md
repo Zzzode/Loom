@@ -4554,6 +4554,21 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## Radar closed frontmatter table (D-430)
+
+- **Three closed shapes, all inert.** `theme: base`; `themeVariables` with
+  `fontSize` (uint), `cScale0` (`#RRGGBB`, quote pair stripped) and a nested
+  `radar.axisColor`; `config.radar` with `marginTop` (uint) and
+  `axisScaleFactor` (0..10 decimal). The native projection draws no polygon,
+  colour or font size, so each leaf is disclosed under
+  `Radar native projection v1` in canonical order. Any other theme name, leaf,
+  value, indent or nesting keeps the whole source; the body style gate is
+  unchanged.
+- **Two `radar:` scopes are distinguished by indent, not by name.** The nested
+  `themeVariables.radar:` accepts only `axisColor` at indent 6, the config-level
+  `radar:` only `marginTop`/`axisScaleFactor` at indent 4, so the two corpus
+  shapes cannot be mixed.
+
 ## Packet closed namespace and frontmatter title (D-429)
 
 - **Inert bit-grid leaves, disclosed.** The packet projection transcribes

@@ -1,0 +1,86 @@
+{
+  "schema": "loom_mermaid_radar_ns_d430_cohort/v1",
+  "decision": "D-430",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "radar original whose frontmatter is a folded description plus closed theme/themeVariables/config.radar shapes",
+    "cohort_digest": "2f0919506f544b339a0d2ebf70a367b59e1ad3fc33fc9d0d5b36ab2b4c23abb0",
+    "theme_values": [
+      "base"
+    ],
+    "exclusions": "look keys, unknown theme names, unknown leaves, init directives and style statements stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice without a design gate; the gate is the test document plus the twin oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 3
+  },
+  "rows": [
+    {
+      "path": "radar/pr-check/should-handle-radar-diagram-with-radar-style-override.mmd",
+      "sha256": "f01d87cdf389b4e1160b52008acb6de0f4548873c5ad21e95985e9f153a8ad5a",
+      "manifest_sha256": "f01d87cdf389b4e1160b52008acb6de0f4548873c5ad21e95985e9f153a8ad5a",
+      "theme": "base",
+      "leaves": {
+        "themeVariables.radar.axisColor": "#FF0000"
+      },
+      "expected_footer_lines": [
+        "Radar native projection v1",
+        "config.theme=base -> colour palette; not applied",
+        "config.themeVariables.radar.axisColor=#FF0000 -> axis colour; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "radar/pr-check/should-parse-radar-diagram-with-theme-override.mmd",
+      "sha256": "d626025975767b68b07a005cee18dfc97de8659937efea37cf1c7c3ca1fcd88d",
+      "manifest_sha256": "d626025975767b68b07a005cee18dfc97de8659937efea37cf1c7c3ca1fcd88d",
+      "theme": "base",
+      "leaves": {
+        "themeVariables.fontSize": "80",
+        "themeVariables.cScale0": "#FF0000"
+      },
+      "expected_footer_lines": [
+        "Radar native projection v1",
+        "config.theme=base -> colour palette; not applied",
+        "config.themeVariables.fontSize=80 -> label font size; not applied",
+        "config.themeVariables.cScale0=#FF0000 -> series palette colour; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "radar/pr-check/should-render-radar-diagram-with-config-override.mmd",
+      "sha256": "24e9872fbdfb0bbb93ccc1a79915307dde08f874f6a785f8693bd87dcff87595",
+      "manifest_sha256": "24e9872fbdfb0bbb93ccc1a79915307dde08f874f6a785f8693bd87dcff87595",
+      "theme": null,
+      "leaves": {
+        "radar.marginTop": "100",
+        "radar.axisScaleFactor": "0.5"
+      },
+      "expected_footer_lines": [
+        "Radar native projection v1",
+        "config.radar.marginTop=100 -> layout margin; not applied",
+        "config.radar.axisScaleFactor=0.5 -> axis scale factor; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

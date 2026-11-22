@@ -2054,3 +2054,19 @@ Attach a short efficiency section to each closure report, answering:
 2. **"Gate green" evidence must name the test.** The TL rule is right: the
    targeted log now shows `MermaidPacketCohort.GatedPacketsStayWholeSource`
    (the red one) passing by name, plus all four D-429 names, not just a count.
+
+## D-430 radar namespace retro (2026-11-23)
+
+1. **A multi-section Python dispatcher must keep its sections separate.** The
+   ledger mirror merged `config` and `themeVariables` into one branch; the first
+   leaf line then fell through to the "unknown key" reject and the cohort
+   silently shrank to one row. Write one branch per section, then assert the
+   expected row count loudly (it did).
+2. **A failed matrix report is not a roster input.** Emitting the roster from a
+   matrix run that failed its own expectations produced a sufficiency table
+   that cannot reconcile (`dagre_layout_tuning`). Always gate the emit on a
+   green matrix (`MTX=0`) and re-run `--self-test` immediately.
+3. **Emit ordering matters when a slice adds a matrix branch.** The branch and
+   the reach proof live in different hunks; patch them together and verify the
+   loader symbol exists before building, or the report is produced with three
+   unexpected draws and a red matrix.

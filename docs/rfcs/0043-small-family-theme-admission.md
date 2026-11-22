@@ -1,9 +1,9 @@
 ---
 rfc: 43
 title: ishikawa, venn and railroad theme admission
-status: accepted
+status: implementable
 owners: "@Zzzode"
-reviewers: ["agent:design-review"]
+reviewers: ["agent:design-review", "agent:prr-review"]
 created: 2026-11-22
 last-reviewed: 2026-11-22
 supersedes: ""
@@ -131,7 +131,10 @@ column-0 metadata passthrough) and replaces only the `theme`/`config` verdicts:
   line with a non-zero indent is interpreted. The admitted leaf is exactly an indent-2
   `theme` read through the TU-local scalar helper below, whose dequoted/commented value
   must be in that family's table. Everything else — another leaf name, a colon-less line,
-  a non-2 indent, a second `theme` — rejects the whole source.
+  a non-2 indent, a second `theme` — rejects the whole source. The leaf key is compared
+  **raw** (text before the first colon, agentflow's `leaf.substr(0, colon) != "theme"`), so
+  `  theme : dark` rejects in all three families; railroad's column-0 key trim never
+  applies to the nested leaf.
 - A config block that ends without an admitted `theme` rejects.
 - Indented `config`/`look` keys outside an admitted config position still reject exactly as
   today (the old flat scan did not ignore them); indented non-visual keys outside a config
@@ -183,9 +186,10 @@ Appended inside the family's own `*_layout` (no parser seam, no new entry point)
 separator row, header, theme line. Line cap 96 bytes; per-line charge
 `size * 4 + sizeof(std::string) + 32`; emission charge
 `(1 + n) * (4 * sizeof(std::string) + 256) + bytes * 2 + 256`; the append is refused when
-`art_rows + 1 + n >` the family's row cap, where `art_rows` is the row vector the footer is
-appended to — for venn that is `title_rows.size() + out.size()`, the same quantity its own
-cap already counts. Refusal keeps the whole source on fallback.
+`art_rows + 1 + n >` the family's row cap. The footer is appended **after** venn's title
+combine (`mermaid_venn_impl.cpp:363-369`), so `art_rows` is simply `out.size()`, which
+already includes the title rows — the same quantity the existing cap counts. Refusal keeps
+the whole source on fallback.
 
 ### 5. Reviewed cohort, twin gate and wiring
 
@@ -205,8 +209,13 @@ cap already counts. Refusal keeps the whole source on fallback.
   change: ishikawa frontmatter 6 → 4; venn frontmatter 7 → **3** and body 3 → **4**;
   railroad frontmatter 1 → 0.
 - The sibling ledger and the three family `admitted` lists carry the same six paths; the
-  gate asserts sibling ↔ family agreement path by path and per-family digest, so the
-  duplicate cannot drift silently.
+  digest is agentflow's definition — sha256 of the concatenated `path\tsha256\n` lines
+  (`generate_agentflow_0041_cohort.py:107-109`) — and the gate asserts sibling ↔ family
+  agreement path by path and per-family digest, so the duplicate cannot drift silently.
+- The partition check is **literal arithmetic against the enumerated fixture total**, not a
+  recomputation from the ledger's own lists: ishikawa 7 + 2 + 4 + 0 = 13, venn
+  11 + 3 + 3 + 4 = 21, railroad 8 + 1 + 0 + 0 = 9, with the filesystem enumeration of each
+  family's fixtures as the total, so a row dropped from every list is caught.
 - Generator `tools/mermaid/generate_smallfam_0043_cohort.py`, renderer-free,
   `--check`-reproducible, pinned path sets/digests, body-equivalence verification. **The
   Python path/digest set and the C++ closed tables are a string-shape coupling**: they must
@@ -250,18 +259,62 @@ by side and none may replace another — ① the absolute `source_fallback` tota
 
 ## Production Readiness Review
 
-Completed at the `implementable` gate. Answers:
+Completed at the `implementable` gate by an independent PRR agent (different lens from the
+design reviewer). The questionnaire rows:
 
-- **Correctness & tests** — per-row twin gate, one battery per family with the §2 verdict
-  table, per-family partition pins, three frame-identity oracles, live narrow measurement.
-- **Build system** — three body units, no module/import/BMI change; one new test
-  executable. Module graph unchanged (still a DAG, no new module, no new import edge).
-- **Rollback** — one atomic commit; one revert plus a rebuild/re-measure.
-- **Observability** — no new diagnostics.
-- **Documentation** — RFC, closure doc, design-decisions entry, docs index, d117 rows,
-  retro, fallback-roster category note.
-- **Deletion** — the three old flat gates are replaced, not wrapped.
-- **Deprecation** — additive; one roster category empties (handled).
+### 1. Correctness and tests
+
+- Every new behaviour has a new test: the six-test cohort gate, the three family-test pin
+  changes, and four hermetic generator `--check` entries.
+- Failure paths covered: every §2 verdict row (table miss, quoted/unmatched, indent, leaf
+  name, duplicate, no theme, fence/body gates).
+- Golden suites: N/A — no rendered-cell golden, no truecolor path, no dialog/session shape
+  is touched; the text surface is asserted by the cohort gate itself.
+- Known flakes: none added; no wall-clock assertion.
+- Serial ctest total: 4657 → **4667** (+10), the pie-closure baseline.
+- Cross-module couplings named and both-sided: sibling/family ledger fields, matrix reason
+  strings, roster category names, C++ closed tables ↔ Python path/digest set, footer
+  literals. `docs/decisions/design-decisions.md` consulted.
+
+### 2. Build system and module discipline
+
+- BMI PSS: N/A — the three files are `.cpp` body units; no `.cppm`, import, or module
+  change, so no BMI producer is affected.
+- No Ninja concurrency reduction; no interface declaration added; no new textual includes;
+  no new module (the graph stays a DAG, unchanged).
+
+### 3. Rollback and compatibility
+
+- One atomic commit including the roster, so a single `git revert` restores 669 and every
+  pin together; no separate `--emit` step.
+- No persisted user data, wire protocol, CLI, or settings change.
+
+### 4. Observability
+
+- No new diagnostics, threads, or render ticker; the layout stays event-driven; session
+  traces unaffected.
+
+### 5. Documentation and deletion
+
+- The three old flat gates are replaced, not wrapped. RFC, closure doc, design-decisions
+  entry, docs index, d117 rows, d394 historical note, retro, audit-fixture note.
+
+### 6. Platform readiness
+
+- Debug + release build `-Werror` clean on the Linux dev box (the closure gate); output is
+  ASCII cell text with no platform-specific code, so termios/signals guards are untouched.
+- macos-14 CI is not a verification gate in this project (directive 2026-09-29); it must
+  not be waited on.
+- truecolor golden path untouched (no colour is painted). Offline dependency cache
+  unaffected; no new fetch.
+
+### Review sign-off
+
+| Role | Reviewer | Date | Verdict |
+|---|---|---|---|
+| Design | agent:design-review | 2026-11-22 | approve (r3) |
+| Production readiness | agent:prr-review | 2026-11-22 | approve (6 MINOR + 2 NIT folded) |
+| Code (per phase) | pending | — | — |
 
 ## Rollout and rollback
 
@@ -291,7 +344,13 @@ data, no wire protocol, no CLI contract changes.
 
 ## Testing and verification plan
 
-- New gate (6 gtests) in a new `test_mermaid_smallfam_0043_cohort` executable.
+- **Red first.** Before the change, record that the 6 rows are `source_fallback` on the
+  committed matrix (roster `total_fallback` 669) — promotion is measured, not assumed.
+- New gate executable `test_mermaid_smallfam_0043_cohort`, registered with
+  `LABELS "mermaid"`, six `TEST`s: `LedgerSchemaReviewsAndPins`,
+  `RowsAreInertAgainstTwins`, `ClosedTablesAdmitWithExactFooter`,
+  `OutOfTableAndShapeRejects`, `FamilyLedgersPartitionFourWays`,
+  `DrawnRowsKeepFrameIdentity`.
 - Four hermetic generator checks (+1 for the new generator, +3 for the existing
   `generate_{ishikawa,venn,railroad}_cohort.py`, which already support `--check` but are
   not registered): expected `ctest -L mermaid` delta **+10** (6 gtests + 4 hermetic).
@@ -320,7 +379,11 @@ data, no wire protocol, no CLI contract changes.
 - [ ] `docs/README.md` — RFC index
 - [ ] `docs/dev/mermaid-d117-family-fallback-counts.md` — ishikawa/venn/railroad rows
 - [ ] `docs/dev/engineering-efficiency.md` — per-task retro
-- [ ] `tests/fixtures/mermaid_native/direct_theme_source_audit.v1.json` — annotate superseded
+- [ ] `tests/fixtures/mermaid_native/direct_theme_source_audit.v1.json` — add a
+      `superseded_by` note; the file is unconsumed (no code reads it), so the edit is
+      documentation only
+- [ ] `docs/dev/mermaid-next-family-spike-d394.md` — mark the ishikawa-6/railroad-1
+      inventory historical
 
 ## Open questions
 
@@ -343,6 +406,7 @@ data, no wire protocol, no CLI contract changes.
 | 2026-11-22 | r1 | agent:design-review | REQUEST-CHANGES | 2 BLOCKER + 5 MAJOR + 8 MINOR + 3 NIT. B1 venn `dark` row missing from the scope → added (6 rows, endpoints corrected); B2 the three existing family tests were unmentioned → named with pin deltas; MAJOR-1 "indented lines ignored" was wrong (the flat scan rejects indented visual keys) → grammar rewritten with the exact admitted position; MAJOR-2 venn partition arithmetic → 11+3+4+3; MAJOR-3 scalar semantics unpinned → `af_scalar` copy and the §2 verdict table; MAJOR-4 per-family behaviours → §3 table; MAJOR-5 "entire vein" overclaim → scoped with the conf-and-directives exclusion; MINORs: D-411 roster numbers (measured 4/7/1 → 2/4/0, 44→43), D-410 arithmetic recomputed structurally, live narrow assertion named, gate+footer in the layout body, exact footer literals, +10 test delta, graph unchanged, C++/Python table coupling, agentflow ledger field names; NITs: `config.ishikawa.*` naming, 44→43 comments, arithmetic note. All folded |
 | 2026-11-22 | r2 | agent:design-review | REQUEST-CHANGES | Scope (exactly 6), endpoints, roster, twins, scalar, +10 delta, protected files all confirmed. 2 MAJOR + 4 MINOR + 1 NIT: (1) venn partition is 11+3+3+4, not 11+3+4+3 — `explicit-set-style-over-redux-palette` reclassifies to body_style once its theme is admitted (this also refutes r1's folded "7→4" pin; correct pin 7→3, body 3→4); (2) the §2 row "config first, description after → rejected" contradicted the grammar (column-0 description closes the block) → relabeled and the positive added; MINORs: matrix commentary values are 4/7/0, agentflow has no `admitted` path list (kept the list and added a sibling↔family cross-check), venn footer cap must count title rows, missing unrelated-column-0 passthrough positive; NIT: narrow 0/6 is expectation-until-measured with the RFC 0041 precedent. All folded |
 | 2026-11-22 | r3 | agent:design-review | **APPROVE-TO-ACCEPT** | All r2 folds re-derived and confirmed (venn 11+3+3+4, §2 config/description semantics against `af_frontmatter_gated`, pin numbers 6→4/7→3/3→4/1→0, matrix commentary 4/7/0). One NIT: the RFC 0041 narrow precedent said "identical 48-character line"; the 9 rows' lines vary 48–60 and are all narrow `source` → reworded. Gate: provisional → accepted |
+| 2026-11-22 | PRR | agent:prr-review | **APPROVE-TO-IMPLEMENT** | Independently confirmed: corpus twins byte-identical, endpoints/roster/partition arithmetic, footer lengths, inline-gate reachability (no interface change), matrix branch placement cannot shadow, generators green pre-registration, roster category removal clean, one-revert rollback, protected ten untouched. 6 MINOR + 2 NIT folded: venn footer append point + `art_rows = out.size()` after the title combine; nested leaf key compared raw (`  theme : dark` rejects everywhere); digest defined (`path\tsha256\n`); partition check is literal arithmetic against the filesystem total; red-first baseline step; PRR questionnaire filled; six TEST names + `LABELS "mermaid"`; audit/d394 doc edits named. Gate: accepted → implementable |
 | 2026-11-22 | — | — | draft | Created provisional from D-410's 5d bucket |
 
 ## Implementation History
@@ -352,3 +416,4 @@ data, no wire protocol, no CLI contract changes.
 | 2026-11-22 | — | Draft created (provisional), no code | — |
 | 2026-11-22 | — | Revised after design review r1; no code | 6c6d0993 |
 | 2026-11-22 | — | Folded design review r2; accepted; no code | 2f07e491 |
+| 2026-11-22 | — | Accepted after design r3; PRR folded; implementable; no code | a7953e42 |

@@ -6,6 +6,12 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
+**Current totals (the last row of the history table below): 1631 drawn /
+514 source_fallback / 0 error at 240 wide**, after D-437 (`278e2ec2`,
+2026-11-23). Every earlier row is dated history; the historical D236 row
+(2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
+the D237/D241 narrative describe that attempt only, not the current count.
+
 All counts are the **whole-original** track at **240 columns** unless
 stated otherwise. `drawn + source_fallback = family size` (the frozen 48
 body-geometry gaps are a separate, flowchart-body-only disposition; they

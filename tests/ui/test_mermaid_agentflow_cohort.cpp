@@ -254,15 +254,16 @@ TEST(MermaidAgentflowCohort, MalformedInputFailsClosed) {
 // per-row frame gate for the nine admitted rows is
 // test_mermaid_agentflow_0041_cohort.
 TEST(MermaidAgentflowCohort, FrontmatterGateBoundary) {
-    // The two remaining gated rows carry look + handDrawnSeed (a geometry
-    // seed is not inert).
-    const std::array<std::string, 2> gated{{
+    // The two rows that used to carry look + handDrawnSeed are admitted by
+    // D-442 as a closed inert pair (test_mermaid_agentflow_handdrawn_d442_cohort
+    // owns their frames); they draw at 240 and stay whole-source at 40.
+    const std::array<std::string, 2> seed_rows{{
         "agentflow/pr-check/should-render-every-container-kind.mmd",
         "agentflow/pr-check/should-render-several-collapsed-containers.mmd",
     }};
-    for (const auto& rel : gated) {
+    for (const auto& rel : seed_rows) {
         const auto source = read_file(kCases / rel);
-        EXPECT_FALSE(draws(source, kWide)) << rel;
+        EXPECT_TRUE(draws(source, kWide)) << rel;
         EXPECT_FALSE(draws(source, kNarrow)) << rel;
     }
     // Out-of-table values and sibling palettes still fail closed.
@@ -270,8 +271,11 @@ TEST(MermaidAgentflowCohort, FrontmatterGateBoundary) {
         return "---\ndescription: x\nconfig:\n" + std::string(config) +
                "---\nagentflow-beta TB\nA[\"x\"]\n";
     };
+    // D-442 admits the handDrawn look and its jitter seed, so the negatives
+    // re-point at still-unadmitted leaves and values.
     for (const auto* config : {"  theme: neo\n", "  theme: redux\n", "  theme: redux-dark\n",
-                               "  look: handDrawn\n", "  theme: dark\n  handDrawnSeed: 1\n"}) {
+                               "  look: neo\n", "  look: handDrawn\n  fontFamily: courier\n",
+                               "  handDrawnSeed: 0\n"}) {
         EXPECT_FALSE(draws(with(config), kWide)) << config;
     }
     // The accepted shape now draws and discloses (per-row gate owns the frame).

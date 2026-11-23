@@ -6278,6 +6278,36 @@ const JourneyCohortEntry* mindmap_tidy_d439_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-442 agentflow handDrawn-look cohort: the two agentflow originals whose
+// only non-admitted input is the inert `config.look: handDrawn` +
+// `config.handDrawnSeed` pair (this closes the agentflow family). The per-row
+// gate is test_mermaid_agentflow_handdrawn_d442_cohort.
+const std::map<std::string, JourneyCohortEntry>& agentflow_handdrawn_d442_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path =
+            kRoot / "../../../tools/mermaid/agentflow-handdrawn-d442-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-442 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-442 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* agentflow_handdrawn_d442_cohort_row(std::string_view path) {
+    const auto& rows = agentflow_handdrawn_d442_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-441 state closed-layout cohort: the three state originals whose only
 // non-admitted input is the inert `config.layout: elk` selector. The per-row
 // gate is test_mermaid_state_layout_d441_cohort.
@@ -11256,6 +11286,33 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     continue;
                 }
             }
+            // D-442 agentflow handDrawn-look admission: the two remaining
+            // agentflow originals whose only non-admitted input is the inert
+            // look + seed pair, under the TL's review exemption. Placed before
+            // the RFC 0041 agentflow branch (disjoint sets); the post-loop
+            // reach proof asserts each row is observed here.
+            if (class_path.is_str() && class_path.as_str().starts_with("agentflow/")) {
+                if (const auto* cohort = agentflow_handdrawn_d442_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "agentflow";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-442 agentflow handDrawn cohort (TL review-exempt)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // RFC 0031 cynefin-family renderer: the seven clean cynefin
             // originals are governed by their reviewed cohort ledger; the
             // per-row pixel gate is test_mermaid_cynefin_cohort. The five
@@ -12924,6 +12981,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d437 == expected_d437,
                     "D-437 branch reach set must equal its ledger");
+        }
+
+        // D-442 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d442 = json::parse(
+                read_file(kRoot / "../../../tools/mermaid/agentflow-handdrawn-d442-cohort.json"));
+            require(ledger_d442.has_value(), "D-442 cohort ledger must parse");
+            std::set<std::string> expected_d442;
+            ledger_d442->root().get("rows").iter([&](const JsonVal row) {
+                expected_d442.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d442;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-442 agentflow handDrawn cohort (TL review-exempt)")
+                    reached_d442.insert(row.path);
+            }
+            require(reached_d442 == expected_d442,
+                    "D-442 branch reach set must equal its ledger");
         }
 
         // D-441 rule-38 reach proof: every ledger row must be observed through

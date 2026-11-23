@@ -1,0 +1,61 @@
+{
+  "schema": "loom_mermaid_agentflow_handdrawn_d442_cohort/v1",
+  "decision": "D-442",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "agentflow original whose frontmatter is a description plus the closed config leaves look: handDrawn and handDrawnSeed: <positive int>",
+    "cohort_digest": "748c66a809899d0eceff4fa212bc880134fce5e345feebde48dd09ecefe5f20a",
+    "exclusions": "other look values, zero/malformed seeds, other leaves, palette siblings and body init directives stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-23: family slice without a design gate; the gate is the test document plus the twin oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 2
+  },
+  "rows": [
+    {
+      "path": "agentflow/pr-check/should-render-every-container-kind.mmd",
+      "sha256": "7e030e4462d6216974d3c336fdbeb841b818172d43690f78a897d52209f03c2e",
+      "manifest_sha256": "7e030e4462d6216974d3c336fdbeb841b818172d43690f78a897d52209f03c2e",
+      "config_leaves": {
+        "look": "handDrawn",
+        "handDrawnSeed": "1"
+      },
+      "expected_footer_lines": [
+        "Agentflow native projection v1",
+        "config.look=handDrawn -> source node style; not applied",
+        "config.handDrawnSeed=1 -> sketch jitter seed; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "agentflow/pr-check/should-render-several-collapsed-containers.mmd",
+      "sha256": "204288f095991aa87625c1ed9906b270c1e4d6e77760f0dddce499a8faeeb46e",
+      "manifest_sha256": "204288f095991aa87625c1ed9906b270c1e4d6e77760f0dddce499a8faeeb46e",
+      "config_leaves": {
+        "look": "handDrawn",
+        "handDrawnSeed": "1"
+      },
+      "expected_footer_lines": [
+        "Agentflow native projection v1",
+        "config.look=handDrawn -> source node style; not applied",
+        "config.handDrawnSeed=1 -> sketch jitter seed; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

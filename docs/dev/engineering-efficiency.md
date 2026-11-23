@@ -2252,3 +2252,14 @@ renderer already draws it.
    `layout: 'elk'` and `layout: elk # note` were rejected; both are accepted by
    design (same YAML string, comment stripped). Two assertion migrations per
    slice from re-deriving leaf semantics instead of reading the shared reader.
+
+## D-442 agentflow family-close retro (2026-11-23)
+
+1. **A family can close on two rows when the blocker is one inert pair.** The
+   agentflow residual was 2 rows behind `look: handDrawn` + `handDrawnSeed`;
+   the whole slice is the rigid envelope gaining two closed leaves with a
+   canonical footer order. Prefer this over leaving a family "almost closed".
+2. **Closing a family always costs negative migrations.** The RFC 0041 gates
+   had pinned the pair as rejected in three places. Re-point every negative at
+   a shape that is still rejected (`fontFamily`, `look: neo`, zero seed) and
+   move the positive assertions to the new gate in the same commit.

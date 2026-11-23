@@ -205,7 +205,9 @@ TEST(MermaidAgentflow0041Cohort, LedgerSchemaReviewsAndPins) {
     EXPECT_EQ(selection.get_string("admitted_digest"),
               family.root().get("selection").get_string("admitted_digest"));
     for (const auto& rel : admitted) EXPECT_FALSE(family_drawn.contains(rel)) << rel;
-    // The two remaining gated rows are the seed rows; they must not draw.
+    // The two rows the RFC 0041 ledger listed as gated are the seed rows;
+    // D-442 admits them through the closed inert look + seed pair, so they now
+    // draw and disclose under its own ledger (test_mermaid_agentflow_handdrawn_d442_cohort).
     int gated = 0;
     family.root().get("selection").get("gated").iter([&](JsonVal value) {
         ++gated;
@@ -213,7 +215,7 @@ TEST(MermaidAgentflow0041Cohort, LedgerSchemaReviewsAndPins) {
         EXPECT_TRUE(rel.find("handdrawn") == std::string::npos &&
                     read_file(kCases / rel).find("handDrawnSeed") != std::string::npos)
             << rel;
-        EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
+        EXPECT_TRUE(draws(read_file(kCases / rel), kWide)) << rel;
     });
     EXPECT_EQ(gated, 2);
 
@@ -360,15 +362,17 @@ TEST(MermaidAgentflow0041Cohort, GrammarBattery) {
     EXPECT_TRUE(draws("---\ndescription : ok\n---\n" + std::string(kBody), kWide));
     // Config shapes other than exactly one admitted leaf reject.
     EXPECT_FALSE(draws(probe("config:\n"), kWide)) << "empty config";
-    EXPECT_FALSE(draws(config_probe("  look: handDrawn\n"), kWide)) << "non-visual leaf";
+    // D-442 admits the handDrawn look; the negative re-points at a leaf that
+    // is still outside the closed table.
+    EXPECT_FALSE(draws(config_probe("  fontFamily: courier\n"), kWide)) << "non-visual leaf";
     EXPECT_FALSE(draws(config_probe("  themeVariables:\n    primaryColor: red\n"), kWide))
         << "non-visual map";
-    EXPECT_FALSE(draws(config_probe("  theme: dark\n  look: handDrawn\n"), kWide))
-        << "theme + look";
-    EXPECT_FALSE(draws(config_probe("  theme: dark\n  handDrawnSeed: 1\n"), kWide))
-        << "theme + seed";
     EXPECT_FALSE(draws(config_probe("  theme: dark\n  fontFamily: courier\n"), kWide))
-        << "theme + fontFamily";
+        << "theme + unadmitted leaf";
+    EXPECT_FALSE(draws(config_probe("  theme: dark\n  look: neo\n"), kWide))
+        << "theme + unadmitted look";
+    EXPECT_FALSE(draws(config_probe("  theme: dark\n  handDrawnSeed: 0\n"), kWide))
+        << "theme + zero seed";
     EXPECT_FALSE(draws(config_probe("  theme\n"), kWide)) << "colon-less leaf";
     EXPECT_FALSE(draws(config_probe("  theme: dark\nconfig:\n  theme: dark\n"), kWide))
         << "second config with a duplicate theme";

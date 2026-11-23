@@ -93,12 +93,13 @@ std::optional<std::string> af_quoted(std::string_view token) {
 }
 
 // RFC 0041: the frontmatter gate validates one admitted shape and discloses it.
-// A column-0 `config:` block whose sole leaf is an indent-2 `theme` inside the
-// closed corpus table is accepted and disclosed through a bounded footer; every
-// other frontmatter shape keeps today's whole-source fallback (the gate still
-// admits only `description` at column 0, and indented lines outside a config
-// block stay ignored, exactly as before). The renderer never reads `theme`, so
-// the footer states that the palette was not applied.
+// A column-0 `config:` block whose leaves are drawn from the closed corpus
+// table (`theme`, `look: handDrawn`, `handDrawnSeed: <positive int>`) is
+// accepted and disclosed through a bounded footer; every other frontmatter
+// shape keeps today's whole-source fallback (the gate still admits only
+// `description` at column 0, and indented lines outside a config block stay
+// ignored, exactly as before). The renderer never reads these leaves, so the
+// footer states that they were not applied.
 constexpr std::size_t kAfNoticeLineLimit = 96u;
 constexpr std::string_view kAfNoticeHeader = "Agentflow native projection v1";
 constexpr std::array<std::string_view, 7> kAfThemeTable{{
@@ -181,6 +182,10 @@ bool af_frontmatter_gated(std::string_view source, std::string_view& body,
     bool in_config = false;
     bool saw_config = false;
     std::optional<std::string> theme;
+    // D-442: the handDrawn look and its rough.js jitter seed carry no terminal
+    // analogue; both are inert and disclosed.
+    std::optional<std::string> look;
+    std::optional<std::string> seed;
     for (std::size_t pos = 0;;) {
         const auto eol = frontmatter.find('\n', pos);
         const auto line = frontmatter.substr(
@@ -199,16 +204,32 @@ bool af_frontmatter_gated(std::string_view source, std::string_view& body,
                 const auto leaf = line.substr(key_start);
                 if (!leaf.starts_with('#')) {                 // YAML comment
                     const auto colon = leaf.find(':');
-                    // Inside the config block the sole admitted leaf is an
-                    // indent-2 `theme`; any other leaf (or a colon-less line)
+                    // Inside the config block only the indent-2 closed leaves
+                    // are admitted; any other leaf (or a colon-less line)
                     // keeps the whole source on fallback.
-                    if (colon == std::string_view::npos ||
-                        leaf.substr(0, colon) != "theme" || key_start != 2u || theme)
-                        return true;
+                    if (colon == std::string_view::npos || key_start != 2u) return true;
+                    const auto key = leaf.substr(0, colon);
                     auto value = af_scalar(leaf.substr(colon + 1u), work);
-                    if (!value || std::ranges::find(kAfThemeTable, *value) == kAfThemeTable.end())
+                    if (!value) return true;
+                    if (key == "theme") {
+                        if (theme || std::ranges::find(kAfThemeTable, *value) == kAfThemeTable.end())
+                            return true;
+                        theme = std::move(*value);
+                    } else if (key == "look") {
+                        if (look || *value != "handDrawn") return true;
+                        look = std::move(*value);
+                    } else if (key == "handDrawnSeed") {
+                        bool digits = !value->empty() && value->size() <= 9u;
+                        bool nonzero = false;
+                        for (const char c : *value) {
+                            if (c < '0' || c > '9') digits = false;
+                            nonzero |= c != '0';
+                        }
+                        if (seed || !digits || !nonzero) return true;
+                        seed = std::move(*value);
+                    } else {
                         return true;
-                    theme = std::move(*value);
+                    }
                 }
             }
             if (eol == std::string_view::npos) break;
@@ -236,12 +257,24 @@ bool af_frontmatter_gated(std::string_view source, std::string_view& body,
         }
         if (eol == std::string_view::npos) break;
     }
-    // A config block must carry exactly one admitted leaf.
-    if (saw_config && !theme) return true;
-    if (theme) {
-        if (!af_notice_line(notices, kAfNoticeHeader, work) ||
-            !af_notice_line(notices,
-                            "config.theme=" + *theme + " -> colour palette; not applied", work))
+    // A config block must carry at least one admitted leaf.
+    if (saw_config && !theme && !look && !seed) return true;
+    if (theme || look || seed) {
+        if (!af_notice_line(notices, kAfNoticeHeader, work)) return true;
+        if (theme &&
+            !af_notice_line(
+                notices, "config.theme=" + *theme + " -> colour palette; not applied", work))
+            return true;
+        // D-442 appends after the palette line so every already-drawn footer
+        // keeps its bytes.
+        if (look && !af_notice_line(notices,
+                                    "config.look=" + *look + " -> source node style; not applied",
+                                    work))
+            return true;
+        if (seed && !af_notice_line(notices,
+                                    "config.handDrawnSeed=" + *seed +
+                                        " -> sketch jitter seed; not applied",
+                                    work))
             return true;
     }
     body = source.substr(*close_nl + 1);

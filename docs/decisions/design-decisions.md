@@ -5103,3 +5103,26 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Accounting.** The matrix branch precedes the RFC 0048/0038/E2b state
   branches with a rule-38 reach proof; `elk_layout_engine` loses exactly the
   three ledger rows.
+
+## agentflow handDrawn look + jitter seed (D-442, family closed)
+
+- **Scope.** The last two agentflow originals carry exactly
+  `config.look: handDrawn` and `config.handDrawnSeed: <positive int>`. Both
+  leaves drive rough.js sketch rendering upstream; the terminal transcribes the
+  container tree, so both are inert. Admitting the pair closes the agentflow
+  family at 240 wide (11 originals drawn, 0 fallback).
+- **Mechanism.** The RFC 0041 envelope accepted exactly one `theme` leaf. It
+  now accepts a non-empty subset of the closed leaf table
+  `{theme, look: handDrawn, handDrawnSeed: <digits, non-zero, <= 9>}` with
+  per-leaf duplicate rejection. The footer keeps the RFC 0041 palette line
+  first and appends `config.look=... -> source node style; not applied` and
+  `config.handDrawnSeed=... -> sketch jitter seed; not applied`, so every
+  already-drawn agentflow footer keeps its bytes.
+- **Migrations.** The RFC 0041 cohort gates asserted the pair stayed
+  whole-source ("a geometry seed is not inert"); both now assert the pair draws
+  and interval the frame to the D-442 gate, and their remaining negatives
+  re-point at still-unadmitted shapes (`fontFamily`, `look: neo`, seed `0`,
+  `themeVariables` maps, body init).
+- **Accounting.** The matrix branch precedes the RFC 0041 agentflow branch with
+  a rule-38 reach proof; the roster's `edge_animation_metadata` bucket loses
+  exactly the two ledger rows.

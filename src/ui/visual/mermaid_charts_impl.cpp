@@ -1575,9 +1575,9 @@ std::optional<std::vector<std::string>> xy_chart(const Chart& chart, Work& work)
         (bars &&
          (reference < std::min(minimum, maximum) || reference > std::max(minimum, maximum))))
         return {};
-    // Negative first-boundary bar/value semantics need their separate source
-    // profile; ordinary label text cannot justify a different bar reference.
-    if (chart.show_data && bars && minimum < 0) return {};
+    // D-448: a data-labelled bar chart whose span crosses zero keeps the same
+    // reference (0) and paints each value at its bar tip; the fixture pair
+    // (-2.5, 0.75, 5.1 against -10..10) pins that profile.
     for (const auto& s : chart.series)
         for (const auto value : s.values)
             if (reversed_y ? value > minimum : (value < minimum || value > maximum)) return {};
@@ -1862,13 +1862,26 @@ std::optional<std::vector<std::string>> xy_chart(const Chart& chart, Work& work)
             const int end = project(chart.series.front().values[c]),
                       span = std::abs(end - baseline);
             const auto text = numeric(chart.series.front().values[c]);
-            if (!work.spend(text.size()) || text.empty() || span == 0) return {};
+            if (!work.spend(text.size()) || text.empty()) return {};
             const int text_width = label_width(text);
+            // D-448: a bar that collapses to one cell cannot host its own value
+            // without erasing the mark (the loop below rejects replaced >= span),
+            // so the compact profile places such a label just outside the tip:
+            // above a positive/non-negative bar, below a negative one.
+            const bool tiny_span = span <= 1;
             const bool external =
-                chart.show_data_outside || (chart.horizontal && text_width >= span);
+                chart.show_data_outside || (chart.horizontal && text_width >= span) ||
+                tiny_span;
             const Point first =
-                chart.horizontal ? Point{external ? right + 2 : end - text_width + 1, category[c]}
-                                 : Point{category[c], external ? top - 1 : end};
+                chart.horizontal
+                    ? Point{external ? (tiny_span ? end + 1 : right + 2) : end - text_width + 1,
+                            category[c]}
+                    : Point{category[c],
+                            external ? (tiny_span ? (chart.series.front().values[c] < reference
+                                                         ? end + 1
+                                                         : end - 1)
+                                                  : top - 1)
+                                     : end};
             if (first.x < 0 || first.y < 0 || first.y >= height || text_width > kWidthLimit ||
                 first.x + text_width > kWidthLimit)
                 return {};
@@ -1884,11 +1897,17 @@ std::optional<std::vector<std::string>> xy_chart(const Chart& chart, Work& work)
                 if (at.x >= width) continue;
                 const auto i = index(at);
                 if (!owners[i]) continue;
+                // D-448: the sample window includes the authored tip on both
+                // sides of the zero reference (a negative bar's last row is
+                // its tip, exactly like a positive bar's first row is).
                 const bool own_sample =
-                    chart.horizontal ? at.y == category[c] && at.x > std::min(end, baseline) &&
-                                           at.x <= std::max(end, baseline)
-                                     : at.x == category[c] && at.y >= std::min(end, baseline) &&
-                                           at.y < std::max(end, baseline);
+                    chart.horizontal
+                        ? at.y == category[c] &&
+                              (end > baseline ? (at.x > baseline && at.x <= end)
+                                              : (at.x >= end && at.x < baseline))
+                        : at.x == category[c] &&
+                              (end > baseline ? (at.y > baseline && at.y <= end)
+                                              : (at.y >= end && at.y < baseline));
                 if (external || owners[i] != 1 || !own_sample) return {};
                 value_overlay[i] = true;
                 ++replaced;

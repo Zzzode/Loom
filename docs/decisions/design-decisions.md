@@ -5206,3 +5206,21 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   leaf, appended after the outline.
 - **Oracle.** The twin removes the config block and the acc declarations; the
   outline above the footer must be cell-equal, and narrow 40 stays source.
+
+## xychart negative-bar data labels (D-448)
+
+- **Scope.** The two negative/decimal `showDataLabel` bar fixtures (`-2.5,
+  0.75, 5.1` against `-10 --> 10`, vertical and horizontal).
+- **Root cause.** The compact label path judged sample ownership with a
+  half-open window `[min(end, baseline), max(...))`, which includes a positive
+  bar's tip row but excludes a negative bar's; every labelled negative bar was
+  therefore rejected. A one-cell bar additionally tripped the
+  `replaced >= span` guard.
+- **Mechanism.** Ownership is now direction-aware (the authored tip is included
+  on both sides of the zero reference), and a one-cell bar labels externally
+  (above a non-negative tip, below a negative one) so the mark is never erased.
+- **Boundary.** A zero-valued bar series still falls back (its tip coincides
+  with the reference and has no reviewed placement), and out-of-domain values
+  still fail.
+- **Oracle.** The gate asserts each authored value token appears exactly once
+  and bars are painted; the 40-column state is measured live per rule 34.

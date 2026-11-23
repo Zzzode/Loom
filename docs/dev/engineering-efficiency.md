@@ -2310,3 +2310,13 @@ renderer already draws it.
 2. **Accessibility declarations have a family precedent; reuse it.** State's
    RFC 0048 scalar accTitle/accDescr no-op (validated, silent, duplicate-gated)
    transferred directly to usecase, including the block form.
+
+## D-448 xychart labels retro (2026-11-23)
+
+1. **Bisect by fixture variants, not by re-reading a 2,000-line renderer.** A
+   six-case probe matrix (positive/negative values × domains × decimals ×
+   line/bar) located the failure class ("any bar ≤ 0 with labels") in one
+   build-and-run cycle; reading the geometry code alone had suggested three
+   different false leads.
+2. **Keep the probe out of the commit.** The probe target and file were
+   removed before the slice commit; only the gate and ledger remain.

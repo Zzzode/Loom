@@ -5292,3 +5292,51 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   SVG styling; not applied`).
 - **Oracle.** The twin removes the styling and accessibility lines; the
   outline above the footer must be cell-equal, and narrow 40 stays source.
+
+## treemap closed `classDef` / `:::` styling (D-452)
+
+- **Scope.** Ten treemap originals whose only remaining blocker is an in-body
+  `classDef <name> <prop>:<value>[, ...]` declaration plus `:::class`
+  references on sections and leaves.
+- **Why inert.** The treemap projection is an indented text outline — it draws
+  no colour, stroke or rectangle geometry — so every declaration only shapes
+  the upstream SVG.
+- **Mechanism.** The closed property set is `fill`, `color`, `stroke`,
+  `stroke-width`, `stroke-dasharray`, with the value charset `#.-% ` (no
+  quotes, parentheses or leading/trailing space); the trailing `;` is optional.
+  Duplicate classes and duplicate properties inside one declaration keep the
+  whole source. `:::class` suffixes are accumulated on node lines and checked
+  after the loop against the defined classes; an undefined, malformed or
+  doubled suffix (`:::a:::b`) fails closed. Any body `%%{` still gates the
+  whole source (treemap has no admitted directive).
+- **Disclosure.** `Treemap native projection v1` plus one line per class in
+  source order (`classDef red [fill,stroke] -> SVG colour; not applied`);
+  `:::` references render no suffix.
+- **Oracle.** The twin removes the classDef lines and every `:::class` suffix;
+  the outline above the footer must be cell-equal, and narrow 40 is measured
+  live (all ten rows stay source there).
+
+## venn closed `style` statements (D-453)
+
+- **Scope.** Five venn originals whose only remaining blocker is an in-body
+  `style <targets> <key>:<value>[, ...]` statement; two rows also use the flat
+  `text` child form (a `text` line directly after a base-level set/union) and
+  the `text id["Label"]` form.
+- **Why inert.** The venn projection paints its own labelled outline and never
+  reads fill/colour, so every statement only shapes the upstream SVG.
+- **Mechanism.** Targets are a comma list of identifiers (the set-name charset:
+  head `[A-Za-z_]`, body alnum/`_`, ≤64); the closed property set is `fill`,
+  `color`, `stroke`, `stroke-width` with value charset `#.-%` (≤32). A
+  duplicate property inside one statement, or a second *identical* statement,
+  fails closed; distinct values under the same target (`style A fill:#fff`
+  then `style A fill:#000`) are distinct statements and both are admitted —
+  the duplicate key is (targets, ordered key=value pairs), never the rendered
+  disclosure line, which omits values. `text id["Label"]` takes the id path
+  only when the text does not start with a quote: a quoted label such as
+  `text "a [b] c"` renders verbatim. `classDef` and `:::` still gate the whole
+  source.
+- **Disclosure.** `Venn native projection v1` plus one line per statement in
+  source order (`style A,B [color] -> SVG colour; not applied`).
+- **Oracle.** The twin removes the style statements and collapses
+  `text id["Label"]` to `text "Label"`; the outline above the footer must be
+  cell-equal, and narrow 40 is measured live (all five rows stay source).

@@ -2383,3 +2383,28 @@ renderer already draws it.
    attribute names (`"red"olor`). Bind a named `std::string_view arg = args[i]`
    and slice the view instead. This is exactly the class of defect the
    release boundary exists to catch.
+
+## D-452/D-453 treemap-classdef and venn-style retro (2026-11-24)
+
+1. **A dedupe key derived from the rendered line rejects distinct inputs.** The
+   venn style statement's disclosure line omits values, so keying duplicate
+   detection on that line rejected the legitimate pair `style A fill:#fff` +
+   `style A fill:#000`. Key duplicates on the normalized parsed statement
+   (targets plus ordered key=value pairs) in the renderer *and* in the
+   generator, so the two mirrors agree on what "duplicate" means.
+2. **A forwarded `string_view` parameter is a shared mutable contract.** The
+   venn duplicate set had to be threaded from the body loop into
+   `venn_style_statement`; adding the parameter was mechanical, but the
+   release-only dangling-view lesson from D-451 says to confirm every new
+   `string_view` is either bound to a named local or lives for the whole call.
+   `props_text` slices `content`, which the caller owns — no copy needed.
+3. **Cross-check an emptied partition against its owning ledger.** When D-453
+   moved the five venn body-style rows into their own ledger, the family gate's
+   `body_style_gated` partition became a vacuous `EXPECT_EQ(0, 0)`. Add a
+   membership assertion against the owning ledger's row set, so a row that
+   disappears from both ledgers fails the gate instead of passing twice.
+4. **Generator/C++ identifier charset drift is invisible until a fixture hits
+   it.** The venn generator rejected `-` in style targets while the renderer
+   accepted it; no cohort row exercised the difference. Compare the two
+   charsets whenever a new identifier validator is added, and pin one negative
+   per charset difference in the gate.

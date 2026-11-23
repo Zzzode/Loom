@@ -1,0 +1,195 @@
+{
+  "schema": "loom_mermaid_d443_inert_leaves_cohort/v1",
+  "decision": "D-443",
+  "admission": {
+    "shape": {
+      "requirement": "description envelope + closed config leaves including the indent-4 config.flowchart.htmlLabels leaf",
+      "ishikawa": "closed config.theme / config.ishikawa namespace / config.look leaves",
+      "venn": "closed config.theme / config.look / config.handDrawnSeed / config.fontFamily leaves"
+    },
+    "footer_line_limit_bytes": 96,
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the config-free twin is the same fixture with the whole top-level config block removed; the frame oracle strips the source footer and compares cell-exact art"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "remaining requirement/ishikawa/venn fallbacks whose body is byte-identical to the config-free twin and whose only unsupported frontmatter shape is a closed inert leaf",
+    "cohort_digest": "ead932f20b7a1ce70fa8287a26e1866320c398bde1040a3a1166fd3078a2e0df"
+  },
+  "counts": {
+    "total": 6,
+    "by_family": {
+      "requirement": 3,
+      "ishikawa": 1,
+      "venn": 2
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, D-443 inert look/htmlLabels/layout admission, 2026-11-23)",
+    "date": "2026-11-23",
+    "verdict": "approved",
+    "note": "Reviewer re-ran the generator --check entry and the live gate and verified: each of the three closed tables matches its renderer branch; the footer append sites keep every pre-existing leaf order; a namespace without its leaf fails closed; the twin is the same file with the whole config block stripped and the frame equality oracle excludes the footer; the negative probes stay whole-source."
+  },
+  "rows": [
+    {
+      "path": "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-handdrawn-look.mmd",
+      "family": "requirement",
+      "sha256": "26f4b4f23469dacfdb000e070f4a52757f693564a7551733fd052ac1556c05b4",
+      "manifest_sha256": "26f4b4f23469dacfdb000e070f4a52757f693564a7551733fd052ac1556c05b4",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.look=handDrawn -> source node style; not applied",
+        "config.flowchart.htmlLabels=false -> native text labels; not applied"
+      ],
+      "twin": {
+        "kind": "config-free",
+        "path": "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-handdrawn-look.mmd",
+        "sha256": "26f4b4f23469dacfdb000e070f4a52757f693564a7551733fd052ac1556c05b4",
+        "footer_lines": []
+      },
+      "ledger_note": "inert closed-leaf admission; the family projection never reads the leaf and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-default.mmd",
+      "family": "requirement",
+      "sha256": "661fe37d64d9040e6ecc7c187f79e9442dad6aac7d56a300af7fbe0e2a0cfba2",
+      "manifest_sha256": "661fe37d64d9040e6ecc7c187f79e9442dad6aac7d56a300af7fbe0e2a0cfba2",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.flowchart.htmlLabels=false -> native text labels; not applied"
+      ],
+      "twin": {
+        "kind": "config-free",
+        "path": "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-default.mmd",
+        "sha256": "661fe37d64d9040e6ecc7c187f79e9442dad6aac7d56a300af7fbe0e2a0cfba2",
+        "footer_lines": []
+      },
+      "ledger_note": "inert closed-leaf admission; the family projection never reads the leaf and the footer discloses it"
+    },
+    {
+      "path": "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-elk-layout.mmd",
+      "family": "requirement",
+      "sha256": "2b36d569d99973aa017d6287b55e8a49e932bf8ce4bf5be462538bdf13831d58",
+      "manifest_sha256": "2b36d569d99973aa017d6287b55e8a49e932bf8ce4bf5be462538bdf13831d58",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Requirement native projection v1",
+        "config.layout=elk -> external layout engine; not applied",
+        "config.flowchart.htmlLabels=false -> native text labels; not applied"
+      ],
+      "twin": {
+        "kind": "config-free",
+        "path": "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-elk-layout.mmd",
+        "sha256": "2b36d569d99973aa017d6287b55e8a49e932bf8ce4bf5be462538bdf13831d58",
+        "footer_lines": []
+      },
+      "ledger_note": "inert closed-leaf admission; the family projection never reads the leaf and the footer discloses it"
+    },
+    {
+      "path": "ishikawa/pr-check/6-should-render-with-handdrawn-look.mmd",
+      "family": "ishikawa",
+      "sha256": "5684ab054686f3d8ebe676acd200cfdd1edc2ac221b38079f413c204d10c436d",
+      "manifest_sha256": "5684ab054686f3d8ebe676acd200cfdd1edc2ac221b38079f413c204d10c436d",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Ishikawa native projection v1",
+        "config.look=handDrawn -> source node style; not applied"
+      ],
+      "twin": {
+        "kind": "config-free",
+        "path": "ishikawa/pr-check/6-should-render-with-handdrawn-look.mmd",
+        "sha256": "5684ab054686f3d8ebe676acd200cfdd1edc2ac221b38079f413c204d10c436d",
+        "footer_lines": []
+      },
+      "ledger_note": "inert closed-leaf admission; the family projection never reads the leaf and the footer discloses it"
+    },
+    {
+      "path": "venn/nightly-check/handdrawn/14-should-render-a-two-set-venn-diagram-with-handdrawn-look.mmd",
+      "family": "venn",
+      "sha256": "f92f7baf401bebded596518899ef0b6dacc83e88d2df70f224a5248eec56d9d8",
+      "manifest_sha256": "f92f7baf401bebded596518899ef0b6dacc83e88d2df70f224a5248eec56d9d8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Venn native projection v1",
+        "config.look=handDrawn -> source node style; not applied",
+        "config.handDrawnSeed=1 -> sketch jitter seed; not applied",
+        "config.fontFamily=\"courier\" -> terminal font; not applied"
+      ],
+      "twin": {
+        "kind": "config-free",
+        "path": "venn/nightly-check/handdrawn/14-should-render-a-two-set-venn-diagram-with-handdrawn-look.mmd",
+        "sha256": "f92f7baf401bebded596518899ef0b6dacc83e88d2df70f224a5248eec56d9d8",
+        "footer_lines": []
+      },
+      "ledger_note": "inert closed-leaf admission; the family projection never reads the leaf and the footer discloses it"
+    },
+    {
+      "path": "venn/pr-check/15-should-render-a-three-set-venn-with-handdrawn-look-and-title.mmd",
+      "family": "venn",
+      "sha256": "71898f5dabbee60309b1895572a530be465eff06f6280c141e257068a0284319",
+      "manifest_sha256": "71898f5dabbee60309b1895572a530be465eff06f6280c141e257068a0284319",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Venn native projection v1",
+        "config.look=handDrawn -> source node style; not applied",
+        "config.handDrawnSeed=1 -> sketch jitter seed; not applied",
+        "config.fontFamily=\"courier\" -> terminal font; not applied"
+      ],
+      "twin": {
+        "kind": "config-free",
+        "path": "venn/pr-check/15-should-render-a-three-set-venn-with-handdrawn-look-and-title.mmd",
+        "sha256": "71898f5dabbee60309b1895572a530be465eff06f6280c141e257068a0284319",
+        "footer_lines": []
+      },
+      "ledger_note": "inert closed-leaf admission; the family projection never reads the leaf and the footer discloses it"
+    }
+  ]
+}

@@ -83,8 +83,9 @@ TEST(MermaidVennCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_venn_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 11);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 11);
-    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 3);
-    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 4);
+    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 0);
+    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 5);
+    EXPECT_EQ(root.get("selection").get_int("d443_admitted_count"), 2);
     EXPECT_EQ(root.get("selection").get_int("admitted_count"), 3);
     EXPECT_EQ(root.get("selection").get_int("family_total"), 21);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
@@ -144,18 +145,21 @@ TEST(MermaidVennCohort, GatedVennsStayWholeSource) {
     // RFC 0043: the partition sizes are asserted explicitly so a shrinking
     // gate list cannot turn this loop vacuous. `explicit-set-style` moved to
     // body_style because its admitted theme no longer explains its fallback.
+    // D-443 admitted the two look/seed/font rows (their own d443 bucket below)
+    // and the third former frontmatter row reclassified as body_style, so the
+    // frontmatter gate is empty.
     int frontmatter = 0;
     selection.get("frontmatter_gated").iter([&](JsonVal value) {
         ++frontmatter;
         EXPECT_FALSE(draws(read_file(kCases / value.as_str()), kWide)) << value.as_str();
     });
-    EXPECT_EQ(frontmatter, 3);
+    EXPECT_EQ(frontmatter, 0);
     int body_style = 0;
     selection.get("body_style_gated").iter([&](JsonVal value) {
         ++body_style;
         EXPECT_FALSE(draws(read_file(kCases / value.as_str()), kWide)) << value.as_str();
     });
-    EXPECT_EQ(body_style, 4);
+    EXPECT_EQ(body_style, 5);
     int admitted = 0;
     selection.get("admitted").iter([&](JsonVal value) {
         ++admitted;
@@ -170,6 +174,19 @@ TEST(MermaidVennCohort, GatedVennsStayWholeSource) {
             << rel;
     });
     EXPECT_EQ(admitted, 3);
+    // D-443: the look/seed/font rows draw and disclose under the venn footer;
+    // the per-row frame oracle is test_mermaid_d443_inert_leaves_cohort.
+    int d443 = 0;
+    selection.get("d443_admitted").iter([&](JsonVal value) {
+        ++d443;
+        const auto rel = value.as_str();
+        const auto source = read_file(kCases / rel);
+        EXPECT_TRUE(draws(source, kWide)) << rel;
+        const auto frame = capture(source, "mermaid", kWide).text;
+        EXPECT_NE(frame.find("Venn native projection v1"), std::string::npos) << rel;
+        EXPECT_NE(frame.find("config.look=handDrawn"), std::string::npos) << rel;
+    });
+    EXPECT_EQ(d443, 2);
 }
 
 // Key-based gate: prose mentioning "style"/"theme" is not a gate; a frontmatter
@@ -182,10 +199,16 @@ TEST(MermaidVennCohort, VisualGateIsKeyBased) {
         "venn-beta\n  set A\n  set B\n  union A, B\n  style A fill:#ff0000\n";
     EXPECT_FALSE(draws(body_style, kWide));
 
+    // D-443 admits the closed handDrawn look; a value outside the table (and
+    // the seed rule) still closes the renderer.
     const std::string with_look =
-        "---\ndescription:\n  x\nconfig:\n  look: handDrawn\n---\n"
+        "---\ndescription:\n  x\nconfig:\n  look: classic\n---\n"
         "venn-beta\n  set A\n";
     EXPECT_FALSE(draws(with_look, kWide));
+    const std::string with_seed =
+        "---\ndescription:\n  x\nconfig:\n  handDrawnSeed: 0\n---\n"
+        "venn-beta\n  set A\n";
+    EXPECT_FALSE(draws(with_seed, kWide));
 }
 
 // All grammar shapes: bare and quoted set names, :size, ["label"], two/three

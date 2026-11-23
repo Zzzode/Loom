@@ -417,7 +417,9 @@ TEST(MermaidRequirement0037Cohort, P1LookTableIsClosed) {
     EXPECT_FALSE(draws(with("  handDrawnSeed: 1\n"), kWide));
     EXPECT_FALSE(draws(with("  securityLevel: strict\n"), kWide));
     EXPECT_FALSE(draws(with("  curve: linear\n"), kWide));
-    EXPECT_FALSE(draws(with("  flowchart:\n    htmlLabels: false\n"), kWide));
+    // D-443 admits the nested config.flowchart.htmlLabels leaf; another
+    // nested key still keeps the whole source on fallback.
+    EXPECT_FALSE(draws(with("  flowchart:\n    curve: linear\n"), kWide));
     EXPECT_FALSE(draws(with("  theme: dark\n"), kWide));
     EXPECT_FALSE(draws(with("  themeVariables:\n    primaryColor: \"#ff0000\"\n"), kWide));
     // Unbalanced quoting is a quoting mismatch, never a dequoted value.

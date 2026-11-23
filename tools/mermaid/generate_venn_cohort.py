@@ -59,7 +59,11 @@ def sha256_file(path):
 
 # RFC 0043: the admitted frontmatter shape is exactly one column-0 `config:`
 # block whose sole leaf is an indent-2 `theme` in this family's closed table.
+# D-443 adds the closed look/seed/font leaf trio as a separate admission owned
+# by the D-443 gate; such rows are partitioned as "d443", not "admitted".
 THEME_TABLE = {"dark", "redux-color", "redux-dark-color"}
+LOOK_TABLE = {"handDrawn"}
+FONT_TABLE = {"courier"}
 TRIM_COLUMN0_KEY = False
 
 
@@ -86,17 +90,25 @@ def _theme_scalar(raw):
     return value
 
 
+def _seed_ok(value):
+    """Mirror the D-442 seed rule: 1..9 decimal digits, not all zero."""
+    return bool(value) and len(value) <= 9 and value.isdigit() and value.strip("0") != ""
+
+
 def frontmatter_theme(frontmatter):
-    """Return ('none' | 'admitted' | 'gated', theme).
+    """Return ('none' | 'admitted' | 'd443' | 'gated', theme).
 
     Mirrors the C++ gate: a column-0 config block admits exactly one indent-2
-    theme leaf from the closed table; every other visual key gates.
+    theme leaf from the closed table plus the D-443 look/seed/font trio, each
+    from its closed table; every other visual key gates. A row carrying any
+    D-443 leaf is partitioned as "d443" and owned by the D-443 gate.
     """
     if frontmatter is None:
         return "none", None
     in_config = False
     saw_config = False
     theme = None
+    look = seed = font = None
     for line in frontmatter.split("\n"):
         # Blank means spaces/tabs only. The renderers pre-reject any tab in the
         # source, so the C++ space-only key scan and this predicate agree on
@@ -110,12 +122,28 @@ def frontmatter_theme(frontmatter):
                 if leaf.startswith("#"):
                     continue
                 colon = leaf.find(":")
-                if colon < 0 or leaf[:colon] != "theme" or key_start != 2 or theme is not None:
+                if colon < 0 or key_start != 2:
                     return "gated", None
+                key = leaf[:colon]
                 value = _theme_scalar(leaf[colon + 1:])
-                if value not in THEME_TABLE:
+                if key == "theme":
+                    if theme is not None or value not in THEME_TABLE:
+                        return "gated", None
+                    theme = value
+                elif key == "look":
+                    if look is not None or value not in LOOK_TABLE:
+                        return "gated", None
+                    look = value
+                elif key == "handDrawnSeed":
+                    if seed is not None or not _seed_ok(value):
+                        return "gated", None
+                    seed = value
+                elif key == "fontFamily":
+                    if font is not None or value not in FONT_TABLE:
+                        return "gated", None
+                    font = value
+                else:
                     return "gated", None
-                theme = value
             else:
                 colon = leaf.find(":")
                 key = leaf[:colon] if colon >= 0 else leaf
@@ -139,20 +167,22 @@ def frontmatter_theme(frontmatter):
             if key in ("theme", "look"):
                 return "gated", None
             in_config = False
-    if saw_config and theme is None:
+    if saw_config and theme is None and look is None and seed is None and font is None:
         return "gated", None
+    if look is not None or seed is not None or font is not None:
+        return "d443", theme
     return ("admitted", theme) if theme is not None else ("none", None)
 
 
 def gate_kind(text, frontmatter, body):
-    """Return 'frontmatter', 'admitted', 'body_style' or None."""
+    """Return 'frontmatter', 'admitted', 'd443', 'body_style' or None."""
     verdict, _theme = frontmatter_theme(frontmatter)
     if verdict == "gated":
         return "frontmatter"
     if re.search(r"^\s*style\s+\w", body, re.M) or "classDef" in body or ":::" in body:
         return "body_style"
-    if verdict == "admitted":
-        return "admitted"
+    if verdict in ("admitted", "d443"):
+        return verdict
     return None
 
 
@@ -191,7 +221,7 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
-    draw, admitted, fm_gate, body_gate = set(), set(), set(), set()
+    draw, admitted, d443, fm_gate, body_gate = set(), set(), set(), set(), set()
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
         text = path.read_text()
         rel = path.relative_to(
@@ -204,14 +234,20 @@ def build(repo_root):
             body_gate.add(rel)
         elif kind == "admitted":
             admitted.add(rel)
+        elif kind == "d443":
+            d443.add(rel)
         else:
             draw.add(rel)
 
-    if (len(draw), len(admitted), len(fm_gate), len(body_gate)) != (11, 3, 3, 4):
+    # D-443 moved the two look/seed/font rows out of the frontmatter gate and
+    # into their own bucket; the third former frontmatter row keeps its body
+    # style statements and reclassifies as body_style: 21 = 11 draw + 3 theme
+    # + 0 frontmatter + 5 style + 2 d443.
+    if (len(draw), len(admitted), len(fm_gate), len(body_gate), len(d443)) != (11, 3, 0, 5, 2):
         raise ValueError(
             f"venn partition drift: draw={len(draw)} "
             f"admitted={len(admitted)} frontmatter={len(fm_gate)} "
-            f"body_style={len(body_gate)} (expected 11/3/3/4)")
+            f"body_style={len(body_gate)} d443={len(d443)} (expected 11/3/0/5/2)")
 
     admitted_digest = hashlib.sha256("".join(
         f"{rel}\t{manifest_rows[rel]['sha256']}\n" for rel in sorted(admitted)
@@ -271,7 +307,10 @@ def build(repo_root):
             "admitted_count": len(admitted),
             "admitted": sorted(admitted),
             "admitted_digest": admitted_digest,
-            "family_total": len(draw) + len(admitted) + len(fm_gate) + len(body_gate),
+            "family_total": (len(draw) + len(admitted) + len(fm_gate) +
+                             len(body_gate) + len(d443)),
+            "d443_admitted_count": len(d443),
+            "d443_admitted": sorted(d443),
             "frontmatter_gated_count": len(fm_gate),
             "frontmatter_gated": sorted(fm_gate),
             "body_style_gated_count": len(body_gate),

@@ -32,11 +32,13 @@
       "ishikawa/pr-check/9-should-render-with-custom-diagrampadding.mmd"
     ],
     "layout_admitted_digest": "5e1971fa60de5d7b99194888f885cbd366ed22d26fc35b2db405dc30bd08096d",
-    "family_total": 13,
-    "frontmatter_gated_count": 1,
-    "frontmatter_gated": [
+    "d443_admitted_count": 1,
+    "d443_admitted": [
       "ishikawa/pr-check/6-should-render-with-handdrawn-look.mmd"
     ],
+    "family_total": 13,
+    "frontmatter_gated_count": 0,
+    "frontmatter_gated": [],
     "body_style_gated_count": 0,
     "body_style_gated": []
   },

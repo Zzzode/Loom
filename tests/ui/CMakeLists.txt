@@ -248,6 +248,15 @@ add_test(NAME MermaidFallbackAttribution.RosterIsReproducibleAndTotal
 set_tests_properties(MermaidFallbackAttribution.RosterIsReproducibleAndTotal
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-443: the requirement/ishikawa/venn inert-leaf cohort ledger is a generator
+# constant; the check fails on a hand edit or an unreviewed expectation change.
+add_test(NAME MermaidD443InertLeavesCohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_d443_inert_leaves_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidD443InertLeavesCohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-442: the agentflow handDrawn-look cohort ledger is a generator constant;
 # the check fails on a hand edit or an unreviewed expectation change.
 add_test(NAME MermaidAgentflowHanddrawnD442Cohort.GeneratorIsReproducible
@@ -1381,6 +1390,16 @@ add_executable(test_mermaid_wardley_theme_d437_cohort
 target_link_libraries(test_mermaid_wardley_theme_d437_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_wardley_theme_d437_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# D-442: agentflow handDrawn-look cohort gate and its ledger.
+# D-443: requirement/ishikawa/venn inert-leaf cohort gate and its ledger.
+add_executable(test_mermaid_d443_inert_leaves_cohort
+    test_mermaid_d443_inert_leaves_cohort.cpp)
+target_link_libraries(test_mermaid_d443_inert_leaves_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_d443_inert_leaves_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

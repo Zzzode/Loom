@@ -368,7 +368,7 @@ TEST(MermaidRequirement0044Cohort, ClosedTableAndGrammarBattery) {
                              "    layout: elk\n", "   layout: elk\n",
                              "  layout: elk\n  layout: elk\n", "  layout\n",
                              "  securityLevel: strict\n",
-                             "  flowchart:\n    htmlLabels: false\n"}) {
+                             "  flowchart:\n    curve: linear\n"}) {
         EXPECT_FALSE(draws(config_probe(form), kWide)) << form;
     }
     // The envelope parser trims a key's surrounding spaces, so `layout : elk`
@@ -383,8 +383,9 @@ TEST(MermaidRequirement0044Cohort, ClosedTableAndGrammarBattery) {
     EXPECT_FALSE(draws(probe("config:\n"), kWide)) << "empty config";
     EXPECT_FALSE(draws(probe("config:\n  layout: elk\nconfig:\n  layout: elk\n"), kWide))
         << "second config";
-    // The nested config.flowchart map stays outside the whitelist.
-    EXPECT_FALSE(draws(probe("config:\n  layout: elk\n  flowchart:\n    htmlLabels: false\n"),
+    // D-443 admits the nested config.flowchart.htmlLabels leaf; another
+    // nested key stays outside the whitelist.
+    EXPECT_FALSE(draws(probe("config:\n  layout: elk\n  flowchart:\n    curve: linear\n"),
                        kWide));
 }
 

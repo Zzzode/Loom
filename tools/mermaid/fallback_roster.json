@@ -1,13 +1,13 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 505,
+  "total_fallback": 499,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
     "dagre_layout_tuning": 11,
     "edge_animation_metadata": 80,
-    "elk_layout_engine": 12,
+    "elk_layout_engine": 11,
     "family_residual:c4": 8,
     "family_residual:class-diagram": 6,
     "family_residual:er-diagram": 1,
@@ -28,11 +28,11 @@
     "family_residual:xychart": 11,
     "family_residual:zenuml": 1,
     "git_cherry_pick": 6,
-    "htmllabels_false": 44,
+    "htmllabels_false": 43,
     "icon_font_glyphs": 28,
     "linkstyle_directive": 12,
     "look_classic_other": 0,
-    "look_handdrawn": 43,
+    "look_handdrawn": 39,
     "look_neo": 22,
     "multiline_label": 7,
     "securitylevel_directive": 34,
@@ -103,8 +103,8 @@
     },
     "elk_layout_engine": {
       "originals_matching_predicate": 79,
-      "drawn_among_matches": 65,
-      "fallback_among_matches": 14,
+      "drawn_among_matches": 66,
+      "fallback_among_matches": 13,
       "sufficient_blocker": false
     },
     "git_cherry_pick": {
@@ -115,8 +115,8 @@
     },
     "htmllabels_false": {
       "originals_matching_predicate": 220,
-      "drawn_among_matches": 121,
-      "fallback_among_matches": 99,
+      "drawn_among_matches": 124,
+      "fallback_among_matches": 96,
       "sufficient_blocker": false
     },
     "icon_font_glyphs": {
@@ -139,8 +139,8 @@
     },
     "look_handdrawn": {
       "originals_matching_predicate": 206,
-      "drawn_among_matches": 127,
-      "fallback_among_matches": 79,
+      "drawn_among_matches": 131,
+      "fallback_among_matches": 75,
       "sufficient_blocker": false
     },
     "look_neo": {
@@ -387,7 +387,6 @@
       "flowchart/pr-check/3-layout-elk-subgraphs.mmd",
       "flowchart/visual-check/should-keep-the-true-entry-on-top-when-a-back-edge-feeds-it-79.mmd",
       "flowchart/visual-check/subgraph-titles-wider-than-children.mmd",
-      "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-elk-layout.mmd",
       "state-diagram-v2/nightly-check/elk/elk-notes-keep-their-layout.mmd"
     ],
     "family_residual:c4": [
@@ -560,7 +559,6 @@
       "flowchart/visual-check/should-render-subgraphs-with-title-margins-set-lr-and-htmllabels-set-to-false.mmd",
       "flowchart/visual-check/stadium-tall-labels.mmd",
       "mindmap/pr-check/6-should-centre-svg-text-labels-in-all-node-shapes-issue-8387.mmd",
-      "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-default.mmd",
       "swimlanes/nightly-check/8-query-process-2.mmd",
       "swimlanes/nightly-check/classdef-and-class-statements.mmd",
       "swimlanes/nightly-check/coloured-lanes-redux-color-theme.mmd",
@@ -665,17 +663,13 @@
       "flowchart/nightly-check/handdrawn/should-render-subgraphs.mmd",
       "flowchart/nightly-check/handdrawn/should-style-nodes-via-a-class.mmd",
       "flowchart/nightly-check/handdrawn/testing-the-label-width-in-percy.mmd",
-      "ishikawa/pr-check/6-should-render-with-handdrawn-look.mmd",
-      "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-handdrawn-look.mmd",
       "swimlanes/nightly-check/16-intake-cycle-lr.mmd",
       "swimlanes/nightly-check/coloured-lanes-handdrawn-look-redux-color-theme.mmd",
       "swimlanes/nightly-check/coloured-lanes-handdrawn-look-redux-dark-color-theme.mmd",
       "swimlanes/nightly-check/handdrawn/9-edge-labels.mmd",
       "swimlanes/nightly-check/handdrawn/intake-review-complete.mmd",
       "swimlanes/nightly-check/synthetic-default-lane-handdrawn.mmd",
-      "venn/nightly-check/handdrawn/14-should-render-a-two-set-venn-diagram-with-handdrawn-look.mmd",
-      "venn/nightly-check/handdrawn/18-should-render-a-handdrawn-venn-with-custom-styles-and-text-nodes.mmd",
-      "venn/pr-check/15-should-render-a-three-set-venn-with-handdrawn-look-and-title.mmd"
+      "venn/nightly-check/handdrawn/18-should-render-a-handdrawn-venn-with-custom-styles-and-text-nodes.mmd"
     ],
     "look_neo": [
       "mindmap/nightly-check/all-shapes-neo-look-neo-dark-theme.mmd",

@@ -63,6 +63,7 @@ def sha256_file(path):
 # RFC 0043: the admitted frontmatter shape is exactly one column-0 `config:`
 # block whose sole leaf is an indent-2 `theme` in this family's closed table.
 THEME_TABLE = {"dark", "forest"}
+LOOK_TABLE = {"handDrawn"}
 # RFC 0046: the same block may instead carry exactly one `ishikawa` namespace
 # with these closed tuning leaves.
 LAYOUT_TABLE = {"useMaxWidth": {"true", "false"}, "diagramPadding": {"50"}}
@@ -96,10 +97,12 @@ def frontmatter_shape(frontmatter):
     """Return (verdict, theme, layout_leaves).
 
     verdict is 'none' | 'admitted' (RFC 0043 theme leaf) | 'layout' (RFC 0046
-    namespace leaves) | 'gated'. Mirrors the C++ gate: a column-0 config block
-    admits exactly one indent-2 theme leaf from the closed table and/or exactly
-    one indent-2 `ishikawa` namespace with closed indent-4 tuning leaves; every
-    other visual key or shape gates.
+    namespace leaves) | 'd443' (D-443 look leaf) | 'gated'. Mirrors the C++
+    gate: a column-0 config block admits exactly one indent-2 theme leaf from
+    the closed table, exactly one `ishikawa` namespace with closed indent-4
+    tuning leaves, and/or the closed D-443 look leaf; every other visual key
+    or shape gates. A row carrying the look leaf is partitioned as "d443" and
+    owned by the D-443 gate.
     """
     if frontmatter is None:
         return "none", None, {}
@@ -129,6 +132,10 @@ def frontmatter_shape(frontmatter):
                     if theme is not None or value not in THEME_TABLE:
                         return "gated", None, {}
                     theme = value
+                elif key_start == 2 and key == "look":
+                    if leaves.get("look") is not None or value not in LOOK_TABLE:
+                        return "gated", None, {}
+                    leaves["look"] = value
                 elif key_start == 2 and key == "ishikawa" and value == "":
                     if saw_namespace:
                         return "gated", None, {}
@@ -162,21 +169,24 @@ def frontmatter_shape(frontmatter):
             if key in ("theme", "look"):
                 return "gated", None, {}
             in_config = False
+    tuning = {key: value for key, value in leaves.items() if key != "look"}
     if saw_config and theme is None and not leaves:
         return "gated", None, {}
-    if saw_namespace and not leaves:
+    if saw_namespace and not tuning:
         return "gated", None, {}
-    if theme is not None and leaves:
+    if theme is not None and tuning:
         return "gated", None, {}
-    if theme is not None:
+    if theme is not None and not leaves:
         return "admitted", theme, {}
+    if "look" in leaves:
+        return "d443", theme, {}
     if leaves:
         return "layout", None, leaves
     return "none", None, {}
 
 
 def gate_kind(frontmatter, body):
-    """Return 'frontmatter', 'admitted', 'layout', 'body_style' or None."""
+    """Return 'frontmatter', 'admitted', 'layout', 'd443', 'body_style' or None."""
     verdict, _theme, _leaves = frontmatter_shape(frontmatter)
     if verdict == "gated":
         return "frontmatter"
@@ -184,7 +194,7 @@ def gate_kind(frontmatter, body):
             re.search(r"^\s*classDef", body, re.M) or ":::" in body or \
             re.search(r"^\s*style\s", body, re.M):
         return "body_style"
-    if verdict in ("admitted", "layout"):
+    if verdict in ("admitted", "layout", "d443"):
         return verdict
     return None
 
@@ -227,7 +237,8 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
-    draw, admitted, layout, fm_gate, body_gate = set(), set(), set(), set(), set()
+    draw, admitted, layout, d443, fm_gate, body_gate = \
+        set(), set(), set(), set(), set(), set()
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
         text = path.read_text()
         rel = path.relative_to(
@@ -242,17 +253,20 @@ def build(repo_root):
             admitted.add(rel)
         elif kind == "layout":
             layout.add(rel)
+        elif kind == "d443":
+            d443.add(rel)
         else:
             draw.add(rel)
 
-    # RFC 0046 admitted the 3 tuning rows: 13 = 7 + 2 + 3 + 1 + 0.
-    if (len(draw), len(admitted), len(layout), len(fm_gate), len(body_gate)) != \
-            (7, 2, 3, 1, 0):
+    # RFC 0046 admitted the 3 tuning rows and D-443 the look row:
+    # 13 = 7 + 2 + 3 + 1(d443) + 0 + 0.
+    if (len(draw), len(admitted), len(layout), len(fm_gate), len(body_gate),
+            len(d443)) != (7, 2, 3, 0, 0, 1):
         raise ValueError(
             f"ishikawa partition drift: draw={len(draw)} "
             f"admitted={len(admitted)} layout={len(layout)} "
             f"frontmatter={len(fm_gate)} body_style={len(body_gate)} "
-            f"(expected 7/2/3/1/0)")
+            f"d443={len(d443)} (expected 7/2/3/0/0/1)")
 
     layout_digest = hashlib.sha256("".join(
         f"{rel}\t{manifest_rows[rel]['sha256']}\n" for rel in sorted(layout)
@@ -329,7 +343,9 @@ def build(repo_root):
             "layout_admitted_count": len(layout),
             "layout_admitted": sorted(layout),
             "layout_admitted_digest": layout_digest,
-            "family_total": (len(draw) + len(admitted) + len(layout) +
+            "d443_admitted_count": len(d443),
+            "d443_admitted": sorted(d443),
+            "family_total": (len(draw) + len(admitted) + len(layout) + len(d443) +
                              len(fm_gate) + len(body_gate)),
             "frontmatter_gated_count": len(fm_gate),
             "frontmatter_gated": sorted(fm_gate),

@@ -2263,3 +2263,20 @@ renderer already draws it.
    had pinned the pair as rejected in three places. Re-point every negative at
    a shape that is still rejected (`fontFamily`, `look: neo`, zero seed) and
    move the positive assertions to the new gate in the same commit.
+
+## D-443 inert-leaf batch retro (2026-11-23)
+
+1. **A whole-roster twin probe is the right scoping instrument; the twin must
+   strip the *whole config block*, not one key.** The D-441 measurement had
+   already produced the "66 twin-drawable rows" figure. Re-running it as a
+   temporary C++ probe with two extra variants (config-stripped, and fully
+   frontmatter-free) split the 505 rows into 61 config-blocked, 27
+   frontmatter-blocked (25 flowchart) and the rest body-blocked. That split is
+   what made it obvious that only 6 rows are locally closable this batch.
+2. **The probe belongs in `tests/ui` only transiently.** It is a C++ gtest
+   binary (so it exercises the real renderer) but it must be deleted before
+   the commit; never let a probe target survive into a slice commit.
+3. **Four-family-scale admission can share one ledger.** One generator, one
+   ledger, one gate file and one exact-path matrix branch covered three
+   families with six rows. Splitting per family would have tripled the
+   artifact count for the same evidence.

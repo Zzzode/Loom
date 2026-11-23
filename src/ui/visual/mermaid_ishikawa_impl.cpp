@@ -137,6 +137,10 @@ bool ishikawa_frontmatter_gated(std::string_view source, std::vector<std::string
     bool saw_config = false;
     bool saw_namespace = false;
     std::optional<std::string> theme;
+    // D-443: `look` is the sketch-style switch. The fishbone projection paints
+    // its own borders and never reads it, so the only corpus-backed value is
+    // admitted and disclosed like theme.
+    std::optional<std::string> look;
     IshikawaTuning tuning;
     std::size_t search = 4;
     while (search < source.size()) {
@@ -180,6 +184,11 @@ bool ishikawa_frontmatter_gated(std::string_view source, std::vector<std::string
                         // the tuning block exactly once, never beside theme.
                         if (saw_namespace || theme) return true;
                         saw_namespace = true;
+                    } else if (key_start == 2u && key == "look") {
+                        // D-443: the closed corpus table for the look leaf is
+                        // exactly {"handDrawn"}; a duplicate stays whole-source.
+                        if (look || *value != "handDrawn") return true;
+                        look = std::move(*value);
                     } else if (key_start == 4u && saw_namespace && key == "useMaxWidth") {
                         if (tuning.use_max_width ||
                             (*value != "true" && *value != "false"))
@@ -228,8 +237,9 @@ bool ishikawa_frontmatter_gated(std::string_view source, std::vector<std::string
     }
     // A namespace without any admitted leaf is whole-source (RFC 0046).
     if (saw_namespace && !tuning.use_max_width && !tuning.diagram_padding) return true;
-    if (saw_config && !theme && !tuning.use_max_width && !tuning.diagram_padding) return true;
-    if (!theme && !tuning.use_max_width && !tuning.diagram_padding) return false;
+    if (saw_config && !theme && !look && !tuning.use_max_width && !tuning.diagram_padding)
+        return true;
+    if (!theme && !look && !tuning.use_max_width && !tuning.diagram_padding) return false;
     if (!ishikawa_notice_line(notices, kIshikawaNoticeHeader, work)) return true;
     if (theme) {
         std::string line = "config.theme=";
@@ -245,6 +255,12 @@ bool ishikawa_frontmatter_gated(std::string_view source, std::vector<std::string
     if (tuning.diagram_padding) {
         const std::string line = "config.ishikawa.diagramPadding=" + *tuning.diagram_padding +
                                  " -> diagram padding; not applied";
+        if (!ishikawa_notice_line(notices, line, work)) return true;
+    }
+    // D-443 appends the look line after every existing leaf so no already-drawn
+    // frame's footer changes.
+    if (look) {
+        const std::string line = "config.look=" + *look + " -> source node style; not applied";
         if (!ishikawa_notice_line(notices, line, work)) return true;
     }
     return false;

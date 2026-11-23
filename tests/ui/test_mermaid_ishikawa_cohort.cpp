@@ -84,7 +84,8 @@ TEST(MermaidIshikawaCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_ishikawa_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 7);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 7);
-    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 1);
+    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 0);
+    EXPECT_EQ(root.get("selection").get_int("d443_admitted_count"), 1);
     EXPECT_EQ(root.get("selection").get_int("admitted_count"), 2);
     EXPECT_EQ(root.get("selection").get_int("layout_admitted_count"), 3);
     EXPECT_EQ(root.get("selection").get_int("family_total"), 13);
@@ -150,7 +151,8 @@ TEST(MermaidIshikawaCohort, GatedIshikawasStayWholeSource) {
         const auto rel = value.as_str();
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
     });
-    EXPECT_EQ(frontmatter, 1);
+    // D-443 admitted the one remaining frontmatter row (its own d443 bucket).
+    EXPECT_EQ(frontmatter, 0);
     int body_style = 0;
     selection.get("body_style_gated").iter([&](JsonVal value) {
         ++body_style;
@@ -173,6 +175,19 @@ TEST(MermaidIshikawaCohort, GatedIshikawasStayWholeSource) {
             << rel;
     });
     EXPECT_EQ(admitted, 2);
+    // D-443: the look row draws and discloses under the family footer; the
+    // per-row frame oracle is test_mermaid_d443_inert_leaves_cohort.
+    int d443 = 0;
+    selection.get("d443_admitted").iter([&](JsonVal value) {
+        ++d443;
+        const auto rel = value.as_str();
+        const auto source = read_file(kCases / rel);
+        EXPECT_TRUE(draws(source, kWide)) << rel;
+        const auto text = capture(source, "mermaid", kWide).text;
+        EXPECT_NE(text.find("Ishikawa native projection v1"), std::string::npos) << rel;
+        EXPECT_NE(text.find("config.look=handDrawn"), std::string::npos) << rel;
+    });
+    EXPECT_EQ(d443, 1);
     // RFC 0046: the three tuning rows draw, disclose the family header and
     // their `config.ishikawa.` line, and stay outside the theme cohort.
     int layout = 0;

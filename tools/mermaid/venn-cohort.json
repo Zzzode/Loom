@@ -27,16 +27,18 @@
     ],
     "admitted_digest": "7feb579f74bacecde4d02ce61616e578a55da6d6ea344f4fd77ac8ae75dcb4a9",
     "family_total": 21,
-    "frontmatter_gated_count": 3,
-    "frontmatter_gated": [
+    "d443_admitted_count": 2,
+    "d443_admitted": [
       "venn/nightly-check/handdrawn/14-should-render-a-two-set-venn-diagram-with-handdrawn-look.mmd",
-      "venn/nightly-check/handdrawn/18-should-render-a-handdrawn-venn-with-custom-styles-and-text-nodes.mmd",
       "venn/pr-check/15-should-render-a-three-set-venn-with-handdrawn-look-and-title.mmd"
     ],
-    "body_style_gated_count": 4,
+    "frontmatter_gated_count": 0,
+    "frontmatter_gated": [],
+    "body_style_gated_count": 5,
     "body_style_gated": [
       "venn/nightly-check/13-should-render-a-complex-venn-with-labels-text-nodes-and-styles.mmd",
       "venn/nightly-check/explicit-set-style-over-redux-palette.mmd",
+      "venn/nightly-check/handdrawn/18-should-render-a-handdrawn-venn-with-custom-styles-and-text-nodes.mmd",
       "venn/pr-check/11-should-render-a-venn-diagram-with-custom-text-colors-via-style.mmd",
       "venn/pr-check/7-should-render-a-venn-diagram-with-custom-colors-via-style.mmd"
     ]

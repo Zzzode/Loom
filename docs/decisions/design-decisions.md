@@ -5126,3 +5126,28 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Accounting.** The matrix branch precedes the RFC 0041 agentflow branch with
   a rule-38 reach proof; the roster's `edge_animation_metadata` bucket loses
   exactly the two ledger rows.
+
+## requirement/ishikawa/venn inert closed leaves (D-443)
+
+- **Scope.** Six rows, one closed leaf group per family, all admitted from the
+  same measurement: the whole-roster config-strip twin probe. Each row's body
+  is byte-identical to its config-free twin, so the config block is the only
+  blocker. The groups are `config.flowchart.htmlLabels` (requirement),
+  `config.look: handDrawn` (ishikawa) and `config.look` + `handDrawnSeed` +
+  `fontFamily: courier` (venn).
+- **Mechanism.** requirement gains the `FlowNs/FlowHtml` bits: an indent-2
+  empty `flowchart:` namespace exactly once plus its indent-4 `htmlLabels`
+  leaf over `{false,true}`; the namespace without its leaf fails closed.
+  ishikawa gains `look` over `{handDrawn}`; venn gains `look` over
+  `{handDrawn}`, `handDrawnSeed` under the D-442 digit rule and `fontFamily`
+  over `{courier}`. Every family projection paints its own geometry and never
+  reads these leaves.
+- **Disclosure.** Each family appends its new line after every pre-existing
+  leaf of its canonical footer, so already-drawn frames keep their bytes.
+- **Oracle.** `test_mermaid_d443_inert_leaves_cohort` renders each row against
+  its config-free twin: the art above the footer is cell-equal, and narrow 40
+  stays whole-source. Twenty closed-value probes plus namespace-shape probes
+  stay whole-source in both width states.
+- **Accounting.** One matrix branch keyed by exact path precedes all three
+  family-wide branches with a rule-38 reach proof; the roster loses exactly
+  the six ledger rows.

@@ -6308,6 +6308,36 @@ const JourneyCohortEntry* agentflow_handdrawn_d442_cohort_row(std::string_view p
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-443 inert look/htmlLabels/layout cohort: the last requirement, ishikawa
+// and venn fallbacks whose body is byte-identical to the config-free twin and
+// whose only unsupported frontmatter shape is a closed inert leaf group. The
+// per-row gate is test_mermaid_d443_inert_leaves_cohort.
+const std::map<std::string, JourneyCohortEntry>& d443_inert_leaves_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path =
+            kRoot / "../../../tools/mermaid/d443-inert-leaves-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-443 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-443 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* d443_inert_leaves_cohort_row(std::string_view path) {
+    const auto& rows = d443_inert_leaves_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-441 state closed-layout cohort: the three state originals whose only
 // non-admitted input is the inert `config.layout: elk` selector. The per-row
 // gate is test_mermaid_state_layout_d441_cohort.
@@ -10712,6 +10742,36 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // D-443 inert-leaf admission: the six remaining requirement,
+            // ishikawa and venn originals whose only non-admitted input is a
+            // closed inert leaf group, under the TL's review exemption. Placed
+            // before every family-wide branch below (exact path match, so the
+            // sets are disjoint); the post-loop reach proof asserts each row is
+            // observed here.
+            if (class_path.is_str()) {
+                if (const auto* cohort = d443_inert_leaves_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = row.path.starts_with("requirement/")  ? "requirement"
+                               : row.path.starts_with("ishikawa/")   ? "ishikawa"
+                                                                     : "venn";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-443 inert-leaf cohort (TL review-exempt)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // RFC 0044 requirement `layout: elk` admission: the 23 reviewed
             // rows promoted by the closed one-value table, states read per row.
             // Placed before the F0, RFC 0037 and base requirement branches so
@@ -12981,6 +13041,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d437 == expected_d437,
                     "D-437 branch reach set must equal its ledger");
+        }
+
+        // D-443 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d443 = json::parse(
+                read_file(kRoot / "../../../tools/mermaid/d443-inert-leaves-cohort.json"));
+            require(ledger_d443.has_value(), "D-443 cohort ledger must parse");
+            std::set<std::string> expected_d443;
+            ledger_d443->root().get("rows").iter([&](const JsonVal row) {
+                expected_d443.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d443;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-443 inert-leaf cohort (TL review-exempt)")
+                    reached_d443.insert(row.path);
+            }
+            require(reached_d443 == expected_d443,
+                    "D-443 branch reach set must equal its ledger");
         }
 
         // D-442 rule-38 reach proof: every ledger row must be observed through

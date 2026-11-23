@@ -261,10 +261,15 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
     // stays rejected.
     bool config_seen = false;
     enum : unsigned {
-        Log = 1u, Font = 2u, Html = 4u, Look = 8u, Theme = 16u, Layout = 32u
+        Log = 1u, Font = 2u, Html = 4u, Look = 8u, Theme = 16u, Layout = 32u,
+        // D-443: the nested `flowchart` namespace carrying its own
+        // `htmlLabels` leaf, a second spelling of the top-level htmlLabels
+        // display switch the native text projection already ignores.
+        FlowNs = 64u, FlowHtml = 128u
     };
     unsigned fields = 0u;
-    std::string log_value, html_value, look_value, theme_value, layout_value;
+    std::string log_value, html_value, look_value, theme_value, layout_value,
+        flow_html_value;
     std::optional<std::string> title;
     for (const auto& event : envelope->events) {
         if (event.blank || event.comment) continue;
@@ -307,8 +312,22 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
             fields |= bit;
             return true;
         };
-        if (event.namespace_entry) return {};
-        if (event.path == "logLevel" && event.indent == 2) {
+        if (event.namespace_entry) {
+            // D-443: exactly one `flowchart` namespace (indent 2, empty value)
+            // opens the nested htmlLabels leaf; it may not stand alone.
+            if (event.path != "flowchart" || event.indent != 2 || (fields & FlowNs))
+                return {};
+            fields |= FlowNs;
+            continue;
+        }
+        if (event.path == "flowchart.htmlLabels" && event.indent == 4) {
+            // D-443: the namespace spelling of RFC 0037's top-level htmlLabels
+            // switch. The native text projection never emits HTML, so both
+            // values are inert and disclosed below.
+            if (!(fields & FlowNs) || !mark(FlowHtml) || (text != "false" && text != "true"))
+                return {};
+            flow_html_value = std::move(text);
+        } else if (event.path == "logLevel" && event.indent == 2) {
             if (!mark(Log) || (text != "0" && text != "1" && text != "2")) return {};
             log_value = std::move(text);
         } else if (event.path == "fontFamily" && event.indent == 2) {
@@ -345,6 +364,9 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
         }
     }
     if (config_seen && fields == 0u) return {};
+    // D-443: a namespace without its leaf fails closed, as in every other
+    // namespaced admission in this tree.
+    if ((fields & FlowNs) && !(fields & FlowHtml)) return {};
     std::vector<std::string> notices;
     if (fields != 0u) {
         const auto push = [&](std::string line) -> bool {
@@ -373,6 +395,12 @@ std::optional<RequirementEnvelope> requirement_envelope(std::string_view source,
         // no already-drawn frame can carry a layout leaf.
         if ((fields & Layout) &&
             !push("config.layout=" + layout_value + " -> external layout engine; not applied"))
+            return {};
+        // D-443 appends the nested spelling after every existing leaf so no
+        // already-drawn frame's footer changes.
+        if ((fields & FlowHtml) &&
+            !push("config.flowchart.htmlLabels=" + flow_html_value +
+                  " -> native text labels; not applied"))
             return {};
     }
     const auto& description = *envelope->description;

@@ -435,8 +435,10 @@ TEST(MermaidRequirementCohort, F0InertBoundaryKeepsVisualKeysClosed) {
     EXPECT_TRUE(draws(with("  htmlLabels: true\n"), kWide));
     EXPECT_TRUE(draws(with("  logLevel: 2\n"), kWide));
     EXPECT_TRUE(draws(with("  fontFamily: courier\n"), kWide));
-    // A namespaced flowchart.* key is outside this family whitelist.
-    EXPECT_FALSE(draws(with("  flowchart:\n    htmlLabels: false\n"), kWide));
+    // D-443 admits the nested config.flowchart.htmlLabels leaf; the namespace
+    // without that exact leaf still keeps the whole source on fallback.
+    EXPECT_TRUE(draws(with("  flowchart:\n    htmlLabels: false\n"), kWide));
+    EXPECT_FALSE(draws(with("  flowchart:\n    curve: linear\n"), kWide));
     // Visual/semantic keys and unsupported values stay whole-source. RFC 0037
     // P1 admits the closed look table, so `look: handDrawn` now draws with its
     // disclosure footer; `theme: dark` is outside the closed palette table and
@@ -459,7 +461,7 @@ TEST(MermaidRequirementCohort, F0InertBoundaryKeepsVisualKeysClosed) {
     EXPECT_FALSE(draws(with("  htmlLabels: false\n  htmlLabels: true\n"), kWide));
     EXPECT_FALSE(draws(with("    htmlLabels: false\n"), kWide));
     EXPECT_FALSE(draws(with("  a:\n    b:\n      htmlLabels: false\n"), kWide));
-    EXPECT_FALSE(draws(with("  flowchart:\n    htmlLabels: false\n  logLevel: 2\n"), kWide));
+    EXPECT_FALSE(draws(with("  flowchart:\n    curve: linear\n  logLevel: 2\n"), kWide));
     EXPECT_FALSE(draws(with("  htmlLabels: false\nconfig:\n  logLevel: 2\n"), kWide));
     EXPECT_FALSE(draws(
         "---\ndescription: tab probe\nconfig:\n\thtmlLabels: false\n---\n" + body, kWide));
@@ -468,11 +470,13 @@ TEST(MermaidRequirementCohort, F0InertBoundaryKeepsVisualKeysClosed) {
                        kWide));
     // A trailing YAML comment on an inert leaf is accepted like State E2b.
     EXPECT_TRUE(draws(with("  htmlLabels: false # note\n"), kWide));
-    // The deferred corpus row stays whole-source (no config-free twin).
-    EXPECT_FALSE(draws(read_file(kCases /
-                                 "requirement/nightly-check/"
-                                 "edge-labels-correctly-when-flowchart-htmllabels-is-false-default.mmd"),
-                       kWide));
+    // The former deferred corpus row is now drawn by D-443; a sibling shape
+    // outside the closed set stays whole-source.
+    EXPECT_TRUE(draws(read_file(kCases /
+                                "requirement/nightly-check/"
+                                "edge-labels-correctly-when-flowchart-htmllabels-is-false-default.mmd"),
+                      kWide));
+    EXPECT_FALSE(draws(with("  flowchart:\n    htmlLabels: maybe\n"), kWide));
     // The footer text is part of the published contract, not just presence.
     const auto footer = capture(with("  logLevel: 2\n  fontFamily: courier\n"), "mermaid", kWide);
     EXPECT_NE(footer.text.find("Requirement native projection v1"), std::string::npos);

@@ -223,6 +223,10 @@ bool venn_frontmatter_gated(std::string_view source, std::vector<std::string>& n
     bool in_config = false;
     bool saw_config = false;
     std::optional<std::string> theme;
+    // D-443: the sketch-style leaf trio. The venn projection paints its own
+    // circles and never reads these keys, so each value comes from its closed
+    // corpus table and is disclosed.
+    std::optional<std::string> look, seed, font;
     for (std::size_t pos = 0;;) {
         const auto eol = frontmatter.find('\n', pos);
         const std::string_view line = frontmatter.substr(
@@ -238,14 +242,33 @@ bool venn_frontmatter_gated(std::string_view source, std::vector<std::string>& n
             if (in_config) {
                 if (!leaf.starts_with('#')) {  // YAML comment
                     const auto colon = leaf.find(':');
-                    if (colon == std::string_view::npos ||
-                        leaf.substr(0, colon) != "theme" || key_start != 2u || theme)
-                        return true;
+                    if (colon == std::string_view::npos || key_start != 2u) return true;
+                    const std::string_view key = leaf.substr(0, colon);
                     auto value = venn_scalar(leaf.substr(colon + 1u), work);
-                    if (!value ||
-                        std::ranges::find(kVennThemeTable, *value) == kVennThemeTable.end())
+                    if (!value) return true;
+                    if (key == "theme") {
+                        if (theme ||
+                            std::ranges::find(kVennThemeTable, *value) == kVennThemeTable.end())
+                            return true;
+                        theme = std::move(*value);
+                    } else if (key == "look") {
+                        // Closed corpus table: only the hand-drawn look occurs.
+                        if (look || *value != "handDrawn") return true;
+                        look = std::move(*value);
+                    } else if (key == "handDrawnSeed") {
+                        // D-442's seed rule: a positive decimal of at most nine
+                        // digits; zero, signs, decimals and empty stay rejected.
+                        if (seed || value->empty() || value->size() > 9u ||
+                            value->find_first_not_of("0123456789") != std::string_view::npos ||
+                            value->find_first_not_of('0') == std::string_view::npos)
+                            return true;
+                        seed = std::move(*value);
+                    } else if (key == "fontFamily") {
+                        if (font || *value != "courier") return true;
+                        font = std::move(*value);
+                    } else {
                         return true;
-                    theme = std::move(*value);
+                    }
                 }
             } else {
                 // Outside a config block the previous flat scan still gates
@@ -277,13 +300,31 @@ bool venn_frontmatter_gated(std::string_view source, std::vector<std::string>& n
         }
         if (eol == std::string_view::npos) break;
     }
-    if (saw_config && !theme) return true;
-    if (!theme) return false;
+    if (saw_config && !theme && !look && !seed && !font) return true;
+    if (!theme && !look && !seed && !font) return false;
     if (!venn_notice_line(notices, kVennNoticeHeader, work)) return true;
-    std::string line = "config.theme=";
-    line += *theme;
-    line += " -> colour palette; not applied";
-    return !venn_notice_line(notices, line, work);
+    if (theme) {
+        std::string line = "config.theme=";
+        line += *theme;
+        line += " -> colour palette; not applied";
+        if (!venn_notice_line(notices, line, work)) return true;
+    }
+    // D-443 appends the look/seed/font lines after the theme leaf so no
+    // already-drawn frame's footer changes.
+    if (look) {
+        const std::string line = "config.look=" + *look + " -> source node style; not applied";
+        if (!venn_notice_line(notices, line, work)) return true;
+    }
+    if (seed) {
+        const std::string line =
+            "config.handDrawnSeed=" + *seed + " -> sketch jitter seed; not applied";
+        if (!venn_notice_line(notices, line, work)) return true;
+    }
+    if (font) {
+        const std::string line = "config.fontFamily=\"courier\" -> terminal font; not applied";
+        if (!venn_notice_line(notices, line, work)) return true;
+    }
+    return false;
 }
 
 }  // namespace

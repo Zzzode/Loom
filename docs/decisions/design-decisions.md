@@ -5224,3 +5224,17 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   still fail.
 - **Oracle.** The gate asserts each authored value token appears exactly once
   and bars are painted; the 40-column state is measured live per rule 34.
+
+## state `state X: Description` declaration form (D-449)
+
+- **Scope.** The four `states-with-descriptions-neo-look-*` originals whose
+  remaining blocker was the upstream declaration spelling
+  `state State1: Description 1`.
+- **Why it was blocked.** The declaration form attaches a description fragment
+  to a state already introduced by a transition; the parser treated the trailing
+  `: text` as a stray token (and, for a first sighting, an unsupported line).
+- **Mechanism.** Inside the `state ` branch, a non-alias, non-brace `: payload`
+  is validated with `state_description_label`, attached through
+  `state_fragment`, and marks the entity declared before any duplicate check.
+- **Oracle.** The config-free twin draws the same body; the art above the RFC
+  0038 footer is cell-equal, and narrow 40 is measured live.

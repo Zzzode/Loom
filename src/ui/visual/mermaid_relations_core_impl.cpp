@@ -3195,6 +3195,19 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
                 if (!work.spend(64u)) return {};
                 line = lines[++n];
             }
+            // D-449: the upstream declaration spelling `state X: Description`
+            // attaches a description fragment to X whether X was introduced
+            // here or by an earlier transition. The colon form carries no
+            // alias, composite brace or marker, so it is consumed before the
+            // duplicate-declaration and stray-token checks.
+            if (!alias && !suffix && line.starts_with(':')) {
+                if (!state_source_lines(original, state_source_lines_checked, work)) return {};
+                auto described = state_description_label(line.substr(1u), work);
+                if (!described) return {};
+                if (!diagram.state_fragment(target, std::move(*described), work)) return {};
+                entity.declared = true;
+                continue;
+            }
             if (entity.declared) return {};
             const auto previous = diagram.state_text_index(target, work);
             if (!previous) return {};

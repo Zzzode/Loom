@@ -1394,6 +1394,15 @@ gtest_discover_tests(test_mermaid_wardley_theme_d437_cohort
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 
 # D-442: agentflow handDrawn-look cohort gate and its ledger.
+# D-449: state description-declaration cohort gate and its ledger.
+add_executable(test_mermaid_state_description_d449_cohort
+    test_mermaid_state_description_d449_cohort.cpp)
+target_link_libraries(test_mermaid_state_description_d449_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_state_description_d449_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
 # D-448: xychart negative-bar label cohort gate and its ledger.
 add_executable(test_mermaid_xychart_negative_labels_d448_cohort
     test_mermaid_xychart_negative_labels_d448_cohort.cpp)

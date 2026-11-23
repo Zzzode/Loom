@@ -1,0 +1,140 @@
+{
+  "schema": "loom_mermaid_state_description_d449_cohort/v1",
+  "decision": "D-449",
+  "admission": {
+    "shape": "`state <id>: <description>` declaration form",
+    "footer": {
+      "header": "State native projection v1",
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the config-free twin is the same fixture with the whole config block removed; the art above the footer must be cell-equal"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "state originals whose only remaining blocker is the `state X: Description` declaration form",
+    "cohort_digest": "c7672e44c1df3247efb94f18ef7ca74edd6554f44481376c222d899eee172eab"
+  },
+  "counts": {
+    "total": 4,
+    "by_family": {
+      "state-diagram-v2": 4
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, D-449 state description declarations, 2026-11-23)",
+    "date": "2026-11-23",
+    "verdict": "approved",
+    "note": "Reviewer re-ran the generator --check entry and the live gate and verified: the colon form is consumed before the duplicate/stray-token checks; it carries no alias, brace or marker; the description fragment goes through the same state_description_label validation; the twin oracle is cell-exact and narrow 40 stays source."
+  },
+  "rows": [
+    {
+      "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-dark-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "7b9de32c950706068d44c0c7fe7b695a82ac795a49660343e5d18a98e4210909",
+      "manifest_sha256": "7b9de32c950706068d44c0c7fe7b695a82ac795a49660343e5d18a98e4210909",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "twin": {
+        "kind": "config-free",
+        "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-dark-theme.mmd",
+        "sha256": "7b9de32c950706068d44c0c7fe7b695a82ac795a49660343e5d18a98e4210909",
+        "footer_lines": []
+      },
+      "ledger_note": "`state X: Description` declares a description fragment for an already-introduced state; the leaf disclosures are RFC 0038's"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "a1546bbddaedd0fb4b4bbd87f7e43f68a4cb32ef3c06907893c784d8604f9315",
+      "manifest_sha256": "a1546bbddaedd0fb4b4bbd87f7e43f68a4cb32ef3c06907893c784d8604f9315",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "twin": {
+        "kind": "config-free",
+        "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-theme.mmd",
+        "sha256": "a1546bbddaedd0fb4b4bbd87f7e43f68a4cb32ef3c06907893c784d8604f9315",
+        "footer_lines": []
+      },
+      "ledger_note": "`state X: Description` declares a description fragment for an already-introduced state; the leaf disclosures are RFC 0038's"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-dark-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "109616381e9cdbe0366f6d53a53885c64db082eb1e75f64bc1ea4a4d947fc7d2",
+      "manifest_sha256": "109616381e9cdbe0366f6d53a53885c64db082eb1e75f64bc1ea4a4d947fc7d2",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "twin": {
+        "kind": "config-free",
+        "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-dark-theme.mmd",
+        "sha256": "109616381e9cdbe0366f6d53a53885c64db082eb1e75f64bc1ea4a4d947fc7d2",
+        "footer_lines": []
+      },
+      "ledger_note": "`state X: Description` declares a description fragment for an already-introduced state; the leaf disclosures are RFC 0038's"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "14b84716aae842dbe61d422e315cc039d6bdaf71786c8fb9a8b171c7f03ea3a8",
+      "manifest_sha256": "14b84716aae842dbe61d422e315cc039d6bdaf71786c8fb9a8b171c7f03ea3a8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "twin": {
+        "kind": "config-free",
+        "path": "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-theme.mmd",
+        "sha256": "14b84716aae842dbe61d422e315cc039d6bdaf71786c8fb9a8b171c7f03ea3a8",
+        "footer_lines": []
+      },
+      "ledger_note": "`state X: Description` declares a description fragment for an already-introduced state; the leaf disclosures are RFC 0038's"
+    }
+  ]
+}

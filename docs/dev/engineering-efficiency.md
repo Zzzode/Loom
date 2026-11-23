@@ -2320,3 +2320,10 @@ renderer already draws it.
    different false leads.
 2. **Keep the probe out of the commit.** The probe target and file were
    removed before the slice commit; only the gate and ledger remain.
+
+## D-449 state descriptions retro (2026-11-23)
+
+1. **Probe a body family by minimal variants before assuming capacity.** The
+   complete-graph probe showed an 8-transition layout wall (shared geometry,
+   out of scope), while a two-line probe isolated the `state X: Description`
+   grammar gap as the actual blocker for four rows.

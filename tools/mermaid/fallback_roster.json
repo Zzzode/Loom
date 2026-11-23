@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 493,
+  "total_fallback": 489,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -33,7 +33,7 @@
     "linkstyle_directive": 12,
     "look_classic_other": 0,
     "look_handdrawn": 39,
-    "look_neo": 22,
+    "look_neo": 18,
     "multiline_label": 7,
     "securitylevel_directive": 34,
     "special_link_markers": 16,
@@ -145,8 +145,8 @@
     },
     "look_neo": {
       "originals_matching_predicate": 349,
-      "drawn_among_matches": 278,
-      "fallback_among_matches": 71,
+      "drawn_among_matches": 282,
+      "fallback_among_matches": 67,
       "sufficient_blocker": false
     },
     "multiline_label": {
@@ -677,10 +677,6 @@
       "state-diagram-v2/nightly-check/basic-states-neo-look-neo-theme.mmd",
       "state-diagram-v2/nightly-check/basic-states-neo-look-redux-dark-theme.mmd",
       "state-diagram-v2/nightly-check/basic-states-neo-look-redux-theme.mmd",
-      "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-dark-theme.mmd",
-      "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-theme.mmd",
-      "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-dark-theme.mmd",
-      "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-theme.mmd",
       "state-diagram/nightly-check/transitions-with-labels-neo-look-neo-dark-theme.mmd",
       "state-diagram/nightly-check/transitions-with-labels-neo-look-neo-theme.mmd",
       "state-diagram/nightly-check/transitions-with-labels-neo-look-redux-dark-theme.mmd",

@@ -5480,3 +5480,49 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   (the classDef line, the `:::class` text and the inline style suffix); the
   art above the footer must be cell-equal. Narrow 40 is measured live (all
   three rows stay source there).
+
+## usecase body grammar: styling statements, annotations and json payloads (D-458)
+
+- **Scope.** The last eight usecase fallbacks: the six body-style originals and
+  the two complete-contract originals whose only non-admitted inputs are the
+  closed body styling surface, flat `@{ ... }` properties, single-line json
+  payloads and inline `json <id>@{ ... }` blocks.
+- **Why inert.** The projection draws colours, line weights, node shapes and
+  edge animation from none of these inputs — it is a statement outline. The
+  surface is therefore **accepted, dropped from the transcription and
+  disclosed**; rendering with it is identical to rendering the same body with
+  it removed.
+- **Mechanism.** `classDef <id-list> <props>`, `class <id-list> <class-list>`
+  and `style <id> <props>` are validated against one closed property table
+  (`fill` / `stroke` `#rgb|#rrggbb`, `stroke-width` `<1..3 digits>px`,
+  whitespace tolerant around `,` and `:`, no duplicate key, no trailing
+  comma) and dropped. One trailing `:::class` annotation is stripped from a
+  declaration, a boundary title, an edge or a json block close; on a
+  `direction` / `end` / `note` / accessibility line it is not a shape and
+  keeps the source gated. Flat `@{...}` properties are stripped from
+  declarations, boundaries and edges **only outside quotes** — a quoted label
+  that happens to contain `@{` is authored text and is transcribed as is.
+  Json payload lines may carry balanced inline braces (a nested object or
+  array, counted outside quotes) and must start with a quote; the lone `}`
+  line closes a block, and an inline `json <id>@{ ... }` payload is validated
+  on the raw statement. An empty, unclosed or nested annotation, a trailing
+  property comma, a second `:::` and an unbalanced payload brace still gate.
+- **Disclosure.** `Usecase native projection v1` plus one
+  `body :::class annotations …` line and one `body @{} properties …` line when
+  used, and one line per dropped `classDef` / `class` / `style` statement in
+  source order.
+- **Oracle.** The twin is the same fixture with those statements and
+  annotations removed; the art above the footer must be cell-equal. Narrow 40
+  is measured live (all eight rows stay source there; `15-animation-variants`
+  also leaves the narrow-draw set because its new body notice is wider than 40
+  columns).
+- **Migration / blast radius.** The nine D-456 themed rows carry `@{...}`
+  annotations, so their transcription and footer changed: their ledger footer
+  gained the body notice (recorded under `review.decisions.D-458`) and their
+  twin comparison became footer-aware. No D-456 row changed its drawn status.
+  Four already-drawn usecase rows (`02-system-boundaries`,
+  `03-actor-variants`, `09-business-and-stereotypes`, `15-animation-variants`)
+  lose the annotation text from their outline and gain the body notice; the
+  D-458 gate pins them with the same style-stripped twin, and
+  `15-animation-variants` leaves the narrow-draw set because its footer no
+  longer fits 40 columns.

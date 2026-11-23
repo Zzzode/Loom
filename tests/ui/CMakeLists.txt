@@ -284,6 +284,15 @@ add_test(NAME MermaidStyleD457Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidStyleD457Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-458: the usecase body-grammar cohort ledger is a generator constant; the
+# check fails on a hand edit or an unreviewed expectation change.
+add_test(NAME MermaidUsecaseBodyD458Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_usecase_body_d458_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidUsecaseBodyD458Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-452: the treemap classDef cohort ledger is a generator constant; the check
 # fails on a hand edit or an unreviewed expectation change.
 add_test(NAME MermaidTreemapClassdefD452Cohort.GeneratorIsReproducible
@@ -1311,6 +1320,15 @@ add_executable(test_mermaid_venn_style_d453_cohort
 target_link_libraries(test_mermaid_venn_style_d453_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_venn_style_d453_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# D-458: usecase body-grammar cohort gate.
+add_executable(test_mermaid_usecase_body_d458_cohort
+    test_mermaid_usecase_body_d458_cohort.cpp)
+target_link_libraries(test_mermaid_usecase_body_d458_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_usecase_body_d458_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

@@ -29,7 +29,10 @@
     "reviewer_agent": "independent read-only adversarial code review, fresh general-purpose agent, D-456 usecase themed envelope, 2026-11-24: round 1 REQUEST-CHANGES (mirror divergence, json prefix capture, look twin coverage, boundary keyword, CMake/ledger nits), round 2 APPROVE after fixes (task adc1bfd4d2bc4513d, resumed for the re-check)",
     "date": "2026-11-24",
     "verdict": "approved",
-    "note": "The roster regeneration and the d117 counts are deferred to the post-approval OfficialMatrix rerun; both landed in the same commit."
+    "note": "The roster regeneration and the d117 counts are deferred to the post-approval OfficialMatrix rerun; both landed in the same commit.",
+    "decisions": {
+      "D-458": "the body grammar admits flat `@{...}` annotations, so these rows now drop them from the transcription and append one `body @{} properties` disclosure line; the admission itself is unchanged"
+    }
   },
   "rows": [
     {
@@ -49,7 +52,8 @@
         "Usecase native projection v1",
         "config.theme=redux-color -> colour palette; not applied",
         "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
-        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
+        "body @{} properties -> shape/type/animation; not applied"
       ],
       "twin": {
         "kind": "frontmatter-free-body",
@@ -76,7 +80,8 @@
         "Usecase native projection v1",
         "config.theme=redux-dark-color -> colour palette; not applied",
         "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
-        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
+        "body @{} properties -> shape/type/animation; not applied"
       ],
       "twin": {
         "kind": "frontmatter-free-body",
@@ -104,7 +109,8 @@
         "config.theme=redux-color -> colour palette; not applied",
         "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
         "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
-        "config.usecase.colorScheme=rotate -> SVG layout tuning; not applied"
+        "config.usecase.colorScheme=rotate -> SVG layout tuning; not applied",
+        "body @{} properties -> shape/type/animation; not applied"
       ],
       "twin": {
         "kind": "frontmatter-free-body",
@@ -132,7 +138,8 @@
         "config.theme=redux-dark-color -> colour palette; not applied",
         "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
         "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
-        "config.usecase.colorScheme=rotate -> SVG layout tuning; not applied"
+        "config.usecase.colorScheme=rotate -> SVG layout tuning; not applied",
+        "body @{} properties -> shape/type/animation; not applied"
       ],
       "twin": {
         "kind": "frontmatter-free-body",
@@ -159,7 +166,8 @@
         "Usecase native projection v1",
         "config.theme=base -> colour palette; not applied",
         "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
-        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
+        "body @{} properties -> shape/type/animation; not applied"
       ],
       "twin": {
         "kind": "frontmatter-free-body",
@@ -186,7 +194,8 @@
         "Usecase native projection v1",
         "config.theme=dark -> colour palette; not applied",
         "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
-        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
+        "body @{} properties -> shape/type/animation; not applied"
       ],
       "twin": {
         "kind": "frontmatter-free-body",
@@ -213,7 +222,8 @@
         "Usecase native projection v1",
         "config.theme=default -> colour palette; not applied",
         "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
-        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
+        "body @{} properties -> shape/type/animation; not applied"
       ],
       "twin": {
         "kind": "frontmatter-free-body",
@@ -240,7 +250,8 @@
         "Usecase native projection v1",
         "config.theme=forest -> colour palette; not applied",
         "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
-        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
+        "body @{} properties -> shape/type/animation; not applied"
       ],
       "twin": {
         "kind": "frontmatter-free-body",
@@ -267,7 +278,8 @@
         "Usecase native projection v1",
         "config.theme=neutral -> colour palette; not applied",
         "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
-        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
+        "body @{} properties -> shape/type/animation; not applied"
       ],
       "twin": {
         "kind": "frontmatter-free-body",

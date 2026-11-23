@@ -103,6 +103,24 @@ bool native_frame(const std::string& source, int width) {
     }
     return got.back() == "P456_SENTINEL";
 }
+// The art rows above the disclosure footer (or the whole body when there is
+// no footer). D-458 appended a body disclosure line to these rows, so the twin
+// carries its own footer and must be compared art-only.
+std::vector<std::string> art_above_footer(const CellCapture& capture, int width) {
+    auto lines = trimmed_lines(capture, width);
+    std::size_t header = lines.size();
+    for (std::size_t i = 0; i < lines.size(); ++i)
+        if (lines[i] == "Usecase native projection v1") {
+            header = i;
+            break;
+        }
+    if (header != lines.size() && header > 0 && lines[header - 1].empty()) --header;
+    std::vector<std::string> art(lines.begin(),
+                                 lines.begin() + static_cast<std::ptrdiff_t>(header));
+    while (!art.empty() && (art.back().empty() || art.back() == "P456_SENTINEL"))
+        art.pop_back();
+    return art;
+}
 // The same fixture with the frontmatter removed (the envelope is the only
 // admitted frontmatter surface, so the body art must be identical).
 std::string frontmatter_free_twin(const std::string& source) {
@@ -181,11 +199,8 @@ TEST(MermaidUsecaseThemedD456Cohort, LeavesAreInertAgainstFrontmatterFreeTwins) 
         std::vector<std::string> art(lines.begin(),
                                      lines.begin() + static_cast<std::ptrdiff_t>(begin));
         while (!art.empty() && art.back().empty()) art.pop_back();
-        auto twin_lines = trimmed_lines(capture(twin, "mermaid", kWide), kWide);
-        while (!twin_lines.empty() &&
-               (twin_lines.back().empty() || twin_lines.back() == "P456_SENTINEL"))
-            twin_lines.pop_back();
-        EXPECT_EQ(art, twin_lines) << rel << " the leaves changed the art";
+        EXPECT_EQ(art, art_above_footer(capture(twin, "mermaid", kWide), kWide))
+            << rel << " the leaves changed the art";
         ++checked;
     });
     EXPECT_EQ(checked, 9);
@@ -265,8 +280,10 @@ TEST(MermaidUsecaseThemedD456Cohort, ClosedNegatives) {
              probe("config:\n  usecase:\n    useMaxWidth: false\n    useMaxWidth: true\n"),
              probe("config:\n  usecase:\n    diagramPadding: 30\n"),
              probe("theme: forest\n"),
-             // A classDef body statement still gates the whole source.
-             std::string{"usecase-beta\n  classDef red stroke:#f00\n  actor A\n"},
+             // D-458 admits the closed body styling surface; the positive is
+             // owned by test_mermaid_usecase_body_d458_cohort, and a malformed
+             // statement still gates.
+             std::string{"usecase-beta\n  classDef red stroke:red\n  actor A\n"},
              // The quoted boundary title stays closed.
              std::string{"usecase-beta\n  systemBoundary \"\"\n  end\n"},
              std::string{"usecase-beta\n  systemBoundary \"A\" junk\n  end\n"},
@@ -275,7 +292,9 @@ TEST(MermaidUsecaseThemedD456Cohort, ClosedNegatives) {
              // The JSON block stays closed.
              std::string{"usecase-beta\n  json P@{\n    \"k\": \"v\"\n"},
              std::string{"usecase-beta\n  json P@{\n    k: v\n  }\n"},
-             std::string{"usecase-beta\n  json P@{\n    \"k\": {\"n\": 1}\n  }\n"},
+             // D-458 admits balanced inline braces in a payload line; an
+             // unbalanced line still gates.
+             std::string{"usecase-beta\n  json P@{\n    \"k\": {\"n\": 1\n  }\n"},
          }) {
         EXPECT_FALSE(draws(source, kWide)) << source;
     }

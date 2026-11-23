@@ -6810,6 +6810,35 @@ const JourneyCohortEntry* usecase_themed_d456_cohort_row(std::string_view path) 
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-458 usecase body-grammar cohort: the last eight usecase fallbacks, whose
+// only non-admitted inputs are the closed body styling surface. The per-row
+// gate is test_mermaid_usecase_body_d458_cohort.
+const std::map<std::string, JourneyCohortEntry>& usecase_body_d458_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path =
+            kRoot / "../../../tools/mermaid/usecase-body-d458-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-458 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-458 cohort ledger must be approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* usecase_body_d458_cohort_row(std::string_view path) {
+    const auto& rows = usecase_body_d458_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-457 body-style cohort: the last body-style fallbacks of quadrant-chart
 // (classDef / `:::class` / inline point-style suffix) and tree-view
 // (`:::class` node annotation). The per-row gate is
@@ -11729,6 +11758,33 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // D-458 usecase body-grammar admission: the eight complete bodies
+            // whose only blockers are the closed styling surface. Placed before
+            // the D-456 themed-envelope branch (exact path match, disjoint
+            // sets); the post-loop reach proof asserts each row is observed
+            // here (rule 38).
+            if (class_path.is_str() && class_path.as_str().starts_with("usecase/")) {
+                if (const auto* cohort = usecase_body_d458_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "usecase";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-458 usecase body-grammar cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // D-456 usecase themed-envelope admission: the nine themed
             // originals whose only blockers are the closed themed-envelope
             // leaves, the quoted boundary title and the json block. Placed
@@ -14074,6 +14130,25 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d456 == expected_d456,
                     "D-456 branch reach set must equal its ledger");
+        }
+
+        // D-458 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d458 = json::parse(read_file(
+                kRoot / "../../../tools/mermaid/usecase-body-d458-cohort.json"));
+            require(ledger_d458.has_value(), "D-458 cohort ledger must parse");
+            std::set<std::string> expected_d458;
+            ledger_d458->root().get("rows").iter([&](const JsonVal row) {
+                expected_d458.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d458;
+            for (const auto& row : observations) {
+                if (row.track == "original" && row.reason == "D-458 usecase body-grammar cohort")
+                    reached_d458.insert(row.path);
+            }
+            require(reached_d458 == expected_d458,
+                    "D-458 branch reach set must equal its ledger");
         }
 
         // D-457 rule-38 reach proof: every ledger row must be observed through

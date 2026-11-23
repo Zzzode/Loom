@@ -241,6 +241,148 @@ bool validate_note(std::string_view code) {
     return is_identifier(id);
 }
 
+// D-458: one trailing `:::class` annotation on a declaration, boundary title
+// or json block close. The class is an identifier; the annotation and the
+// single separating or attached boundary that precedes it are removed from
+// the transcribed statement and disclosed once per source.
+std::optional<std::string_view> usecase_strip_class(std::string_view text, bool& had) {
+    const auto at = text.rfind(":::");
+    if (at == std::string_view::npos) return text;
+    if (text.find(":::") != at) return std::nullopt;  // exactly one annotation
+    const auto name = trim_view(text.substr(at + 3));
+    if (!is_identifier(name)) return std::nullopt;
+    std::string_view prefix = text.substr(0, at);
+    while (!prefix.empty() && prefix.back() == ' ') prefix.remove_suffix(1);
+    if (prefix.empty()) return std::nullopt;
+    had = true;
+    return prefix;
+}
+
+// D-458: the closed styling property list carried by `classDef` and `style`:
+// `fill` / `stroke` (#rgb or #rrggbb) and `stroke-width` (<n>px), comma
+// separated, no duplicate key, whitespace-tolerant around ',' and ':'.
+bool usecase_hex_colour(std::string_view value) {
+    if (value.size() != 4u && value.size() != 7u) return false;
+    if (value.front() != '#') return false;
+    return std::ranges::all_of(value.substr(1u), [](char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    });
+}
+
+bool usecase_px(std::string_view value) {
+    if (value.size() < 3u || value.size() > 5u || !value.ends_with("px")) return false;
+    return std::ranges::all_of(value.substr(0u, value.size() - 2u),
+                               [](char c) { return c >= '0' && c <= '9'; });
+}
+
+bool usecase_style_props(std::string_view text) {
+    std::vector<std::string_view> seen;
+    bool any = false;
+    bool expect_entry = false;
+    std::size_t pos = 0;
+    while (true) {
+        while (pos < text.size() && text[pos] == ' ') ++pos;
+        if (pos >= text.size()) return !expect_entry && any;
+        const auto colon = text.find(':', pos);
+        if (colon == std::string_view::npos) return false;
+        const auto key = trim_view(text.substr(pos, colon - pos));
+        const auto comma = text.find(',', colon + 1);
+        const auto value = trim_view(text.substr(
+            colon + 1, comma == std::string_view::npos ? std::string_view::npos
+                                                      : comma - colon - 1));
+        bool ok = false;
+        if (key == "fill" || key == "stroke")
+            ok = usecase_hex_colour(value);
+        else if (key == "stroke-width")
+            ok = usecase_px(value);
+        if (!ok || std::ranges::find(seen, key) != seen.end()) return false;
+        seen.push_back(key);
+        any = true;
+        if (comma == std::string_view::npos) break;
+        pos = comma + 1;
+        expect_entry = true;
+    }
+    return any;
+}
+
+// D-458: a non-empty comma list of identifiers (`class A,B c,d`).
+bool usecase_identifier_list(std::string_view text) {
+    text = trim_view(text);
+    if (text.empty()) return false;
+    std::size_t pos = 0;
+    bool any = false;
+    while (true) {
+        const auto comma = text.find(',', pos);
+        const auto item = trim_view(text.substr(
+            pos, comma == std::string_view::npos ? std::string_view::npos : comma - pos));
+        if (!is_identifier(item)) return false;
+        any = true;
+        if (comma == std::string_view::npos) break;
+        pos = comma + 1;
+    }
+    return any;
+}
+
+// D-458: one `json` block payload line. Braces are allowed when they stay
+// balanced on the line (an inline nested object or array); the lone `}` line
+// remains the block terminator.
+bool usecase_json_payload_line(std::string_view stmt) {
+    if (stmt.empty() || stmt.size() > static_cast<std::size_t>(kUsecaseMaxTextBytes) ||
+        !unicode_text(std::string{stmt}))
+        return false;
+    if (trim_view(stmt).front() != '"') return false;
+    int depth = 0;
+    bool in_quote = false;
+    for (const char c : stmt) {
+        if (c == '"') {
+            in_quote = !in_quote;
+            continue;
+        }
+        if (in_quote) continue;
+        if (c == '{') ++depth;
+        else if (c == '}') {
+            if (--depth < 0) return false;
+        }
+    }
+    return depth == 0 && !in_quote;
+}
+
+// D-458: remove every flat `@{ ... }` annotation from a declaration so the
+// transcription carries the logical statement only. The block must be
+// balanced, single-line and brace-free inside; anything else gates.
+std::optional<std::string> usecase_strip_annotations(std::string_view text, bool& had) {
+    std::string out;
+    out.reserve(text.size());
+    bool in_quote = false;
+    std::size_t pos = 0;
+    while (pos < text.size()) {
+        const char c = text[pos];
+        if (c == '"') {
+            in_quote = !in_quote;
+            out.push_back(c);
+            ++pos;
+            continue;
+        }
+        // Only an unquoted `@{...}` is a property block; a quoted label that
+        // happens to contain `@{` is authored text and is transcribed as is.
+        if (!in_quote && c == '@' && pos + 1u < text.size() && text[pos + 1u] == '{') {
+            const auto close = text.find('}', pos + 2u);
+            if (close == std::string_view::npos) return std::nullopt;
+            const std::string_view inside = text.substr(pos + 2u, close - pos - 2u);
+            if (trim_view(inside).empty() || inside.find('{') != std::string_view::npos)
+                return std::nullopt;
+            while (!out.empty() && out.back() == ' ') out.pop_back();
+            pos = close + 1u;
+            had = true;
+            continue;
+        }
+        out.push_back(c);
+        ++pos;
+    }
+    if (in_quote) return std::nullopt;
+    return std::string{trim_view(out)};
+}
+
 }  // namespace
 
 // D-447: the closed `config.usecase` tuning namespace and the scalar/block
@@ -479,11 +621,12 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
                 const auto trimmed = line.find_first_not_of(' ');
                 if (trimmed != std::string_view::npos) {
                     const std::string_view content = line.substr(trimmed);
-                    if (content.starts_with("%%{init") ||
-                        content.starts_with("classDef") ||
-                        content.starts_with("style ") ||
-                        content.find(":::") != std::string_view::npos)
-                        visual_gate = true;
+                    // D-458: the closed body styling surface (classDef /
+                    // class / style, one `:::class` annotation, flat `@{...}`
+                    // properties) is admitted and disclosed by the body loop;
+                    // only an in-body `%%{init}%%` directive keeps the whole
+                    // source gated here.
+                    if (content.starts_with("%%{init")) visual_gate = true;
                 }
                 if (eol == std::string_view::npos) break;
             }
@@ -547,27 +690,57 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
         return true;
     };
 
+    bool class_notice = false;
+    bool annotation_notice = false;
+    auto add_body_notice = [&](std::string_view line) -> bool {
+        if (line.size() > kUsecaseNoticeLineLimit) return false;
+        if (notices.empty()) notices.emplace_back(kUsecaseNoticeHeader);
+        notices.emplace_back(line);
+        return true;
+    };
+    // D-458: one disclosure per stripped annotation kind, not per statement.
+    auto note_class = [&]() -> bool {
+        if (class_notice) return true;
+        class_notice = true;
+        return add_body_notice(
+            "body :::class annotations -> colour/line weight; not applied");
+    };
+    auto note_annotation = [&]() -> bool {
+        if (annotation_notice) return true;
+        annotation_notice = true;
+        return add_body_notice(
+            "body @{} properties -> shape/type/animation; not applied");
+    };
+    // Identifiers are ASCII, so a byte cap is also a codepoint cap.
+    auto short_name = [](std::string_view text) {
+        if (text.size() <= 40u) return std::string{text};
+        return std::string{text.substr(0u, 40u)} + "...";
+    };
+
     for (std::size_t i = 1; i < statements.size(); ++i) {
         const std::string& stmt = statements[i];
         if (static_cast<int>(i) > kUsecaseMaxStatements) return {};
         if (stmt.starts_with("%%")) continue;  // comment
-        const std::string code = blank_quotes(stmt);
-        const std::string_view cv = code;
 
         if (in_json_block) {
-            // D-456: a `json <id>@{ ... }` block is transcribed verbatim. The
-            // payload lines stay bounded single-line unicode; the close is a
-            // lone `}`.
+            // D-456/D-458: a `json <id>@{ ... }` block is transcribed verbatim.
+            // Payload lines are bounded single-line text whose braces stay
+            // balanced on the line; the close is a lone `}` and may carry one
+            // `:::class` annotation.
             if (stmt == "}") {
                 in_json_block = false;
                 if (!push_guarded(stmt)) return {};
                 continue;
             }
-            if (stmt.empty() ||
-                stmt.size() > static_cast<std::size_t>(kUsecaseMaxTextBytes) ||
-                !unicode_text(stmt) || stmt.find_first_of("{}") != std::string::npos ||
-                trim_view(stmt).front() != '"')
-                return {};
+            if (stmt.starts_with("}:::")) {
+                bool closed_class = false;
+                const auto closed = usecase_strip_class(stmt, closed_class);
+                if (!closed || *closed != "}" || !note_class()) return {};
+                in_json_block = false;
+                if (!push_guarded("}")) return {};
+                continue;
+            }
+            if (!usecase_json_payload_line(stmt)) return {};
             if (!push_guarded(stmt)) return {};
             continue;
         }
@@ -583,6 +756,26 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
                 return {};
             continue;
         }
+        // D-458: one trailing `:::class` annotation is stripped before shape
+        // validation; the class does not change the outline.
+        bool class_here = false;
+        const auto unclassed = usecase_strip_class(stmt, class_here);
+        if (!unclassed) return {};
+        if (class_here) {
+            // A class annotation belongs to a declaration, a boundary title,
+            // an edge or a json block close; on a direction/end/note or
+            // accessibility line it is not a shape and keeps the source gated.
+            const auto head = trim_view(*unclassed);
+            if (head.empty() || head == "end" || head.starts_with("direction ") ||
+                head.starts_with("note ") || head.starts_with("accTitle") ||
+                head.starts_with("accDescr") || head.starts_with("classDef ") ||
+                head.starts_with("class ") || head.starts_with("style "))
+                return {};
+            if (!note_class()) return {};
+        }
+        const std::string working{*unclassed};
+        const std::string code = blank_quotes(working);
+        const std::string_view cv = code;
         if (cv.starts_with("accTitle")) {
             // D-447: scalar accessibility metadata is a validated no-op.
             if (saw_acc_title) return {};
@@ -590,7 +783,7 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
             if (!rest.starts_with(':')) return {};
             // The value comes from the raw statement: blank_quotes() erases
             // quoted spans, and `accTitle: "..."` is the canonical spelling.
-            const std::string_view raw{stmt};
+            const std::string_view raw{working};
             if (!usecase_accessibility_value(trim_view(raw.substr(8u)).substr(1u), work))
                 return {};
             saw_acc_title = true;
@@ -605,16 +798,90 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
                 continue;
             }
             if (!rest.starts_with(':')) return {};
-            const std::string_view raw{stmt};
+            const std::string_view raw{working};
             if (!usecase_accessibility_value(trim_view(raw.substr(8u)).substr(1u), work))
                 return {};
             saw_acc_descr = true;
             continue;
         }
-        if (cv.starts_with("direction ")) {
-            if (saw_direction || !is_direction(trim_view(cv.substr(10)))) return {};
+        // D-458: `json` statements are matched before the generic annotation
+        // strip because their `@{` is structural.
+        if (cv.starts_with("json ") && cv.find("@{") != std::string_view::npos) {
+            // `json <identifier>@{` opens a verbatim block; a payload on the
+            // same line closes it inline. A statement that merely starts with
+            // `json ` (an edge such as `json --> Foo`) falls through.
+            const auto rest = trim_view(cv.substr(5u));
+            const auto open = rest.find("@{");
+            if (open == std::string_view::npos || open == 0u ||
+                !is_identifier(trim_view(rest.substr(0u, open))))
+                return {};
+            // Both views are trimmed the same way (blank_quotes preserves
+            // length), so `open` holds in the raw view too; the raw payload is
+            // non-empty only there once the quoted strings are restored.
+            const auto raw_rest = trim_view(std::string_view{working}.substr(5u));
+            const auto raw_payload = trim_view(raw_rest.substr(open + 2u));
+            if (raw_payload.empty()) {
+                in_json_block = true;
+            } else {
+                if (raw_payload.back() != '}') return {};
+                const auto inline_payload =
+                    trim_view(raw_payload.substr(0u, raw_payload.size() - 1u));
+                if (!usecase_json_payload_line(inline_payload)) return {};
+            }
+            if (!push_guarded(working)) return {};
+            continue;
+        }
+        // D-458: flat `@{...}` properties are stripped from declarations,
+        // boundaries and edges; the logical statement is what gets transcribed.
+        bool annotation_here = false;
+        const auto plain = usecase_strip_annotations(working, annotation_here);
+        if (!plain) return {};
+        if (annotation_here && !note_annotation()) return {};
+        const std::string plain_code = blank_quotes(*plain);
+        const std::string_view pv = plain_code;
+
+        if (pv.starts_with("direction ")) {
+            if (saw_direction || !is_direction(trim_view(pv.substr(10)))) return {};
             saw_direction = true;
-        } else if (cv == "systemBoundary" || cv.starts_with("systemBoundary ")) {
+        } else if (pv.starts_with("classDef ")) {
+            // D-458: closed styling statements are validated, dropped and
+            // disclosed; the projection draws no colour or line weight.
+            const auto rest = trim_view(pv.substr(9u));
+            const auto space = rest.find(' ');
+            if (space == std::string_view::npos) return {};
+            // A classDef may name several classes (`classDef external,critical ...`).
+            const auto names = trim_view(rest.substr(0u, space));
+            if (!usecase_identifier_list(names) ||
+                !usecase_style_props(rest.substr(space + 1u)))
+                return {};
+            if (!add_body_notice("body classDef=" + short_name(names) +
+                                 " -> colour/line weight; not applied"))
+                return {};
+            continue;
+        } else if (pv.starts_with("class ")) {
+            const auto rest = trim_view(pv.substr(6u));
+            const auto space = rest.find(' ');
+            if (space == std::string_view::npos) return {};
+            const auto ids = trim_view(rest.substr(0u, space));
+            if (!usecase_identifier_list(ids) ||
+                !usecase_identifier_list(rest.substr(space + 1u)))
+                return {};
+            if (!add_body_notice("body class=" + short_name(ids) +
+                                 " -> colour/line weight; not applied"))
+                return {};
+            continue;
+        } else if (pv.starts_with("style ")) {
+            const auto rest = trim_view(pv.substr(6u));
+            const auto space = rest.find(' ');
+            if (space == std::string_view::npos) return {};
+            const auto id = rest.substr(0u, space);
+            if (!is_identifier(id) || !usecase_style_props(rest.substr(space + 1u)))
+                return {};
+            if (!add_body_notice("body style=" + short_name(id) +
+                                 " -> colour/line weight; not applied"))
+                return {};
+            continue;
+        } else if (pv == "systemBoundary" || pv.starts_with("systemBoundary ")) {
             if (boundary_depth >= kUsecaseMaxBoundaryDepth) return {};
             // Both views keep blank_quotes' length, so the guarded tail is the
             // same slice on either side; the keyword check excludes a longer
@@ -623,8 +890,8 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
                 return statement.size() > 15u ? trim_view(statement.substr(15u))
                                               : std::string_view{};
             };
-            const auto tail = after_keyword(cv);
-            const std::string_view raw{stmt};
+            const auto tail = after_keyword(pv);
+            const std::string_view raw{*plain};
             const auto raw_tail = after_keyword(raw);
             if (!raw_tail.empty() && raw_tail.front() == '"') {
                 // The blanked view erased a quoted title; validate it on the
@@ -635,38 +902,25 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
                 return {};
             }
             ++boundary_depth;
-        } else if (cv == "end") {
+        } else if (pv == "end") {
             if (boundary_depth == 0) return {};
             --boundary_depth;
-        } else if (cv.starts_with("note ")) {
-            if (!validate_note(cv)) return {};
-        } else if (cv.starts_with("json ") && cv.find("@{") != std::string_view::npos) {
-            // D-456: `json <identifier>@{` opens a verbatim block. A statement
-            // that merely starts with `json ` (an edge such as `json --> Foo`)
-            // falls through to the edge/declaration branches unchanged.
-            const auto rest = trim_view(cv.substr(5u));
-            const auto open = rest.find("@{");
-            if (open == std::string_view::npos || open == 0u ||
-                !is_identifier(trim_view(rest.substr(0u, open))) ||
-                !trim_view(rest.substr(open + 2u)).empty())
-                return {};
-            in_json_block = true;
-            if (!push_guarded(stmt)) return {};
-            continue;
-        } else if (cv.starts_with("actor ")) {
-            if (!validate_declaration(trim_view(cv.substr(6)))) return {};
-        } else if (is_edge(cv)) {
-            if (!validate_edge(cv)) return {};
-        } else if (trim_view(stmt).starts_with('"')) {
-            // An anonymous use case is a quoted string on its own; the join
-            // step already proved the quotes are balanced and closed.
-            if (trim_view(stmt).find('"', 1) == std::string_view::npos) return {};
+        } else if (pv.starts_with("note ")) {
+            if (!validate_note(pv)) return {};
+        } else if (pv.starts_with("actor ")) {
+            if (!validate_declaration(trim_view(pv.substr(6)))) return {};
+        } else if (is_edge(pv)) {
+            if (!validate_edge(pv)) return {};
+        } else if (trim_view(*plain).starts_with('"')) {
+            // An anonymous use case (or a quoted boundary reference) is a
+            // quoted string on its own; the join step already proved the
+            // quotes are balanced and closed.
+            if (trim_view(*plain).find('"', 1) == std::string_view::npos) return {};
         } else {
-            // A use case declaration, an edge annotation (id@{...}) or an
-            // anonymous quoted use case.
-            if (!validate_declaration(cv)) return {};
+            // A use case declaration or an edge-property reference.
+            if (!validate_declaration(pv)) return {};
         }
-        if (!push_guarded(stmt)) return {};
+        if (!push_guarded(std::string{*plain})) return {};
     }
 
     if (in_descr_block) return {};       // unclosed accDescr block

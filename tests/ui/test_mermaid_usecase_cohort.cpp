@@ -30,6 +30,8 @@ const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/ca
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
 const fs::path kD456Ledger =
     fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/usecase-themed-d456-cohort.json";
+const fs::path kD458Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/usecase-body-d458-cohort.json";
 const fs::path kD447Ledger =
     fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/usecase-accessibility-d447-cohort.json";
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/usecase-cohort.json";
@@ -88,10 +90,12 @@ TEST(MermaidUsecaseCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_usecase_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 14);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 14);
-    // D-456 moves the nine themed rows into their own decision cohort.
-    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 3);
+    // D-456 moves the nine themed rows and D-458 the eight body-grammar rows
+    // into their own decision cohorts, so no usecase row stays gated.
+    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 1);
     EXPECT_EQ(root.get("selection").get_int("d456_admitted_count"), 9);
-    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 6);
+    EXPECT_EQ(root.get("selection").get_int("d458_admitted_count"), 8);
+    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 0);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     const auto manifest = parse_doc(kManifest);
@@ -147,7 +151,7 @@ TEST(MermaidUsecaseCohort, GatedUsecasesStayWholeSource) {
     // D-447 admits the closed `config.usecase` namespace + accessibility row;
     // its positive is owned by test_mermaid_usecase_accessibility_d447_cohort.
     std::set<std::string> admitted;
-    for (const auto& ledger_path : {kD447Ledger, kD456Ledger}) {
+    for (const auto& ledger_path : {kD447Ledger, kD456Ledger, kD458Ledger}) {
         auto admitted_ledger = json::parse(read_file(ledger_path));
         ASSERT_TRUE(admitted_ledger.has_value()) << "cohort ledger must parse";
         admitted_ledger->root().get("rows").iter(
@@ -166,11 +170,12 @@ TEST(MermaidUsecaseCohort, GatedUsecasesStayWholeSource) {
         });
     }
     EXPECT_EQ(skipped, 1);
-    EXPECT_EQ(admitted.size(), 10u);
+    EXPECT_EQ(admitted.size(), 18u);
 }
 
 // Key-based gate: prose mentioning "config"/"theme" is not a gate; a
-// frontmatter visual key or a body style statement closes the renderer.
+// frontmatter visual key or an in-body `%%{init}%%` directive closes the
+// renderer, while the closed body styling surface is admitted by D-458.
 TEST(MermaidUsecaseCohort, VisualGateIsKeyBased) {
     const std::string plain =
         "usecase-beta\n  actor Theme[Config actor]\n  Theme --> Manage(\"theme work\")\n";
@@ -183,8 +188,12 @@ TEST(MermaidUsecaseCohort, VisualGateIsKeyBased) {
     EXPECT_FALSE(draws("---\ntheme: dark\n---\nusecase-beta\n  A(\"A\")\n", kWide));
 
     EXPECT_FALSE(draws("usecase-beta\n  A(\"A\")\n%%{init: {}}%%\n", kWide));
-    EXPECT_FALSE(draws("usecase-beta\n  A(\"A\")\n  classDef c color:#f00\n", kWide));
-    EXPECT_FALSE(draws("usecase-beta\n  A(\"A\"):::critical\n", kWide));
+    // D-458 admits the closed body styling surface; a property outside the
+    // table and a malformed class annotation still close the renderer.
+    EXPECT_TRUE(draws("usecase-beta\n  A(\"A\")\n  classDef c fill:#ff0000\n", kWide));
+    EXPECT_TRUE(draws("usecase-beta\n  A(\"A\"):::critical\n", kWide));
+    EXPECT_FALSE(draws("usecase-beta\n  A(\"A\")\n  classDef c color:#ff0000\n", kWide));
+    EXPECT_FALSE(draws("usecase-beta\n  A(\"A\"):::1critical\n", kWide));
 }
 
 // All grammar shapes: directions, actors with @{...}/icon metadata, use
@@ -219,15 +228,17 @@ TEST(MermaidUsecaseCohort, AcceptedGrammarDrawsAndTranscribes) {
         "  trueEdge@{ animate: true }\n";
     const CellCapture cap = capture(source, "mermaid", kWide);
     ASSERT_TRUE(draws(source, kWide));
+    // D-458: the flat `@{...}` properties are dropped from the transcription
+    // (the D-458 gate owns the positive), so only the logical statement shows.
     for (const char* needle :
          {"direction LR", "actor Customer(\"Customer\")",
-          "actor Hollow(\"Hollow\")@{ type: hollow }",
+          "actor Hollow(\"Hollow\")",
           "systemBoundary Storefront", "Manage[Manage catalog]",
           "\"Anonymous request\"", "note for Browse", "Customer --> Browse",
           "Browse <-- Customer", "Customer --o Browse", "Customer --|> Browse",
           "Browse ..> : include Manage",
           "Customer -- \"opens form\" --> Manage", "Browse ---> Manage",
-          "Customer trueEdge@--> Manage", "trueEdge@{ animate: true }"}) {
+          "Customer trueEdge@--> Manage", "trueEdge"}) {
         EXPECT_NE(cap.text.find(needle), std::string::npos) << needle;
     }
 

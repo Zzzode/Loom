@@ -28,16 +28,18 @@ SCHEMA = "loom_mermaid_usecase_cohort/v1"
 
 # Per-width geometry facts not derivable without rendering; enforced live by
 # tests/ui/test_mermaid_usecase_cohort.cpp. Populated from live measurement;
-# edited only after a live re-measure (engineering rule 18). The nine compact
+# edited only after a live re-measure (engineering rule 18). The eight compact
 # diagrams (including the header-only empty frame) also draw at 40 columns;
-# the five larger/label-rich ones stay source there.
+# the larger/label-rich ones stay source there. D-458 removed
+# `15-animation-variants` from this set: its `@{...}` annotations are now
+# dropped from the outline and replaced by a 56-column body disclosure line,
+# so the frame no longer fits 40 columns and falls back there (re-measured).
 _NARROW_DRAW = {
     "usecase/nightly-check/01-basic-use-cases.mmd",
     "usecase/nightly-check/05-association-markers.mmd",
     "usecase/nightly-check/06-uml-relationships.mmd",
     "usecase/nightly-check/11-order-independent-refinement.mmd",
     "usecase/nightly-check/13-minimum-edge-lengths.mmd",
-    "usecase/nightly-check/15-animation-variants.mmd",
     "usecase/nightly-check/17-direction-bottom-up.mmd",
     "usecase/nightly-check/18-direction-right-to-left.mmd",
     "usecase/pr-check/empty-diagram.mmd",
@@ -118,6 +120,16 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
+    D458 = {
+        "usecase/nightly-check/07-edge-styles-and-animation.mmd",
+        "usecase/nightly-check/08-json-table.mmd",
+        "usecase/nightly-check/12-boundary-contained-actors.mmd",
+        "usecase/nightly-check/14-element-styling-precedence.mmd",
+        "usecase/nightly-check/16-json-order-and-values.mmd",
+        "usecase/nightly-check/20-full-featured-order-system.mmd",
+        "usecase/pr-check/complete-hand-drawn-rendering-contract.mmd",
+        "usecase/pr-check/small-representative-visual-snapshot.mmd",
+    }
     D456 = {
         "usecase/nightly-check/themed-elements-redux-color-theme.mmd",
         "usecase/nightly-check/themed-elements-redux-dark-color-theme.mmd",
@@ -147,11 +159,18 @@ def build(repo_root):
     if len(moved) != 9:
         raise ValueError(f"D-456 rows drifted out of the frontmatter partition: {sorted(moved)}")
     fm_gate -= D456
-    if (len(draw), len(fm_gate), len(body_gate)) != (14, 3, 6):
+    # D-458: the eight remaining rows moved into their own decision cohort
+    # (six body-style rows plus the two complete-contract rows).
+    moved458 = (fm_gate | body_gate) & D458
+    if len(moved458) != 8:
+        raise ValueError(f"D-458 rows drifted out of the gated partitions: {sorted(moved458)}")
+    fm_gate -= D458
+    body_gate -= D458
+    if (len(draw), len(fm_gate), len(body_gate)) != (14, 1, 0):
         raise ValueError(
             f"usecase partition drift: draw={len(draw)} "
             f"frontmatter={len(fm_gate)} body_style={len(body_gate)} "
-            f"(expected 14/3/6; the nine D-456 rows moved out)")
+            f"(expected 14/1/0 after D-458)")
 
     rows = []
     for rel in sorted(draw):
@@ -197,9 +216,10 @@ def build(repo_root):
                         "systemBoundary/end, notes, UML edges and @{...} "
                         "metadata"),
             "theme_gate": (
-                "a frontmatter theme/look/config key, an %%{init}%% directive "
-                "or a body style/classDef/::: statement keeps the whole "
-                "original on source fallback"),
+                "a frontmatter theme/look/config key or an in-body "
+                "%%{init}%% directive keeps the whole original on source "
+                "fallback; the closed body styling surface is owned by the "
+                "D-458 cohort"),
         },
         "upstream": {
             "tag": manifest["upstream"]["tag"],
@@ -215,6 +235,8 @@ def build(repo_root):
             "frontmatter_gated": sorted(fm_gate),
             "d456_admitted_count": len(moved),
             "d456_admitted": sorted(moved),
+            "d458_admitted_count": len(moved458),
+            "d458_admitted": sorted(moved458),
             "body_style_gated_count": len(body_gate),
             "body_style_gated": sorted(body_gate),
         },

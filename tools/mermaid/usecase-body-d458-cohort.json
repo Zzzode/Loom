@@ -1,0 +1,266 @@
+{
+  "schema": "loom_mermaid_usecase_body_d458_cohort/v1",
+  "decision": "D-458",
+  "admission": {
+    "shape": "closed body `classDef` / `class` / `style` styling statements, one trailing `:::class` annotation on a declaration / boundary title / edge / json close, flat `@{...}` properties, and single-line json payloads",
+    "footer": {
+      "header": "Usecase native projection v1",
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin is the same fixture with the styling statements, `:::class` annotations and `@{...}` properties removed; the art above the footer must be cell-equal"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the last usecase fallbacks whose only non-admitted inputs are the closed body styling surface",
+    "cohort_digest": "0909b101fcd825214257bbe392f0314d30efb79ccea4d34c792ce7d38c123c87"
+  },
+  "counts": {
+    "total": 8,
+    "by_family": {
+      "usecase": 8
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review, fresh general-purpose agent, D-458 usecase body grammar, 2026-11-24: round 1 REQUEST-CHANGES (BLOCKER quoted `@{...}` silently dropped; blast radius on four drawn rows; blind twin; empty annotation; class scope; trailing comma; braces inside json strings; mirror four-colon divergence), round 2 APPROVE after fixes (task aba09a2cce8422b7f, resumed for the re-check)",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "The roster regeneration and the d117 counts are deferred to the post-approval OfficialMatrix rerun; both landed in the same commit."
+  },
+  "rows": [
+    {
+      "path": "usecase/nightly-check/07-edge-styles-and-animation.mmd",
+      "family": "usecase",
+      "sha256": "b74e71835e7f1bf612ed6b255819808bb4f492539857afded97c74bcf2fe15e9",
+      "manifest_sha256": "b74e71835e7f1bf612ed6b255819808bb4f492539857afded97c74bcf2fe15e9",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "body classDef=emphasized -> colour/line weight; not applied",
+        "body class=opens,payment -> colour/line weight; not applied",
+        "body style=opens -> colour/line weight; not applied",
+        "body @{} properties -> shape/type/animation; not applied"
+      ],
+      "twin": {
+        "kind": "body-styling-stripped",
+        "path": "usecase/nightly-check/07-edge-styles-and-animation.mmd"
+      },
+      "ledger_note": "the projection transcribes logical statements only: the validated classDef/class/style statements, `:::class` annotations and `@{...}` properties are dropped and disclosed, and the style-stripped twin renders identical art"
+    },
+    {
+      "path": "usecase/nightly-check/08-json-table.mmd",
+      "family": "usecase",
+      "sha256": "c67983f90c5105b809184b41f56488300a2d4678a44c60e1c2618182ce78c2e5",
+      "manifest_sha256": "c67983f90c5105b809184b41f56488300a2d4678a44c60e1c2618182ce78c2e5",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "body :::class annotations -> colour/line weight; not applied",
+        "body classDef=data -> colour/line weight; not applied",
+        "body style=Payload -> colour/line weight; not applied"
+      ],
+      "twin": {
+        "kind": "body-styling-stripped",
+        "path": "usecase/nightly-check/08-json-table.mmd"
+      },
+      "ledger_note": "the projection transcribes logical statements only: the validated classDef/class/style statements, `:::class` annotations and `@{...}` properties are dropped and disclosed, and the style-stripped twin renders identical art"
+    },
+    {
+      "path": "usecase/nightly-check/12-boundary-contained-actors.mmd",
+      "family": "usecase",
+      "sha256": "9c6319d0034b6ae3243155b177a059821d90a5646c5ff95afd4f6d9b6960c876",
+      "manifest_sha256": "9c6319d0034b6ae3243155b177a059821d90a5646c5ff95afd4f6d9b6960c876",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "body :::class annotations -> colour/line weight; not applied",
+        "body @{} properties -> shape/type/animation; not applied",
+        "body classDef=service -> colour/line weight; not applied"
+      ],
+      "twin": {
+        "kind": "body-styling-stripped",
+        "path": "usecase/nightly-check/12-boundary-contained-actors.mmd"
+      },
+      "ledger_note": "the projection transcribes logical statements only: the validated classDef/class/style statements, `:::class` annotations and `@{...}` properties are dropped and disclosed, and the style-stripped twin renders identical art"
+    },
+    {
+      "path": "usecase/nightly-check/14-element-styling-precedence.mmd",
+      "family": "usecase",
+      "sha256": "f5d27d07be8c9f1c7ae4cceea4eac4cce214fba58f51fbe57d13db499cefe748",
+      "manifest_sha256": "f5d27d07be8c9f1c7ae4cceea4eac4cce214fba58f51fbe57d13db499cefe748",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "body :::class annotations -> colour/line weight; not applied",
+        "body classDef=default -> colour/line weight; not applied",
+        "body classDef=external,critical -> colour/line weight; not applied",
+        "body classDef=boundary -> colour/line weight; not applied",
+        "body classDef=data -> colour/line weight; not applied",
+        "body class=User,Login -> colour/line weight; not applied",
+        "body class=Account,Session -> colour/line weight; not applied",
+        "body style=User -> colour/line weight; not applied",
+        "body style=Login -> colour/line weight; not applied",
+        "body style=Account -> colour/line weight; not applied",
+        "body style=Session -> colour/line weight; not applied"
+      ],
+      "twin": {
+        "kind": "body-styling-stripped",
+        "path": "usecase/nightly-check/14-element-styling-precedence.mmd"
+      },
+      "ledger_note": "the projection transcribes logical statements only: the validated classDef/class/style statements, `:::class` annotations and `@{...}` properties are dropped and disclosed, and the style-stripped twin renders identical art"
+    },
+    {
+      "path": "usecase/nightly-check/16-json-order-and-values.mmd",
+      "family": "usecase",
+      "sha256": "c06e12c17bcd613aea500cdd730aae6c31c1f2a758076a8847bad3c8c1a809d4",
+      "manifest_sha256": "c06e12c17bcd613aea500cdd730aae6c31c1f2a758076a8847bad3c8c1a809d4",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "body :::class annotations -> colour/line weight; not applied",
+        "body classDef=payload -> colour/line weight; not applied"
+      ],
+      "twin": {
+        "kind": "body-styling-stripped",
+        "path": "usecase/nightly-check/16-json-order-and-values.mmd"
+      },
+      "ledger_note": "the projection transcribes logical statements only: the validated classDef/class/style statements, `:::class` annotations and `@{...}` properties are dropped and disclosed, and the style-stripped twin renders identical art"
+    },
+    {
+      "path": "usecase/nightly-check/20-full-featured-order-system.mmd",
+      "family": "usecase",
+      "sha256": "6e989885f7ed864f2c57db0b8a161e7fabe7bfc0845beed0acd381ff37e150cd",
+      "manifest_sha256": "6e989885f7ed864f2c57db0b8a161e7fabe7bfc0845beed0acd381ff37e150cd",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "body @{} properties -> shape/type/animation; not applied",
+        "body :::class annotations -> colour/line weight; not applied",
+        "body classDef=system -> colour/line weight; not applied",
+        "body classDef=critical -> colour/line weight; not applied",
+        "body classDef=data -> colour/line weight; not applied",
+        "body style=pays -> colour/line weight; not applied"
+      ],
+      "twin": {
+        "kind": "body-styling-stripped",
+        "path": "usecase/nightly-check/20-full-featured-order-system.mmd"
+      },
+      "ledger_note": "the projection transcribes logical statements only: the validated classDef/class/style statements, `:::class` annotations and `@{...}` properties are dropped and disclosed, and the style-stripped twin renders identical art"
+    },
+    {
+      "path": "usecase/pr-check/complete-hand-drawn-rendering-contract.mmd",
+      "family": "usecase",
+      "sha256": "cb6dfa6a8dfade833e00a964743b488c53dea0218145024ff9c964b1d8f5d624",
+      "manifest_sha256": "cb6dfa6a8dfade833e00a964743b488c53dea0218145024ff9c964b1d8f5d624",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "config.look=handDrawn -> source node style; not applied",
+        "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
+        "body @{} properties -> shape/type/animation; not applied",
+        "body :::class annotations -> colour/line weight; not applied",
+        "body classDef=framed -> colour/line weight; not applied",
+        "body classDef=critical -> colour/line weight; not applied",
+        "body classDef=emphasized -> colour/line weight; not applied",
+        "body class=assocRel -> colour/line weight; not applied",
+        "body style=Authentication_System -> colour/line weight; not applied",
+        "body style=Checkout -> colour/line weight; not applied",
+        "body style=Payload -> colour/line weight; not applied",
+        "body style=assocRel -> colour/line weight; not applied"
+      ],
+      "twin": {
+        "kind": "body-styling-stripped",
+        "path": "usecase/pr-check/complete-hand-drawn-rendering-contract.mmd"
+      },
+      "ledger_note": "the projection transcribes logical statements only: the validated classDef/class/style statements, `:::class` annotations and `@{...}` properties are dropped and disclosed, and the style-stripped twin renders identical art"
+    },
+    {
+      "path": "usecase/pr-check/small-representative-visual-snapshot.mmd",
+      "family": "usecase",
+      "sha256": "19b48f9fb60cf523c2932a9b627ace21994e8ef6f7d0e47efc06aa809c68f167",
+      "manifest_sha256": "19b48f9fb60cf523c2932a9b627ace21994e8ef6f7d0e47efc06aa809c68f167",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
+        "body @{} properties -> shape/type/animation; not applied",
+        "body :::class annotations -> colour/line weight; not applied",
+        "body classDef=framed -> colour/line weight; not applied",
+        "body classDef=critical -> colour/line weight; not applied",
+        "body classDef=emphasized -> colour/line weight; not applied",
+        "body class=assocRel -> colour/line weight; not applied",
+        "body style=Authentication_System -> colour/line weight; not applied",
+        "body style=Checkout -> colour/line weight; not applied",
+        "body style=Payload -> colour/line weight; not applied",
+        "body style=assocRel -> colour/line weight; not applied"
+      ],
+      "twin": {
+        "kind": "body-styling-stripped",
+        "path": "usecase/pr-check/small-representative-visual-snapshot.mmd"
+      },
+      "ledger_note": "the projection transcribes logical statements only: the validated classDef/class/style statements, `:::class` annotations and `@{...}` properties are dropped and disclosed, and the style-stripped twin renders identical art"
+    }
+  ]
+}

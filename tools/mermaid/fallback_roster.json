@@ -1,12 +1,12 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 448,
+  "total_fallback": 440,
   "category_counts": {
     "classdef_styling": 24,
     "click_interactive_callback": 18,
     "dagre_layout_tuning": 10,
-    "edge_animation_metadata": 71,
+    "edge_animation_metadata": 63,
     "elk_layout_engine": 10,
     "family_residual:class-diagram": 6,
     "family_residual:er-diagram": 1,
@@ -69,8 +69,8 @@
   "predicate_sufficiency": {
     "classdef_styling": {
       "originals_matching_predicate": 147,
-      "drawn_among_matches": 67,
-      "fallback_among_matches": 80,
+      "drawn_among_matches": 75,
+      "fallback_among_matches": 72,
       "sufficient_blocker": false
     },
     "click_interactive_callback": {
@@ -81,14 +81,14 @@
     },
     "dagre_layout_tuning": {
       "originals_matching_predicate": 167,
-      "drawn_among_matches": 121,
-      "fallback_among_matches": 46,
+      "drawn_among_matches": 123,
+      "fallback_among_matches": 44,
       "sufficient_blocker": false
     },
     "edge_animation_metadata": {
       "originals_matching_predicate": 242,
-      "drawn_among_matches": 171,
-      "fallback_among_matches": 71,
+      "drawn_among_matches": 179,
+      "fallback_among_matches": 63,
       "sufficient_blocker": false
     },
     "elk_layout_engine": {
@@ -111,8 +111,8 @@
     },
     "icon_font_glyphs": {
       "originals_matching_predicate": 61,
-      "drawn_among_matches": 24,
-      "fallback_among_matches": 37,
+      "drawn_among_matches": 26,
+      "fallback_among_matches": 35,
       "sufficient_blocker": false
     },
     "linkstyle_directive": {
@@ -129,8 +129,8 @@
     },
     "look_handdrawn": {
       "originals_matching_predicate": 206,
-      "drawn_among_matches": 132,
-      "fallback_among_matches": 74,
+      "drawn_among_matches": 133,
+      "fallback_among_matches": 73,
       "sufficient_blocker": false
     },
     "look_neo": {
@@ -333,15 +333,7 @@
       "swimlanes/nightly-check/issue-7802-3.mmd",
       "swimlanes/nightly-check/issue-7802-4.mmd",
       "swimlanes/nightly-check/issue-7802-5.mmd",
-      "swimlanes/nightly-check/issue-7802-6.mmd",
-      "usecase/nightly-check/07-edge-styles-and-animation.mmd",
-      "usecase/nightly-check/08-json-table.mmd",
-      "usecase/nightly-check/12-boundary-contained-actors.mmd",
-      "usecase/nightly-check/14-element-styling-precedence.mmd",
-      "usecase/nightly-check/16-json-order-and-values.mmd",
-      "usecase/nightly-check/20-full-featured-order-system.mmd",
-      "usecase/pr-check/complete-hand-drawn-rendering-contract.mmd",
-      "usecase/pr-check/small-representative-visual-snapshot.mmd"
+      "swimlanes/nightly-check/issue-7802-6.mmd"
     ],
     "elk_layout_engine": [
       "er-diagram/visual-check/an-er-diagram-with-relationships-with-unicode-text-without-htmllabels-elk-layout.mmd",

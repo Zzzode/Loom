@@ -5,7 +5,7 @@
   "renderer": {
     "module": "src/ui/visual/mermaid_usecase_impl.cpp",
     "grammar": "usecase-beta; direction, actor, use cases, systemBoundary/end, notes, UML edges and @{...} metadata",
-    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+    "theme_gate": "a frontmatter theme/look/config key or an in-body %%{init}%% directive keeps the whole original on source fallback; the closed body styling surface is owned by the D-458 cohort"
   },
   "upstream": {
     "tag": "mermaid@12.2.0",
@@ -18,11 +18,9 @@
       "usecase"
     ],
     "draw_count": 14,
-    "frontmatter_gated_count": 3,
+    "frontmatter_gated_count": 1,
     "frontmatter_gated": [
-      "usecase/nightly-check/10-configuration-and-accessibility.mmd",
-      "usecase/pr-check/complete-hand-drawn-rendering-contract.mmd",
-      "usecase/pr-check/small-representative-visual-snapshot.mmd"
+      "usecase/nightly-check/10-configuration-and-accessibility.mmd"
     ],
     "d456_admitted_count": 9,
     "d456_admitted": [
@@ -36,15 +34,19 @@
       "usecase/pr-check/themed-elements-forest-theme.mmd",
       "usecase/pr-check/themed-elements-neutral-theme.mmd"
     ],
-    "body_style_gated_count": 6,
-    "body_style_gated": [
+    "d458_admitted_count": 8,
+    "d458_admitted": [
       "usecase/nightly-check/07-edge-styles-and-animation.mmd",
       "usecase/nightly-check/08-json-table.mmd",
       "usecase/nightly-check/12-boundary-contained-actors.mmd",
       "usecase/nightly-check/14-element-styling-precedence.mmd",
       "usecase/nightly-check/16-json-order-and-values.mmd",
-      "usecase/nightly-check/20-full-featured-order-system.mmd"
-    ]
+      "usecase/nightly-check/20-full-featured-order-system.mmd",
+      "usecase/pr-check/complete-hand-drawn-rendering-contract.mmd",
+      "usecase/pr-check/small-representative-visual-snapshot.mmd"
+    ],
+    "body_style_gated_count": 0,
+    "body_style_gated": []
   },
   "review": {
     "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, usecase renderer cohort, 2026-11-13, task a37954a81a81ed523)",
@@ -319,12 +321,12 @@
       "track_scope": "whole-and-body",
       "expected_states": {
         "wide_240": "drawn",
-        "narrow_40": "drawn",
+        "narrow_40": "source",
         "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
-        "narrow_40": "drawn",
+        "narrow_40": "source",
         "restored_240": "drawn"
       },
       "ledger_note": "usecase renderer projects actors/use-cases/boundaries/edges to a bounded native outline; no visual gate is present so it draws"

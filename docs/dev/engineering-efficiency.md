@@ -2567,3 +2567,27 @@ Derived cost (batch = 2 slices, 12 fallback rows removed):
 Target for the next batch: keep per-slice spending at one debug mermaid suite
 plus targeted gates, and run the full suite and the dual-preset gate exactly
 once at the batch boundary.
+
+## D-458 usecase body grammar retro (2026-11-24)
+
+1. **A string_view returned from a local std::string is a dangling read.** The
+   annotation-stripping helper built its result in a local `std::string` and
+   returned `trim_view(...)` of it; every admitted row then failed with an
+   empty/garbage statement, and only the failure line number revealed it. When
+   a helper both allocates and trims, return the owning `std::string` (or trim
+   in place), never a view.
+2. **`blank_quotes` preserves length, but `trim` does not.** The inline json
+   payload was validated on the blanked view (which erases quoted content) and
+   on offsets computed from a trimmed view; both hid the payload. Validate
+   quoted content on the raw statement and compute offsets on the same trimmed
+   base in both views.
+3. **A body-level disclosure can flip the narrow state of a previously drawn
+   row.** Dropping annotations from `15-animation-variants` shortened its rows
+   but added a 57-column footer, so at 40 columns the frame falls back where it
+   used to draw. Re-measure the narrow pin in the same slice (rule 34) and
+   record why the pin moved; do not assume dropping text makes a row narrower.
+4. **An older decision's ledger is part of the new decision's blast radius.**
+   D-456's approved rows carried `@{...}` annotations, so D-458 changed their
+   art and footer. Regenerate the older ledger with an explicit
+   `review.decisions.<new-id>` record and make its twin comparison
+   footer-aware, instead of loosening the assertion.

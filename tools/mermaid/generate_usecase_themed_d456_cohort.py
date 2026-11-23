@@ -72,6 +72,13 @@ REVIEW = {
     "note": (
         "The roster regeneration and the d117 counts are deferred to the "
         "post-approval OfficialMatrix rerun; both landed in the same commit."),
+    "decisions": {
+        "D-458": (
+            "the body grammar admits flat `@{...}` annotations, so these rows "
+            "now drop them from the transcription and append one "
+            "`body @{} properties` disclosure line; the admission itself is "
+            "unchanged"),
+    },
 }
 
 
@@ -193,6 +200,33 @@ def frontmatter_lines(text: str):
     return lines
 
 
+ANNOTATION_NOTICE = "body @{} properties -> shape/type/animation; not applied"
+
+
+def body_notices(body: str):
+    """D-458 appended the body disclosure to these rows: every flat `@{...}`
+    annotation (the `json <id>@{` block opener is structural and does not
+    count) is now dropped from the transcription and disclosed once."""
+    had_annotation = False
+    for raw in body.split("\n"):
+        line = raw.strip(" ")
+        if not line or line.startswith("%%"):
+            continue
+        if line.startswith("json ") and "@{" in line:
+            continue
+        # The renderer only strips an unquoted `@{...}`; a quoted label that
+        # contains `@{` is authored text.
+        in_quote = False
+        for at, c in enumerate(line):
+            if c == '"':
+                in_quote = not in_quote
+            elif not in_quote and line.startswith("@{", at):
+                had_annotation = True
+        if ":::" in line or line.startswith(("classDef ", "class ", "style ")):
+            raise ValueError(f"unexpected body styling in a D-456 row: {line}")
+    return [ANNOTATION_NOTICE] if had_annotation else []
+
+
 def body_shape_ok(body: str) -> bool:
     """The two body shapes this cohort adds: a quoted boundary and a json block."""
     quoted_boundary = re.search(r'systemBoundary\s+"[^"\n]+"\s*$', body, re.M)
@@ -222,6 +256,7 @@ def build(repo_root):
         _, body = split_frontmatter(source)
         if not body_shape_ok(body):
             raise ValueError(f"{rel} does not carry the admitted body shapes")
+        body_lines = body_notices(body)
         rows.append({
             "path": rel,
             "family": "usecase",
@@ -235,7 +270,7 @@ def build(repo_root):
                 "narrow_40": "drawn" if rel in NARROW_DRAW else "source_fallback",
                 "restored_240": "drawn",
             },
-            "expected_footer_lines": [HEADER] + notices,
+            "expected_footer_lines": [HEADER] + notices + body_lines,
             "twin": {
                 "kind": "frontmatter-free-body",
                 "path": rel,

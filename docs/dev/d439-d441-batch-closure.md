@@ -1,4 +1,4 @@
-# 批边界收口记录 —— D-439 / D-440（2026-11-23）
+# 批边界收口记录 —— D-439 / D-440 / D-441（2026-11-23）
 
 本文件是「继续按普查推进下一族」这一批的批边界验证证据。全量 ctest 与双预设
 字节门按 TL 口径只在批边界跑一次，日志独立落盘（`/tmp/loom-logs/closure-d440-*`）。
@@ -9,20 +9,26 @@
 |---|---|---|---|---|
 | 起点（D-435..D-437 收口后） | `d5a5b9ac` | — | 514 | 1445 |
 | D-439 mindmap 封闭 `config.layout: tidy-tree` | `1651284e` | 3 | 511 | 1448 |
-| D-440 flowchart 封闭 `config.theme: forest` | `f36aaa3d` | 1 | **510** | **1449** |
+| D-440 flowchart 封闭 `config.theme: forest` | `f36aaa3d` | 1 | 510 | 1449 |
+| D-441 state 封闭 `config.layout: elk` | `f82993ff` | 3 | **507** | **1452** |
 
-roster：**510 条 / 35 类**；`--self-test` 绿；E6c 48 条未动。
+roster：**507 条 / 35 类**；`--self-test` 绿；E6c 48 条未动。
 
-三数并列：①绝对 source_fallback **510**；②超出认证 profile/冻结权威 **289**
-（未变）；③本轮净减少 **4**。
+三数并列：①绝对 source_fallback **507**；②超出认证 profile/冻结权威 **289**
+（未变）；③本轮净减少 **7**（514 → 507）。
 
 ## 2. 全量 ctest（release 预设）
 
 - `cmake --build --preset release -j8` 退出码 0 → `ctest --preset release -j8`
   （带 OpenSSL `LD_LIBRARY_PATH`）。
-- **4761 条，100% passed，退出码 0**（
-  `/tmp/loom-logs/closure-d440-release-ctest.log{,.exit}`）；2 条 Disabled、
+- **4765 条，100% passed，退出码 0**（
+  `/tmp/loom-logs/closure-d441-release-ctest2.log{,.exit}`）；2 条 Disabled、
   25 条 Skipped（既有环境原因），无 Failed。
+- **收口时抓到并修复的 3 处门禁回归（D-441 的负向迁移债）**：
+  `MermaidState0038Cohort.LookTableIsClosed` 的 `layout: elk` 负例（迁移到
+  `layout: dagre`）、`MermaidE2aCohort.ConfigAndInitRowsKeepWholeSource`
+  （`checked` 48 → 45）与 `MermaidE2bCohort.NonWhitelistedConfigRowsKeepWholeSource`
+  （`checked` 25 → 22，两个跳过集并入 D-441 账本）。修复后全量首跑即 100%。
 - 用例名核验（均在通过日志内）：D-439 的 3 条 + 3 条 Generator、
   D-440 的 3 条 + 3 条 Generator、`MermaidFallbackAttribution.*`、
   `MermaidCapabilityReport.OfficialMatrix` 全部 `Passed`。
@@ -31,8 +37,8 @@ roster：**510 条 / 35 类**；`--self-test` 绿；E6c 48 条未动。
 
 - debug 全量重编（退出码 0）后单独跑 `MermaidCapabilityReport.OfficialMatrix`；
   debug 与 release 的 `mermaid-official-matrix.json` sha256 **逐字节相同**：
-  `f28739cd90575a0d4db2cfe0d763486b73d2316e7d072e897ccfd93976004ce0`
-  （drawn 1635 / fallback 510 / error 0，`drawn_at_240` 1449，
+  `31055ad77a5f0f5942ac810d94df743aff50916f0e931655e443e79bfc48ed60`
+  （drawn 1638 / fallback 507 / error 0，`drawn_at_240` 1452，
   `mandatory_gaps` 48，`integrity_errors` 空）。
 
 ## 4. 本批最重要的结构性发现：Flow400 合同冻结 flowchart 全族

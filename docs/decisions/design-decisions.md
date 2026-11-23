@@ -5173,3 +5173,18 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Accounting.** One exact-path matrix branch precedes the D-432 and RFC 0031
   c4 branches with a rule-38 reach proof; the roster loses exactly the two
   ledger rows.
+
+## state leading body comments (D-446)
+
+- **Scope.** One state original whose config leaves were already admitted
+  (`layout: elk`, `fontFamily: courier`) and whose only blocker was a body
+  opening with three `%%` comment lines.
+- **Why it was blocked.** The state body parser always ignored comments (the
+  same body without frontmatter drew), but `state_source_envelope` required
+  `raw_body` to start with `stateDiagram`.
+- **Mechanism.** The header check skips leading `%%` lines (Work-charged, one
+  line at a time) before the `stateDiagram` comparison. An indented comment, a
+  non-comment line, or a comment followed by a non-state header still fails.
+- **Oracle.** The twin is the same fixture with the leading comment lines
+  removed; since the config is identical, the whole frame (footer included)
+  must be byte-identical. Narrow 40 stays whole-source.

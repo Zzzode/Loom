@@ -2247,8 +2247,23 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
         content = true;
     }
     if (!content) return {};
-    if (!(has_init ? parsed->effective_body : parsed->raw_body).starts_with("stateDiagram"))
-        return {};
+    {
+        // D-446: the header check skips leading body comment lines. The state
+        // body parser already ignores them; only this envelope check was
+        // stricter, so a commented body under an admitted config fell back.
+        const auto& checked_body = has_init ? parsed->effective_body : parsed->raw_body;
+        std::size_t header_at = 0;
+        while (header_at < checked_body.size()) {
+            const auto eol = checked_body.find('\n', header_at);
+            const auto line = checked_body.substr(
+                header_at, eol == std::string_view::npos ? std::string_view::npos
+                                                        : eol - header_at);
+            if (!line.starts_with("%%")) break;
+            header_at = eol == std::string_view::npos ? checked_body.size() : eol + 1u;
+            if (!work.spend(line.size() + 8u)) return {};
+        }
+        if (!checked_body.substr(header_at).starts_with("stateDiagram")) return {};
+    }
     // A present config map must carry at least one accepted leaf; an empty
     // config block was whole-source before E2b and stays rejected.
     if (config_seen && fields == 0u) return {};

@@ -1394,6 +1394,15 @@ gtest_discover_tests(test_mermaid_wardley_theme_d437_cohort
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 
 # D-442: agentflow handDrawn-look cohort gate and its ledger.
+# D-446: state leading-comment cohort gate and its ledger.
+add_executable(test_mermaid_state_leading_comment_d446_cohort
+    test_mermaid_state_leading_comment_d446_cohort.cpp)
+target_link_libraries(test_mermaid_state_leading_comment_d446_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_state_leading_comment_d446_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
 # D-445: c4 UpdateLayoutConfig cohort gate and its ledger.
 add_executable(test_mermaid_c4_layout_config_d445_cohort
     test_mermaid_c4_layout_config_d445_cohort.cpp)

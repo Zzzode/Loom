@@ -2292,3 +2292,11 @@ renderer already draws it.
    line had its own inline footer; generalizing to a disclosure list with wrap
    first preserved every drawn frame and made the new line placement a
    one-line change instead of a second footer path.
+
+## D-446 state comments retro (2026-11-23)
+
+1. **When the twin keeps the same config, compare whole frames, not art slots.**
+   The first oracle sliced the footer using the D-443 convention (config-free
+   twin ⇒ no footer). Here the twin keeps its admitted config and therefore
+   emits the same footer, so the honest and simpler oracle is full-surface
+   equality between the source and the comment-free twin.

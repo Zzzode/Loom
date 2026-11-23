@@ -1,0 +1,66 @@
+{
+  "schema": "loom_mermaid_state_leading_comment_d446_cohort/v1",
+  "decision": "D-446",
+  "admission": {
+    "shape": "leading `%%` body comment lines before stateDiagram",
+    "footer": {
+      "header": "State native projection v1",
+      "leaf_order": [
+        "config.fontFamily",
+        "config.layout"
+      ],
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin removes the leading comment lines; the art above the footer must be cell-equal"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the last state fallback whose only blocker is a commented body header",
+    "cohort_digest": "9391f3160c48c32761f26b800cdb4fe111f8f86b2216ace933f9bedac8099c36"
+  },
+  "counts": {
+    "total": 1,
+    "by_family": {
+      "state-diagram-v2": 1
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, D-446 state leading-comment admission, 2026-11-23)",
+    "date": "2026-11-23",
+    "verdict": "approved",
+    "note": "Reviewer re-ran the generator --check entry and the live gate and verified: only leading `%%` lines are skipped (an indented comment or any other line still fails the header check); the skip is Work-charged; the footer is byte-identical to the D-441 leaf order; an uncommented twin draws the same art."
+  },
+  "rows": [
+    {
+      "path": "state-diagram-v2/nightly-check/elk/elk-notes-keep-their-layout.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "930428f26cddca134f9202519b035f352b0a3b164065737ccd0b05f974dcffbb",
+      "manifest_sha256": "930428f26cddca134f9202519b035f352b0a3b164065737ccd0b05f974dcffbb",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "twin": {
+        "kind": "leading-comment-free",
+        "path": "state-diagram-v2/nightly-check/elk/elk-notes-keep-their-layout.mmd",
+        "sha256": "930428f26cddca134f9202519b035f352b0a3b164065737ccd0b05f974dcffbb",
+        "footer_lines": []
+      },
+      "ledger_note": "leading body comment lines are skipped by the header check; the body parser already ignored them"
+    }
+  ]
+}

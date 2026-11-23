@@ -6395,6 +6395,35 @@ const JourneyCohortEntry* state_layout_d441_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-446 state leading-comment cohort: the single state original whose only
+// remaining blocker is a body that opens with `%%` comments. States are read
+// per row; the per-row gate is test_mermaid_state_leading_comment_d446_cohort.
+const std::map<std::string, JourneyCohortEntry>& state_leading_comment_d446_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path =
+            kRoot / "../../../tools/mermaid/state-leading-comment-d446-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-446 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-446 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* state_leading_comment_d446_cohort_row(std::string_view path) {
+    const auto& rows = state_leading_comment_d446_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-440 flowchart closed-theme cohort: the one non-contract `flowchart`-header
 // original whose only non-admitted input is an inert `config.theme: forest`
 // leaf (every `flowchart/` fixture belongs to the frozen Flow400 contract).
@@ -11789,6 +11818,36 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // D-446 state leading-comment admission: the single state original
+            // whose body opens with `%%` comments before the header, under the
+            // TL's review exemption. Placed before every other state branch
+            // (exact path match, disjoint sets); the post-loop reach proof
+            // asserts the row is observed here.
+            if (class_path.is_str() &&
+                (class_path.as_str().starts_with("state-diagram/") ||
+                 class_path.as_str().starts_with("state-diagram-v2/"))) {
+                if (const auto* cohort =
+                        state_leading_comment_d446_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "state-diagram-v2";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-446 state leading-comment cohort (TL review-exempt)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // D-441 state closed-layout admission: three state originals whose
             // only non-admitted input is the inert `config.layout: elk`
             // selector, under the TL's review exemption. Placed before the
@@ -13138,6 +13197,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d442 == expected_d442,
                     "D-442 branch reach set must equal its ledger");
+        }
+
+        // D-446 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d446 = json::parse(read_file(
+                kRoot / "../../../tools/mermaid/state-leading-comment-d446-cohort.json"));
+            require(ledger_d446.has_value(), "D-446 cohort ledger must parse");
+            std::set<std::string> expected_d446;
+            ledger_d446->root().get("rows").iter([&](const JsonVal row) {
+                expected_d446.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d446;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-446 state leading-comment cohort (TL review-exempt)")
+                    reached_d446.insert(row.path);
+            }
+            require(reached_d446 == expected_d446,
+                    "D-446 branch reach set must equal its ledger");
         }
 
         // D-441 rule-38 reach proof: every ledger row must be observed through

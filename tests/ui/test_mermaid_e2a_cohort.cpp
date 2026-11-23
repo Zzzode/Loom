@@ -36,6 +36,7 @@ const fs::path kRfc0045Ledger = kTestsDir / "../tools/mermaid/git-0045-cohort.js
 const fs::path kRfc0046Ledger = kTestsDir / "../tools/mermaid/layouttuning-0046-cohort.json";
 const fs::path kRfc0048Ledger = kTestsDir / "../tools/mermaid/state-region-0048-cohort.json";
 const fs::path kD424Ledger = kTestsDir / "../tools/mermaid/git-bool-d424-cohort.json";
+const fs::path kD436Ledger = kTestsDir / "../tools/mermaid/git-mainbranch-d436-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -298,6 +299,14 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     ASSERT_TRUE(d424.has_value()) << "D-424 cohort ledger must parse";
     d424->root().get("rows").iter(
         [&](const JsonVal row) { git_admitted.insert(row.get_string("path")); });
+    // D-436 admits 14 reviewed gitGraph trunk rows (`config.gitGraph.mainBranchName`
+    // / `mainBranchOrder`, honoured); the per-row gate is
+    // test_mermaid_git_mainbranch_d436_cohort. All 14 are config-bearing, so
+    // they leave the whole-source scan and the set equality below pins them.
+    auto d436 = json::parse(read_file(kD436Ledger));
+    ASSERT_TRUE(d436.has_value()) << "D-436 cohort ledger must parse";
+    d436->root().get("rows").iter(
+        [&](const JsonVal row) { git_admitted.insert(row.get_string("path")); });
     cohort.insert(git_admitted.begin(), git_admitted.end());
     // RFC 0048 admits the reviewed State concurrent-region cohort; the per-row
     // gate is test_mermaid_state_region_0048_cohort. Only the config/init-bearing
@@ -355,8 +364,9 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     // concurrency rows are themselves cohort members, so they are counted
     // once, not twice) and the 8 init-bearing P2 rows leave at P2.
     // D-424 population migration: 18 config-bearing git rows leave for the
-    // closed-boolean cohort, so the exact value drops 80 -> 62.
-    EXPECT_EQ(checked, 62);
+    // closed-boolean cohort, so the exact value drops 80 -> 62. D-436 moves
+    // the 14 trunk-config rows out too: 62 -> 48.
+    EXPECT_EQ(checked, 48);
     EXPECT_EQ(skipped_by_rfc0048.size(), 24u);
     // Under-listing fails here (an admitted row that really changes surface is
     // scanned again); over-listing a missing or non-config-bearing path fails

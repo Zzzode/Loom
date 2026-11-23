@@ -2224,3 +2224,18 @@ renderer already draws it.
 3. **Generator mirrors must encode every rejection, not just the acceptance.** The first
    generator accepted 19 rows because a description-only envelope also ends with
    `config_seen == false`; the cohort pin (`total == 3`) caught it on the first run.
+
+## D-440 flowchart theme retro (2026-11-23)
+
+1. **Probe the whole corpus, not the directory you plan to touch.** The
+   twin-probe showed 11 drawable flowchart/ candidates; the decisive fact was
+   one directory up: `flowchart/` has exactly 400 fixtures, the same 400 as the
+   frozen Flow400 contract. One 8-row edit attempt produced
+   `flows.errors = 8` and five extra mandatory gaps in a single matrix run —
+   that run is the cheapest possible proof of the freeze.
+2. **Size a cohort by the contract it would violate, not by the renderer it
+   would satisfy.** After narrowing to `{forest}` the slice is 1 row; the
+   remaining 10 candidates are contract-pending, not "hard".
+3. **A closed table must be corpus-backed per value.** Listing five palettes
+   because the probe saw five values was the mistake; the correct rule is one
+   value per non-frozen corpus row.

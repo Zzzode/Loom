@@ -1,0 +1,40 @@
+{
+  "schema": "loom_mermaid_flowchart_theme_d440_cohort/v1",
+  "decision": "D-440",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "flowchart original whose frontmatter is a description plus a lone indent-2 theme leaf from the closed corpus-backed palette table",
+    "palettes": [
+      "forest"
+    ],
+    "cohort_digest": "fee3e64bd8ff500fb1b6183e002228b7406c5d328ecb8dbf35d2c7a28181363d",
+    "exclusions": "any sibling config leaf, quoted single-quote forms, unknown palettes and namespace blocks keep the whole source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-23: family slice without a design gate; the gate is the test document plus the twin oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 1
+  },
+  "rows": [
+    {
+      "path": "conf-and-directives/pr-check/settings-from-initialize-nodes-should-be-green.mmd",
+      "sha256": "31fdd750572f464b890a883595b826a960342b3b690737e260ee888f0d2b1771",
+      "manifest_sha256": "31fdd750572f464b890a883595b826a960342b3b690737e260ee888f0d2b1771",
+      "theme": "forest",
+      "expected_footer_lines": [
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

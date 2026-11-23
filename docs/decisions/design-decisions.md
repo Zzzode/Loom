@@ -5059,3 +5059,24 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Accounting.** The matrix branch precedes the Mindmap10 and Shapes4 selections with a
   rule-38 reach proof; the roster's `family_residual:mindmap` bucket shrinks by exactly the
   three ledger paths.
+
+## flowchart closed `config.theme` and the Flow400 freeze (D-440)
+
+- **What was admitted.** `flow_envelope_body` now accepts the exact profile
+  `fields == Theme`: a lone indent-2 `theme` leaf whose value is the single
+  corpus-backed palette `forest` (bare or double-quoted). The flow notice
+  footer discloses `config.theme=forest -> colour palette; not applied`. Every
+  sibling leaf, namespace block, other palette, malformed scalar or duplicate
+  keeps the whole source on fallback.
+- **Why the table holds one value.** `flowchart/` contains exactly the 400
+  sources of the frozen Flow400 contract (8 complete models, 392 pending
+  nulls). Admitting the redux palettes first drew the eight
+  `redux-color-subgraphs` contract rows and the matrix reported
+  `flows.errors = 8` with `flow_whole_null_unmet` gaps (48 -> 57). Pending
+  contract rows cannot be drawn without a Flow400 re-baseline (new models plus
+  re-reviewed SHAs), so `forest` — carried by the one `graph TD` fixture
+  outside the contract — is the only admissible value today.
+- **Consequence for the census.** The large flowchart frontmatter buckets
+  (look/theme/htmlLabels/spacing, ~80 rows) are **not** config slices; they are
+  contract-pending rows. Treat Flow400 re-baseline as its own protected
+  milestone, in the same class as the ER107/Block58 joins.

@@ -6278,6 +6278,35 @@ const JourneyCohortEntry* mindmap_tidy_d439_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-440 flowchart closed-theme cohort: the one non-contract `flowchart`-header
+// original whose only non-admitted input is an inert `config.theme: forest`
+// leaf (every `flowchart/` fixture belongs to the frozen Flow400 contract).
+// The per-row gate is test_mermaid_flow_theme_d440_cohort.
+const std::map<std::string, JourneyCohortEntry>& flow_theme_d440_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/flowchart-theme-d440-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-440 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-440 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* flow_theme_d440_cohort_row(std::string_view path) {
+    const auto& rows = flow_theme_d440_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-437 wardley closed-theme cohort: the four wardley originals whose only
 // non-admitted input is `config.theme` in the closed palette table (their
 // bodies use the upstream column-0 spelling, also admitted). The per-row gate
@@ -10500,6 +10529,32 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                                                                 block_diagnostics));
                     continue;
                 }
+            // D-440 flowchart closed-theme admission: the one non-contract
+            // `flowchart`-header original whose only non-admitted input is the
+            // inert `config.theme: forest` leaf, under the TL's review
+            // exemption. Every `flowchart/` row belongs to the frozen Flow400
+            // contract, so this cohort is deliberately outside it; the
+            // post-loop reach proof asserts the row is observed here.
+            if (const auto* cohort = flow_theme_d440_cohort_row(fixture.get_string("path"))) {
+                Observation row;
+                row.path = fixture.get_string("path");
+                row.track = "original";
+                row.type = "conf-and-directives";
+                row.source_sha256 = fixture.get_string("sha256");
+                row.expected = "drawn";
+                row.reason = "D-440 flowchart theme cohort (TL review-exempt)";
+                const auto state_status = [](const std::string& state) {
+                    return state == "drawn" ? "drawn" : "source_fallback";
+                };
+                row.status = {state_status(cohort->states[0]),
+                              state_status(cohort->states[1]),
+                              state_status(cohort->states[2])};
+                row.expected_states = cohort->states;
+                row.decision_reasons.fill(row.reason);
+                observations.push_back(std::move(row));
+                continue;
+            }
+
             // D-439 mindmap closed-layout admission: three mindmap originals
             // whose only non-admitted input is the inert
             // `config.layout: tidy-tree` leaf, under the TL's review exemption.
@@ -12810,6 +12865,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d437 == expected_d437,
                     "D-437 branch reach set must equal its ledger");
+        }
+
+        // D-440 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d440 = json::parse(
+                read_file(kRoot / "../../../tools/mermaid/flowchart-theme-d440-cohort.json"));
+            require(ledger_d440.has_value(), "D-440 cohort ledger must parse");
+            std::set<std::string> expected_d440;
+            ledger_d440->root().get("rows").iter([&](const JsonVal row) {
+                expected_d440.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d440;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-440 flowchart theme cohort (TL review-exempt)")
+                    reached_d440.insert(row.path);
+            }
+            require(reached_d440 == expected_d440,
+                    "D-440 branch reach set must equal its ledger");
         }
 
         // D-439 rule-38 reach proof: every ledger row must be observed through

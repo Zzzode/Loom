@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 511,
+  "total_fallback": 510,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -37,7 +37,7 @@
     "multiline_label": 7,
     "securitylevel_directive": 34,
     "special_link_markers": 16,
-    "subgraph_nesting": 31
+    "subgraph_nesting": 30
   },
   "causality": {
     "click_interactive_callback": "permanent",
@@ -169,8 +169,8 @@
     },
     "subgraph_nesting": {
       "originals_matching_predicate": 195,
-      "drawn_among_matches": 69,
-      "fallback_among_matches": 126,
+      "drawn_among_matches": 70,
+      "fallback_among_matches": 125,
       "sufficient_blocker": false
     }
   },
@@ -771,7 +771,6 @@
     ],
     "subgraph_nesting": [
       "conf-and-directives/pr-check/settings-from-frontmatter-nodes-should-be-grey.mmd",
-      "conf-and-directives/pr-check/settings-from-initialize-nodes-should-be-green.mmd",
       "conf-and-directives/pr-check/should-render-if-values-are-not-quoted-properly.mmd",
       "flowchart/nightly-check/dagre/6088-2-should-handle-diamond-shape-intersections.mmd",
       "flowchart/nightly-check/dagre/dagre-should-keep-the-entry-node-on-top-of-a-recursive-flow-nested-in-a-subgraph-with-dagre-keepentrynodeontop-true-7827.mmd",

@@ -2537,6 +2537,10 @@ struct FlowEnvelope {
     // selects SVG label anchoring upstream; the terminal draws text either
     // way). Disclosed below the art via Diagram::config_notices.
     std::optional<bool> html_labels;
+    // D-440: a lone top-level config.theme from the closed flowchart palette
+    // table. The terminal never paints a palette, so the leaf is inert and
+    // disclosed below the art.
+    std::optional<std::string> theme;
 };
 
 std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& work) {
@@ -2562,6 +2566,9 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
         DiagramPadding = 512u,
         NodeSpacing = 2048u,
         RankSpacing = 4096u,
+        // D-440: the closed flowchart palette table. The terminal draws no
+        // colour, so the palette name is inert and disclosed.
+        Theme = 16384u,
         // FS-elk: an `elk.rectpacking` layout-engine value. The terminal runs
         // its own fixed layout, so the upstream engine selection is
         // non-terminal. The bare `elk` and `elk.box` values stay whole-source:
@@ -2576,6 +2583,7 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
     bool root_html_value = false, nested_html_value = false, log_one = false;
     bool title_top_margin_zero = false, diagram_padding_zero = false;
     std::optional<bool> use_max_width;
+    std::optional<std::string> theme_value;
     unsigned fields = 0;
     const auto mark = [&](unsigned bit) {
         if (fields & bit) return false;
@@ -2694,6 +2702,21 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
                 log_one = true;
             } else if (event.path == "htmlLabels") {
                 if (!boolean(trim(event.value), RootHtml, root_html_value)) return {};
+            } else if (event.path == "theme") {
+                // D-440: a lone palette scalar from the corpus-backed flowchart
+                // table. Bare or double-quoted forms are the same YAML string;
+                // a single-quoted, mismatched-quoted or unknown value, a
+                // duplicate or any sibling key keeps the whole source.
+                auto scalar = trim(event.value);
+                if (scalar.size() >= 2u && scalar.front() == '"' && scalar.back() == '"')
+                    scalar = trim(scalar.substr(1u, scalar.size() - 2u));
+                // The only palette with a corpus row outside the frozen Flow400
+                // contract: every flowchart-footer theme fixture is one of the
+                // contract's 400 sources, so admitting another palette value
+                // there would draw a contract-pending row (D-440 finding).
+                constexpr std::array<std::string_view, 1> themes{{"forest"}};
+                if (!mark(Theme) || std::ranges::find(themes, scalar) == themes.end()) return {};
+                theme_value = std::string(scalar);
             } else {
                 return {};
             }
@@ -2754,7 +2777,7 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
     if ((!description && !config) || (description && !description_text)) return {};
     if (!config) {
         if (title) return {};
-        return FlowEnvelope{envelope->raw_body, {}, false, std::nullopt};
+        return FlowEnvelope{envelope->raw_body, {}, false, std::nullopt, std::nullopt};
     }
     const bool legacy_dagre = fields == Layout && !title;
     const bool dagre_diagram_title = fields == Layout && title;
@@ -2788,6 +2811,8 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
     // anchoring upstream; terminal text geometry is identical. Non-terminal,
     // disclosed per diagram.
     const bool root_html_only = fields == RootHtml;
+    // D-440: a lone inert palette leaf is the whole admitted profile.
+    const bool theme_only = fields == Theme;
     const bool both_false =
         fields == (RootHtml | Flowchart | NestedHtml) && !root_html_value && !nested_html_value;
     const unsigned strict_bits = RootHtml | Flowchart | NestedHtml | Security;
@@ -2806,11 +2831,12 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
     if (legacy_dagre || dagre_diagram_title || elk_rectpacking_profile ||
         terminal_max_width || terminal_zero_diagram_padding ||
         title_top_margin_zero_without_layout || dagre_title_top_margin_zero ||
-        root_html_only || spacing_profile ||
+        root_html_only || theme_only || spacing_profile ||
         (description &&
          (courier_only || courier_nested_false || logging_false || both_false || strict))) {
         FlowEnvelope result{envelope->raw_body, {}, (fields & Layout) != 0u,
-                            root_html_only ? std::optional<bool>{root_html_value} : std::nullopt};
+                            root_html_only ? std::optional<bool>{root_html_value} : std::nullopt,
+                            std::move(theme_value)};
         if (title) {
             const auto& value = envelope->title->text;
             if (!work.spend(value.size() * 8u + sizeof(std::string) + 128u)) return {};
@@ -6720,6 +6746,10 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
                 rich.notices.push_back(
                     std::string("config.htmlLabels=") + (*envelope->html_labels ? "true" : "false") +
                     " -> native text labels; not applied");
+            // D-440: disclose the admitted inert palette name.
+            if (envelope->theme)
+                rich.notices.push_back("config.theme=" + *envelope->theme +
+                                       " -> colour palette; not applied");
             if (envelope->dagre_layout && flow_untrusted_dagre_compound(*diagram, work))
                 return {};
             lines = flow_layout(*diagram, work, nullptr, flow_styles.get(), &styles, &rich);

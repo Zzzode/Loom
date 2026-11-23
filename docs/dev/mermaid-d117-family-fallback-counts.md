@@ -6,8 +6,8 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1634 drawn /
-511 source_fallback / 0 error at 240 wide**, after D-439 (`local`,
+**Current totals (the last row of the history table below): 1635 drawn /
+510 source_fallback / 0 error at 240 wide**, after D-440 (`local`,
 2026-11-23). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
@@ -75,6 +75,7 @@ are not whole-original errors).
 | After D-436 gitGraph main branch name/order (14 rows) | 2026-11-23 | local | 1627 | 518 | 0 |
 | After D-437 wardley closed theme (4 rows, wardley family closed) | 2026-11-23 | local | 1631 | 514 | 0 |
 | After D-439 mindmap closed `config.layout: tidy-tree` (3 rows) | 2026-11-23 | local | 1634 | 511 | 0 |
+| After D-440 flowchart closed `config.theme: forest` (1 row; flowchart family is Flow400-contract-frozen) | 2026-11-23 | local | 1635 | 510 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone

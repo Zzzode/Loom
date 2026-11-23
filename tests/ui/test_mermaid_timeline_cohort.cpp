@@ -3,8 +3,10 @@
 // the pinned manifest. The seven clean (theme-free) timeline originals render
 // natively; RFC 0040 promotes the sixteen frontmatter-only look/theme rows
 // (their per-row gate is test_mermaid_journeyfam_0040_cohort), and the seven
-// rows whose theme arrives through an in-body %%{init}%% directive stay on
-// whole-source fallback.
+// rows whose theme arrives through an in-body %%{init}%% directive are
+// disclosed: RFC 0047 admits the flat logLevel/theme payloads and D-454 the
+// closed nested `timeline`/`themeVariables` objects, so no timeline row is
+// whole-source any more.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -145,7 +147,8 @@ TEST(MermaidTimelineCohort, ThemedTimelinesStayWholeSource) {
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
     });
     // RFC 0047: the inert leading logLevel/theme directives are admitted and
-    // disclosed; the two content-key rows above stay whole-source.
+    // disclosed. D-454 admits the closed nested `timeline`/`themeVariables`
+    // payloads; every other content key stays whole-source.
     const std::string directive =
         "%%{init: { 'logLevel': 'debug', 'theme': 'forest' } }%%\n"
         "timeline\n  title T\n  2024 : Event one\n";
@@ -157,11 +160,32 @@ TEST(MermaidTimelineCohort, ThemedTimelinesStayWholeSource) {
     EXPECT_NE(frame.find("config.theme=forest -> colour palette; not applied"),
               std::string::npos);
     // A content key and an out-of-table theme still gate.
-    EXPECT_FALSE(draws("%%{init: { 'theme': 'base', 'timeline': {'disableMulticolor': true}}}%%\n"
+    EXPECT_FALSE(draws("%%{init: { 'theme': 'base', 'flowchart': {'htmlLabels': true}}}%%\n"
                        "timeline\n  title T\n  2024 : Event one\n",
                        kWide));
     EXPECT_FALSE(draws("%%{init: { 'theme': 'neo' }}%%\ntimeline\n  title T\n  2024 : Event one\n",
                        kWide));
+    // D-454 direct positives: the two formerly-themed corpus shapes draw and
+    // disclose (their per-row frame oracle is the RFC 0047 cohort gate).
+    const std::string nested_boolean =
+        "%%{init: { 'theme': 'base', 'timeline': {'disableMulticolor': true}}}%%\n"
+        "timeline\n  title T\n  2024 : Event one\n";
+    ASSERT_TRUE(draws(nested_boolean, kWide));
+    EXPECT_NE(capture(nested_boolean, "mermaid", kWide).text.find(
+                  "config.timeline.disableMulticolor=true -> colour palette; not applied"),
+              std::string::npos);
+    const std::string nested_colours =
+        " %%{init: { 'theme': 'default' , 'themeVariables': {\n"
+        "              'cScale0': '#ff0000',\n"
+        "              'cScale1': '#00ff00'\n"
+        "       } } }%%\n"
+        "timeline\n  title T\n  2024 : Event one\n";
+    ASSERT_TRUE(draws(nested_colours, kWide));
+    const auto colours_frame = capture(nested_colours, "mermaid", kWide).text;
+    EXPECT_NE(colours_frame.find("config.themeVariables.cScale0=#ff0000 -> colour palette; not applied"),
+              std::string::npos);
+    EXPECT_NE(colours_frame.find("config.themeVariables.cScale1=#00ff00 -> colour palette; not applied"),
+              std::string::npos);
 }
 
 // Key-based gate: the word "theme" in a period/event must not be a false gate;

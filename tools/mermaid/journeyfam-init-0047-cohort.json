@@ -7,21 +7,21 @@
     "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
   },
   "selection": {
-    "rule": "a single-line leading %%{init: {...}}%% directive over logLevel/theme with a value inside the family's closed directive table, no frontmatter visual leaf",
+    "rule": "a leading %%{init: {...}}%% directive (single-line or spanning) over logLevel/theme, and since D-454 the closed nested `timeline.disableMulticolor` / `themeVariables.cScaleN` leaves, all inside the family's closed tables, with no frontmatter visual leaf and no repeated leaf across directives",
     "roots": [
       "journey",
       "timeline",
       "gantt"
     ],
     "phase": "P1-initializers",
-    "cohort_digest": "333fb8658fb91722fab9138a07190e93b3521b34fcf631686f41cf7e6c4ac960",
-    "probes_sha256": "0df2234cceafac1ebd743d4bdce785bdea5aaa958d031394ccdf63703788584a",
+    "cohort_digest": "258216d09aec53f4f1da13951711c01dcfbe28d5ea41f5eb4b88014eafa1dac7",
+    "probes_sha256": "c920f603f238bd5b085d7c103d7e539a5f4787bd7bba9fed00cead9c060f8330",
     "families": {
       "journey": 4,
-      "timeline": 5,
+      "timeline": 7,
       "gantt": 0
     },
-    "exclusions": "timeline disableMulticolor (content key) and the multi-line themeVariables override stay whole-source",
+    "exclusions": "every other content key, named colours, deeper nesting, non-canonical cScale indexes and repeated leaves stay whole-source",
     "width_policy": "wide_240 admission only; narrow_40 is measured per row."
   },
   "review": {
@@ -33,14 +33,22 @@
         "note": "Filled at phase closure: the probe artifact review, the per-row frame = twin + footer evidence, and the paired flip/negative audit."
       }
     },
-    "probes_sha256": "0df2234cceafac1ebd743d4bdce785bdea5aaa958d031394ccdf63703788584a",
+    "decisions": {
+      "D-454": {
+        "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, D-454 timeline nested init payloads, 2026-11-24; round 1 REQUEST-CHANGES with a mirror-divergence blocker plus five findings, round 2 re-review of the fixes, round 3 verification of the provenance record and the join bound)",
+        "date": "2026-11-24",
+        "scope": "nested `timeline.disableMulticolor` / `themeVariables.cScaleN` admission, cross-directive leaf-identity duplicate rejection, canonical cScale index, spanning-directive join bounded at 2048 bytes, and the classify_mermaid continuation peek",
+        "verdict": "approved"
+      }
+    },
+    "probes_sha256": "c920f603f238bd5b085d7c103d7e539a5f4787bd7bba9fed00cead9c060f8330",
     "verdict": "approved"
   },
   "counts": {
-    "total": 9,
-    "predicted_draw": 9,
+    "total": 11,
+    "predicted_draw": 11,
     "journey": 4,
-    "timeline": 5,
+    "timeline": 7,
     "gantt": 0
   },
   "rows": [
@@ -257,6 +265,92 @@
         "Timeline native projection v1",
         "config.logLevel=debug -> logger only; not applied",
         "config.theme=neutral -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0047 timeline leading %%{init}%% admission; the directives are logger/palette-only and not applied, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/pr-check/4-should-render-a-simple-timeline-with-directives-and-disablemulticolor-true.mmd",
+      "family": "timeline",
+      "phase": "P1-initializers",
+      "sha256": "1f9ebd370fbbe0a192fd1b6545f55881407a41532342e5d90148f24b2944ecde",
+      "manifest_sha256": "1f9ebd370fbbe0a192fd1b6545f55881407a41532342e5d90148f24b2944ecde",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "directive": {
+        "logLevel": "debug",
+        "theme": "base",
+        "nested": [
+          "config.timeline.disableMulticolor=true -> colour palette; not applied"
+        ]
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the frontmatter and every leading %%{init...}%% line"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.logLevel=debug -> logger only; not applied",
+        "config.theme=base -> colour palette; not applied",
+        "config.timeline.disableMulticolor=true -> colour palette; not applied"
+      ],
+      "prediction": "predicted-draw",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "RFC 0047 timeline leading %%{init}%% admission; the directives are logger/palette-only and not applied, so the frame equals the directive-free twin's plus the bounded footer."
+    },
+    {
+      "path": "timeline/pr-check/5-should-render-a-simple-timeline-with-directive-overridden-colors.mmd",
+      "family": "timeline",
+      "phase": "P1-initializers",
+      "sha256": "5d8f2eec8c9d01b0640de1f9c43e71f78c032cb6dc7d338a33ab2a48874c1169",
+      "manifest_sha256": "5d8f2eec8c9d01b0640de1f9c43e71f78c032cb6dc7d338a33ab2a48874c1169",
+      "prior_status": {
+        "expected": "source",
+        "reason": "frontmatter",
+        "witness": {
+          "offset": 0,
+          "text": "---\n"
+        }
+      },
+      "directive": {
+        "logLevel": "debug",
+        "theme": "default",
+        "nested": [
+          "config.themeVariables.cScale0=#ff0000 -> colour palette; not applied",
+          "config.themeVariables.cScale1=#00ff00 -> colour palette; not applied",
+          "config.themeVariables.cScale2=#0000ff -> colour palette; not applied"
+        ]
+      },
+      "twin": {
+        "kind": "synthetic",
+        "rule": "delete the frontmatter and every leading %%{init...}%% line"
+      },
+      "expected_prepend_lines": [],
+      "expected_footer_lines": [
+        "",
+        "Timeline native projection v1",
+        "config.logLevel=debug -> logger only; not applied",
+        "config.theme=default -> colour palette; not applied",
+        "config.themeVariables.cScale0=#ff0000 -> colour palette; not applied",
+        "config.themeVariables.cScale1=#00ff00 -> colour palette; not applied",
+        "config.themeVariables.cScale2=#0000ff -> colour palette; not applied"
       ],
       "prediction": "predicted-draw",
       "expected_states": {

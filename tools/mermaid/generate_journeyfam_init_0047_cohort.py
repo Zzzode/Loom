@@ -8,8 +8,9 @@ Renderer-free. Two duties:
    (`journeyfam_tables.classify` + `notice_lines`) and fail on any disagreement.
    The C++ gate reads the same artifact, so both sides are driven by one case
    list (efficiency rule 37).
-2. Derive the 9-row cohort (journey 4, timeline 5) from `classify`, pin it by a
-   path+sha digest and by `selection.probes_sha256`, and write the ledger.
+2. Derive the 11-row cohort (journey 4, timeline 7, gantt 0 — the last two are
+   the D-454 nested `timeline`/`themeVariables` rows) from `classify`, pin it by
+   a path+sha digest and by `selection.probes_sha256`, and write the ledger.
 
 Per-row `expected_states.narrow_40` is NOT source-derivable; like the sibling
 generators it comes from a reviewed, measured set (empty unless the phase
@@ -35,16 +36,18 @@ PROBES = pathlib.Path("tools/mermaid/journeyfam-init-0047-probes.json")
 SCHEMA = "loom_mermaid_journeyfam_init_0047_cohort/v1"
 PHASE = "P1-initializers"
 
-EXPECTED = {"journey": 4, "timeline": 5, "gantt": 0}
-EXPECTED_TOTAL = 9
+# D-454 adds the two timeline rows whose nested `timeline`/`themeVariables`
+# payloads are now inside the closed grammar.
+EXPECTED = {"journey": 4, "timeline": 7, "gantt": 0}
+EXPECTED_TOTAL = 11
 EXPECTED_KINDS = {"init_admitted", "admitted", "drawn", "themed"}
 
 # Measured narrow-width draws (empty until the phase measures a row at 40
 # columns; the ledger's expected_states are checked live by the gate).
 NARROW_DRAW: set[str] = set()
 
-COHORT_DIGEST = "333fb8658fb91722fab9138a07190e93b3521b34fcf631686f41cf7e6c4ac960"
-PROBES_SHA256 = "0df2234cceafac1ebd743d4bdce785bdea5aaa958d031394ccdf63703788584a"
+COHORT_DIGEST = "258216d09aec53f4f1da13951711c01dcfbe28d5ea41f5eb4b88014eafa1dac7"
+PROBES_SHA256 = "c920f603f238bd5b085d7c103d7e539a5f4787bd7bba9fed00cead9c060f8330"
 
 PHASE_REVIEWS = {
     PHASE: {
@@ -56,6 +59,27 @@ PHASE_REVIEWS = {
         "note": (
             "Filled at phase closure: the probe artifact review, the per-row "
             "frame = twin + footer evidence, and the paired flip/negative audit."),
+    },
+}
+
+# Decision-scope reviews that extend this cohort after its RFC phase. Each
+# record names its own reviewer and artifact scope; the ledger verdict is the
+# conjunction of every record.
+DECISION_REVIEWS = {
+    "D-454": {
+        "reviewer_agent": (
+            "independent read-only adversarial code review (fresh general-purpose "
+            "agent, D-454 timeline nested init payloads, 2026-11-24; round 1 "
+            "REQUEST-CHANGES with a mirror-divergence blocker plus five findings, "
+            "round 2 re-review of the fixes, round 3 verification of the "
+            "provenance record and the join bound)"),
+        "date": "2026-11-24",
+        "scope": (
+            "nested `timeline.disableMulticolor` / `themeVariables.cScaleN` "
+            "admission, cross-directive leaf-identity duplicate rejection, "
+            "canonical cScale index, spanning-directive join bounded at 2048 "
+            "bytes, and the classify_mermaid continuation peek"),
+        "verdict": "approved",
     },
 }
 
@@ -162,7 +186,9 @@ def build(repo_root: pathlib.Path):
                 "manifest_sha256": manifest_rows[rel]["sha256"],
                 "prior_status": manifest_rows[rel]["raw"],
                 "directive": {
-                    name.replace("init_", ""): value for name, value in leaves.items()},
+                    name.replace("init_", ""): value
+                    for name, value in leaves.items()
+                    if name != "init_nested_idents"},
                 "twin": {"kind": "synthetic",
                          "rule": "delete the frontmatter and every leading "
                                  "%%{init...}%% line"},
@@ -203,23 +229,31 @@ def build(repo_root: pathlib.Path):
             "manifest_sha256": sha256_bytes((repo_root / MANIFEST).read_bytes()),
         },
         "selection": {
-            "rule": "a single-line leading %%{init: {...}}%% directive over "
-                    "logLevel/theme with a value inside the family's closed "
-                    "directive table, no frontmatter visual leaf",
+            "rule": "a leading %%{init: {...}}%% directive (single-line or "
+                    "spanning) over logLevel/theme, and since D-454 the closed "
+                    "nested `timeline.disableMulticolor` / "
+                    "`themeVariables.cScaleN` leaves, all inside the family's "
+                    "closed tables, with no frontmatter visual leaf and no "
+                    "repeated leaf across directives",
             "roots": list(EXPECTED),
             "phase": PHASE,
             "cohort_digest": digest,
             "probes_sha256": probes_sha,
             "families": per_family,
-            "exclusions": "timeline disableMulticolor (content key) and the "
-                          "multi-line themeVariables override stay whole-source",
+            "exclusions": "every other content key, named colours, deeper "
+                          "nesting, non-canonical cScale indexes and repeated "
+                          "leaves stay whole-source",
             "width_policy": "wide_240 admission only; narrow_40 is measured per row.",
         },
         "review": {
             "phases": PHASE_REVIEWS,
+            "decisions": DECISION_REVIEWS,
             "probes_sha256": probes_sha,
-            "verdict": "approved" if PHASE_REVIEWS[PHASE]["verdict"] == "approved"
-                       else "pending",
+            "verdict": (
+                "approved"
+                if all(record["verdict"] == "approved"
+                       for record in [*PHASE_REVIEWS.values(), *DECISION_REVIEWS.values()])
+                else "pending"),
         },
         "counts": {
             "total": len(rows),

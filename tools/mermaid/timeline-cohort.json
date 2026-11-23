@@ -18,15 +18,14 @@
       "timeline"
     ],
     "clean_count": 7,
-    "themed_excluded_count": 2,
-    "themed_excluded": [
-      "timeline/pr-check/4-should-render-a-simple-timeline-with-directives-and-disablemulticolor-true.mmd",
-      "timeline/pr-check/5-should-render-a-simple-timeline-with-directive-overridden-colors.mmd"
-    ],
-    "init_admitted_count": 5,
+    "themed_excluded_count": 0,
+    "themed_excluded": [],
+    "init_admitted_count": 7,
     "init_admitted": [
       "timeline/nightly-check/10-should-render-a-simple-timeline-in-forest-theme.mmd",
       "timeline/nightly-check/9-should-render-a-simple-timeline-in-neutral-theme.mmd",
+      "timeline/pr-check/4-should-render-a-simple-timeline-with-directives-and-disablemulticolor-true.mmd",
+      "timeline/pr-check/5-should-render-a-simple-timeline-with-directive-overridden-colors.mmd",
       "timeline/pr-check/6-should-render-a-simple-timeline-in-base-theme.mmd",
       "timeline/pr-check/7-should-render-a-simple-timeline-in-default-theme.mmd",
       "timeline/pr-check/8-should-render-a-simple-timeline-in-dark-theme.mmd"

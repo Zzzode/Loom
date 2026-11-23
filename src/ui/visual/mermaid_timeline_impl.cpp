@@ -131,6 +131,8 @@ bool timeline_wrap(const std::string& label, Work& work, std::vector<std::string
 // does an in-body %%{...theme...}%% initializer. Every other frontmatter line
 // is ignored (the three renderers' long-standing pass-through contract).
 constexpr std::size_t kJourneyFamNoticeLineLimit = 96u;
+// D-454: upper bound for a leading directive spanning several body lines.
+constexpr std::size_t kJourneyFamDirectiveBufferLimit = 2048u;
 constexpr std::string_view kFamilyNoticeHeader = "Timeline native projection v1";
 constexpr std::array<std::string_view, 2> kFamilyLookTable{"classic", "neo"};
 constexpr std::array<std::string_view, 10> kFamilyThemeTable{"dark", "default", "forest", "neo", "neo-dark", "neutral", "redux", "redux-dark", "redux-color", "redux-dark-color"};
@@ -226,29 +228,6 @@ bool journey_fam_directive_quotes(std::string_view text) {
     return true;
 }
 
-std::vector<std::string_view> journey_fam_split_commas(std::string_view text) {
-    std::vector<std::string_view> parts;
-    char quote = 0;
-    std::size_t start = 0;
-    for (std::size_t at = 0; at < text.size(); ++at) {
-        const char c = text[at];
-        if (quote) {
-            if (c == quote) quote = 0;
-            continue;
-        }
-        if (c == '\'' || c == '"') {
-            quote = c;
-            continue;
-        }
-        if (c == ',') {
-            parts.push_back(text.substr(start, at - start));
-            start = at + 1;
-        }
-    }
-    parts.push_back(text.substr(start));
-    return parts;
-}
-
 std::size_t journey_fam_colon(std::string_view text) {
     char quote = 0;
     bool escape = false;
@@ -275,13 +254,137 @@ std::size_t journey_fam_colon(std::string_view text) {
     return std::string_view::npos;
 }
 
+// D-454: a top-level-only split. A comma inside a nested `{...}` object or a
+// quoted scalar does not split; unbalanced braces or an unterminated quote
+// reject the whole directive.
+std::optional<std::vector<std::string_view>> journey_fam_split_entries(std::string_view text) {
+    std::vector<std::string_view> parts;
+    char quote = 0;
+    int depth = 0;
+    std::size_t start = 0;
+    for (std::size_t at = 0; at < text.size(); ++at) {
+        const char c = text[at];
+        if (quote) {
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+        if (c == '{') {
+            ++depth;
+        } else if (c == '}') {
+            if (--depth < 0) return std::nullopt;
+        } else if (c == ',' && depth == 0) {
+            parts.push_back(text.substr(start, at - start));
+            start = at + 1;
+        }
+    }
+    if (quote != 0 || depth != 0) return std::nullopt;
+    parts.push_back(text.substr(start));
+    return parts;
+}
+
+// D-454: the closed nested directive objects. The timeline projection is a
+// text table and never reads a colour, so a boolean/colour payload inside the
+// leading `%%{init}%%` block is inert and disclosed. Only the timeline family
+// enables the table; journey passes an empty span and keeps RFC 0047's flat
+// grammar byte-identical.
+enum class JourneyFamNestedKind { Boolean, Colour };
+
+struct JourneyFamNestedLeaf {
+    std::string_view outer;  // `timeline`
+    std::string_view inner;  // `disableMulticolor`; empty = `cScale<index>`
+    JourneyFamNestedKind kind;
+};
+
+constexpr std::array<JourneyFamNestedLeaf, 2> kTimelineNestedLeaves{{
+    {"timeline", "disableMulticolor", JourneyFamNestedKind::Boolean},
+    {"themeVariables", {}, JourneyFamNestedKind::Colour},
+}};
+
+bool journey_fam_boolean(std::string_view value) {
+    return value == "true" || value == "false";
+}
+
+bool journey_fam_colour(std::string_view value) {
+    if (value.size() != 4u && value.size() != 7u) return false;
+    if (value.front() != '#') return false;
+    for (const char c : value.substr(1u))
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+            return false;
+    return true;
+}
+
+// True for `cScale<index>` with a canonical index in 0..11 (no leading zero).
+bool journey_fam_cscale(std::string_view key) {
+    constexpr std::string_view kPrefix = "cScale";
+    if (!key.starts_with(kPrefix)) return false;
+    const std::string_view digits = key.substr(kPrefix.size());
+    if (digits.empty() || digits.size() > 2u) return false;
+    if (digits.size() == 2u && digits.front() == '0') return false;
+    int index = 0;
+    for (const char c : digits) {
+        if (c < '0' || c > '9') return false;
+        index = index * 10 + (c - '0');
+    }
+    return index <= 11;
+}
+
+// One admitted nested object: `{ 'key': value, ... }` with balanced braces,
+// no deeper nesting, and every (outer, inner) pair in the family's closed
+// table. `lines` receives the disclosure line per admitted leaf in source
+// order; `seen` rejects a repeated leaf across directives.
+bool journey_fam_nested_object(std::string_view outer, std::string_view object,
+                               std::span<const JourneyFamNestedLeaf> nested,
+                               std::vector<std::string>& lines,
+                               std::vector<std::string>& seen, Work& work) {
+    if (object.size() < 2u || object.front() != '{' || object.back() != '}')
+        return false;
+    const std::string_view interior = object.substr(1u, object.size() - 2u);
+    if (interior.find_first_of("{}[]") != std::string_view::npos) return false;
+    if (!journey_fam_directive_quotes(interior)) return false;
+    const auto entries = journey_fam_split_entries(interior);
+    if (!entries || entries->empty()) return false;
+    for (const std::string_view entry : *entries) {
+        const auto colon = journey_fam_colon(entry);
+        if (colon == std::string_view::npos) return false;
+        const auto key = journey_fam_scalar(entry.substr(0u, colon), work);
+        const auto value = journey_fam_scalar(entry.substr(colon + 1u), work);
+        if (!key || !value) return false;
+        std::string id = std::string{outer} + "." + *key;
+        const JourneyFamNestedLeaf* leaf = nullptr;
+        for (const auto& candidate : nested) {
+            if (candidate.outer != outer) continue;
+            if (candidate.inner == *key ||
+                (candidate.inner.empty() && journey_fam_cscale(*key)))
+                leaf = &candidate;
+        }
+        if (leaf == nullptr) return false;
+        if (leaf->kind == JourneyFamNestedKind::Boolean ? !journey_fam_boolean(*value)
+                                                        : !journey_fam_colour(*value))
+            return false;
+        if (!work.spend(id.size() * 4u + 2u * value->size() + 64u)) return false;
+        if (std::ranges::find(seen, id) != seen.end()) return false;
+        seen.push_back(id);
+        lines.push_back("config." + id + "=" + *value + " -> colour palette; not applied");
+    }
+    return true;
+}
+
 // True when `line` is an admitted leading directive; the no-op forms fill
 // nothing. `log_level`/`theme` are shared across the whole block, so a key
-// repeated in a second directive is a duplicate and gates.
+// repeated in a second directive is a duplicate and gates. D-454: a value may
+// be a closed nested object from `nested`; its disclosure lines land in
+// `nested_lines` in source order and `seen_nested` rejects a repeated leaf.
 bool journey_fam_init_directive(std::string_view line,
                                 std::span<const std::string_view> themes,
+                                std::span<const JourneyFamNestedLeaf> nested,
                                 std::optional<std::string>& log_level,
-                                std::optional<std::string>& theme, Work& work) {
+                                std::optional<std::string>& theme,
+                                std::vector<std::string>& nested_lines,
+                                std::vector<std::string>& seen_nested, Work& work) {
     line = journey_fam_rtrim(line);
     if (!line.starts_with("%%{") || !line.ends_with("}%%") || line.size() < 7u) return false;
     const std::string_view inner = line.substr(3u, line.size() - 6u);
@@ -293,15 +396,26 @@ bool journey_fam_init_directive(std::string_view line,
         journey_fam_rtrim(journey_fam_ltrim(directive.substr(5u)));
     if (payload.size() < 2u || payload.front() != '{' || payload.back() != '}') return false;
     const std::string_view interior = payload.substr(1u, payload.size() - 2u);
-    if (interior.find_first_of("{}[]") != std::string_view::npos) return false;
+    if (interior.find_first_of("[]") != std::string_view::npos) return false;
     if (!journey_fam_directive_quotes(interior)) return false;
     if (journey_fam_rtrim(journey_fam_ltrim(interior)).empty()) return true;
-    for (const std::string_view entry : journey_fam_split_commas(interior)) {
+    const auto entries = journey_fam_split_entries(interior);
+    if (!entries) return false;
+    for (const std::string_view entry : *entries) {
         const auto colon = journey_fam_colon(entry);
         if (colon == std::string_view::npos) return false;
         const auto key = journey_fam_scalar(entry.substr(0u, colon), work);
-        const auto value = journey_fam_scalar(entry.substr(colon + 1u), work);
-        if (!key || !value) return false;
+        if (!key) return false;
+        const std::string_view raw_value =
+            journey_fam_rtrim(journey_fam_ltrim(entry.substr(colon + 1u)));
+        if (!raw_value.empty() && raw_value.front() == '{') {
+            if (!journey_fam_nested_object(*key, raw_value, nested, nested_lines, seen_nested,
+                                           work))
+                return false;
+            continue;
+        }
+        const auto value = journey_fam_scalar(raw_value, work);
+        if (!value) return false;
         if (*key == "logLevel") {
             if (log_level ||
                 std::ranges::find(kJourneyFamLogLevels, *value) == kJourneyFamLogLevels.end())
@@ -317,12 +431,23 @@ bool journey_fam_init_directive(std::string_view line,
     return true;
 }
 
+struct JourneyFamVisual {
+    std::vector<std::string> notices;
+    // Offset into the body where the diagram starts (after the admitted
+    // leading directive block; 0 when there is none).
+    std::size_t body_tail_start = 0u;
+};
+
 // nullopt: the whole source stays whole-source. Otherwise the bounded
-// disclosure footer (possibly empty), emitted below the art by the caller.
-std::optional<std::vector<std::string>> journey_fam_visual_config(
+// disclosure footer (possibly empty), emitted below the art by the caller,
+// plus the body offset the diagram parse must start from (D-454: a multi-line
+// directive's continuation lines are not `%%`-prefixed and must not be parsed
+// as diagram statements).
+std::optional<JourneyFamVisual> journey_fam_visual_config(
     std::string_view source, std::string_view header,
     std::span<const std::string_view> looks, std::span<const std::string_view> themes,
-    bool init_enabled, std::span<const std::string_view> init_themes, Work& work) {
+    bool init_enabled, std::span<const std::string_view> init_themes,
+    std::span<const JourneyFamNestedLeaf> nested, Work& work) {
     const auto matches = [](std::span<const std::string_view> table,
                             const std::string& value) {
         return std::ranges::find(table, value) != table.end();
@@ -389,6 +514,7 @@ std::optional<std::vector<std::string>> journey_fam_visual_config(
     // exclusive. The legacy "any body %%{ line that mentions theme keeps the
     // whole source" rule still covers everything from the diagram header on.
     std::optional<std::string> init_log_level, init_theme;
+    std::vector<std::string> nested_lines, seen_nested;
     std::size_t tail_start = 0u;
     if (init_enabled) {
         if (!work.spend(body.size() * 2u + 256u)) return std::nullopt;
@@ -398,8 +524,7 @@ std::optional<std::vector<std::string>> journey_fam_visual_config(
             const auto eol = body.find('\n', pos);
             std::string_view line = body.substr(
                 pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
-            const std::size_t next =
-                eol == std::string_view::npos ? body.size() + 1u : eol + 1u;
+            std::size_t next = eol == std::string_view::npos ? body.size() + 1u : eol + 1u;
             if (!line.empty() && line.back() == '\r') line.remove_suffix(1u);
             const std::string_view trimmed = journey_fam_ltrim(line);
             if (trimmed.empty() || (trimmed.starts_with("%%") && !trimmed.starts_with("%%{"))) {
@@ -410,12 +535,31 @@ std::optional<std::vector<std::string>> journey_fam_visual_config(
                 tail_start = pos;
                 break;
             }
-            if (!journey_fam_init_directive(trimmed, init_themes, init_log_level, init_theme,
-                                            work))
+            // D-454: a directive may span lines until its closing `}%%`; the
+            // joined text is the same closed grammar with whitespace between
+            // entries, bounded so a stray opener cannot swallow the body.
+            std::string buffer{trimmed};
+            while (!journey_fam_rtrim(buffer).ends_with("}%%")) {
+                if (next > body.size()) return std::nullopt;
+                const auto part_eol = body.find('\n', next);
+                std::string_view part = body.substr(
+                    next, part_eol == std::string_view::npos ? std::string_view::npos
+                                                             : part_eol - next);
+                if (!part.empty() && part.back() == '\r') part.remove_suffix(1u);
+                const std::string_view piece = journey_fam_ltrim(part);
+                if (buffer.size() + piece.size() + 1u > kJourneyFamDirectiveBufferLimit ||
+                    !work.spend(piece.size() * 2u + 16u))
+                    return std::nullopt;
+                buffer.push_back(' ');
+                buffer += piece;
+                next = part_eol == std::string_view::npos ? body.size() + 1u : part_eol + 1u;
+            }
+            if (!journey_fam_init_directive(buffer, init_themes, nested, init_log_level,
+                                            init_theme, nested_lines, seen_nested, work))
                 return std::nullopt;
             saw_directive = true;
             pos = next;
-            if (eol == std::string_view::npos) {
+            if (next > body.size()) {
                 tail_start = body.size();
                 break;
             }
@@ -423,7 +567,8 @@ std::optional<std::vector<std::string>> journey_fam_visual_config(
         // A directives-only body has no header to start the tail scan; the
         // admitted block must not be re-read by the legacy rule.
         if (saw_directive && tail_start == 0u) tail_start = body.size();
-        if (fields != 0u && (init_log_level || init_theme)) return std::nullopt;
+        if (fields != 0u && (init_log_level || init_theme || !nested_lines.empty()))
+            return std::nullopt;
     }
     const std::string_view tail = body.substr(tail_start);
     for (std::size_t pos = 0;;) {
@@ -438,7 +583,7 @@ std::optional<std::vector<std::string>> journey_fam_visual_config(
         if (eol == std::string_view::npos) break;
     }
     std::vector<std::string> notices;
-    if (fields != 0u || init_log_level || init_theme) {
+    if (fields != 0u || init_log_level || init_theme || !nested_lines.empty()) {
         if (!journey_fam_notice_line(notices, header, work)) return std::nullopt;
         if ((fields & Look) &&
             !journey_fam_notice_line(notices,
@@ -464,8 +609,10 @@ std::optional<std::vector<std::string>> journey_fam_visual_config(
                                          " -> colour palette; not applied",
                                      work))
             return std::nullopt;
+        for (const auto& line : nested_lines)
+            if (!journey_fam_notice_line(notices, line, work)) return std::nullopt;
     }
-    return notices;
+    return JourneyFamVisual{std::move(notices), tail_start};
 }
 
 }  // namespace
@@ -480,12 +627,13 @@ std::optional<std::vector<std::string>> timeline_layout(std::string_view source,
             return {};
     }
 
-    const std::string_view body = timeline_body(source);
     const auto visual = journey_fam_visual_config(
         source, kFamilyNoticeHeader, kFamilyLookTable, kFamilyThemeTable, kFamilyInitDirectivesEnabled,
-        kFamilyInitThemeTable, work);
+        kFamilyInitThemeTable, kTimelineNestedLeaves, work);
     if (!visual) return {};
-    const std::vector<std::string>& notices = *visual;
+    const std::vector<std::string>& notices = visual->notices;
+    const std::string_view body =
+        timeline_body(source).substr(visual->body_tail_start);
 
     std::vector<TimelineSection> sections;
     sections.push_back({"", {}});  // implicit block before the first section

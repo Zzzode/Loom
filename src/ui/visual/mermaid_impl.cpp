@@ -6211,6 +6211,30 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             header = trim(header.substr(1));
         if (header.starts_with("%%{") && !header.ends_with("}%%")) multiline_directive = true;
         if (header.starts_with("%%{") && header.ends_with("}%%")) class_envelope_seen = true;
+        if (header.starts_with("%%{") && !header.ends_with("}%%")) {
+            // D-454: a directive may span lines; skip its continuation lines so
+            // the header peek still sees the diagram keyword. The owner's own
+            // gate decides admission, exactly as for a single-line directive.
+            if (end == std::string_view::npos) break;
+            remaining.remove_prefix(end + 1);
+            bool closed = false;
+            while (!remaining.empty()) {
+                const auto part_end = remaining.find('\n');
+                std::string_view part = remaining.substr(0, part_end);
+                if (part.ends_with('\r')) part.remove_suffix(1);
+                part = trim(part);
+                const std::size_t consumed =
+                    part_end == std::string_view::npos ? remaining.size() : part_end + 1;
+                peek_bytes += consumed;  // the skip is a real source walk
+                remaining.remove_prefix(consumed);
+                if (part.ends_with("}%%")) {
+                    closed = true;
+                    break;
+                }
+            }
+            if (!closed) break;
+            continue;
+        }
         if (!header.empty() && !header.starts_with("%%")) break;
         if (end == std::string_view::npos) break;
         remaining.remove_prefix(end + 1);
@@ -6255,6 +6279,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
         auto peek = remaining;
         bool opening = true;
         bool closed = false;
+        bool in_multiline_directive = false;
         while (!peek.empty()) {
             const auto end = peek.find('\n');
             auto line = peek.substr(0, end);
@@ -6272,7 +6297,16 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             line = trim(line);
             while (line.starts_with(';'))
                 line = trim(line.substr(1));
-            if (line.starts_with("%%{") && !line.ends_with("}%%")) multiline_directive = true;
+            if (in_multiline_directive) {
+                // D-454: skip continuation lines of a spanning directive.
+                if (line.ends_with("}%%")) in_multiline_directive = false;
+                continue;
+            }
+            if (line.starts_with("%%{") && !line.ends_with("}%%")) {
+                multiline_directive = true;
+                in_multiline_directive = true;
+                continue;
+            }
             if (line.empty() || line.starts_with("%%")) continue;
             flow = (line.starts_with("flowchart") &&
                     (line.size() == 9u || line[9] == ' ' || line[9] == '\t')) ||

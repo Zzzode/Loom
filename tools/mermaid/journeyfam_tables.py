@@ -50,6 +50,16 @@ INIT_THEME_TABLE = {
 LOG_LEVELS = ("0", "1", "2", "3", "4", "5",
               "trace", "debug", "info", "warn", "error", "fatal")
 
+# D-454: the closed nested directive objects. Only the timeline family admits
+# them; journey and gantt keep the RFC 0047 flat grammar. A leaf is
+# (outer, inner-or-empty-for-cScaleN, kind) with kind in {"bool", "colour"}.
+NESTED_TABLE = {
+    "timeline": (("timeline", "disableMulticolor", "bool"),
+                 ("themeVariables", "", "colour")),
+    "journey": (),
+    "gantt": (),
+}
+
 
 def sanitize_breaks(text):
     """Mirror the gantt renderer's `<br ...>` sanitizing (each tag -> one space)."""
@@ -182,57 +192,152 @@ def _first_colon(text):
     return -1
 
 
-def parse_init_directive(line, theses):
-    """Return (admitted, log_level, theme) for one leading directive line.
+def _split_entries(text):
+    """Top-level comma split; commas inside `{...}` or quotes do not split."""
+    parts, quote, depth, start = [], "", 0, 0
+    for at, char in enumerate(text):
+        if quote:
+            if char == quote:
+                quote = ""
+        elif char in "'\"":
+            quote = char
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth < 0:
+                return None
+        elif char == "," and depth == 0:
+            parts.append(text[start:at])
+            start = at + 1
+    if quote or depth != 0:
+        return None
+    parts.append(text[start:])
+    return parts
 
-    `theses` is the family's closed directive theme table. A duplicated key
-    inside one payload is rejected here; duplicates across directives are the
-    caller's job.
+
+def _boolean(value):
+    return value in ("true", "false")
+
+
+def _colour(value):
+    if len(value) not in (4, 7) or not value.startswith("#"):
+        return False
+    return all(char in "0123456789abcdefABCDEF" for char in value[1:])
+
+
+def _cscale(key):
+    if not key.startswith("cScale"):
+        return False
+    digits = key[len("cScale"):]
+    return (digits.isascii() and digits.isdigit() and
+            1 <= len(digits) <= 2 and int(digits) <= 11 and
+            (digits == "0" or digits[0] != "0"))
+
+
+def _nested_object(outer, object_text, nested, leaves, seen, idents):
+    """Mirror journey_fam_nested_object; appends disclosure lines to `leaves`."""
+    if len(object_text) < 2 or object_text[0] != "{" or object_text[-1] != "}":
+        return False
+    interior = object_text[1:-1]
+    if any(char in interior for char in "{}[]"):
+        return False
+    if not _quotes_ok(interior):
+        return False
+    entries = _split_entries(interior)
+    if not entries:
+        return False
+    for entry in entries:
+        colon = _first_colon(entry)
+        if colon < 0:
+            return False
+        key = scalar(entry[:colon])
+        value = scalar(entry[colon + 1:])
+        leaf = None
+        for candidate in nested:
+            if candidate[0] != outer:
+                continue
+            if candidate[1] == key or (candidate[1] == "" and _cscale(key)):
+                leaf = candidate
+        if leaf is None:
+            return False
+        if leaf[2] == "bool":
+            if not _boolean(value):
+                return False
+        elif not _colour(value):
+            return False
+        ident = outer + "." + key
+        if ident in seen:
+            return False
+        seen.add(ident)
+        idents.append(ident)
+        leaves.append(f"config.{outer}.{key}={value} -> colour palette; not applied")
+    return True
+
+
+def parse_init_directive(line, theses, nested=()):
+    """Return (admitted, log_level, theme, nested_lines) for one directive.
+
+    `theses` is the family's closed directive theme table; `nested` is the
+    D-454 closed nested-object table. A duplicated key inside one payload is
+    rejected here; duplicates across directives are the caller's job.
     """
     text = line.rstrip(" \t")
     if not text.startswith("%%{") or not text.endswith("}%%") or len(text) < 7:
-        return False, None, None
+        return False, None, None, [], []
     directive = text[3:-3].strip(" \t")
     if directive == "init":
-        return True, None, None
+        return True, None, None, [], []
     if not directive.startswith("init:"):
-        return False, None, None
+        return False, None, None, [], []
     payload = directive[5:].strip(" \t")
     if len(payload) < 2 or payload[0] != "{" or payload[-1] != "}":
-        return False, None, None
+        return False, None, None, [], []
     interior = payload[1:-1]
-    if any(ch in interior for ch in "{}[]"):
-        return False, None, None
+    if any(char in interior for char in "[]"):
+        return False, None, None, [], []
     if not _quotes_ok(interior):
-        return False, None, None
+        return False, None, None, [], []
     if not interior.strip(" \t"):
-        return True, None, None
+        return True, None, None, [], []
+    entries = _split_entries(interior)
+    if not entries:
+        return False, None, None, [], []
     log_level = theme = None
-    for entry in _split_outside_quotes(interior, ","):
+    nested_lines, seen, nested_idents = [], set(), []
+    for entry in entries:
         colon = _first_colon(entry)
         if colon < 0:
-            return False, None, None
+            return False, None, None, [], []
         key = scalar(entry[:colon])
-        value = scalar(entry[colon + 1:])
+        # Mirror journey_fam_rtrim(journey_fam_ltrim(...)): left trims spaces
+        # only, right trims spaces and tabs.
+        raw = entry[colon + 1:].lstrip(" ").rstrip(" \t")
+        if raw.startswith("{"):
+            if not _nested_object(key, raw, nested, nested_lines, seen, nested_idents):
+                return False, None, None, [], []
+            continue
+        value = scalar(raw)
         if key == "logLevel":
             if log_level is not None or value not in LOG_LEVELS:
-                return False, None, None
+                return False, None, None, [], []
             log_level = value
         elif key == "theme":
             if theme is not None or value not in theses:
-                return False, None, None
+                return False, None, None, [], []
             theme = value
         else:
-            return False, None, None
-    return True, log_level, theme
+            return False, None, None, [], []
+    return True, log_level, theme, nested_lines, nested_idents
 
 
 def classify_init(family, body):
-    """Mirror the RFC 0047 leading-block scan.
+    """Mirror the RFC 0047 leading-block scan (D-454 nested objects included).
 
     Returns (kind, init_leaves) where kind is None when the body is clean,
     "gate" when the block is rejected and "admit" when every leading directive
-    is inside the closed grammar. `init_leaves` carries any admitted values.
+    is inside the closed grammar. `init_leaves` carries any admitted values;
+    `init_nested` is a list of disclosure lines in source order.
     """
     if not INIT_ENABLED[family]:
         return None, {}
@@ -249,7 +354,22 @@ def classify_init(family, body):
             continue
         if not line.startswith("%%{"):
             break
-        ok, log_level, theme = parse_init_directive(line, INIT_THEME_TABLE[family])
+        # D-454: join the following lines until the closing `}%%`, bounding the
+        # prospective size exactly as the renderer does.
+        buffer = line
+        while not buffer.rstrip(" \t").endswith("}%%"):
+            index += 1
+            if index >= len(lines):
+                return "gate", {}
+            part = lines[index]
+            if part.endswith("\r"):
+                part = part[:-1]
+            piece = part.lstrip(" ")
+            if len(buffer) + 1 + len(piece) > 2048:
+                return "gate", {}
+            buffer += " " + piece
+        ok, log_level, theme, nested, nested_idents = parse_init_directive(
+            buffer, INIT_THEME_TABLE[family], NESTED_TABLE[family])
         if not ok:
             return "gate", {}
         if log_level is not None:
@@ -260,6 +380,14 @@ def classify_init(family, body):
             if "init_theme" in leaves:
                 return "gate", {}
             leaves["init_theme"] = theme
+        if nested:
+            # A leaf identity (`outer.key`) repeated across directives is a
+            # duplicate and gates, matching the renderer's shared seen-set.
+            seen = leaves.get("init_nested_idents", [])
+            if any(ident in seen for ident in nested_idents):
+                return "gate", {}
+            leaves["init_nested_idents"] = seen + nested_idents
+            leaves["init_nested"] = leaves.get("init_nested", []) + nested
         index += 1
     return "admit", leaves
 
@@ -374,6 +502,8 @@ def notice_lines(family, leaves, init_leaves=None):
     if "init_theme" in init_leaves:
         lines.append(
             f"config.theme={init_leaves['init_theme']} -> colour palette; not applied")
+    for nested in init_leaves.get("init_nested", []):
+        lines.append(nested)
     return [NOTICE_HEADER[family]] + lines if lines else []
 
 

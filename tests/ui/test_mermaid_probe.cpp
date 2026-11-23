@@ -55,9 +55,15 @@ TEST(MermaidProbe, MultilineDirectiveOwnsClassOnlyForExactHeader) {
     EXPECT_EQ(exact->family, MermaidProbeFamily::Class);
     EXPECT_TRUE(exact->class_envelope);
 
+    // D-454: the header peek now skips a spanning directive's continuation
+    // lines, so a prefix match behaves exactly as it does for a single-line
+    // directive — `classDiagramFoo` selects Class by prefix (the same shape as
+    // `erDiagramX` selecting Er) and the owner rejects the header, leaving the
+    // whole source on fallback. `class_envelope` stays false for the typo.
     auto typo = classify("%%{init: {\n  \"x\":1\n}%%\nclassDiagramFoo\n");
     ASSERT_TRUE(typo.has_value());
-    EXPECT_EQ(typo->family, MermaidProbeFamily::Charts);
+    EXPECT_EQ(typo->family, MermaidProbeFamily::Class);
+    EXPECT_FALSE(typo->class_envelope);
 }
 
 TEST(MermaidProbe, LeadingInitDirectiveMarksClassEnvelope) {

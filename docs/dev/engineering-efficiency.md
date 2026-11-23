@@ -2408,3 +2408,44 @@ renderer already draws it.
    accepted it; no cohort row exercised the difference. Compare the two
    charsets whenever a new identifier validator is added, and pin one negative
    per charset difference in the gate.
+
+## D-454 timeline nested-directive retro (2026-11-24)
+
+1. **A family-local parser fix is not enough when a shared peek misidentifies
+   the header.** The renderer accepted the joined directive, but the source
+   never reached it: `classify_mermaid`'s header peek stopped on the
+   directive's continuation line (`'cScale0': '#ff0000'`) and classified the
+   source as Charts. Diagnostic order that works here: (a) scratch probe that
+   prints the rendered frame, (b) stderr markers at each renderer reject
+   point — their absence localizes the reject to the dispatch layer, before
+   any family code runs.
+2. **A comment-scanning body loop is not a directive-aware loop.** The
+   timeline body parse skipped `%%`-prefixed lines and therefore parsed a
+   spanning directive's continuation lines as diagram statements. Return the
+   body tail offset from the visual-config pass instead of re-deriving it.
+3. **Twin builders must delete the whole directive, not its opener.** The
+   RFC 0047 gate's twin removed `%%{`-prefixed lines; a spanning directive
+   left its payload behind and the "twin must itself draw" assertion caught
+   it. Any twin/oracle that strips a construct must strip the construct's
+   extent.
+4. **Empty partitions need ledger cross-checks (again).** The timeline
+   cohort's `themed_excluded` went 2→0; the 0047 cohort pinned 5→7 and the
+   family gate pins were migrated in the same slice so no row can vanish
+   between the two ledgers.
+5. **A duplicate rule must name its key, and the mirror must share the key.**
+   The renderer keyed nested-leaf duplicates on identity (`outer.key`) while
+   the Python mirror keyed them on the disclosure line (which includes the
+   value), so two directives setting the same leaf to different values were
+   predicted-draw by the generator and gated live. When a dedupe rule exists
+   in two languages, pin the one shape where the two candidate keys disagree
+   (same identity, different value) in the shared probe artifact.
+6. **A prospective bound must be checked against the prospective size.** The
+   mirror tested `len(buffer) > 2048` before appending while the renderer
+   tested `size + piece + 1 > 2048`; a single long continuation line split the
+   two. Bound checks on both sides must be written as the same expression, and
+   the over-bound case belongs in the probe artifact.
+7. **Extending an aged ledger needs its own review record.** The RFC 0047
+   cohort ledger bound the new probe artifact to the 2026-11-22 RFC review.
+   Add a `review.decisions.<id>` record per later extension (reviewer identity,
+   date, scope, verdict) and make the top-level verdict the conjunction, so a
+   green ledger never claims an older sign-off for newer rows.

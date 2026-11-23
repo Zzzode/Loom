@@ -4,12 +4,14 @@
 The timeline renderer (mermaid_timeline_impl.cpp) projects the timeline
 grammar (`timeline [TD]`, title, optional sections, `period : event : ...`
 with colon continuations and <br> breaks) to a bounded native linear text
-table. It has no color contract, so any themed fixture stays on whole-source
+table. It has no color contract, so a visual key is validated against the
+family's closed tables and disclosed; a key outside them stays on whole-source
 fallback.
 
 Renderer-free; the durable gtest enforces every state live. Drift guard pins
-the 7 clean / 23 themed partition; manifest shas are pinned; the review block
-is preserved across regeneration.
+the 7 clean / 16 admitted / 0 themed / 7 init-admitted partition (D-454 moved
+the last two themed rows into the RFC 0047 init cohort); manifest shas are
+pinned; the review block is preserved across regeneration.
 
 Usage: python3 tools/mermaid/generate_timeline_cohort.py --repo-root . [--check]
 """
@@ -128,12 +130,13 @@ def build(repo_root):
 
     # RFC 0040 four-way partition plus the RFC 0047 init-directive bucket
     # (timeline has no fail_closed rows).
-    if (len(clean) != 7 or len(admitted) != 16 or len(themed) != 2
-            or len(init_admitted) != 5):
+    # D-454 moves the two former themed rows into the init cohort.
+    if (len(clean) != 7 or len(admitted) != 16 or len(themed) != 0
+            or len(init_admitted) != 7):
         raise ValueError(
             f"timeline partition drift: drawn={len(clean)} admitted={len(admitted)} "
             f"themed={len(themed)} init_admitted={len(init_admitted)} "
-            f"(expected 7/16/2/5)")
+            f"(expected 7/16/0/7)")
     if len(clean) + len(admitted) + len(themed) + len(init_admitted) != 30:
         raise ValueError("timeline five-way partition does not sum to 30")
 

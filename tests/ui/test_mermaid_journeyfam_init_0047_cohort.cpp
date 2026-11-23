@@ -126,14 +126,28 @@ std::string directive_free_twin(const std::string& source) {
     std::vector<std::string> kept;
     std::string line;
     bool leading = true;
+    bool dropping = false;
+    const auto rtrimmed = [](std::string_view view) {
+        while (!view.empty() && (view.back() == ' ' || view.back() == '\t'))
+            view.remove_suffix(1);
+        return view;
+    };
     auto flush = [&]() {
         std::string_view view{line};
         if (!view.empty() && view.back() == '\r') view.remove_suffix(1);
         const auto first = view.find_first_not_of(' ');
         const auto trimmed = first == std::string_view::npos ? std::string_view{} : view.substr(first);
+        if (dropping) {
+            // D-454: delete the whole spanning directive, not just its opener.
+            if (rtrimmed(trimmed).ends_with("}%%")) dropping = false;
+            return;
+        }
         if (leading) {
-            if (trimmed.starts_with("%%{"))
-                return;  // delete a leading directive line
+            if (trimmed.starts_with("%%{")) {
+                // delete a leading directive (single-line or spanning)
+                if (!rtrimmed(trimmed).ends_with("}%%")) dropping = true;
+                return;
+            }
             if (trimmed.empty() || trimmed.starts_with("%%"))
                 ;  // keep blanks/comments, stay in the leading block
             else
@@ -213,9 +227,9 @@ TEST(MermaidJourneyFamInit0047Cohort, LedgerPinsAndProbeDigest) {
     EXPECT_EQ(ledger.root().get_int("rfc"), 47);
     const auto selection = ledger.root().get("selection");
     EXPECT_EQ(selection.get("families").get_int("journey"), 4);
-    EXPECT_EQ(selection.get("families").get_int("timeline"), 5);
+    EXPECT_EQ(selection.get("families").get_int("timeline"), 7);
     EXPECT_EQ(selection.get("families").get_int("gantt"), 0);
-    EXPECT_EQ(ledger.root().get("counts").get_int("total"), 9);
+    EXPECT_EQ(ledger.root().get("counts").get_int("total"), 11);
     EXPECT_EQ(ledger.root().get("review").get_string("verdict"), "approved");
     // The review is bound to the authored probe artifact.
     const auto probes_sha = std::string(loom::utils::crypto::sha256(read_file(kProbes)));
@@ -238,7 +252,7 @@ TEST(MermaidJourneyFamInit0047Cohort, LedgerPinsAndProbeDigest) {
         EXPECT_NE(footer[1].find("native projection v1"), std::string::npos)
             << row.get_string("path");
     });
-    EXPECT_EQ(rows, 9u);
+    EXPECT_EQ(rows, 11u);
     EXPECT_EQ(selection.get_string("cohort_digest"),
               loom::utils::crypto::sha256(payload));
 }
@@ -310,7 +324,7 @@ TEST(MermaidJourneyFamInit0047Cohort, ProbeArtifactDrivesTheGate) {
             expect_footer(source, footer, label);
         }
     });
-    EXPECT_EQ(entries, 60u);
+    EXPECT_EQ(entries, 73u);
     EXPECT_EQ(kinds.size(), 4u);
 }
 
@@ -386,8 +400,9 @@ TEST(MermaidJourneyFamInit0047Cohort, FamilyLedgersPartitionFiveWays) {
     const auto timeline = timeline_doc.root().get("selection");
     EXPECT_EQ(timeline.get_int("clean_count"), 7);
     EXPECT_EQ(timeline.get_int("admitted_count"), 16);
-    EXPECT_EQ(timeline.get_int("init_admitted_count"), 5);
-    EXPECT_EQ(timeline.get_int("themed_excluded_count"), 2);
+    // D-454: the two former themed rows join the init cohort.
+    EXPECT_EQ(timeline.get_int("init_admitted_count"), 7);
+    EXPECT_EQ(timeline.get_int("themed_excluded_count"), 0);
     EXPECT_EQ(timeline.get_int("clean_count") + timeline.get_int("admitted_count") +
                   timeline.get_int("init_admitted_count") +
                   timeline.get_int("themed_excluded_count"),

@@ -400,3 +400,4 @@ settings change.
 | 2026-11-22 | — | PRR r1 findings folded (probe table, checklist, rollback set) | c98b51a5 |
 | 2026-11-22 | — | PRR r2 findings folded (single-source probe artifact) | fdc8f7f8 |
 | 2026-11-22 | P1 | Implemented and verified: journey 14/4 → 18/0, timeline 23/7 → 28/2, global 1528/617 → 1537/608, formal 1342 → 1351, gaps 48, integrity empty; dual-preset matrix byte-identical `86e4942375205d111af0d39d868ba7cdf299502b0a4f3a9f152900e5ed368ffe`; `ctest -L mermaid` 1508/1508; full debug ctest and the isolated-rerun evidence recorded in D-420 | (this commit) |
+| 2026-11-24 | — | D-454 (decision layer, not an RFC change) extends the timeline TU only: two closed nested payloads (`timeline.disableMulticolor`, `themeVariables.cScaleN`) and spanning directives join this cohort's grammar; cohort 9 → 11 rows, timeline 28/2 → 30/0; provenance in `review.decisions.D-454` of the cohort ledger and in `docs/decisions/design-decisions.md` | local |

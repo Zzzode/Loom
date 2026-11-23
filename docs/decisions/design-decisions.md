@@ -4525,6 +4525,9 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   `normalize_directive_quotes`; keys and values are read with the family's
   `journey_fam_scalar` (quotes, trailing `#` comment). A nested object, unknown
   key, duplicate, out-of-table value, multi-line or trailing text gates.
+  **Timeline supersession:** D-454 later admits two closed nested objects and
+  spanning directives for the timeline TU only; journey and gantt are
+  unchanged.
 - **Gantt keeps the legacy switch.** `kFamilyInitDirectivesEnabled = false`
   leaves gantt's "any body `%%{` line mentioning `theme` gates" rule verbatim:
   0 of its 52 originals carry a directive, so enabling it would only tighten an
@@ -5340,3 +5343,44 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Oracle.** The twin removes the style statements and collapses
   `text id["Label"]` to `text "Label"`; the outline above the footer must be
   cell-equal, and narrow 40 is measured live (all five rows stay source).
+
+## timeline closed nested init payloads (D-454)
+
+- **Scope.** The two remaining timeline originals whose only blockers are the
+  nested init-directive payloads `timeline: {disableMulticolor: <bool>}` and
+  `themeVariables: {cScaleN: '#rrggbb'}`, both inside the leading
+  `%%{init: {...}}%%` block (one of them spanning several lines).
+- **Why inert.** The timeline projection is a bounded text table and never
+  reads a colour or a palette switch, so both payloads only shape the upstream
+  SVG.
+- **Mechanism.** The timeline TU's directive parser gains a closed nested
+  table (`timeline.disableMulticolor` boolean; `themeVariables.cScale0..11`
+  colour). Braces are balanced by a depth-aware top-level splitter, deeper
+  nesting, unknown inner keys, out-of-range `cScale` indexes, named colours
+  and duplicate leaves all keep the whole source. A directive may now span
+  lines up to its `}%%` terminator (≤2048 bytes); the joined text is the same
+  grammar with whitespace between entries. Journey and gantt keep their own
+  TU-local copies unchanged, so their flat grammar is byte-identical.
+- **Disclosure.** `Timeline native projection v1`, then the existing
+  logLevel/theme lines, then one line per admitted nested leaf in source
+  order (`config.timeline.disableMulticolor=true -> colour palette; not
+  applied`, `config.themeVariables.cScale0=#ff0000 -> colour palette; not
+  applied`).
+- **Shared dispatch note.** `classify_mermaid`'s header peek previously read a
+  spanning directive's continuation line as the diagram header, so such a
+  source could only ever be owned by the legacy sequence/class route. The
+  peek now skips continuation lines (both the plain scan and the
+  frontmatter-body scan) and the family renderer keeps sole admission
+  authority — no family's gate semantics change; sources whose renderer
+  rejects their directives still fall back. One classifier label moves: a
+  prefix-shaped header after a spanning directive (`classDiagramFoo`) now
+  selects its family by prefix (exactly as `erDiagramX` selects Er) instead of
+  Charts, and the owner still rejects it; `MermaidProbe.
+  MultilineDirectiveOwnsClassOnlyForExactHeader` pins the new verdict.
+- **Oracle.** The twin deletes the whole leading directive block (single-line
+  or spanning); the art above the footer must be cell-equal. The RFC 0047
+  probe artifact gained thirteen D-454 cases (four admitted shapes including a
+  spanning directive; nine negatives covering unknown/deeper-nested keys,
+  named colours, same-directive and cross-directive duplicate leaves, a
+  non-canonical `cScale` index, the 2048-byte join bound and a journey-family
+  flat-grammar check) plus one RFC 0047 negative flipped to admitted.

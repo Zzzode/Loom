@@ -799,9 +799,13 @@
         "  title Probe",
         "  2002 : LinkedIn"
       ],
-      "expected_kind": "themed",
-      "expected_footer": [],
-      "note": "content key disableMulticolor"
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Timeline native projection v1",
+        "config.theme=base -> colour palette; not applied",
+        "config.timeline.disableMulticolor=true -> colour palette; not applied"
+      ],
+      "note": "content key disableMulticolor (D-454 admission flip)"
     },
     {
       "family": "timeline",
@@ -814,7 +818,7 @@
       ],
       "expected_kind": "themed",
       "expected_footer": [],
-      "note": "multi-line themeVariables"
+      "note": "unterminated multi-line directive"
     },
     {
       "family": "timeline",
@@ -932,6 +936,195 @@
       "expected_kind": "themed",
       "expected_footer": [],
       "note": "comma inside a quoted value stays one entry"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'timeline': {'disableMulticolor': true}}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Timeline native projection v1",
+        "config.timeline.disableMulticolor=true -> colour palette; not applied"
+      ],
+      "note": "D-454 nested boolean"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'themeVariables': { 'cScale0': '#ff0000' }}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Timeline native projection v1",
+        "config.themeVariables.cScale0=#ff0000 -> colour palette; not applied"
+      ],
+      "note": "D-454 nested colour"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'themeVariables': {",
+        "  'cScale0': '#ff0000',",
+        "  'cScale1': '#00ff00'",
+        "}}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Timeline native projection v1",
+        "config.themeVariables.cScale0=#ff0000 -> colour palette; not applied",
+        "config.themeVariables.cScale1=#00ff00 -> colour palette; not applied"
+      ],
+      "note": "D-454 multi-line nested object"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'theme': 'base', 'timeline': {'disableMulticolor': false}}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "init_admitted",
+      "expected_footer": [
+        "Timeline native projection v1",
+        "config.theme=base -> colour palette; not applied",
+        "config.timeline.disableMulticolor=false -> colour palette; not applied"
+      ],
+      "note": "D-454 theme plus nested leaf"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'timeline': {'unknown': true}}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "D-454 unknown nested key gates"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'themeVariables': {'cScale0': 'red'}}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "D-454 named colour gates"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'themeVariables': {'cScale0': '#ff0000', 'cScale0': '#00ff00'}}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "D-454 duplicate nested leaf gates"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'themeVariables': {'cScale12': '#ff0000'}}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "D-454 cScale index above 11 gates"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'timeline': {'disableMulticolor': {'x': true}}}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "D-454 deeper nesting gates"
+    },
+    {
+      "family": "journey",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'themeVariables': { 'cScale0': '#ff0000' }}}%%",
+        "journey",
+        "  title Probe",
+        "  section S",
+        "    A: 1: Me"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "D-454 journey keeps the flat grammar"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'timeline': {'disableMulticolor': true}}}%%",
+        "%%{init: {'timeline': {'disableMulticolor': false}}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "D-454 repeated nested leaf across directives gates (identity, not value)"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {'themeVariables': {'cScale00': '#ff0000'}}}%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "D-454 non-canonical cScale index gates"
+    },
+    {
+      "family": "timeline",
+      "frontmatter": "",
+      "body": [
+        "%%{init: {",
+        "'theme': 'dark'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        } }%%",
+        "timeline",
+        "  title Probe",
+        "  2002 : LinkedIn"
+      ],
+      "expected_kind": "themed",
+      "expected_footer": [],
+      "note": "D-454 spanning directive above the 2048-byte join bound gates"
     }
   ]
 }

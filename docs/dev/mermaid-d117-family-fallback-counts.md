@@ -6,8 +6,8 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1681 drawn /
-464 source_fallback / 0 error at 240 wide**, after D-453 (`local`,
+**Current totals (the last row of the history table below): 1683 drawn /
+462 source_fallback / 0 error at 240 wide**, after D-454 (`local`,
 2026-11-24). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
@@ -88,6 +88,7 @@ are not whole-original errors).
 | After D-451 c4 closed styling calls + accessibility no-ops (6 rows) | 2026-11-23 | local | 1666 | 479 | 0 |
 | After D-452 treemap closed classDef/::: styling (10 rows) | 2026-11-24 | local | 1676 | 469 | 0 |
 | After D-453 venn closed `style` statements (5 rows) | 2026-11-24 | local | 1681 | 464 | 0 |
+| After D-454 timeline closed nested init payloads (2 rows) | 2026-11-24 | local | 1683 | 462 | 0 |
 
 Row-level detail for the newest rows:
 - **D-450 (5)**: `quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd`,
@@ -106,6 +107,9 @@ Row-level detail for the newest rows:
 - **D-453 (5)**: `venn/nightly-check/13-...styles`, `venn/nightly-check/
   explicit-set-style-over-redux-palette`, `venn/nightly-check/handdrawn/18-...`,
   `venn/pr-check/11-...text-colors-via-style`, `venn/pr-check/7-...colors-via-style`.
+- **D-454 (2)**: `timeline/pr-check/4-...directives-and-disablemulticolor-true`
+  (nested `timeline.disableMulticolor`), `timeline/pr-check/5-...directive-
+  overridden-colors` (spanning directive with `themeVariables.cScale0..2`).
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -126,7 +130,7 @@ disposition (fix or documented infeasibility).
 | c4 | 8 | 24 | renderer added 2026-11-12; D-432 (2026-11-23) admits the single `config.wrap` frontmatter row through a tri-state closed parser (the leaf is inert and disclosed, art equals the config-stripped twin); the 8 remaining rows are Update*Style/UpdateLayoutConfig statements with no color/layout contract; live census 24/8/0 from 32 |
 | usecase | 18 | 14 | renderer added 2026-11-13; 12 frontmatter theme/look/config + 6 body classDef/:::/style/init rows stay source (no placement/color contract) |
 | er-diagram | 31 | 13 | |
-| timeline | 2 | 28 | renderer added 2026-11-11; RFC 0040 admitted 16 look/theme rows and RFC 0047 admits the 5 inert leading `%%{init}%%` theme directives (footer-disclosed, synthetic directive-free twins); the 2 remaining are the `disableMulticolor` content key and the multi-line `themeVariables` override; live census 28/2/0 from 30 |
+| timeline | 0 | 30 | renderer added 2026-11-11; RFC 0040 admitted 16 look/theme rows and RFC 0047 admits the 5 inert leading `%%{init}%%` theme directives (footer-disclosed, synthetic directive-free twins); D-454 (2026-11-24) admits the last 2 rows through the closed nested `timeline.disableMulticolor` boolean and `themeVariables.cScale0..11` colour table, including a directive spanning several body lines (twin deletes the whole directive block); the family is closed at 30 originals; live census 30/0/0 from 30 |
 | class-diagram | 25 | 260 | |
 | treemap | 10 | 24 | RFC 0031 treemap reviewed renderer admits the 10 plain originals; D-427 (2026-11-23, TL review-exempt) admits the 6 `config.treemap.valueFormat` rows through the closed d3-format subset (`$0,0`, `.1%`, `.2f`, `$.2f`, `$,.2f`), honoured in the drawn leaf labels by exact decimal string arithmetic (renderer-free Python mirror in the ledger generator; negative values are not in the corpus). The 10 remaining are all `classdef_styling` rows; measured narrow_40 is 6/24 (the six formatted rows wrap instead of falling back) |
 | architecture | 0 | 20 | renderer added 2026-11-13; RFC 0046 (2026-11-22) admits the 4 `config.architecture.*` fcose knobs (randomize/seed/idealEdgeLengthMultiplier) through the closed tuning namespace with a disclosure footer (two corpus twins, two synthetic); live census 20/0/0 from 20 |

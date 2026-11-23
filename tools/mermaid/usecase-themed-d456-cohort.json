@@ -1,0 +1,281 @@
+{
+  "schema": "loom_mermaid_usecase_themed_d456_cohort/v1",
+  "decision": "D-456",
+  "admission": {
+    "shape": "the closed `config.theme` / `config.look: handDrawn` leaves, the closed `config.usecase` leaves including `useMaxWidth: true` and `colorScheme: rotate`, a quoted `systemBoundary \"Title\"` label and a `json <id>@{ ... }` block",
+    "footer": {
+      "header": "Usecase native projection v1",
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin is the same fixture with the frontmatter removed; the art above the footer must be cell-equal"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "usecase originals whose only non-admitted inputs are the closed themed-envelope leaves, the quoted boundary title and the JSON block",
+    "cohort_digest": "ca560262b56299475c67f52f7e1f9695736bb5fcf6391ab3cd614f6dca8056aa"
+  },
+  "counts": {
+    "total": 9,
+    "by_family": {
+      "usecase": 9
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review, fresh general-purpose agent, D-456 usecase themed envelope, 2026-11-24: round 1 REQUEST-CHANGES (mirror divergence, json prefix capture, look twin coverage, boundary keyword, CMake/ledger nits), round 2 APPROVE after fixes (task adc1bfd4d2bc4513d, resumed for the re-check)",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "The roster regeneration and the d117 counts are deferred to the post-approval OfficialMatrix rerun; both landed in the same commit."
+  },
+  "rows": [
+    {
+      "path": "usecase/nightly-check/themed-elements-redux-color-theme.mmd",
+      "family": "usecase",
+      "sha256": "3a921f4cc5c49968d0b08358fce835c87840552616546e2412e73a00e0795ac6",
+      "manifest_sha256": "3a921f4cc5c49968d0b08358fce835c87840552616546e2412e73a00e0795ac6",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "config.theme=redux-color -> colour palette; not applied",
+        "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "frontmatter-free-body",
+        "path": "usecase/nightly-check/themed-elements-redux-color-theme.mmd",
+        "sha256": "3a921f4cc5c49968d0b08358fce835c87840552616546e2412e73a00e0795ac6",
+        "footer_lines": []
+      },
+      "ledger_note": "the usecase projection transcribes statements verbatim and never reads a palette or a source-node style, so the closed frontmatter leaves are inert and disclosed; the quoted boundary title and the JSON block are authored text"
+    },
+    {
+      "path": "usecase/nightly-check/themed-elements-redux-dark-color-theme.mmd",
+      "family": "usecase",
+      "sha256": "6626b6522aba40bef54a4113d37192f12ef695091e6848041eeb04b105973348",
+      "manifest_sha256": "6626b6522aba40bef54a4113d37192f12ef695091e6848041eeb04b105973348",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "config.theme=redux-dark-color -> colour palette; not applied",
+        "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "frontmatter-free-body",
+        "path": "usecase/nightly-check/themed-elements-redux-dark-color-theme.mmd",
+        "sha256": "6626b6522aba40bef54a4113d37192f12ef695091e6848041eeb04b105973348",
+        "footer_lines": []
+      },
+      "ledger_note": "the usecase projection transcribes statements verbatim and never reads a palette or a source-node style, so the closed frontmatter leaves are inert and disclosed; the quoted boundary title and the JSON block are authored text"
+    },
+    {
+      "path": "usecase/pr-check/palette-rotation-redux-color-theme.mmd",
+      "family": "usecase",
+      "sha256": "36c60f0ddaaa545f8b77cd6cbf62017ef46d20db697076ea19ed612fa9ff1fc8",
+      "manifest_sha256": "36c60f0ddaaa545f8b77cd6cbf62017ef46d20db697076ea19ed612fa9ff1fc8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "config.theme=redux-color -> colour palette; not applied",
+        "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
+        "config.usecase.colorScheme=rotate -> SVG layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "frontmatter-free-body",
+        "path": "usecase/pr-check/palette-rotation-redux-color-theme.mmd",
+        "sha256": "36c60f0ddaaa545f8b77cd6cbf62017ef46d20db697076ea19ed612fa9ff1fc8",
+        "footer_lines": []
+      },
+      "ledger_note": "the usecase projection transcribes statements verbatim and never reads a palette or a source-node style, so the closed frontmatter leaves are inert and disclosed; the quoted boundary title and the JSON block are authored text"
+    },
+    {
+      "path": "usecase/pr-check/palette-rotation-redux-dark-color-theme.mmd",
+      "family": "usecase",
+      "sha256": "4f3b3a07904c950c78c88ca50f538cd7435c740d868718d1da25a2a514d98fc7",
+      "manifest_sha256": "4f3b3a07904c950c78c88ca50f538cd7435c740d868718d1da25a2a514d98fc7",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "config.theme=redux-dark-color -> colour palette; not applied",
+        "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied",
+        "config.usecase.colorScheme=rotate -> SVG layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "frontmatter-free-body",
+        "path": "usecase/pr-check/palette-rotation-redux-dark-color-theme.mmd",
+        "sha256": "4f3b3a07904c950c78c88ca50f538cd7435c740d868718d1da25a2a514d98fc7",
+        "footer_lines": []
+      },
+      "ledger_note": "the usecase projection transcribes statements verbatim and never reads a palette or a source-node style, so the closed frontmatter leaves are inert and disclosed; the quoted boundary title and the JSON block are authored text"
+    },
+    {
+      "path": "usecase/pr-check/themed-elements-base-theme.mmd",
+      "family": "usecase",
+      "sha256": "da47d198428b05bfe31ee0b52999e49877506775dc45c65a5bee7ea26feee12d",
+      "manifest_sha256": "da47d198428b05bfe31ee0b52999e49877506775dc45c65a5bee7ea26feee12d",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "config.theme=base -> colour palette; not applied",
+        "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "frontmatter-free-body",
+        "path": "usecase/pr-check/themed-elements-base-theme.mmd",
+        "sha256": "da47d198428b05bfe31ee0b52999e49877506775dc45c65a5bee7ea26feee12d",
+        "footer_lines": []
+      },
+      "ledger_note": "the usecase projection transcribes statements verbatim and never reads a palette or a source-node style, so the closed frontmatter leaves are inert and disclosed; the quoted boundary title and the JSON block are authored text"
+    },
+    {
+      "path": "usecase/pr-check/themed-elements-dark-theme.mmd",
+      "family": "usecase",
+      "sha256": "c82367829e24a3706902badc72ef491e94833293080433b7bd7b3e7b4e1eb619",
+      "manifest_sha256": "c82367829e24a3706902badc72ef491e94833293080433b7bd7b3e7b4e1eb619",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "config.theme=dark -> colour palette; not applied",
+        "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "frontmatter-free-body",
+        "path": "usecase/pr-check/themed-elements-dark-theme.mmd",
+        "sha256": "c82367829e24a3706902badc72ef491e94833293080433b7bd7b3e7b4e1eb619",
+        "footer_lines": []
+      },
+      "ledger_note": "the usecase projection transcribes statements verbatim and never reads a palette or a source-node style, so the closed frontmatter leaves are inert and disclosed; the quoted boundary title and the JSON block are authored text"
+    },
+    {
+      "path": "usecase/pr-check/themed-elements-default-theme.mmd",
+      "family": "usecase",
+      "sha256": "5f656642864de3d5589a1897d1e57ab073ec9a01763cda548df9214f83929817",
+      "manifest_sha256": "5f656642864de3d5589a1897d1e57ab073ec9a01763cda548df9214f83929817",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "config.theme=default -> colour palette; not applied",
+        "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "frontmatter-free-body",
+        "path": "usecase/pr-check/themed-elements-default-theme.mmd",
+        "sha256": "5f656642864de3d5589a1897d1e57ab073ec9a01763cda548df9214f83929817",
+        "footer_lines": []
+      },
+      "ledger_note": "the usecase projection transcribes statements verbatim and never reads a palette or a source-node style, so the closed frontmatter leaves are inert and disclosed; the quoted boundary title and the JSON block are authored text"
+    },
+    {
+      "path": "usecase/pr-check/themed-elements-forest-theme.mmd",
+      "family": "usecase",
+      "sha256": "45f67ae6bbe7691b3c2ab16cde52263b70e55f9edf3a58aca09a275b094e39bd",
+      "manifest_sha256": "45f67ae6bbe7691b3c2ab16cde52263b70e55f9edf3a58aca09a275b094e39bd",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "config.theme=forest -> colour palette; not applied",
+        "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "frontmatter-free-body",
+        "path": "usecase/pr-check/themed-elements-forest-theme.mmd",
+        "sha256": "45f67ae6bbe7691b3c2ab16cde52263b70e55f9edf3a58aca09a275b094e39bd",
+        "footer_lines": []
+      },
+      "ledger_note": "the usecase projection transcribes statements verbatim and never reads a palette or a source-node style, so the closed frontmatter leaves are inert and disclosed; the quoted boundary title and the JSON block are authored text"
+    },
+    {
+      "path": "usecase/pr-check/themed-elements-neutral-theme.mmd",
+      "family": "usecase",
+      "sha256": "bcbc4961f9cf29a4375aa309676710a786e20d77d28cf2adab9fbd02ac0c9a2c",
+      "manifest_sha256": "bcbc4961f9cf29a4375aa309676710a786e20d77d28cf2adab9fbd02ac0c9a2c",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Usecase native projection v1",
+        "config.theme=neutral -> colour palette; not applied",
+        "config.usecase.diagramPadding=24 -> SVG layout tuning; not applied",
+        "config.usecase.useMaxWidth=true -> SVG layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "frontmatter-free-body",
+        "path": "usecase/pr-check/themed-elements-neutral-theme.mmd",
+        "sha256": "bcbc4961f9cf29a4375aa309676710a786e20d77d28cf2adab9fbd02ac0c9a2c",
+        "footer_lines": []
+      },
+      "ledger_note": "the usecase projection transcribes statements verbatim and never reads a palette or a source-node style, so the closed frontmatter leaves are inert and disclosed; the quoted boundary title and the JSON block are authored text"
+    }
+  ]
+}

@@ -18,15 +18,18 @@
       "usecase"
     ],
     "draw_count": 14,
-    "frontmatter_gated_count": 12,
+    "frontmatter_gated_count": 3,
     "frontmatter_gated": [
       "usecase/nightly-check/10-configuration-and-accessibility.mmd",
+      "usecase/pr-check/complete-hand-drawn-rendering-contract.mmd",
+      "usecase/pr-check/small-representative-visual-snapshot.mmd"
+    ],
+    "d456_admitted_count": 9,
+    "d456_admitted": [
       "usecase/nightly-check/themed-elements-redux-color-theme.mmd",
       "usecase/nightly-check/themed-elements-redux-dark-color-theme.mmd",
-      "usecase/pr-check/complete-hand-drawn-rendering-contract.mmd",
       "usecase/pr-check/palette-rotation-redux-color-theme.mmd",
       "usecase/pr-check/palette-rotation-redux-dark-color-theme.mmd",
-      "usecase/pr-check/small-representative-visual-snapshot.mmd",
       "usecase/pr-check/themed-elements-base-theme.mmd",
       "usecase/pr-check/themed-elements-dark-theme.mmd",
       "usecase/pr-check/themed-elements-default-theme.mmd",

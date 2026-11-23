@@ -270,14 +270,19 @@ TEST(MermaidUsecaseAccessibilityD447Cohort, ClosedNamespaceAndAccNegatives) {
              // Closed leaf table.
              "config:\n  usecase:\n    actorFontSize: 17\n",
              "config:\n  usecase:\n    actorFontFamily: Inter\n",
-             "config:\n  usecase:\n    useMaxWidth: true\n",
+             // D-456 admits the corpus' other closed value (`true`); a value
+             // outside the table still gates.
+             "config:\n  usecase:\n    useMaxWidth: maybe\n",
              "config:\n  usecase:\n    diagramPadding: \"24\"\n",
              "config:\n  usecase:\n    actorFontSize: 16\n    actorFontSize: 16\n",
              "config:\n  usecase:\n",
              "config:\n",
-             "config:\n  theme: dark\n",
-             "config:\n  look: handDrawn\n",
-             "config:\n  usecase:\n    actorFontSize: 16\n  theme: dark\n",
+             // D-456 admits the closed config.theme / config.look leaves and
+             // their combination with the usecase namespace; an unknown theme
+             // and a leaf at the wrong depth stay closed.
+             "config:\n  theme: unknown\n",
+             "config:\n  look: classic\n",
+             "config:\n    theme: dark\n",
              "config:\n    usecase:\n      actorFontSize: 16\n",
          }) {
         const auto source = probe(tail, std::string{kBody});

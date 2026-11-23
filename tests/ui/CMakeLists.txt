@@ -257,8 +257,8 @@ add_test(NAME MermaidVennStyleD453Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidVennStyleD453Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
-# D-452: the treemap classDef cohort ledger is a generator constant; the check
-# fails on a hand edit or an unreviewed expectation change.
+# D-455: the tree-view residual cohort ledger is a generator constant; the
+# check fails on a hand edit or an unreviewed expectation change.
 add_test(NAME MermaidTreeviewResidualD455Cohort.GeneratorIsReproducible
     COMMAND "${LOOM_UI_LINT_PYTHON}" -I
         "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_treeview_residual_d455_cohort.py" --check
@@ -266,6 +266,17 @@ add_test(NAME MermaidTreeviewResidualD455Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidTreeviewResidualD455Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-456: the usecase themed-envelope cohort ledger is a generator constant; the
+# check fails on a hand edit or an unreviewed expectation change.
+add_test(NAME MermaidUsecaseThemedD456Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_usecase_themed_d456_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidUsecaseThemedD456Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+# D-452: the treemap classDef cohort ledger is a generator constant; the check
+# fails on a hand edit or an unreviewed expectation change.
 add_test(NAME MermaidTreemapClassdefD452Cohort.GeneratorIsReproducible
     COMMAND "${LOOM_UI_LINT_PYTHON}" -I
         "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_treemap_classdef_d452_cohort.py" --check
@@ -1294,7 +1305,15 @@ gtest_discover_tests(test_mermaid_venn_style_d453_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 
-# D-452: treemap classDef/::: cohort gate.
+# D-456: usecase themed-envelope cohort gate.
+add_executable(test_mermaid_usecase_themed_d456_cohort
+    test_mermaid_usecase_themed_d456_cohort.cpp)
+target_link_libraries(test_mermaid_usecase_themed_d456_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_usecase_themed_d456_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
 # D-455: tree-view residual cohort gate.
 add_executable(test_mermaid_treeview_residual_d455_cohort
     test_mermaid_treeview_residual_d455_cohort.cpp)
@@ -1304,6 +1323,7 @@ gtest_discover_tests(test_mermaid_treeview_residual_d455_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 
+# D-452: treemap classDef/::: cohort gate.
 add_executable(test_mermaid_treemap_classdef_d452_cohort
     test_mermaid_treemap_classdef_d452_cohort.cpp)
 target_link_libraries(test_mermaid_treemap_classdef_d452_cohort

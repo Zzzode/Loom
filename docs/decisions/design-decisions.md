@@ -5412,3 +5412,38 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Oracle.** The twin is the same fixture with the frontmatter removed; the
   art above the footer must be cell-equal, and narrow 40 is measured live (both
   rows stay source there).
+
+## usecase themed envelope, quoted boundary title and JSON block (D-456)
+
+- **Scope.** The nine themed usecase originals whose only non-admitted inputs
+  are the closed top-level `config.theme` (9 names) / `config.look:
+  handDrawn` leaves, the `config.usecase.useMaxWidth: true` /
+  `colorScheme: rotate` leaves, a quoted `systemBoundary "Title"` label and a
+  `json <id>@{ ... }` block.
+- **Why inert.** The usecase projection is a verbatim text outline: it draws no
+  palette, no source-node style and no SVG layout tuning. `config.theme` and
+  `config.look` therefore have **no visual side effect — the keys are accepted
+  and disclosed but not applied**, and rendering with them is identical to
+  rendering the same body without them. The quoted boundary title and the JSON
+  block are authored text and are transcribed as written.
+- **Mechanism.** The frontmatter walk accepts an indent-2 `theme` (exact
+  closed vocabulary, one occurrence) and `look: handDrawn` (one occurrence)
+  inside `config`, in addition to the D-447 `usecase` namespace. A leaf may
+  now carry more than one closed value (`useMaxWidth: false|true`); a key
+  repeated in the same source still gates. The boundary branch (`systemBoundary`
+  as the exact keyword, so `systemBoundaryX` stays closed) validates a leading
+  `"` with `usecase_quoted_label` on the raw statement (rejecting an empty
+  title and trailing junk); the `json <identifier>@{` opener starts a verbatim
+  block whose payload lines must be non-empty, single-line and quote-leading,
+  whose close is a lone `}`, and which must be closed by the end of the body.
+  A statement that only starts with `json ` (for example the edge
+  `json --> Foo`) is not a block opener and falls through to the edge and
+  declaration branches unchanged.
+- **Disclosure.** `Usecase native projection v1` plus, in canonical order,
+  `config.theme=<name> -> colour palette; not applied`,
+  `config.look=handDrawn -> source node style; not applied`, then the
+  `config.usecase.<key>=<value> -> SVG layout tuning; not applied` lines.
+- **Oracle.** The twin is the same fixture with the frontmatter removed; the
+  art above the footer must be cell-equal — the assertion that proves the
+  accepted keys change no output. Narrow 40 is measured live (all nine rows
+  stay source there).

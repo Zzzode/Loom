@@ -2468,3 +2468,38 @@ renderer already draws it.
    false. The exclusion text is authored in the generator, so it was updated
    and the ledger regenerated in the same slice — otherwise the register would
    carry a silently stale claim.
+
+## D-456 usecase themed envelope retro (2026-11-24)
+
+1. **A closed leaf table can legitimately hold several values per key.** The
+   D-447 `config.usecase` leaf table stored one allowed value per key, so a
+   value-mismatch branch returned early and `useMaxWidth: true` (the corpus'
+   other precisely-counted value) was unreachable even after being listed.
+   When widening a table to `key -> {values}`, make the mismatch `continue`
+   (not `return`) and keep the duplicate-key rejection separate — a repeated
+   key is a different rule from an out-of-table value, and conflating them
+   silently disables one of the two.
+2. **A quoted-label path must be entered only when the quote is at the head.**
+   `systemBoundary admin["Admin Panel"]@{...}` (an already-drawn corpus row)
+   tripped a validator that fired on any `"` in the statement; the branch now
+   requires `raw_tail.front() == '"'`, identical to the usecase declaration
+   fallback. A new quoted surface must be gated by the head character, then
+   validated to end-of-statement so trailing junk still gates.
+3. **A verbatim block needs a post-loop open check.** An unterminated
+   `json <id>@{` was accepted because only the opener was validated; the
+   `in_json_block` flag is now tested after the loop, alongside the
+   `accDescr` block check. Any new "stateful block" admission inherits the
+   same obligation: the unclosed case is a negative in the cohort test, not
+   just a code path.
+4. **TL disclosure convention for keys with no terminal analogue.** The
+   `config.theme` / `config.look` leaves are accepted, disclosed in the footer
+   as "not applied", and proven inert by the frontmatter-free twin equality
+   (same fixture, same viewport, art above the footer cell-equal). The family
+   doc records the acceptance-without-application explicitly, so the ledger
+   never implies the keys influence output.
+5. **The d117 per-family table only stays current for the touched family.**
+   Several rows (xychart, state-diagram-v2, mindmap, class-diagram, the Total
+   line) had drifted from the live matrix because later slices updated the
+   banner and history row but not their own family row. Each slice must update
+   its family row in the same commit, and the whole table is refreshed from the
+   matrix at batch closure rather than per slice.

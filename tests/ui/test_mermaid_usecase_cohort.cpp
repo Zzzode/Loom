@@ -28,6 +28,8 @@ using json::JsonVal;
 
 const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases";
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
+const fs::path kD456Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/usecase-themed-d456-cohort.json";
 const fs::path kD447Ledger =
     fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/usecase-accessibility-d447-cohort.json";
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/usecase-cohort.json";
@@ -86,7 +88,9 @@ TEST(MermaidUsecaseCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_usecase_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 14);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 14);
-    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 12);
+    // D-456 moves the nine themed rows into their own decision cohort.
+    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 3);
+    EXPECT_EQ(root.get("selection").get_int("d456_admitted_count"), 9);
     EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 6);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
@@ -143,10 +147,12 @@ TEST(MermaidUsecaseCohort, GatedUsecasesStayWholeSource) {
     // D-447 admits the closed `config.usecase` namespace + accessibility row;
     // its positive is owned by test_mermaid_usecase_accessibility_d447_cohort.
     std::set<std::string> admitted;
-    auto d447 = json::parse(read_file(kD447Ledger));
-    ASSERT_TRUE(d447.has_value()) << "D-447 cohort ledger must parse";
-    d447->root().get("rows").iter(
-        [&](const JsonVal row) { admitted.insert(row.get_string("path")); });
+    for (const auto& ledger_path : {kD447Ledger, kD456Ledger}) {
+        auto admitted_ledger = json::parse(read_file(ledger_path));
+        ASSERT_TRUE(admitted_ledger.has_value()) << "cohort ledger must parse";
+        admitted_ledger->root().get("rows").iter(
+            [&](const JsonVal row) { admitted.insert(row.get_string("path")); });
+    }
     const auto& selection = ledger.root().get("selection");
     int skipped = 0;
     for (const auto* key : {"frontmatter_gated", "body_style_gated"}) {
@@ -160,7 +166,7 @@ TEST(MermaidUsecaseCohort, GatedUsecasesStayWholeSource) {
         });
     }
     EXPECT_EQ(skipped, 1);
-    EXPECT_EQ(admitted.size(), 1u);
+    EXPECT_EQ(admitted.size(), 10u);
 }
 
 // Key-based gate: prose mentioning "config"/"theme" is not a gate; a

@@ -255,7 +255,13 @@ struct UsecaseLeaf {
     std::string_view key, value;
 };
 
-constexpr std::array<UsecaseLeaf, 9> kUsecaseLeaves{{
+// D-456: the closed top-level `config.theme` leaf. The usecase projection draws
+// a text outline and never reads a palette, so the name is inert and disclosed.
+constexpr std::array<std::string_view, 9> kUsecaseThemes{
+    {"base", "dark", "default", "forest", "neutral", "redux", "redux-dark",
+     "redux-color", "redux-dark-color"}};
+
+constexpr std::array<UsecaseLeaf, 11> kUsecaseLeaves{{
     {"actorFontSize", "16"},
     {"actorFontFamily", "Arial"},
     {"actorFontWeight", "bold"},
@@ -265,6 +271,10 @@ constexpr std::array<UsecaseLeaf, 9> kUsecaseLeaves{{
     {"rankSpacing", "70"},
     {"diagramPadding", "24"},
     {"useMaxWidth", "false"},
+    // D-456: the same leaf under the corpus' other closed value, plus the
+    // categorical palette selector. Both are inert in a text projection.
+    {"useMaxWidth", "true"},
+    {"colorScheme", "rotate"},
 }};
 
 bool usecase_frontmatter(std::string_view source, std::vector<std::string>& notices,
@@ -275,6 +285,8 @@ bool usecase_frontmatter(std::string_view source, std::vector<std::string>& noti
     const std::string_view frontmatter = source.substr(4, close - 4);
     bool in_config = false, saw_config = false, saw_description = false, folded = false,
          namespace_seen = false, payload = false;
+    std::optional<std::string> theme_value;
+    bool look_seen = false;
     std::size_t block_indent = 0;
     std::array<bool, kUsecaseLeaves.size()> seen{};
     for (std::size_t pos = 0;;) {
@@ -290,7 +302,8 @@ bool usecase_frontmatter(std::string_view source, std::vector<std::string>& noti
         if (folded && in_config == false && line.front() == ' ') {
             const auto indent = line.find_first_not_of(' ');
             if (block_indent == 0) block_indent = indent;
-            if (indent != block_indent || !unicode_text(line.substr(indent))) return false;
+            if (indent != block_indent || !unicode_text(line.substr(indent)))
+                return false;
             payload = true;
             if (eol == std::string_view::npos) break;
             continue;
@@ -313,11 +326,29 @@ bool usecase_frontmatter(std::string_view source, std::vector<std::string>& noti
             if (key_start == 2u && key == "usecase" && value.empty()) {
                 if (namespace_seen) return false;
                 namespace_seen = true;
+            } else if (key_start == 2u && key == "look") {
+                // D-456: the closed inert look leaf.
+                if (look_seen || value != "handDrawn") return false;
+                look_seen = true;
+            } else if (key_start == 2u && key == "theme") {
+                // D-456: the closed inert palette leaf.
+                if (theme_value || std::ranges::find(kUsecaseThemes, value) ==
+                                       kUsecaseThemes.end())
+                    return false;
+                theme_value = std::string{value};
             } else if (key_start == 4u && namespace_seen) {
                 bool matched = false;
                 for (std::size_t i = 0; i < kUsecaseLeaves.size(); ++i) {
                     if (kUsecaseLeaves[i].key != key) continue;
-                    if (seen[i] || kUsecaseLeaves[i].value != value) return false;
+                    // D-456: a key may carry more than one closed value; try the
+                    // next entry before failing (an unknown value leaves
+                    // `matched` false and gates below).
+                    if (kUsecaseLeaves[i].value != value) continue;
+                    if (seen[i]) return false;
+                    // A key may carry more than one closed value entry but only
+                    // one may appear per source.
+                    for (std::size_t j = 0; j < kUsecaseLeaves.size(); ++j)
+                        if (seen[j] && kUsecaseLeaves[j].key == key) return false;
                     seen[i] = true;
                     matched = true;
                     break;
@@ -353,9 +384,9 @@ bool usecase_frontmatter(std::string_view source, std::vector<std::string>& noti
     if (folded && !payload) return false;
     bool any = false;
     for (const auto flag : seen) any |= flag;
-    if (saw_config && !any) return false;
+    if (saw_config && !any && !theme_value && !look_seen) return false;
     if (namespace_seen && !any) return false;
-    if (any) {
+    if (any || theme_value || look_seen) {
         std::size_t bytes = 0;
         auto push = [&](std::string_view line) -> bool {
             if (line.size() > kUsecaseNoticeLineLimit || !work.spend(line.size() * 4u + 32u))
@@ -364,6 +395,18 @@ bool usecase_frontmatter(std::string_view source, std::vector<std::string>& noti
             return true;
         };
         if (!push(kUsecaseNoticeHeader)) return false;
+        if (theme_value) {
+            const std::string line =
+                "config.theme=" + *theme_value + " -> colour palette; not applied";
+            if (!push(line)) return false;
+            bytes += line.size();
+        }
+        if (look_seen) {
+            const std::string line =
+                "config.look=handDrawn -> source node style; not applied";
+            if (!push(line)) return false;
+            bytes += line.size();
+        }
         for (std::size_t i = 0; i < kUsecaseLeaves.size(); ++i) {
             if (!seen[i]) continue;
             std::string line = "config.usecase.";
@@ -390,6 +433,20 @@ bool usecase_accessibility_value(std::string_view raw, Work& work) {
         value = trim_view(value.substr(1u, value.size() - 2u));
     return !value.empty() && value.size() <= static_cast<std::size_t>(kUsecaseMaxTextBytes) &&
            value.find_first_of("\r\n\t") == std::string_view::npos && unicode_text(value);
+}
+
+// D-456: a quoted boundary title — the only visible form upstream allows
+// beyond a bare identifier. The statement is transcribed verbatim, so the
+// label only has to be bounded, single-line and unicode.
+bool usecase_quoted_label(std::string_view raw, Work& work) {
+    if (!work.spend(raw.size() * 2u + 32u)) return false;
+    if (raw.size() < 3u || raw.front() != '"') return false;
+    const auto close = raw.find('"', 1u);
+    if (close == std::string_view::npos || close == 1u) return false;
+    if (!trim_view(raw.substr(close + 1u)).empty()) return false;
+    const auto label = raw.substr(1u, close - 1u);
+    return label.size() <= static_cast<std::size_t>(kUsecaseMaxTextBytes) &&
+           label.find_first_of("\r\n\t") == std::string_view::npos && unicode_text(label);
 }
 
 std::optional<std::vector<std::string>> usecase_layout(std::string_view source, Work& work) {
@@ -478,6 +535,7 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
 
     bool saw_direction = false;
     bool saw_acc_title = false, saw_acc_descr = false, in_descr_block = false;
+    bool in_json_block = false;
     int boundary_depth = 0;
     std::vector<std::string> out;
     auto push_guarded = [&](const std::string& row) -> bool {
@@ -496,6 +554,23 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
         const std::string code = blank_quotes(stmt);
         const std::string_view cv = code;
 
+        if (in_json_block) {
+            // D-456: a `json <id>@{ ... }` block is transcribed verbatim. The
+            // payload lines stay bounded single-line unicode; the close is a
+            // lone `}`.
+            if (stmt == "}") {
+                in_json_block = false;
+                if (!push_guarded(stmt)) return {};
+                continue;
+            }
+            if (stmt.empty() ||
+                stmt.size() > static_cast<std::size_t>(kUsecaseMaxTextBytes) ||
+                !unicode_text(stmt) || stmt.find_first_of("{}") != std::string::npos ||
+                trim_view(stmt).front() != '"')
+                return {};
+            if (!push_guarded(stmt)) return {};
+            continue;
+        }
         if (in_descr_block) {
             // D-447: block-form accDescr payload is validated opaque text.
             if (stmt == "}") {
@@ -539,15 +614,45 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
         if (cv.starts_with("direction ")) {
             if (saw_direction || !is_direction(trim_view(cv.substr(10)))) return {};
             saw_direction = true;
-        } else if (cv.starts_with("systemBoundary")) {
+        } else if (cv == "systemBoundary" || cv.starts_with("systemBoundary ")) {
             if (boundary_depth >= kUsecaseMaxBoundaryDepth) return {};
-            if (!validate_declaration(trim_view(cv.substr(15)))) return {};
+            // Both views keep blank_quotes' length, so the guarded tail is the
+            // same slice on either side; the keyword check excludes a longer
+            // identifier such as `systemBoundaryX`.
+            const auto after_keyword = [](std::string_view statement) {
+                return statement.size() > 15u ? trim_view(statement.substr(15u))
+                                              : std::string_view{};
+            };
+            const auto tail = after_keyword(cv);
+            const std::string_view raw{stmt};
+            const auto raw_tail = after_keyword(raw);
+            if (!raw_tail.empty() && raw_tail.front() == '"') {
+                // The blanked view erased a quoted title; validate it on the
+                // raw statement (same offset, blank_quotes preserves length),
+                // which also rejects any trailing text after the title.
+                if (!usecase_quoted_label(raw_tail, work)) return {};
+            } else if (!validate_declaration(tail)) {
+                return {};
+            }
             ++boundary_depth;
         } else if (cv == "end") {
             if (boundary_depth == 0) return {};
             --boundary_depth;
         } else if (cv.starts_with("note ")) {
             if (!validate_note(cv)) return {};
+        } else if (cv.starts_with("json ") && cv.find("@{") != std::string_view::npos) {
+            // D-456: `json <identifier>@{` opens a verbatim block. A statement
+            // that merely starts with `json ` (an edge such as `json --> Foo`)
+            // falls through to the edge/declaration branches unchanged.
+            const auto rest = trim_view(cv.substr(5u));
+            const auto open = rest.find("@{");
+            if (open == std::string_view::npos || open == 0u ||
+                !is_identifier(trim_view(rest.substr(0u, open))) ||
+                !trim_view(rest.substr(open + 2u)).empty())
+                return {};
+            in_json_block = true;
+            if (!push_guarded(stmt)) return {};
+            continue;
         } else if (cv.starts_with("actor ")) {
             if (!validate_declaration(trim_view(cv.substr(6)))) return {};
         } else if (is_edge(cv)) {
@@ -565,6 +670,7 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
     }
 
     if (in_descr_block) return {};       // unclosed accDescr block
+    if (in_json_block) return {};        // unclosed json block
     if (boundary_depth != 0) return {};  // unclosed system boundary
     if (out.empty()) {
         if (!push_guarded("usecase-beta")) return {};  // header-only frame

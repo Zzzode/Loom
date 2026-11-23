@@ -118,6 +118,17 @@ def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
+    D456 = {
+        "usecase/nightly-check/themed-elements-redux-color-theme.mmd",
+        "usecase/nightly-check/themed-elements-redux-dark-color-theme.mmd",
+        "usecase/pr-check/palette-rotation-redux-color-theme.mmd",
+        "usecase/pr-check/palette-rotation-redux-dark-color-theme.mmd",
+        "usecase/pr-check/themed-elements-base-theme.mmd",
+        "usecase/pr-check/themed-elements-dark-theme.mmd",
+        "usecase/pr-check/themed-elements-default-theme.mmd",
+        "usecase/pr-check/themed-elements-forest-theme.mmd",
+        "usecase/pr-check/themed-elements-neutral-theme.mmd",
+    }
     draw, fm_gate, body_gate = set(), set(), set()
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
         text = path.read_text()
@@ -132,11 +143,15 @@ def build(repo_root):
         else:
             draw.add(rel)
 
-    if (len(draw), len(fm_gate), len(body_gate)) != (14, 12, 6):
+    moved = fm_gate & D456
+    if len(moved) != 9:
+        raise ValueError(f"D-456 rows drifted out of the frontmatter partition: {sorted(moved)}")
+    fm_gate -= D456
+    if (len(draw), len(fm_gate), len(body_gate)) != (14, 3, 6):
         raise ValueError(
             f"usecase partition drift: draw={len(draw)} "
             f"frontmatter={len(fm_gate)} body_style={len(body_gate)} "
-            f"(expected 14/12/6)")
+            f"(expected 14/3/6; the nine D-456 rows moved out)")
 
     rows = []
     for rel in sorted(draw):
@@ -198,6 +213,8 @@ def build(repo_root):
             "draw_count": len(draw),
             "frontmatter_gated_count": len(fm_gate),
             "frontmatter_gated": sorted(fm_gate),
+            "d456_admitted_count": len(moved),
+            "d456_admitted": sorted(moved),
             "body_style_gated_count": len(body_gate),
             "body_style_gated": sorted(body_gate),
         },

@@ -6,8 +6,8 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1685 drawn /
-460 source_fallback / 0 error at 240 wide**, after D-455 (`local`,
+**Current totals (the last row of the history table below): 1694 drawn /
+451 source_fallback / 0 error at 240 wide**, after D-456 (`local`,
 2026-11-24). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
@@ -90,6 +90,7 @@ are not whole-original errors).
 | After D-453 venn closed `style` statements (5 rows) | 2026-11-24 | local | 1681 | 464 | 0 |
 | After D-454 timeline closed nested init payloads (2 rows) | 2026-11-24 | local | 1683 | 462 | 0 |
 | After D-455 tree-view residual envelope and icon suppression (2 rows) | 2026-11-24 | local | 1685 | 460 | 0 |
+| After D-456 usecase themed envelope + quoted boundary/json block (9 rows) | 2026-11-24 | local | 1694 | 451 | 0 |
 
 Row-level detail for the newest rows:
 - **D-450 (5)**: `quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd`,
@@ -115,6 +116,18 @@ Row-level detail for the newest rows:
   quoted-labels` (trailing-space closing fence + closed namespace leaves),
   `tree-view/nightly-check/should-hide-default-icons-with-icon-none-and-icon`
   (`icon(none)` / empty `icon()`).
+- **D-456 (9)**: `usecase/nightly-check/themed-elements-redux-color-theme`,
+  `usecase/nightly-check/themed-elements-redux-dark-color-theme`,
+  `usecase/pr-check/palette-rotation-redux-color-theme`,
+  `usecase/pr-check/palette-rotation-redux-dark-color-theme`,
+  `usecase/pr-check/themed-elements-{base,dark,default,forest,neutral}-theme`.
+  Every row carries the closed `config.theme` + `config.usecase`
+  (`diagramPadding: 24`, `useMaxWidth: true`) leaves, the quoted
+  `systemBoundary "Authentication System"` label and a `json <id>@{ ... }`
+  block; the two `palette-rotation-*` rows add
+  `usecase.colorScheme: rotate`. The theme/leaves are inert and disclosed
+  "not applied" (art equals the frontmatter-free twin), and the boundary title
+  and JSON block are transcribed verbatim.
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -133,7 +146,7 @@ disposition (fix or documented infeasibility).
 | xychart | 35 | 13 | D236: +11 folded-description envelope originals (description-only `>-` frontmatter now family-agnostic, not pie-only); 5 SHA-bound E2c rows stay source (4 inline per-point quoted labels, 1 over-limit multi-series), remaining are config/theme/title/init gates |
 | agentflow | 2 | 36 | renderer added 2026-11-14; full agentflow-beta grammar (flow/global/connector containers, @{ } metadata, four edge vocabularies, labeled branches) validated and projected as a bounded native outline, not a flowchart approximation; RFC 0041 (2026-11-22) admits the 9 theme-only rows through a closed seven-value table with a disclosure footer, so the live census is 36/2/0 from 38 (the 2 `look`+`handDrawnSeed` rows stay source); 19 of 27 native rows draw at 40 columns and 0 of 9 admitted rows do (the footer exceeds the viewport) |
 | c4 | 8 | 24 | renderer added 2026-11-12; D-432 (2026-11-23) admits the single `config.wrap` frontmatter row through a tri-state closed parser (the leaf is inert and disclosed, art equals the config-stripped twin); the 8 remaining rows are Update*Style/UpdateLayoutConfig statements with no color/layout contract; live census 24/8/0 from 32 |
-| usecase | 18 | 14 | renderer added 2026-11-13; 12 frontmatter theme/look/config + 6 body classDef/:::/style/init rows stay source (no placement/color contract) |
+| usecase | 8 | 24 | renderer added 2026-11-13; D-447 (2026-11-23) admits the closed `config.usecase` namespace + accessibility no-op row; D-456 (2026-11-24) admits the nine themed originals through the closed top-level `config.theme`/`config.look` and `config.usecase` leaves (inert, footer-disclosed "not applied", art equal to the frontmatter-free twin), the quoted `systemBoundary "Title"` label and the `json <id>@{ ... }` block (transcribed verbatim); the 8 remaining are `classDef`/`style`/`:::class` body rows, several also carrying per-edge `@{...}` animation metadata (roster primary category `edge_animation_metadata`); live census 24/8/0 from 32 |
 | er-diagram | 31 | 13 | |
 | timeline | 0 | 30 | renderer added 2026-11-11; RFC 0040 admitted 16 look/theme rows and RFC 0047 admits the 5 inert leading `%%{init}%%` theme directives (footer-disclosed, synthetic directive-free twins); D-454 (2026-11-24) admits the last 2 rows through the closed nested `timeline.disableMulticolor` boolean and `themeVariables.cScale0..11` colour table, including a directive spanning several body lines (twin deletes the whole directive block); the family is closed at 30 originals; live census 30/0/0 from 30 |
 | class-diagram | 25 | 260 | |

@@ -6291,7 +6291,30 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
                 continue;
             }
             if (!closed) {
-                if (line == "---") closed = true;
+                if (line == "---") {
+                    closed = true;
+                } else if (line.size() > 3 && line.substr(0, 3) == "---" &&
+                           line.find_first_not_of(" \t", 3) == std::string_view::npos) {
+                    // D-455: a trailing-whitespace fence closes only for the
+                    // one corpus shape whose owner admits it (`treeView-beta`
+                    // right after the fence). Every other family keeps the
+                    // pre-D-455 non-closing behavior: a tolerant body stripper
+                    // paired with an exact namespace gate would otherwise draw
+                    // with its whole frontmatter silently dropped.
+                    auto ahead = peek;
+                    while (!ahead.empty()) {
+                        const auto next_nl = ahead.find('\n');
+                        std::string_view next = ahead.substr(0, next_nl);
+                        if (next.ends_with('\r')) next.remove_suffix(1);
+                        next = trim(next);
+                        if (!next.empty() && !next.starts_with("%%")) {
+                            if (next == "treeView-beta") closed = true;
+                            break;
+                        }
+                        if (next_nl == std::string_view::npos) break;
+                        ahead.remove_prefix(next_nl + 1);
+                    }
+                }
                 continue;
             }
             line = trim(line);

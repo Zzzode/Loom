@@ -14,8 +14,9 @@ line weight or pixel indentation, so every leaf is inert and disclosed under
 equals the config-stripped twin's art.
 
 The closing fence is matched strictly (`\\n---\\n`) because that is the shape the
-shared classify probe can dispatch; a `---      ` close (the custom-config row)
-never reaches any family renderer and stays whole-source.
+shared classify probe dispatched when this cohort landed; D-455 later admits
+the `---      ` custom-config row and the empty-`icon()` row in their own
+cohort, so the trailing-space close now reaches the tree-view renderer.
 
 Usage: python3 tools/mermaid/generate_treeview_ns_d433_cohort.py [--check]
 """
@@ -270,8 +271,8 @@ def build(repo_root: pathlib.Path):
                     "including the filenameIcons / extensionIcons maps",
             "cohort_digest": digest,
             "exclusions": "look/theme keys, unknown leaves, unknown map entries and style "
-                          "statements stay whole-source; a `---      ` closing fence never "
-                          "reaches a family renderer through the shared classify probe",
+                          "statements stay whole-source; the trailing-space closing fence "
+                          "row was out of scope here (D-455 admits it later)",
         },
         "review": {
             "reviewer_agent": "TL exemption 2026-11-22: family slice without a design "

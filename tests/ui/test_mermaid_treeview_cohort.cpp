@@ -33,6 +33,8 @@ const fs::path kD433Ledger =
     fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treeview-ns-d433-cohort.json";
 const fs::path kD434Ledger =
     fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treeview-icons-d434-cohort.json";
+const fs::path kD455Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treeview-residual-d455-cohort.json";
 constexpr int kWide = 240;
 constexpr int kNarrow = 40;
 constexpr int kHeight = 1600;
@@ -88,7 +90,9 @@ TEST(MermaidTreeviewCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_treeview_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 8);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 8);
-    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 5);
+    // D-455 moves the two residual rows into their own decision cohort.
+    EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 3);
+    EXPECT_EQ(root.get("selection").get_int("d455_admitted_count"), 2);
     EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 2);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
@@ -148,7 +152,7 @@ TEST(MermaidTreeviewCohort, GatedTreeviewsStayWholeSource) {
     // The partition is preserved: each admitted row must be a D-433 ledger
     // member, every other gated row stays whole source.
     std::set<std::string> namespace_rows;
-    for (const auto& path : {kD433Ledger, kD434Ledger}) {
+    for (const auto& path : {kD433Ledger, kD434Ledger, kD455Ledger}) {
         auto ns_ledger = json::parse(read_file(path));
         ASSERT_TRUE(ns_ledger.has_value()) << "namespace cohort ledger must parse";
         ns_ledger->root().get("rows").iter(
@@ -164,7 +168,16 @@ TEST(MermaidTreeviewCohort, GatedTreeviewsStayWholeSource) {
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
     });
     EXPECT_EQ(admitted, 3);
-    EXPECT_EQ(namespace_rows.size(), 3u);
+    EXPECT_EQ(namespace_rows.size(), 5u);
+    // D-455: the two moved rows draw and disclose under their own ledger.
+    selection.get("d455_admitted").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        EXPECT_TRUE(draws(read_file(kCases / rel), kWide)) << rel;
+        EXPECT_NE(capture(read_file(kCases / rel), "mermaid", kWide).text.find(
+                      "TreeView native projection v1"),
+                  std::string::npos)
+            << rel;
+    });
     selection.get("body_style_gated").iter([&](JsonVal value) {
         const auto rel = value.as_str();
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
@@ -241,7 +254,9 @@ TEST(MermaidTreeviewCohort, MalformedInputFailsClosed) {
     EXPECT_FALSE(draws("treeView-beta\n  \"\"\n", kWide));                  // empty quoted label
     EXPECT_FALSE(draws("treeView-beta\n  a icon(x) icon(y)\n", kWide));     // two icons
     EXPECT_FALSE(draws("treeView-beta\n  a ## d icon(x)\n", kWide));        // icon after ##
-    EXPECT_FALSE(draws("treeView-beta\n  a icon()\n", kWide));              // empty icon arg
+    // D-455 admits the empty `icon()` suppression form; the doubled and
+    // unbalanced shapes above stay closed.
+    EXPECT_TRUE(draws("treeView-beta\n  a icon()\n", kWide));
     EXPECT_FALSE(draws("treeView-beta\n  a##b\n", kWide));                  // no-space ##
 }
 

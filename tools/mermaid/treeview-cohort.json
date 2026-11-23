@@ -18,12 +18,15 @@
       "tree-view"
     ],
     "draw_count": 8,
-    "frontmatter_gated_count": 5,
+    "frontmatter_gated_count": 3,
     "frontmatter_gated": [
-      "tree-view/nightly-check/should-hide-default-icons-with-icon-none-and-icon.mmd",
       "tree-view/nightly-check/should-resolve-unprefixed-icon-overrides-via-default-icon-pack.mmd",
       "tree-view/pr-check/should-pick-file-icons-from-filename-and-extension-config-maps.mmd",
-      "tree-view/pr-check/should-render-bare-unquoted-labels-with-icons.mmd",
+      "tree-view/pr-check/should-render-bare-unquoted-labels-with-icons.mmd"
+    ],
+    "d455_admitted_count": 2,
+    "d455_admitted": [
+      "tree-view/nightly-check/should-hide-default-icons-with-icon-none-and-icon.mmd",
       "tree-view/pr-check/should-render-with-custom-config-and-quoted-labels.mmd"
     ],
     "body_style_gated_count": 2,

@@ -2449,3 +2449,22 @@ renderer already draws it.
    Add a `review.decisions.<id>` record per later extension (reviewer identity,
    date, scope, verdict) and make the top-level verdict the conjunction, so a
    green ledger never claims an older sign-off for newer rows.
+
+## D-455 tree-view residual retro (2026-11-24)
+
+1. **A raw echo of a valid body can be indistinguishable from the native
+   frame.** The tree-view projection transcribes node rows verbatim, so
+   `native_frame`-style signature checks cannot tell a fallback echo from a
+   native frame for well-formed bodies; `draws()` (mermaid-language view vs
+   text-language view) is the discriminator. Keep the native-frame assertion
+   for positive cases only where the projection adds or strips content.
+2. **Older gates pin the old answer, and that is the point.** Two family gates
+   encoded "empty `icon()` gates" and "a trailing-space fence never reaches a
+   renderer". Both were flipped with the decision recorded in place; the
+   trailing-text fence (`---x`) was added as the replacement negative so the
+   gate still proves the boundary rather than shrinking.
+3. **A generator's exclusion prose is a durable claim.** D-434's ledger said
+   the trailing-space row "never reaches a family renderer"; D-455 makes that
+   false. The exclusion text is authored in the generator, so it was updated
+   and the ledger regenerated in the same slice — otherwise the register would
+   carry a silently stale claim.

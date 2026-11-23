@@ -91,13 +91,15 @@ bool validate_node(std::string_view content) {
             pos += 2;
             continue;
         }
-        // icon(...) suffix with a non-empty, balanced argument. The branch
-        // consumes the whole parenthesized pair atomically, so it does not
-        // touch `parens` (which only tracks stray, non-icon parentheses).
+        // icon(...) suffix with a balanced argument; the empty `icon()` form
+        // suppresses the default icon upstream and is inert here (icons are
+        // never drawn). The branch consumes the whole parenthesized pair
+        // atomically, so it does not touch `parens` (which only tracks stray,
+        // non-icon parentheses).
         if (content.compare(pos, 5, "icon(") == 0) {
             if (seen_icon || seen_description) return false;
             const auto close = content.find(')', pos + 5);
-            if (close == std::string_view::npos || close == pos + 5) return false;
+            if (close == std::string_view::npos) return false;
             seen_icon = true;
             pos = close + 1;
             continue;

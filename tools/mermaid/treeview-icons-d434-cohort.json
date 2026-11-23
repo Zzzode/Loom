@@ -9,7 +9,7 @@
   "selection": {
     "rule": "treeView original whose frontmatter is a folded description plus the closed config.treeView / config.themeVariables.treeView leaves including the filenameIcons / extensionIcons maps",
     "cohort_digest": "8811e7d5edd752f0ce56083ab254bf6af5c7913e234f21ae6bf34d811f3c616a",
-    "exclusions": "look/theme keys, unknown leaves, unknown map entries and style statements stay whole-source; a `---      ` closing fence never reaches a family renderer through the shared classify probe"
+    "exclusions": "look/theme keys, unknown leaves, unknown map entries and style statements stay whole-source; the trailing-space closing fence row was out of scope here (D-455 admits it later)"
   },
   "review": {
     "reviewer_agent": "TL exemption 2026-11-22: family slice without a design gate; the gate is the test document plus the twin oracle",

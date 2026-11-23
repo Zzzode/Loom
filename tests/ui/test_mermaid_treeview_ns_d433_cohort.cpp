@@ -299,11 +299,13 @@ TEST(MermaidTreeviewNamespaceD433Cohort, ClosedNamespaceNegativesStayWholeSource
         EXPECT_FALSE(draws(probe("config:\n  treeView:\n    showIcons: true\n", body), kWide))
             << body << " (namespace does not bypass the body style gate)";
     }
-    // Reachability boundary: a closing fence with trailing whitespace never
-    // leaves the shared classify probe's frontmatter, so no family renderer
-    // sees the source. Pinned so an admission of that shape must come with a
-    // shared change (D-433).
+    // Reachability boundary: D-455 admits a closing fence with trailing
+    // whitespace through the shared classify peek, so that shape now draws;
+    // a fence with trailing text stays outside the envelope and gates.
+    EXPECT_TRUE(draws("---\ndescription: >-\n  x\nconfig:\n  treeView:\n    showIcons: "
+                      "true\n---      \ntreeView-beta\n  src/\n",
+                      kWide));
     EXPECT_FALSE(draws("---\ndescription: >-\n  x\nconfig:\n  treeView:\n    showIcons: "
-                       "true\n---      \ntreeView-beta\n  src/\n",
+                       "true\n---x\ntreeView-beta\n  src/\n",
                        kWide));
 }

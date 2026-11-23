@@ -6750,6 +6750,36 @@ const JourneyCohortEntry* treeview_icons_d434_cohort_row(std::string_view path) 
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-455 tree-view residual cohort: the last two treeView fallbacks (the
+// trailing-space closing fence with the closed namespace, and the empty
+// `icon()` suppression form). The per-row gate is
+// test_mermaid_treeview_residual_d455_cohort.
+const std::map<std::string, JourneyCohortEntry>& treeview_residual_d455_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path =
+            kRoot / "../../../tools/mermaid/treeview-residual-d455-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-455 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-455 cohort ledger must be approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* treeview_residual_d455_cohort_row(std::string_view path) {
+    const auto& rows = treeview_residual_d455_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-433 tree-view closed-namespace cohort: the two treeView originals whose
 // only non-admitted input is the closed config.treeView namespace. The per-row
 // gate is test_mermaid_treeview_ns_d433_cohort.
@@ -11665,6 +11695,33 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // D-455 tree-view residual admission: the trailing-space closing
+            // fence with the closed namespace, and the empty `icon()` form.
+            // Placed before the RFC 0031 tree-view cohort (disjoint sets); the
+            // post-loop reach proof asserts each row is observed here (rule 38).
+            if (class_path.is_str() &&
+                class_path.as_str().starts_with("tree-view/")) {
+                if (const auto* cohort = treeview_residual_d455_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "tree-view";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-455 tree-view residual cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // D-433 tree-view closed-namespace admission: the two treeView
             // originals whose only non-admitted input is the closed
             // config.treeView namespace, under the TL's review exemption.
@@ -13859,6 +13916,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d434 == expected_d434,
                     "D-434 branch reach set must equal its ledger");
+        }
+
+        // D-455 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d455 = json::parse(read_file(
+                kRoot / "../../../tools/mermaid/treeview-residual-d455-cohort.json"));
+            require(ledger_d455.has_value(), "D-455 cohort ledger must parse");
+            std::set<std::string> expected_d455;
+            ledger_d455->root().get("rows").iter([&](const JsonVal row) {
+                expected_d455.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d455;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-455 tree-view residual cohort")
+                    reached_d455.insert(row.path);
+            }
+            require(reached_d455 == expected_d455,
+                    "D-455 branch reach set must equal its ledger");
         }
 
         // D-433 rule-38 reach proof: every ledger row must be observed through

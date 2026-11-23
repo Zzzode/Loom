@@ -6,8 +6,8 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1683 drawn /
-462 source_fallback / 0 error at 240 wide**, after D-454 (`local`,
+**Current totals (the last row of the history table below): 1685 drawn /
+460 source_fallback / 0 error at 240 wide**, after D-455 (`local`,
 2026-11-24). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
@@ -89,6 +89,7 @@ are not whole-original errors).
 | After D-452 treemap closed classDef/::: styling (10 rows) | 2026-11-24 | local | 1676 | 469 | 0 |
 | After D-453 venn closed `style` statements (5 rows) | 2026-11-24 | local | 1681 | 464 | 0 |
 | After D-454 timeline closed nested init payloads (2 rows) | 2026-11-24 | local | 1683 | 462 | 0 |
+| After D-455 tree-view residual envelope and icon suppression (2 rows) | 2026-11-24 | local | 1685 | 460 | 0 |
 
 Row-level detail for the newest rows:
 - **D-450 (5)**: `quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd`,
@@ -110,6 +111,10 @@ Row-level detail for the newest rows:
 - **D-454 (2)**: `timeline/pr-check/4-...directives-and-disablemulticolor-true`
   (nested `timeline.disableMulticolor`), `timeline/pr-check/5-...directive-
   overridden-colors` (spanning directive with `themeVariables.cScale0..2`).
+- **D-455 (2)**: `tree-view/pr-check/should-render-with-custom-config-and-
+  quoted-labels` (trailing-space closing fence + closed namespace leaves),
+  `tree-view/nightly-check/should-hide-default-icons-with-icon-none-and-icon`
+  (`icon(none)` / empty `icon()`).
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -138,7 +143,7 @@ disposition (fix or documented infeasibility).
 | journey | 0 | 18 | renderer added 2026-11-11; RFC 0040 admitted the 4 `config: theme: redux*` rows and RFC 0047 admits the 4 inert leading `%%{init}%%` theme directives (footer-disclosed, synthetic twin); live census 18/0/0 from 18 |
 | pie | 0 | 24 | RFC 0042 (2026-11-22) admits 5 theme-only rows through a closed five-value table with a disclosure footer; D-425 (2026-11-22) admits the 8 rows whose only non-admitted input is the closed `config.pie` namespace (art equals the config-free twin, footer-disclosed); D-426 (2026-11-23) admits the last 4 rows: scalar `accTitle:`/`accDescr:` are validated no-ops (accessibility metadata; a text terminal has no separate accessibility tree) and the closed theme table gains `default`/`forest`/`neutral`, so the whole family is closed at 24 originals; frame equality against the acc-line-deleted twin is the oracle; measured narrow_40 is 2/24 (two baseline rows fit 40 columns) |
 | state-diagram | 7 | 35 | RFC 0046 (2026-11-22) admits the 2 `state.useMaxWidth` rows through the closed tuning namespace with a disclosure footer (synthetic twins); D223 batch one: +3 (HTML-entity fork/join top-level and nested, edge literal `\n`); RFC 0048 admits the concurrency row at P1 and the 4 in-body `%%{init}%%` theme rows at P2 (region dividers, footer-disclosed, synthetic twins); the v1 note twin stays gated by a real tab in its folded description and the labeled composite rows stay gated; live census 35/7/0 from 42 |
-| tree-view | 12 | 3 | renderer added 2026-11-13 (verbatim node-row transcription, no icons/colour); D-433 (2026-11-23) admits the two closed `config.treeView` rows and D-434 the closed `filenameIcons`/`extensionIcons` maps (every entry inert and disclosed, art equals the config-stripped twin); the 3 remaining: one `:::class` body row (`classdef_styling`), one empty-`icon()` body row, and one row whose `---      ` close the shared classify probe never dispatches. Bucket note: the D-433/D-434 rows previously sat in `family_residual:tree-view` (4 -> 2) and `icon_font_glyphs` (29 -> 28), so the family total moved 6 -> 4 -> 3; live census 15/3/0 from 15 |
+| tree-view | 2 | 13 | renderer added 2026-11-13 (verbatim node-row transcription, no icons/colour); D-433 (2026-11-23) admits the two closed `config.treeView` rows and D-434 the closed `filenameIcons`/`extensionIcons` maps (every entry inert and disclosed, art equals the config-stripped twin); D-455 (2026-11-24) admits the trailing-space-fence custom-config row (the shared classify peek closes `---`+whitespace only when the next body line is exactly `treeView-beta`) and the `icon(none)` / empty-`icon()` suppression row; the 2 remaining are the `:::class` body row (`classdef_styling`) and the combined-annotations icon row (`icon_font_glyphs`); live census 15/2/0 from 15 |
 | quadrant-chart | 7 | 7 | renderer added 2026-11-13; 5 %%{init}%% visual directives (axis position/sizing/theme colors) + 2 inline point-style rows stay source (no geometry/color contract) |
 | ishikawa | 1 | 12 | renderer added 2026-11-13; RFC 0043 (2026-11-22) admits the forest/dark theme rows through a closed two-value table with a disclosure footer (both body-identical to `pr-check/1`); RFC 0046 admits the 3 `config.ishikawa.*` tuning rows through the closed namespace (1 corpus twin, 2 synthetic); only the handdrawn-look row stays source; live census 12/1/0 from 13 |
 | kanban | 0 | 11 | renderer added 2026-11-13; all eleven originals clean (description-only frontmatter; cards with optional @{...} structural metadata, no color contract) |

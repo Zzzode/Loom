@@ -13,8 +13,9 @@ the draw / frontmatter-gated / body-style-gated partition; manifest shas are
 pinned; the review block is preserved across regeneration.
 
 Note: one fixture closes its frontmatter with a trailing-whitespace fence
-(``---      ``); the splitter tolerates that, so the file is correctly counted
-as frontmatter-gated rather than misread as clean.
+(``---      ``); the splitter tolerates that. D-455 later admits that row and
+the empty-``icon()`` row into their own decision cohort, so both are excluded
+from the frontmatter partition here and pinned in ``d455_admitted``.
 
 Usage: python3 tools/mermaid/generate_treeview_cohort.py --repo-root . [--check]
 """
@@ -122,6 +123,11 @@ def build(repo_root):
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
 
     draw, fm_gate, body_gate = set(), set(), set()
+    # D-455: the two residual rows moved into their own decision cohort.
+    d455 = {
+        "tree-view/pr-check/should-render-with-custom-config-and-quoted-labels.mmd",
+        "tree-view/nightly-check/should-hide-default-icons-with-icon-none-and-icon.mmd",
+    }
     for path in sorted((repo_root / CASES).rglob("*.mmd")):
         text = path.read_text()
         rel = path.relative_to(
@@ -135,11 +141,15 @@ def build(repo_root):
         else:
             draw.add(rel)
 
-    if (len(draw), len(fm_gate), len(body_gate)) != (8, 5, 2):
+    moved = fm_gate & d455
+    if len(moved) != 2:
+        raise ValueError(f"D-455 rows drifted out of the frontmatter partition: {sorted(moved)}")
+    fm_gate -= d455
+    if (len(draw), len(fm_gate), len(body_gate)) != (8, 3, 2):
         raise ValueError(
             f"tree-view partition drift: draw={len(draw)} "
             f"frontmatter={len(fm_gate)} body_style={len(body_gate)} "
-            f"(expected 8/5/2)")
+            f"(expected 8/3/2; the two D-455 rows moved out)")
 
     rows = []
     for rel in sorted(draw):
@@ -200,6 +210,8 @@ def build(repo_root):
             "draw_count": len(draw),
             "frontmatter_gated_count": len(fm_gate),
             "frontmatter_gated": sorted(fm_gate),
+            "d455_admitted_count": len(moved),
+            "d455_admitted": sorted(moved),
             "body_style_gated_count": len(body_gate),
             "body_style_gated": sorted(body_gate),
         },

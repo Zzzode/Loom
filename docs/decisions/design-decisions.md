@@ -5384,3 +5384,31 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   named colours, same-directive and cross-directive duplicate leaves, a
   non-canonical `cScale` index, the 2048-byte join bound and a journey-family
   flat-grammar check) plus one RFC 0047 negative flipped to admitted.
+
+## tree-view residual envelope and icon suppression (D-455)
+
+- **Scope.** The last two tree-view fallbacks: the custom-config row whose
+  frontmatter closes with `---` plus trailing spaces, and the row that
+  suppresses a default icon with `icon(none)` / an empty `icon()`.
+- **Why inert.** The tree-view projection transcribes node rows verbatim and
+  draws no icon, colour, line weight or pixel indentation, so the closed
+  namespace leaves and the suppression suffixes have no terminal analogue.
+- **Mechanism.** `classify_mermaid`'s frontmatter peek treats `---` followed
+  only by spaces/tabs as a close **only when the first body line is exactly
+  `treeView-beta`**; a fence with trailing text never closes. The tree-view
+  namespace walk then validates the closed leaves (`rowIndent`,
+  `lineThickness`, `labelFontSize`, `labelColor`, `lineColor`) exactly as
+  D-433/D-434 do. The node validator accepts an empty `icon()` argument; a
+  doubled icon suffix, an unbalanced `icon(`, an icon after `## description`
+  and a quoted label with trailing junk stay closed.
+- **Shared dispatch note.** The tolerance is in the shared classify peek, so it
+  is deliberately narrowed to the one header whose owner admits the shape.
+  Other families' gates mix a tolerant body stripper with an exact namespace
+  gate (packet, cynefin, radar): a blind fence tolerance would let them draw
+  with their whole frontmatter silently dropped. Scoping on the header keeps
+  their pre-D-455 behavior byte-identical.
+- **Disclosure.** `TreeView native projection v1` plus one line per accepted
+  leaf in the canonical D-433/434 order.
+- **Oracle.** The twin is the same fixture with the frontmatter removed; the
+  art above the footer must be cell-equal, and narrow 40 is measured live (both
+  rows stay source there).

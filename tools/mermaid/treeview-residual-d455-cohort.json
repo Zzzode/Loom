@@ -1,0 +1,90 @@
+{
+  "schema": "loom_mermaid_treeview_residual_d455_cohort/v1",
+  "decision": "D-455",
+  "admission": {
+    "shape": "a `---` envelope whose closing fence may carry trailing spaces/tabs, the closed `config.treeView` / `config.themeVariables.treeView` leaves, and node `icon(none)` / empty `icon()` suffixes",
+    "footer": {
+      "header": "TreeView native projection v1",
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin is the same fixture with the frontmatter removed; the art above the footer must be cell-equal"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the last tree-view fallbacks: the trailing-space closing fence with the closed namespace, and the empty `icon()` suppression form",
+    "cohort_digest": "662bf3072e6c31b7f10b87a955172f01a79bea12c0baee927e623766354bfa1d"
+  },
+  "counts": {
+    "total": 2,
+    "by_family": {
+      "tree-view": 2
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, D-455 tree-view residual admission, 2026-11-24; round 1 REQUEST-CHANGES with a shared-classify fence blocker plus five findings, round 2 APPROVE after the header-scoped tolerance, the hardened mirror and the token fix)",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "The fence tolerance is scoped to a `treeView-beta` body so packet/cynefin/radar keep their pre-D-455 verdicts; the empty `icon()` form is the only node-shape change; the twin and partition arithmetic are pinned by the per-row gate."
+  },
+  "rows": [
+    {
+      "path": "tree-view/pr-check/should-render-with-custom-config-and-quoted-labels.mmd",
+      "family": "tree-view",
+      "sha256": "d8a09ed88f3127e8fbaff2c4bc7a83f11e026d36ada013e6d6629717db241e2e",
+      "manifest_sha256": "d8a09ed88f3127e8fbaff2c4bc7a83f11e026d36ada013e6d6629717db241e2e",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "TreeView native projection v1",
+        "config.treeView.rowIndent=80 -> row indentation; not applied",
+        "config.treeView.lineThickness=3 -> branch line weight; not applied",
+        "config.themeVariables.treeView.labelFontSize=20px -> label font size; not applied",
+        "config.themeVariables.treeView.labelColor=#FF0000 -> label colour; not applied",
+        "config.themeVariables.treeView.lineColor=#00FF00 -> branch line colour; not applied"
+      ],
+      "twin": {
+        "kind": "frontmatter-free-body",
+        "path": "tree-view/pr-check/should-render-with-custom-config-and-quoted-labels.mmd",
+        "sha256": "d8a09ed88f3127e8fbaff2c4bc7a83f11e026d36ada013e6d6629717db241e2e",
+        "footer_lines": []
+      },
+      "ledger_note": "the tree-view projection transcribes node rows verbatim and never draws icons, colour, line weight or pixel indentation, so the closed namespace leaves and the icon-suppression suffixes are inert; the footer discloses each accepted leaf"
+    },
+    {
+      "path": "tree-view/nightly-check/should-hide-default-icons-with-icon-none-and-icon.mmd",
+      "family": "tree-view",
+      "sha256": "24b34698e001b7ea91077b7d14df970aa9d16634df986bbe3f153a67e4f1e81a",
+      "manifest_sha256": "24b34698e001b7ea91077b7d14df970aa9d16634df986bbe3f153a67e4f1e81a",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "TreeView native projection v1",
+        "config.treeView.showIcons=true -> icons are not drawn; not applied"
+      ],
+      "twin": {
+        "kind": "frontmatter-free-body",
+        "path": "tree-view/nightly-check/should-hide-default-icons-with-icon-none-and-icon.mmd",
+        "sha256": "24b34698e001b7ea91077b7d14df970aa9d16634df986bbe3f153a67e4f1e81a",
+        "footer_lines": []
+      },
+      "ledger_note": "the tree-view projection transcribes node rows verbatim and never draws icons, colour, line weight or pixel indentation, so the closed namespace leaves and the icon-suppression suffixes are inert; the footer discloses each accepted leaf"
+    }
+  ]
+}

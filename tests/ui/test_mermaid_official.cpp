@@ -6086,6 +6086,35 @@ const JourneyCohortEntry* c4_wrap_d432_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-445 c4 UpdateLayoutConfig cohort: the two c4 originals whose only blocker
+// is the closed row-shaping call. States are read per row; the per-row gate is
+// test_mermaid_c4_layout_config_d445_cohort.
+const std::map<std::string, JourneyCohortEntry>& c4_layout_config_d445_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path =
+            kRoot / "../../../tools/mermaid/c4-layout-config-d445-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-445 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-445 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* c4_layout_config_d445_cohort_row(std::string_view path) {
+    const auto& rows = c4_layout_config_d445_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 const std::map<std::string, JourneyCohortEntry>& c4_cohort_map() {
     static const std::map<std::string, JourneyCohortEntry> map = [] {
         std::map<std::string, JourneyCohortEntry> rows;
@@ -10930,6 +10959,34 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // D-445 c4 UpdateLayoutConfig admission: the two c4 originals whose
+            // only blocker is the closed row-shaping call, under the TL's
+            // review exemption. Placed before the D-432 and RFC 0031 c4
+            // branches (exact path match, disjoint sets); the post-loop reach
+            // proof asserts each row is observed here.
+            if (class_path.is_str() && class_path.as_str().starts_with("c4/")) {
+                if (const auto* cohort =
+                        c4_layout_config_d445_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "c4";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-445 c4 layout-config cohort (TL review-exempt)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // D-432 c4 config.wrap admission: the single c4 original whose only
             // non-admitted input is the closed wrap leaf, under the TL's review
             // exemption. Placed before the RFC 0031 c4 cohort (the sets are
@@ -13201,6 +13258,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d433 == expected_d433,
                     "D-433 branch reach set must equal its ledger");
+        }
+
+        // D-445 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d445 = json::parse(read_file(
+                kRoot / "../../../tools/mermaid/c4-layout-config-d445-cohort.json"));
+            require(ledger_d445.has_value(), "D-445 cohort ledger must parse");
+            std::set<std::string> expected_d445;
+            ledger_d445->root().get("rows").iter([&](const JsonVal row) {
+                expected_d445.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d445;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-445 c4 layout-config cohort (TL review-exempt)")
+                    reached_d445.insert(row.path);
+            }
+            require(reached_d445 == expected_d445,
+                    "D-445 branch reach set must equal its ledger");
         }
 
         // D-432 rule-38 reach proof: every ledger row must be observed through

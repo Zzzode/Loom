@@ -1,14 +1,14 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 499,
+  "total_fallback": 497,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
     "dagre_layout_tuning": 11,
     "edge_animation_metadata": 80,
     "elk_layout_engine": 11,
-    "family_residual:c4": 8,
+    "family_residual:c4": 6,
     "family_residual:class-diagram": 6,
     "family_residual:er-diagram": 1,
     "family_residual:flowchart": 13,
@@ -395,9 +395,7 @@
       "c4/nightly-check/update-element-shape-override.mmd",
       "c4/pr-check/c4-1-should-render-a-simple-c4context-diagram.mmd",
       "c4/pr-check/c4-3-should-render-a-simple-c4component-diagram.mmd",
-      "c4/pr-check/update-element-style-colors.mmd",
-      "c4/visual-check/update-layout-config-2-shapes-per-row.mmd",
-      "c4/visual-check/update-layout-config-4-shapes-per-row.mmd"
+      "c4/pr-check/update-element-style-colors.mmd"
     ],
     "family_residual:class-diagram": [
       "class-diagram/nightly-check/10-should-render-a-simple-class-diagram-with-clickable-callback-2.mmd",

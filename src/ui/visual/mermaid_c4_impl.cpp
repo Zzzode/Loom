@@ -225,6 +225,20 @@ C4Frontmatter c4_frontmatter_wrap(std::string_view source) {
     return result;
 }
 
+// D-445: `$key="value"` with the value in a closed table.
+bool c4_layout_config_arg(std::string_view arg, std::string_view key,
+                          std::initializer_list<std::string_view> values,
+                          std::string& out) {
+    if (!arg.starts_with(key) || arg.size() <= key.size() + 3u) return false;
+    if (arg[key.size()] != '=' || arg[key.size() + 1u] != '"' || arg.back() != '"')
+        return false;
+    const std::string_view value =
+        arg.substr(key.size() + 2u, arg.size() - key.size() - 3u);
+    if (std::ranges::find(values, value) == values.end()) return false;
+    out.assign(value);
+    return true;
+}
+
 std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
     std::size_t fee = 256;
@@ -237,8 +251,10 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
 
     const std::string_view body = c4_body(source);
     // D-432: the closed frontmatter parser owns the admitted shape; an in-body
-    // Update*Style/UpdateLayoutConfig statement keeps the whole source on
-    // ordinary fallback. Key-based so prose mentioning "style" is not a gate.
+    // Update*Style statement keeps the whole source on ordinary fallback.
+    // D-445 admits the closed UpdateLayoutConfig call: this projection is an
+    // outline and draws no geometry, so its SVG row-shaping knobs are inert.
+    // Key-based so prose mentioning "style" is not a gate.
     const auto frontmatter = c4_frontmatter_wrap(source);
     if (!frontmatter.accepted) return {};
     {
@@ -254,8 +270,7 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
                 if (trimmed != std::string_view::npos) {
                     const std::string_view content = line.substr(trimmed);
                     if (content.starts_with("UpdateElementStyle") ||
-                        content.starts_with("UpdateRelStyle") ||
-                        content.starts_with("UpdateLayoutConfig"))
+                        content.starts_with("UpdateRelStyle"))
                         visual_gate = true;
                 }
                 if (eol == std::string_view::npos) break;
@@ -269,6 +284,9 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
     bool saw_header = false;
     int depth = 0;
     int statement_count = 0;
+    // D-445: the admitted call records its row-shaping value for the footer.
+    bool layout_config_seen = false;
+    std::string layout_shape;
     std::vector<std::string> title_rows;
     std::vector<std::string> out;
     // Single protected emission path shared by the title and every statement
@@ -346,6 +364,20 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
         if (!split_args(arg_text, args) || args.empty()) return {};
         if (++statement_count > kC4MaxStatements) return {};
 
+        if (keyword == "UpdateLayoutConfig") {
+            // D-445: exactly one call, exactly the two corpus-backed quoted
+            // knobs in order, each within its closed table; anything else
+            // keeps the whole source on fallback.
+            if (opens_block || layout_config_seen || args.size() != 2u) return {};
+            std::string shape, boundary;
+            if (!c4_layout_config_arg(args[0], "$c4ShapeInRow", {"2", "4"}, shape) ||
+                !c4_layout_config_arg(args[1], "$c4BoundaryInRow", {"1"}, boundary))
+                return {};
+            layout_config_seen = true;
+            layout_shape = std::move(shape);
+            continue;
+        }
+
         std::string outline;
         if (is_any(keyword, kRelations)) {
             if (opens_block) return {};  // relations never open a block
@@ -405,14 +437,25 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
         out = std::move(combined);
     }
     if (out.empty()) return {};
-    if (frontmatter.wrap) {
-        const std::string line =
-            "config.wrap=" + *frontmatter.wrap + " -> SVG text wrapping; not applied";
-        if (line.size() > 96u || !work.spend(line.size() * 4u + sizeof(std::string) + 32u))
+    // D-432's wrap line stays first; D-445 appends the admitted call after it,
+    // so every already-drawn wrapper frame keeps its bytes.
+    std::vector<std::string> disclosures;
+    if (frontmatter.wrap)
+        disclosures.push_back("config.wrap=" + *frontmatter.wrap +
+                              " -> SVG text wrapping; not applied");
+    if (layout_config_seen)
+        disclosures.push_back("UpdateLayoutConfig $c4ShapeInRow=" + layout_shape +
+                              " $c4BoundaryInRow=1 -> SVG layout tuning; not applied");
+    if (!disclosures.empty()) {
+        if (!work.spend(96u + 32u * disclosures.size() +
+                        static_cast<std::size_t>(out.size())))
             return {};
         out.push_back("");
         out.push_back("C4 native projection v1");
-        out.push_back(line);
+        for (const auto& line : disclosures) {
+            if (line.size() > 96u || !work.spend(line.size() * 4u + 32u)) return {};
+            out.push_back(line);
+        }
     }
     return out;
 }

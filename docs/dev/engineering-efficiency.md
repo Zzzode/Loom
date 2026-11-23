@@ -2280,3 +2280,15 @@ renderer already draws it.
    ledger, one gate file and one exact-path matrix branch covered three
    families with six rows. Splitting per family would have tripled the
    artifact count for the same evidence.
+
+## D-445 c4 layout-config retro (2026-11-23)
+
+1. **An outline projection makes upstream layout knobs genuinely inert.**
+   `$c4ShapeInRow` changes SVG row packing, but the terminal c4 projection
+   emits statement rows only, so the honest oracle is "delete the call, the
+   outline must not change" rather than a config-strip twin (which would be
+   byte-identical here).
+2. **Keep the disclosure block ordered, not appended ad hoc.** D-432's wrap
+   line had its own inline footer; generalizing to a disclosure list with wrap
+   first preserved every drawn frame and made the new line placement a
+   one-line change instead of a second footer path.

@@ -1,0 +1,95 @@
+{
+  "schema": "loom_mermaid_c4_layout_config_d445_cohort/v1",
+  "decision": "D-445",
+  "admission": {
+    "call": "UpdateLayoutConfig($c4ShapeInRow=\"2\"|\"4\", $c4BoundaryInRow=\"1\")",
+    "shape_tables": {
+      "$c4ShapeInRow": [
+        "2",
+        "4"
+      ],
+      "$c4BoundaryInRow": [
+        "1"
+      ]
+    },
+    "footer": {
+      "header": "C4 native projection v1",
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin is the same fixture with the admitted call line removed; the frame oracle compares the outline above the footer"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "c4 fallbacks whose only blocker is the closed UpdateLayoutConfig row-shaping call",
+    "cohort_digest": "6d1a92eec4de61b04fb2b77fc58abf0c60dac746935effa48ba8334cd51f39c6"
+  },
+  "counts": {
+    "total": 2,
+    "by_family": {
+      "c4": 2
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, D-445 c4 UpdateLayoutConfig admission, 2026-11-23)",
+    "date": "2026-11-23",
+    "verdict": "approved",
+    "note": "Reviewer re-ran the generator --check entry and the live gate and verified: the call validator requires exactly the two quoted knobs in order with closed tables; the call emits no outline row; the footer appends after D-432's wrap line; the call-free twin oracle is cell-exact; every out-of-shape call stays whole-source."
+  },
+  "rows": [
+    {
+      "path": "c4/visual-check/update-layout-config-2-shapes-per-row.mmd",
+      "family": "c4",
+      "sha256": "cda9311b008e7304607b13b470a68c0db97b4133899d9694c2537c57f497e236",
+      "manifest_sha256": "cda9311b008e7304607b13b470a68c0db97b4133899d9694c2537c57f497e236",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "C4 native projection v1",
+        "UpdateLayoutConfig $c4ShapeInRow=2 $c4BoundaryInRow=1 -> SVG layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "call-free-body",
+        "path": "c4/visual-check/update-layout-config-2-shapes-per-row.mmd",
+        "sha256": "cda9311b008e7304607b13b470a68c0db97b4133899d9694c2537c57f497e236",
+        "footer_lines": []
+      },
+      "ledger_note": "the c4 projection is an outline and draws no geometry, so the SVG row-shaping call is inert and disclosed"
+    },
+    {
+      "path": "c4/visual-check/update-layout-config-4-shapes-per-row.mmd",
+      "family": "c4",
+      "sha256": "5cb0b6e1428f225d2e4341c793db2d5970474eb5438cdd284f27f590757a562f",
+      "manifest_sha256": "5cb0b6e1428f225d2e4341c793db2d5970474eb5438cdd284f27f590757a562f",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "C4 native projection v1",
+        "UpdateLayoutConfig $c4ShapeInRow=4 $c4BoundaryInRow=1 -> SVG layout tuning; not applied"
+      ],
+      "twin": {
+        "kind": "call-free-body",
+        "path": "c4/visual-check/update-layout-config-4-shapes-per-row.mmd",
+        "sha256": "5cb0b6e1428f225d2e4341c793db2d5970474eb5438cdd284f27f590757a562f",
+        "footer_lines": []
+      },
+      "ledger_note": "the c4 projection is an outline and draws no geometry, so the SVG row-shaping call is inert and disclosed"
+    }
+  ]
+}

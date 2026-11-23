@@ -5151,3 +5151,25 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Accounting.** One matrix branch keyed by exact path precedes all three
   family-wide branches with a rule-38 reach proof; the roster loses exactly
   the six ledger rows.
+
+## c4 closed UpdateLayoutConfig call (D-445)
+
+- **Scope.** Two c4 originals whose only blocker is the in-body
+  `UpdateLayoutConfig($c4ShapeInRow="2"|"4", $c4BoundaryInRow="1")` call.
+- **Why inert.** The native c4 projection is an outline — one `Keyword alias -
+  Name` row per element — and draws no geometry. The call only shapes the
+  upstream SVG row packing, so it has no terminal analogue.
+- **Mechanism.** The pre-scan no longer gates `UpdateLayoutConfig` (the other
+  `Update*Style` statements still do). The statement loop validates exactly one
+  call with exactly the two quoted knobs in order, each from its closed table,
+  emits no outline row, and records the shape value for the footer.
+- **Disclosure.** `C4 native projection v1` plus
+  `UpdateLayoutConfig $c4ShapeInRow=<v> $c4BoundaryInRow=1 -> SVG layout
+  tuning; not applied`, appended after D-432's `config.wrap` line so existing
+  wrapper frames keep their bytes.
+- **Oracle.** The twin is the same fixture with the call line removed; the
+  outline above the footer must be cell-equal, and narrow 40 stays
+  whole-source.
+- **Accounting.** One exact-path matrix branch precedes the D-432 and RFC 0031
+  c4 branches with a rule-38 reach proof; the roster loses exactly the two
+  ledger rows.

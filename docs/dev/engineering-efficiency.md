@@ -2362,3 +2362,24 @@ renderer already draws it.
    Grep the protected rosters for the fixture path/sha in the same step that
    the ledger is written, so the slice lands with its final scope instead of
    being narrowed at the boundary.
+
+## D-450/D-451 quadrant-init and c4-styling retro (2026-11-23)
+
+1. **A disclosure footer can collide with the source-echo guard.** Both new
+   gates rejected any frame line starting with the admitted marker
+   (`%%{init`, `UpdateElementStyle(`), which also matched the disclosure lines
+   themselves and failed the oracle for every admitted row. Guard on
+   "marker and not a disclosure" (`not applied`) instead of the bare prefix.
+2. **When a partition empties, pin the empty set instead of deleting it.** The
+   quadrant `init_gated` 5 and c4 `styled_excluded` 9 populations both moved
+   entirely into their own cohort ledgers. Keep the partition check in the
+   family gate with the new zero count (plus the owning-ledger skip list in the
+   generator); deleting it would let a future non-admitted row slip through
+   unasserted.
+3. **A view helper over a temporary is a release-only bug.** In the D-451
+   attribute loop, `trim_view(args[i].substr(0u, eq))` bound a `string_view`
+   into the temporary produced by `std::string::substr`; the debug binary kept
+   the memory alive by luck, while the release binary emitted corrupted
+   attribute names (`"red"olor`). Bind a named `std::string_view arg = args[i]`
+   and slice the view instead. This is exactly the class of defect the
+   release boundary exists to catch.

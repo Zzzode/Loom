@@ -6,8 +6,8 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1655 drawn /
-490 source_fallback / 0 error at 240 wide**, after D-449 (`local`,
+**Current totals (the last row of the history table below): 1666 drawn /
+479 source_fallback / 0 error at 240 wide**, after D-451 (`local`,
 2026-11-23). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
@@ -84,6 +84,21 @@ are not whole-original errors).
 | After D-447 usecase closed tuning namespace + accessibility no-ops (1 row) | 2026-11-23 | local | 1650 | 495 | 0 |
 | After D-448 xychart negative/decimal bar data labels (1 row; vertical only, horizontal profile pending) | 2026-11-23 | local | 1651 | 494 | 0 |
 | After D-449 state `state X: Description` declaration form (4 rows) | 2026-11-23 | local | 1655 | 490 | 0 |
+| After D-450 quadrant leading `%%{init}%%` tuning/theme directive (5 rows) | 2026-11-23 | local | 1660 | 485 | 0 |
+| After D-451 c4 closed styling calls + accessibility no-ops (6 rows) | 2026-11-23 | local | 1666 | 479 | 0 |
+
+Row-level detail for the newest rows:
+- **D-450 (5)**: `quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd`,
+  `quadrant-chart/pr-check/should-able-to-render-x-axis-on-bottom-and-y-axis-on-right.mmd`,
+  `quadrant-chart/pr-check/should-able-to-render-y-axis-on-right-side.mmd`,
+  `quadrant-chart/pr-check/should-use-all-the-config.mmd`,
+  `quadrant-chart/pr-check/should-use-all-the-theme-variable.mmd`.
+- **D-451 (6)**: `c4/nightly-check/c4-4-should-render-a-simple-c4dynamic-diagram.mmd`,
+  `c4/nightly-check/styling/update-relationship-style.mmd`,
+  `c4/nightly-check/update-element-shape-override.mmd`,
+  `c4/pr-check/c4-1-should-render-a-simple-c4context-diagram.mmd`,
+  `c4/pr-check/c4-3-should-render-a-simple-c4component-diagram.mmd`,
+  `c4/pr-check/update-element-style-colors.mmd`.
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone

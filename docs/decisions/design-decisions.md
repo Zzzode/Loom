@@ -5249,3 +5249,46 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   state declared here or introduced by a transition.
 - **Oracle.** The config-free twin draws the same body; the art above the RFC
   0038 footer is cell-equal, and narrow 40 is measured live.
+
+## quadrant leading closed `%%{init}%%` directive (D-450)
+
+- **Scope.** Five quadrant-chart originals whose only blocker is a leading
+  body `%%{init: {...}}%%` directive carrying `quadrantChart` sizing/axis
+  knobs or quadrant `themeVariables` colours.
+- **Why inert.** The quadrant projection is a bounded text outline — title,
+  axis labels, four quadrant labels, point coordinates — and draws no axes,
+  points or colours, so axis placement and every sizing/colour key has no
+  terminal analogue.
+- **Mechanism.** Only the first body line may be a directive; it is consumed
+  before the visual gate. The grammar is closed: `quadrantChart` (16
+  non-negative-integer sizing keys plus `xAxisPosition` {top,bottom} and
+  `yAxisPosition` {left,right}) and `themeVariables` (15 quadrant colour keys
+  with `#rrggbb` values). A bare `%%{init}%%` or empty object is a no-op; a
+  second or non-leading directive, unknown/duplicate key, nested value or bad
+  colour keeps the whole source on fallback.
+- **Disclosure.** `Quadrant native projection v1` plus one line per admitted
+  key in source order, below the art.
+- **Oracle.** The twin is the same fixture with the directive line removed;
+  the outline above the footer must be cell-equal, and narrow 40 stays source.
+
+## c4 closed styling calls + accessibility no-ops (D-451)
+
+- **Scope.** Six c4 originals whose only blockers are
+  `UpdateElementStyle(alias, $attr...)`, `UpdateRelStyle(from, to,
+  $attr...)` and scalar `accTitle:`/`accDescr:`.
+- **Why inert.** The c4 projection is an outline with no colour or geometry,
+  so every admitted attribute only shapes the upstream SVG; the accessibility
+  scalars are metadata, admitted as validated no-ops like state and usecase.
+- **Mechanism.** The pre-scan no longer gates the two `Update*Style` keywords.
+  The statement loop requires the exact identifier count (1 or 2) followed by
+  at least one `$ident=value` attribute of closed SHAPE — the keys are not
+  enumerated, the same convention as the element `$attr` list; duplicate
+  attributes, missing or empty values, parenthesised values, non-`$`
+  arguments, block openers and unknown calls fail closed.
+  Accessibility scalars are non-empty, ≤256 bytes, unicode and duplicate-gated;
+  the block form stays rejected.
+- **Disclosure.** After D-432's wrap line and D-445's layout line, one line per
+  admitted attribute in source order (`UpdateElementStyle(a).$fontColor ->
+  SVG styling; not applied`).
+- **Oracle.** The twin removes the styling and accessibility lines; the
+  outline above the footer must be cell-equal, and narrow 40 stays source.

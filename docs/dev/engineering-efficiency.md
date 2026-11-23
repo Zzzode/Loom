@@ -2192,3 +2192,20 @@ renderer already draws it.
    The cloned git gate carried `kBody`/`probe` for gitGraph, which collided with
    the wardley ones; build the helper set from the new oracle before the first
    compile.
+
+## D-438 sankey config NO-GO retro (2026-11-23)
+
+1. **A family-residual label hides where the blocker actually sits.** The 17
+   `family_residual:sankey` rows were labelled by a config detector, so the
+   slice was designed against that label. All 17 use a bare `sankey` header,
+   which the shared `classify_mermaid` predicate never dispatches — the config
+   work was implemented, tested and then proved to move zero corpus rows. Probe
+   the smallest surviving input (a bare body, no frontmatter) **before**
+   designing the config admission.
+2. **Renderers are only reachable through the dispatch predicate.** Before
+   widening a family's frontmatter grammar, grep the classifier for the family
+   keyword and check every spelling the corpus uses; a header alias is a shared
+   change and belongs in a TL decision, not in the slice.
+3. **Zero-effect slices are reverted, not committed.** The finished patch is
+   kept at `/tmp/d438-sankey-config.patch` (applies cleanly to `04a98f1c`) so
+   authorization does not pay for the reimplementation.

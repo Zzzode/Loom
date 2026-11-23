@@ -37,6 +37,7 @@ const fs::path kRfc0046Ledger = kTestsDir / "../tools/mermaid/layouttuning-0046-
 const fs::path kRfc0048Ledger = kTestsDir / "../tools/mermaid/state-region-0048-cohort.json";
 const fs::path kD424Ledger = kTestsDir / "../tools/mermaid/git-bool-d424-cohort.json";
 const fs::path kD436Ledger = kTestsDir / "../tools/mermaid/git-mainbranch-d436-cohort.json";
+const fs::path kD441Ledger = kTestsDir / "../tools/mermaid/state-layout-d441-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -330,6 +331,16 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
         cohort.insert(rel);
         if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
     });
+    // D-441 admits the 3 reviewed state `config.layout: elk` rows; the per-row
+    // gate is test_mermaid_state_layout_d441_cohort. They leave this scan and
+    // the state side of the skip set is pinned to that ledger below.
+    auto d441 = json::parse(read_file(kD441Ledger));
+    ASSERT_TRUE(d441.has_value()) << "D-441 cohort ledger must parse";
+    d441->root().get("rows").iter([&](const JsonVal row) {
+        const auto rel = row.get_string("path");
+        cohort.insert(rel);
+        if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
+    });
     std::set<std::string> git_skipped;
     std::set<std::string> state_skipped;
     std::set<std::string> skipped_by_rfc0048;
@@ -365,8 +376,9 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     // once, not twice) and the 8 init-bearing P2 rows leave at P2.
     // D-424 population migration: 18 config-bearing git rows leave for the
     // closed-boolean cohort, so the exact value drops 80 -> 62. D-436 moves
-    // the 14 trunk-config rows out too: 62 -> 48.
-    EXPECT_EQ(checked, 48);
+    // the 14 trunk-config rows out too: 62 -> 48. D-441 moves the 3 state
+    // layout rows out: 48 -> 45.
+    EXPECT_EQ(checked, 45);
     EXPECT_EQ(skipped_by_rfc0048.size(), 24u);
     // Under-listing fails here (an admitted row that really changes surface is
     // scanned again); over-listing a missing or non-config-bearing path fails

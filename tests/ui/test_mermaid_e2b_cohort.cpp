@@ -31,6 +31,7 @@ const fs::path kManifest = kTestsDir / "fixtures/mermaid_official/manifest.json"
 const fs::path kLedger = kTestsDir / "../tools/mermaid/e2b-cohort.json";
 const fs::path kRfc0038Ledger = kTestsDir / "../tools/mermaid/state-0038-cohort.json";
 const fs::path kRfc0046Ledger = kTestsDir / "../tools/mermaid/layouttuning-0046-cohort.json";
+const fs::path kD441Ledger = kTestsDir / "../tools/mermaid/state-layout-d441-cohort.json";
 const fs::path kRfc0048Ledger = kTestsDir / "../tools/mermaid/state-region-0048-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
@@ -276,6 +277,16 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
         cohort.insert(rel);
         if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
     });
+    // D-441 admits the 3 reviewed state `config.layout: elk` rows; the per-row
+    // gate is test_mermaid_state_layout_d441_cohort. They leave this scan and
+    // the skip set is pinned below.
+    auto d441 = json::parse(read_file(kD441Ledger));
+    ASSERT_TRUE(d441.has_value()) << "D-441 cohort ledger must parse";
+    d441->root().get("rows").iter([&](const JsonVal row) {
+        const auto rel = row.get_string("path");
+        cohort.insert(rel);
+        if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
+    });
     cohort.insert(admitted.begin(), admitted.end());
     std::set<std::string> skipped_by_rfc0038;
     std::set<std::string> skipped_by_rfc0046;
@@ -322,7 +333,8 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
             ++checked;
         }
     }
-    EXPECT_EQ(checked, 25);
+    // D-441 population migration: the 3 state layout rows leave the scan.
+    EXPECT_EQ(checked, 22);
     EXPECT_EQ(skipped_by_rfc0048.size(), 16u);
     // Under-listing fails here (an admitted row that really changes surface is
     // no longer excluded, so the whole-source assertion above goes red);

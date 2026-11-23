@@ -360,8 +360,10 @@ TEST(MermaidState0038Cohort, LookTableIsClosed) {
               std::string::npos);
     // A trailing YAML comment on an admitted leaf is accepted.
     EXPECT_TRUE(draws(state_probe("  look: neo # note\n"), kWide));
-    // Keys outside the admitted set keep the whole source on fallback.
-    EXPECT_FALSE(draws(state_probe("  layout: elk\n"), kWide));
+    // Keys outside the admitted set keep the whole source on fallback. The
+    // `layout: elk` selector is admitted by D-441 (see
+    // test_mermaid_state_layout_d441_cohort); other engine values stay gated.
+    EXPECT_FALSE(draws(state_probe("  layout: dagre\n"), kWide));
     EXPECT_FALSE(draws(state_probe("  handDrawnSeed: 1\n"), kWide));
     EXPECT_FALSE(draws(state_probe("  curve: linear\n"), kWide));
     EXPECT_FALSE(draws(state_probe("  themeVariables:\n    primaryColor: \"#ff0000\"\n"), kWide));

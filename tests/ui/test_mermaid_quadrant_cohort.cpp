@@ -86,7 +86,9 @@ TEST(MermaidQuadrantCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 7);
     // D-450 moves the five leading-init rows to their own cohort ledger.
     EXPECT_EQ(root.get("selection").get_int("init_gated_count"), 0);
-    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 2);
+    // D-457 moves the two body-style rows to their own cohort ledger.
+    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 0);
+    EXPECT_EQ(root.get("selection").get_int("d457_admitted_count"), 2);
     EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 0);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
@@ -150,6 +152,19 @@ TEST(MermaidQuadrantCohort, GatedQuadrantsStayWholeSource) {
             EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
         });
     }
+    // D-457: the two moved body-style rows draw and disclose under their own
+    // ledger.
+    int moved = 0;
+    selection.get("d457_admitted").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        EXPECT_TRUE(draws(read_file(kCases / rel), kWide)) << rel;
+        EXPECT_NE(capture(read_file(kCases / rel), "mermaid", kWide).text.find(
+                      "Quadrant native projection v1"),
+                  std::string::npos)
+            << rel;
+        ++moved;
+    });
+    EXPECT_EQ(moved, 2);
 }
 
 // Key/shape-based gate: prose mentioning "color"/"radius" is not a gate; an
@@ -164,17 +179,23 @@ TEST(MermaidQuadrantCohort, VisualGateIsKeyBased) {
         "quadrantChart\n%%{init: {\"quadrantChart\": {}}}%%\n  quadrant-1 A\n";
     EXPECT_FALSE(draws(init, kWide));
 
+    // D-457 admits the closed body-style surface (classDef, `:::class` and the
+    // inline point-style suffix); its positives live in the D-457 gate.
     const std::string point_style =
         "quadrantChart\n  Campaign A: [0.3, 0.6] radius: 20\n";
-    EXPECT_FALSE(draws(point_style, kWide));
+    EXPECT_TRUE(draws(point_style, kWide));
 
     const std::string classdef =
         "quadrantChart\n  quadrant-1 A\n  classDef class1 color: #908342\n";
-    EXPECT_FALSE(draws(classdef, kWide));
+    EXPECT_TRUE(draws(classdef, kWide));
 
     const std::string triple_colon =
         "quadrantChart\n  Campaign A:::class1: [0.3, 0.6]\n";
-    EXPECT_FALSE(draws(triple_colon, kWide));
+    EXPECT_TRUE(draws(triple_colon, kWide));
+
+    // A property outside the closed table still gates.
+    EXPECT_FALSE(draws(
+        "quadrantChart\n  Campaign A: [0.3, 0.6] fillcolor: #908342\n", kWide));
 
     const std::string with_config =
         "---\ndescription:\n  x\nconfig:\n  theme: dark\n---\n"

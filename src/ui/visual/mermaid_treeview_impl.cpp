@@ -55,6 +55,39 @@ std::string_view tree_body(std::string_view source) {
     }
 }
 
+// D-457: a node line may carry one trailing `:::class` annotation
+// (`Button.tsx :::highlight`). The terminal draws no highlight colour, so the
+// suffix is validated against an identifier, dropped from the transcribed row
+// and disclosed once in the footer. A suffix without the separating space, a
+// second `:::` or a non-identifier name is malformed.
+std::optional<std::string_view> tree_strip_class(std::string_view content, bool& had_class) {
+    const auto at = content.rfind(":::");
+    if (at == std::string_view::npos) return content;
+    if (at == 0 || content[at - 1] != ' ') return std::nullopt;
+    if (content.rfind(":::", at - 1) != std::string_view::npos) return std::nullopt;
+    std::string_view name = content.substr(at + 3);
+    while (!name.empty() && name.back() == ' ') name.remove_suffix(1);
+    if (name.empty() || name.size() > 64u) return std::nullopt;
+    if (!((name.front() >= 'a' && name.front() <= 'z') ||
+          (name.front() >= 'A' && name.front() <= 'Z') || name.front() == '_'))
+        return std::nullopt;
+    for (const char c : name)
+        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+              c == '-' || c == '_'))
+            return std::nullopt;
+    had_class = true;
+    std::string_view stripped = content.substr(0, at - 1);
+    while (!stripped.empty() && stripped.back() == ' ') stripped.remove_suffix(1);
+    while (!stripped.empty() && stripped.front() == ' ') stripped.remove_prefix(1);
+    // The annotation attaches to a bare or quoted label only: it must not
+    // follow an icon(...) or `## description` suffix, where the tail is free
+    // text and dropping it would silently lose authored content.
+    if (stripped.find("icon(") != std::string_view::npos ||
+        stripped.find("##") != std::string_view::npos)
+        return std::nullopt;
+    return stripped;
+}
+
 // Validate one node content (indent already stripped): a leading quoted label
 // or a bare label, with balanced icon(...)/## suffixes. Quotes, when used,
 // form exactly one leading "..." pair; parentheses balance; a "##" may only
@@ -429,8 +462,9 @@ std::optional<std::vector<std::string>> treeview_layout(std::string_view source,
 
     const std::string_view body = tree_body(source);
     // D-433: the closed `config` namespace owns the admitted frontmatter shape;
-    // an in-body %%{init}%% directive or a classDef/:::/style statement keeps
-    // the whole source on ordinary fallback. Key-based so prose mentioning
+    // an in-body %%{init}%% directive or a classDef/style statement keeps the
+    // whole source on ordinary fallback. A `:::class` annotation is admitted
+    // per node by D-457 (validated and dropped). Key-based so prose mentioning
     // "config" is not a gate.
     const TreeNamespace ns = tree_namespace(source);
     if (!ns.accepted) return {};
@@ -445,8 +479,7 @@ std::optional<std::vector<std::string>> treeview_layout(std::string_view source,
             if (trimmed != std::string_view::npos) {
                 const std::string_view content = line.substr(trimmed);
                 if (content.starts_with("%%{init") || content.starts_with("classDef") ||
-                    content.starts_with("style ") ||
-                    content.find(":::") != std::string_view::npos)
+                    content.starts_with("style "))
                     visual_gate = true;
             }
             if (eol == std::string_view::npos) break;
@@ -455,6 +488,7 @@ std::optional<std::vector<std::string>> treeview_layout(std::string_view source,
     }
 
     bool saw_header = false;
+    bool had_class = false;
     int node_count = 0;
     std::vector<std::string> out;
     auto push_guarded = [&](const std::string& row) -> bool {
@@ -488,8 +522,13 @@ std::optional<std::vector<std::string>> treeview_layout(std::string_view source,
             (first_non_space - kTreeBaseIndent) % kTreeIndentStep != 0)
             return {};
         if (++node_count > kTreeMaxNodes) return {};
-        if (!validate_node(content)) return {};
-        if (!push_guarded(std::string{line})) return {};  // verbatim, indent preserved
+        const auto stripped = tree_strip_class(content, had_class);
+        if (!stripped) return {};
+        if (!validate_node(*stripped)) return {};
+        // Verbatim row, indent preserved; the class annotation is dropped.
+        if (!push_guarded(std::string{line.substr(0, first_non_space)} +
+                          std::string{*stripped}))
+            return {};
     }
 
     if (!saw_header) return {};
@@ -502,7 +541,9 @@ std::optional<std::vector<std::string>> treeview_layout(std::string_view source,
         combined.insert(combined.end(), out.begin(), out.end());
         out = std::move(combined);
     }
-    const auto notices = tree_namespace_notices(ns);
+    auto notices = tree_namespace_notices(ns);
+    if (had_class)
+        notices.push_back("body class annotations -> highlight colour; not applied");
     if (!notices.empty()) {
         std::size_t extra = 2 + notices.size();
         for (const auto& notice : notices) extra += notice.size();

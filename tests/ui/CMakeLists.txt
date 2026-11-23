@@ -275,6 +275,15 @@ add_test(NAME MermaidUsecaseThemedD456Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidUsecaseThemedD456Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-457: the quadrant/tree-view body-style cohort ledger is a generator
+# constant; the check fails on a hand edit or an unreviewed expectation change.
+add_test(NAME MermaidStyleD457Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_style_d457_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidStyleD457Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-452: the treemap classDef cohort ledger is a generator constant; the check
 # fails on a hand edit or an unreviewed expectation change.
 add_test(NAME MermaidTreemapClassdefD452Cohort.GeneratorIsReproducible
@@ -1302,6 +1311,15 @@ add_executable(test_mermaid_venn_style_d453_cohort
 target_link_libraries(test_mermaid_venn_style_d453_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_venn_style_d453_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# D-457: quadrant/tree-view body-style cohort gate.
+add_executable(test_mermaid_style_d457_cohort
+    test_mermaid_style_d457_cohort.cpp)
+target_link_libraries(test_mermaid_style_d457_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_style_d457_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

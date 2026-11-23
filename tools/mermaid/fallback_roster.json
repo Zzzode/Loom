@@ -1,9 +1,9 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 451,
+  "total_fallback": 448,
   "category_counts": {
-    "classdef_styling": 27,
+    "classdef_styling": 24,
     "click_interactive_callback": 18,
     "dagre_layout_tuning": 10,
     "edge_animation_metadata": 71,
@@ -69,8 +69,8 @@
   "predicate_sufficiency": {
     "classdef_styling": {
       "originals_matching_predicate": 147,
-      "drawn_among_matches": 64,
-      "fallback_among_matches": 83,
+      "drawn_among_matches": 67,
+      "fallback_among_matches": 80,
       "sufficient_blocker": false
     },
     "click_interactive_callback": {
@@ -227,8 +227,6 @@
       "flowchart/visual-check/5-should-style-nodes-via-a-class.mmd",
       "flowchart/visual-check/with-styling-and-classes-2.mmd",
       "flowchart/visual-check/with-styling-and-classes.mmd",
-      "quadrant-chart/pr-check/it-should-render-data-points-with-styles-classes.mmd",
-      "quadrant-chart/pr-check/it-should-render-data-points-with-styles.mmd",
       "requirement/visual-check/with-a-theme-default.mmd",
       "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-color-theme.mmd",
       "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-dark-color-theme.mmd",
@@ -238,8 +236,7 @@
       "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-dark-color-theme.mmd",
       "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-dark-theme.mmd",
       "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-theme.mmd",
-      "state-diagram-v2/nightly-check/v2-can-have-multiple-classes-applied-to-multiple-states.mmd",
-      "tree-view/pr-check/should-render-class-annotations-for-highlighting.mmd"
+      "state-diagram-v2/nightly-check/v2-can-have-multiple-classes-applied-to-multiple-states.mmd"
     ],
     "click_interactive_callback": [
       "flowchart/nightly-check/dagre/v2-dagre-16-render-stadium-shape.mmd",

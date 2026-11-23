@@ -6,8 +6,8 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1694 drawn /
-451 source_fallback / 0 error at 240 wide**, after D-456 (`local`,
+**Current totals (the last row of the history table below): 1697 drawn /
+448 source_fallback / 0 error at 240 wide**, after D-457 (`local`,
 2026-11-24). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
@@ -91,6 +91,7 @@ are not whole-original errors).
 | After D-454 timeline closed nested init payloads (2 rows) | 2026-11-24 | local | 1683 | 462 | 0 |
 | After D-455 tree-view residual envelope and icon suppression (2 rows) | 2026-11-24 | local | 1685 | 460 | 0 |
 | After D-456 usecase themed envelope + quoted boundary/json block (9 rows) | 2026-11-24 | local | 1694 | 451 | 0 |
+| After D-457 quadrant/tree-view body styles (3 rows) | 2026-11-24 | local | 1697 | 448 | 0 |
 
 Row-level detail for the newest rows:
 - **D-450 (5)**: `quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd`,
@@ -128,6 +129,12 @@ Row-level detail for the newest rows:
   `usecase.colorScheme: rotate`. The theme/leaves are inert and disclosed
   "not applied" (art equals the frontmatter-free twin), and the boundary title
   and JSON block are transcribed verbatim.
+- **D-457 (3)**: `quadrant-chart/pr-check/it-should-render-data-points-with-
+  styles-classes` and `it-should-render-data-points-with-styles` (body
+  `classDef`, `:::class` point suffixes and the closed inline point-style
+  suffix, all validated, dropped and disclosed), plus
+  `tree-view/pr-check/should-render-class-annotations-for-highlighting`
+  (one trailing `:::highlight` node annotation, dropped and disclosed).
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -156,8 +163,8 @@ disposition (fix or documented infeasibility).
 | journey | 0 | 18 | renderer added 2026-11-11; RFC 0040 admitted the 4 `config: theme: redux*` rows and RFC 0047 admits the 4 inert leading `%%{init}%%` theme directives (footer-disclosed, synthetic twin); live census 18/0/0 from 18 |
 | pie | 0 | 24 | RFC 0042 (2026-11-22) admits 5 theme-only rows through a closed five-value table with a disclosure footer; D-425 (2026-11-22) admits the 8 rows whose only non-admitted input is the closed `config.pie` namespace (art equals the config-free twin, footer-disclosed); D-426 (2026-11-23) admits the last 4 rows: scalar `accTitle:`/`accDescr:` are validated no-ops (accessibility metadata; a text terminal has no separate accessibility tree) and the closed theme table gains `default`/`forest`/`neutral`, so the whole family is closed at 24 originals; frame equality against the acc-line-deleted twin is the oracle; measured narrow_40 is 2/24 (two baseline rows fit 40 columns) |
 | state-diagram | 7 | 35 | RFC 0046 (2026-11-22) admits the 2 `state.useMaxWidth` rows through the closed tuning namespace with a disclosure footer (synthetic twins); D223 batch one: +3 (HTML-entity fork/join top-level and nested, edge literal `\n`); RFC 0048 admits the concurrency row at P1 and the 4 in-body `%%{init}%%` theme rows at P2 (region dividers, footer-disclosed, synthetic twins); the v1 note twin stays gated by a real tab in its folded description and the labeled composite rows stay gated; live census 35/7/0 from 42 |
-| tree-view | 2 | 13 | renderer added 2026-11-13 (verbatim node-row transcription, no icons/colour); D-433 (2026-11-23) admits the two closed `config.treeView` rows and D-434 the closed `filenameIcons`/`extensionIcons` maps (every entry inert and disclosed, art equals the config-stripped twin); D-455 (2026-11-24) admits the trailing-space-fence custom-config row (the shared classify peek closes `---`+whitespace only when the next body line is exactly `treeView-beta`) and the `icon(none)` / empty-`icon()` suppression row; the 2 remaining are the `:::class` body row (`classdef_styling`) and the combined-annotations icon row (`icon_font_glyphs`); live census 15/2/0 from 15 |
-| quadrant-chart | 7 | 7 | renderer added 2026-11-13; 5 %%{init}%% visual directives (axis position/sizing/theme colors) + 2 inline point-style rows stay source (no geometry/color contract) |
+| tree-view | 1 | 14 | renderer added 2026-11-13 (verbatim node-row transcription, no icons/colour); D-433 (2026-11-23) admits the two closed `config.treeView` rows and D-434 the closed `filenameIcons`/`extensionIcons` maps (every entry inert and disclosed, art equals the config-stripped twin); D-455 (2026-11-24) admits the trailing-space-fence custom-config row (the shared classify peek closes `---`+whitespace only when the next body line is exactly `treeView-beta`) and the `icon(none)` / empty-`icon()` suppression row; the 2 remaining are the `:::class` body row (`classdef_styling`) and the combined-annotations icon row (`icon_font_glyphs`); D-457 (2026-11-24) admits the one trailing `:::class` node annotation (drop + disclose, class-stripped twin), so the only remaining row is the combined-annotations icon row; live census 14/1/0 from 15 |
+| quadrant-chart | 0 | 14 | renderer added 2026-11-13; D-450 (2026-11-23) admits the 5 leading closed `%%{init}%%` tuning/theme rows; D-457 (2026-11-24) admits the last 2 body-style rows (`classDef`, `:::class` point suffixes and the closed inline point-style suffix, validated, dropped and disclosed with a style-stripped twin), so the family is closed at 14 originals; live census 14/0/0 from 14 |
 | ishikawa | 1 | 12 | renderer added 2026-11-13; RFC 0043 (2026-11-22) admits the forest/dark theme rows through a closed two-value table with a disclosure footer (both body-identical to `pr-check/1`); RFC 0046 admits the 3 `config.ishikawa.*` tuning rows through the closed namespace (1 corpus twin, 2 synthetic); only the handdrawn-look row stays source; live census 12/1/0 from 13 |
 | kanban | 0 | 11 | renderer added 2026-11-13; all eleven originals clean (description-only frontmatter; cards with optional @{...} structural metadata, no color contract) |
 | mindmap | 19 | 14 | |

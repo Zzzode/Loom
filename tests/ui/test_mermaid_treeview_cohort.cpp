@@ -93,7 +93,9 @@ TEST(MermaidTreeviewCohort, LedgerSchemaReviewCountsAndManifest) {
     // D-455 moves the two residual rows into their own decision cohort.
     EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 3);
     EXPECT_EQ(root.get("selection").get_int("d455_admitted_count"), 2);
-    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 2);
+    // D-457 moves the `:::class` node-annotation row into its own cohort.
+    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 1);
+    EXPECT_EQ(root.get("selection").get_int("d457_admitted_count"), 1);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     const auto manifest = parse_doc(kManifest);
@@ -182,6 +184,18 @@ TEST(MermaidTreeviewCohort, GatedTreeviewsStayWholeSource) {
         const auto rel = value.as_str();
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
     });
+    // D-457: the moved `:::class` row draws and discloses under its ledger.
+    int moved457 = 0;
+    selection.get("d457_admitted").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        EXPECT_TRUE(draws(read_file(kCases / rel), kWide)) << rel;
+        EXPECT_NE(capture(read_file(kCases / rel), "mermaid", kWide).text.find(
+                      "TreeView native projection v1"),
+                  std::string::npos)
+            << rel;
+        ++moved457;
+    });
+    EXPECT_EQ(moved457, 1);
 }
 
 // Key-based gate: prose mentioning "config"/"theme" is not a gate; a
@@ -201,7 +215,9 @@ TEST(MermaidTreeviewCohort, VisualGateIsKeyBased) {
     EXPECT_FALSE(draws(
         "---\nconfig:\n  x: 1\n---      \ntreeView-beta\n  \"root\"\n", kWide));
     EXPECT_FALSE(draws("---\nlook: handDrawn\n---\ntreeView-beta\n  \"root\"\n", kWide));
-    EXPECT_FALSE(draws("treeView-beta\n  App.tsx :::highlight\n", kWide));
+    // D-457 admits one trailing `:::class` node annotation; the positives live
+    // in the D-457 gate.
+    EXPECT_TRUE(draws("treeView-beta\n  App.tsx :::highlight\n", kWide));
     EXPECT_FALSE(draws("treeView-beta\n  classDef c color:#f00\n", kWide));
     EXPECT_FALSE(draws("treeView-beta\n  %%{init: {}}%%\n  a\n", kWide));
     EXPECT_FALSE(draws("treeView-beta\n  style a fill:#f00\n", kWide));

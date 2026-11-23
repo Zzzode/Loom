@@ -71,30 +71,6 @@ bool is_coordinate(std::string_view token) {
     return token.front() != '.' && token.back() != '.';
 }
 
-// Inline point styling appears after the coordinate bracket, e.g.
-// "[0.3, 0.6] radius: 20" or "[..] stroke-color  : #ff00ff". Shape/key-based:
-// a key must start on a non-identifier boundary and end at an optional-space
-// colon, so prose mentioning "color" never trips the gate. Longer keys first;
-// the '-' boundary check also blocks "color" matching inside "stroke-color".
-bool has_point_style_keyword(std::string_view suffix) {
-    static constexpr std::string_view kKeys[] = {"stroke-color", "stroke-width", "radius",
-                                                  "color"};
-    for (const std::string_view key : kKeys) {
-        std::size_t pos = 0;
-        while ((pos = suffix.find(key, pos)) != std::string_view::npos) {
-            const char before = pos == 0 ? ' ' : suffix[pos - 1];
-            if (!((before >= 'a' && before <= 'z') || (before >= 'A' && before <= 'Z') ||
-                  (before >= '0' && before <= '9') || before == '_' || before == '-')) {
-                std::size_t k = pos + key.size();
-                while (k < suffix.size() && suffix[k] == ' ') ++k;
-                if (k < suffix.size() && suffix[k] == ':') return true;
-            }
-            pos += key.size();
-        }
-    }
-    return false;
-}
-
 bool quadrant_wrap(const std::string& label, Work& work, std::vector<std::string>& out) {
     std::size_t byte = 0;
     std::string current;
@@ -136,6 +112,9 @@ constexpr std::string_view kQuadrantNoticeHeader = "Quadrant native projection v
 // Bounded by the closed tables: prefix 11 + namespace 15 + longest key 35 +
 // "=" + longest value 7 + suffix 41 = 110 bytes; the cap is 128.
 constexpr std::size_t kQuadrantNoticeLimit = 128;
+// "point " — the fixed prefix of a per-point disclosure line; the pre-check
+// and the truncation budget count it exactly once.
+constexpr std::size_t kQuadrantNoticePrefix = 6u;
 
 constexpr std::array<std::string_view, 16> kQuadrantTuningKeys{
     "chartWidth", "chartHeight", "titlePadding", "titleFontSize", "quadrantPadding",
@@ -222,6 +201,60 @@ bool quadrant_color(std::string_view value) {
     return std::ranges::all_of(value.substr(1u), [](char c) {
         return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
     });
+}
+
+// D-457: a class name or a `:::class` annotation is an identifier.
+bool quadrant_identifier(std::string_view value) {
+    if (value.empty() || value.size() > 64u) return false;
+    if (!((value.front() >= 'a' && value.front() <= 'z') ||
+          (value.front() >= 'A' && value.front() <= 'Z') || value.front() == '_'))
+        return false;
+    for (const char c : value)
+        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+              c == '_' || c == '-'))
+            return false;
+    return true;
+}
+
+// D-457: the closed point-style property list shared by `classDef` and the
+// inline per-point suffix (`radius: 20`, `color: #ff0000`,
+// `stroke-color: #ff00ff`, `stroke-width: 3px`), whitespace-tolerant around
+// ',' and ':' and closed in both key and value shape. The terminal plots point
+// labels only, so every property is inert, validated, dropped and disclosed.
+bool quadrant_style_entry(std::string_view key, std::string_view value) {
+    if (key == "radius") return quadrant_uint(value) && value.size() <= 3u;
+    if (key == "color" || key == "stroke-color") return quadrant_color(value);
+    if (key == "stroke-width")
+        return value.size() >= 3u && value.size() <= 5u && value.ends_with("px") &&
+               std::ranges::all_of(value.substr(0u, value.size() - 2u),
+                                   [](char c) { return c >= '0' && c <= '9'; });
+    return false;
+}
+
+std::optional<std::vector<std::pair<std::string, std::string>>> quadrant_style_list(
+    std::string_view text) {
+    std::vector<std::pair<std::string, std::string>> props;
+    std::size_t pos = 0;
+    while (true) {
+        while (pos < text.size() && text[pos] == ' ') ++pos;
+        if (pos >= text.size()) break;
+        const auto colon = text.find(':', pos);
+        if (colon == std::string_view::npos) return std::nullopt;
+        const std::string_view key = trim_view(text.substr(pos, colon - pos));
+        const auto comma = text.find(',', colon + 1);
+        const std::string_view value =
+            trim_view(text.substr(colon + 1, comma == std::string_view::npos
+                                                 ? std::string_view::npos
+                                                 : comma - colon - 1));
+        if (key.empty() || !quadrant_style_entry(key, value)) return std::nullopt;
+        for (const auto& [seen, ignored] : props)
+            if (seen == key) return std::nullopt;
+        props.emplace_back(std::string{key}, std::string{value});
+        if (comma == std::string_view::npos) break;
+        pos = comma + 1;
+    }
+    if (props.empty()) return std::nullopt;
+    return props;
 }
 
 bool quadrant_object_interior(std::string_view text, std::string_view& interior) {
@@ -332,6 +365,24 @@ bool quadrant_init_directive(std::string_view line, std::vector<std::string>& no
     return true;
 }
 
+// Truncate `text` to at most `budget` bytes on a UTF-8 codepoint boundary: a
+// sequence cut mid-way is dropped whole, so the disclosure never carries an
+// invalid byte sequence.
+void quadrant_truncate_utf8(std::string& text, std::size_t budget) {
+    if (text.size() <= budget) return;
+    text.resize(budget);
+    std::size_t at = text.size();
+    while (at > 0 && (static_cast<unsigned char>(text[at - 1]) & 0xC0u) == 0x80u) --at;
+    if (at == 0) {
+        text.clear();
+        return;
+    }
+    const auto lead = static_cast<unsigned char>(text[at - 1]);
+    const std::size_t expected =
+        lead >= 0xF0u ? 4u : lead >= 0xE0u ? 3u : lead >= 0xC0u ? 2u : 1u;
+    if (text.size() - (at - 1) < expected) text.erase(at - 1);
+}
+
 }  // namespace
 
 std::optional<std::vector<std::string>> quadrant_layout(std::string_view source, Work& work) {
@@ -360,10 +411,11 @@ std::optional<std::vector<std::string>> quadrant_layout(std::string_view source,
             body = eol == std::string_view::npos ? std::string_view{} : body.substr(eol + 1u);
         }
     }
-    // No geometry/color contract: a frontmatter theme/look/config key, any
-    // other %%{init}%% directive (axis position, size, font, fill), a
-    // classDef/::: style, or an inline point style keeps the whole source on
-    // fallback. Key/shape-based so prose words are not false gates.
+    // No geometry/color contract: a frontmatter theme/look/config key or a
+    // non-leading %%{init}%% directive keeps the whole source on fallback.
+    // D-457 admits the body `classDef` statements and the per-point `:::class`
+    // / inline style suffixes, validated and dropped by the loop below.
+    // Key/shape-based so prose words are not false gates.
     {
         bool visual_gate = false;
         if (source.starts_with("---\n")) {
@@ -398,15 +450,7 @@ std::optional<std::vector<std::string>> quadrant_layout(std::string_view source,
                 const auto trimmed = line.find_first_not_of(' ');
                 if (trimmed != std::string_view::npos) {
                     const std::string_view content = line.substr(trimmed);
-                    if (content.starts_with("%%{init") ||
-                        content.starts_with("classDef") ||
-                        content.find(":::") != std::string_view::npos)
-                        visual_gate = true;
-                    // Inline per-point style suffix after the coordinate pair.
-                    const auto bracket = content.find(']');
-                    if (!visual_gate && bracket != std::string_view::npos &&
-                        has_point_style_keyword(content.substr(bracket + 1)))
-                        visual_gate = true;
+                    if (content.starts_with("%%{init")) visual_gate = true;
                 }
                 if (eol == std::string_view::npos) break;
             }
@@ -452,6 +496,7 @@ std::optional<std::vector<std::string>> quadrant_layout(std::string_view source,
 
         if (content.starts_with("title ")) {
             if (!title.empty()) return {};  // duplicate title
+            if (content.find(":::") != std::string_view::npos) return {};
             title = trim_copy(content.substr(6));
             if (title.empty() || title.size() > kQuadrantMaxNameBytes ||
                 !unicode_text(title))
@@ -464,6 +509,7 @@ std::optional<std::vector<std::string>> quadrant_layout(std::string_view source,
         }
 
         if (content.starts_with("x-axis ") || content.starts_with("y-axis ")) {
+            if (content.find(":::") != std::string_view::npos) return {};
             const std::string axis(content.substr(0, 6));
             const std::string label = trim_copy(content.substr(7));
             if (label.empty() || label.size() > kQuadrantMaxNameBytes ||
@@ -478,6 +524,7 @@ std::optional<std::vector<std::string>> quadrant_layout(std::string_view source,
 
         if (content.starts_with("quadrant-")) {
             // quadrant-1 .. quadrant-4 followed by a label.
+            if (content.find(":::") != std::string_view::npos) return {};
             const auto space = content.find(' ');
             if (space == std::string_view::npos) return {};
             const std::string_view number = content.substr(9, space - 9);
@@ -495,20 +542,84 @@ std::optional<std::vector<std::string>> quadrant_layout(std::string_view source,
             continue;
         }
 
-        // Data point: "<name>: [x, y]" with nothing but the coordinate pair.
-        const auto colon = content.find(':');
-        if (colon == std::string_view::npos) return {};  // unknown statement
-        const std::string name = trim_copy(content.substr(0, colon));
-        if (name.empty() || name.size() > kQuadrantMaxNameBytes || !unicode_text(name))
+        // D-457: a body `classDef <name> <closed props>` statement is inert
+        // styling. It is validated, dropped from the outline and disclosed.
+        if (content.starts_with("classDef ")) {
+            const std::string_view rest = trim_view(content.substr(9u));
+            const auto space = rest.find(' ');
+            if (space == std::string_view::npos) return {};
+            const std::string_view name = rest.substr(0, space);
+            if (!quadrant_identifier(name)) return {};
+            if (!quadrant_style_list(rest.substr(space + 1))) return {};
+            const std::string line =
+                "body classDef=" + std::string{name} + " -> colour/radius; not applied";
+            if (line.size() > kQuadrantNoticeLimit || !work.spend(line.size() * 2u + 32u))
+                return {};
+            notices.push_back(line);
+            continue;
+        }
+
+        // Data point: "<name>[: :::class]: [x, y][ <closed style list>]".
+        const auto bracket_open = content.find('[');
+        const auto bracket_close = content.find(']');
+        if (bracket_open == std::string_view::npos ||
+            bracket_close == std::string_view::npos || bracket_close < bracket_open)
             return {};
-        std::string_view tail = trim_view(content.substr(colon + 1));
-        if (tail.size() < 2 || tail.front() != '[' || tail.back() != ']') return {};
-        const auto comma = tail.find(',');
+        std::string_view prefix = trim_view(content.substr(0, bracket_open));
+        if (prefix.empty() || prefix.back() != ':') return {};
+        prefix.remove_suffix(1);
+        std::string_view name = trim_view(prefix);
+        std::string_view point_class;
+        const auto class_mark = name.rfind(":::");
+        if (class_mark != std::string_view::npos) {
+            point_class = name.substr(class_mark + 3u);
+            if (class_mark == 0u || !quadrant_identifier(point_class)) return {};
+            name = trim_view(name.substr(0, class_mark));
+            if (name.find(":::") != std::string_view::npos) return {};
+        }
+        // The name is the single field before the `:` separator; an inner
+        // `:` (e.g. `A: B: [0.1, 0.2]`) is outside the admitted grammar.
+        if (name.empty() || name.size() > kQuadrantMaxNameBytes ||
+            name.find(':') != std::string_view::npos || !unicode_text(std::string{name}))
+            return {};
+        const std::string_view coords =
+            content.substr(bracket_open + 1u, bracket_close - bracket_open - 1u);
+        const auto comma = coords.find(',');
         if (comma == std::string_view::npos) return {};
-        const std::string_view x = trim_view(tail.substr(1, comma - 1));
-        const std::string_view y = trim_view(tail.substr(comma + 1, tail.size() - comma - 2));
+        const std::string_view x = trim_view(coords.substr(0, comma));
+        const std::string_view y = trim_view(coords.substr(comma + 1u));
         if (!is_coordinate(x) || !is_coordinate(y)) return {};
+        const std::string_view style_text = trim_view(content.substr(bracket_close + 1u));
+        std::optional<std::vector<std::pair<std::string, std::string>>> styles;
+        if (!style_text.empty()) {
+            styles = quadrant_style_list(style_text);
+            if (!styles) return {};
+        }
         if (++point_count > kQuadrantMaxPoints) return {};
+        if (!point_class.empty() || styles) {
+            std::string tail = " -> ";
+            if (!point_class.empty()) tail += "class=" + std::string{point_class};
+            if (!point_class.empty() && styles) tail += ", ";
+            if (styles) tail += "styles=" + std::to_string(styles->size());
+            tail += "; not applied";
+            std::string disclosed{name};
+            if (kQuadrantNoticePrefix + disclosed.size() + tail.size() >
+                kQuadrantNoticeLimit) {
+                // Truncate on a codepoint boundary so a long free-text name
+                // never turns an otherwise admitted row into a fallback.
+                const std::size_t marker = 3u;  // "..."
+                if (tail.size() + kQuadrantNoticePrefix + marker >= kQuadrantNoticeLimit)
+                    return {};
+                const std::size_t budget =
+                    kQuadrantNoticeLimit - tail.size() - kQuadrantNoticePrefix - marker;
+                quadrant_truncate_utf8(disclosed, budget);
+                disclosed += "...";
+            }
+            const std::string line = "point " + disclosed + tail;
+            if (line.size() > kQuadrantNoticeLimit || !work.spend(line.size() * 2u + 32u))
+                return {};
+            notices.push_back(line);
+        }
 
         const std::string outline =
             std::string{name} + " (" + std::string{x} + ", " + std::string{y} + ")";

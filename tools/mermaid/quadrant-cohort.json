@@ -5,7 +5,7 @@
   "renderer": {
     "module": "src/ui/visual/mermaid_quadrant_impl.cpp",
     "grammar": "quadrantChart; title, x-axis/y-axis labels, quadrant-1..4 labels, Name: [x, y] points",
-    "theme_gate": "frontmatter theme/look/config, an %%{init}%% directive, a classDef/::: statement or an inline point style keeps the whole original on source fallback"
+    "theme_gate": "frontmatter theme/look/config or a non-admitted %%{init}%% directive keeps the whole original on source fallback; the body classDef / ::: / inline point-style surface is owned by the D-457 cohort"
   },
   "upstream": {
     "tag": "mermaid@12.2.0",
@@ -20,8 +20,10 @@
     "draw_count": 7,
     "init_gated_count": 0,
     "init_gated": [],
-    "body_style_gated_count": 2,
-    "body_style_gated": [
+    "body_style_gated_count": 0,
+    "body_style_gated": [],
+    "d457_admitted_count": 2,
+    "d457_admitted": [
       "quadrant-chart/pr-check/it-should-render-data-points-with-styles-classes.mmd",
       "quadrant-chart/pr-check/it-should-render-data-points-with-styles.mmd"
     ],

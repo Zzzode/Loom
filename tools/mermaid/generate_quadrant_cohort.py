@@ -4,10 +4,11 @@
 The quadrant renderer (mermaid_quadrant_impl.cpp) projects the quadrantChart
 grammar (title, x/y-axis labels, quadrant-1..4 labels, named [x, y] data
 points) to a bounded native outline. It has no geometry/color contract, so
-fixtures carrying a frontmatter theme/look/config key, a non-admitted
-%%{init}%% visual directive, a classDef/::: statement, or an inline per-point
-style suffix
-(radius/color/stroke-color/stroke-width) stay on whole-source fallback.
+fixtures carrying a frontmatter theme/look/config key or a non-admitted
+%%{init}%% visual directive stay on whole-source fallback. The body
+classDef / `:::class` / inline point-style surface is admitted by the D-457
+cohort (validated, dropped and disclosed), so those rows are outside this
+partition.
 
 Renderer-free; the durable gtest enforces every state live. Drift guards pin
 the draw / init-gated / body-style-gated partition; manifest shas are pinned;
@@ -54,10 +55,17 @@ _BODY_SOURCE = {
     "quadrant-chart/nightly-check/should-render-if-only-chart-type-is-provided.mmd",
 }
 
-# Inline point style keys, longest first. A key must start on a non-identifier
-# boundary and be followed by optional spaces and a colon, mirroring the C++
-# has_point_style_keyword shape gate.
-_STYLE_KEYS = ("stroke-color", "stroke-width", "radius", "color")
+# D-457: the two body-style rows moved into their own decision cohort (the
+# closed classDef / `:::class` / inline point-style surface is validated,
+# dropped and disclosed by that cohort's gate).
+D457 = {
+    "quadrant-chart/pr-check/it-should-render-data-points-with-styles-classes.mmd",
+    "quadrant-chart/pr-check/it-should-render-data-points-with-styles.mmd",
+}
+
+# Inline point style keys. A key must start on a non-identifier boundary and
+# be followed by optional spaces and a colon. This detector only classifies
+# the historical body-style partition; D-457 owns admission.
 _STYLE_RE = re.compile(
     r"(?<![A-Za-z0-9_-])(?:stroke-color|stroke-width|radius|color)\s*:")
 
@@ -167,11 +175,16 @@ def build(repo_root):
         else:
             draw.add(rel)
 
-    if (len(draw), len(init_gate), len(body_gate), len(fm_gate)) != (7, 0, 2, 0):
+    moved = body_gate & D457
+    if len(moved) != 2:
+        raise ValueError(
+            f"D-457 rows drifted out of the body-style partition: {sorted(moved)}")
+    body_gate -= D457
+    if (len(draw), len(init_gate), len(body_gate), len(fm_gate)) != (7, 0, 0, 0):
         raise ValueError(
             f"quadrant partition drift: draw={len(draw)} init={len(init_gate)} "
             f"body_style={len(body_gate)} frontmatter={len(fm_gate)} "
-            f"(expected 7/0/2/0 after D-450)")
+            f"(expected 7/0/0/0 after D-457)")
 
     rows = []
     for rel in sorted(draw):
@@ -214,9 +227,10 @@ def build(repo_root):
             "grammar": ("quadrantChart; title, x-axis/y-axis labels, "
                         "quadrant-1..4 labels, Name: [x, y] points"),
             "theme_gate": (
-                "frontmatter theme/look/config, an %%{init}%% directive, a "
-                "classDef/::: statement or an inline point style keeps the "
-                "whole original on source fallback"),
+                "frontmatter theme/look/config or a non-admitted %%{init}%% "
+                "directive keeps the whole original on source fallback; the "
+                "body classDef / ::: / inline point-style surface is owned by "
+                "the D-457 cohort"),
         },
         "upstream": {
             "tag": manifest["upstream"]["tag"],
@@ -233,6 +247,8 @@ def build(repo_root):
             "init_gated": sorted(init_gate),
             "body_style_gated_count": len(body_gate),
             "body_style_gated": sorted(body_gate),
+            "d457_admitted_count": len(moved),
+            "d457_admitted": sorted(moved),
             "frontmatter_gated_count": len(fm_gate),
             "frontmatter_gated": sorted(fm_gate),
         },

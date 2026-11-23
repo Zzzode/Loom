@@ -5,7 +5,7 @@
   "renderer": {
     "module": "src/ui/visual/mermaid_treeview_impl.cpp",
     "grammar": "treeView-beta; indented quoted/bare node labels with optional icon(...) and ## description suffixes",
-    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body style/classDef/::: statement keeps the whole original on source fallback"
+    "theme_gate": "a frontmatter theme/look/config key, an %%{init}%% directive or a body classDef/style statement keeps the whole original on source fallback; a :::class node annotation is owned by the D-457 cohort"
   },
   "upstream": {
     "tag": "mermaid@12.2.0",
@@ -29,9 +29,12 @@
       "tree-view/nightly-check/should-hide-default-icons-with-icon-none-and-icon.mmd",
       "tree-view/pr-check/should-render-with-custom-config-and-quoted-labels.mmd"
     ],
-    "body_style_gated_count": 2,
+    "body_style_gated_count": 1,
     "body_style_gated": [
-      "tree-view/nightly-check/should-render-combined-annotations.mmd",
+      "tree-view/nightly-check/should-render-combined-annotations.mmd"
+    ],
+    "d457_admitted_count": 1,
+    "d457_admitted": [
       "tree-view/pr-check/should-render-class-annotations-for-highlighting.mmd"
     ]
   },

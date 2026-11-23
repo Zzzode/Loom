@@ -5,8 +5,10 @@ The tree-view renderer (mermaid_treeview_impl.cpp) projects the treeView-beta
 grammar (indentation-based nodes with quoted or bare labels, optional icon(...)
 and ``## description`` suffixes) to a bounded native outline that preserves the
 source indentation. It has no icon/color/layout contract, so fixtures carrying
-a frontmatter theme/look/config key or a body :::/classDef/style/%%{init}%%
-statement stay on whole-source fallback.
+a frontmatter theme/look/config key or a body classDef/style/%%{init}%%
+statement stay on whole-source fallback. A `:::class` node annotation is
+admitted by the D-457 cohort (validated, dropped and disclosed), so those rows
+are outside this partition.
 
 Renderer-free; the durable gtest enforces every state live. Drift guards pin
 the draw / frontmatter-gated / body-style-gated partition; manifest shas are
@@ -145,11 +147,20 @@ def build(repo_root):
     if len(moved) != 2:
         raise ValueError(f"D-455 rows drifted out of the frontmatter partition: {sorted(moved)}")
     fm_gate -= d455
-    if (len(draw), len(fm_gate), len(body_gate)) != (8, 3, 2):
+    # D-457: the `:::class` node-annotation row moved into its own cohort.
+    d457 = {
+        "tree-view/pr-check/should-render-class-annotations-for-highlighting.mmd",
+    }
+    moved457 = body_gate & d457
+    if len(moved457) != 1:
+        raise ValueError(
+            f"D-457 rows drifted out of the body-style partition: {sorted(moved457)}")
+    body_gate -= d457
+    if (len(draw), len(fm_gate), len(body_gate)) != (8, 3, 1):
         raise ValueError(
             f"tree-view partition drift: draw={len(draw)} "
             f"frontmatter={len(fm_gate)} body_style={len(body_gate)} "
-            f"(expected 8/3/2; the two D-455 rows moved out)")
+            f"(expected 8/3/1; the D-455 and D-457 rows moved out)")
 
     rows = []
     for rel in sorted(draw):
@@ -195,8 +206,9 @@ def build(repo_root):
                         "optional icon(...) and ## description suffixes"),
             "theme_gate": (
                 "a frontmatter theme/look/config key, an %%{init}%% directive "
-                "or a body style/classDef/::: statement keeps the whole "
-                "original on source fallback"),
+                "or a body classDef/style statement keeps the whole original "
+                "on source fallback; a :::class node annotation is owned by "
+                "the D-457 cohort"),
         },
         "upstream": {
             "tag": manifest["upstream"]["tag"],
@@ -214,6 +226,8 @@ def build(repo_root):
             "d455_admitted": sorted(moved),
             "body_style_gated_count": len(body_gate),
             "body_style_gated": sorted(body_gate),
+            "d457_admitted_count": len(moved457),
+            "d457_admitted": sorted(moved457),
         },
         "review": build_review(repo_root),
         "counts": {

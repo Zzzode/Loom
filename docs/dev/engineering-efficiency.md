@@ -2503,3 +2503,34 @@ renderer already draws it.
    banner and history row but not their own family row. Each slice must update
    its family row in the same commit, and the whole table is refreshed from the
    matrix at batch closure rather than per slice.
+
+## D-457 quadrant/tree-view body styles retro (2026-11-24)
+
+1. **A mirror check must name the search direction.** `string_view::rfind(sv,
+   pos)` searches backwards from `pos` (inclusive), so the "second `:::`"
+   guard written as `rfind(":::", at)` matched the annotation itself and
+   rejected every valid row. Pin the direction: search `at - 1` for an earlier
+   occurrence, and put the accepted shape in the gate's positive probe.
+2. **An identifier rule belongs to the annotation, not the name.** A quadrant
+   point name is free text; only the `:::class` annotation is an identifier.
+   The first negative ("digit-leading name") was wrong for that reason and was
+   replaced by a malformed annotation. Write the closed-vocabulary negative
+   against the closed token, not against the free-text field beside it.
+3. **Two families, two footers, one ledger.** A decision cohort can span
+   families when the admission is the same concept; the ledger carries the
+   per-row footer header rather than assuming one, and the rule-38 reach proof
+   covers the union so a branch cannot silently claim only one family.
+4. **A bounded-disclosure budget is a constant with three terms, and every
+   term must be counted once.** The truncation test compared
+   `5 + name + tail` while the emitted line is `"point "` (6 bytes) + name +
+   tail, so a 129-byte notice passed the pre-check and then failed the
+   post-check, turning an otherwise admitted row into a fallback. Derive the
+   prefix width from one named constant in both languages (the Python mirror
+   had the same off-by-one), and probe the boundary with a source that forces
+   truncation rather than trusting the arithmetic.
+5. **Never rebuild a build tree while its suite is running.** A debug rebuild
+   during the pre-approval `ctest -L mermaid` run replaced test executables
+   mid-suite and produced eight `BAD_COMMAND`/`Not Run` results with exit 0 at
+   the harness level but unusable evidence. One writer per build tree applies
+   to the test runner too: wait for the suite (or use the other preset) before
+   building, or the log is worthless and the run must be repeated.

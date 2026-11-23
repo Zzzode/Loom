@@ -1,0 +1,120 @@
+{
+  "schema": "loom_mermaid_style_d457_cohort/v1",
+  "decision": "D-457",
+  "admission": {
+    "shape": "a body `classDef <name> <closed props>` statement, a `:::class` suffix on a quadrant data point or a tree-view node, and the closed inline point-style suffix (`radius`, `color`, `stroke-color`, `stroke-width`)",
+    "footer": {
+      "quadrant_header": "Quadrant native projection v1",
+      "treeview_header": "TreeView native projection v1",
+      "line_limit_bytes": 128
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin is the same fixture with the styling surface removed; the art above the footer must be cell-equal"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the last body-style fallbacks of quadrant-chart and tree-view, whose only non-admitted inputs are the closed body styling surface",
+    "cohort_digest": "39fe4a905c23196c31774323b0d8b45ed126d1ee50e34ab86b1e5faaad165dc0"
+  },
+  "counts": {
+    "total": 3,
+    "by_family": {
+      "quadrant-chart": 2,
+      "tree-view": 1
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review, fresh general-purpose agent, D-457 quadrant/tree-view body styles, 2026-11-24: round 1 REQUEST-CHANGES (point-name widening, tree-view fail-open after icon()/##, notice budget, ledger prose, mirror scope), round 2 REQUEST-CHANGES (UTF-8 truncation boundary, literal prefix width, doc wording), round 3 APPROVE after fixes (task aa20b69e9a9c097f5, resumed for each re-check)",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "The roster regeneration and the d117 counts are deferred to the post-approval OfficialMatrix rerun; both landed in the same commit."
+  },
+  "rows": [
+    {
+      "path": "quadrant-chart/pr-check/it-should-render-data-points-with-styles-classes.mmd",
+      "family": "quadrant-chart",
+      "sha256": "0746b7f5be7318e7d4672de2a850536074f09e15033ad7ebd3855b60fab2ce49",
+      "manifest_sha256": "0746b7f5be7318e7d4672de2a850536074f09e15033ad7ebd3855b60fab2ce49",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Quadrant native projection v1",
+        "point Campaign A -> class=class1, styles=1; not applied",
+        "point Campaign B -> styles=1; not applied",
+        "point Campaign C -> styles=1; not applied",
+        "point Campaign D -> class=class2, styles=1; not applied",
+        "point Campaign E -> class=class2, styles=4; not applied",
+        "point Campaign F -> class=class1; not applied",
+        "body classDef=class1 -> colour/radius; not applied",
+        "body classDef=class2 -> colour/radius; not applied"
+      ],
+      "twin": {
+        "kind": "quadrant-style-stripped-body",
+        "path": "quadrant-chart/pr-check/it-should-render-data-points-with-styles-classes.mmd"
+      },
+      "ledger_note": "the projection plots labels only, so the validated body styling is dropped from the outline and disclosed in the footer (once per statement); the style-stripped twin renders identical art"
+    },
+    {
+      "path": "quadrant-chart/pr-check/it-should-render-data-points-with-styles.mmd",
+      "family": "quadrant-chart",
+      "sha256": "f002d4d9d9efa0525cc0b3de07548bec5e5ed38fac9ae4442a918538140568c6",
+      "manifest_sha256": "f002d4d9d9efa0525cc0b3de07548bec5e5ed38fac9ae4442a918538140568c6",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Quadrant native projection v1",
+        "point Campaign A -> styles=1; not applied",
+        "point Campaign B -> styles=1; not applied",
+        "point Campaign C -> styles=1; not applied",
+        "point Campaign D -> styles=1; not applied",
+        "point Campaign E -> styles=4; not applied",
+        "point Campaign F -> styles=4; not applied",
+        "point Campaign G -> styles=4; not applied"
+      ],
+      "twin": {
+        "kind": "quadrant-style-stripped-body",
+        "path": "quadrant-chart/pr-check/it-should-render-data-points-with-styles.mmd"
+      },
+      "ledger_note": "the projection plots labels only, so the validated body styling is dropped from the outline and disclosed in the footer (once per statement); the style-stripped twin renders identical art"
+    },
+    {
+      "path": "tree-view/pr-check/should-render-class-annotations-for-highlighting.mmd",
+      "family": "tree-view",
+      "sha256": "2a6d7b4d0e658ec103a522623a95e80ef2f7ae487d2276966740c92a9705de1e",
+      "manifest_sha256": "2a6d7b4d0e658ec103a522623a95e80ef2f7ae487d2276966740c92a9705de1e",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "TreeView native projection v1",
+        "body class annotations -> highlight colour; not applied"
+      ],
+      "twin": {
+        "kind": "treeview-class-stripped-body",
+        "path": "tree-view/pr-check/should-render-class-annotations-for-highlighting.mmd"
+      },
+      "ledger_note": "the projection plots labels only, so the validated body styling is dropped from the outline and disclosed in the footer (once per source); the style-stripped twin renders identical art"
+    }
+  ]
+}

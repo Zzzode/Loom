@@ -5447,3 +5447,36 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   art above the footer must be cell-equal — the assertion that proves the
   accepted keys change no output. Narrow 40 is measured live (all nine rows
   stay source there).
+
+## quadrant-chart and tree-view body styles (D-457)
+
+- **Scope.** The last body-style fallbacks of two families whose projections
+  plot labels only: the two quadrant originals that carry a body `classDef`,
+  a `:::class` suffix on data points and inline per-point style suffixes, and
+  the tree-view original that annotates two node rows with `:::highlight`.
+- **Why inert.** Neither projection has a colour, radius or stroke contract —
+  the quadrant outline plots `name (x, y)` rows and the tree-view outline
+  transcribes node rows. The styling surface therefore has **no visual side
+  effect: it is accepted, dropped from the outline and disclosed in the
+  footer as "not applied"**, and rendering with the styling is identical to
+  rendering the same body without it.
+- **Mechanism.** The quadrant parser validates `classDef <identifier>
+  <props>` and a point line's `:::class` suffix plus post-bracket style list
+  against one closed property grammar (`radius` ≤ 3 digits, `color` /
+  `stroke-color` `#rrggbb`, `stroke-width` `<1..3 digits>px`, whitespace
+  tolerant around `,` and `:`, no duplicate key). A property outside the
+  table, a `class`/`style` statement, a `:::` that is not one trailing class
+  annotation, or a `:::` on a title/axis/quadrant label keeps the whole source
+  gated. The tree-view node validator accepts one trailing
+  `' :::' <identifier>` annotation (first character a letter or `_`, the
+  separating space required, never after an `icon(...)` or `## description`
+  suffix), drops it from the transcribed row and rejects a second annotation.
+- **Disclosure.** The D-450 quadrant footer gains `body classDef=<name> ->
+  colour/radius; not applied` and `point <name> -> class=<id>, styles=<n>;
+  not applied` lines in source order; the D-433/434 tree-view footer gains
+  `body class annotations -> highlight colour; not applied` when a node
+  carries one.
+- **Oracle.** The twin is the same fixture with the styling surface removed
+  (the classDef line, the `:::class` text and the inline style suffix); the
+  art above the footer must be cell-equal. Narrow 40 is measured live (all
+  three rows stay source there).

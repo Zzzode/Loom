@@ -291,8 +291,11 @@ TEST(MermaidTreeviewIconsD434Cohort, ClosedIconMapNegativesStayWholeSource) {
         EXPECT_FALSE(draws(source, kWide)) << tail;
         EXPECT_FALSE(native_frame(source, kWide)) << tail;
     }
+    // D-457 admits one trailing `:::class` node annotation (validated and
+    // dropped, positives in test_mermaid_style_d457_cohort); a malformed
+    // annotation still gates.
     for (const auto* body : {"treeView-beta\n  src/\n  classDef red fill:#fff\n",
-                             "treeView-beta\n  src/\n  index.js :::red\n",
+                             "treeView-beta\n  src/\n  index.js :::1red\n",
                              "treeView-beta\n  %%{init: {}}%%\n"}) {
         EXPECT_FALSE(draws(std::string(body), kWide)) << body;
         EXPECT_FALSE(draws(

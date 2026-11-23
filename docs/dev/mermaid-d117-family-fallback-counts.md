@@ -67,6 +67,7 @@ are not whole-original errors).
 | After D-434 tree-view closed icon maps (1 row) | 2026-11-23 | local | 1612 | 533 | 0 |
 | After D-435 gitGraph frontmatter title (1 row) | 2026-11-23 | local | 1613 | 532 | 0 |
 | After D-436 gitGraph main branch name/order (14 rows) | 2026-11-23 | local | 1627 | 518 | 0 |
+| After D-437 wardley closed theme (4 rows, wardley family closed) | 2026-11-23 | local | 1631 | 514 | 0 |
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
@@ -101,7 +102,7 @@ disposition (fix or documented infeasibility).
 | kanban | 0 | 11 | renderer added 2026-11-13; all eleven originals clean (description-only frontmatter; cards with optional @{...} structural metadata, no color contract) |
 | mindmap | 19 | 14 | |
 | venn | 7 | 14 | renderer added 2026-11-12; RFC 0043 (2026-11-22) admits the dark/redux-color/redux-dark-color theme rows through a closed three-value table (the redux pair body-identical to `pr-check/16`, `dark` synthetic); 3 look/handDrawnSeed frontmatter rows and 4 body style/classDef rows stay source; live census 14/7/0 from 21; measured narrow_40 is 0/3 |
-| wardley | 4 | 6 | renderer added 2026-11-13; 4 frontmatter theme-test rows stay source (no map-canvas/color contract); live census 6/4/0 from a candidate pool of 10; the only non-ASCII byte in the family is inside one frontmatter description |
+| wardley | 10 | 0 | renderer added 2026-11-13 (verbatim outline, no map canvas/colour); D-437 (2026-11-23) admits the four `config.theme` rows through the closed palette table and accepts the upstream column-0 body spelling (theme inert and disclosed, art equals the config-stripped twin); family closed at wide 240; live census 10/0/0 from 10 |
 | railroad | 0 | 9 | renderer added 2026-11-13; first multi-dialect family (railroad-beta IR + abnf/ebnf/peg-beta); RFC 0043 (2026-11-22) admits the single dark-theme row through a closed one-value table (synthetic twin), so no frontmatter-gated row remains; live census 9/0/0 from 9; measured narrow_40 is 0/1; only non-ASCII byte is in one frontmatter description |
 | block | 0 | 58 | complete (B0a/B6) |
 | sequence | 0 | 193 | complete |

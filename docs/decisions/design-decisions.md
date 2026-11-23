@@ -4554,6 +4554,24 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## wardley closed theme and column-0 bodies (D-437)
+
+- **A config-only diagnosis can hide a body-grammar blocker.** The four wardley
+  theme rows were registered as `frontmatter_gated`, but their bodies spell
+  statements at column 0 (the upstream style) while the renderer required the
+  two-space grid, so admitting the theme alone still fell back. The grid now
+  accepts column 0 *or* two spaces; odd indents still fail closed, and the
+  transcription stays verbatim with the source indentation.
+- **The theme leaf is inert and disclosed.** `config.theme` in the closed
+  base/dark/forest/neutral table is a palette the terminal never draws, so it is
+  disclosed under `Wardley native projection v1`; the art above the footer
+  equals the config-stripped twin's art. A top-level `theme:` key stays
+  unadmitted (the closed shape is the config-namespaced leaf).
+- **Accounting.** The D-437 branch precedes the RFC 0031 wardley branch with a
+  rule-38 reach proof; the RFC 0031 gate asserts its four former negatives are
+  D-437 ledger members, and the indent-0 malformed-input case is flipped to a
+  positive with the two-space and odd-indent cases still negative.
+
 ## gitGraph trunk identity and lane order (D-436)
 
 - **The trunk identity must reach the parser before the body is read.**

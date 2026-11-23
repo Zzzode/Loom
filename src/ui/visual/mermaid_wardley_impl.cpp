@@ -318,6 +318,94 @@ bool is_link(std::string_view content) {
     return split_link(head, "->", left, right);
 }
 
+// D-437: the closed frontmatter theme. `base`/`dark`/`forest`/`neutral` are
+// colour palettes the terminal projection never draws, so the leaf is inert and
+// disclosed under `Wardley native projection v1`. Tri-state: `accepted`
+// separates "no theme" (plain source or description-only) from "not an admitted
+// frontmatter".
+struct WardleyTheme {
+    bool accepted = false;
+    std::optional<std::string> theme;
+};
+
+WardleyTheme wardley_frontmatter_theme(std::string_view source) {
+    WardleyTheme result;
+    if (!source.starts_with("---\n")) {
+        result.accepted = true;  // a plain source carries no frontmatter
+        return result;
+    }
+    std::size_t close_start = 0;
+    for (std::size_t search = 4;;) {
+        const auto nl = source.find('\n', search);
+        const std::string_view line =
+            source.substr(search, nl == std::string_view::npos ? std::string_view::npos
+                                                               : nl - search);
+        if (line.size() >= 3 && line[0] == '-' && line[1] == '-' && line[2] == '-') {
+            std::size_t i = 3;
+            while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) ++i;
+            if (i == line.size()) {
+                if (nl == std::string_view::npos) return result;  // unterminated
+                close_start = search;
+                break;
+            }
+        }
+        if (nl == std::string_view::npos) return result;
+        search = nl + 1;
+    }
+    const std::string_view frontmatter = source.substr(0, close_start);
+    bool description_seen = false, config_seen = false, theme_seen = false, first = true;
+    for (std::size_t pos = 0; pos <= frontmatter.size();) {
+        const auto nl = frontmatter.find('\n', pos);
+        const std::string_view line =
+            frontmatter.substr(pos, nl == std::string_view::npos ? std::string_view::npos
+                                                                 : nl - pos);
+        const bool last = nl == std::string_view::npos;
+        pos = last ? frontmatter.size() + 1u : nl + 1u;
+        const auto key_start = line.find_first_not_of(' ');
+        if (key_start == std::string_view::npos) {
+            if (last) break;
+            continue;
+        }
+        const std::string_view content = line.substr(key_start);
+        if (first) {
+            if (key_start != 0u || content != "---") return result;
+            first = false;
+            if (last) break;
+            continue;
+        }
+        if (key_start == 0u) {
+            if (content.starts_with("description:")) {
+                if (description_seen || config_seen) return result;
+                description_seen = true;
+            } else if (content == "config:") {
+                if (config_seen || !description_seen) return result;
+                config_seen = true;
+            } else {
+                return result;  // a top-level theme/look key stays unadmitted
+            }
+            if (last) break;
+            continue;
+        }
+        if (!config_seen) {  // a description payload line
+            if (!description_seen) return result;
+            if (last) break;
+            continue;
+        }
+        // The config block is closed: exactly one indent-2 `theme` leaf.
+        if (theme_seen || key_start != 2u || !content.starts_with("theme: ")) return result;
+        const std::string_view value = trim_spaces(content.substr(7u));
+        if (value != "base" && value != "dark" && value != "forest" && value != "neutral")
+            return result;
+        theme_seen = true;
+        result.theme = std::string{value};
+        if (last) break;
+    }
+    if (config_seen && !theme_seen) return result;
+    if (!description_seen) return result;
+    result.accepted = true;
+    return result;
+}
+
 }  // namespace
 
 std::optional<std::vector<std::string>> wardley_layout(std::string_view source,
@@ -332,41 +420,15 @@ std::optional<std::vector<std::string>> wardley_layout(std::string_view source,
     }
 
     const std::string_view body = wardley_body(source);
-    // No map-canvas/color contract: a frontmatter theme/look/config key, an
-    // %%{init}%% directive or a classDef/:::/style statement keeps the whole
-    // source on fallback. The fence splitter tolerates trailing whitespace.
+    // D-437: the closed frontmatter parser owns the admitted shape; an
+    // in-body %%{init}%% directive or a classDef/:::/style statement keeps the
+    // whole source on fallback. Key-based so prose mentioning "theme" is not a
+    // gate.
+    const WardleyTheme frontmatter = wardley_frontmatter_theme(source);
+    if (!frontmatter.accepted) return {};
     {
         bool visual_gate = false;
-        if (source.starts_with("---\n")) {
-            std::size_t search = 4;
-            while (search < source.size()) {
-                const auto nl = source.find('\n', search);
-                const std::string_view line =
-                    source.substr(search, nl == std::string_view::npos
-                                                      ? std::string_view::npos
-                                                      : nl - search);
-                std::size_t i = 0;
-                bool is_fence = false;
-                if (line.size() >= 3 && line[0] == '-' && line[1] == '-' && line[2] == '-') {
-                    i = 3;
-                    while (i < line.size() && (line[i] == ' ' || line[i] == '\t')) ++i;
-                    is_fence = i == line.size();
-                }
-                const auto key_start = line.find_first_not_of(' ');
-                if (!is_fence && key_start != std::string_view::npos) {
-                    std::string_view key = line.substr(key_start);
-                    const auto colon = key.find(':');
-                    if (colon != std::string_view::npos)
-                        key = trim_spaces(key.substr(0, colon));
-                    if (key == "theme" || key == "look" || key == "config")
-                        visual_gate = true;
-                }
-                if (is_fence) break;
-                if (nl == std::string_view::npos) break;
-                search = nl + 1;
-            }
-        }
-        if (!visual_gate) {
+        {
             for (std::size_t pos = 0;;) {
                 const auto eol = body.find('\n', pos);
                 std::string_view line = body.substr(
@@ -417,8 +479,11 @@ std::optional<std::vector<std::string>> wardley_layout(std::string_view source,
             saw_header = true;
             continue;
         }
-        // Every statement sits on the strict two-space grid.
-        if (first_non_space != static_cast<std::size_t>(kWardleyIndent)) return {};
+        // D-437: the corpus spells whole maps at column 0 (upstream style) and
+        // earlier slices at the two-space grid; both are accepted, and the
+        // source indentation is preserved verbatim in the emitted rows.
+        if (first_non_space != 0u && first_non_space != static_cast<std::size_t>(kWardleyIndent))
+            return {};
         if (++statement_count > kWardleyMaxStatements) return {};
 
         std::string_view pipeline_name;
@@ -474,6 +539,15 @@ std::optional<std::vector<std::string>> wardley_layout(std::string_view source,
         combined.push_back("wardley-beta");
         combined.insert(combined.end(), out.begin(), out.end());
         out = std::move(combined);
+    }
+    if (frontmatter.theme) {
+        const std::string line = "config.theme=" + *frontmatter.theme +
+                                 " -> colour palette; not applied";
+        if (line.size() > 96u || !work.spend(line.size() * 4u + 128u)) return {};
+        if (out.size() + 2u > static_cast<std::size_t>(kWardleyMaxRows)) return {};
+        out.push_back("");
+        out.push_back("Wardley native projection v1");
+        out.push_back(line);
     }
     return out;
 }

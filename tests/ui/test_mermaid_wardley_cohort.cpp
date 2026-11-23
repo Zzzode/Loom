@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -28,6 +29,8 @@ using json::JsonVal;
 const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases";
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/wardley-cohort.json";
+const fs::path kD437Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/wardley-theme-d437-cohort.json";
 constexpr int kWide = 240;
 constexpr int kNarrow = 40;
 constexpr int kHeight = 1600;
@@ -138,12 +141,31 @@ TEST(MermaidWardleyCohort, CleanWardleysDrawOnWholeAndBodyTracks) {
 TEST(MermaidWardleyCohort, GatedWardleysStayWholeSource) {
     const auto ledger = parse_doc(kLedger);
     const auto& selection = ledger.root().get("selection");
-    for (const auto* key : {"frontmatter_gated", "body_style_gated"}) {
-        selection.get(key).iter([&](JsonVal value) {
-            const auto rel = value.as_str();
-            EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
-        });
-    }
+    // D-437 admits the four closed `config.theme` rows (and the column-0 body
+    // spelling they use); their positives live in
+    // test_mermaid_wardley_theme_d437_cohort. The partition is preserved: each
+    // admitted row must be a D-437 ledger member, every other gated row stays
+    // whole source.
+    std::set<std::string> theme_rows;
+    auto theme_ledger = json::parse(read_file(kD437Ledger));
+    ASSERT_TRUE(theme_ledger.has_value()) << "D-437 cohort ledger must parse";
+    theme_ledger->root().get("rows").iter(
+        [&](const JsonVal row) { theme_rows.insert(row.get_string("path")); });
+    int admitted = 0;
+    selection.get("frontmatter_gated").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        if (theme_rows.contains(std::string(rel))) {
+            ++admitted;
+            return;
+        }
+        EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
+    });
+    EXPECT_EQ(admitted, 4);
+    EXPECT_EQ(theme_rows.size(), 4u);
+    selection.get("body_style_gated").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
+    });
 }
 
 // Key-based gate: prose mentioning "theme"/"config" inside a note or title is
@@ -216,7 +238,9 @@ TEST(MermaidWardleyCohort, MalformedInputFailsClosed) {
     EXPECT_FALSE(draws("not-wardley\n  component A [0.1, 0.1]\n", kWide));
     EXPECT_FALSE(draws("wardley-beta\n\tcomponent A [0.1, 0.1]\n", kWide));
     EXPECT_FALSE(draws("wardley-beta\n  a\rb\n", kWide));
-    EXPECT_FALSE(draws("wardley-beta\ncomponent A [0.1, 0.1]\n", kWide));   // indent 0
+    // D-437 accepts the upstream column-0 spelling (the positive is owned by
+    // the D-437 gate); the off-grid indents still fail closed.
+    EXPECT_TRUE(draws("wardley-beta\ncomponent A [0.1, 0.1]\n", kWide));   // indent 0
     EXPECT_FALSE(draws("wardley-beta\n component A [0.1, 0.1]\n", kWide));  // indent 1
     EXPECT_FALSE(draws("wardley-beta\n    component A [0.1, 0.1]\n", kWide));  // indent 4
     // Coordinate shapes: pair outside a pipeline, well-formed decimals only.

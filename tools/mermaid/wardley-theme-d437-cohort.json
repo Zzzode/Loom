@@ -1,0 +1,84 @@
+{
+  "schema": "loom_mermaid_wardley_theme_d437_cohort/v1",
+  "decision": "D-437",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "wardley original whose frontmatter is a folded description plus config.theme in the closed base/dark/forest/neutral table",
+    "cohort_digest": "4e208f1bdb4913f39ae55b89aaedf89250eeaec444b70e2bc7c7ecdcf0bd7f0b",
+    "body_spellings": "column-0 and two-space statement indentation are both transcribed verbatim",
+    "exclusions": "top-level theme keys, other theme names, look keys, unknown leaves and style statements stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice without a design gate; the gate is the test document plus the twin oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 4
+  },
+  "rows": [
+    {
+      "path": "wardley/pr-check/theme-test-base.mmd",
+      "sha256": "c2c2a7d03087ba61bbd605ce7edae0a867a99fda2db80ba12f94454d1ab76c62",
+      "manifest_sha256": "c2c2a7d03087ba61bbd605ce7edae0a867a99fda2db80ba12f94454d1ab76c62",
+      "theme": "base",
+      "expected_footer_lines": [
+        "Wardley native projection v1",
+        "config.theme=base -> colour palette; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "wardley/pr-check/theme-test-dark.mmd",
+      "sha256": "f2a52c895a32f690bcf6dd3d2ea5b84a3f73fd43cc608b8e6b3b4b4bfbb648a0",
+      "manifest_sha256": "f2a52c895a32f690bcf6dd3d2ea5b84a3f73fd43cc608b8e6b3b4b4bfbb648a0",
+      "theme": "dark",
+      "expected_footer_lines": [
+        "Wardley native projection v1",
+        "config.theme=dark -> colour palette; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "wardley/pr-check/theme-test-forest.mmd",
+      "sha256": "0ecb4dd95cf6fa623bbad6fbf4f260d74ace96690590ce2d45dd0c342b26538a",
+      "manifest_sha256": "0ecb4dd95cf6fa623bbad6fbf4f260d74ace96690590ce2d45dd0c342b26538a",
+      "theme": "forest",
+      "expected_footer_lines": [
+        "Wardley native projection v1",
+        "config.theme=forest -> colour palette; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "wardley/pr-check/theme-test-neutral.mmd",
+      "sha256": "29c381273d695862706a4df38eefa95701d04ad752d5ee51fadeb3e1e03979de",
+      "manifest_sha256": "29c381273d695862706a4df38eefa95701d04ad752d5ee51fadeb3e1e03979de",
+      "theme": "neutral",
+      "expected_footer_lines": [
+        "Wardley native projection v1",
+        "config.theme=neutral -> colour palette; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

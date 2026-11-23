@@ -2175,3 +2175,20 @@ writing the closure doc, and size the ledger from the matrix's unexpected list,
 not from the hand-picked fixtures. The twelve rows were added to the ledger
 rather than blocked in the renderer — the combination is legitimate and the
 renderer already draws it.
+
+## D-437 wardley theme retro (2026-11-23)
+
+1. **A ledger's "frontmatter_gated" label is a diagnosis, not a proof.** The
+   four wardley rows were listed as frontmatter-gated because the blunt key scan
+   fired first; their bodies (column-0 statements) failed a second, unlabelled
+   check. Always probe the *body alone* after implementing the config part — the
+   first probe here showed "config admitted, still fallback" and saved a wrong
+   closure.
+2. **Twin-frame trimming must remove the sentinel, not only blanks.** The
+   config-free twin's capture ends with a blank row plus the sentinel, so the
+   art comparison failed on two extra rows while the art itself matched. Trim
+   both the blank and the sentinel when comparing against a footer-free twin.
+3. **A gate copied to a new family drags the old family's fixture helpers.**
+   The cloned git gate carried `kBody`/`probe` for gitGraph, which collided with
+   the wardley ones; build the helper set from the new oracle before the first
+   compile.

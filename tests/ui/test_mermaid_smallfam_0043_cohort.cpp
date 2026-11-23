@@ -52,6 +52,9 @@ struct FamilySpec {
     int expected_layout_admitted;
     int expected_frontmatter_gated;
     int expected_body_style_gated;
+    // D-443 adds a dedicated bucket for the closed look/seed/font rows so the
+    // five-way partition stays literal.
+    int expected_d443 = 0;
 };
 
 const std::vector<FamilySpec>& families() {
@@ -61,13 +64,13 @@ const std::vector<FamilySpec>& families() {
          {"dark", "forest"},
          "Ishikawa native projection v1",
          "ishikawa-beta\n  Effect\n      Cause\n",
-         13, 7, 2, 3, 1, 0},
+         13, 7, 2, 3, 0, 0, 1},
         {"venn",
          fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/venn-cohort.json",
          {"dark", "redux-color", "redux-dark-color"},
          "Venn native projection v1",
          "venn-beta\n  set A\n  set B\n  union A, B\n",
-         21, 11, 3, 0, 3, 4},
+         21, 11, 3, 0, 0, 5, 2},
         {"railroad",
          fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/railroad-cohort.json",
          {"dark"},
@@ -416,12 +419,30 @@ TEST(MermaidSmallfam0043Cohort, OutOfTableAndShapeRejects) {
         EXPECT_FALSE(draws(config_probe(spec, "  theme: dark\nconfig:\n  theme: dark\n"),
                           kWide))
             << spec.name;
-        // Non-theme leaves reject: the block must be exactly one theme leaf.
-        EXPECT_FALSE(draws(config_probe(spec, "  look: handDrawn\n"), kWide)) << spec.name;
-        EXPECT_FALSE(draws(config_probe(spec, "  theme: dark\n  look: handDrawn\n"), kWide))
+        // D-443 admits the closed look/seed/font trio for ishikawa and venn
+        // (that gate owns the positive frames); railroad keeps every look leaf
+        // gated, and out-of-table values stay gated in every family.
+        const bool d443_family =
+            std::string_view(spec.name) == "ishikawa" || std::string_view(spec.name) == "venn";
+        EXPECT_FALSE(draws(config_probe(spec, "  look: classic\n"), kWide)) << spec.name;
+        EXPECT_FALSE(draws(config_probe(spec, "  theme: dark\n  look: classic\n"), kWide))
             << spec.name;
-        EXPECT_FALSE(draws(config_probe(spec, "  theme: dark\n  handDrawnSeed: 1\n"), kWide))
+        EXPECT_FALSE(draws(config_probe(spec, "  theme: dark\n  handDrawnSeed: 0\n"), kWide))
             << spec.name;
+        if (d443_family) {
+            EXPECT_TRUE(draws(config_probe(spec, "  look: handDrawn\n"), kWide)) << spec.name;
+            EXPECT_TRUE(
+                draws(config_probe(spec, "  theme: dark\n  look: handDrawn\n"), kWide))
+                << spec.name;
+        } else {
+            EXPECT_FALSE(draws(config_probe(spec, "  look: handDrawn\n"), kWide)) << spec.name;
+            EXPECT_FALSE(
+                draws(config_probe(spec, "  theme: dark\n  look: handDrawn\n"), kWide))
+                << spec.name;
+            EXPECT_FALSE(
+                draws(config_probe(spec, "  theme: dark\n  handDrawnSeed: 1\n"), kWide))
+                << spec.name;
+        }
         EXPECT_FALSE(draws(config_probe(spec, "  htmlLabels: false\n"), kWide)) << spec.name;
         // RFC 0046 admits the closed ishikawa tuning namespace for the
         // ishikawa spec only; the sibling families keep it gated, and an
@@ -518,11 +539,13 @@ TEST(MermaidSmallfam0043Cohort, FamilyLedgersPartitionFiveWays) {
         EXPECT_EQ(selection.get_int("layout_admitted_count"),
                   spec.expected_layout_admitted)
             << spec.name;
+        EXPECT_EQ(selection.get_int("d443_admitted_count"), spec.expected_d443) << spec.name;
         EXPECT_EQ(selection.get_int("family_total"), spec.expected_originals) << spec.name;
         EXPECT_EQ(selection.get_int("draw_count") + selection.get_int("admitted_count") +
                       selection.get_int("layout_admitted_count") +
                       selection.get_int("frontmatter_gated_count") +
-                      selection.get_int("body_style_gated_count"),
+                      selection.get_int("body_style_gated_count") +
+                      selection.get_int("d443_admitted_count"),
                   spec.expected_originals)
             << spec.name;
         EXPECT_EQ(selection.get_int("admission_rfc"), 43) << spec.name;
@@ -536,7 +559,7 @@ TEST(MermaidSmallfam0043Cohort, FamilyLedgersPartitionFiveWays) {
         });
         EXPECT_EQ(drawn, spec.expected_draw) << spec.name;
         for (const auto* key : {"admitted", "layout_admitted", "frontmatter_gated",
-                                "body_style_gated"}) {
+                                "body_style_gated", "d443_admitted"}) {
             int listed = 0;
             selection.get(key).iter([&](JsonVal value) {
                 ++listed;
@@ -551,6 +574,8 @@ TEST(MermaidSmallfam0043Cohort, FamilyLedgersPartitionFiveWays) {
                 EXPECT_EQ(listed, spec.expected_frontmatter_gated) << spec.name;
             if (std::string_view(key) == "body_style_gated")
                 EXPECT_EQ(listed, spec.expected_body_style_gated) << spec.name;
+            if (std::string_view(key) == "d443_admitted")
+                EXPECT_EQ(listed, spec.expected_d443) << spec.name;
         }
         EXPECT_EQ(static_cast<int>(covered.size()), spec.expected_originals) << spec.name;
         // The remaining gated rows stay whole-source; an empty list is

@@ -236,6 +236,17 @@ TEST(MermaidC4LayoutConfigD445Cohort, ClosedCallsStayWholeSource) {
         const auto source = probe(call);
         EXPECT_FALSE(draws(source, kWide)) << call;
     }
+    // The call is a top-level statement only: nested inside an element block
+    // it is not the admitted form.
+    {
+        const auto source = std::string{
+            "---\ndescription: >-\n  c4 layout probe\n---\nC4Context\n"
+            "System_Boundary(b, \"B\") {\n"
+            "UpdateLayoutConfig($c4ShapeInRow=\"2\", $c4BoundaryInRow=\"1\")\n"
+            "}\n"};
+        EXPECT_FALSE(draws(source, kWide));
+        EXPECT_FALSE(native_frame(source, kWide));
+    }
     // A call-free source keeps no disclosure footer.
     {
         const auto frame = capture("---\ndescription: >-\n  probe\n---\n" + std::string(kBody),

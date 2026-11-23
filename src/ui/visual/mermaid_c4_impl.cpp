@@ -368,7 +368,8 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
             // D-445: exactly one call, exactly the two corpus-backed quoted
             // knobs in order, each within its closed table; anything else
             // keeps the whole source on fallback.
-            if (opens_block || layout_config_seen || args.size() != 2u) return {};
+            if (opens_block || depth != 0 || layout_config_seen || args.size() != 2u)
+                return {};
             std::string shape, boundary;
             if (!c4_layout_config_arg(args[0], "$c4ShapeInRow", {"2", "4"}, shape) ||
                 !c4_layout_config_arg(args[1], "$c4BoundaryInRow", {"1"}, boundary))

@@ -32,6 +32,8 @@ const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/c4-cohort.json";
 const fs::path kD445Ledger =
     fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/c4-layout-config-d445-cohort.json";
+const fs::path kD451Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/c4-styling-d451-cohort.json";
 const fs::path kD432Ledger =
     fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/c4-wrap-d432-cohort.json";
 constexpr int kWide = 240;
@@ -89,7 +91,8 @@ TEST(MermaidC4Cohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_c4_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 23);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 23);
-    EXPECT_EQ(root.get("selection").get_int("styled_excluded_count"), 9);
+    // D-432/D-445/D-451 exhaust the styled population; their ledgers own it.
+    EXPECT_EQ(root.get("selection").get_int("styled_excluded_count"), 0);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     const auto manifest = parse_doc(kManifest);
@@ -152,13 +155,17 @@ TEST(MermaidC4Cohort, StyledC4sStayWholeSource) {
     ASSERT_TRUE(wrap_ledger.has_value()) << "D-432 cohort ledger must parse";
     wrap_ledger->root().get("rows").iter(
         [&](const JsonVal row) { wrap_rows.insert(row.get_string("path")); });
-    // D-445 admits the two closed `UpdateLayoutConfig` rows; their positives
-    // are owned by test_mermaid_c4_layout_config_d445_cohort.
+    // D-445 admits the two closed `UpdateLayoutConfig` rows and D-451 the six
+    // styling/accessibility rows; their positives are owned by
+    // test_mermaid_c4_layout_config_d445_cohort and
+    // test_mermaid_c4_styling_d451_cohort.
     std::set<std::string> admitted_rows = wrap_rows;
-    auto layout_ledger = json::parse(read_file(kD445Ledger));
-    ASSERT_TRUE(layout_ledger.has_value()) << "D-445 cohort ledger must parse";
-    layout_ledger->root().get("rows").iter(
-        [&](const JsonVal row) { admitted_rows.insert(row.get_string("path")); });
+    for (const auto& ledger_path : {kD445Ledger, kD451Ledger}) {
+        auto ledger_other = json::parse(read_file(ledger_path));
+        ASSERT_TRUE(ledger_other.has_value()) << ledger_path;
+        ledger_other->root().get("rows").iter(
+            [&](const JsonVal row) { admitted_rows.insert(row.get_string("path")); });
+    }
     int admitted = 0;
     ledger.root().get("selection").get("styled_excluded").iter([&](JsonVal value) {
         const auto rel = value.as_str();
@@ -168,9 +175,12 @@ TEST(MermaidC4Cohort, StyledC4sStayWholeSource) {
         }
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
     });
-    EXPECT_EQ(admitted, 3);
+    // The styled population is exhausted by the three cohort ledgers
+    // (1 wrap + 2 layout-config + 6 styling), so the ledger list is empty and
+    // the loop above guards any future non-admitted addition.
+    EXPECT_EQ(admitted, 0);
     EXPECT_EQ(wrap_rows.size(), 1u);
-    EXPECT_EQ(admitted_rows.size(), 3u);
+    EXPECT_EQ(admitted_rows.size(), 9u);
 }
 
 // Key-based gate: prose mentioning "style" is not a gate; a frontmatter
@@ -180,9 +190,18 @@ TEST(MermaidC4Cohort, VisualGateIsKeyBased) {
         "C4Context\n  title Style discussion\n  System(s, \"A style guide\")\n";
     EXPECT_TRUE(draws(plain, kWide));
 
-    const std::string update_style =
-        "C4Context\n  System(a, \"A\")\n  UpdateElementStyle(a, $shape=\"folder\")\n";
-    EXPECT_FALSE(draws(update_style, kWide));
+    // D-451 admits the closed styling calls; the still-rejected shapes are a
+    // missing attribute list, a non-`$` attribute and an unknown call.
+    EXPECT_TRUE(draws("C4Context\n  System(a, \"A\")\n"
+                      "  UpdateElementStyle(a, $shape=\"folder\")\n",
+                      kWide));
+    for (const auto* rejected : {
+             "C4Context\n  System(a, \"A\")\n  UpdateElementStyle(a)\n",
+             "C4Context\n  System(a, \"A\")\n  UpdateElementStyle(a, shape=\"folder\")\n",
+             "C4Context\n  System(a, \"A\")\n  UpdateOtherStyle(a, $x=\"1\")\n",
+         }) {
+        EXPECT_FALSE(draws(rejected, kWide)) << rejected;
+    }
 
     const std::string with_look =
         "---\ndescription:\n  x\nconfig:\n  look: handDrawn\n---\n"

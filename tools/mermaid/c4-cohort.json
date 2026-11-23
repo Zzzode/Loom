@@ -18,18 +18,8 @@
       "c4"
     ],
     "draw_count": 23,
-    "styled_excluded_count": 9,
-    "styled_excluded": [
-      "c4/nightly-check/c4-4-should-render-a-simple-c4dynamic-diagram.mmd",
-      "c4/nightly-check/description-wrapping.mmd",
-      "c4/nightly-check/styling/update-relationship-style.mmd",
-      "c4/nightly-check/update-element-shape-override.mmd",
-      "c4/pr-check/c4-1-should-render-a-simple-c4context-diagram.mmd",
-      "c4/pr-check/c4-3-should-render-a-simple-c4component-diagram.mmd",
-      "c4/pr-check/update-element-style-colors.mmd",
-      "c4/visual-check/update-layout-config-2-shapes-per-row.mmd",
-      "c4/visual-check/update-layout-config-4-shapes-per-row.mmd"
-    ]
+    "styled_excluded_count": 0,
+    "styled_excluded": []
   },
   "review": {
     "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, c4 renderer cohort, 2026-11-12, task a1ee3ba2e69a1f2c3)",

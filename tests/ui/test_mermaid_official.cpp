@@ -6196,6 +6196,65 @@ const JourneyCohortEntry* quadrant_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-450 quadrant leading-init cohort: the five quadrant originals whose only
+// blocker is a leading closed `%%{init}%%` tuning/theme directive. States are
+// read per row; the per-row gate is test_mermaid_quadrant_init_d450_cohort.
+const std::map<std::string, JourneyCohortEntry>& quadrant_init_d450_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path =
+            kRoot / "../../../tools/mermaid/quadrant-init-d450-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-450 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-450 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* quadrant_init_d450_cohort_row(std::string_view path) {
+    const auto& rows = quadrant_init_d450_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
+// D-451 c4 styling/accessibility cohort: the six c4 originals whose only
+// blockers are the closed UpdateElementStyle/UpdateRelStyle calls and scalar
+// accessibility declarations. States are read per row; the per-row gate is
+// test_mermaid_c4_styling_d451_cohort.
+const std::map<std::string, JourneyCohortEntry>& c4_styling_d451_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path =
+            kRoot / "../../../tools/mermaid/c4-styling-d451-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-451 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-451 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* c4_styling_d451_cohort_row(std::string_view path) {
+    const auto& rows = c4_styling_d451_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0031 architecture-family renderer cohort: the twenty (no
 // frontmatter gate and no body style statement) architecture-beta originals
 // admitted by mermaid_architecture_impl, with per-width states.
@@ -11078,6 +11137,33 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // D-451 c4 styling/accessibility admission: the six closed
+            // UpdateElementStyle/UpdateRelStyle + scalar-accessibility rows,
+            // under the TL's review exemption. Placed before the D-445/D-432
+            // and RFC 0031 c4 branches (exact path match, disjoint sets); the
+            // post-loop reach proof asserts each row is observed here.
+            if (class_path.is_str() && class_path.as_str().starts_with("c4/")) {
+                if (const auto* cohort = c4_styling_d451_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "c4";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-451 c4 styling/accessibility cohort (TL review-exempt)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // D-445 c4 UpdateLayoutConfig admission: the two c4 originals whose
             // only blocker is the closed row-shaping call, under the TL's
             // review exemption. Placed before the D-432 and RFC 0031 c4
@@ -11204,6 +11290,34 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.source_sha256 = fixture.get_string("sha256");
                     row.expected = "drawn";
                     row.reason = "RFC-0031 venn reviewed renderer cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
+            // D-450 quadrant leading-init admission: the five closed
+            // `%%{init}%%` tuning/theme rows, under the TL's review exemption.
+            // Placed before the RFC 0031 quadrant branch (exact path match,
+            // disjoint sets); the post-loop reach proof asserts each row is
+            // observed here.
+            if (class_path.is_str() && class_path.as_str().starts_with("quadrant-chart/")) {
+                if (const auto* cohort =
+                        quadrant_init_d450_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "quadrant-chart";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-450 quadrant leading-init cohort (TL review-exempt)";
                     const auto state_status = [](const std::string& state) {
                         return state == "drawn" ? "drawn" : "source_fallback";
                     };
@@ -13414,6 +13528,46 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d448 == expected_d448,
                     "D-448 branch reach set must equal its ledger");
+        }
+
+        // D-451 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d451 = json::parse(read_file(
+                kRoot / "../../../tools/mermaid/c4-styling-d451-cohort.json"));
+            require(ledger_d451.has_value(), "D-451 cohort ledger must parse");
+            std::set<std::string> expected_d451;
+            ledger_d451->root().get("rows").iter([&](const JsonVal row) {
+                expected_d451.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d451;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-451 c4 styling/accessibility cohort (TL review-exempt)")
+                    reached_d451.insert(row.path);
+            }
+            require(reached_d451 == expected_d451,
+                    "D-451 branch reach set must equal its ledger");
+        }
+
+        // D-450 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d450 = json::parse(read_file(
+                kRoot / "../../../tools/mermaid/quadrant-init-d450-cohort.json"));
+            require(ledger_d450.has_value(), "D-450 cohort ledger must parse");
+            std::set<std::string> expected_d450;
+            ledger_d450->root().get("rows").iter([&](const JsonVal row) {
+                expected_d450.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d450;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-450 quadrant leading-init cohort (TL review-exempt)")
+                    reached_d450.insert(row.path);
+            }
+            require(reached_d450 == expected_d450,
+                    "D-450 branch reach set must equal its ledger");
         }
 
         // D-447 rule-38 reach proof: every ledger row must be observed through

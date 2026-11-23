@@ -85,6 +85,20 @@ def build_review(repo_root):
     return review
 
 
+# D-451 admits the six styled rows whose only blockers are the closed
+# UpdateElementStyle/UpdateRelStyle calls and scalar accessibility no-ops; the
+# other styled rows are owned by D-432 (wrap) and D-445 (UpdateLayoutConfig).
+# All nine leave this ledger for their own cohort ledgers.
+D451_COHORT = {
+    "c4/nightly-check/c4-4-should-render-a-simple-c4dynamic-diagram.mmd",
+    "c4/nightly-check/styling/update-relationship-style.mmd",
+    "c4/nightly-check/update-element-shape-override.mmd",
+    "c4/pr-check/c4-1-should-render-a-simple-c4context-diagram.mmd",
+    "c4/pr-check/c4-3-should-render-a-simple-c4component-diagram.mmd",
+    "c4/pr-check/update-element-style-colors.mmd",
+}
+
+
 def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
@@ -94,6 +108,11 @@ def build(repo_root):
         text = path.read_text()
         rel = path.relative_to(
             repo_root / "tests/fixtures/mermaid_official/cases").as_posix()
+        if rel in D451_COHORT or rel in (
+                "c4/nightly-check/description-wrapping.mmd",
+                "c4/visual-check/update-layout-config-2-shapes-per-row.mmd",
+                "c4/visual-check/update-layout-config-4-shapes-per-row.mmd"):
+            continue  # owned by the D-432 / D-445 / D-451 cohort ledgers
         frontmatter, body = split_frontmatter(text)
         is_style = bool(STYLE_RE.search(body))
         if not is_style and frontmatter is not None and re.search(
@@ -101,10 +120,10 @@ def build(repo_root):
             is_style = True
         (styled if is_style else draw).add(rel)
 
-    if (len(draw), len(styled)) != (23, 9):
+    if (len(draw), len(styled)) != (23, 0):
         raise ValueError(
             f"c4 partition drift: draw={len(draw)} styled={len(styled)} "
-            "(expected 23/9)")
+            "(expected 23/0 after the D-432/D-445/D-451 cohort ledgers)")
 
     rows = []
     for rel in sorted(draw):

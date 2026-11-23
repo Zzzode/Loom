@@ -1,0 +1,208 @@
+{
+  "schema": "loom_mermaid_c4_styling_d451_cohort/v1",
+  "decision": "D-451",
+  "admission": {
+    "shape": "`UpdateElementStyle(alias, $attr...)`, `UpdateRelStyle(from, to, $attr...)` with at least one closed `$name=value` attribute, and scalar `accTitle:`/`accDescr:` no-ops",
+    "footer": {
+      "header": "C4 native projection v1",
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin is the same fixture with the styling and accessibility lines removed; the frame oracle compares the outline above the footer"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "c4 fallbacks whose only blockers are the closed styling calls and scalar accessibility declarations",
+    "cohort_digest": "abc1c6ba8d85e9874dc9a9fbf20caf43526ba6e84d7dfb1e0cdd1f2c8f2d150f"
+  },
+  "counts": {
+    "total": 6,
+    "by_family": {
+      "c4": 6
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, D-451 c4 styling/accessibility admission, 2026-11-23)",
+    "date": "2026-11-23",
+    "verdict": "approved",
+    "note": "Reviewer re-ran the generator --check entry and the live gate and verified: only closed $name=value attributes are admitted after the exact identifier count; duplicate attributes fail closed; the accessibility scalars are duplicate-gated no-ops; the disclosure footer appends after the D-445 line; the styling-free twin oracle is cell-exact above the footer."
+  },
+  "rows": [
+    {
+      "path": "c4/nightly-check/c4-4-should-render-a-simple-c4dynamic-diagram.mmd",
+      "family": "c4",
+      "sha256": "b4993cc8b414ded81b61be29d4de8671ab2b20659295dbac8f6b1bcc18beaec6",
+      "manifest_sha256": "b4993cc8b414ded81b61be29d4de8671ab2b20659295dbac8f6b1bcc18beaec6",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "C4 native projection v1",
+        "UpdateRelStyle(c1, c2).$textColor -> SVG styling; not applied",
+        "UpdateRelStyle(c1, c2).$offsetY -> SVG styling; not applied",
+        "UpdateRelStyle(c2, c3).$textColor -> SVG styling; not applied",
+        "UpdateRelStyle(c2, c3).$offsetX -> SVG styling; not applied",
+        "UpdateRelStyle(c2, c3).$offsetY -> SVG styling; not applied",
+        "UpdateRelStyle(c3, c4).$textColor -> SVG styling; not applied",
+        "UpdateRelStyle(c3, c4).$offsetY -> SVG styling; not applied",
+        "UpdateRelStyle(c3, c4).$offsetX -> SVG styling; not applied"
+      ],
+      "twin": {
+        "kind": "styling-free-body",
+        "path": "c4/nightly-check/c4-4-should-render-a-simple-c4dynamic-diagram.mmd",
+        "sha256": "b4993cc8b414ded81b61be29d4de8671ab2b20659295dbac8f6b1bcc18beaec6",
+        "footer_lines": []
+      },
+      "ledger_note": "the c4 projection is an outline with no colour or geometry, so the closed styling attributes are inert and disclosed one line per attribute; the accessibility scalars are validated no-ops"
+    },
+    {
+      "path": "c4/nightly-check/styling/update-relationship-style.mmd",
+      "family": "c4",
+      "sha256": "d898649710215eb357e5cb45138bf1abcb1c7945eef7492398d15489d727e372",
+      "manifest_sha256": "d898649710215eb357e5cb45138bf1abcb1c7945eef7492398d15489d727e372",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "C4 native projection v1",
+        "UpdateRelStyle(a, b).$textColor -> SVG styling; not applied",
+        "UpdateRelStyle(a, b).$lineColor -> SVG styling; not applied",
+        "UpdateRelStyle(a, b).$offsetX -> SVG styling; not applied",
+        "UpdateRelStyle(a, b).$offsetY -> SVG styling; not applied"
+      ],
+      "twin": {
+        "kind": "styling-free-body",
+        "path": "c4/nightly-check/styling/update-relationship-style.mmd",
+        "sha256": "d898649710215eb357e5cb45138bf1abcb1c7945eef7492398d15489d727e372",
+        "footer_lines": []
+      },
+      "ledger_note": "the c4 projection is an outline with no colour or geometry, so the closed styling attributes are inert and disclosed one line per attribute; the accessibility scalars are validated no-ops"
+    },
+    {
+      "path": "c4/nightly-check/update-element-shape-override.mmd",
+      "family": "c4",
+      "sha256": "7b5b4bf337c44bda6e78b91e80462c9d488326f27e4f73d133c4b4923beda85d",
+      "manifest_sha256": "7b5b4bf337c44bda6e78b91e80462c9d488326f27e4f73d133c4b4923beda85d",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "C4 native projection v1",
+        "UpdateElementStyle(b).$shape -> SVG styling; not applied",
+        "UpdateElementStyle(c).$shape -> SVG styling; not applied"
+      ],
+      "twin": {
+        "kind": "styling-free-body",
+        "path": "c4/nightly-check/update-element-shape-override.mmd",
+        "sha256": "7b5b4bf337c44bda6e78b91e80462c9d488326f27e4f73d133c4b4923beda85d",
+        "footer_lines": []
+      },
+      "ledger_note": "the c4 projection is an outline with no colour or geometry, so the closed styling attributes are inert and disclosed one line per attribute; the accessibility scalars are validated no-ops"
+    },
+    {
+      "path": "c4/pr-check/c4-1-should-render-a-simple-c4context-diagram.mmd",
+      "family": "c4",
+      "sha256": "a36ef92fe3052d0f00bf107cb9c50c43e20327f5e7b976b3fa9ab27f1f1b90f7",
+      "manifest_sha256": "a36ef92fe3052d0f00bf107cb9c50c43e20327f5e7b976b3fa9ab27f1f1b90f7",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "C4 native projection v1",
+        "UpdateElementStyle(customerA).$fontColor -> SVG styling; not applied",
+        "UpdateElementStyle(customerA).$bgColor -> SVG styling; not applied",
+        "UpdateElementStyle(customerA).$borderColor -> SVG styling; not applied",
+        "UpdateRelStyle(customerA, SystemAA).$textColor -> SVG styling; not applied",
+        "UpdateRelStyle(customerA, SystemAA).$lineColor -> SVG styling; not applied",
+        "UpdateRelStyle(customerA, SystemAA).$offsetX -> SVG styling; not applied",
+        "UpdateRelStyle(SystemC, customerA).$textColor -> SVG styling; not applied",
+        "UpdateRelStyle(SystemC, customerA).$lineColor -> SVG styling; not applied",
+        "UpdateRelStyle(SystemC, customerA).$offsetX -> SVG styling; not applied",
+        "UpdateRelStyle(SystemC, customerA).$offsetY -> SVG styling; not applied"
+      ],
+      "twin": {
+        "kind": "styling-free-body",
+        "path": "c4/pr-check/c4-1-should-render-a-simple-c4context-diagram.mmd",
+        "sha256": "a36ef92fe3052d0f00bf107cb9c50c43e20327f5e7b976b3fa9ab27f1f1b90f7",
+        "footer_lines": []
+      },
+      "ledger_note": "the c4 projection is an outline with no colour or geometry, so the closed styling attributes are inert and disclosed one line per attribute; the accessibility scalars are validated no-ops"
+    },
+    {
+      "path": "c4/pr-check/c4-3-should-render-a-simple-c4component-diagram.mmd",
+      "family": "c4",
+      "sha256": "2085576940433186809aec1f8f24aa713c41cb777bd1eb7680c5219a16274f66",
+      "manifest_sha256": "2085576940433186809aec1f8f24aa713c41cb777bd1eb7680c5219a16274f66",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "C4 native projection v1",
+        "UpdateRelStyle(spa, sign).$offsetY -> SVG styling; not applied"
+      ],
+      "twin": {
+        "kind": "styling-free-body",
+        "path": "c4/pr-check/c4-3-should-render-a-simple-c4component-diagram.mmd",
+        "sha256": "2085576940433186809aec1f8f24aa713c41cb777bd1eb7680c5219a16274f66",
+        "footer_lines": []
+      },
+      "ledger_note": "the c4 projection is an outline with no colour or geometry, so the closed styling attributes are inert and disclosed one line per attribute; the accessibility scalars are validated no-ops"
+    },
+    {
+      "path": "c4/pr-check/update-element-style-colors.mmd",
+      "family": "c4",
+      "sha256": "01224890b0795f993cacfcc39b8fb9bb97345ecdb069c6613f860293dfa93076",
+      "manifest_sha256": "01224890b0795f993cacfcc39b8fb9bb97345ecdb069c6613f860293dfa93076",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "C4 native projection v1",
+        "UpdateElementStyle(p).$fontColor -> SVG styling; not applied",
+        "UpdateElementStyle(p).$bgColor -> SVG styling; not applied",
+        "UpdateElementStyle(p).$borderColor -> SVG styling; not applied"
+      ],
+      "twin": {
+        "kind": "styling-free-body",
+        "path": "c4/pr-check/update-element-style-colors.mmd",
+        "sha256": "01224890b0795f993cacfcc39b8fb9bb97345ecdb069c6613f860293dfa93076",
+        "footer_lines": []
+      },
+      "ledger_note": "the c4 projection is an outline with no colour or geometry, so the closed styling attributes are inert and disclosed one line per attribute; the accessibility scalars are validated no-ops"
+    }
+  ]
+}

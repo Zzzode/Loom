@@ -4,8 +4,9 @@
 The quadrant renderer (mermaid_quadrant_impl.cpp) projects the quadrantChart
 grammar (title, x/y-axis labels, quadrant-1..4 labels, named [x, y] data
 points) to a bounded native outline. It has no geometry/color contract, so
-fixtures carrying a frontmatter theme/look/config key, an %%{init}%% visual
-directive, a classDef/::: statement, or an inline per-point style suffix
+fixtures carrying a frontmatter theme/look/config key, a non-admitted
+%%{init}%% visual directive, a classDef/::: statement, or an inline per-point
+style suffix
 (radius/color/stroke-color/stroke-width) stay on whole-source fallback.
 
 Renderer-free; the durable gtest enforces every state live. Drift guards pin
@@ -79,6 +80,19 @@ def has_point_style(suffix):
     return _STYLE_RE.search(suffix) is not None
 
 
+# D-450 admits the leading closed %%{init}%% tuning/theme directive for the
+# five fixtures below; they leave this ledger for
+# tools/mermaid/quadrant-init-d450-cohort.json and draw natively.
+D450_COHORT = {
+    "quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd",
+    "quadrant-chart/pr-check/"
+    "should-able-to-render-x-axis-on-bottom-and-y-axis-on-right.mmd",
+    "quadrant-chart/pr-check/should-able-to-render-y-axis-on-right-side.mmd",
+    "quadrant-chart/pr-check/should-use-all-the-config.mmd",
+    "quadrant-chart/pr-check/should-use-all-the-theme-variable.mmd",
+}
+
+
 def gate_kind(frontmatter, body):
     """Return 'frontmatter', 'init', 'body_style' or None."""
     if frontmatter is not None and re.search(r"^\s*(theme|look|config)\s*:",
@@ -140,6 +154,8 @@ def build(repo_root):
         text = path.read_text()
         rel = path.relative_to(
             repo_root / "tests/fixtures/mermaid_official/cases").as_posix()
+        if rel in D450_COHORT:
+            continue  # owned by the D-450 leading-init cohort
         frontmatter, body = split_frontmatter(text)
         kind = gate_kind(frontmatter, body)
         if kind == "frontmatter":
@@ -151,11 +167,11 @@ def build(repo_root):
         else:
             draw.add(rel)
 
-    if (len(draw), len(init_gate), len(body_gate), len(fm_gate)) != (7, 5, 2, 0):
+    if (len(draw), len(init_gate), len(body_gate), len(fm_gate)) != (7, 0, 2, 0):
         raise ValueError(
             f"quadrant partition drift: draw={len(draw)} init={len(init_gate)} "
             f"body_style={len(body_gate)} frontmatter={len(fm_gate)} "
-            f"(expected 7/5/2/0)")
+            f"(expected 7/0/2/0 after D-450)")
 
     rows = []
     for rel in sorted(draw):

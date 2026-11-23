@@ -1,0 +1,236 @@
+{
+  "schema": "loom_mermaid_quadrant_init_d450_cohort/v1",
+  "decision": "D-450",
+  "admission": {
+    "shape": "leading body `%%{init: {...}}%%` with `quadrantChart` sizing/axis-position knobs and quadrant `themeVariables` colours",
+    "position_table": {
+      "xAxisPosition": [
+        "bottom",
+        "top"
+      ],
+      "yAxisPosition": [
+        "left",
+        "right"
+      ]
+    },
+    "tuning_keys": [
+      "chartWidth",
+      "chartHeight",
+      "titlePadding",
+      "titleFontSize",
+      "quadrantPadding",
+      "quadrantTextTopPadding",
+      "quadrantLabelFontSize",
+      "quadrantInternalBorderStrokeWidth",
+      "quadrantExternalBorderStrokeWidth",
+      "xAxisLabelPadding",
+      "xAxisLabelFontSize",
+      "yAxisLabelPadding",
+      "yAxisLabelFontSize",
+      "pointTextPadding",
+      "pointLabelFontSize",
+      "pointRadius"
+    ],
+    "theme_keys": [
+      "quadrant1Fill",
+      "quadrant2Fill",
+      "quadrant3Fill",
+      "quadrant4Fill",
+      "quadrant1TextFill",
+      "quadrant2TextFill",
+      "quadrant3TextFill",
+      "quadrant4TextFill",
+      "quadrantPointFill",
+      "quadrantPointTextFill",
+      "quadrantXAxisTextFill",
+      "quadrantYAxisTextFill",
+      "quadrantInternalBorderStrokeFill",
+      "quadrantExternalBorderStrokeFill",
+      "quadrantTitleFill"
+    ],
+    "footer": {
+      "header": "Quadrant native projection v1",
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin is the same fixture with the leading directive line removed; the frame oracle compares the outline above the footer"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "quadrant-chart fallbacks whose only blocker is a leading closed `%%{init}%%` tuning/theme directive",
+    "cohort_digest": "997dd7d0a56a06d5824d4979ff2a42b3bc37d63f32bc06d4cee739da88dade62"
+  },
+  "counts": {
+    "total": 5,
+    "by_family": {
+      "quadrant-chart": 5
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, D-450 quadrant leading-init admission, 2026-11-23)",
+    "date": "2026-11-23",
+    "verdict": "approved",
+    "note": "Reviewer re-ran the generator --check entry and the live gate and verified: only a leading directive is consumed; the quadrantChart knobs and quadrant theme colours are closed tables; duplicates, unknown keys, nested values and non-hex colours fail closed; the directive-free twin oracle is cell-exact above the footer."
+  },
+  "rows": [
+    {
+      "path": "quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd",
+      "family": "quadrant-chart",
+      "sha256": "d572b93f3beb0499d8f6ae7c32e7cec87c30933ed84881a4cf6c703a120c98e9",
+      "manifest_sha256": "d572b93f3beb0499d8f6ae7c32e7cec87c30933ed84881a4cf6c703a120c98e9",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Quadrant native projection v1",
+        "%%{init}%% quadrantChart.xAxisPosition=bottom -> SVG layout/axis tuning; not applied"
+      ],
+      "twin": {
+        "kind": "init-free-body",
+        "path": "quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd",
+        "sha256": "d572b93f3beb0499d8f6ae7c32e7cec87c30933ed84881a4cf6c703a120c98e9",
+        "footer_lines": []
+      },
+      "ledger_note": "the quadrant projection draws no axes, points or colours, so the closed quadrantChart knobs and quadrant theme colours are inert and disclosed in source order"
+    },
+    {
+      "path": "quadrant-chart/pr-check/should-able-to-render-x-axis-on-bottom-and-y-axis-on-right.mmd",
+      "family": "quadrant-chart",
+      "sha256": "3b111e119d91137fc9c6f4483b5a893be31368799bb19644a5fb78b93c777b9c",
+      "manifest_sha256": "3b111e119d91137fc9c6f4483b5a893be31368799bb19644a5fb78b93c777b9c",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Quadrant native projection v1",
+        "%%{init}%% quadrantChart.xAxisPosition=bottom -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.yAxisPosition=right -> SVG layout/axis tuning; not applied"
+      ],
+      "twin": {
+        "kind": "init-free-body",
+        "path": "quadrant-chart/pr-check/should-able-to-render-x-axis-on-bottom-and-y-axis-on-right.mmd",
+        "sha256": "3b111e119d91137fc9c6f4483b5a893be31368799bb19644a5fb78b93c777b9c",
+        "footer_lines": []
+      },
+      "ledger_note": "the quadrant projection draws no axes, points or colours, so the closed quadrantChart knobs and quadrant theme colours are inert and disclosed in source order"
+    },
+    {
+      "path": "quadrant-chart/pr-check/should-able-to-render-y-axis-on-right-side.mmd",
+      "family": "quadrant-chart",
+      "sha256": "3cdcff4ea72c617392acbfd660437190d1cbfea4730eaa1e08cedb8dcf4ed579",
+      "manifest_sha256": "3cdcff4ea72c617392acbfd660437190d1cbfea4730eaa1e08cedb8dcf4ed579",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Quadrant native projection v1",
+        "%%{init}%% quadrantChart.yAxisPosition=right -> SVG layout/axis tuning; not applied"
+      ],
+      "twin": {
+        "kind": "init-free-body",
+        "path": "quadrant-chart/pr-check/should-able-to-render-y-axis-on-right-side.mmd",
+        "sha256": "3cdcff4ea72c617392acbfd660437190d1cbfea4730eaa1e08cedb8dcf4ed579",
+        "footer_lines": []
+      },
+      "ledger_note": "the quadrant projection draws no axes, points or colours, so the closed quadrantChart knobs and quadrant theme colours are inert and disclosed in source order"
+    },
+    {
+      "path": "quadrant-chart/pr-check/should-use-all-the-config.mmd",
+      "family": "quadrant-chart",
+      "sha256": "7d20056a52cf1a0ca04dd1b75e1092203a38dd7d6232e06f524d1a3fb4e23ee0",
+      "manifest_sha256": "7d20056a52cf1a0ca04dd1b75e1092203a38dd7d6232e06f524d1a3fb4e23ee0",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Quadrant native projection v1",
+        "%%{init}%% quadrantChart.chartWidth=600 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.chartHeight=600 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.titlePadding=20 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.titleFontSize=10 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.quadrantPadding=20 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.quadrantTextTopPadding=40 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.quadrantLabelFontSize=20 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.quadrantInternalBorderStrokeWidth=3 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.quadrantExternalBorderStrokeWidth=5 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.xAxisLabelPadding=20 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.xAxisLabelFontSize=20 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.yAxisLabelPadding=20 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.yAxisLabelFontSize=20 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.pointTextPadding=20 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.pointLabelFontSize=20 -> SVG layout/axis tuning; not applied",
+        "%%{init}%% quadrantChart.pointRadius=10 -> SVG layout/axis tuning; not applied"
+      ],
+      "twin": {
+        "kind": "init-free-body",
+        "path": "quadrant-chart/pr-check/should-use-all-the-config.mmd",
+        "sha256": "7d20056a52cf1a0ca04dd1b75e1092203a38dd7d6232e06f524d1a3fb4e23ee0",
+        "footer_lines": []
+      },
+      "ledger_note": "the quadrant projection draws no axes, points or colours, so the closed quadrantChart knobs and quadrant theme colours are inert and disclosed in source order"
+    },
+    {
+      "path": "quadrant-chart/pr-check/should-use-all-the-theme-variable.mmd",
+      "family": "quadrant-chart",
+      "sha256": "15d82736bded1e90223afb3f419981e148aaddce29f079c28b1db224717cdb86",
+      "manifest_sha256": "15d82736bded1e90223afb3f419981e148aaddce29f079c28b1db224717cdb86",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Quadrant native projection v1",
+        "%%{init}%% themeVariables.quadrant1Fill=#b4dcff -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrant2Fill=#fef0ff -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrant3Fill=#fffaf0 -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrant4Fill=#f0fff2 -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrant1TextFill=#ff0000 -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrant2TextFill=#2d00df -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrant3TextFill=#00ffda -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrant4TextFill=#e68300 -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrantPointFill=#0149ff -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrantPointTextFill=#dc00ff -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrantXAxisTextFill=#ffb500 -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrantYAxisTextFill=#fae604 -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrantInternalBorderStrokeFill=#3636f2 -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrantExternalBorderStrokeFill=#ff1010 -> colour palette; not applied",
+        "%%{init}%% themeVariables.quadrantTitleFill=#00ea19 -> colour palette; not applied"
+      ],
+      "twin": {
+        "kind": "init-free-body",
+        "path": "quadrant-chart/pr-check/should-use-all-the-theme-variable.mmd",
+        "sha256": "15d82736bded1e90223afb3f419981e148aaddce29f079c28b1db224717cdb86",
+        "footer_lines": []
+      },
+      "ledger_note": "the quadrant projection draws no axes, points or colours, so the closed quadrantChart knobs and quadrant theme colours are inert and disclosed in source order"
+    }
+  ]
+}

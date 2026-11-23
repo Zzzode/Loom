@@ -61,6 +61,15 @@ std::string trim_copy(std::string_view value) {
     return std::string(value);
 }
 
+// View-only trim; never binds a temporary, so it is safe inside validators.
+std::string_view trim_view(std::string_view value) {
+    while (!value.empty() && (value.front() == ' ' || value.front() == '\t'))
+        value.remove_prefix(1);
+    while (!value.empty() && (value.back() == ' ' || value.back() == '\t'))
+        value.remove_suffix(1);
+    return value;
+}
+
 bool is_any(std::string_view token, const std::array<std::string_view, 7>& set) {
     return std::ranges::find(set, token) != set.end();
 }
@@ -250,34 +259,13 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
     }
 
     const std::string_view body = c4_body(source);
-    // D-432: the closed frontmatter parser owns the admitted shape; an in-body
-    // Update*Style statement keeps the whole source on ordinary fallback.
-    // D-445 admits the closed UpdateLayoutConfig call: this projection is an
-    // outline and draws no geometry, so its SVG row-shaping knobs are inert.
-    // Key-based so prose mentioning "style" is not a gate.
+    // D-432: the closed frontmatter parser owns the admitted shape. D-445
+    // admits the closed UpdateLayoutConfig call and D-451 the closed
+    // UpdateElementStyle/UpdateRelStyle calls: this projection is an outline
+    // and draws no geometry or colour, so their SVG knobs are inert and
+    // disclosed. Every other unknown statement still keeps the whole source.
     const auto frontmatter = c4_frontmatter_wrap(source);
     if (!frontmatter.accepted) return {};
-    {
-        bool visual_gate = false;
-        if (!visual_gate) {
-            for (std::size_t pos = 0;;) {
-                const auto eol = body.find('\n', pos);
-                std::string_view line = body.substr(
-                    pos, eol == std::string_view::npos ? std::string_view::npos
-                                                       : eol - pos);
-                pos = eol == std::string_view::npos ? body.size() : eol + 1;
-                const auto trimmed = line.find_first_not_of(' ');
-                if (trimmed != std::string_view::npos) {
-                    const std::string_view content = line.substr(trimmed);
-                    if (content.starts_with("UpdateElementStyle") ||
-                        content.starts_with("UpdateRelStyle"))
-                        visual_gate = true;
-                }
-                if (eol == std::string_view::npos) break;
-            }
-        }
-        if (visual_gate) return {};
-    }
 
     static const std::array<std::string_view, 5> kHeaders{
         "C4Context", "C4Container", "C4Component", "C4Deployment", "C4Dynamic"};
@@ -287,6 +275,9 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
     // D-445: the admitted call records its row-shaping value for the footer.
     bool layout_config_seen = false;
     std::string layout_shape;
+    // D-451: admitted styling calls and accessibility no-ops.
+    std::vector<std::string> style_disclosures;
+    bool saw_acc_title = false, saw_acc_descr = false;
     std::vector<std::string> title_rows;
     std::vector<std::string> out;
     // Single protected emission path shared by the title and every statement
@@ -340,6 +331,20 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
             continue;
         }
 
+        // D-451: scalar accessibility metadata is a validated no-op, like the
+        // state and usecase families.
+        if (content.starts_with("accTitle") || content.starts_with("accDescr")) {
+            const bool is_title = content.starts_with("accTitle");
+            const std::string_view rest = trim_view(content.substr(8u));
+            if (rest.size() < 2u || rest.front() != ':') return {};
+            if ((is_title && saw_acc_title) || (!is_title && saw_acc_descr)) return {};
+            const auto value = trim_view(rest.substr(1u));
+            if (value.empty() || value.size() > 256u || !unicode_text(value)) return {};
+            if (!work.spend(value.size() * 2u + 32u)) return {};
+            (is_title ? saw_acc_title : saw_acc_descr) = true;
+            continue;
+        }
+
         // Function-call statement: keyword( ... ) optionally followed by {,
         // with or without whitespace before the brace ("...){}" or "...) {").
         const auto paren = content.find('(');
@@ -376,6 +381,35 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
                 return {};
             layout_config_seen = true;
             layout_shape = std::move(shape);
+            continue;
+        }
+
+        if (keyword == "UpdateElementStyle" || keyword == "UpdateRelStyle") {
+            // D-451: two (element) or three (relationship) leading identifiers
+            // followed by at least one closed `$name=value` attribute; the
+            // projection draws no colour or geometry, so only the statement's
+            // SHAPE is admitted and its attribute keys are disclosed.
+            if (opens_block) return {};
+            const std::size_t id_count = keyword == "UpdateRelStyle" ? 2u : 1u;
+            if (args.size() <= id_count) return {};
+            for (std::size_t i = 0; i < id_count; ++i)
+                if (!is_identifier(args[i])) return {};
+            std::string target = std::string{keyword} + "(" + std::string{args[0]};
+            if (id_count == 2u) target += ", " + std::string{args[1]};
+            target += ").";
+            std::vector<std::string> seen;
+            for (std::size_t i = id_count; i < args.size(); ++i) {
+                if (!is_attribute(args[i])) return {};
+                const auto eq = args[i].find('=');
+                const std::string_view name = trim_view(args[i].substr(0u, eq));
+                if (name.size() < 2u) return {};
+                const auto name_text = std::string{name};
+                if (std::ranges::find(seen, name_text) != seen.end()) return {};
+                seen.push_back(name_text);
+                std::string line = target + name_text + " -> SVG styling; not applied";
+                if (line.size() > 96u || !work.spend(line.size() * 4u + 32u)) return {};
+                style_disclosures.push_back(std::move(line));
+            }
             continue;
         }
 
@@ -447,6 +481,7 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
     if (layout_config_seen)
         disclosures.push_back("UpdateLayoutConfig $c4ShapeInRow=" + layout_shape +
                               " $c4BoundaryInRow=1 -> SVG layout tuning; not applied");
+    for (const auto& line : style_disclosures) disclosures.push_back(line);
     if (!disclosures.empty()) {
         if (!work.spend(96u + 32u * disclosures.size() +
                         static_cast<std::size_t>(out.size())))

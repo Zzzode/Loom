@@ -18,14 +18,8 @@
       "quadrant-chart"
     ],
     "draw_count": 7,
-    "init_gated_count": 5,
-    "init_gated": [
-      "quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd",
-      "quadrant-chart/pr-check/should-able-to-render-x-axis-on-bottom-and-y-axis-on-right.mmd",
-      "quadrant-chart/pr-check/should-able-to-render-y-axis-on-right-side.mmd",
-      "quadrant-chart/pr-check/should-use-all-the-config.mmd",
-      "quadrant-chart/pr-check/should-use-all-the-theme-variable.mmd"
-    ],
+    "init_gated_count": 0,
+    "init_gated": [],
     "body_style_gated_count": 2,
     "body_style_gated": [
       "quadrant-chart/pr-check/it-should-render-data-points-with-styles-classes.mmd",

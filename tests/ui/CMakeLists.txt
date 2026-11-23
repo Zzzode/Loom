@@ -248,6 +248,24 @@ add_test(NAME MermaidFallbackAttribution.RosterIsReproducibleAndTotal
 set_tests_properties(MermaidFallbackAttribution.RosterIsReproducibleAndTotal
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-451: the c4 styling/accessibility cohort ledger is a generator constant;
+# the check fails on a hand edit or an unreviewed expectation change.
+add_test(NAME MermaidC4StylingD451Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_c4_styling_d451_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidC4StylingD451Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+# D-450: the quadrant leading-init cohort ledger is a generator constant; the
+# check fails on a hand edit or an unreviewed expectation change.
+add_test(NAME MermaidQuadrantInitD450Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_quadrant_init_d450_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidQuadrantInitD450Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-443: the requirement/ishikawa/venn inert-leaf cohort ledger is a generator
 # constant; the check fails on a hand edit or an unreviewed expectation change.
 add_test(NAME MermaidD443InertLeavesCohort.GeneratorIsReproducible
@@ -1241,6 +1259,24 @@ target_link_libraries(test_mermaid_venn_cohort
 gtest_discover_tests(test_mermaid_venn_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+# D-451: c4 closed styling/accessibility cohort gate.
+add_executable(test_mermaid_c4_styling_d451_cohort
+    test_mermaid_c4_styling_d451_cohort.cpp)
+target_link_libraries(test_mermaid_c4_styling_d451_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_c4_styling_d451_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# D-450: quadrant leading closed %%{init}%% tuning/theme cohort gate.
+add_executable(test_mermaid_quadrant_init_d450_cohort
+    test_mermaid_quadrant_init_d450_cohort.cpp)
+target_link_libraries(test_mermaid_quadrant_init_d450_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_quadrant_init_d450_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
 
 add_executable(test_mermaid_quadrant_cohort test_mermaid_quadrant_cohort.cpp)
 target_link_libraries(test_mermaid_quadrant_cohort

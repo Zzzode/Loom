@@ -1,7 +1,8 @@
 // RFC 0031 quadrant-family renderer durable cohort gate. Public API only:
 // enforces tools/mermaid/quadrant-cohort.json against the live renderer and
 // the pinned manifest. The seven clean quadrant originals render natively;
-// the five %%{init}%%-gated and two body-style-gated fixtures stay on source.
+// the five %%{init}%%-gated fixtures move to the D-450 leading-init cohort, and
+// the two body-style-gated fixtures stay on source.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -83,7 +84,8 @@ TEST(MermaidQuadrantCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_quadrant_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 7);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 7);
-    EXPECT_EQ(root.get("selection").get_int("init_gated_count"), 5);
+    // D-450 moves the five leading-init rows to their own cohort ledger.
+    EXPECT_EQ(root.get("selection").get_int("init_gated_count"), 0);
     EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 2);
     EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 0);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");

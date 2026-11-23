@@ -230,9 +230,11 @@ TEST(MermaidC4LayoutConfigD445Cohort, ClosedCallsStayWholeSource) {
         EXPECT_FALSE(draws(source, kWide)) << call;
         EXPECT_FALSE(native_frame(source, kWide)) << call;
     }
-    // An empty call and the other Update* statements stay whole-source.
-    for (const auto* call : {"UpdateLayoutConfig()\n", "UpdateElementStyle(a, $bgColor=\"red\")\n",
-                             "UpdateRelStyle(a, b, $textColor=\"red\")\n"}) {
+    // An empty call stays whole-source. (D-451 admits the closed
+    // UpdateElementStyle/UpdateRelStyle attribute calls; the still-rejected
+    // shapes there are a missing attribute list or a non-`$` attribute.)
+    for (const auto* call : {"UpdateLayoutConfig()\n", "UpdateElementStyle(a)\n",
+                             "UpdateRelStyle(a, b)\n"}) {
         const auto source = probe(call);
         EXPECT_FALSE(draws(source, kWide)) << call;
     }

@@ -126,6 +126,205 @@ bool quadrant_wrap(const std::string& label, Work& work, std::vector<std::string
     return flush();
 }
 
+// D-450: the leading body `%%{init: {...}}%%` directive is a closed grammar.
+// The projection draws no axes, points or colors, so the quadrantChart sizing
+// / axis-position knobs and the quadrant theme colors are inert; each admitted
+// key is disclosed in a bounded footer. Anything outside the closed tables, a
+// duplicate key or section, a nested value or a second directive keeps the
+// whole source on fallback.
+constexpr std::string_view kQuadrantNoticeHeader = "Quadrant native projection v1";
+
+constexpr std::array<std::string_view, 16> kQuadrantTuningKeys{
+    "chartWidth", "chartHeight", "titlePadding", "titleFontSize", "quadrantPadding",
+    "quadrantTextTopPadding", "quadrantLabelFontSize", "quadrantInternalBorderStrokeWidth",
+    "quadrantExternalBorderStrokeWidth", "xAxisLabelPadding", "xAxisLabelFontSize",
+    "yAxisLabelPadding", "yAxisLabelFontSize", "pointTextPadding", "pointLabelFontSize",
+    "pointRadius"};
+
+constexpr std::array<std::string_view, 15> kQuadrantThemeKeys{
+    "quadrant1Fill", "quadrant2Fill", "quadrant3Fill", "quadrant4Fill", "quadrant1TextFill",
+    "quadrant2TextFill", "quadrant3TextFill", "quadrant4TextFill", "quadrantPointFill",
+    "quadrantPointTextFill", "quadrantXAxisTextFill", "quadrantYAxisTextFill",
+    "quadrantInternalBorderStrokeFill", "quadrantExternalBorderStrokeFill", "quadrantTitleFill"};
+
+// Split an object interior on its top-level commas; quoted spans and nested
+// braces are tracked so a value comma or object separator never splits.
+std::optional<std::vector<std::string_view>> quadrant_split_top(std::string_view text) {
+    std::vector<std::string_view> parts;
+    int depth = 0;
+    char quote = 0;
+    std::size_t start = 0;
+    for (std::size_t at = 0; at < text.size(); ++at) {
+        const char c = text[at];
+        if (quote) {
+            if (c == quote) quote = 0;
+            continue;
+        }
+        if (c == '"' || c == '\'') {
+            quote = c;
+            continue;
+        }
+        if (c == '{') {
+            ++depth;
+            continue;
+        }
+        if (c == '}') {
+            if (depth == 0) return std::nullopt;
+            --depth;
+            continue;
+        }
+        if (c == ',' && depth == 0) {
+            parts.push_back(text.substr(start, at - start));
+            start = at + 1;
+        }
+    }
+    if (quote != 0 || depth != 0) return std::nullopt;
+    parts.push_back(text.substr(start));
+    return parts;
+}
+
+bool quadrant_key(std::string_view text, std::string_view& out) {
+    text = trim_view(text);
+    if (text.size() >= 2u && text.front() == '"' && text.back() == '"')
+        text = text.substr(1u, text.size() - 2u);
+    if (text.empty() || text.find('"') != std::string_view::npos ||
+        text.find('\'') != std::string_view::npos)
+        return false;
+    out = text;
+    return true;
+}
+
+// A quoted or bare scalar; no nested structure and no quote or control bytes.
+bool quadrant_scalar(std::string_view text, std::string_view& out) {
+    text = trim_view(text);
+    if (text.size() >= 2u && text.front() == '"' && text.back() == '"')
+        text = text.substr(1u, text.size() - 2u);
+    if (text.empty() || text.find('"') != std::string_view::npos ||
+        text.find('\'') != std::string_view::npos ||
+        text.find_first_of("{}[]") != std::string_view::npos)
+        return false;
+    for (const char c : text)
+        if (static_cast<unsigned char>(c) < 0x20) return false;
+    out = text;
+    return true;
+}
+
+bool quadrant_uint(std::string_view value) {
+    return !value.empty() && value.size() <= 9u &&
+           std::ranges::all_of(value, [](char c) { return c >= '0' && c <= '9'; });
+}
+
+bool quadrant_color(std::string_view value) {
+    if (value.size() != 7u || value.front() != '#') return false;
+    return std::ranges::all_of(value.substr(1u), [](char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    });
+}
+
+bool quadrant_object_interior(std::string_view text, std::string_view& interior) {
+    text = trim_view(text);
+    if (text.size() < 2u || text.front() != '{' || text.back() != '}') return false;
+    interior = text.substr(1u, text.size() - 2u);
+    return true;
+}
+
+bool quadrant_tuning_object(std::string_view text, std::vector<std::string>& notices,
+                            Work& work) {
+    std::string_view interior;
+    if (!quadrant_object_interior(text, interior)) return false;
+    auto entries = quadrant_split_top(interior);
+    if (!entries) return false;
+    std::vector<std::string> seen;
+    for (const std::string_view entry : *entries) {
+        const auto colon = entry.find(':');
+        if (colon == std::string_view::npos) return false;
+        std::string_view key;
+        if (!quadrant_key(entry.substr(0u, colon), key)) return false;
+        const auto key_text = std::string{key};
+        if (std::ranges::find(seen, key_text) != seen.end()) return false;
+        seen.push_back(key_text);
+        std::string_view value;
+        if (!quadrant_scalar(entry.substr(colon + 1u), value)) return false;
+        bool ok = false;
+        if (key == "xAxisPosition")
+            ok = value == "top" || value == "bottom";
+        else if (key == "yAxisPosition")
+            ok = value == "left" || value == "right";
+        else
+            ok = std::ranges::find(kQuadrantTuningKeys, key) != kQuadrantTuningKeys.end() &&
+                 quadrant_uint(value);
+        if (!ok) return false;
+        if (!work.spend(key.size() + value.size() * 2u + 64u)) return false;
+        notices.push_back("%%{init}%% quadrantChart." + key_text + "=" + std::string{value} +
+                          " -> SVG layout/axis tuning; not applied");
+    }
+    return true;
+}
+
+bool quadrant_theme_object(std::string_view text, std::vector<std::string>& notices, Work& work) {
+    std::string_view interior;
+    if (!quadrant_object_interior(text, interior)) return false;
+    auto entries = quadrant_split_top(interior);
+    if (!entries) return false;
+    std::vector<std::string> seen;
+    for (const std::string_view entry : *entries) {
+        const auto colon = entry.find(':');
+        if (colon == std::string_view::npos) return false;
+        std::string_view key;
+        if (!quadrant_key(entry.substr(0u, colon), key)) return false;
+        if (std::ranges::find(kQuadrantThemeKeys, key) == kQuadrantThemeKeys.end()) return false;
+        const auto key_text = std::string{key};
+        if (std::ranges::find(seen, key_text) != seen.end()) return false;
+        seen.push_back(key_text);
+        std::string_view value;
+        if (!quadrant_scalar(entry.substr(colon + 1u), value) || !quadrant_color(value))
+            return false;
+        if (!work.spend(key.size() + value.size() * 2u + 64u)) return false;
+        notices.push_back("%%{init}%% themeVariables." + key_text + "=" + std::string{value} +
+                          " -> colour palette; not applied");
+    }
+    return true;
+}
+
+// True when `line` is an admitted directive. Every admitted key appends one
+// notice; the empty `{}` form is a no-op.
+bool quadrant_init_directive(std::string_view line, std::vector<std::string>& notices,
+                             Work& work) {
+    line = trim_view(line);
+    if (!line.starts_with("%%{") || !line.ends_with("}%%") || line.size() < 8u) return false;
+    const std::string_view inner = line.substr(3u, line.size() - 6u);
+    if (!work.spend(inner.size() * 4u + 256u)) return false;
+    const std::string_view directive = trim_view(inner);
+    if (directive == "init") return true;  // bare no-op directive
+    if (!directive.starts_with("init:")) return false;
+    std::string_view payload = trim_view(directive.substr(5u));
+    std::string_view interior;
+    if (!quadrant_object_interior(payload, interior)) return false;
+    if (trim_view(interior).empty()) return true;
+    auto entries = quadrant_split_top(interior);
+    if (!entries) return false;
+    bool saw_tuning = false, saw_theme = false;
+    for (const std::string_view entry : *entries) {
+        const auto colon = entry.find(':');
+        if (colon == std::string_view::npos) return false;
+        std::string_view key;
+        if (!quadrant_key(entry.substr(0u, colon), key)) return false;
+        const std::string_view value_text = entry.substr(colon + 1u);
+        if (key == "quadrantChart") {
+            if (saw_tuning) return false;
+            saw_tuning = true;
+            if (!quadrant_tuning_object(value_text, notices, work)) return false;
+        } else if (key == "themeVariables") {
+            if (saw_theme) return false;
+            saw_theme = true;
+            if (!quadrant_theme_object(value_text, notices, work)) return false;
+        } else {
+            return false;
+        }
+    }
+    return true;
+}
+
 }  // namespace
 
 std::optional<std::vector<std::string>> quadrant_layout(std::string_view source, Work& work) {
@@ -138,11 +337,26 @@ std::optional<std::vector<std::string>> quadrant_layout(std::string_view source,
             return {};
     }
 
-    const std::string_view body = quadrant_body(source);
-    // No geometry/color contract: a frontmatter theme/look/config key, an
-    // %%{init}%% directive (axis position, size, font, fill), a classDef/:::
-    // style, or an inline point style keeps the whole source on fallback.
-    // Key/shape-based so prose words are not false gates.
+    std::string_view body = quadrant_body(source);
+    // D-450: consume an admitted leading `%%{init: {...}}%%` directive before
+    // the visual gate. A directive anywhere else, a second one, or one that
+    // fails the closed grammar keeps the whole source on fallback.
+    std::vector<std::string> notices;
+    {
+        const auto eol = body.find('\n');
+        std::string_view first =
+            body.substr(0u, eol == std::string_view::npos ? body.size() : eol);
+        if (!first.empty() && first.back() == '\r') first.remove_suffix(1);
+        const auto first_trimmed = trim_view(first);
+        if (first_trimmed.starts_with("%%{init")) {
+            if (!quadrant_init_directive(first_trimmed, notices, work)) return {};
+            body = eol == std::string_view::npos ? std::string_view{} : body.substr(eol + 1u);
+        }
+    }
+    // No geometry/color contract: a frontmatter theme/look/config key, any
+    // other %%{init}%% directive (axis position, size, font, fill), a
+    // classDef/::: style, or an inline point style keeps the whole source on
+    // fallback. Key/shape-based so prose words are not false gates.
     {
         bool visual_gate = false;
         if (source.starts_with("---\n")) {
@@ -312,6 +526,14 @@ std::optional<std::vector<std::string>> quadrant_layout(std::string_view source,
         out = std::move(combined);
     }
     if (out.empty()) return {};
+    // D-450 disclosure footer: header plus one line per admitted key, below
+    // the art and above nothing else.
+    if (!notices.empty()) {
+        if (!push_guarded(out, std::string{})) return {};
+        if (!push_guarded(out, std::string{kQuadrantNoticeHeader})) return {};
+        for (const auto& notice : notices)
+            if (!push_guarded(out, notice)) return {};
+    }
     return out;
 }
 

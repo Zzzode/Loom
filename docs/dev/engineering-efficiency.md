@@ -2327,3 +2327,38 @@ renderer already draws it.
    complete-graph probe showed an 8-transition layout wall (shared geometry,
    out of scope), while a two-line probe isolated the `state X: Description`
    grammar gap as the actual blocker for four rows.
+
+## D-443…D-449 batch boundary retro (2026-11-23)
+
+1. **Re-configure before building after a probe target is deleted.** The first
+   boundary run already had the probe file removed but the release build files
+   were generated before the removal, so ninja failed on the missing
+   `test_mermaid_d450_probe.cpp` (`build=1`) and the following ctest booked six
+   `NOT_BUILT` entries — six "failures" that were a stale target graph, not six
+   failing gates. Always re-run `cmake --preset release` after removing a probe
+   and confirm `ctest -N` no longer lists it before reading a boundary run as
+   evidence.
+2. **Check a reviewer-flagged placement change against the pre-diff path.** The
+   D-448 `tiny_span` redirect fixed the vertical one-cell label but also moved
+   the already-drawn horizontal one-cell label from past the plot edge to the
+   bar tip. No fixture covers that shape, so the matrix stayed byte-identical
+   while an arbitrary drawn input changed. Restricting the redirect to
+   `!chart.horizontal` restored the old profile; a horizontal one-cell probe now
+   pins the shared outside column.
+3. **A quote-blanked shape view cannot supply a payload.** Usecase validated
+   `accTitle:`/`accDescr:` values from the blanked view, so the canonical
+   `accTitle: "..."` spelling fell back. Keys are matched on the blanked view;
+   the value must be read from the raw statement.
+4. **A slice's gate set must include every family census gate, not just the
+   new cohort gate.** The D-445…D-449 targeted runs passed while five older
+   gates kept pinning the admitted rows as whole-source; only the release
+   boundary surfaced them, costing an extra full build+ctest cycle. Run the
+   family's existing census gates (`MermaidE2aCohort`, `MermaidE2bCohort`,
+   `MermaidCapabilityReport.MermanXY102`, the per-family `*Cohort` gates) in
+   the same targeted invocation as the new gate.
+5. **Check protected observation rosters before admitting a corpus row.** The
+   horizontal D-448 twin breaks the protected E6c `merman_xy102` observation
+   (`source_fallback`), which is a reconciliation only the TL can authorize.
+   Grep the protected rosters for the fixture path/sha in the same step that
+   the ledger is written, so the slice lands with its final scope instead of
+   being narrowed at the boundary.

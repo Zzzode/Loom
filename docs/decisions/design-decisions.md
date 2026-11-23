@@ -5161,8 +5161,9 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   upstream SVG row packing, so it has no terminal analogue.
 - **Mechanism.** The pre-scan no longer gates `UpdateLayoutConfig` (the other
   `Update*Style` statements still do). The statement loop validates exactly one
-  call with exactly the two quoted knobs in order, each from its closed table,
-  emits no outline row, and records the shape value for the footer.
+  top-level call (`depth == 0`, so a call nested in an element block fails
+  closed) with exactly the two quoted knobs in order, each from its closed
+  table, emits no outline row, and records the shape value for the footer.
 - **Disclosure.** `C4 native projection v1` plus
   `UpdateLayoutConfig $c4ShapeInRow=<v> $c4BoundaryInRow=1 -> SVG layout
   tuning; not applied`, appended after D-432's `config.wrap` line so existing
@@ -5201,7 +5202,9 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   plus `config:` → `usecase:` → nine exact `key: value` leaves (each once,
   namespace without a leaf fails closed, every other leaf gates). The statement
   loop consumes scalar `accTitle:`/`accDescr:` and the block `accDescr { ... }`
-  form, rejecting duplicates, empty payloads and unclosed blocks.
+  form, rejecting duplicates, empty payloads and unclosed blocks. The key is
+  matched on the quote-blanked shape view but the value is read from the raw
+  statement, so the canonical `accTitle: "..."` spelling is admitted.
 - **Disclosure.** `Usecase native projection v1` plus one line per admitted
   leaf, appended after the outline.
 - **Oracle.** The twin removes the config block and the acc declarations; the
@@ -5209,8 +5212,12 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 
 ## xychart negative-bar data labels (D-448)
 
-- **Scope.** The two negative/decimal `showDataLabel` bar fixtures (`-2.5,
-  0.75, 5.1` against `-10 --> 10`, vertical and horizontal).
+- **Scope.** The vertical negative/decimal `showDataLabel` bar fixture (`-2.5,
+  0.75, 5.1` against `-10 --> 10`). The horizontal twin keeps the whole-source
+  fallback: its label profile is still pending review and the protected E6c
+  merman_xy102 roster pins that observation as `source_fallback`
+  (`merman/f5f012ca4e7055701b83`), so a labelled horizontal bar chart with a
+  negative sample stays rejected until the profile is certified.
 - **Root cause.** The compact label path judged sample ownership with a
   half-open window `[min(end, baseline), max(...))`, which includes a positive
   bar's tip row but excludes a negative bar's; every labelled negative bar was
@@ -5219,6 +5226,8 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Mechanism.** Ownership is now direction-aware (the authored tip is included
   on both sides of the zero reference), and a one-cell bar labels externally
   (above a non-negative tip, below a negative one) so the mark is never erased.
+  The external redirect is vertical-only: a horizontal one-cell bar already
+  drew with its value past the plot's right edge and keeps that placement.
 - **Boundary.** A zero-valued bar series still falls back (its tip coincides
   with the reference and has no reviewed placement), and out-of-domain values
   still fail.
@@ -5236,5 +5245,7 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Mechanism.** Inside the `state ` branch, a non-alias, non-brace `: payload`
   is validated with `state_description_label`, attached through
   `state_fragment`, and marks the entity declared before any duplicate check.
+  Repeated `state X: desc` lines accumulate fragments and all render, for a
+  state declared here or introduced by a transition.
 - **Oracle.** The config-free twin draws the same body; the art above the RFC
   0038 footer is cell-equal, and narrow 40 is measured live.

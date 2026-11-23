@@ -269,13 +269,23 @@ TEST(MermaidD443InertLeavesCohort, ClosedLeavesStayWholeSource) {
         EXPECT_FALSE(native_frame(source, kWide)) << tail;
     }
     for (const auto* tail : {
-             // Ishikawa: the look table is closed and one leaf only.
+             // Ishikawa: the look table is closed and one leaf only. These run
+             // through the ishikawa body so the ishikawa rejection branch is
+             // exercised directly.
              "config:\n  look: neo\n",
              "config:\n  look: HANDDRAWN\n",
              "config:\n  look:\n",
              "config:\n  look: handDrawn\n  look: handDrawn\n",
+         }) {
+        const auto source = probe(kIshikawaBody, tail);
+        EXPECT_FALSE(draws(source, kWide)) << tail;
+        EXPECT_FALSE(native_frame(source, kWide)) << tail;
+    }
+    for (const auto* tail : {
              // Venn: closed look/seed/font tables.
              "config:\n  look: classic\n",
+             "config:\n  look: neo\n",
+             "config:\n  look:\n",
              "config:\n  handDrawnSeed: 0\n",
              "config:\n  handDrawnSeed: -1\n",
              "config:\n  handDrawnSeed: 1.5\n",

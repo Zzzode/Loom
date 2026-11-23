@@ -206,7 +206,8 @@ def _scalar(raw: str) -> str:
 
 def seed_ok(value: str) -> bool:
     """Mirror the D-442 seed rule: 1..9 decimal digits, not all zero."""
-    return bool(value) and len(value) <= 9 and value.isdigit() and value.strip("0") != ""
+    return (bool(value) and len(value) <= 9 and value.isascii() and value.isdigit()
+            and value.strip("0") != "")
 
 
 def _table(family: str, path: str):

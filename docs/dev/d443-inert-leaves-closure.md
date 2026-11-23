@@ -44,5 +44,10 @@
 
 ## 4. 负向迁移
 
-无既有断言被改写：这 6 行此前没有被任何旧门禁钉为「必须整源回退」，只登记在
-roster，迁移即 `--emit` 重生成。
+这 6 行没有专属的旧门禁钉子，roster 迁移即 `--emit` 重生成；但三处**形状级**
+负例被重指（不是删除、不是放宽）：requirement 的三个门禁把
+`config.flowchart.htmlLabels` 钉为「必须整源回退」，现改为「由本门禁负责的已画
+行」并新增 `flowchart.curve` 与 `htmlLabels: maybe` 两个仍被拒绝的负例；
+RFC 0043 smallfam 门禁把 ishikawa/venn 的 `look:` 叶负例重指到表外值
+（`classic`、seed `0`），railroad 保持全部拒绝；两个家族账本的五分区算术增加
+字面 `d443` 桶（ishikawa 7+2+3+1，venn 11+3+0+5+2）。

@@ -6397,8 +6397,9 @@ const JourneyCohortEntry* d443_inert_leaves_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
-// D-448 xychart negative-bar label cohort: the two negative/decimal
-// showDataLabel bar fixtures. States are read per row; the per-row gate is
+// D-448 xychart negative-bar label cohort: the vertical negative/decimal
+// showDataLabel bar fixture (the horizontal twin stays whole-source until its
+// label profile is certified). States are read per row; the per-row gate is
 // test_mermaid_xychart_negative_labels_d448_cohort.
 const std::map<std::string, JourneyCohortEntry>& xychart_negative_labels_d448_cohort_map() {
     static const std::map<std::string, JourneyCohortEntry> map = [] {
@@ -12265,8 +12266,8 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     continue;
                 }
             }
-            // D-448 xychart negative-bar label admission: the two
-            // negative/decimal showDataLabel bar fixtures, under the TL's
+            // D-448 xychart negative-bar label admission: the vertical
+            // negative/decimal showDataLabel bar fixture, under the TL's
             // review exemption. Placed before the E2c/E2d/RFC 0035 xychart
             // branches (exact path match, disjoint sets); the post-loop reach
             // proof asserts each row is observed here.

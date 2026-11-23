@@ -1,6 +1,6 @@
 // D-448 xychart negative-bar data-label gate.
 //
-// Selection rationale: the two negative/decimal bar fixtures whose only blocker
+// Selection rationale: the vertical negative/decimal bar fixture whose only blocker
 // was the compact data-label profile refusing bars on the negative side of the
 // zero reference. The profile now labels the authored tip on either side and
 // treats a one-cell bar as an external label; each value appears exactly once.
@@ -111,10 +111,10 @@ TEST(MermaidXychartNegativeLabelsD448Cohort, LedgerSchemaReviewsAndPins) {
     const auto& root = ledger.root();
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_xychart_negative_labels_d448_cohort/v1");
     EXPECT_EQ(root.get_string("decision"), "D-448");
-    EXPECT_EQ(root.get("counts").get_int("total"), 2);
+    EXPECT_EQ(root.get("counts").get_int("total"), 1);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
     EXPECT_EQ(root.get("selection").get_string("cohort_digest"),
-              "7a398ce68981ad313847e47385c871c17f40c2bbe75411c9255b8c1c3d96959a");
+              "365eb9ab89d2e60b41fac55e5327ba17103abdcae76e134d88629657ac94a11a");
     const auto manifest = parse_doc(kManifest);
     std::map<std::string, JsonVal> manifest_rows;
     manifest.root().get("fixtures").iter(
@@ -131,7 +131,7 @@ TEST(MermaidXychartNegativeLabelsD448Cohort, LedgerSchemaReviewsAndPins) {
             << rel;
         digest_input.emplace_back(rel, row.get_string("sha256"));
     });
-    EXPECT_EQ(digest_input.size(), 2u);
+    EXPECT_EQ(digest_input.size(), 1u);
     std::ranges::sort(digest_input);
     std::string payload;
     for (const auto& [rel, sha] : digest_input) payload += rel + "\t" + sha + "\n";
@@ -158,7 +158,7 @@ TEST(MermaidXychartNegativeLabelsD448Cohort, EveryValueLabelsExactlyOnce) {
         });
         ++checked;
     });
-    EXPECT_EQ(checked, 2);
+    EXPECT_EQ(checked, 1);
 }
 
 TEST(MermaidXychartNegativeLabelsD448Cohort, ClosedProfileNegatives) {
@@ -198,6 +198,14 @@ TEST(MermaidXychartNegativeLabelsD448Cohort, ClosedProfileNegatives) {
         ASSERT_EQ(outside_columns.size(), 2u);
         EXPECT_EQ(outside_columns[0], outside_columns[1]);
     }
+    // The horizontal signed-value label profile is still pending review: the
+    // E6c merman_xy102 observation pins that row as source_fallback
+    // (merman/f5f012ca4e7055701b83), so it stays whole-source.
+    EXPECT_FALSE(draws(read_file(kCases /
+                                 "xychart/pr-check/"
+                                 "should-render-negative-and-decimal-values-with-correct-"
+                                 "labels-for-horizontal-xy-chart.mmd"),
+                       kWide));
     // A zero-valued bar series stays whole-source: its tip coincides with the
     // reference and the compact profile has no reviewed placement for it.
     const auto zero_body =

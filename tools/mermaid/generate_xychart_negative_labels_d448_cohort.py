@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Generate the D-448 xychart negative-bar data-label cohort ledger.
 
-Renderer-free. The two rows are the negative/decimal bar fixtures whose only
-blocker was the compact data-label profile refusing bars on the negative side
-of the zero reference. The profile now places the label at the authored tip on
-either side and treats a one-cell bar as an external label; each value must
-appear exactly once in the frame.
+Renderer-free. The admitted row is the vertical negative/decimal bar fixture
+whose only blocker was the compact data-label profile refusing bars on the
+negative side of the zero reference. The profile now places the label at the
+authored tip on either side and treats a one-cell vertical bar as an external
+label; each value must appear exactly once in the frame. The horizontal twin
+is deliberately left out: its label profile is still pending review and the
+E6c merman_xy102 observation pins it as source_fallback
+(merman/f5f012ca4e7055701b83).
 
 Usage: python3 tools/mermaid/generate_xychart_negative_labels_d448_cohort.py --repo-root . [--check]
 """
@@ -25,9 +28,6 @@ DECISION = "D-448"
 COHORT = [
     ("xychart/nightly-check/"
      "should-render-negative-and-decimal-values-with-correct-labels-for-vertical-xy-chart.mmd",
-     ["-2.5", "0.75", "5.1"]),
-    ("xychart/pr-check/"
-     "should-render-negative-and-decimal-values-with-correct-labels-for-horizontal-xy-chart.mmd",
      ["-2.5", "0.75", "5.1"]),
 ]
 
@@ -99,7 +99,8 @@ def build(repo_root):
         "schema": SCHEMA,
         "decision": DECISION,
         "admission": {
-            "profile": "compact single-bar showDataLabel with one-cell/negative tips",
+            "profile": ("compact single-bar showDataLabel with one-cell/negative "
+                        "tips (vertical orientation; horizontal pending review)"),
             "width_policy": "wide_240 admission only; narrow_40 measured live",
             "oracle": "each authored value token appears exactly once in the frame",
         },
@@ -109,7 +110,9 @@ def build(repo_root):
             "manifest_sha256": sha256_bytes((repo_root / MANIFEST).read_bytes()),
         },
         "selection": {
-            "rule": ("the two negative/decimal showDataLabel bar fixtures"),
+            "rule": ("the vertical negative/decimal showDataLabel bar fixture; "
+                     "the horizontal twin stays whole-source until its label "
+                     "profile is certified"),
             "cohort_digest": cohort_digest(rows),
         },
         "counts": {"total": len(rows), "by_family": {"xychart": len(rows)}},

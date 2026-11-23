@@ -2,7 +2,7 @@
   "schema": "loom_mermaid_xychart_negative_labels_d448_cohort/v1",
   "decision": "D-448",
   "admission": {
-    "profile": "compact single-bar showDataLabel with one-cell/negative tips",
+    "profile": "compact single-bar showDataLabel with one-cell/negative tips (vertical orientation; horizontal pending review)",
     "width_policy": "wide_240 admission only; narrow_40 measured live",
     "oracle": "each authored value token appears exactly once in the frame"
   },
@@ -12,13 +12,13 @@
     "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
   },
   "selection": {
-    "rule": "the two negative/decimal showDataLabel bar fixtures",
-    "cohort_digest": "7a398ce68981ad313847e47385c871c17f40c2bbe75411c9255b8c1c3d96959a"
+    "rule": "the vertical negative/decimal showDataLabel bar fixture; the horizontal twin stays whole-source until its label profile is certified",
+    "cohort_digest": "365eb9ab89d2e60b41fac55e5327ba17103abdcae76e134d88629657ac94a11a"
   },
   "counts": {
-    "total": 2,
+    "total": 1,
     "by_family": {
-      "xychart": 2
+      "xychart": 1
     }
   },
   "review": {
@@ -39,26 +39,6 @@
       "expected_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
-        "restored_240": "drawn"
-      },
-      "value_tokens": [
-        "-2.5",
-        "0.75",
-        "5.1"
-      ],
-      "ledger_note": "compact bar data labels at the authored tip on both sides of the zero reference; one-cell bars label externally"
-    },
-    {
-      "path": "xychart/pr-check/should-render-negative-and-decimal-values-with-correct-labels-for-horizontal-xy-chart.mmd",
-      "family": "xychart",
-      "sha256": "830444eda54bcb61c75728c32c3a078b6d437c2971235f2d00254394ec6551ec",
-      "manifest_sha256": "830444eda54bcb61c75728c32c3a078b6d437c2971235f2d00254394ec6551ec",
-      "prior_status": "source_fallback",
-      "prediction": "predicted-draw",
-      "track_scope": "whole-only",
-      "expected_states": {
-        "wide_240": "drawn",
-        "narrow_40": "source_fallback",
         "restored_240": "drawn"
       },
       "value_tokens": [

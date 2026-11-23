@@ -535,17 +535,20 @@ TEST(MermaidXychart0035Cohort, SuppressionIsPerAxisAndKeepsOtherElements) {
     EXPECT_TRUE(xy_is_fallback(synthetic("showLegend", "false")));
 }
 
-TEST(MermaidXychart0035Cohort, SignedValueCapabilityRowsStayOnFallback) {
-    const std::vector<std::string> pinned{
-        "xychart/nightly-check/should-render-negative-and-decimal-values-with-correct-labels-"
-        "for-vertical-xy-chart.mmd",
-        "xychart/pr-check/should-render-negative-and-decimal-values-with-correct-labels-for-"
-        "horizontal-xy-chart.mmd",
-    };
-    for (const auto& path : pinned) {
-        SCOPED_TRACE(path);
-        EXPECT_TRUE(xy_is_fallback(read_file(kCases / path)));
-    }
+TEST(MermaidXychart0035Cohort, SignedValueCapabilityRowsPinOrientationProfiles) {
+    // D-448 admits the reviewed vertical signed/decimal label profile; its
+    // per-row gate is test_mermaid_xychart_negative_labels_d448_cohort. The
+    // horizontal twin's label profile is still pending review and the E6c
+    // merman_xy102 observation pins it as source_fallback
+    // (merman/f5f012ca4e7055701b83), so only the horizontal row stays here.
+    EXPECT_FALSE(xy_is_fallback(
+        read_file(kCases / "xychart/nightly-check/"
+                           "should-render-negative-and-decimal-values-with-correct-labels-for-"
+                           "vertical-xy-chart.mmd")));
+    EXPECT_TRUE(xy_is_fallback(
+        read_file(kCases / "xychart/pr-check/"
+                           "should-render-negative-and-decimal-values-with-correct-labels-for-"
+                           "horizontal-xy-chart.mmd")));
 }
 
 TEST(MermaidXychart0035Cohort, DescriptionOnlyAndConfigOnlyPathsAreUnchanged) {

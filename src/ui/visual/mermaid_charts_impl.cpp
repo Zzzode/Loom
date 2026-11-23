@@ -1854,6 +1854,14 @@ std::optional<std::vector<std::string>> xy_chart(const Chart& chart, Work& work)
     std::vector<std::pair<Point, std::string>> value_tokens;
     std::vector<bool> value_overlay;
     if (compact_values) {
+        // The horizontal signed-value label profile is still pending review:
+        // the E6c merman_xy102 observation pins that row as source_fallback
+        // (merman/f5f012ca4e7055701b83), so a labelled horizontal bar chart
+        // with a negative sample keeps the whole-source fallback until the
+        // profile is certified.
+        if (chart.horizontal)
+            for (const auto value : chart.series.front().values)
+                if (value < 0) return {};
         if (!work.spend(area)) return {};
         value_overlay.assign(area, false);
         std::set<std::pair<int, int>> reserved;

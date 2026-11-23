@@ -415,13 +415,19 @@ bool parse_init(GitGraph& graph, std::string_view line) {
 
 }  // namespace
 
-std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work) {
+std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work,
+                                       std::string_view main_branch, int main_branch_order) {
     if (source.empty() || source.size() > kSourceLimit) return {};
     if (source.size() >
             (std::numeric_limits<std::size_t>::max() - kGitParseFixed) / kGitParsePerByte ||
         !work.spend(source.size() * kGitParsePerByte + kGitParseFixed))
         return {};
     GitGraph graph;
+    // D-436: the frontmatter config can rename and re-order the trunk before
+    // the body is read, so `checkout <name>` resolves against the configured
+    // identity instead of creating a second branch.
+    graph.main_branch.assign(main_branch);
+    graph.current_branch.assign(main_branch);
     if (!work.spend(kGitCommitLimit * (sizeof(GitCommit) + 192u) +
                     kGitBranchLimit * (sizeof(GitBranch) + 128u)))
         return {};
@@ -470,7 +476,7 @@ std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work) {
                 else
                     return {};
             }
-            graph.branches.push_back({graph.main_branch, "∅", "∅", 0u});
+            graph.branches.push_back({graph.main_branch, "∅", "∅", 0u, main_branch_order});
             seen_header = true;
             continue;
         }
@@ -780,6 +786,9 @@ bool draw_parent_routes(Canvas& canvas, const ParentRoutePlan& plan, bool use_as
 struct GitBooleanConfig {
     bool show_branches = true;
     bool show_commit_label = true;
+    // D-436: honoured trunk identity / lane order.
+    std::optional<std::string> main_branch_name;
+    int main_branch_order = -1;
 };
 
 bool draw_branch_refs(Canvas& canvas, const std::vector<std::string>& branch_labels,
@@ -991,6 +1000,31 @@ struct GitEnvelope {
 
 // D-435: the frontmatter title is a prose scalar the renderer draws above the
 // graph. Quotes, when used, form exactly one matching outer pair.
+// D-436: the trunk name is a single branch label (quotes stripped, no spaces).
+bool git_branch_name_value(std::string_view raw, std::string& out) {
+    auto text = raw;
+    if (text.size() >= 2u &&
+        ((text.front() == '"' && text.back() == '"') ||
+         (text.front() == '\'' && text.back() == '\'')))
+        text = text.substr(1u, text.size() - 2u);
+    if (text.empty() || text.size() > 64u || text == "∅") return false;
+    for (const char c : text)
+        if (c == ' ' || c == '\t' || c == '"' || c == '\'') return false;
+    out.assign(text);
+    return unicode_text(out);
+}
+
+bool git_order_value(std::string_view raw, int& out) {
+    std::string text;
+    if (!git_branch_name_value(raw, text)) return false;
+    for (const char c : text)
+        if (c < '0' || c > '9') return false;
+    if (text.size() > 3u) return false;
+    out = 0;
+    for (const char c : text) out = out * 10 + (c - '0');
+    return true;
+}
+
 bool git_title_text(std::string_view raw, std::string& out) {
     auto text = raw;
     const auto quoted = [](char c) { return c == '"' || c == '\''; };
@@ -1044,11 +1078,14 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
         Parallel = 8u,
         ShowBranches = 16u,
         ShowCommitLabel = 32u,
-        RotateCommitLabel = 64u
+        RotateCommitLabel = 64u,
+        MainBranchName = 128u,
+        MainBranchOrder = 256u
     };
     unsigned fields = 0u;
     std::string look_value, theme_value, parallel_value, show_branches_value,
-        show_commit_label_value, rotate_commit_label_value;
+        show_commit_label_value, rotate_commit_label_value, main_branch_name_value;
+    int main_branch_order_value = -1;
     const auto mark = [&](unsigned bit) -> bool {
         if (fields & bit) return false;
         fields |= bit;
@@ -1105,6 +1142,14 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
             } else if (event.path == "gitGraph.rotateCommitLabel") {
                 if (!boolean || !mark(RotateCommitLabel)) return {};
                 rotate_commit_label_value = scalar;
+            } else if (event.path == "gitGraph.mainBranchName") {
+                if (!git_branch_name_value(scalar, main_branch_name_value) ||
+                    !mark(MainBranchName))
+                    return {};
+            } else if (event.path == "gitGraph.mainBranchOrder") {
+                if (!git_order_value(scalar, main_branch_order_value) ||
+                    !mark(MainBranchOrder))
+                    return {};
             } else {
                 return {};
             }
@@ -1146,10 +1191,13 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
     // A namespace without its leaf: the namespace bit defeats the empty-config
     // guard above, so the gate must reject it explicitly.
     if ((fields & GitGraphNs) &&
-        !(fields & (Parallel | ShowBranches | ShowCommitLabel | RotateCommitLabel)))
+        !(fields & (Parallel | ShowBranches | ShowCommitLabel | RotateCommitLabel |
+                    MainBranchName | MainBranchOrder)))
         return {};
     GitEnvelope result{envelope->raw_body, {}, {}, std::move(title)};
     if (fields & ShowBranches) result.flags.show_branches = show_branches_value == "true";
+    if (fields & MainBranchName) result.flags.main_branch_name = main_branch_name_value;
+    if (fields & MainBranchOrder) result.flags.main_branch_order = main_branch_order_value;
     if (fields & ShowCommitLabel) result.flags.show_commit_label = show_commit_label_value == "true";
     if (fields != 0u) {
         if (!git_notice_line(result.config_notices, "GitGraph native projection v1", work))
@@ -1193,6 +1241,22 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
                                  " -> parallel lane compaction; not applied",
                              work))
             return {};
+        // D-436 honours both leaves: the trunk is renamed and re-ordered, and
+        // the drawn frame shows it, so the notice states the effect without
+        // "not applied".
+        if ((fields & MainBranchName) &&
+            !git_notice_line(result.config_notices,
+                             "config.gitGraph.mainBranchName=" + main_branch_name_value +
+                                 " -> trunk branch label; honoured",
+                             work))
+            return {};
+        if ((fields & MainBranchOrder) &&
+            !git_notice_line(result.config_notices,
+                             "config.gitGraph.mainBranchOrder=" +
+                                 std::to_string(main_branch_order_value) +
+                                 " -> trunk lane order; honoured",
+                             work))
+            return {};
     }
     return result;
 }
@@ -1211,7 +1275,10 @@ std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source,
         flags = admitted->flags;
         admitted_title = std::move(admitted->title);
     }
-    const auto graph = detail::parse_gitgraph(body, work);
+    const auto graph = detail::parse_gitgraph(
+        body, work, flags.main_branch_name ? std::string_view{*flags.main_branch_name}
+                                           : std::string_view{"main"},
+        flags.main_branch_order);
     if (!graph) return {};
     auto lines = layout_gitgraph(*graph, work, use_ascii, flags);
     if (!lines) return {};

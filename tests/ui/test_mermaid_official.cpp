@@ -6250,6 +6250,36 @@ const JourneyCohortEntry* usecase_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-436 gitGraph main-branch cohort: the two git originals whose only
+// non-admitted input is `config.gitGraph.{mainBranchName, mainBranchOrder}`
+// (honoured: trunk identity and lane order). The per-row gate is
+// test_mermaid_git_mainbranch_d436_cohort.
+const std::map<std::string, JourneyCohortEntry>& git_mainbranch_d436_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path =
+            kRoot / "../../../tools/mermaid/git-mainbranch-d436-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-436 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-436 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* git_mainbranch_d436_cohort_row(std::string_view path) {
+    const auto& rows = git_mainbranch_d436_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-434 tree-view closed icon-map cohort: the last reachable treeView original
 // whose only non-admitted input is a closed filenameIcons / extensionIcons map.
 // The per-row gate is test_mermaid_treeview_icons_d434_cohort.
@@ -11521,6 +11551,33 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     continue;
                 }
             }
+            // D-436 gitGraph main-branch admission: the two git originals whose
+            // trunk identity / lane order come from the frontmatter config
+            // (honoured), under the TL's review exemption. Placed before the
+            // RFC 0039 git branch (disjoint sets); the post-loop reach proof
+            // asserts each row is observed here (rule 38).
+            if (class_path.is_str() && class_path.as_str().starts_with("git/")) {
+                if (const auto* cohort = git_mainbranch_d436_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "git";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-436 git main-branch cohort (TL review-exempt)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // RFC 0039 gitGraph look/theme admission: the 12 reviewed git
             // originals promoted by the closed look/theme tables, states read
             // per row. Placed before the generic fallback so these rows cannot
@@ -12623,6 +12680,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             require(reached_0047 == expected_0047,
                     "RFC 0047 branch reach set must equal its ledger");
         }
+        // D-436 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d436 = json::parse(
+                read_file(kRoot / "../../../tools/mermaid/git-mainbranch-d436-cohort.json"));
+            require(ledger_d436.has_value(), "D-436 cohort ledger must parse");
+            std::set<std::string> expected_d436;
+            ledger_d436->root().get("rows").iter([&](const JsonVal row) {
+                expected_d436.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d436;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-436 git main-branch cohort (TL review-exempt)")
+                    reached_d436.insert(row.path);
+            }
+            require(reached_d436 == expected_d436,
+                    "D-436 branch reach set must equal its ledger");
+        }
+
         // D-434 rule-38 reach proof: every ledger row must be observed through
         // its own branch, and the branch must not match anything else.
         {

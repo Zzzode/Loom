@@ -405,8 +405,9 @@ TEST(MermaidGit0045Cohort, NamespaceBattery) {
              "  gitGraph:\n  gitGraph:\n    parallelCommits: true\n",
              "  gitGraph:\n",
              "  gitGraph: foo\n",
-             "  gitGraph:\n    mainBranchName: trunk\n",
-             "  gitGraph:\n    mainBranchOrder: 2\n",
+             // D-436 admits mainBranchName/mainBranchOrder as honoured leaves;
+             // an out-of-table gitGraph leaf still rejects.
+             "  gitGraph:\n    showTags: true\n",
              // D-424 admits the four closed booleans, so the unknown-leaf
              // negative here must use a leaf outside that table; the D-424
              // gate owns the showBranches positive/negative pair.
@@ -445,7 +446,7 @@ TEST(MermaidGit0045Cohort, ExistingLeafBatteriesUnchanged) {
     for (const auto* form : {"  look: classic\n", "  theme: default\n",
                              "  fontFamily: courier\n", "  htmlLabels: false\n",
                              "  layout: elk\n",
-                             "  gitGraph:\n    mainBranchName: trunk\n"}) {
+                             "  gitGraph:\n    showTags: true\n"}) {
         EXPECT_FALSE(draws(config_probe(form), kWide)) << form;
     }
     // A description-only envelope still draws without a footer.

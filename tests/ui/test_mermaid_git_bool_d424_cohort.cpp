@@ -586,7 +586,7 @@ TEST(MermaidGitBoolD424Cohort, ClosedNamespaceNegativesStayWholeSource) {
     // Negatives: anything outside the closed boolean namespace stays
     // whole-source. Each is paired with a drawing control above.
     for (const auto* form : {
-             "    mainBranchName: trunk\n",          // unknown leaf
+             "    colour: red\n",                     // unknown leaf (D-436 owns mainBranchName)
              "    showBranches: yes\n",              // not a boolean literal
              "    showBranches: TRUE\n",             // case-sensitive
              "    showBranches: 1\n",                // numeric

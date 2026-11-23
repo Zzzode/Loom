@@ -1,0 +1,337 @@
+{
+  "schema": "loom_mermaid_git_mainbranch_d436_cohort/v1",
+  "decision": "D-436",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "gitGraph original whose frontmatter config carries config.gitGraph.mainBranchName and/or mainBranchOrder, with only the four closed booleans plus the closed look/theme tables",
+    "cohort_digest": "115731960e15c33ab6e779b2f2874ceaa838861a6f29115640d303c2d2c0ecb1",
+    "exclusions": "unknown leaves, init directives, a non-numeric order, a name with a space or the ∅ placeholder, other look/theme values stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice without a design gate; the gate is the test document plus the trunk identity/order oracles",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 14
+  },
+  "rows": [
+    {
+      "path": "git/nightly-check/95-should-render-with-custom-mainbranchname.mmd",
+      "sha256": "84c04dd2e73edcbb37e9d1f232fa693fe21e1b2bcaca44b1268990821a0a1855",
+      "manifest_sha256": "84c04dd2e73edcbb37e9d1f232fa693fe21e1b2bcaca44b1268990821a0a1855",
+      "config": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false",
+        "mainBranchName": "trunk"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied",
+        "config.gitGraph.mainBranchName=trunk -> trunk branch label; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/nightly-check/96-should-render-with-custom-mainbranchorder.mmd",
+      "sha256": "f6b74309d468fdb3a0d786303bcb0c9b41944dbd313f4b0801c49e442b2b3e78",
+      "manifest_sha256": "f6b74309d468fdb3a0d786303bcb0c9b41944dbd313f4b0801c49e442b2b3e78",
+      "config": {
+        "showBranches": "true",
+        "showCommitLabel": "true",
+        "rotateCommitLabel": "false",
+        "parallelCommits": "false",
+        "mainBranchOrder": "2"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.gitGraph.showBranches=true -> branch reference labels",
+        "config.gitGraph.showCommitLabel=true -> commit id labels",
+        "config.gitGraph.rotateCommitLabel=false -> label rotation; not applied",
+        "config.gitGraph.parallelCommits=false -> parallel lane compaction; not applied",
+        "config.gitGraph.mainBranchOrder=2 -> trunk lane order; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-neo-dark-theme.mmd",
+      "sha256": "1a0af155d8f3228bf6905d8ae98d33e01b8e5f4e47fbcbc5b2ca6b9a2a520ca5",
+      "manifest_sha256": "1a0af155d8f3228bf6905d8ae98d33e01b8e5f4e47fbcbc5b2ca6b9a2a520ca5",
+      "config": {
+        "mainBranchOrder": "2",
+        "look": "neo",
+        "theme": "neo-dark"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied",
+        "config.gitGraph.mainBranchOrder=2 -> trunk lane order; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-neo-theme.mmd",
+      "sha256": "49151e567dca0c0400fa1b8132bb400e99784e21d3110f2949f06ff614b902a5",
+      "manifest_sha256": "49151e567dca0c0400fa1b8132bb400e99784e21d3110f2949f06ff614b902a5",
+      "config": {
+        "mainBranchOrder": "2",
+        "look": "neo",
+        "theme": "neo"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied",
+        "config.gitGraph.mainBranchOrder=2 -> trunk lane order; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-redux-color-theme.mmd",
+      "sha256": "0c0c8010bdc1af27a7e0d3327bc07cd94a9b34ca85a58966c7149cce0018ae4a",
+      "manifest_sha256": "0c0c8010bdc1af27a7e0d3327bc07cd94a9b34ca85a58966c7149cce0018ae4a",
+      "config": {
+        "mainBranchOrder": "2",
+        "look": "neo",
+        "theme": "redux-color"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied",
+        "config.gitGraph.mainBranchOrder=2 -> trunk lane order; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-redux-dark-color-theme.mmd",
+      "sha256": "cb512304b23598781fe33819bc2c5eb93be41a7eb0475b67c43316d90c0c410a",
+      "manifest_sha256": "cb512304b23598781fe33819bc2c5eb93be41a7eb0475b67c43316d90c0c410a",
+      "config": {
+        "mainBranchOrder": "2",
+        "look": "neo",
+        "theme": "redux-dark-color"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied",
+        "config.gitGraph.mainBranchOrder=2 -> trunk lane order; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-redux-dark-theme.mmd",
+      "sha256": "af6aabbb0054df7da825c0d8286af3e052f5198bb02c96451a26ace5fa7cc316",
+      "manifest_sha256": "af6aabbb0054df7da825c0d8286af3e052f5198bb02c96451a26ace5fa7cc316",
+      "config": {
+        "mainBranchOrder": "2",
+        "look": "neo",
+        "theme": "redux-dark"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied",
+        "config.gitGraph.mainBranchOrder=2 -> trunk lane order; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/bt-direction-with-branch-order-keyword-mainbranchorder-and-cherry-pick-with-tag-neo-look-redux-theme.mmd",
+      "sha256": "4ea34c8422a898529b16917493cc3d5b4df38bb18ca8c7fc785d36a77af9e78d",
+      "manifest_sha256": "4ea34c8422a898529b16917493cc3d5b4df38bb18ca8c7fc785d36a77af9e78d",
+      "config": {
+        "mainBranchOrder": "2",
+        "look": "neo",
+        "theme": "redux"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied",
+        "config.gitGraph.mainBranchOrder=2 -> trunk lane order; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-neo-dark-theme.mmd",
+      "sha256": "180d70225c1c3da51d6a6830831c451c7008f80d4b752ecc4624fc37df33d59a",
+      "manifest_sha256": "180d70225c1c3da51d6a6830831c451c7008f80d4b752ecc4624fc37df33d59a",
+      "config": {
+        "parallelCommits": "true",
+        "mainBranchName": "production",
+        "look": "neo",
+        "theme": "neo-dark"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied",
+        "config.gitGraph.mainBranchName=production -> trunk branch label; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-neo-theme.mmd",
+      "sha256": "4415e369e3c1e3d8aa7d16f918b27ab6c3b421f87c39d2cf4664c610b10b461e",
+      "manifest_sha256": "4415e369e3c1e3d8aa7d16f918b27ab6c3b421f87c39d2cf4664c610b10b461e",
+      "config": {
+        "parallelCommits": "true",
+        "mainBranchName": "production",
+        "look": "neo",
+        "theme": "neo"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied",
+        "config.gitGraph.mainBranchName=production -> trunk branch label; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-redux-color-theme.mmd",
+      "sha256": "0c291d101080c6e9da6190f777624d08d0e3dc289fba84909cc8545cad5d16d8",
+      "manifest_sha256": "0c291d101080c6e9da6190f777624d08d0e3dc289fba84909cc8545cad5d16d8",
+      "config": {
+        "parallelCommits": "true",
+        "mainBranchName": "production",
+        "look": "neo",
+        "theme": "redux-color"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied",
+        "config.gitGraph.mainBranchName=production -> trunk branch label; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-redux-dark-color-theme.mmd",
+      "sha256": "b3359f9fd52562e7752c30ca7d5fc7c3a699c9e061599e8db80351f18e8eb9c4",
+      "manifest_sha256": "b3359f9fd52562e7752c30ca7d5fc7c3a699c9e061599e8db80351f18e8eb9c4",
+      "config": {
+        "parallelCommits": "true",
+        "mainBranchName": "production",
+        "look": "neo",
+        "theme": "redux-dark-color"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied",
+        "config.gitGraph.mainBranchName=production -> trunk branch label; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-redux-dark-theme.mmd",
+      "sha256": "41d095c311d143962f40e03cba6bcb557e09aeda0978243d92c7c196e35aeb54",
+      "manifest_sha256": "41d095c311d143962f40e03cba6bcb557e09aeda0978243d92c7c196e35aeb54",
+      "config": {
+        "parallelCommits": "true",
+        "mainBranchName": "production",
+        "look": "neo",
+        "theme": "redux-dark"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied",
+        "config.gitGraph.mainBranchName=production -> trunk branch label; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "git/visual-check/tb-direction-with-parallelcommits-custom-mainbranchname-and-quoted-branch-name-neo-look-redux-theme.mmd",
+      "sha256": "0ee66070c7fc21f9984ae440032125140dc1e687c8593595eb2d8130fec514cf",
+      "manifest_sha256": "0ee66070c7fc21f9984ae440032125140dc1e687c8593595eb2d8130fec514cf",
+      "config": {
+        "parallelCommits": "true",
+        "mainBranchName": "production",
+        "look": "neo",
+        "theme": "redux"
+      },
+      "expected_footer_lines": [
+        "GitGraph native projection v1",
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied",
+        "config.gitGraph.parallelCommits=true -> parallel lane compaction; not applied",
+        "config.gitGraph.mainBranchName=production -> trunk branch label; honoured"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

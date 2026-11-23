@@ -354,7 +354,9 @@ TEST(MermaidGitGraph0039Cohort, LookTableIsClosed) {
     EXPECT_FALSE(draws(git_probe("  layout: elk\n"), kWide));
     EXPECT_FALSE(draws(git_probe("  fontFamily: courier\n"), kWide));
     EXPECT_FALSE(draws(git_probe("  htmlLabels: false\n"), kWide));
-    EXPECT_FALSE(draws(git_probe("  gitGraph:\n    mainBranchName: trunk\n"), kWide));
+    // D-436 admits mainBranchName/mainBranchOrder (honoured, see the D-436
+    // gate); an out-of-table gitGraph leaf still keeps the whole source.
+    EXPECT_FALSE(draws(git_probe("  gitGraph:\n    showTags: true\n"), kWide));
     EXPECT_FALSE(draws(git_probe("  look: neo\n  mainBranchName: trunk\n"), kWide));
     // An empty config block stays rejected (the pre-RFC 0039 contract), and a
     // top-level title stays unadmitted.

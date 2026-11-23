@@ -319,7 +319,12 @@ struct GitGraph {
     bool commit_after_reset = false;
 };
 
-std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work);
+// D-436: the frontmatter `config.gitGraph.mainBranchName` / `mainBranchOrder`
+// reach the parser as the initial trunk identity and lane order, so a body that
+// says `checkout trunk` resolves to the configured trunk.
+std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work,
+                                       std::string_view main_branch = "main",
+                                       int main_branch_order = -1);
 
 // Canonical canvas rows for the closed ASCII Flow profile, before FTXUI
 // Screen padding.

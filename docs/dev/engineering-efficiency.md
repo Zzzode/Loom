@@ -2144,3 +2144,34 @@ Attach a short efficiency section to each closure report, answering:
    copied c4 gate carried `canvas_lines`/`config_free_twin`/`expect_footer`
    that the title oracle never uses; `-Werror` only reports some of them and
    the rest are noise. Build the helper set from the oracle you actually wrote.
+
+## D-436 gitGraph main-branch retro (2026-11-23)
+
+1. **A config value that changes parsing must be a parser input, not a
+   post-pass.** Renaming the trunk after `parse_gitgraph` would resolve
+   `checkout trunk` as an unknown branch (whole-source fallback) or create a
+   duplicate branch. The two defaulted parameters keep the public two-argument
+   callers working and make the rename take effect before the body is read.
+2. **A hand-written Python mirror must be traced, not assumed.** Two state
+   machine slips (payload lines rejected because the description section was
+   never entered; `gitGraph:` children rejected because the `section !=
+   "config"` guard ran first) each produced "0 rows" with no clue. Print the
+   per-line trace once when a mirror returns nothing.
+3. **`is_null()` is not "key absent" on this JSON type.** A missing key made
+   both value branches fire for both rows; `has(key)` is the predicate the
+   ledger readers elsewhere already use. Check the API before writing a
+   presence test.
+4. **Five negative lists carried the same now-admitted leaf.** Grep for the
+   config *key name* across `tests/ui` before coding the gate; migrating them
+   after the fact cost a build+run cycle each.
+
+## D-436 follow-up: an admission surface can exceed its first ledger
+
+The first D-436 ledger claimed 2 rows, but the same renderer change also released
+12 `git/visual-check/*-neo-look-*` rows that carried `look: neo` + `theme` with
+a trunk leaf. The matrix caught them as "unexpected renderer-only" rows in one
+run. Lesson: after widening a closed config namespace, re-run the matrix **before**
+writing the closure doc, and size the ledger from the matrix's unexpected list,
+not from the hand-picked fixtures. The twelve rows were added to the ledger
+rather than blocked in the renderer — the combination is legitimate and the
+renderer already draws it.

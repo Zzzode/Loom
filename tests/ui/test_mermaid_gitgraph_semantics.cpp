@@ -2120,7 +2120,7 @@ TEST(MermaidGitGraphEnvelope, ConfigFrontmatterStaysSource) {
                                "  d\n"
                                "config:\n"
                                "  gitGraph:\n"
-                               "    mainBranchName: trunk\n"
+                               "    showTags: false\n"
                                "---\n"
                                "gitGraph LR:\n"
                                "  commit id:\"1\"\n";

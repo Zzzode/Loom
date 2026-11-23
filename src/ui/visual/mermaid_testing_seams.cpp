@@ -26,8 +26,9 @@ std::optional<Envelope> parse_envelope(std::string_view source, Work& work) {
     return detail::parse_envelope(source, work);
 }
 
-std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work) {
-    return detail::parse_gitgraph(source, work);
+std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work,
+                                       std::string_view main_branch, int main_branch_order) {
+    return detail::parse_gitgraph(source, work, main_branch, main_branch_order);
 }
 
 std::optional<FlowAsciiRows> flow_ascii_rows(std::string_view source, Work& work) {

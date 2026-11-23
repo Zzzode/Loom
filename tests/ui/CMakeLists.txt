@@ -248,6 +248,15 @@ add_test(NAME MermaidFallbackAttribution.RosterIsReproducibleAndTotal
 set_tests_properties(MermaidFallbackAttribution.RosterIsReproducibleAndTotal
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-436: the gitGraph main-branch cohort ledger is a generator constant; the
+# check fails on a hand edit or an unreviewed expectation change.
+add_test(NAME MermaidGitMainBranchD436Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_git_mainbranch_d436_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidGitMainBranchD436Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-435: the gitGraph frontmatter-title cohort ledger is a generator constant;
 # the check fails on a hand edit or an unreviewed expectation change.
 add_test(NAME MermaidGitTitleD435Cohort.GeneratorIsReproducible
@@ -1321,6 +1330,15 @@ gtest_discover_tests(test_mermaid_journeyfam_init_0047_cohort
 
 # RFC 0048: State concurrent-region cohort gate and its renderer-free ledger.
 # D-424: gitGraph closed-boolean namespace cohort gate and its ledger.
+# D-436: gitGraph main-branch cohort gate and its ledger.
+add_executable(test_mermaid_git_mainbranch_d436_cohort
+    test_mermaid_git_mainbranch_d436_cohort.cpp)
+target_link_libraries(test_mermaid_git_mainbranch_d436_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_git_mainbranch_d436_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
 # D-435: gitGraph frontmatter-title cohort gate and its ledger.
 add_executable(test_mermaid_git_title_d435_cohort test_mermaid_git_title_d435_cohort.cpp)
 target_link_libraries(test_mermaid_git_title_d435_cohort

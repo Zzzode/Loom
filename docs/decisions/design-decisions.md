@@ -4554,6 +4554,25 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## gitGraph trunk identity and lane order (D-436)
+
+- **The trunk identity must reach the parser before the body is read.**
+  `config.gitGraph.mainBranchName` renames the implicit trunk; a body that says
+  `checkout trunk` only resolves when the trunk was created under that name, so
+  the rename cannot be applied after parsing (a post-pass would leave both
+  branches and a dangling checkout). `parse_gitgraph` gains two defaulted
+  parameters (`main_branch`, `main_branch_order`); the module signature stays
+  source-compatible for two-argument callers.
+- **Both leaves are honoured, and the oracle proves the drawing.** The trunk
+  label carries `@` with the configured name (and `@main` disappears), while
+  `mainBranchOrder` sorts the trunk lane by the existing branch-order key, so
+  the trunk's commit column lands right of the sibling branches. The notices
+  say "honoured", not "not applied".
+- **Closed value grammars.** A branch name is a single label (optional quote
+  pair, no spaces/quotes, not the `∅` placeholder, ≤ 64 bytes); an order is a
+  plain digit string of at most three digits. Unknown leaves, duplicates,
+  wrong nesting and init directives keep the whole source.
+
 ## gitGraph frontmatter title (D-435)
 
 - **The title is honoured, not disclosed.** `title: <prose>` in the gitGraph

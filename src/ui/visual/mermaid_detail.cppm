@@ -54,7 +54,9 @@ using loom::ui::mermaid::testing::Work;
 // aliased seam types, so they are distinct functions from the testing::
 // forwarders (which call these); production code calls these directly.
 std::optional<Envelope> parse_envelope(std::string_view source, Work& work);
-std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work);
+std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work,
+                                       std::string_view main_branch = "main",
+                                       int main_branch_order = -1);
 std::optional<FlowAsciiRows> flow_ascii_rows(std::string_view source, Work& work);
 std::optional<MermaidProbeDecision> classify_mermaid(std::string_view source, Work& work);
 

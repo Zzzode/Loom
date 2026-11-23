@@ -2,7 +2,7 @@
   "schema": "loom_mermaid_c4_styling_d451_cohort/v1",
   "decision": "D-451",
   "admission": {
-    "shape": "`UpdateElementStyle(alias, $attr...)`, `UpdateRelStyle(from, to, $attr...)` with at least one closed `$name=value` attribute, and scalar `accTitle:`/`accDescr:` no-ops",
+    "shape": "`UpdateElementStyle(alias, $attr...)`, `UpdateRelStyle(from, to, $attr...)` with at least one `$name=value` attribute of closed SHAPE (keys are not enumerated, same convention as the element `$attr` list), and scalar `accTitle:`/`accDescr:` no-ops",
     "footer": {
       "header": "C4 native projection v1",
       "line_limit_bytes": 96

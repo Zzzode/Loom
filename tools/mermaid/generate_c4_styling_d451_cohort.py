@@ -103,7 +103,8 @@ def split_args(text: str):
 
 
 def is_identifier(token: str) -> bool:
-    return (bool(token) and (token[0].isalpha() or token[0] == "_") and
+    return (bool(token) and len(token) <= 64 and
+            (token[0].isalpha() or token[0] == "_") and
             all(c.isalnum() or c == "_" for c in token))
 
 
@@ -117,7 +118,10 @@ def attribute_name(token: str):
         return None
     if not all(c.isalnum() or c == "_" for c in ident):
         return None
-    if value is None or value == "":
+    value = value.strip()
+    if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
+        value = value[1:-1].strip()
+    if not value or "(" in value or ")" in value:
         return None
     return name
 
@@ -161,7 +165,10 @@ def styling_disclosures(text: str):
                 if name is None or name in seen:
                     return None
                 seen.add(name)
-                disclosures.append(f"{target}{name} -> SVG styling; not applied")
+                line = f"{target}{name} -> SVG styling; not applied"
+                if len(line) > NOTICE_LIMIT:
+                    return None
+                disclosures.append(line)
             continue
     return disclosures
 
@@ -224,8 +231,9 @@ def build(repo_root):
         "admission": {
             "shape": ("`UpdateElementStyle(alias, $attr...)`, "
                       "`UpdateRelStyle(from, to, $attr...)` with at least one "
-                      "closed `$name=value` attribute, and scalar "
-                      "`accTitle:`/`accDescr:` no-ops"),
+                      "`$name=value` attribute of closed SHAPE (keys are not "
+                      "enumerated, same convention as the element `$attr` "
+                      "list), and scalar `accTitle:`/`accDescr:` no-ops"),
             "footer": {"header": HEADER, "line_limit_bytes": NOTICE_LIMIT},
             "width_policy": "wide_240 admission only; narrow_40 measured live",
             "twin_rule": ("the twin is the same fixture with the styling and "

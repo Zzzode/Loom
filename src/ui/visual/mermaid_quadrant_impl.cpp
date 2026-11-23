@@ -133,6 +133,9 @@ bool quadrant_wrap(const std::string& label, Work& work, std::vector<std::string
 // duplicate key or section, a nested value or a second directive keeps the
 // whole source on fallback.
 constexpr std::string_view kQuadrantNoticeHeader = "Quadrant native projection v1";
+// Bounded by the closed tables: prefix 11 + namespace 15 + longest key 35 +
+// "=" + longest value 7 + suffix 41 = 110 bytes; the cap is 128.
+constexpr std::size_t kQuadrantNoticeLimit = 128;
 
 constexpr std::array<std::string_view, 16> kQuadrantTuningKeys{
     "chartWidth", "chartHeight", "titlePadding", "titleFontSize", "quadrantPadding",
@@ -255,8 +258,10 @@ bool quadrant_tuning_object(std::string_view text, std::vector<std::string>& not
                  quadrant_uint(value);
         if (!ok) return false;
         if (!work.spend(key.size() + value.size() * 2u + 64u)) return false;
-        notices.push_back("%%{init}%% quadrantChart." + key_text + "=" + std::string{value} +
-                          " -> SVG layout/axis tuning; not applied");
+        std::string line = "%%{init}%% quadrantChart." + key_text + "=" + std::string{value} +
+                           " -> SVG layout/axis tuning; not applied";
+        if (line.size() > kQuadrantNoticeLimit) return false;
+        notices.push_back(std::move(line));
     }
     return true;
 }
@@ -280,8 +285,10 @@ bool quadrant_theme_object(std::string_view text, std::vector<std::string>& noti
         if (!quadrant_scalar(entry.substr(colon + 1u), value) || !quadrant_color(value))
             return false;
         if (!work.spend(key.size() + value.size() * 2u + 64u)) return false;
-        notices.push_back("%%{init}%% themeVariables." + key_text + "=" + std::string{value} +
-                          " -> colour palette; not applied");
+        std::string line = "%%{init}%% themeVariables." + key_text + "=" + std::string{value} +
+                           " -> colour palette; not applied";
+        if (line.size() > kQuadrantNoticeLimit) return false;
+        notices.push_back(std::move(line));
     }
     return true;
 }

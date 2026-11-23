@@ -27,7 +27,7 @@ SCHEMA = "loom_mermaid_quadrant_init_d450_cohort/v1"
 DECISION = "D-450"
 
 HEADER = "Quadrant native projection v1"
-NOTICE_LIMIT = 96
+NOTICE_LIMIT = 128
 TUNING_KEYS = (
     "chartWidth", "chartHeight", "titlePadding", "titleFontSize", "quadrantPadding",
     "quadrantTextTopPadding", "quadrantLabelFontSize", "quadrantInternalBorderStrokeWidth",
@@ -153,6 +153,8 @@ def init_footer(text: str):
     interior = object_interior(inner[5:])
     if interior is None:
         return None
+    if not interior.strip():
+        return []  # empty object is an admitted no-op
     entries = split_top(interior)
     if entries is None:
         return None
@@ -190,15 +192,21 @@ def init_footer(text: str):
                     suffix = "SVG layout/axis tuning; not applied"
                 else:
                     return None
-                notices.append(f"%%{{init}}%% quadrantChart.{name}={raw} -> {suffix}")
+                line = f"%%{{init}}%% quadrantChart.{name}={raw} -> {suffix}"
+                if len(line) > NOTICE_LIMIT:
+                    return None
+                notices.append(line)
             elif key == "themeVariables":
                 if name not in THEME_KEYS:
                     return None
                 if len(raw) != 7 or raw[0] != "#" or \
                         any(c not in "0123456789abcdefABCDEF" for c in raw[1:]):
                     return None
-                notices.append(
-                    f"%%{{init}}%% themeVariables.{name}={raw} -> colour palette; not applied")
+                line = (f"%%{{init}}%% themeVariables.{name}={raw} -> "
+                        f"colour palette; not applied")
+                if len(line) > NOTICE_LIMIT:
+                    return None
+                notices.append(line)
             else:
                 return None
     return notices

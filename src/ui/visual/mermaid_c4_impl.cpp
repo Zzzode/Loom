@@ -400,9 +400,22 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
             std::vector<std::string> seen;
             for (std::size_t i = id_count; i < args.size(); ++i) {
                 if (!is_attribute(args[i])) return {};
-                const auto eq = args[i].find('=');
-                const std::string_view name = trim_view(args[i].substr(0u, eq));
+                // View arithmetic only: `args[i]` is a std::string, so any
+                // `args[i].substr(...)` would bind trim_view to a temporary.
+                const std::string_view arg = args[i];
+                const auto eq = arg.find('=');
+                const std::string_view name = trim_view(arg.substr(0u, eq));
                 if (name.size() < 2u) return {};
+                // D-451 closed SHAPE: the value must be a non-empty token
+                // without parentheses; the keys are shape-only, not a closed
+                // key table (same convention as the element `$attr` list).
+                std::string_view raw_value = trim_view(arg.substr(eq + 1u));
+                if (raw_value.size() >= 2u && raw_value.front() == '"' &&
+                    raw_value.back() == '"')
+                    raw_value = trim_view(raw_value.substr(1u, raw_value.size() - 2u));
+                if (raw_value.empty() ||
+                    raw_value.find_first_of("()") != std::string_view::npos)
+                    return {};
                 const auto name_text = std::string{name};
                 if (std::ranges::find(seen, name_text) != seen.end()) return {};
                 seen.push_back(name_text);
@@ -483,7 +496,10 @@ std::optional<std::vector<std::string>> c4_layout(std::string_view source, Work&
                               " $c4BoundaryInRow=1 -> SVG layout tuning; not applied");
     for (const auto& line : style_disclosures) disclosures.push_back(line);
     if (!disclosures.empty()) {
-        if (!work.spend(96u + 32u * disclosures.size() +
+        // The disclosure rows are bounded by the row cap as well as Work.
+        if (out.size() + 2u + disclosures.size() >
+                static_cast<std::size_t>(kC4MaxRows) ||
+            !work.spend(96u + 32u * disclosures.size() +
                         static_cast<std::size_t>(out.size())))
             return {};
         out.push_back("");

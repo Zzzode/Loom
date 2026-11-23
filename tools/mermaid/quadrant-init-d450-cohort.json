@@ -50,7 +50,7 @@
     ],
     "footer": {
       "header": "Quadrant native projection v1",
-      "line_limit_bytes": 96
+      "line_limit_bytes": 128
     },
     "width_policy": "wide_240 admission only; narrow_40 measured live",
     "twin_rule": "the twin is the same fixture with the leading directive line removed; the frame oracle compares the outline above the footer"

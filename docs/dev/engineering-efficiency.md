@@ -2534,3 +2534,36 @@ renderer already draws it.
    the harness level but unusable evidence. One writer per build tree applies
    to the test runner too: wait for the suite (or use the other preset) before
    building, or the log is worthless and the run must be repeated.
+
+## Efficiency baseline — D-456…D-457 batch (2026-11-24)
+
+Measured on the local Linux dev box (Homebrew LLVM 23.1.2, `-j8`, release
+preset for the full suite). Numbers are the batch's own logs, not estimates.
+
+| Measurement | Value | Log |
+|---|---|---|
+| Debug mermaid label suite, full | 1631 tests, **507.33 s** wall (4050.74 s*proc) | `/tmp/loom-logs/d457-mermaid-suite.log` |
+| Debug mermaid label suite, prior slice | 1627 tests, 581.77 s wall | `/tmp/loom-logs/d456-mermaid-suite.log` |
+| Release full ctest (batch boundary) | 4818 collected, **4816 passed**, 119.40 s wall | `/tmp/loom-logs/d457-release-ctest.log` |
+| Release OfficialMatrix (dual-preset gate) | 26.71 s | `/tmp/loom-logs/d457-release-matrix.log` |
+| Debug OfficialMatrix | 237.40 s | `/tmp/loom-logs/d457-matrix.log` |
+| Family/cohort targeted gates | 1–3 s per test, ~30–60 s per family set | ctest runs quoted in the closure doc |
+
+Derived cost (batch = 2 slices, 12 fallback rows removed):
+
+- **Suite cost per slice**: one full debug mermaid suite ≈ **545 s** average
+  (581.77 + 507.33 over two slices). This is the dominant per-slice cost;
+  targeted gates are negligible beside it.
+- **Suite cost per row**: 1089.10 s of debug mermaid suites / 12 rows ≈
+  **90.8 s per row**; adding the release boundary (119.40 s) gives ≈
+  **100.7 s per row** all-in.
+- **One wasted full suite**: an early pre-approval run was invalidated by a
+  concurrent rebuild (`BAD_COMMAND`), i.e. ~10 minutes re-spent — see the
+  D-457 retro item 5.
+- **Matrix cost asymmetry**: the debug matrix (237 s) is ~9× the release
+  matrix (26.7 s), matching the preset guideline; the dual-preset byte gate
+  therefore runs release-first and uses debug only as the second witness.
+
+Target for the next batch: keep per-slice spending at one debug mermaid suite
+plus targeted gates, and run the full suite and the dual-preset gate exactly
+once at the batch boundary.

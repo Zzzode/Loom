@@ -5034,3 +5034,28 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   +23. The roster is fallback-only, so the 23 leave `elk_layout_engine` (38 → 15) and the
   remaining rows keep the `foreign-engine` label; `predicate_sufficiency` becomes
   79 / 62 / 17 and `sufficient_blocker` stays false.
+
+## mindmap closed `config.layout` namespace (D-439)
+
+- **Scope.** The five `config: layout: tidy-tree` mindmap originals are the clean bucket of
+  the mindmap residual. Three are promoted here; the other two stay fallback for **body**
+  reasons discovered by probing the config-free twin first: one carries `::icon(fa fa-book)`
+  (icon glyphs are an unadmitted foreign surface) and one opens with the anonymous
+  `((This is a mindmap))` top-level root shorthand the tree grammar does not parse.
+- **Mechanism.** `mindmap_body` was a strict description-only envelope scanner. It now
+  accepts exactly one additional top-level `config:` block whose only indent-2 leaf is
+  `layout: tidy-tree`, cross-checked against `parse_envelope`'s `config` event vector
+  (one leaf event, indent 2, plain scalar, no namespace entry). Everything else —
+  other layout values, any other leaf, init directives, titles, comments inside the
+  envelope, duplicate leaves, off-grid indentation — keeps the whole source on fallback.
+- **Disclosure.** The tidy-tree engine is an external layout engine the terminal does not
+  run, so the leaf is inert and disclosed on a canonical footer
+  (`Mindmap native projection v1` + `config.layout=tidy-tree -> external layout engine; not
+  applied`). A config-free mindmap keeps its frame byte-identical (no footer), which is what
+  preserves the Original10 and Shapes4 frames.
+- **Oracle.** The gate checks every row against its config-stripped twin: the art above the
+  footer must equal the twin's art exactly, and narrow 40 must stay whole-source (the footer
+  line exceeds the viewport).
+- **Accounting.** The matrix branch precedes the Mindmap10 and Shapes4 selections with a
+  rule-38 reach proof; the roster's `family_residual:mindmap` bucket shrinks by exactly the
+  three ledger paths.

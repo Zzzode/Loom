@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 514,
+  "total_fallback": 511,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
@@ -16,7 +16,7 @@
     "family_residual:git": 13,
     "family_residual:info": 2,
     "family_residual:katex": 2,
-    "family_residual:mindmap": 10,
+    "family_residual:mindmap": 7,
     "family_residual:quadrant-chart": 5,
     "family_residual:requirement": 1,
     "family_residual:sankey": 17,
@@ -463,11 +463,8 @@
       "mindmap/nightly-check/all-shapes-with-mdi-fire-icon.mmd",
       "mindmap/nightly-check/bang-and-cloud-shape-with-icons.mmd",
       "mindmap/nightly-check/bang-and-cloud-shape.mmd",
-      "mindmap/pr-check/1-tidy-tree-should-render-a-simple-mindmap-without-children.mmd",
-      "mindmap/pr-check/2-tidy-tree-should-render-a-simple-mindmap.mmd",
       "mindmap/pr-check/3-tidy-tree-should-render-a-mindmap-with-different-shapes.mmd",
       "mindmap/pr-check/4-tidy-tree-should-render-a-mindmap-with-children.mmd",
-      "mindmap/pr-check/5-tidy-tree-should-keep-root-edges-connected-to-a-rectangular-root-issue-7572.mmd",
       "mindmap/pr-check/formatted-label-with-linebreak-and-a-wrapping-label-and-emojis.mmd"
     ],
     "family_residual:quadrant-chart": [

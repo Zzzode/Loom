@@ -6250,6 +6250,34 @@ const JourneyCohortEntry* usecase_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-439 mindmap closed-layout cohort: the three mindmap originals whose only
+// non-admitted input is the inert `config.layout: tidy-tree` leaf. The per-row
+// gate is test_mermaid_mindmap_tidy_d439_cohort.
+const std::map<std::string, JourneyCohortEntry>& mindmap_tidy_d439_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/mindmap-tidy-d439-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-439 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-439 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* mindmap_tidy_d439_cohort_row(std::string_view path) {
+    const auto& rows = mindmap_tidy_d439_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-437 wardley closed-theme cohort: the four wardley originals whose only
 // non-admitted input is `config.theme` in the closed palette table (their
 // bodies use the upstream column-0 spelling, also admitted). The per-row gate
@@ -10472,6 +10500,33 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                                                                 block_diagnostics));
                     continue;
                 }
+            // D-439 mindmap closed-layout admission: three mindmap originals
+            // whose only non-admitted input is the inert
+            // `config.layout: tidy-tree` leaf, under the TL's review exemption.
+            // Placed before the Mindmap10/Shapes4 selections (disjoint sets);
+            // the post-loop reach proof asserts each row is observed here.
+            if (class_path.is_str() && class_path.as_str().starts_with("mindmap/")) {
+                if (const auto* cohort = mindmap_tidy_d439_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "mindmap";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-439 mindmap layout cohort (TL review-exempt)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             if (class_path.is_str() && class_path.as_str().starts_with("mindmap/"))
                 if (const auto selected = official_mindmap_selected(official_mindmap_facts->root(),
                                                                     i, class_path.as_str())) {
@@ -12755,6 +12810,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d437 == expected_d437,
                     "D-437 branch reach set must equal its ledger");
+        }
+
+        // D-439 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d439 = json::parse(
+                read_file(kRoot / "../../../tools/mermaid/mindmap-tidy-d439-cohort.json"));
+            require(ledger_d439.has_value(), "D-439 cohort ledger must parse");
+            std::set<std::string> expected_d439;
+            ledger_d439->root().get("rows").iter([&](const JsonVal row) {
+                expected_d439.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d439;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-439 mindmap layout cohort (TL review-exempt)")
+                    reached_d439.insert(row.path);
+            }
+            require(reached_d439 == expected_d439,
+                    "D-439 branch reach set must equal its ledger");
         }
 
         // D-436 rule-38 reach proof: every ledger row must be observed through

@@ -2209,3 +2209,18 @@ renderer already draws it.
 3. **Zero-effect slices are reverted, not committed.** The finished patch is
    kept at `/tmp/d438-sankey-config.patch` (applies cleanly to `04a98f1c`) so
    authorization does not pay for the reimplementation.
+
+## D-439 mindmap layout retro (2026-11-23)
+
+1. **The probe-first rule from D-438 paid off immediately.** A one-file temporary probe
+   built once (47 objects) told us in 0.5 s that only 3 of the 5 `tidy-tree` fixtures are
+   body-admitted: the icon row and the anonymous `((...))` root row fail the body grammar
+   regardless of the config leaf. The ledger was sized from measured rows, not from the
+   config detector's bucket — no matrix surprise, no ledger widening.
+2. **A strict envelope scanner needs a cross-check, not a rewrite.** `mindmap_body` keeps
+   its line-by-line closed scan and adds one `parse_envelope` cross-check for the config
+   event; the Original10/Shapes4 frames stay byte-identical because the footer is emitted
+   only for the newly admitted leaf.
+3. **Generator mirrors must encode every rejection, not just the acceptance.** The first
+   generator accepted 19 rows because a description-only envelope also ends with
+   `config_seen == false`; the cohort pin (`total == 3`) caught it on the first run.

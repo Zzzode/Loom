@@ -71,12 +71,24 @@ bool mindmap_description(std::string_view value) {
     return value.find(": ") == std::string_view::npos && value.find(" #") == std::string_view::npos;
 }
 
-std::optional<std::string_view> mindmap_body(std::string_view source, Work& work) {
+// D-439: a mindmap envelope may also carry the closed `config.layout`
+// namespace with exactly `layout: tidy-tree`. The tidy-tree engine is an
+// external layout engine the terminal projection does not run, so the leaf is
+// inert and disclosed (`Mindmap native projection v1`); every other config
+// key, init directive, title or extra field keeps the whole source on
+// fallback.
+struct MindmapEnvelope {
+    std::string_view body;
+    bool tidy_tree = false;
+};
+
+std::optional<MindmapEnvelope> mindmap_body(std::string_view source, Work& work) {
     std::size_t at = 0;
     std::string_view line;
     if (!mindmap_line(source, at, line)) return {};
-    if (line != "---") return source;
-    bool seen = false, folded = false, payload = false, closed = false;
+    if (line != "---") return MindmapEnvelope{source, false};
+    bool seen = false, folded = false, payload = false, closed = false, config_seen = false,
+         layout_seen = false;
     std::size_t block_indent = 0;
     while (mindmap_line(source, at, line)) {
         if (line == "---") {
@@ -84,11 +96,21 @@ std::optional<std::string_view> mindmap_body(std::string_view source, Work& work
             break;
         }
         if (line.find_first_not_of(' ') == std::string_view::npos) continue;
-        if (folded && line.front() == ' ') {
+        if (folded && !config_seen && line.front() == ' ') {
             const auto indent = line.find_first_not_of(' ');
             if (block_indent == 0) block_indent = indent;
             if (indent != block_indent || !unicode_text(line.substr(indent))) return {};
             payload = true;
+            continue;
+        }
+        if (config_seen) {
+            if (line != "  layout: tidy-tree" || layout_seen) return {};
+            layout_seen = true;
+            continue;
+        }
+        if (line == "config:") {
+            if (!seen) return {};
+            config_seen = true;
             continue;
         }
         if (seen || !line.starts_with("description: ")) return {};
@@ -99,20 +121,53 @@ std::optional<std::string_view> mindmap_body(std::string_view source, Work& work
         else if (!mindmap_description(value))
             return {};
     }
-    if (!closed || !seen || (folded && !payload)) return {};
+    if (!closed || !seen || (folded && !payload) || (config_seen && !layout_seen)) return {};
     const auto envelope = detail::parse_envelope(source, work);
     if (!envelope || !envelope->has_frontmatter || !envelope->description || envelope->title ||
-        !envelope->config.empty() || !envelope->init.empty())
+        !envelope->init.empty())
         return {};
+    if (config_seen) {
+        if (envelope->config.size() != 1u) return {};
+        const auto& event = envelope->config.front();
+        if (event.path != "layout" || event.indent != 2 || event.namespace_entry ||
+            event.comment || event.blank || event.form != EnvelopeScalarForm::Plain ||
+            event.value != "tidy-tree")
+            return {};
+    } else if (!envelope->config.empty()) {
+        return {};
+    }
     std::size_t fields = 0;
     for (const auto& event : envelope->events) {
         if (!work.spend()) return {};
         if (event.blank) continue;
-        if (!event.top_level || event.comment || event.path != "description" || ++fields != 1)
+        if (event.comment) return {};
+        if (event.top_level) {
+            if (event.path == "description") {
+                if (++fields != 1) return {};
+                continue;
+            }
+            if (config_seen && event.namespace_entry && event.path == "config") continue;
             return {};
+        }
+        if (config_seen && event.path == "layout") continue;
+        return {};
     }
     if (fields != 1) return {};
-    return envelope->raw_body;
+    return MindmapEnvelope{envelope->raw_body, config_seen};
+}
+
+// D-439: the admitted `config.layout: tidy-tree` leaf is inert for the native
+// projection. Disclose it on the canonical footer; a config-free source keeps
+// its frame byte-identical.
+bool mindmap_append_layout_notice(std::vector<std::string>& rows, bool tidy_tree, Work& work) {
+    if (!tidy_tree) return true;
+    static constexpr std::string_view kNotice =
+        "config.layout=tidy-tree -> external layout engine; not applied";
+    if (rows.size() >= 512u || !work.spend(256 + kNotice.size())) return false;
+    rows.push_back(std::string{});
+    rows.push_back("Mindmap native projection v1");
+    rows.push_back(std::string{kNotice});
+    return true;
 }
 
 bool mindmap_id(std::string_view id) {
@@ -209,11 +264,12 @@ std::optional<std::vector<std::string>> mindmap_original_layout(std::string_view
             (source[i] == '\r' && (i + 1 == source.size() || source[i + 1] != '\n')))
             return {};
     }
-    const auto body = mindmap_body(source, work);
-    if (!body) return {};
+    const auto envelope = mindmap_body(source, work);
+    if (!envelope) return {};
+    const auto body = envelope->body;
     std::size_t at = 0;
     std::string_view line;
-    if (!mindmap_line(*body, at, line) || line != "mindmap") return {};
+    if (!mindmap_line(body, at, line) || line != "mindmap") return {};
 
     fee = 1024;
     if (!mindmap_term(fee, 64, 2 * sizeof(NodeSpan) + 2 * sizeof(Node) + 32) ||
@@ -223,7 +279,7 @@ std::optional<std::vector<std::string>> mindmap_original_layout(std::string_view
     std::array<int, 16> indents{}, ancestors{};
     std::size_t count = 0;
     int levels = 0;
-    while (mindmap_line(*body, at, line)) {
+    while (mindmap_line(body, at, line)) {
         if (line.empty()) continue;
         const auto leading = line.find_first_not_of(' ');
         if (leading == std::string_view::npos) continue;
@@ -369,6 +425,7 @@ std::optional<std::vector<std::string>> mindmap_original_layout(std::string_view
     if (!work.spend(output_bytes)) return {};
     auto result = canvas.lines();
     if (result.empty()) return {};
+    if (!mindmap_append_layout_notice(result, envelope->tidy_tree, work)) return {};
     return result;
 }
 
@@ -397,11 +454,12 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
         if (source[i] == '\t' ||
             (source[i] == '\r' && (i + 1 == source.size() || source[i + 1] != '\n')))
             return {};
-    const auto body = mindmap_body(source, work);
-    if (!body) return {};
+    const auto envelope = mindmap_body(source, work);
+    if (!envelope) return {};
+    const auto body = envelope->body;
     std::size_t at = 0;
     std::string_view line;
-    if (!mindmap_line(*body, at, line) || line != "mindmap") return {};
+    if (!mindmap_line(body, at, line) || line != "mindmap") return {};
     fee = 1024;
     if (!mindmap_term(fee, 64, 2 * sizeof(ShapedSpan) + 2 * sizeof(ShapedNode) + 32) ||
         !mindmap_term(fee, 16, 4 * sizeof(int)) || !work.spend(fee))
@@ -411,7 +469,7 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
     std::size_t count = 0, label_bytes = 0;
     int levels = 0;
     bool shaped = false;
-    while (mindmap_line(*body, at, line)) {
+    while (mindmap_line(body, at, line)) {
         const auto leading = line.find_first_not_of(' ');
         if (leading == std::string_view::npos) continue;
         if (count == spans.size() || !work.spend(32)) return {};
@@ -443,7 +501,7 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
                 // separate from its one nonempty terminal caption line.
                 const auto* raw_start = value.data();
                 std::string_view payload, closing;
-                if (!mindmap_line(*body, at, payload) || !mindmap_line(*body, at, closing))
+                if (!mindmap_line(body, at, payload) || !mindmap_line(body, at, closing))
                     return {};
                 const auto text_start = payload.find_first_not_of(' ');
                 const auto close_start = closing.find_first_not_of(' ');
@@ -632,6 +690,7 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
     if (!work.spend(output_bytes)) return {};
     auto result = canvas.lines();
     if (result.empty()) return {};
+    if (!mindmap_append_layout_notice(result, envelope->tidy_tree, work)) return {};
     return result;
 }
 }  // namespace

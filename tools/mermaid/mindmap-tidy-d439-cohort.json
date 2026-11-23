@@ -1,0 +1,65 @@
+{
+  "schema": "loom_mermaid_mindmap_tidy_d439_cohort/v1",
+  "decision": "D-439",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "mindmap original whose frontmatter is a folded description plus the closed config.layout namespace with exactly layout: tidy-tree, and whose body uses no icon annotation and no anonymous ((...)) root",
+    "cohort_digest": "36d3a7cf96fba3cd978cf781e3d3dce98c8b0d8ce7dec6611ef0f5cfbead3193",
+    "exclusions": "other layout values, other config keys, init directives, ::icon(...) annotations and the ((...)) top-level shorthand stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-23: family slice without a design gate; the gate is the test document plus the twin oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 3
+  },
+  "rows": [
+    {
+      "path": "mindmap/pr-check/1-tidy-tree-should-render-a-simple-mindmap-without-children.mmd",
+      "sha256": "d43bcaf178e7445aab539f23c80dac97019677c824448b0b87acde5999d8f564",
+      "manifest_sha256": "d43bcaf178e7445aab539f23c80dac97019677c824448b0b87acde5999d8f564",
+      "expected_footer_lines": [
+        "Mindmap native projection v1",
+        "config.layout=tidy-tree -> external layout engine; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "mindmap/pr-check/2-tidy-tree-should-render-a-simple-mindmap.mmd",
+      "sha256": "10718bf1285476f5ae15e790c38a57cc34e501abe9164ace6067070c1f9eacaa",
+      "manifest_sha256": "10718bf1285476f5ae15e790c38a57cc34e501abe9164ace6067070c1f9eacaa",
+      "expected_footer_lines": [
+        "Mindmap native projection v1",
+        "config.layout=tidy-tree -> external layout engine; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "mindmap/pr-check/5-tidy-tree-should-keep-root-edges-connected-to-a-rectangular-root-issue-7572.mmd",
+      "sha256": "7e4468a2c81232aaf03ff5553c61431a1ac229a39da28ef48cf868781c0f2551",
+      "manifest_sha256": "7e4468a2c81232aaf03ff5553c61431a1ac229a39da28ef48cf868781c0f2551",
+      "expected_footer_lines": [
+        "Mindmap native projection v1",
+        "config.layout=tidy-tree -> external layout engine; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

@@ -243,6 +243,155 @@ bool validate_note(std::string_view code) {
 
 }  // namespace
 
+// D-447: the closed `config.usecase` tuning namespace and the scalar/block
+// accessibility no-ops. The usecase projection is a statement outline; the
+// tuning leaves only shape upstream SVG geometry, so each is admitted from its
+// corpus-backed exact value and disclosed. `accTitle`/`accDescr` are
+// accessibility metadata and are validated no-ops, like the state family's.
+constexpr std::size_t kUsecaseNoticeLineLimit = 96u;
+constexpr std::string_view kUsecaseNoticeHeader = "Usecase native projection v1";
+
+struct UsecaseLeaf {
+    std::string_view key, value;
+};
+
+constexpr std::array<UsecaseLeaf, 9> kUsecaseLeaves{{
+    {"actorFontSize", "16"},
+    {"actorFontFamily", "Arial"},
+    {"actorFontWeight", "bold"},
+    {"usecaseFontSize", "14"},
+    {"usecaseFontFamily", "Georgia"},
+    {"nodeSpacing", "60"},
+    {"rankSpacing", "70"},
+    {"diagramPadding", "24"},
+    {"useMaxWidth", "false"},
+}};
+
+bool usecase_frontmatter(std::string_view source, std::vector<std::string>& notices,
+                         Work& work) {
+    if (!source.starts_with("---\n")) return true;
+    const auto close = source.find("\n---\n", 4);
+    if (close == std::string_view::npos) return true;  // unclosed: historical passthrough
+    const std::string_view frontmatter = source.substr(4, close - 4);
+    bool in_config = false, saw_config = false, saw_description = false, folded = false,
+         namespace_seen = false, payload = false;
+    std::size_t block_indent = 0;
+    std::array<bool, kUsecaseLeaves.size()> seen{};
+    for (std::size_t pos = 0;;) {
+        const auto eol = frontmatter.find('\n', pos);
+        const std::string_view line = frontmatter.substr(
+            pos, eol == std::string_view::npos ? std::string_view::npos : eol - pos);
+        pos = eol == std::string_view::npos ? frontmatter.size() : eol + 1;
+        const auto key_start = line.find_first_not_of(' ');
+        if (key_start == std::string_view::npos) {  // blank line
+            if (eol == std::string_view::npos) break;
+            continue;
+        }
+        if (folded && in_config == false && line.front() == ' ') {
+            const auto indent = line.find_first_not_of(' ');
+            if (block_indent == 0) block_indent = indent;
+            if (indent != block_indent || !unicode_text(line.substr(indent))) return false;
+            payload = true;
+            if (eol == std::string_view::npos) break;
+            continue;
+        }
+        if (key_start != 0) {
+            if (!in_config) return false;
+            const std::string_view leaf = line.substr(key_start);
+            if (leaf.starts_with("#")) {  // YAML comment
+                if (eol == std::string_view::npos) break;
+                continue;
+            }
+            const auto colon = leaf.find(':');
+            if (colon == std::string_view::npos) return false;
+            const std::string_view key = leaf.substr(0, colon);
+            std::string_view value = leaf.substr(colon + 1u);
+            const auto first = value.find_first_not_of(' ');
+            const auto last = value.find_last_not_of(' ');
+            value = first == std::string_view::npos ? std::string_view{}
+                                                     : value.substr(first, last - first + 1u);
+            if (key_start == 2u && key == "usecase" && value.empty()) {
+                if (namespace_seen) return false;
+                namespace_seen = true;
+            } else if (key_start == 4u && namespace_seen) {
+                bool matched = false;
+                for (std::size_t i = 0; i < kUsecaseLeaves.size(); ++i) {
+                    if (kUsecaseLeaves[i].key != key) continue;
+                    if (seen[i] || kUsecaseLeaves[i].value != value) return false;
+                    seen[i] = true;
+                    matched = true;
+                    break;
+                }
+                if (!matched) return false;
+            } else {
+                return false;
+            }
+            if (eol == std::string_view::npos) break;
+            continue;
+        }
+        if (line.starts_with("#")) {  // YAML comment
+            if (eol == std::string_view::npos) break;
+            continue;
+        }
+        const auto colon = line.find(':');
+        const std::string_view key = line.substr(0, colon);
+        if (key == "config") {
+            if (saw_config) return false;
+            saw_config = true;
+            in_config = true;
+        } else if (key == "description") {
+            if (saw_description) return false;
+            saw_description = true;
+            folded = line.substr(colon + 1u) == " >-";
+            in_config = false;
+        } else {
+            return false;
+        }
+        if (eol == std::string_view::npos) break;
+    }
+    if (!saw_description) return false;
+    if (folded && !payload) return false;
+    bool any = false;
+    for (const auto flag : seen) any |= flag;
+    if (saw_config && !any) return false;
+    if (namespace_seen && !any) return false;
+    if (any) {
+        std::size_t bytes = 0;
+        auto push = [&](std::string_view line) -> bool {
+            if (line.size() > kUsecaseNoticeLineLimit || !work.spend(line.size() * 4u + 32u))
+                return false;
+            notices.emplace_back(line);
+            return true;
+        };
+        if (!push(kUsecaseNoticeHeader)) return false;
+        for (std::size_t i = 0; i < kUsecaseLeaves.size(); ++i) {
+            if (!seen[i]) continue;
+            std::string line = "config.usecase.";
+            line += kUsecaseLeaves[i].key;
+            line += '=';
+            line += kUsecaseLeaves[i].value;
+            line += " -> SVG layout tuning; not applied";
+            if (!push(line)) return false;
+            bytes += line.size();
+        }
+        if (!work.spend(bytes)) return false;
+    }
+    return true;
+}
+
+// D-447: a non-empty, bounded, unicode payload with a matched quote pair
+// removed; the value itself is never projected.
+bool usecase_accessibility_value(std::string_view raw, Work& work) {
+    auto value = trim_view(raw);
+    if (!work.spend(value.size() * 2u + 32u)) return false;
+    if (value.size() >= 2u &&
+        ((value.front() == '"' && value.back() == '"') ||
+         (value.front() == '\'' && value.back() == '\'')))
+        value = trim_view(value.substr(1u, value.size() - 2u));
+    return !value.empty() && value.size() <= static_cast<std::size_t>(kUsecaseMaxTextBytes) &&
+           value.find_first_of("\r\n\t") == std::string_view::npos && unicode_text(value);
+}
+
 std::optional<std::vector<std::string>> usecase_layout(std::string_view source, Work& work) {
     if (source.empty() || source.size() > kSourceLimit) return {};
     std::size_t fee = 256;
@@ -254,34 +403,16 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
     }
 
     const std::string_view body = usecase_body(source);
-    // No layout/color contract: a frontmatter theme/look/config key, an
-    // %%{init}%% directive or a classDef/:::/style statement keeps the whole
-    // source on fallback. Key-based so prose words are not false gates.
+    // D-447: the frontmatter envelope is the closed description + `config.usecase`
+    // shape; its admitted leaves become the disclosure footer.
+    std::vector<std::string> notices;
+    if (!usecase_frontmatter(source, notices, work)) return {};
+    // No color contract: a %%{init}%% directive or a classDef/:::/style
+    // statement keeps the whole source on fallback. Key-based so prose words
+    // are not false gates.
     {
         bool visual_gate = false;
-        if (source.starts_with("---\n")) {
-            const auto close = source.find("\n---\n", 4);
-            if (close != std::string_view::npos) {
-                const std::string_view frontmatter(source.data(), close);
-                for (std::size_t pos = 0;;) {
-                    const auto eol = frontmatter.find('\n', pos);
-                    std::string_view line = frontmatter.substr(
-                        pos, eol == std::string_view::npos ? std::string_view::npos
-                                                           : eol - pos);
-                    pos = eol == std::string_view::npos ? frontmatter.size() : eol + 1;
-                    const auto key_start = line.find_first_not_of(' ');
-                    if (key_start != std::string_view::npos) {
-                        std::string_view key = line.substr(key_start);
-                        const auto colon = key.find(':');
-                        if (colon != std::string_view::npos) key = key.substr(0, colon);
-                        if (key == "theme" || key == "look" || key == "config")
-                            visual_gate = true;
-                    }
-                    if (eol == std::string_view::npos) break;
-                }
-            }
-        }
-        if (!visual_gate) {
+        {
             for (std::size_t pos = 0;;) {
                 const auto eol = body.find('\n', pos);
                 std::string_view line = body.substr(
@@ -346,6 +477,7 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
     if (statements.empty() || statements.front() != "usecase-beta") return {};
 
     bool saw_direction = false;
+    bool saw_acc_title = false, saw_acc_descr = false, in_descr_block = false;
     int boundary_depth = 0;
     std::vector<std::string> out;
     auto push_guarded = [&](const std::string& row) -> bool {
@@ -364,6 +496,40 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
         const std::string code = blank_quotes(stmt);
         const std::string_view cv = code;
 
+        if (in_descr_block) {
+            // D-447: block-form accDescr payload is validated opaque text.
+            if (stmt == "}") {
+                in_descr_block = false;
+                continue;
+            }
+            if (stmt.empty() ||
+                stmt.size() > static_cast<std::size_t>(kUsecaseMaxTextBytes) ||
+                !unicode_text(stmt))
+                return {};
+            continue;
+        }
+        if (cv.starts_with("accTitle")) {
+            // D-447: scalar accessibility metadata is a validated no-op.
+            if (saw_acc_title) return {};
+            const auto rest = trim_view(cv.substr(8u));
+            if (!rest.starts_with(':')) return {};
+            if (!usecase_accessibility_value(rest.substr(1u), work)) return {};
+            saw_acc_title = true;
+            continue;
+        }
+        if (cv.starts_with("accDescr")) {
+            if (saw_acc_descr) return {};
+            const auto rest = trim_view(cv.substr(8u));
+            if (rest == "{") {
+                saw_acc_descr = true;
+                in_descr_block = true;
+                continue;
+            }
+            if (!rest.starts_with(':')) return {};
+            if (!usecase_accessibility_value(rest.substr(1u), work)) return {};
+            saw_acc_descr = true;
+            continue;
+        }
         if (cv.starts_with("direction ")) {
             if (saw_direction || !is_direction(trim_view(cv.substr(10)))) return {};
             saw_direction = true;
@@ -392,6 +558,7 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
         if (!push_guarded(stmt)) return {};
     }
 
+    if (in_descr_block) return {};       // unclosed accDescr block
     if (boundary_depth != 0) return {};  // unclosed system boundary
     if (out.empty()) {
         if (!push_guarded("usecase-beta")) return {};  // header-only frame
@@ -401,6 +568,12 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
         combined.push_back("usecase-beta");
         combined.insert(combined.end(), out.begin(), out.end());
         out = std::move(combined);
+    }
+    if (!notices.empty()) {
+        // D-447: append the closed-envelope disclosure after the outline.
+        if (!push_guarded("")) return {};
+        for (const auto& line : notices)
+            if (!push_guarded(line)) return {};
     }
     return out;
 }

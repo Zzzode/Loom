@@ -2300,3 +2300,13 @@ renderer already draws it.
    twin ⇒ no footer). Here the twin keeps its admitted config and therefore
    emits the same footer, so the honest and simpler oracle is full-surface
    equality between the source and the comment-free twin.
+
+## D-447 usecase accessibility retro (2026-11-23)
+
+1. **A missing ledger row turns "drawn" into a matrix error, not a fallback.**
+   The renderer change landed before the D-447 branch, so the matrix booked one
+   `Expected exact ordinary-code source fallback` error and gaps 48→49. That is
+   the expected transient state: land ledger + branch before judging the run.
+2. **Accessibility declarations have a family precedent; reuse it.** State's
+   RFC 0048 scalar accTitle/accDescr no-op (validated, silent, duplicate-gated)
+   transferred directly to usecase, including the block form.

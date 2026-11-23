@@ -1,11 +1,11 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 496,
+  "total_fallback": 495,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
-    "dagre_layout_tuning": 11,
+    "dagre_layout_tuning": 10,
     "edge_animation_metadata": 80,
     "elk_layout_engine": 10,
     "family_residual:c4": 6,
@@ -91,8 +91,8 @@
     },
     "dagre_layout_tuning": {
       "originals_matching_predicate": 167,
-      "drawn_among_matches": 111,
-      "fallback_among_matches": 56,
+      "drawn_among_matches": 112,
+      "fallback_among_matches": 55,
       "sufficient_blocker": false
     },
     "edge_animation_metadata": {
@@ -291,8 +291,7 @@
       "flowchart/nightly-check/dagre/with-formatting-in-a-node.mmd",
       "flowchart/nightly-check/dagre/wrapping-long-text-with-a-new-line-2.mmd",
       "flowchart/nightly-check/dagre/wrapping-long-text-with-a-new-line.mmd",
-      "flowchart/visual-check/7213-should-render-edges-with-rounded-curve-right-angles-with-rounded-corners.mmd",
-      "usecase/nightly-check/10-configuration-and-accessibility.mmd"
+      "flowchart/visual-check/7213-should-render-edges-with-rounded-curve-right-angles-with-rounded-corners.mmd"
     ],
     "edge_animation_metadata": [
       "flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd",

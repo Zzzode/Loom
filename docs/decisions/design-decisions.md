@@ -5188,3 +5188,21 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Oracle.** The twin is the same fixture with the leading comment lines
   removed; since the config is identical, the whole frame (footer included)
   must be byte-identical. Narrow 40 stays whole-source.
+
+## usecase closed tuning namespace + accessibility no-ops (D-447)
+
+- **Scope.** One usecase original whose only blockers were the closed
+  `config.usecase` tuning namespace and in-body `accTitle:`/block `accDescr`.
+- **Why inert.** The usecase projection is a statement outline and draws no
+  geometry; the nine tuning leaves only shape upstream SVG. The accessibility
+  declarations are metadata, admitted as validated no-ops exactly like the
+  state family's RFC 0048 handling.
+- **Mechanism.** A closed line-scan frontmatter parser accepts the description
+  plus `config:` → `usecase:` → nine exact `key: value` leaves (each once,
+  namespace without a leaf fails closed, every other leaf gates). The statement
+  loop consumes scalar `accTitle:`/`accDescr:` and the block `accDescr { ... }`
+  form, rejecting duplicates, empty payloads and unclosed blocks.
+- **Disclosure.** `Usecase native projection v1` plus one line per admitted
+  leaf, appended after the outline.
+- **Oracle.** The twin removes the config block and the acc declarations; the
+  outline above the footer must be cell-equal, and narrow 40 stays source.

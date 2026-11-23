@@ -101,6 +101,22 @@ def build_review(repo_root):
     return review
 
 
+# D-452 admits the ten styled rows through the closed classDef/::: grammar;
+# they leave this ledger for tools/mermaid/treemap-classdef-d452-cohort.json.
+D452_COHORT = {
+    "treemap/nightly-check/12-should-apply-classdef-fill-color-to-leaf-nodes.mmd",
+    "treemap/nightly-check/14-should-apply-classdef-color-to-text-labels.mmd",
+    "treemap/nightly-check/15-should-apply-multiple-classdef-properties-simultaneously.mmd",
+    "treemap/nightly-check/16-should-handle-classdef-on-nested-sections-and-leaves.mmd",
+    "treemap/pr-check/10-should-render-the-example-from-documentation.mmd",
+    "treemap/pr-check/13-should-apply-classdef-stroke-styles-to-sections.mmd",
+    "treemap/pr-check/19-should-render-labels-in-complex-treemap-with-many-nested-blocks.mmd",
+    "treemap/pr-check/3-should-render-a-treemap-with-styling-using-classdef.mmd",
+    "treemap/pr-check/7-should-handle-classdef-with-multiple-styles.mmd",
+    "treemap/pr-check/9-should-handle-a-complex-example-with-multiple-features.mmd",
+}
+
+
 def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
@@ -110,14 +126,16 @@ def build(repo_root):
         text = path.read_text()
         rel = path.relative_to(
             repo_root / "tests/fixtures/mermaid_official/cases").as_posix()
+        if rel in D452_COHORT:
+            continue  # owned by the D-452 classDef cohort
         frontmatter, body = split_frontmatter(text)
         groups[partition(text, frontmatter, body)].add(rel)
 
-    if (len(groups["draw"]), len(groups["styled"]), len(groups["config"])) != (10, 10, 6):
+    if (len(groups["draw"]), len(groups["styled"]), len(groups["config"])) != (10, 0, 6):
         raise ValueError(
             f"treemap partition drift: draw={len(groups['draw'])} "
             f"styled={len(groups['styled'])} config={len(groups['config'])} "
-            "(expected 10/10/6)")
+            "(expected 10/0/6 after D-427 and D-452)")
 
     rows = []
     for rel in sorted(groups["draw"]):

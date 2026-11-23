@@ -1,0 +1,179 @@
+{
+  "schema": "loom_mermaid_venn_style_d453_cohort/v1",
+  "decision": "D-453",
+  "admission": {
+    "shape": "`style <targets> <key>:<value>[, ...]` with the closed property set, flat `text` children and `text id[\"Label\"]`",
+    "properties": [
+      "fill",
+      "color",
+      "stroke",
+      "stroke-width"
+    ],
+    "footer": {
+      "header": "Venn native projection v1",
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin removes the style statements and strips text ids; the outline above the footer must be cell-equal"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "venn fallbacks whose only remaining blocker is the closed style statement (plus flat text children / text ids)",
+    "cohort_digest": "298ebaada6c3203ca5fe393ca4aa4e707825a774628db36c4e39cf0dd1bc7a1f"
+  },
+  "counts": {
+    "total": 5,
+    "by_family": {
+      "venn": 5
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, D-453 venn style admission, 2026-11-23)",
+    "date": "2026-11-23",
+    "verdict": "approved",
+    "note": "Reviewer re-ran the generator --check entry and the live gate and verified: only the four closed style properties are admitted with validated values; duplicate statements and duplicate properties fail closed; flat text children and text ids are inert; classDef/::: stay whole-source; the disclosure footer appends after the outline and style-free twins are cell-exact."
+  },
+  "rows": [
+    {
+      "path": "venn/nightly-check/13-should-render-a-complex-venn-with-labels-text-nodes-and-styles.mmd",
+      "family": "venn",
+      "sha256": "63e53395ff4feab0d713923120403f189dd554030b7633a21c78558513a04722",
+      "manifest_sha256": "63e53395ff4feab0d713923120403f189dd554030b7633a21c78558513a04722",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Venn native projection v1",
+        "style Frontend [fill] -> SVG colour; not applied",
+        "style Backend [fill] -> SVG colour; not applied",
+        "style DevOps [fill] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "style-free-body",
+        "path": "venn/nightly-check/13-should-render-a-complex-venn-with-labels-text-nodes-and-styles.mmd",
+        "sha256": "63e53395ff4feab0d713923120403f189dd554030b7633a21c78558513a04722",
+        "footer_lines": []
+      },
+      "ledger_note": "the venn projection paints its own labelled outline and never reads fill/colour, so the closed style statements are inert and disclosed once; flat text children and text ids render the outline only"
+    },
+    {
+      "path": "venn/nightly-check/explicit-set-style-over-redux-palette.mmd",
+      "family": "venn",
+      "sha256": "1d9202a2ef1f19d234a875ac3987853bf9cf1653e8711bd00792c0b2be5ca7e7",
+      "manifest_sha256": "1d9202a2ef1f19d234a875ac3987853bf9cf1653e8711bd00792c0b2be5ca7e7",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Venn native projection v1",
+        "config.theme=redux-color -> colour palette; not applied",
+        "style A [fill] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "style-free-body",
+        "path": "venn/nightly-check/explicit-set-style-over-redux-palette.mmd",
+        "sha256": "1d9202a2ef1f19d234a875ac3987853bf9cf1653e8711bd00792c0b2be5ca7e7",
+        "footer_lines": []
+      },
+      "ledger_note": "the venn projection paints its own labelled outline and never reads fill/colour, so the closed style statements are inert and disclosed once; flat text children and text ids render the outline only"
+    },
+    {
+      "path": "venn/nightly-check/handdrawn/18-should-render-a-handdrawn-venn-with-custom-styles-and-text-nodes.mmd",
+      "family": "venn",
+      "sha256": "a15d2579af8789627753d277569a32c1b61a800fbe0bfe557d48c93af6382c48",
+      "manifest_sha256": "a15d2579af8789627753d277569a32c1b61a800fbe0bfe557d48c93af6382c48",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Venn native projection v1",
+        "config.look=handDrawn -> source node style; not applied",
+        "config.handDrawnSeed=1 -> sketch jitter seed; not applied",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "style A [fill] -> SVG colour; not applied",
+        "style B [fill] -> SVG colour; not applied",
+        "style A,B [fill] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "style-free-body",
+        "path": "venn/nightly-check/handdrawn/18-should-render-a-handdrawn-venn-with-custom-styles-and-text-nodes.mmd",
+        "sha256": "a15d2579af8789627753d277569a32c1b61a800fbe0bfe557d48c93af6382c48",
+        "footer_lines": []
+      },
+      "ledger_note": "the venn projection paints its own labelled outline and never reads fill/colour, so the closed style statements are inert and disclosed once; flat text children and text ids render the outline only"
+    },
+    {
+      "path": "venn/pr-check/11-should-render-a-venn-diagram-with-custom-text-colors-via-style.mmd",
+      "family": "venn",
+      "sha256": "b5d0aef47e7b4b37a000ad83a2d2e7c8eb266879b25ea80316691ebeb0363489",
+      "manifest_sha256": "b5d0aef47e7b4b37a000ad83a2d2e7c8eb266879b25ea80316691ebeb0363489",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Venn native projection v1",
+        "style A1 [color] -> SVG colour; not applied",
+        "style B1 [color] -> SVG colour; not applied",
+        "style AB1 [color] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "style-free-body",
+        "path": "venn/pr-check/11-should-render-a-venn-diagram-with-custom-text-colors-via-style.mmd",
+        "sha256": "b5d0aef47e7b4b37a000ad83a2d2e7c8eb266879b25ea80316691ebeb0363489",
+        "footer_lines": []
+      },
+      "ledger_note": "the venn projection paints its own labelled outline and never reads fill/colour, so the closed style statements are inert and disclosed once; flat text children and text ids render the outline only"
+    },
+    {
+      "path": "venn/pr-check/7-should-render-a-venn-diagram-with-custom-colors-via-style.mmd",
+      "family": "venn",
+      "sha256": "d2ef075c308aae9f3d882f4dc089ad0e6af5f510959483309d683468557f563e",
+      "manifest_sha256": "d2ef075c308aae9f3d882f4dc089ad0e6af5f510959483309d683468557f563e",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Venn native projection v1",
+        "style A [fill] -> SVG colour; not applied",
+        "style B [fill] -> SVG colour; not applied",
+        "style A,B [fill] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "style-free-body",
+        "path": "venn/pr-check/7-should-render-a-venn-diagram-with-custom-colors-via-style.mmd",
+        "sha256": "d2ef075c308aae9f3d882f4dc089ad0e6af5f510959483309d683468557f563e",
+        "footer_lines": []
+      },
+      "ledger_note": "the venn projection paints its own labelled outline and never reads fill/colour, so the closed style statements are inert and disclosed once; flat text children and text ids render the outline only"
+    }
+  ]
+}

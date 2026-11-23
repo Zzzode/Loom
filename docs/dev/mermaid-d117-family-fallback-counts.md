@@ -6,9 +6,9 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1666 drawn /
-479 source_fallback / 0 error at 240 wide**, after D-451 (`local`,
-2026-11-23). Every earlier row is dated history; the historical D236 row
+**Current totals (the last row of the history table below): 1681 drawn /
+464 source_fallback / 0 error at 240 wide**, after D-453 (`local`,
+2026-11-24). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
 
@@ -86,6 +86,8 @@ are not whole-original errors).
 | After D-449 state `state X: Description` declaration form (4 rows) | 2026-11-23 | local | 1655 | 490 | 0 |
 | After D-450 quadrant leading `%%{init}%%` tuning/theme directive (5 rows) | 2026-11-23 | local | 1660 | 485 | 0 |
 | After D-451 c4 closed styling calls + accessibility no-ops (6 rows) | 2026-11-23 | local | 1666 | 479 | 0 |
+| After D-452 treemap closed classDef/::: styling (10 rows) | 2026-11-24 | local | 1676 | 469 | 0 |
+| After D-453 venn closed `style` statements (5 rows) | 2026-11-24 | local | 1681 | 464 | 0 |
 
 Row-level detail for the newest rows:
 - **D-450 (5)**: `quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd`,
@@ -99,6 +101,11 @@ Row-level detail for the newest rows:
   `c4/pr-check/c4-1-should-render-a-simple-c4context-diagram.mmd`,
   `c4/pr-check/c4-3-should-render-a-simple-c4component-diagram.mmd`,
   `c4/pr-check/update-element-style-colors.mmd`.
+- **D-452 (10)**: treemap `12`/`14`/`15`/`16` (nightly-check), `pr-check/10`,
+  `pr-check/13`, `pr-check/19`, `pr-check/3`, `pr-check/7`, `pr-check/9`.
+- **D-453 (5)**: `venn/nightly-check/13-...styles`, `venn/nightly-check/
+  explicit-set-style-over-redux-palette`, `venn/nightly-check/handdrawn/18-...`,
+  `venn/pr-check/11-...text-colors-via-style`, `venn/pr-check/7-...colors-via-style`.
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone

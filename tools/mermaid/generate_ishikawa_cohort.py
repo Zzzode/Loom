@@ -345,6 +345,8 @@ def build(repo_root):
             "layout_admitted_digest": layout_digest,
             "d443_admitted_count": len(d443),
             "d443_admitted": sorted(d443),
+            "d453_admitted_count": 0,
+            "d453_admitted": [],
             "family_total": (len(draw) + len(admitted) + len(layout) + len(d443) +
                              len(fm_gate) + len(body_gate)),
             "frontmatter_gated_count": len(fm_gate),

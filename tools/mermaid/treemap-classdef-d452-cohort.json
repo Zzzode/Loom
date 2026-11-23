@@ -1,0 +1,307 @@
+{
+  "schema": "loom_mermaid_treemap_classdef_d452_cohort/v1",
+  "decision": "D-452",
+  "admission": {
+    "shape": "`classDef <name> <prop>:<value>[, ...][;]` with the closed property set plus `:::class` references on sections and leaves",
+    "properties": [
+      "fill",
+      "color",
+      "stroke",
+      "stroke-width",
+      "stroke-dasharray"
+    ],
+    "footer": {
+      "header": "Treemap native projection v1",
+      "line_limit_bytes": 96
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin removes the classDef lines and every `:::class` suffix; the outline above the footer must be cell-equal"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "treemap fallbacks whose only blocker is the closed classDef/::: styling surface",
+    "cohort_digest": "951d076dbd90cf9108795a9b714ee754ae317bc3fb3cfc8abb985d3005bb7c38"
+  },
+  "counts": {
+    "total": 10,
+    "by_family": {
+      "treemap": 10
+    }
+  },
+  "review": {
+    "reviewer_agent": "independent read-only adversarial code review (fresh general-purpose agent, D-452 treemap classDef admission, 2026-11-23)",
+    "date": "2026-11-23",
+    "verdict": "approved",
+    "note": "Reviewer re-ran the generator --check entry and the live gate and verified: only the five closed classDef properties are admitted with validated values; duplicate classes, duplicate properties, undefined :::-references and malformed suffixes fail closed; the disclosure footer appends after the outline; the class-free twin oracle is cell-exact above the footer."
+  },
+  "rows": [
+    {
+      "path": "treemap/nightly-check/12-should-apply-classdef-fill-color-to-leaf-nodes.mmd",
+      "family": "treemap",
+      "sha256": "72e9fc5b4de300cbae100eefbdeb3e34f1d6106241ce19b19100781840756f8d",
+      "manifest_sha256": "72e9fc5b4de300cbae100eefbdeb3e34f1d6106241ce19b19100781840756f8d",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Treemap native projection v1",
+        "classDef redClass [fill] -> SVG colour; not applied",
+        "classDef blueClass [fill] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "class-free-body",
+        "path": "treemap/nightly-check/12-should-apply-classdef-fill-color-to-leaf-nodes.mmd",
+        "sha256": "72e9fc5b4de300cbae100eefbdeb3e34f1d6106241ce19b19100781840756f8d",
+        "footer_lines": []
+      },
+      "ledger_note": "the treemap projection draws no colour or rectangle geometry, so the closed classDef property set is inert and disclosed once per class; `:::class` references render no suffix"
+    },
+    {
+      "path": "treemap/nightly-check/14-should-apply-classdef-color-to-text-labels.mmd",
+      "family": "treemap",
+      "sha256": "57b413e794adbb3735c1b15d7b70738fdc43acc6d37d9bbc424e6b00a6f1459b",
+      "manifest_sha256": "57b413e794adbb3735c1b15d7b70738fdc43acc6d37d9bbc424e6b00a6f1459b",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Treemap native projection v1",
+        "classDef whiteText [fill,color] -> SVG colour; not applied",
+        "classDef darkText [fill,color] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "class-free-body",
+        "path": "treemap/nightly-check/14-should-apply-classdef-color-to-text-labels.mmd",
+        "sha256": "57b413e794adbb3735c1b15d7b70738fdc43acc6d37d9bbc424e6b00a6f1459b",
+        "footer_lines": []
+      },
+      "ledger_note": "the treemap projection draws no colour or rectangle geometry, so the closed classDef property set is inert and disclosed once per class; `:::class` references render no suffix"
+    },
+    {
+      "path": "treemap/nightly-check/15-should-apply-multiple-classdef-properties-simultaneously.mmd",
+      "family": "treemap",
+      "sha256": "7ea2572fbd6df147cc1d9779b0514c51a23bd61953483f363294afaede6d27d0",
+      "manifest_sha256": "7ea2572fbd6df147cc1d9779b0514c51a23bd61953483f363294afaede6d27d0",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Treemap native projection v1",
+        "classDef critical [fill,color,stroke,stroke-width] -> SVG colour; not applied",
+        "classDef normal [fill,color,stroke,stroke-width] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "class-free-body",
+        "path": "treemap/nightly-check/15-should-apply-multiple-classdef-properties-simultaneously.mmd",
+        "sha256": "7ea2572fbd6df147cc1d9779b0514c51a23bd61953483f363294afaede6d27d0",
+        "footer_lines": []
+      },
+      "ledger_note": "the treemap projection draws no colour or rectangle geometry, so the closed classDef property set is inert and disclosed once per class; `:::class` references render no suffix"
+    },
+    {
+      "path": "treemap/nightly-check/16-should-handle-classdef-on-nested-sections-and-leaves.mmd",
+      "family": "treemap",
+      "sha256": "0409a430bf90423e941ec33e89cadb655b692ec89bc16f409338746b7eae657e",
+      "manifest_sha256": "0409a430bf90423e941ec33e89cadb655b692ec89bc16f409338746b7eae657e",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Treemap native projection v1",
+        "classDef engSection [fill,stroke,stroke-width] -> SVG colour; not applied",
+        "classDef highlight [fill,color,stroke,stroke-width] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "class-free-body",
+        "path": "treemap/nightly-check/16-should-handle-classdef-on-nested-sections-and-leaves.mmd",
+        "sha256": "0409a430bf90423e941ec33e89cadb655b692ec89bc16f409338746b7eae657e",
+        "footer_lines": []
+      },
+      "ledger_note": "the treemap projection draws no colour or rectangle geometry, so the closed classDef property set is inert and disclosed once per class; `:::class` references render no suffix"
+    },
+    {
+      "path": "treemap/pr-check/10-should-render-the-example-from-documentation.mmd",
+      "family": "treemap",
+      "sha256": "f9986ec2910b519930f3f425ea716ad8839858932dcfc251e416764b5a680990",
+      "manifest_sha256": "f9986ec2910b519930f3f425ea716ad8839858932dcfc251e416764b5a680990",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Treemap native projection v1",
+        "classDef class1 [fill,color,stroke] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "class-free-body",
+        "path": "treemap/pr-check/10-should-render-the-example-from-documentation.mmd",
+        "sha256": "f9986ec2910b519930f3f425ea716ad8839858932dcfc251e416764b5a680990",
+        "footer_lines": []
+      },
+      "ledger_note": "the treemap projection draws no colour or rectangle geometry, so the closed classDef property set is inert and disclosed once per class; `:::class` references render no suffix"
+    },
+    {
+      "path": "treemap/pr-check/13-should-apply-classdef-stroke-styles-to-sections.mmd",
+      "family": "treemap",
+      "sha256": "26b647faa12e225d2cf754a58455f607a9f288906f6a15160fac83c651598d4a",
+      "manifest_sha256": "26b647faa12e225d2cf754a58455f607a9f288906f6a15160fac83c651598d4a",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Treemap native projection v1",
+        "classDef thickBorder [stroke,stroke-width] -> SVG colour; not applied",
+        "classDef dashedBorder [stroke,stroke-dasharray,stroke-width] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "class-free-body",
+        "path": "treemap/pr-check/13-should-apply-classdef-stroke-styles-to-sections.mmd",
+        "sha256": "26b647faa12e225d2cf754a58455f607a9f288906f6a15160fac83c651598d4a",
+        "footer_lines": []
+      },
+      "ledger_note": "the treemap projection draws no colour or rectangle geometry, so the closed classDef property set is inert and disclosed once per class; `:::class` references render no suffix"
+    },
+    {
+      "path": "treemap/pr-check/19-should-render-labels-in-complex-treemap-with-many-nested-blocks.mmd",
+      "family": "treemap",
+      "sha256": "033eceaa91f25114ac9efbaddbf7cebaa8a71a2f75a36b91c3afb04d4a8a8db0",
+      "manifest_sha256": "033eceaa91f25114ac9efbaddbf7cebaa8a71a2f75a36b91c3afb04d4a8a8db0",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Treemap native projection v1",
+        "classDef root [fill] -> SVG colour; not applied",
+        "classDef redContainer [fill] -> SVG colour; not applied",
+        "classDef orangeContainer [fill] -> SVG colour; not applied",
+        "classDef yellowContainer [fill] -> SVG colour; not applied",
+        "classDef redleaf [fill,stroke,color] -> SVG colour; not applied",
+        "classDef orangeleaf [fill,stroke,color] -> SVG colour; not applied",
+        "classDef yellowleaf [fill,stroke,color] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "class-free-body",
+        "path": "treemap/pr-check/19-should-render-labels-in-complex-treemap-with-many-nested-blocks.mmd",
+        "sha256": "033eceaa91f25114ac9efbaddbf7cebaa8a71a2f75a36b91c3afb04d4a8a8db0",
+        "footer_lines": []
+      },
+      "ledger_note": "the treemap projection draws no colour or rectangle geometry, so the closed classDef property set is inert and disclosed once per class; `:::class` references render no suffix"
+    },
+    {
+      "path": "treemap/pr-check/3-should-render-a-treemap-with-styling-using-classdef.mmd",
+      "family": "treemap",
+      "sha256": "d74b96913df15a112a780337d166ee699513d0ed506be296f5f60fe234d94a3d",
+      "manifest_sha256": "d74b96913df15a112a780337d166ee699513d0ed506be296f5f60fe234d94a3d",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Treemap native projection v1",
+        "classDef class1 [fill,color,stroke] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "class-free-body",
+        "path": "treemap/pr-check/3-should-render-a-treemap-with-styling-using-classdef.mmd",
+        "sha256": "d74b96913df15a112a780337d166ee699513d0ed506be296f5f60fe234d94a3d",
+        "footer_lines": []
+      },
+      "ledger_note": "the treemap projection draws no colour or rectangle geometry, so the closed classDef property set is inert and disclosed once per class; `:::class` references render no suffix"
+    },
+    {
+      "path": "treemap/pr-check/7-should-handle-classdef-with-multiple-styles.mmd",
+      "family": "treemap",
+      "sha256": "017d153db512972394740af19fc61354b6bdb360b45393e95a31eaf8ce072e25",
+      "manifest_sha256": "017d153db512972394740af19fc61354b6bdb360b45393e95a31eaf8ce072e25",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Treemap native projection v1",
+        "classDef important [fill,stroke,stroke-width] -> SVG colour; not applied",
+        "classDef secondary [fill,stroke,stroke-dasharray] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "class-free-body",
+        "path": "treemap/pr-check/7-should-handle-classdef-with-multiple-styles.mmd",
+        "sha256": "017d153db512972394740af19fc61354b6bdb360b45393e95a31eaf8ce072e25",
+        "footer_lines": []
+      },
+      "ledger_note": "the treemap projection draws no colour or rectangle geometry, so the closed classDef property set is inert and disclosed once per class; `:::class` references render no suffix"
+    },
+    {
+      "path": "treemap/pr-check/9-should-handle-a-complex-example-with-multiple-features.mmd",
+      "family": "treemap",
+      "sha256": "5efef8b83be2c5c5e0f7c998dd518ed150413b2cb9c27e06eb8cc4466430c601",
+      "manifest_sha256": "5efef8b83be2c5c5e0f7c998dd518ed150413b2cb9c27e06eb8cc4466430c601",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_lines": [
+        "Treemap native projection v1",
+        "classDef engineering [fill,stroke] -> SVG colour; not applied",
+        "classDef marketing [fill,stroke] -> SVG colour; not applied",
+        "classDef sales [fill,stroke] -> SVG colour; not applied"
+      ],
+      "twin": {
+        "kind": "class-free-body",
+        "path": "treemap/pr-check/9-should-handle-a-complex-example-with-multiple-features.mmd",
+        "sha256": "5efef8b83be2c5c5e0f7c998dd518ed150413b2cb9c27e06eb8cc4466430c601",
+        "footer_lines": []
+      },
+      "ledger_note": "the treemap projection draws no colour or rectangle geometry, so the closed classDef property set is inert and disclosed once per class; `:::class` references render no suffix"
+    }
+  ]
+}

@@ -29,6 +29,8 @@ using json::JsonVal;
 
 const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases";
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
+const fs::path kD452Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treemap-classdef-d452-cohort.json";
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treemap-cohort.json";
 const fs::path kD427Ledger =
     fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/treemap-fmt-d427-cohort.json";
@@ -87,7 +89,8 @@ TEST(MermaidTreemapCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_treemap_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 10);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 10);
-    EXPECT_EQ(root.get("selection").get_int("styled_excluded_count"), 10);
+    // D-452 moves the ten styled rows to their own cohort ledger.
+    EXPECT_EQ(root.get("selection").get_int("styled_excluded_count"), 0);
     EXPECT_EQ(root.get("selection").get_int("config_excluded_count"), 6);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
@@ -143,10 +146,22 @@ TEST(MermaidTreemapCohort, PlainTreemapsDrawOnWholeAndBodyTracks) {
 TEST(MermaidTreemapCohort, StyledAndConfigTreemapsStayWholeSource) {
     const auto ledger = parse_doc(kLedger);
     const auto& selection = ledger.root().get("selection");
+    // D-452 admits every styled row through the closed classDef/::: grammar;
+    // the transferred population is pinned against that ledger, which owns the
+    // positive assertions and the closed negatives.
+    std::set<std::string> classdef_rows;
+    auto class_ledger = json::parse(read_file(kD452Ledger));
+    ASSERT_TRUE(class_ledger.has_value()) << "D-452 cohort ledger must parse";
+    class_ledger->root().get("rows").iter(
+        [&](const JsonVal row) { classdef_rows.insert(row.get_string("path")); });
+    int styled_rows = 0;
     selection.get("styled_excluded").iter([&](JsonVal value) {
         const auto rel = value.as_str();
-        EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
+        EXPECT_TRUE(classdef_rows.contains(std::string(rel))) << rel;
+        ++styled_rows;
     });
+    EXPECT_EQ(styled_rows + static_cast<int>(classdef_rows.size()), 10);
+    EXPECT_EQ(classdef_rows.size(), 10u);
     // D-427 admits every `config_excluded` row through the closed
     // `config.treemap.valueFormat` grammar (the spec is honoured in the
     // labels). The partition is preserved: each excluded row must be a D-427
@@ -186,9 +201,18 @@ TEST(MermaidTreemapCohort, VisualGateIsKeyBased) {
         "treemap\n  \"Root\"\n    \"Leaf\": 1\n";
     EXPECT_FALSE(draws(with_config, kWide));
 
-    const std::string with_classdef =
-        "treemap-beta\n  \"Root\"\n    \"A\": 1:::redClass\n  classDef redClass fill:#ff0000;\n";
-    EXPECT_FALSE(draws(with_classdef, kWide));
+    // D-452 admits the closed classDef/::: surface; the still-rejected shapes
+    // are an off-table property and an undefined class reference.
+    EXPECT_TRUE(draws("treemap-beta\n  \"Root\"\n    \"A\": 1:::redClass\n"
+                      "  classDef redClass fill:#ff0000;\n",
+                      kWide));
+    for (const auto* rejected : {
+             "treemap-beta\n  \"Root\"\n    \"A\": 1:::redClass\n"
+             "  classDef redClass unknown:1;\n",
+             "treemap-beta\n  \"Root\"\n    \"A\": 1:::missing\n",
+         }) {
+        EXPECT_FALSE(draws(rejected, kWide)) << rejected;
+    }
 }
 
 // Both header spellings draw; hierarchy and source values are transcribed

@@ -248,6 +248,24 @@ add_test(NAME MermaidFallbackAttribution.RosterIsReproducibleAndTotal
 set_tests_properties(MermaidFallbackAttribution.RosterIsReproducibleAndTotal
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-453: the venn style cohort ledger is a generator constant; the check fails
+# on a hand edit or an unreviewed expectation change.
+add_test(NAME MermaidVennStyleD453Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_venn_style_d453_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidVennStyleD453Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+# D-452: the treemap classDef cohort ledger is a generator constant; the check
+# fails on a hand edit or an unreviewed expectation change.
+add_test(NAME MermaidTreemapClassdefD452Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_treemap_classdef_d452_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidTreemapClassdefD452Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-451: the c4 styling/accessibility cohort ledger is a generator constant;
 # the check fails on a hand edit or an unreviewed expectation change.
 add_test(NAME MermaidC4StylingD451Cohort.GeneratorIsReproducible
@@ -1259,6 +1277,24 @@ target_link_libraries(test_mermaid_venn_cohort
 gtest_discover_tests(test_mermaid_venn_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 300 LABELS "mermaid")
+
+# D-453: venn closed style cohort gate.
+add_executable(test_mermaid_venn_style_d453_cohort
+    test_mermaid_venn_style_d453_cohort.cpp)
+target_link_libraries(test_mermaid_venn_style_d453_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_venn_style_d453_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# D-452: treemap classDef/::: cohort gate.
+add_executable(test_mermaid_treemap_classdef_d452_cohort
+    test_mermaid_treemap_classdef_d452_cohort.cpp)
+target_link_libraries(test_mermaid_treemap_classdef_d452_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_treemap_classdef_d452_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
 
 # D-451: c4 closed styling/accessibility cohort gate.
 add_executable(test_mermaid_c4_styling_d451_cohort

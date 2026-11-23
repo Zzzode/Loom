@@ -249,9 +249,12 @@ TEST(MermaidTreemapFormatD427Cohort, ClosedGrammarAndGateBattery) {
         EXPECT_FALSE(draws(source, kWide)) << tail;
         EXPECT_FALSE(native_frame(source, kWide)) << tail;
     }
-    for (const auto* body : {"treemap-beta\n  \"Root\"\n    \"Leaf\": 1:::red\n",
-                             "treemap-beta\n  \"Root\"\n    \"Leaf\": 1\n  classDef red "
-                             "fill:#ff0000;\n"}) {
+    // D-452 admits the closed classDef/::: surface, so the still-rejected
+    // style shapes are an off-table property and a body `%%{init}%%` directive.
+    for (const auto* body : {"treemap-beta\n  \"Root\"\n    \"Leaf\": 1\n  classDef red "
+                             "unknown:1;\n",
+                             "treemap-beta\n  %%{init: {\"theme\": \"dark\"}}%%\n"
+                             "  \"Root\"\n    \"Leaf\": 1\n"}) {
         EXPECT_FALSE(draws(std::string(body), kWide)) << body;
         EXPECT_FALSE(draws(probe("config:\n  treemap:\n    valueFormat: '$0,0'\n", body),
                            kWide))

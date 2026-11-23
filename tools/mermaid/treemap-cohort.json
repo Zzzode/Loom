@@ -18,19 +18,8 @@
       "treemap"
     ],
     "draw_count": 10,
-    "styled_excluded_count": 10,
-    "styled_excluded": [
-      "treemap/nightly-check/12-should-apply-classdef-fill-color-to-leaf-nodes.mmd",
-      "treemap/nightly-check/14-should-apply-classdef-color-to-text-labels.mmd",
-      "treemap/nightly-check/15-should-apply-multiple-classdef-properties-simultaneously.mmd",
-      "treemap/nightly-check/16-should-handle-classdef-on-nested-sections-and-leaves.mmd",
-      "treemap/pr-check/10-should-render-the-example-from-documentation.mmd",
-      "treemap/pr-check/13-should-apply-classdef-stroke-styles-to-sections.mmd",
-      "treemap/pr-check/19-should-render-labels-in-complex-treemap-with-many-nested-blocks.mmd",
-      "treemap/pr-check/3-should-render-a-treemap-with-styling-using-classdef.mmd",
-      "treemap/pr-check/7-should-handle-classdef-with-multiple-styles.mmd",
-      "treemap/pr-check/9-should-handle-a-complex-example-with-multiple-features.mmd"
-    ],
+    "styled_excluded_count": 0,
+    "styled_excluded": [],
     "config_excluded_count": 6,
     "config_excluded": [
       "treemap/nightly-check/8-should-handle-dollar-value-formatting-with-thousands-separator.mmd",

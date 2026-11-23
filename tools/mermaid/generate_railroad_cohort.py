@@ -296,6 +296,8 @@ def build(repo_root):
             "admitted_count": len(admitted),
             "admitted": sorted(admitted),
             "admitted_digest": admitted_digest,
+            "d453_admitted_count": 0,
+            "d453_admitted": [],
             "family_total": len(draw) + len(admitted) + len(fm_gate) + len(body_gate),
             "frontmatter_gated_count": len(fm_gate),
             "frontmatter_gated": sorted(fm_gate),

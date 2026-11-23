@@ -53,8 +53,9 @@ struct FamilySpec {
     int expected_frontmatter_gated;
     int expected_body_style_gated;
     // D-443 adds a dedicated bucket for the closed look/seed/font rows so the
-    // five-way partition stays literal.
+    // five-way partition stays literal; D-453 adds the venn closed-style rows.
     int expected_d443 = 0;
+    int expected_d453 = 0;
 };
 
 const std::vector<FamilySpec>& families() {
@@ -70,7 +71,7 @@ const std::vector<FamilySpec>& families() {
          {"dark", "redux-color", "redux-dark-color"},
          "Venn native projection v1",
          "venn-beta\n  set A\n  set B\n  union A, B\n",
-         21, 11, 3, 0, 0, 5, 2},
+         21, 11, 3, 0, 0, 0, 2, 5},
         {"railroad",
          fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/railroad-cohort.json",
          {"dark"},
@@ -502,6 +503,20 @@ TEST(MermaidSmallfam0043Cohort, OutOfTableAndShapeRejects) {
     // %%{init} body gate belongs to ishikawa and railroad only (venn ignores
     // body comments), and an admitted theme does not bypass them.
     for (const auto& spec : families()) {
+        // D-453 admits the closed venn `style` statement; ishikawa/railroad
+        // still keep the whole source, as does every family for an off-table
+        // style property.
+        if (std::string_view(spec.name) == "venn") {
+            EXPECT_TRUE(draws("---\nconfig:\n  theme: dark\n---\n" + spec.body +
+                                  "  style A fill:#ff0000\n",
+                              kWide))
+                << spec.name;
+            EXPECT_FALSE(draws("---\nconfig:\n  theme: dark\n---\n" + spec.body +
+                                   "  style A unknown:#ff0000\n",
+                               kWide))
+                << spec.name;
+            continue;
+        }
         EXPECT_FALSE(draws("---\nconfig:\n  theme: dark\n---\n" + spec.body +
                                "  style A fill:#ff0000\n",
                            kWide))
@@ -540,12 +555,14 @@ TEST(MermaidSmallfam0043Cohort, FamilyLedgersPartitionFiveWays) {
                   spec.expected_layout_admitted)
             << spec.name;
         EXPECT_EQ(selection.get_int("d443_admitted_count"), spec.expected_d443) << spec.name;
+        EXPECT_EQ(selection.get_int("d453_admitted_count"), spec.expected_d453) << spec.name;
         EXPECT_EQ(selection.get_int("family_total"), spec.expected_originals) << spec.name;
         EXPECT_EQ(selection.get_int("draw_count") + selection.get_int("admitted_count") +
                       selection.get_int("layout_admitted_count") +
                       selection.get_int("frontmatter_gated_count") +
                       selection.get_int("body_style_gated_count") +
-                      selection.get_int("d443_admitted_count"),
+                      selection.get_int("d443_admitted_count") +
+                      selection.get_int("d453_admitted_count"),
                   spec.expected_originals)
             << spec.name;
         EXPECT_EQ(selection.get_int("admission_rfc"), 43) << spec.name;
@@ -559,7 +576,8 @@ TEST(MermaidSmallfam0043Cohort, FamilyLedgersPartitionFiveWays) {
         });
         EXPECT_EQ(drawn, spec.expected_draw) << spec.name;
         for (const auto* key : {"admitted", "layout_admitted", "frontmatter_gated",
-                                "body_style_gated", "d443_admitted"}) {
+                                "body_style_gated", "d443_admitted",
+                                "d453_admitted"}) {
             int listed = 0;
             selection.get(key).iter([&](JsonVal value) {
                 ++listed;
@@ -576,6 +594,8 @@ TEST(MermaidSmallfam0043Cohort, FamilyLedgersPartitionFiveWays) {
                 EXPECT_EQ(listed, spec.expected_body_style_gated) << spec.name;
             if (std::string_view(key) == "d443_admitted")
                 EXPECT_EQ(listed, spec.expected_d443) << spec.name;
+            if (std::string_view(key) == "d453_admitted")
+                EXPECT_EQ(listed, spec.expected_d453) << spec.name;
         }
         EXPECT_EQ(static_cast<int>(covered.size()), spec.expected_originals) << spec.name;
         // The remaining gated rows stay whole-source; an empty list is

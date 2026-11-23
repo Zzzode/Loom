@@ -210,6 +210,97 @@ bool venn_notice_line(std::vector<std::string>& notices, std::string_view line, 
     return true;
 }
 
+// D-453: the in-body `style <targets> <key>:<value>[, ...]` statement is a
+// closed colour shape. The venn projection paints its own labelled outline and
+// never reads fill/colour, so each statement is inert and disclosed once.
+constexpr std::array<std::string_view, 4> kVennStyleProps{
+    {"fill", "color", "stroke", "stroke-width"}};
+
+bool venn_style_identifier(std::string_view token) {
+    if (token.empty() || token.size() > 64u) return false;
+    const auto head_ok = [](char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+    };
+    if (!head_ok(token.front())) return false;
+    return std::ranges::all_of(token, [&](char c) {
+        return head_ok(c) || (c >= '0' && c <= '9') || c == '_';
+    });
+}
+
+bool venn_style_value(std::string_view value) {
+    if (value.empty() || value.size() > 32u) return false;
+    for (const char c : value) {
+        const auto u = static_cast<unsigned char>(c);
+        const bool ok = (u >= '0' && u <= '9') || (u >= 'a' && u <= 'z') ||
+                        (u >= 'A' && u <= 'Z') || c == '#' || c == '.' || c == '-' ||
+                        c == '%';
+        if (!ok) return false;
+    }
+    return true;
+}
+
+// `style A,B fill:#ffe66d` -> one disclosure line. Targets and properties are
+// both closed: identifiers for the former, the property table for the latter.
+bool venn_style_statement(std::string_view content, std::vector<std::string>& notices,
+                          std::vector<std::string>& seen_statements, Work& work) {
+    std::string_view rest = content.substr(6u);  // after "style "
+    const auto space = rest.find(' ');
+    if (space == std::string_view::npos) return false;
+    const std::string_view targets_text = rest.substr(0u, space);
+    std::string_view props_text = rest.substr(space + 1u);
+    while (!props_text.empty() && props_text.front() == ' ') props_text.remove_prefix(1);
+    while (!props_text.empty() && props_text.back() == ' ') props_text.remove_suffix(1);
+    if (props_text.empty()) return false;
+    std::string targets;
+    for (std::size_t pos = 0;;) {
+        const auto comma = targets_text.find(',', pos);
+        std::string_view name = targets_text.substr(
+            pos, comma == std::string_view::npos ? std::string_view::npos : comma - pos);
+        if (!venn_style_identifier(name)) return false;
+        if (!targets.empty()) targets.push_back(',');
+        targets.append(name.data(), name.size());
+        if (comma == std::string_view::npos) break;
+        pos = comma + 1;
+    }
+    std::string keys;
+    // The disclosure omits values, so duplicates are keyed on the normalized
+    // statement (targets plus each ordered key=value pair), not on the rendered
+    // line: `style A fill:#fff` twice is a duplicate, `fill:#fff` plus
+    // `fill:#000` is not.
+    std::string dedupe = targets + "|";
+    std::vector<std::string> seen;
+    for (std::size_t pos = 0;;) {
+        const auto comma = props_text.find(',', pos);
+        std::string_view entry = props_text.substr(
+            pos, comma == std::string_view::npos ? std::string_view::npos : comma - pos);
+        while (!entry.empty() && entry.front() == ' ') entry.remove_prefix(1);
+        while (!entry.empty() && entry.back() == ' ') entry.remove_suffix(1);
+        if (entry.empty()) return false;
+        const auto colon = entry.find(':');
+        if (colon == std::string_view::npos) return false;
+        const std::string_view key = entry.substr(0u, colon);
+        const std::string_view value = entry.substr(colon + 1u);
+        if (std::ranges::find(kVennStyleProps, key) == kVennStyleProps.end() ||
+            !venn_style_value(value))
+            return false;
+        const std::string key_text{key};
+        if (std::ranges::find(seen, key_text) != seen.end()) return false;
+        seen.push_back(key_text);
+        if (!keys.empty()) keys.push_back(',');
+        keys += key_text;
+        dedupe += key_text;
+        dedupe += '=';
+        dedupe.append(value.data(), value.size());
+        dedupe += ';';
+        if (comma == std::string_view::npos) break;
+        pos = comma + 1;
+    }
+    if (std::ranges::find(seen_statements, dedupe) != seen_statements.end()) return false;
+    seen_statements.push_back(std::move(dedupe));
+    std::string line = "style " + targets + " [" + keys + "] -> SVG colour; not applied";
+    return venn_notice_line(notices, line, work);
+}
+
 // Returns true when the whole source must fall back. Otherwise `notices` holds
 // the bounded disclosure footer (empty when no theme leaf was admitted).
 bool venn_frontmatter_gated(std::string_view source, std::vector<std::string>& notices,
@@ -341,7 +432,8 @@ std::optional<std::vector<std::string>> venn_layout(std::string_view source, Wor
 
     const std::string_view body = venn_body(source);
     // No color/layout contract: a frontmatter theme/look/config key, an in-body
-    // style assignment, classDef or ::: tag keeps the whole source on fallback.
+    // classDef or ::: tag keeps the whole source on fallback; D-453 admits the
+    // closed `style` statement (inert and disclosed).
     // Key-based so the words "style"/"theme" in prose or a name are not gates.
     // The single admitted exception is RFC 0043's config-block theme leaf.
     std::vector<std::string> notices;
@@ -354,7 +446,9 @@ std::optional<std::vector<std::string>> venn_layout(std::string_view source, Wor
         const auto trimmed = line.find_first_not_of(' ');
         if (trimmed != std::string_view::npos) {
             const std::string_view content = line.substr(trimmed);
-            if (content.starts_with("style ") || content.starts_with("classDef") ||
+            // D-453 admits the closed `style` statement; classDef/::: stay
+            // whole-source gates.
+            if (content.starts_with("classDef") ||
                 content.find(":::") != std::string_view::npos)
                 return {};
         }
@@ -363,6 +457,9 @@ std::optional<std::vector<std::string>> venn_layout(std::string_view source, Wor
 
     bool saw_header = false;
     std::string title;
+    // D-453 flat text form: `text` lines directly after a base-level set/union.
+    bool flat_parent = false;
+    std::vector<std::string> seen_statements;
     int base_indent = -1;
     int previous_depth = -1;
     int statement_count = 0;
@@ -417,11 +514,28 @@ std::optional<std::vector<std::string>> venn_layout(std::string_view source, Wor
         if (previous_depth >= 0 && depth > previous_depth + 1) return {};  // no skipped level
 
         if (content.starts_with("text ")) {
-            // A text node is always exactly one level under a set/union.
-            if (depth != 1) return {};
+            // A text node is one level under a set/union, or at the base level
+            // directly after a base-level set/union (the flat corpus form).
+            if (!(depth == 1 || (depth == 0 && flat_parent))) return {};
             std::string_view quoted = trim_view(content.substr(5));
             std::string text_value;
-            if (!name_token(quoted, text_value)) return {};
+            // D-453: `text id["Label"]` carries an id used only for styling;
+            // the label is what renders.
+            const auto bracket = quoted.find('[');
+            if (bracket != std::string_view::npos && quoted.front() != '"' &&
+                quoted.front() != '\'') {
+                const std::string_view id = trim_view(quoted.substr(0u, bracket));
+                if (!venn_style_identifier(id)) return {};
+                std::string_view rest_label = trim_view(quoted.substr(bracket));
+                if (rest_label.size() < 4u || rest_label.front() != '[' ||
+                    rest_label.back() != ']')
+                    return {};
+                rest_label = trim_view(rest_label.substr(1u, rest_label.size() - 2u));
+                if (!name_token(rest_label, text_value)) return {};
+                quoted = rest_label;
+            } else if (!name_token(quoted, text_value)) {
+                return {};
+            }
             std::vector<std::string> wrapped;
             if (!venn_wrap(text_value, work, wrapped)) return {};
             const std::string pad(static_cast<std::size_t>(depth) * 2, ' ');
@@ -433,6 +547,12 @@ std::optional<std::vector<std::string>> venn_layout(std::string_view source, Wor
             continue;
         }
 
+        if (content.starts_with("style ")) {
+            if (!venn_style_statement(content, notices, seen_statements, work)) return {};
+            flat_parent = false;
+            continue;
+        }
+
         if (++statement_count > kVennMaxStatements) return {};
         const auto sp = content.find(' ');
         if (sp == std::string_view::npos) return {};  // unknown bare statement
@@ -440,8 +560,10 @@ std::optional<std::vector<std::string>> venn_layout(std::string_view source, Wor
         std::string_view rest = content.substr(sp + 1);
 
         // Grammar role invariant (corpus: sets/unions are always at the base
-        // level, text one level under them). A nested set/union is invalid.
+        // level, text one level under them or flat after them). A nested
+        // set/union is invalid.
         if ((keyword == "set" || keyword == "union") && depth != 0) return {};
+        flat_parent = depth == 0 && (keyword == "set" || keyword == "union");
 
         std::string outline;
         if (keyword == "set") {
@@ -515,6 +637,12 @@ std::optional<std::vector<std::string>> venn_layout(std::string_view source, Wor
     // RFC 0043: disclose the validated, not-applied theme leaf below the art,
     // after the title combine so the cap counts the same rows it always did.
     if (!notices.empty()) {
+        // The frontmatter parser pushes the header when a theme/look leaf is
+        // admitted; a style-only footer needs it prepended here.
+        if (notices.front() != kVennNoticeHeader) {
+            if (!work.spend(sizeof(std::string) + 64u)) return {};
+            notices.insert(notices.begin(), std::string{kVennNoticeHeader});
+        }
         std::size_t bytes = 0;
         for (const auto& notice : notices) bytes += notice.size();
         if (out.size() + 1u + notices.size() > kVennMaxRows ||

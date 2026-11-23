@@ -217,6 +217,18 @@ def build_review(repo_root):
     return review
 
 
+# D-453 admits the five style rows through the closed style grammar; they leave
+# this ledger for tools/mermaid/venn-style-d453-cohort.json.
+D453_COHORT = {
+    "venn/nightly-check/13-should-render-a-complex-venn-with-labels-text-nodes-and-styles.mmd",
+    "venn/nightly-check/explicit-set-style-over-redux-palette.mmd",
+    "venn/nightly-check/handdrawn/"
+    "18-should-render-a-handdrawn-venn-with-custom-styles-and-text-nodes.mmd",
+    "venn/pr-check/11-should-render-a-venn-diagram-with-custom-text-colors-via-style.mmd",
+    "venn/pr-check/7-should-render-a-venn-diagram-with-custom-colors-via-style.mmd",
+}
+
+
 def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
@@ -226,6 +238,8 @@ def build(repo_root):
         text = path.read_text()
         rel = path.relative_to(
             repo_root / "tests/fixtures/mermaid_official/cases").as_posix()
+        if rel in D453_COHORT:
+            continue  # owned by the D-453 style cohort
         frontmatter, body = split_frontmatter(text)
         kind = gate_kind(text, frontmatter, body)
         if kind == "frontmatter":
@@ -240,14 +254,13 @@ def build(repo_root):
             draw.add(rel)
 
     # D-443 moved the two look/seed/font rows out of the frontmatter gate and
-    # into their own bucket; the third former frontmatter row keeps its body
-    # style statements and reclassifies as body_style: 21 = 11 draw + 3 theme
-    # + 0 frontmatter + 5 style + 2 d443.
-    if (len(draw), len(admitted), len(fm_gate), len(body_gate), len(d443)) != (11, 3, 0, 5, 2):
+    # into their own bucket; D-453 moves the five style rows to their own
+    # ledger: 21 = 11 draw + 3 theme + 0 frontmatter + 0 style + 2 d443.
+    if (len(draw), len(admitted), len(fm_gate), len(body_gate), len(d443)) != (11, 3, 0, 0, 2):
         raise ValueError(
             f"venn partition drift: draw={len(draw)} "
             f"admitted={len(admitted)} frontmatter={len(fm_gate)} "
-            f"body_style={len(body_gate)} d443={len(d443)} (expected 11/3/0/5/2)")
+            f"body_style={len(body_gate)} d443={len(d443)} (expected 11/3/0/0/2)")
 
     admitted_digest = hashlib.sha256("".join(
         f"{rel}\t{manifest_rows[rel]['sha256']}\n" for rel in sorted(admitted)
@@ -308,7 +321,9 @@ def build(repo_root):
             "admitted": sorted(admitted),
             "admitted_digest": admitted_digest,
             "family_total": (len(draw) + len(admitted) + len(fm_gate) +
-                             len(body_gate) + len(d443)),
+                             len(body_gate) + len(d443) + len(D453_COHORT)),
+            "d453_admitted_count": len(D453_COHORT),
+            "d453_admitted": sorted(D453_COHORT),
             "d443_admitted_count": len(d443),
             "d443_admitted": sorted(d443),
             "frontmatter_gated_count": len(fm_gate),

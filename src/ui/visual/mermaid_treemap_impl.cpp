@@ -59,6 +59,109 @@ bool is_leaf_value(std::string_view token) {
     return token.front() != '.' && token.back() != '.';
 }
 
+// D-452: the in-body styling surface is a closed shape. `classDef <name>
+// <prop>:<value>[, ...][;]` declares classes whose fill/colour/stroke only
+// affect upstream SVG; the terminal projection draws no colour, so each
+// declaration is inert and disclosed once. A `:::class` suffix on a section or
+// leaf applies a class and is likewise inert.
+constexpr std::string_view kTreemapNoticeHeader = "Treemap native projection v1";
+constexpr std::size_t kTreemapNoticeLimit = 96;
+
+constexpr std::array<std::string_view, 5> kTreemapClassProps{
+    "fill", "color", "stroke", "stroke-width", "stroke-dasharray"};
+
+bool treemap_identifier(std::string_view token) {
+    if (token.empty() || token.size() > 64u) return false;
+    const auto head_ok = [](char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+    };
+    if (!head_ok(token.front())) return false;
+    return std::ranges::all_of(token, [&](char c) {
+        return head_ok(c) || (c >= '0' && c <= '9') || c == '-';
+    });
+}
+
+// A colour / stroke token: hex, named colour, `Npx` or a dash array with
+// single spaces. Quotes, commas and controls stay out.
+bool treemap_style_value(std::string_view value) {
+    if (value.empty() || value.size() > 32u) return false;
+    for (const char c : value) {
+        const auto u = static_cast<unsigned char>(c);
+        const bool ok = (u >= '0' && u <= '9') || (u >= 'a' && u <= 'z') ||
+                        (u >= 'A' && u <= 'Z') || c == '#' || c == '.' || c == '-' ||
+                        c == '%' || c == ' ';
+        if (!ok) return false;
+    }
+    return value.front() != ' ' && value.back() != ' ';
+}
+
+// Parse one classDef statement into its disclosure line; false keeps the whole
+// source. `seen` rejects duplicate class names.
+bool treemap_class_def(std::string_view content, std::vector<std::string>& seen,
+                       std::vector<std::string>& notices, Work& work) {
+    std::string_view rest = content.substr(8u);  // after "classDef"
+    while (!rest.empty() && rest.front() == ' ') rest.remove_prefix(1);
+    if (rest.empty()) return false;
+    std::size_t name_end = 0;
+    while (name_end < rest.size() && rest[name_end] != ' ') ++name_end;
+    const std::string_view name = rest.substr(0u, name_end);
+    if (!treemap_identifier(name)) return false;
+    std::string_view props = rest.substr(name_end);
+    while (!props.empty() && props.front() == ' ') props.remove_prefix(1);
+    if (!props.empty() && props.back() == ';') props.remove_suffix(1);
+    if (props.empty()) return false;
+    const std::string name_text{name};
+    if (std::ranges::find(seen, name_text) != seen.end()) return false;
+    std::string keys;
+    std::vector<std::string> prop_seen;
+    for (std::size_t pos = 0;;) {
+        const auto comma = props.find(',', pos);
+        std::string_view entry = props.substr(
+            pos, comma == std::string_view::npos ? std::string_view::npos : comma - pos);
+        while (!entry.empty() && entry.front() == ' ') entry.remove_prefix(1);
+        while (!entry.empty() && entry.back() == ' ') entry.remove_suffix(1);
+        if (entry.empty()) return false;
+        const auto colon = entry.find(':');
+        if (colon == std::string_view::npos) return false;
+        const std::string_view key = entry.substr(0u, colon);
+        const std::string_view value = entry.substr(colon + 1u);
+        if (std::ranges::find(kTreemapClassProps, key) == kTreemapClassProps.end() ||
+            !treemap_style_value(value))
+            return false;
+        const std::string key_text{key};
+        if (std::ranges::find(prop_seen, key_text) != prop_seen.end()) return false;
+        prop_seen.push_back(key_text);
+        if (!keys.empty()) keys.push_back(',');
+        keys += key_text;
+        if (comma == std::string_view::npos) break;
+        pos = comma + 1;
+    }
+    seen.push_back(name_text);
+    std::string line = "classDef " + name_text + " [" + keys +
+                       "] -> SVG colour; not applied";
+    if (line.size() > kTreemapNoticeLimit || !work.spend(line.size() * 4u + 32u)) return false;
+    notices.push_back(std::move(line));
+    return true;
+}
+
+// Split a trailing `:::class` suffix off `text`. Returns the text before the
+// suffix and fills `class_name`; a bare `:::` or a malformed name is false.
+bool treemap_split_class(std::string_view text, std::string_view& before,
+                         std::string_view& class_name, bool& had_class) {
+    const auto marker = text.rfind(":::");
+    if (marker == std::string_view::npos) {
+        before = text;
+        had_class = false;
+        return true;
+    }
+    class_name = text.substr(marker + 3u);
+    if (!treemap_identifier(class_name)) return false;
+    before = text.substr(0u, marker);
+    while (!before.empty() && before.back() == ' ') before.remove_suffix(1);
+    had_class = true;
+    return true;
+}
+
 // D-427: the closed `config.treemap.valueFormat` decimal formatter. Mermaid
 // exposes d3-format strings here; the corpus uses exactly five shapes —
 // `$0,0`, `.1%`, `.2f`, `$.2f`, `$,.2f` — so the grammar is closed to an
@@ -219,8 +322,9 @@ std::optional<std::vector<std::string>> treemap_layout(std::string_view source, 
     }
 
     const std::string_view body = treemap_body(source);
-    // A frontmatter theme/look leaf or an in-body classDef / ::: style keeps
-    // the whole source on ordinary fallback. D-427 admits exactly one config
+    // A frontmatter theme/look leaf keeps the whole source on ordinary
+    // fallback; D-452 admits the closed in-body classDef/::: styling surface
+    // (inert and disclosed). D-427 admits exactly one config
     // shape — `config:` > `treemap:` > `valueFormat:` with a closed-form
     // formatter — which is honoured in the drawn leaf labels; any other key or
     // shape still gates. Key-based, so the word "theme" inside a description
@@ -288,9 +392,9 @@ std::optional<std::vector<std::string>> treemap_layout(std::string_view source, 
                 const auto trimmed = line.find_first_not_of(' ');
                 if (trimmed != std::string_view::npos) {
                     const std::string_view content = line.substr(trimmed);
-                    if (content.starts_with("classDef") || content.find(":::") != std::string_view::npos ||
-                        (content.starts_with("%%{") && line.find("theme") != std::string_view::npos))
-                        visual_gate = true;
+                    // D-452 admits the closed classDef/::: styling surface;
+                    // every body directive stays a whole-source gate.
+                    if (content.starts_with("%%{")) visual_gate = true;
                 }
                 if (eol == std::string_view::npos) break;
             }
@@ -300,6 +404,12 @@ std::optional<std::vector<std::string>> treemap_layout(std::string_view source, 
 
     bool saw_header = false;
     std::vector<TreemapNode> nodes;
+    // D-452: admitted class declarations (source order, disclosed in the
+    // footer) and every `:::class` reference, validated against them after
+    // the body loop so forward references stay legal.
+    std::vector<std::string> class_defs;
+    std::vector<std::string> class_refs;
+    std::vector<std::string> notices;
     int base_indent = -1;
     int previous_depth = -1;
     // A node carrying a value is a leaf; no node may be nested deeper than the
@@ -326,6 +436,12 @@ std::optional<std::vector<std::string>> treemap_layout(std::string_view source, 
             continue;
         }
 
+        if (content.starts_with("classDef")) {
+            if (content.size() <= 8u || content[8] != ' ') return {};
+            if (!treemap_class_def(content, class_defs, notices, work)) return {};
+            continue;
+        }
+
         // Structural node: leading even spaces then a quoted name.
         const int indent = static_cast<int>(trimmed_pos);
         if (base_indent < 0) base_indent = indent;
@@ -342,6 +458,12 @@ std::optional<std::vector<std::string>> treemap_layout(std::string_view source, 
         if (name.size() > kTreemapMaxNameBytes || !unicode_text(name)) return {};
         std::string_view remainder = content.substr(closing + 1);
         while (!remainder.empty() && remainder.front() == ' ') remainder.remove_prefix(1);
+        {
+            std::string_view class_name;
+            bool had_class = false;
+            if (!treemap_split_class(remainder, remainder, class_name, had_class)) return {};
+            if (had_class) class_refs.emplace_back(class_name);
+        }
 
         std::string value;
         if (!remainder.empty()) {
@@ -364,6 +486,8 @@ std::optional<std::vector<std::string>> treemap_layout(std::string_view source, 
     }
 
     if (!saw_header || nodes.empty()) return {};
+    for (const auto& ref : class_refs)
+        if (std::ranges::find(class_defs, ref) == class_defs.end()) return {};
 
     std::vector<std::string> out;
     auto emit = [&](std::string row) -> bool {
@@ -390,6 +514,12 @@ std::optional<std::vector<std::string>> treemap_layout(std::string_view source, 
         }
     }
     if (out.empty()) return {};
+    if (!notices.empty()) {
+        if (!emit(std::string{})) return {};
+        if (!emit(std::string{kTreemapNoticeHeader})) return {};
+        for (const auto& notice : notices)
+            if (!emit(notice)) return {};
+    }
     return out;
 }
 

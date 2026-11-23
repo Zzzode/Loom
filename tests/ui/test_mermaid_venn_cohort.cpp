@@ -1,7 +1,8 @@
 // RFC 0031 venn-family renderer durable cohort gate. Public API only: enforces
 // tools/mermaid/venn-cohort.json against the live renderer and the pinned
 // manifest. The eleven clean venn originals render natively; the seven
-// frontmatter-gated and three body-style-gated fixtures stay on source.
+// frontmatter-gated fixtures stay on source, and the five body-style rows move
+// to the D-453 style cohort.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -28,6 +29,8 @@ using json::JsonVal;
 const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases";
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/venn-cohort.json";
+const fs::path kD453Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/venn-style-d453-cohort.json";
 constexpr int kWide = 240;
 constexpr int kNarrow = 40;
 constexpr int kHeight = 1600;
@@ -84,7 +87,8 @@ TEST(MermaidVennCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get("counts").get_int("total"), 11);
     EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 11);
     EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 0);
-    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 5);
+    // D-453 moves the five body-style rows to their own cohort ledger.
+    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 0);
     EXPECT_EQ(root.get("selection").get_int("d443_admitted_count"), 2);
     EXPECT_EQ(root.get("selection").get_int("admitted_count"), 3);
     EXPECT_EQ(root.get("selection").get_int("family_total"), 21);
@@ -159,7 +163,32 @@ TEST(MermaidVennCohort, GatedVennsStayWholeSource) {
         ++body_style;
         EXPECT_FALSE(draws(read_file(kCases / value.as_str()), kWide)) << value.as_str();
     });
-    EXPECT_EQ(body_style, 5);
+    EXPECT_EQ(body_style, 0);
+    // D-453: the emptied body-style partition must be exactly the style cohort
+    // ledger's row set (a moved row cannot vanish silently).
+    {
+        const auto d453 = parse_doc(kD453Ledger);
+        std::vector<std::string> ledger_rows;
+        d453.root().get("rows").iter(
+            [&](JsonVal row) { ledger_rows.push_back(row.get_string("path")); });
+        std::ranges::sort(ledger_rows);
+        std::vector<std::string> moved;
+        selection.get("d453_admitted").iter([&](JsonVal value) {
+            moved.emplace_back(value.as_str());
+            const auto rel = value.as_str();
+            const auto source = read_file(kCases / rel);
+            EXPECT_TRUE(draws(source, kWide)) << rel;
+            EXPECT_NE(capture(source, "mermaid", kWide).text.find(
+                          "Venn native projection v1"),
+                      std::string::npos)
+                << rel;
+        });
+        EXPECT_EQ(selection.get_int("d453_admitted_count"),
+                  static_cast<int>(moved.size()));
+        EXPECT_EQ(moved.size(), 5u);
+        std::ranges::sort(moved);
+        EXPECT_EQ(moved, ledger_rows);
+    }
     int admitted = 0;
     selection.get("admitted").iter([&](JsonVal value) {
         ++admitted;
@@ -195,9 +224,17 @@ TEST(MermaidVennCohort, VisualGateIsKeyBased) {
     const std::string plain = "venn-beta\n  set Style\n  union Style, Theme\n";
     EXPECT_TRUE(draws(plain, kWide));
 
-    const std::string body_style =
-        "venn-beta\n  set A\n  set B\n  union A, B\n  style A fill:#ff0000\n";
-    EXPECT_FALSE(draws(body_style, kWide));
+    // D-453 admits the closed style statement; classDef/::: remain gates and
+    // an off-table style property stays whole-source.
+    EXPECT_TRUE(draws("venn-beta\n  set A\n  set B\n  union A, B\n  "
+                      "style A fill:#ff0000\n",
+                      kWide));
+    EXPECT_FALSE(draws("venn-beta\n  set A\n  set B\n  union A, B\n  "
+                       "style A unknown:#ff0000\n",
+                       kWide));
+    EXPECT_FALSE(draws("venn-beta\n  set A\n  set B\n  union A, B\n  "
+                       "classDef red fill:#ff0000\n",
+                       kWide));
 
     // D-443 admits the closed handDrawn look; a value outside the table (and
     // the seed rule) still closes the renderer.

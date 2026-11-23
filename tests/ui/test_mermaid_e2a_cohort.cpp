@@ -38,6 +38,9 @@ const fs::path kRfc0048Ledger = kTestsDir / "../tools/mermaid/state-region-0048-
 const fs::path kD424Ledger = kTestsDir / "../tools/mermaid/git-bool-d424-cohort.json";
 const fs::path kD436Ledger = kTestsDir / "../tools/mermaid/git-mainbranch-d436-cohort.json";
 const fs::path kD441Ledger = kTestsDir / "../tools/mermaid/state-layout-d441-cohort.json";
+const fs::path kD446Ledger =
+    kTestsDir / "../tools/mermaid/state-leading-comment-d446-cohort.json";
+const fs::path kD449Ledger = kTestsDir / "../tools/mermaid/state-description-d449-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -341,6 +344,24 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
         cohort.insert(rel);
         if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
     });
+    // D-446 admits the state row whose body opens with `%%` comment lines; the
+    // per-row gate is test_mermaid_state_leading_comment_d446_cohort.
+    auto d446 = json::parse(read_file(kD446Ledger));
+    ASSERT_TRUE(d446.has_value()) << "D-446 cohort ledger must parse";
+    d446->root().get("rows").iter([&](const JsonVal row) {
+        const auto rel = row.get_string("path");
+        cohort.insert(rel);
+        if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
+    });
+    // D-449 admits the four `state X: Description` originals; the per-row gate
+    // is test_mermaid_state_description_d449_cohort.
+    auto d449 = json::parse(read_file(kD449Ledger));
+    ASSERT_TRUE(d449.has_value()) << "D-449 cohort ledger must parse";
+    d449->root().get("rows").iter([&](const JsonVal row) {
+        const auto rel = row.get_string("path");
+        cohort.insert(rel);
+        if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
+    });
     std::set<std::string> git_skipped;
     std::set<std::string> state_skipped;
     std::set<std::string> skipped_by_rfc0048;
@@ -377,8 +398,9 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     // D-424 population migration: 18 config-bearing git rows leave for the
     // closed-boolean cohort, so the exact value drops 80 -> 62. D-436 moves
     // the 14 trunk-config rows out too: 62 -> 48. D-441 moves the 3 state
-    // layout rows out: 48 -> 45.
-    EXPECT_EQ(checked, 45);
+    // layout rows out: 48 -> 45. D-446/D-449 move their 5 state rows out:
+    // 45 -> 40.
+    EXPECT_EQ(checked, 40);
     EXPECT_EQ(skipped_by_rfc0048.size(), 24u);
     // Under-listing fails here (an admitted row that really changes surface is
     // scanned again); over-listing a missing or non-config-bearing path fails

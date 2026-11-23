@@ -32,6 +32,9 @@ const fs::path kLedger = kTestsDir / "../tools/mermaid/e2b-cohort.json";
 const fs::path kRfc0038Ledger = kTestsDir / "../tools/mermaid/state-0038-cohort.json";
 const fs::path kRfc0046Ledger = kTestsDir / "../tools/mermaid/layouttuning-0046-cohort.json";
 const fs::path kD441Ledger = kTestsDir / "../tools/mermaid/state-layout-d441-cohort.json";
+const fs::path kD446Ledger =
+    kTestsDir / "../tools/mermaid/state-leading-comment-d446-cohort.json";
+const fs::path kD449Ledger = kTestsDir / "../tools/mermaid/state-description-d449-cohort.json";
 const fs::path kRfc0048Ledger = kTestsDir / "../tools/mermaid/state-region-0048-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
@@ -287,6 +290,17 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
         cohort.insert(rel);
         if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
     });
+    // D-446/D-449 admit five state rows that previously fell back on the
+    // leading-comment envelope and the `state X: Description` spelling.
+    for (const auto& ledger_path : {kD446Ledger, kD449Ledger}) {
+        auto ledger = json::parse(read_file(ledger_path));
+        ASSERT_TRUE(ledger.has_value()) << ledger_path;
+        ledger->root().get("rows").iter([&](const JsonVal row) {
+            const auto rel = row.get_string("path");
+            cohort.insert(rel);
+            if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
+        });
+    }
     cohort.insert(admitted.begin(), admitted.end());
     std::set<std::string> skipped_by_rfc0038;
     std::set<std::string> skipped_by_rfc0046;
@@ -333,8 +347,9 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
             ++checked;
         }
     }
-    // D-441 population migration: the 3 state layout rows leave the scan.
-    EXPECT_EQ(checked, 22);
+    // D-441 population migration: the 3 state layout rows leave the scan
+    // (25 -> 22). D-446/D-449 move their 5 state rows out too: 22 -> 17.
+    EXPECT_EQ(checked, 17);
     EXPECT_EQ(skipped_by_rfc0048.size(), 16u);
     // Under-listing fails here (an admitted row that really changes surface is
     // no longer excluded, so the whole-source assertion above goes red);

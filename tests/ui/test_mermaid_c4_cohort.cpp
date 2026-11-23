@@ -30,6 +30,8 @@ using json::JsonVal;
 const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases";
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/c4-cohort.json";
+const fs::path kD445Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/c4-layout-config-d445-cohort.json";
 const fs::path kD432Ledger =
     fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/c4-wrap-d432-cohort.json";
 constexpr int kWide = 240;
@@ -150,17 +152,25 @@ TEST(MermaidC4Cohort, StyledC4sStayWholeSource) {
     ASSERT_TRUE(wrap_ledger.has_value()) << "D-432 cohort ledger must parse";
     wrap_ledger->root().get("rows").iter(
         [&](const JsonVal row) { wrap_rows.insert(row.get_string("path")); });
+    // D-445 admits the two closed `UpdateLayoutConfig` rows; their positives
+    // are owned by test_mermaid_c4_layout_config_d445_cohort.
+    std::set<std::string> admitted_rows = wrap_rows;
+    auto layout_ledger = json::parse(read_file(kD445Ledger));
+    ASSERT_TRUE(layout_ledger.has_value()) << "D-445 cohort ledger must parse";
+    layout_ledger->root().get("rows").iter(
+        [&](const JsonVal row) { admitted_rows.insert(row.get_string("path")); });
     int admitted = 0;
     ledger.root().get("selection").get("styled_excluded").iter([&](JsonVal value) {
         const auto rel = value.as_str();
-        if (wrap_rows.contains(std::string(rel))) {
+        if (admitted_rows.contains(std::string(rel))) {
             ++admitted;
             return;
         }
         EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
     });
-    EXPECT_EQ(admitted, 1);
+    EXPECT_EQ(admitted, 3);
     EXPECT_EQ(wrap_rows.size(), 1u);
+    EXPECT_EQ(admitted_rows.size(), 3u);
 }
 
 // Key-based gate: prose mentioning "style" is not a gate; a frontmatter

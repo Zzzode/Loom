@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -27,6 +28,8 @@ using json::JsonVal;
 
 const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/cases";
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
+const fs::path kD447Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/usecase-accessibility-d447-cohort.json";
 const fs::path kLedger = fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/usecase-cohort.json";
 constexpr int kWide = 240;
 constexpr int kNarrow = 40;
@@ -137,13 +140,27 @@ TEST(MermaidUsecaseCohort, CleanUsecasesDrawOnWholeAndBodyTracks) {
 
 TEST(MermaidUsecaseCohort, GatedUsecasesStayWholeSource) {
     const auto ledger = parse_doc(kLedger);
+    // D-447 admits the closed `config.usecase` namespace + accessibility row;
+    // its positive is owned by test_mermaid_usecase_accessibility_d447_cohort.
+    std::set<std::string> admitted;
+    auto d447 = json::parse(read_file(kD447Ledger));
+    ASSERT_TRUE(d447.has_value()) << "D-447 cohort ledger must parse";
+    d447->root().get("rows").iter(
+        [&](const JsonVal row) { admitted.insert(row.get_string("path")); });
     const auto& selection = ledger.root().get("selection");
+    int skipped = 0;
     for (const auto* key : {"frontmatter_gated", "body_style_gated"}) {
         selection.get(key).iter([&](JsonVal value) {
             const auto rel = value.as_str();
+            if (admitted.contains(std::string(rel))) {
+                ++skipped;
+                return;
+            }
             EXPECT_FALSE(draws(read_file(kCases / rel), kWide)) << rel;
         });
     }
+    EXPECT_EQ(skipped, 1);
+    EXPECT_EQ(admitted.size(), 1u);
 }
 
 // Key-based gate: prose mentioning "config"/"theme" is not a gate; a

@@ -2089,17 +2089,29 @@ TEST(MermaidGitGraphEnvelope, DescriptionIsNeverRendered) {
     EXPECT_EQ(text.find("SecretDescriptionToken"), std::string::npos);
 }
 
-TEST(MermaidGitGraphEnvelope, TitleIsBlockedNotDropped) {
+TEST(MermaidGitGraphEnvelope, TitleIsHonouredNotDropped) {
+    // D-435: the frontmatter title is drawn as the frame's first row, never
+    // silently dropped. The positive lives in test_mermaid_git_title_d435_cohort.
     const std::string source = "---\n"
                                "description: >-\n"
-                               "  A titled gitGraph row has no title projection.\n"
+                               "  A titled gitGraph row draws its title.\n"
                                "title: simpleGitGraphTitle\n"
                                "---\n"
                                "gitGraph BT:\n"
                                "  commit id:\"1\"\n";
     const auto text = render_text(source);
-    // Whole source falls back rather than drawing with the title dropped.
-    EXPECT_FALSE(native_drawn(text)) << text;
+    ASSERT_TRUE(native_drawn(text)) << text;
+    EXPECT_NE(text.find("title simpleGitGraphTitle"), std::string::npos) << text;
+    // A title with no text, after the config block, or duplicated still keeps
+    // the whole source.
+    for (const std::string& bad : {
+             std::string("---\ndescription: >-\n  x\ntitle:\n---\ngitGraph BT:\n  commit "
+                         "id:\"1\"\n"),
+             std::string("---\ndescription: >-\n  x\nconfig:\n  look: neo\ntitle: "
+                         "late\n---\ngitGraph BT:\n  commit id:\"1\"\n"),
+             std::string("---\ndescription: >-\n  x\ntitle: one\ntitle: two\n---\ngitGraph "
+                         "BT:\n  commit id:\"1\"\n")})
+        EXPECT_FALSE(native_drawn(render_text(bad))) << bad;
 }
 
 TEST(MermaidGitGraphEnvelope, ConfigFrontmatterStaysSource) {

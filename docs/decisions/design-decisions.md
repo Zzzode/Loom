@@ -4554,6 +4554,22 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   post-loop assertion proves every ledger row is observed through it
   (rule 38).
 
+## gitGraph frontmatter title (D-435)
+
+- **The title is honoured, not disclosed.** `title: <prose>` in the gitGraph
+  frontmatter is drawn as the frame's first row (`title <text>`), so the oracle
+  is exact: the frame minus that row equals the title-free twin's frame. This
+  deliberately changes the RFC 0039 contract line "gitGraph has no title
+  projection"; the three assertions that pinned the old contract were migrated
+  (positive moved to the D-435 gate, negatives re-pointed at shapes still
+  unadmitted: a title after `config:`, a title with an out-of-table leaf).
+- **Closed title grammar.** At most one `title`, after the folded `description`
+  and before `config`; prose only (≤ 256 bytes, no tabs, no leading/trailing
+  space, Unicode); a matching outer quote pair is stripped, and an unbalanced
+  or inner quote rejects the whole source.
+- **Accounting.** The D-435 matrix branch precedes the RFC 0039 git branch
+  (disjoint sets) with a rule-38 reach proof.
+
 ## tree-view closed icon maps (D-434)
 
 - **Icon maps are inert and disclosed per entry.** The projection draws no

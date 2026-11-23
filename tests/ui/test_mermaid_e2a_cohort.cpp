@@ -87,9 +87,14 @@ bool drawn_native(const std::string& source) {
     const auto native = capture_cells(source, "mermaid");
     const auto control = capture_cells(source, "text");
     if (native.cells.empty() || same_source_surface(native, control)) return false;
+    // A source echo is proven above by the cell equality; this second guard
+    // only rejects a frame whose *first* line is the echoed header. Substring
+    // checks would misfire on a projected title (D-435 draws
+    // `title simple gitGraph`, which contains the family name).
     const auto text = render_text(source, "mermaid");
-    return text.find("stateDiagram") == std::string::npos &&
-           text.find("gitGraph") == std::string::npos;
+    const auto first = text.substr(0, text.find('\n'));
+    return first != "---" && first != "gitGraph" && first != "gitGraph BT:" &&
+           first != "gitGraph TB:" && first != "stateDiagram" && first != "stateDiagram-v2";
 }
 
 // The returned JsonDoc owns the yyjson document; JsonVal is a non-owning
@@ -151,15 +156,16 @@ TEST(MermaidE2aCohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(counts.get_int("git"), 64);
     EXPECT_EQ(counts.get_int("state_v2"), 5);
     EXPECT_EQ(counts.get_int("state_v1_qualified"), 0);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 60);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 9);
+    EXPECT_EQ(counts.get_int("predicted_draw"), 61);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 8);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
     root.get("blocker_vocabulary").iter([&](const JsonVal value) {
         vocabulary.emplace(value.as_str());
     });
-    EXPECT_EQ(vocabulary.size(), 6u);
+    // D-435 retired `gitgraph-title-not-projected` (the title is projected).
+    EXPECT_EQ(vocabulary.size(), 5u);
     root.get("rows").iter([&](const JsonVal row) {
         if (row.get_string("prediction") == "predicted-blocked")
             EXPECT_TRUE(vocabulary.contains(row.get("blocker").get_string("kind")));
@@ -203,8 +209,10 @@ TEST(MermaidE2aCohort, EveryDrawRowDrawsAndEveryBlockedRowKeepsSourceAt240) {
         }
         EXPECT_EQ(row.wide, is_drawn ? "drawn" : "source");
     }
-    EXPECT_EQ(drawn, 60);
-    EXPECT_EQ(blocked, 9);
+    // D-435 moved the titled gitGraph row from blocked to drawn.
+    EXPECT_EQ(drawn, 61);
+    // D-435 retired the title blocker, so exactly eight rows stay blocked.
+    EXPECT_EQ(blocked, 8);
 }
 
 TEST(MermaidE2aCohort, DescriptionIsNeverRendered) {

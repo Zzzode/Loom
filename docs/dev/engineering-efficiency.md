@@ -2128,3 +2128,19 @@ Attach a short efficiency section to each closure report, answering:
    d117 history row was never written even though the same script updated the
    family row; the D-434 commit carries the missing row. Verify the grep, not
    just the script's exit status.
+
+## D-435 gitGraph title retro (2026-11-23)
+
+1. **A "blocked" contract can be recorded in three places.** Changing the
+   frontmatter-title contract broke a dedicated semantics test, an RFC 0039
+   cohort negative and an RFC 0045 namespace negative. Grep for the *behaviour*
+   (the word the frame would print, the key name) across `tests/ui` before
+   running the matrix, not only the family's own gate.
+2. **Quoted scalars need an explicit balance rule.** An unbalanced `"` survived
+   as plain text and drew. The value grammar now decides lead/trail quote
+   symmetry first, then strips the pair, then rejects inner quotes — mirrored
+   in the Python generator, which otherwise drifts on the next corpus refresh.
+3. **Deriving a gate from another family's file leaves dead helpers.** The
+   copied c4 gate carried `canvas_lines`/`config_free_twin`/`expect_footer`
+   that the title oracle never uses; `-Werror` only reports some of them and
+   the rest are noise. Build the helper set from the oracle you actually wrote.

@@ -1,0 +1,35 @@
+{
+  "schema": "loom_mermaid_git_title_d435_cohort/v1",
+  "decision": "D-435",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "gitGraph original whose frontmatter is a folded description plus a single title scalar and no config block",
+    "cohort_digest": "e420ab586fabe66365e606124409f3551085c3eaa73a6e6c0cfb7a5fb3d76271",
+    "exclusions": "config leaves, init directives, a title after config, a duplicate or empty title stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-22: family slice without a design gate; the gate is the test document plus the title-row oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 1
+  },
+  "rows": [
+    {
+      "path": "git/nightly-check/66-should-render-a-simple-gitgraph-with-a-title-vertical-branch-bottom-to-top.mmd",
+      "sha256": "3f7f0856dadcb566d92cffe068ffe85868a2eab8c9e1adb1d5444f35193ed4b9",
+      "manifest_sha256": "3f7f0856dadcb566d92cffe068ffe85868a2eab8c9e1adb1d5444f35193ed4b9",
+      "title": "simple gitGraph",
+      "expected_title_row": "title simple gitGraph",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

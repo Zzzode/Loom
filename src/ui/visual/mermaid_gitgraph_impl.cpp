@@ -986,7 +986,32 @@ struct GitEnvelope {
     std::string_view body;
     std::vector<std::string> config_notices;
     GitBooleanConfig flags;
+    std::optional<std::string> title;  // D-435: frontmatter title, drawn first
 };
+
+// D-435: the frontmatter title is a prose scalar the renderer draws above the
+// graph. Quotes, when used, form exactly one matching outer pair.
+bool git_title_text(std::string_view raw, std::string& out) {
+    auto text = raw;
+    const auto quoted = [](char c) { return c == '"' || c == '\''; };
+    if (text.empty()) return false;
+    const bool lead = quoted(text.front()), trail = quoted(text.back());
+    if (lead != trail) return false;  // unbalanced or stray quote
+    if (lead) {
+        if (text.front() != text.back() || text.size() < 2u) return false;
+        text = text.substr(1u, text.size() - 2u);
+        for (const char c : text)
+            if (quoted(c)) return false;  // an inner quote is not prose
+    } else {
+        for (const char c : text)
+            if (quoted(c)) return false;
+    }
+    if (text.empty() || text.size() > 256u || text.front() == ' ' || text.back() == ' ' ||
+        text.find('\t') != std::string_view::npos)
+        return false;
+    out.assign(text);
+    return unicode_text(out);
+}
 
 // Mirrors state_scalar_text exactly: parse_envelope already trimmed the value.
 std::string git_inert_scalar(std::string_view raw, Work& work) {
@@ -1010,7 +1035,8 @@ bool git_notice_line(std::vector<std::string>& notices, std::string_view line, W
 std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) {
     const auto envelope = detail::parse_envelope(source, work);
     if (!envelope || !envelope->has_frontmatter || !envelope->init.empty()) return {};
-    bool description_seen = false, config_seen = false;
+    bool description_seen = false, config_seen = false, title_seen = false;
+    std::optional<std::string> title;
     enum : unsigned {
         Look = 1u,
         Theme = 2u,
@@ -1034,6 +1060,17 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
             if (event.path == "description") {
                 if (description_seen) return {};
                 description_seen = true;
+                continue;
+            }
+            if (event.path == "title") {
+                // Closed order: description, then at most one title, then an
+                // optional config block.
+                if (title_seen || config_seen || !description_seen || !envelope->title)
+                    return {};
+                title_seen = true;
+                std::string text;
+                if (!git_title_text(envelope->title->text, text)) return {};
+                title = std::move(text);
                 continue;
             }
             if (event.path == "config") {
@@ -1111,7 +1148,7 @@ std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) 
     if ((fields & GitGraphNs) &&
         !(fields & (Parallel | ShowBranches | ShowCommitLabel | RotateCommitLabel)))
         return {};
-    GitEnvelope result{envelope->raw_body, {}, {}};
+    GitEnvelope result{envelope->raw_body, {}, {}, std::move(title)};
     if (fields & ShowBranches) result.flags.show_branches = show_branches_value == "true";
     if (fields & ShowCommitLabel) result.flags.show_commit_label = show_commit_label_value == "true";
     if (fields != 0u) {
@@ -1165,17 +1202,27 @@ std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source,
     std::string_view body = source;
     std::vector<std::string> notices;
     GitBooleanConfig flags;
+    std::optional<std::string> admitted_title;
     if (!use_ascii && source.starts_with("---")) {
         const auto admitted = git_frontmatter(source, work);
         if (!admitted) return {};
         body = admitted->body;
         notices = std::move(admitted->config_notices);
         flags = admitted->flags;
+        admitted_title = std::move(admitted->title);
     }
     const auto graph = detail::parse_gitgraph(body, work);
     if (!graph) return {};
     auto lines = layout_gitgraph(*graph, work, use_ascii, flags);
     if (!lines) return {};
+    if (admitted_title) {
+        // D-435: the honoured title leads the frame.
+        const std::string row = "title " + *admitted_title;
+        if (lines->size() >= static_cast<std::size_t>(kHeightLimit) ||
+            !work.spend(row.size() * 2u + sizeof(std::string) + 64u))
+            return {};
+        lines->insert(lines->begin(), row);
+    }
     // RFC 0039: the bounded disclosure footer is part of the returned art
     // (blank separator, then the header and one line per accepted leaf) so the
     // height guard and Work budget match the state and flow paths.

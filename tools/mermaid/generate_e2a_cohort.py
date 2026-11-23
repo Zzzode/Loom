@@ -14,7 +14,9 @@ Four blocker classes come from fixed source-content detectors; two classes
 reviewed execution sets. D235 retired a fifth fixed detector,
 gitgraph-empty-quoted-tag: an explicit empty quoted tag now parses to no label
 and those three rows draw, guarded by the MermaidGitGraphEmptyTag native
-gtests. State entries are bound to explicit path/SHA pairs;
+gtests. D-435 retired the gitgraph-title-not-projected detector: the frontmatter
+title is now projected as the frame's first row (the D-435 cohort ledger owns
+that positive). State entries are bound to explicit path/SHA pairs;
 new or changed next-line-brace sources require review. For GitGraph,
 parse_gitgraph accepts the body but plan_parent_routes cannot close an edge. That set is sha-bound to
 this pinned corpus and additions require a new review row. The original
@@ -44,7 +46,6 @@ LEDGER = pathlib.Path("tools/mermaid/e2a-cohort.json")
 
 SCHEMA = "loom_mermaid_e2a_cohort/v1"
 BLOCKER_VOCABULARY = [
-    "gitgraph-title-not-projected",
     "gitgraph-multiline-quoted-branch-label",
     "gitgraph-canvas-dimension-overflow",
     "gitgraph-native-parent-route-debt",
@@ -54,10 +55,6 @@ BLOCKER_VOCABULARY = [
 
 # Source-profile witnesses; remaining execution gaps are distinguished from grammar rejection.
 WITNESS = {
-    "gitgraph-title-not-projected": (
-        "src/ui/visual/mermaid_gitgraph_impl.cpp:348-403",
-        "GitGraph has no title projection; admitting a titled row would silently drop the title.",
-    ),
     "gitgraph-multiline-quoted-branch-label": (
         "src/ui/visual/mermaid_gitgraph_impl.cpp:55-64",
         "Cursor::quoted scans one physical line; a quoted label split across lines cannot close.",
@@ -150,8 +147,8 @@ def odd_quotes(line):
 
 def git_blocker(rel, keys, body_lines):
     """Source-derived gitGraph blocker, in deterministic precedence."""
-    if "title" in keys:
-        return "gitgraph-title-not-projected"
+    # D-435 retires the title detector: the frontmatter title is projected as
+    # the frame's first row (positive owned by the D-435 cohort ledger).
     for line in body_lines:
         stripped = line.strip()
         if stripped.startswith("branch") and odd_quotes(line):
@@ -273,7 +270,7 @@ def build(repo_root):
         "selection": {
             "rule": "frontmatter original containing neither a top-level config key nor a body %%{init}%% directive",
             "roots": ["git", "state-diagram-v2", "state-diagram"],
-            "blocker_detection": "four fixed source-content detectors plus two execution-attested reviewed sets (native parent-route debt and path/SHA-bound State composite debt); no generator-time rendering; new execution-debt entries require independent review. D235 retired the empty-quoted-tag detector (empty tag now parses to no label, guarded by MermaidGitGraphEmptyTag).",
+            "blocker_detection": "three fixed source-content detectors plus two execution-attested reviewed sets (native parent-route debt and path/SHA-bound State composite debt); no generator-time rendering; new execution-debt entries require independent review. D235 retired the empty-quoted-tag detector (empty tag now parses to no label, guarded by MermaidGitGraphEmptyTag); D-435 retired the title detector (the frontmatter title is projected as the frame's first row).",
             "width_policy": "E2a pre-registers the 240-column admission; narrow_40 is uniformly 'source'.",
         },
         "review": {

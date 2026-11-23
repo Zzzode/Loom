@@ -419,10 +419,13 @@ TEST(MermaidGit0045Cohort, NamespaceBattery) {
         EXPECT_FALSE(draws(config_probe(form), kWide)) << form;
     }
     EXPECT_FALSE(draws(probe("config:\n"), kWide)) << "empty config";
-    EXPECT_FALSE(draws("---\ndescription: >-\n  titled probe\ntitle: git title\n---\n" +
+    // D-435 admits a frontmatter title (drawn first, see the D-435 gate); a
+    // title after the config block still keeps the whole source.
+    EXPECT_FALSE(draws("---\ndescription: >-\n  titled probe\nconfig:\n  look: neo\ntitle: "
+                       "late\n---\n" +
                            std::string(kBody),
                        kWide))
-        << "title stays unadmitted";
+        << "title after config stays unadmitted";
     EXPECT_FALSE(draws("---\ndescription: >-\n  x\nconfig:\n  gitGraph:\n    parallelCommits: "
                        "true\nconfig:\n  look: neo\n---\n" +
                            std::string(kBody),

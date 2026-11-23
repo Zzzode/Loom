@@ -361,8 +361,10 @@ TEST(MermaidGitGraph0039Cohort, LookTableIsClosed) {
     EXPECT_FALSE(draws("---\ndescription: >-\n  empty config probe\nconfig:\n---\ngitGraph LR:\n"
                        "  commit id:\"1\"\n",
                        kWide));
-    EXPECT_FALSE(draws("---\ndescription: >-\n  titled probe\ntitle: git title\nconfig:\n  look: "
-                       "neo\n---\ngitGraph LR:\n  commit id:\"1\"\n",
+    // D-435 admits the frontmatter title (drawn, see the D-435 gate); a title
+    // combined with an out-of-table config leaf still keeps the whole source.
+    EXPECT_FALSE(draws("---\ndescription: >-\n  titled probe\ntitle: git title\nconfig:\n  "
+                       "layout: elk\n---\ngitGraph LR:\n  commit id:\"1\"\n",
                        kWide));
     // The folded description is documentation, never a config event: a payload
     // line that looks like `look: neo` neither rejects the source nor adds a
@@ -416,6 +418,14 @@ TEST(MermaidGitGraph0039Cohort, DrawnGitRowsKeepFrameIdentity) {
     e2a.root().get("rows").iter([&](JsonVal row) {
         const auto rel = row.get_string("path");
         if (!rel.starts_with("git/") || row.get_string("prediction") != "predicted-draw") return;
+        // D-435: a frontmatter title is projected as the frame's first row, so a
+        // title-bearing row is intentionally *not* frame-identical to its
+        // stripped twin. The D-435 gate owns that exact-row oracle.
+        bool titled = false;
+        row.get("metadata_keys").iter([&](const JsonVal key) {
+            if (key.as_str() == "title") titled = true;
+        });
+        if (titled) return;
         ++checked;
         const auto source = read_file(kCases / rel);
         const auto stripped = frontmatter_stripped(source);
@@ -431,5 +441,7 @@ TEST(MermaidGitGraph0039Cohort, DrawnGitRowsKeepFrameIdentity) {
         EXPECT_EQ(with.text.find("config.look="), std::string::npos) << rel;
         EXPECT_EQ(with.text.find("config.theme="), std::string::npos) << rel;
     });
+    // Stays 58: D-435 retires the title blocker (+1 drawn row) and excludes
+    // that same title-bearing row (owned by the D-435 gate) again.
     EXPECT_EQ(checked, 58);
 }

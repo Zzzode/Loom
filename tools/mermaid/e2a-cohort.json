@@ -14,7 +14,7 @@
       "state-diagram-v2",
       "state-diagram"
     ],
-    "blocker_detection": "four fixed source-content detectors plus two execution-attested reviewed sets (native parent-route debt and path/SHA-bound State composite debt); no generator-time rendering; new execution-debt entries require independent review. D235 retired the empty-quoted-tag detector (empty tag now parses to no label, guarded by MermaidGitGraphEmptyTag).",
+    "blocker_detection": "three fixed source-content detectors plus two execution-attested reviewed sets (native parent-route debt and path/SHA-bound State composite debt); no generator-time rendering; new execution-debt entries require independent review. D235 retired the empty-quoted-tag detector (empty tag now parses to no label, guarded by MermaidGitGraphEmptyTag); D-435 retired the title detector (the frontmatter title is projected as the frame's first row).",
     "width_policy": "E2a pre-registers the 240-column admission; narrow_40 is uniformly 'source'."
   },
   "review": {
@@ -28,11 +28,10 @@
     "git": 64,
     "state_v2": 5,
     "state_v1_qualified": 0,
-    "predicted_draw": 60,
-    "predicted_blocked": 9
+    "predicted_draw": 61,
+    "predicted_blocked": 8
   },
   "blocker_vocabulary": [
-    "gitgraph-title-not-projected",
     "gitgraph-multiline-quoted-branch-label",
     "gitgraph-canvas-dimension-overflow",
     "gitgraph-native-parent-route-debt",
@@ -1262,19 +1261,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "gitgraph-title-not-projected",
-        "site": "src/ui/visual/mermaid_gitgraph_impl.cpp:348-403",
-        "evidence": "src/ui/visual/mermaid_gitgraph_impl.cpp:348-403",
-        "detail": "GitGraph has no title projection; admitting a titled row would silently drop the title."
-      },
-      "ledger_note": "Blocked by a non-envelope body-grammar or capacity witness"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     },
     {
       "path": "git/nightly-check/68-should-render-a-simple-gitgraph-with-two-branches-from-same-commit-vertical-branch-bottom-to-top.mmd",

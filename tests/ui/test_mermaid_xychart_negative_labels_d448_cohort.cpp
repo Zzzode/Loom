@@ -64,6 +64,24 @@ CellCapture capture(const std::string& source, const char* language, int width) 
 }
 
 bool same_surface(const CellCapture& a, const CellCapture& b) { return a.chars == b.chars; }
+std::vector<std::string> trimmed_lines(const CellCapture& capture, int width) {
+    if (capture.chars.size() !=
+        static_cast<std::size_t>(width) * static_cast<std::size_t>(kHeight))
+        return {};
+    std::vector<std::string> lines;
+    lines.reserve(static_cast<std::size_t>(kHeight));
+    for (int y = 0; y < kHeight; ++y) {
+        std::string line;
+        line.reserve(static_cast<std::size_t>(width));
+        for (int x = 0; x < width; ++x)
+            line += capture.chars[static_cast<std::size_t>(y) * static_cast<std::size_t>(width) +
+                                   static_cast<std::size_t>(x)];
+        while (!line.empty() && line.back() == ' ') line.pop_back();
+        lines.push_back(std::move(line));
+    }
+    while (!lines.empty() && lines.back().empty()) lines.pop_back();
+    return lines;
+}
 bool draws(const std::string& source, int width) {
     return !same_surface(capture(source, "mermaid", width), capture(source, "text", width));
 }
@@ -156,6 +174,30 @@ TEST(MermaidXychartNegativeLabelsD448Cohort, ClosedProfileNegatives) {
     EXPECT_TRUE(draws(probe("config:\n  xyChart:\n    showDataLabel: true\n"
                             "    showDataLabelOutsideBar: true\n"),
                       kWide));
+    // A horizontal one-cell bar keeps its pre-existing label profile: the
+    // value sits just past the plot's right edge, not redirected to the bar
+    // tip (the tiny-span redirect is vertical-only).
+    {
+        const auto source =
+            std::string{"---\ndescription: >-\n  probe\nconfig:\n  xyChart:\n"
+                        "    showDataLabel: true\n---\n  xychart horizontal\n"
+                        "  x-axis Categories [A, B, C]\n  y-axis 0 --> 40\n"
+                        "  bar [ 1, 40, 1 ]\n"};
+        ASSERT_TRUE(draws(source, kWide));
+        const auto lines = trimmed_lines(capture(source, "mermaid", kWide), kWide);
+        std::vector<std::size_t> outside_columns;
+        for (const auto& line : lines) {
+            const auto bar = line.rfind("█");
+            if (bar == std::string::npos) continue;
+            if (count_of(line, "█") != 1) continue;  // a one-cell bar row
+            const auto digit = line.find_first_of("0123456789", bar + 3);
+            ASSERT_NE(digit, std::string::npos) << line;
+            for (std::size_t at = bar + 3; at < digit; ++at) ASSERT_EQ(line[at], ' ') << line;
+            outside_columns.push_back(digit);
+        }
+        ASSERT_EQ(outside_columns.size(), 2u);
+        EXPECT_EQ(outside_columns[0], outside_columns[1]);
+    }
     // A zero-valued bar series stays whole-source: its tip coincides with the
     // reference and the compact profile has no reviewed placement for it.
     const auto zero_body =

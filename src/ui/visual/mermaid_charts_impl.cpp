@@ -1864,11 +1864,13 @@ std::optional<std::vector<std::string>> xy_chart(const Chart& chart, Work& work)
             const auto text = numeric(chart.series.front().values[c]);
             if (!work.spend(text.size()) || text.empty()) return {};
             const int text_width = label_width(text);
-            // D-448: a bar that collapses to one cell cannot host its own value
-            // without erasing the mark (the loop below rejects replaced >= span),
-            // so the compact profile places such a label just outside the tip:
-            // above a positive/non-negative bar, below a negative one.
-            const bool tiny_span = span <= 1;
+            // D-448: a vertical bar that collapses to one cell cannot host its
+            // own value without erasing the mark (the loop below rejects
+            // replaced >= span), so the compact profile places such a label
+            // just outside the tip: above a non-negative bar, below a negative
+            // one. Horizontal one-cell bars already draw with their label past
+            // the plot's right edge; keep that profile untouched.
+            const bool tiny_span = !chart.horizontal && span <= 1;
             const bool external =
                 chart.show_data_outside || (chart.horizontal && text_width >= span) ||
                 tiny_span;

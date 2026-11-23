@@ -513,7 +513,11 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
             if (saw_acc_title) return {};
             const auto rest = trim_view(cv.substr(8u));
             if (!rest.starts_with(':')) return {};
-            if (!usecase_accessibility_value(rest.substr(1u), work)) return {};
+            // The value comes from the raw statement: blank_quotes() erases
+            // quoted spans, and `accTitle: "..."` is the canonical spelling.
+            const std::string_view raw{stmt};
+            if (!usecase_accessibility_value(trim_view(raw.substr(8u)).substr(1u), work))
+                return {};
             saw_acc_title = true;
             continue;
         }
@@ -526,7 +530,9 @@ std::optional<std::vector<std::string>> usecase_layout(std::string_view source, 
                 continue;
             }
             if (!rest.starts_with(':')) return {};
-            if (!usecase_accessibility_value(rest.substr(1u), work)) return {};
+            const std::string_view raw{stmt};
+            if (!usecase_accessibility_value(trim_view(raw.substr(8u)).substr(1u), work))
+                return {};
             saw_acc_descr = true;
             continue;
         }

@@ -243,6 +243,16 @@ TEST(MermaidUsecaseAccessibilityD447Cohort, ClosedNamespaceAndAccNegatives) {
         const auto frame = capture(source, "mermaid", kWide).text;
         EXPECT_EQ(frame.find("Usecase native projection v1"), std::string::npos);
     }
+    // The canonical quoted spellings are accepted too: the value is read from
+    // the raw statement, not from the quote-blanked shape view.
+    {
+        const auto source = probe("",
+                                  "usecase-beta\n  direction LR\n  accTitle: \"A probe title\"\n"
+                                  "  accDescr: \"A probe description.\"\n  actor A(\"A\")\n");
+        ASSERT_TRUE(draws(source, kWide));
+        const auto frame = capture(source, "mermaid", kWide).text;
+        EXPECT_EQ(frame.find("Usecase native projection v1"), std::string::npos);
+    }
     // The admitted namespace draws and discloses every leaf in table order.
     {
         const auto source = probe(

@@ -2239,3 +2239,16 @@ renderer already draws it.
 3. **A closed table must be corpus-backed per value.** Listing five palettes
    because the probe saw five values was the mistake; the correct rule is one
    value per non-frozen corpus row.
+
+## D-441 state layout retro (2026-11-23)
+
+1. **Enumerate the corpus value table before writing the closed set.** The state
+   envelope's `look`/`theme` tables are corpus-backed per value; `layout` has
+   exactly four state fixtures and one admitted value (`elk`), so the table is
+   one entry and the fourth fixture is excluded by its body (notes), not by a
+   guessed config rule.
+2. **Check how the shared inert-scalar reader treats quotes and comments
+   before writing negatives.** The first gate draft asserted
+   `layout: 'elk'` and `layout: elk # note` were rejected; both are accepted by
+   design (same YAML string, comment stripped). Two assertion migrations per
+   slice from re-deriving leaf semantics instead of reading the shared reader.

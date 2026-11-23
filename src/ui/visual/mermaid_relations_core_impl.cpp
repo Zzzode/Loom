@@ -2125,11 +2125,15 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
         Look = 8u,
         Theme = 16u,
         StateNs = 32u,
-        UseMax = 64u
+        UseMax = 64u,
+        // D-441: the ELK engine selector. The terminal runs its own fixed
+        // directed routing, so the upstream engine choice is non-terminal.
+        Layout = 128u
     };
     unsigned fields = 0u;
     int log_value = 0;
     std::string security_value, look_value, theme_value, use_max_value;
+    std::string layout_value;
     StateEnvelope result;
     for (const auto& event : parsed->events) {
         if (event.blank || event.comment) continue;
@@ -2203,6 +2207,11 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
             if (!mark(Look) || (*scalar != "classic" && *scalar != "neo" && *scalar != "handDrawn"))
                 return {};
             look_value = *scalar;
+        } else if (event.path == "layout") {
+            // D-441: only the corpus-backed ELK selector is admitted; the
+            // terminal's directed routing ignores which engine upstream used.
+            if (!mark(Layout) || *scalar != "elk") return {};
+            layout_value = std::move(*scalar);
         } else if (event.path == "theme") {
             // RFC 0038: the seven palettes carried by the state corpus are
             // admitted and disclosed only (the terminal has its own tokens).
@@ -2284,6 +2293,14 @@ std::optional<StateEnvelope> state_source_envelope(std::string_view source, Work
             std::string line = "config.state.useMaxWidth=";
             line += use_max_value;
             line += " -> display sizing; not applied";
+            if (!state_notice_line(result.config_notices, line, work)) return {};
+        }
+        // D-441 appends the engine line after every existing leaf so no
+        // already-drawn frame's footer changes.
+        if ((fields & Layout)) {
+            std::string line = "config.layout=";
+            line += layout_value;
+            line += " -> external layout engine; not applied";
             if (!state_notice_line(result.config_notices, line, work)) return {};
         }
     }

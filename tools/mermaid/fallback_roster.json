@@ -1,13 +1,13 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 510,
+  "total_fallback": 507,
   "category_counts": {
     "classdef_styling": 37,
     "click_interactive_callback": 18,
     "dagre_layout_tuning": 11,
     "edge_animation_metadata": 82,
-    "elk_layout_engine": 15,
+    "elk_layout_engine": 12,
     "family_residual:c4": 8,
     "family_residual:class-diagram": 6,
     "family_residual:er-diagram": 1,
@@ -103,8 +103,8 @@
     },
     "elk_layout_engine": {
       "originals_matching_predicate": 79,
-      "drawn_among_matches": 62,
-      "fallback_among_matches": 17,
+      "drawn_among_matches": 65,
+      "fallback_among_matches": 14,
       "sufficient_blocker": false
     },
     "git_cherry_pick": {
@@ -390,10 +390,7 @@
       "flowchart/visual-check/should-keep-the-true-entry-on-top-when-a-back-edge-feeds-it-79.mmd",
       "flowchart/visual-check/subgraph-titles-wider-than-children.mmd",
       "requirement/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-elk-layout.mmd",
-      "state-diagram-v2/nightly-check/elk/elk-composite-entry-default-centering.mmd",
-      "state-diagram-v2/nightly-check/elk/elk-notes-keep-their-layout.mmd",
-      "state-diagram-v2/nightly-check/elk/elk-start-end-edge-centering.mmd",
-      "state-diagram-v2/pr-check/composite-with-a-loop-starts-on-its-start-state.mmd"
+      "state-diagram-v2/nightly-check/elk/elk-notes-keep-their-layout.mmd"
     ],
     "family_residual:c4": [
       "c4/nightly-check/c4-4-should-render-a-simple-c4dynamic-diagram.mmd",

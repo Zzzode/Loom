@@ -248,6 +248,15 @@ add_test(NAME MermaidFallbackAttribution.RosterIsReproducibleAndTotal
 set_tests_properties(MermaidFallbackAttribution.RosterIsReproducibleAndTotal
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-441: the state closed-layout cohort ledger is a generator constant; the
+# check fails on a hand edit or an unreviewed expectation change.
+add_test(NAME MermaidStateLayoutD441Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_state_layout_d441_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidStateLayoutD441Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-440: the flowchart closed-theme cohort ledger is a generator constant; the
 # check fails on a hand edit or an unreviewed expectation change.
 add_test(NAME MermaidFlowchartThemeD440Cohort.GeneratorIsReproducible
@@ -1363,6 +1372,15 @@ add_executable(test_mermaid_wardley_theme_d437_cohort
 target_link_libraries(test_mermaid_wardley_theme_d437_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_wardley_theme_d437_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# D-441: state closed-layout cohort gate and its ledger.
+add_executable(test_mermaid_state_layout_d441_cohort
+    test_mermaid_state_layout_d441_cohort.cpp)
+target_link_libraries(test_mermaid_state_layout_d441_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_state_layout_d441_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

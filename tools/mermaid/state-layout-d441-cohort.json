@@ -1,0 +1,76 @@
+{
+  "schema": "loom_mermaid_state_layout_d441_cohort/v1",
+  "decision": "D-441",
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "state original whose frontmatter is a folded description plus a closed config block carrying the corpus-backed layout: elk selector (optionally with the admitted fontFamily: courier leaf)",
+    "cohort_digest": "033b701ef3c3c12b792972f7dd6c477d154829424a7091027e273a79306d8fd1",
+    "exclusions": "other engine values, unknown leaves, nested maps, init directives and off-grid indentation stay whole-source"
+  },
+  "review": {
+    "reviewer_agent": "TL exemption 2026-11-23: family slice without a design gate; the gate is the test document plus the twin oracle",
+    "verdict": "approved"
+  },
+  "counts": {
+    "total": 3
+  },
+  "rows": [
+    {
+      "path": "state-diagram-v2/nightly-check/elk/elk-composite-entry-default-centering.mmd",
+      "sha256": "7aa4be0d80370e4b353a6f96c41dcb26551aa4af94727c860a234f95c64c4ee8",
+      "manifest_sha256": "7aa4be0d80370e4b353a6f96c41dcb26551aa4af94727c860a234f95c64c4ee8",
+      "config_leaves": {
+        "fontFamily": "courier",
+        "layout": "elk"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/elk/elk-start-end-edge-centering.mmd",
+      "sha256": "482ebd18e7aa4e2fe426164bc8b480c294ecd6fe9c384678c5bfca214ef90768",
+      "manifest_sha256": "482ebd18e7aa4e2fe426164bc8b480c294ecd6fe9c384678c5bfca214ef90768",
+      "config_leaves": {
+        "layout": "elk"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    },
+    {
+      "path": "state-diagram-v2/pr-check/composite-with-a-loop-starts-on-its-start-state.mmd",
+      "sha256": "74b6133c5fae78a8a1a2f54c0a2904c002380aa1a1e0d2ac613157c71012b293",
+      "manifest_sha256": "74b6133c5fae78a8a1a2f54c0a2904c002380aa1a1e0d2ac613157c71012b293",
+      "config_leaves": {
+        "layout": "elk"
+      },
+      "expected_footer_lines": [
+        "State native projection v1",
+        "config.layout=elk -> external layout engine; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source",
+        "restored_240": "drawn"
+      }
+    }
+  ]
+}

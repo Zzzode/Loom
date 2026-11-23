@@ -5080,3 +5080,26 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   (look/theme/htmlLabels/spacing, ~80 rows) are **not** config slices; they are
   contract-pending rows. Treat Flow400 re-baseline as its own protected
   milestone, in the same class as the ER107/Block58 joins.
+
+## state closed `config.layout: elk` (D-441)
+
+- **Scope.** Three state originals carry only the corpus-backed `layout: elk`
+  selector (one also carries the already-admitted `fontFamily: courier`); the
+  fourth `layout: elk` state fixture stays whole-source because its body uses
+  notes the state projection does not render. This mirrors RFC 0044's
+  requirement `layout: elk` admission for the relations-core state envelope.
+- **Mechanism.** `state_source_envelope` gains one bit (`Layout = 128u`) and one
+  indent-2 leaf `layout` whose only value is `elk`. The scalar goes through the
+  same shared inert-scalar reader as every other state leaf, so quoted forms
+  and trailing comments behave identically, duplicates and off-grid indentation
+  fail closed, and the leaf composes with every other admitted leaf.
+- **Disclosure.** The terminal runs its own fixed directed routing, so the
+  engine selector is non-terminal and disclosed last on the canonical footer
+  (`State native projection v1` + `config.layout=elk -> external layout engine;
+  not applied`). Appending after every existing leaf keeps all already-drawn
+  state footers byte-identical.
+- **Oracle.** The gate checks each row against its config-stripped twin: the art
+  above the footer must equal the twin's art, and narrow 40 stays whole-source.
+- **Accounting.** The matrix branch precedes the RFC 0048/0038/E2b state
+  branches with a rule-38 reach proof; `elk_layout_engine` loses exactly the
+  three ledger rows.

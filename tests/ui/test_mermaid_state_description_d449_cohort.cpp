@@ -212,6 +212,23 @@ TEST(MermaidStateDescriptionD449Cohort, DescriptionDeclarationShape) {
     }
     EXPECT_TRUE(draws(probe("", "stateDiagram-v2\n  state S1: Solo text\n  S1 --> [*]\n"),
                       kWide));
+    // Repeated declarations accumulate: both description fragments render, for
+    // a state already declared here and for one introduced by a transition.
+    {
+        const auto source = probe("", "stateDiagram-v2\n  state S1: First text\n"
+                                      "  S1 --> [*]\n  state S1: Second text\n");
+        ASSERT_TRUE(draws(source, kWide));
+        const auto frame = capture(source, "mermaid", kWide).text;
+        EXPECT_NE(frame.find("First text"), std::string::npos);
+        EXPECT_NE(frame.find("Second text"), std::string::npos);
+    }
+    {
+        const auto source = probe("", "stateDiagram-v2\n  A --> B : go\n"
+                                      "  state A\n  state A: Later text\n");
+        ASSERT_TRUE(draws(source, kWide));
+        EXPECT_NE(capture(source, "mermaid", kWide).text.find("Later text"),
+                  std::string::npos);
+    }
     // Shape rules: empty payload, unbalanced quote and brace markers stay out.
     for (const auto* body : {
              "stateDiagram-v2\n  state S1:\n  S1 --> [*]\n",

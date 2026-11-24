@@ -1,0 +1,388 @@
+{
+ "schema": "flow400_theme8_native_supplement/v1",
+ "qualification": "Source-pinned complete typed Models for the four redux palettes require independent Native and Official actual runs before admission; the base authority and the four earlier supplements stay untouched.",
+ "base_authority": {
+  "asset_sha256": "f03178a8c6b3872abf1a3d2693fc1841b31492961f7a7a632424860d6a8d884c",
+  "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b",
+  "all_sources": 400,
+  "complete_models": 8,
+  "pending": 392
+ },
+ "prior_authority": {
+  "config21_asset_sha256": "6011a1ff418dcb2491e65e3a77205237d5b24483d755a9826dbbe32fd537c9e6",
+  "typed_source4_asset_sha256": "b5a64f09fd363020d5bb91c2498541d6bfa88ec17bab8a3fb8eaf3f0b43a472e",
+  "classic_asset_sha256": "9b8580bda97015356b3bd442c4a698a3cda1e6d686aec731d3d1820ec281f79d",
+  "aggregate_complete_before_theme8": 39,
+  "aggregate_pending_before_theme8": 361
+ },
+ "formal_counts": {
+  "cases": 8,
+  "aggregate_complete_after_all_official_runs": 47,
+  "aggregate_pending_after_all_official_runs": 353,
+  "ultimate_complete_required": 400,
+  "ultimate_pending_required": 0,
+  "official_credit_before_execution": 0
+ },
+ "cases": [
+  {
+   "case_id": "original_137_redux_theme",
+   "base_authority": {
+    "adaptation": null,
+    "fixture": "flowchart/nightly-check/redux-color-subgraphs/01-should-render-subgraphs-subgraph-containers.mmd",
+    "manifest_global_ordinal": 798,
+    "model_json": null,
+    "model_sha256": null,
+    "oracle_record_sha256": "68dd2b048d57d6f55a6cece4210421dd9524fa0e8af62704fe8b88b51a4a306c",
+    "ordinal": 137,
+    "source_bytes": 673,
+    "source_git_blob": "a3b10603add38218153494c11bd85e8c188c25ff",
+    "source_sha256": "e427673c1cb813892bc7ec61b1ff4eca26246c095f54c816d54aa7abdf8bd36e"
+   },
+   "source": "---\ndescription:\n  Renders five sibling subgraphs (Ingest, Transform, Store, Serve, Observe)\n  chained in a top-to-bottom pipeline under the plain redux theme, checking that\n  each top-level container - including one holding a database-shaped node - gets\n  its own distinct themed background and border color.\nconfig:\n  theme: \"redux\"\n---\n\n  flowchart TB\n    subgraph Ingest\n      A[Fetch] --> B[Validate]\n    end\n    subgraph Transform\n      C[Normalise] --> D[Enrich]\n    end\n    subgraph Store\n      E[(Warehouse)]\n    end\n    subgraph Serve\n      F[API] --> G[Cache]\n    end\n    subgraph Observe\n      H[Metrics]\n    end\n    B --> C\n    D --> E\n    E --> F\n    F --> H\n",
+   "source_sha256": "e427673c1cb813892bc7ec61b1ff4eca26246c095f54c816d54aa7abdf8bd36e",
+   "typed_model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Fetch\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Validate\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"Normalise\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"Enrich\",\"shape\":\"rectangle\"}],[\"E\",{\"id\":\"E\",\"label\":\"Warehouse\",\"shape\":\"cylinder\"}],[\"F\",{\"id\":\"F\",\"label\":\"API\",\"shape\":\"rectangle\"}],[\"G\",{\"id\":\"G\",\"label\":\"Cache\",\"shape\":\"rectangle\"}],[\"H\",{\"id\":\"H\",\"label\":\"Metrics\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"F\",\"target\":\"G\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"D\",\"target\":\"E\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"E\",\"target\":\"F\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"F\",\"target\":\"H\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[{\"id\":\"Ingest\",\"label\":\"Ingest\",\"direction\":\"\",\"nodeIds\":[\"A\",\"B\"],\"children\":[]},{\"id\":\"Transform\",\"label\":\"Transform\",\"direction\":\"\",\"nodeIds\":[\"C\",\"D\"],\"children\":[]},{\"id\":\"Store\",\"label\":\"Store\",\"direction\":\"\",\"nodeIds\":[\"E\"],\"children\":[]},{\"id\":\"Serve\",\"label\":\"Serve\",\"direction\":\"\",\"nodeIds\":[\"F\",\"G\"],\"children\":[]},{\"id\":\"Observe\",\"label\":\"Observe\",\"direction\":\"\",\"nodeIds\":[\"H\"],\"children\":[]}]}",
+   "typed_model_sha256": "eff302707885751a2a9df0e40c4b65ef806a2e236272763bf1318e70ce6158a3",
+   "envelope": {
+    "profile": "description_config_theme",
+    "bytes": 339,
+    "sha256": "d240ca6d5bcd459ad9a1aadfeed1a24e1ca18263c4f0c82151cfc82c7e16b638",
+    "text": "---\ndescription:\n  Renders five sibling subgraphs (Ingest, Transform, Store, Serve, Observe)\n  chained in a top-to-bottom pipeline under the plain redux theme, checking that\n  each top-level container - including one holding a database-shaped node - gets\n  its own distinct themed background and border color.\nconfig:\n  theme: \"redux\"\n---\n",
+    "description_form": "plain_multiline",
+    "root_keys": [
+     "description",
+     "config"
+    ],
+    "config": {
+     "theme": "\"redux\""
+    },
+    "body_header": "flowchart TB",
+    "body_sha256": "cee09af46e5548776ef41c42bdfdb64f3890956f6cd6733de7623a770b8a295d"
+   },
+   "native_requirement": {
+    "exact_rejections": 4,
+    "mutations": [
+     "cylinder_to_circle",
+     "first_label_to_absent",
+     "first_edge_endpoint_to_self",
+     "extra_ink"
+    ]
+   },
+   "formal_status": "unadmitted_design_only"
+  },
+  {
+   "case_id": "original_138_redux_theme",
+   "base_authority": {
+    "adaptation": null,
+    "fixture": "flowchart/nightly-check/redux-color-subgraphs/02-should-render-nested-subgraph-containers.mmd",
+    "manifest_global_ordinal": 799,
+    "model_json": null,
+    "model_sha256": null,
+    "oracle_record_sha256": "380209126eed6ef3314de08a8eb550c574e81bebc92576ef61b408c09b6f56ce",
+    "ordinal": 138,
+    "source_bytes": 564,
+    "source_git_blob": "cb199cd18b542346edf4607115c573989ed93828",
+    "source_sha256": "dd90e3fd9b0c3c728f8b52c3f9f07a9e55916450b1b385c7bda899acb4e48f54"
+   },
+   "source": "---\ndescription:\n  Renders a subgraph (Outer) containing two nested child subgraphs (InnerOne,\n  InnerTwo) alongside an unrelated top-level sibling subgraph (Sibling) under\n  the plain redux theme, checking that nested containers are colored distinctly\n  from their parent and from the sibling at the outer level.\nconfig:\n  theme: \"redux\"\n---\n\n  flowchart LR\n    subgraph Outer\n      subgraph InnerOne\n        A[one] --> B[two]\n      end\n      subgraph InnerTwo\n        C[three]\n      end\n    end\n    subgraph Sibling\n      D[four]\n    end\n    B --> C\n    C --> D\n",
+   "source_sha256": "dd90e3fd9b0c3c728f8b52c3f9f07a9e55916450b1b385c7bda899acb4e48f54",
+   "typed_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"one\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"two\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"three\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"four\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[{\"id\":\"Outer\",\"label\":\"Outer\",\"direction\":\"\",\"nodeIds\":[],\"children\":[{\"id\":\"InnerOne\",\"label\":\"InnerOne\",\"direction\":\"\",\"nodeIds\":[\"A\",\"B\"],\"children\":[]},{\"id\":\"InnerTwo\",\"label\":\"InnerTwo\",\"direction\":\"\",\"nodeIds\":[\"C\"],\"children\":[]}]},{\"id\":\"Sibling\",\"label\":\"Sibling\",\"direction\":\"\",\"nodeIds\":[\"D\"],\"children\":[]}]}",
+   "typed_model_sha256": "d4518ed30582b9485232c7e5e04c77b1a20d46e5832aabdee135893486d6e794",
+   "envelope": {
+    "profile": "description_config_theme",
+    "bytes": 343,
+    "sha256": "d2eb2a39723aa031ccdbaec1e7a3039f8990035351c9c5f6e2dc71c81cd0f422",
+    "text": "---\ndescription:\n  Renders a subgraph (Outer) containing two nested child subgraphs (InnerOne,\n  InnerTwo) alongside an unrelated top-level sibling subgraph (Sibling) under\n  the plain redux theme, checking that nested containers are colored distinctly\n  from their parent and from the sibling at the outer level.\nconfig:\n  theme: \"redux\"\n---\n",
+    "description_form": "plain_multiline",
+    "root_keys": [
+     "description",
+     "config"
+    ],
+    "config": {
+     "theme": "\"redux\""
+    },
+    "body_header": "flowchart LR",
+    "body_sha256": "76088f4d148c21f8e72cfa4d60b0b1f46af7358986cb37f4e5fe2f8eb2548bfd"
+   },
+   "native_requirement": {
+    "exact_rejections": 4,
+    "mutations": [
+     "cylinder_to_circle",
+     "first_label_to_absent",
+     "first_edge_endpoint_to_self",
+     "extra_ink"
+    ]
+   },
+   "formal_status": "unadmitted_design_only"
+  },
+  {
+   "case_id": "original_141_redux_theme",
+   "base_authority": {
+    "adaptation": null,
+    "fixture": "flowchart/nightly-check/redux-color-subgraphs/05-should-render-subgraphs-subgraph-containers.mmd",
+    "manifest_global_ordinal": 802,
+    "model_json": null,
+    "model_sha256": null,
+    "oracle_record_sha256": "40fb00ffb9e699bf75f6bdd361ab8f2d925587ed560f097c885991e83552d6d2",
+    "ordinal": 141,
+    "source_bytes": 679,
+    "source_git_blob": "ab3c492136f93f3507022949092638321d6bfdc4",
+    "source_sha256": "0cc4ea4d40527a3bd819b9dc914f9e01fd4fb90c6a5f0acaebc4b0a9a9715051"
+   },
+   "source": "---\ndescription:\n  Renders five sibling subgraphs (Ingest, Transform, Store, Serve, Observe)\n  chained in a top-to-bottom pipeline under the redux-color theme, checking that\n  each top-level container - including one holding a database-shaped node - gets\n  its own distinct themed background and border color.\nconfig:\n  theme: \"redux-color\"\n---\n\n  flowchart TB\n    subgraph Ingest\n      A[Fetch] --> B[Validate]\n    end\n    subgraph Transform\n      C[Normalise] --> D[Enrich]\n    end\n    subgraph Store\n      E[(Warehouse)]\n    end\n    subgraph Serve\n      F[API] --> G[Cache]\n    end\n    subgraph Observe\n      H[Metrics]\n    end\n    B --> C\n    D --> E\n    E --> F\n    F --> H\n",
+   "source_sha256": "0cc4ea4d40527a3bd819b9dc914f9e01fd4fb90c6a5f0acaebc4b0a9a9715051",
+   "typed_model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Fetch\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Validate\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"Normalise\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"Enrich\",\"shape\":\"rectangle\"}],[\"E\",{\"id\":\"E\",\"label\":\"Warehouse\",\"shape\":\"cylinder\"}],[\"F\",{\"id\":\"F\",\"label\":\"API\",\"shape\":\"rectangle\"}],[\"G\",{\"id\":\"G\",\"label\":\"Cache\",\"shape\":\"rectangle\"}],[\"H\",{\"id\":\"H\",\"label\":\"Metrics\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"F\",\"target\":\"G\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"D\",\"target\":\"E\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"E\",\"target\":\"F\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"F\",\"target\":\"H\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[{\"id\":\"Ingest\",\"label\":\"Ingest\",\"direction\":\"\",\"nodeIds\":[\"A\",\"B\"],\"children\":[]},{\"id\":\"Transform\",\"label\":\"Transform\",\"direction\":\"\",\"nodeIds\":[\"C\",\"D\"],\"children\":[]},{\"id\":\"Store\",\"label\":\"Store\",\"direction\":\"\",\"nodeIds\":[\"E\"],\"children\":[]},{\"id\":\"Serve\",\"label\":\"Serve\",\"direction\":\"\",\"nodeIds\":[\"F\",\"G\"],\"children\":[]},{\"id\":\"Observe\",\"label\":\"Observe\",\"direction\":\"\",\"nodeIds\":[\"H\"],\"children\":[]}]}",
+   "typed_model_sha256": "eff302707885751a2a9df0e40c4b65ef806a2e236272763bf1318e70ce6158a3",
+   "envelope": {
+    "profile": "description_config_theme",
+    "bytes": 345,
+    "sha256": "15410726e2b8d0c964ce3aacb9555f088102ed900d2fe2761d2e0c8753adaead",
+    "text": "---\ndescription:\n  Renders five sibling subgraphs (Ingest, Transform, Store, Serve, Observe)\n  chained in a top-to-bottom pipeline under the redux-color theme, checking that\n  each top-level container - including one holding a database-shaped node - gets\n  its own distinct themed background and border color.\nconfig:\n  theme: \"redux-color\"\n---\n",
+    "description_form": "plain_multiline",
+    "root_keys": [
+     "description",
+     "config"
+    ],
+    "config": {
+     "theme": "\"redux-color\""
+    },
+    "body_header": "flowchart TB",
+    "body_sha256": "cee09af46e5548776ef41c42bdfdb64f3890956f6cd6733de7623a770b8a295d"
+   },
+   "native_requirement": {
+    "exact_rejections": 4,
+    "mutations": [
+     "cylinder_to_circle",
+     "first_label_to_absent",
+     "first_edge_endpoint_to_self",
+     "extra_ink"
+    ]
+   },
+   "formal_status": "unadmitted_design_only"
+  },
+  {
+   "case_id": "original_142_redux_theme",
+   "base_authority": {
+    "adaptation": null,
+    "fixture": "flowchart/nightly-check/redux-color-subgraphs/06-should-render-nested-subgraph-containers.mmd",
+    "manifest_global_ordinal": 803,
+    "model_json": null,
+    "model_sha256": null,
+    "oracle_record_sha256": "1ad759e09f58deaa92a28bd8968b3efa806db106541b7571ee706a62070bac62",
+    "ordinal": 142,
+    "source_bytes": 570,
+    "source_git_blob": "1fa10aef28cbca6c8403dccb3a0c27bf9bfc42eb",
+    "source_sha256": "eab28e978fb364666ba430c11a4b767d8feb67a94685e5afb7716b60f2dc4a6a"
+   },
+   "source": "---\ndescription:\n  Renders a subgraph (Outer) containing two nested child subgraphs (InnerOne,\n  InnerTwo) alongside an unrelated top-level sibling subgraph (Sibling) under\n  the redux-color theme, checking that nested containers are colored distinctly\n  from their parent and from the sibling at the outer level.\nconfig:\n  theme: \"redux-color\"\n---\n\n  flowchart LR\n    subgraph Outer\n      subgraph InnerOne\n        A[one] --> B[two]\n      end\n      subgraph InnerTwo\n        C[three]\n      end\n    end\n    subgraph Sibling\n      D[four]\n    end\n    B --> C\n    C --> D\n",
+   "source_sha256": "eab28e978fb364666ba430c11a4b767d8feb67a94685e5afb7716b60f2dc4a6a",
+   "typed_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"one\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"two\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"three\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"four\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[{\"id\":\"Outer\",\"label\":\"Outer\",\"direction\":\"\",\"nodeIds\":[],\"children\":[{\"id\":\"InnerOne\",\"label\":\"InnerOne\",\"direction\":\"\",\"nodeIds\":[\"A\",\"B\"],\"children\":[]},{\"id\":\"InnerTwo\",\"label\":\"InnerTwo\",\"direction\":\"\",\"nodeIds\":[\"C\"],\"children\":[]}]},{\"id\":\"Sibling\",\"label\":\"Sibling\",\"direction\":\"\",\"nodeIds\":[\"D\"],\"children\":[]}]}",
+   "typed_model_sha256": "d4518ed30582b9485232c7e5e04c77b1a20d46e5832aabdee135893486d6e794",
+   "envelope": {
+    "profile": "description_config_theme",
+    "bytes": 349,
+    "sha256": "32bd51fddca4becb39241204cfb2c8b194d33f6096a6b2e3ef66e8f3a02acdfa",
+    "text": "---\ndescription:\n  Renders a subgraph (Outer) containing two nested child subgraphs (InnerOne,\n  InnerTwo) alongside an unrelated top-level sibling subgraph (Sibling) under\n  the redux-color theme, checking that nested containers are colored distinctly\n  from their parent and from the sibling at the outer level.\nconfig:\n  theme: \"redux-color\"\n---\n",
+    "description_form": "plain_multiline",
+    "root_keys": [
+     "description",
+     "config"
+    ],
+    "config": {
+     "theme": "\"redux-color\""
+    },
+    "body_header": "flowchart LR",
+    "body_sha256": "76088f4d148c21f8e72cfa4d60b0b1f46af7358986cb37f4e5fe2f8eb2548bfd"
+   },
+   "native_requirement": {
+    "exact_rejections": 4,
+    "mutations": [
+     "cylinder_to_circle",
+     "first_label_to_absent",
+     "first_edge_endpoint_to_self",
+     "extra_ink"
+    ]
+   },
+   "formal_status": "unadmitted_design_only"
+  },
+  {
+   "case_id": "original_145_redux_theme",
+   "base_authority": {
+    "adaptation": null,
+    "fixture": "flowchart/nightly-check/redux-color-subgraphs/09-should-render-subgraphs-subgraph-containers.mmd",
+    "manifest_global_ordinal": 806,
+    "model_json": null,
+    "model_sha256": null,
+    "oracle_record_sha256": "375dbca112f96f771c69b044a4e863fcb978f46b7e154152a179e8757e843705",
+    "ordinal": 145,
+    "source_bytes": 710,
+    "source_git_blob": "36664e1d07aae2c92e6d3e076e1c39fef8ab4f96",
+    "source_sha256": "325fc021010e8353e63bfb5ae256c059c11d7bc3edd82b7a2c0d9eae94b89cdb"
+   },
+   "source": "---\ndescription:\n  Renders five sibling subgraphs (Ingest, Transform, Store, Serve, Observe)\n  chained in a top-to-bottom pipeline under the redux-dark-color theme, checking\n  that each top-level container - including one holding a database-shaped node -\n  gets its own distinct themed background and border color on a dark background.\nconfig:\n  theme: \"redux-dark-color\"\n---\n\n  flowchart TB\n    subgraph Ingest\n      A[Fetch] --> B[Validate]\n    end\n    subgraph Transform\n      C[Normalise] --> D[Enrich]\n    end\n    subgraph Store\n      E[(Warehouse)]\n    end\n    subgraph Serve\n      F[API] --> G[Cache]\n    end\n    subgraph Observe\n      H[Metrics]\n    end\n    B --> C\n    D --> E\n    E --> F\n    F --> H\n",
+   "source_sha256": "325fc021010e8353e63bfb5ae256c059c11d7bc3edd82b7a2c0d9eae94b89cdb",
+   "typed_model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Fetch\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Validate\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"Normalise\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"Enrich\",\"shape\":\"rectangle\"}],[\"E\",{\"id\":\"E\",\"label\":\"Warehouse\",\"shape\":\"cylinder\"}],[\"F\",{\"id\":\"F\",\"label\":\"API\",\"shape\":\"rectangle\"}],[\"G\",{\"id\":\"G\",\"label\":\"Cache\",\"shape\":\"rectangle\"}],[\"H\",{\"id\":\"H\",\"label\":\"Metrics\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"F\",\"target\":\"G\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"D\",\"target\":\"E\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"E\",\"target\":\"F\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"F\",\"target\":\"H\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[{\"id\":\"Ingest\",\"label\":\"Ingest\",\"direction\":\"\",\"nodeIds\":[\"A\",\"B\"],\"children\":[]},{\"id\":\"Transform\",\"label\":\"Transform\",\"direction\":\"\",\"nodeIds\":[\"C\",\"D\"],\"children\":[]},{\"id\":\"Store\",\"label\":\"Store\",\"direction\":\"\",\"nodeIds\":[\"E\"],\"children\":[]},{\"id\":\"Serve\",\"label\":\"Serve\",\"direction\":\"\",\"nodeIds\":[\"F\",\"G\"],\"children\":[]},{\"id\":\"Observe\",\"label\":\"Observe\",\"direction\":\"\",\"nodeIds\":[\"H\"],\"children\":[]}]}",
+   "typed_model_sha256": "eff302707885751a2a9df0e40c4b65ef806a2e236272763bf1318e70ce6158a3",
+   "envelope": {
+    "profile": "description_config_theme",
+    "bytes": 376,
+    "sha256": "17012ba9ee1ac8ffdc711bb9d539771697fad1975c83334bc5a89c08959606c8",
+    "text": "---\ndescription:\n  Renders five sibling subgraphs (Ingest, Transform, Store, Serve, Observe)\n  chained in a top-to-bottom pipeline under the redux-dark-color theme, checking\n  that each top-level container - including one holding a database-shaped node -\n  gets its own distinct themed background and border color on a dark background.\nconfig:\n  theme: \"redux-dark-color\"\n---\n",
+    "description_form": "plain_multiline",
+    "root_keys": [
+     "description",
+     "config"
+    ],
+    "config": {
+     "theme": "\"redux-dark-color\""
+    },
+    "body_header": "flowchart TB",
+    "body_sha256": "cee09af46e5548776ef41c42bdfdb64f3890956f6cd6733de7623a770b8a295d"
+   },
+   "native_requirement": {
+    "exact_rejections": 4,
+    "mutations": [
+     "cylinder_to_circle",
+     "first_label_to_absent",
+     "first_edge_endpoint_to_self",
+     "extra_ink"
+    ]
+   },
+   "formal_status": "unadmitted_design_only"
+  },
+  {
+   "case_id": "original_146_redux_theme",
+   "base_authority": {
+    "adaptation": null,
+    "fixture": "flowchart/nightly-check/redux-color-subgraphs/10-should-render-nested-subgraph-containers.mmd",
+    "manifest_global_ordinal": 807,
+    "model_json": null,
+    "model_sha256": null,
+    "oracle_record_sha256": "cb9185a882bf86aa8d2cacb9b3804b927b516793abae90b07a10a754e76d94cc",
+    "ordinal": 146,
+    "source_bytes": 596,
+    "source_git_blob": "06bb354d97f8facebd18da45b1f9e0930e18f91b",
+    "source_sha256": "91e9d2e0e7a11d438a63b4781db592aaf0c9657ad4b6a129dad1b1c1701727b3"
+   },
+   "source": "---\ndescription:\n  Renders a subgraph (Outer) containing two nested child subgraphs (InnerOne,\n  InnerTwo) alongside an unrelated top-level sibling subgraph (Sibling) under\n  the redux-dark theme, checking that nested containers remain distinguishable\n  from their parent and from the sibling at the outer level against a dark\n  background.\nconfig:\n  theme: \"redux-dark\"\n---\n\n  flowchart LR\n    subgraph Outer\n      subgraph InnerOne\n        A[one] --> B[two]\n      end\n      subgraph InnerTwo\n        C[three]\n      end\n    end\n    subgraph Sibling\n      D[four]\n    end\n    B --> C\n    C --> D\n",
+   "source_sha256": "91e9d2e0e7a11d438a63b4781db592aaf0c9657ad4b6a129dad1b1c1701727b3",
+   "typed_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"one\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"two\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"three\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"four\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[{\"id\":\"Outer\",\"label\":\"Outer\",\"direction\":\"\",\"nodeIds\":[],\"children\":[{\"id\":\"InnerOne\",\"label\":\"InnerOne\",\"direction\":\"\",\"nodeIds\":[\"A\",\"B\"],\"children\":[]},{\"id\":\"InnerTwo\",\"label\":\"InnerTwo\",\"direction\":\"\",\"nodeIds\":[\"C\"],\"children\":[]}]},{\"id\":\"Sibling\",\"label\":\"Sibling\",\"direction\":\"\",\"nodeIds\":[\"D\"],\"children\":[]}]}",
+   "typed_model_sha256": "d4518ed30582b9485232c7e5e04c77b1a20d46e5832aabdee135893486d6e794",
+   "envelope": {
+    "profile": "description_config_theme",
+    "bytes": 375,
+    "sha256": "3cf166b563bf51e0a8890c3a997351021f0b6f0c39622469572c5965d04ef569",
+    "text": "---\ndescription:\n  Renders a subgraph (Outer) containing two nested child subgraphs (InnerOne,\n  InnerTwo) alongside an unrelated top-level sibling subgraph (Sibling) under\n  the redux-dark theme, checking that nested containers remain distinguishable\n  from their parent and from the sibling at the outer level against a dark\n  background.\nconfig:\n  theme: \"redux-dark\"\n---\n",
+    "description_form": "plain_multiline",
+    "root_keys": [
+     "description",
+     "config"
+    ],
+    "config": {
+     "theme": "\"redux-dark\""
+    },
+    "body_header": "flowchart LR",
+    "body_sha256": "76088f4d148c21f8e72cfa4d60b0b1f46af7358986cb37f4e5fe2f8eb2548bfd"
+   },
+   "native_requirement": {
+    "exact_rejections": 4,
+    "mutations": [
+     "cylinder_to_circle",
+     "first_label_to_absent",
+     "first_edge_endpoint_to_self",
+     "extra_ink"
+    ]
+   },
+   "formal_status": "unadmitted_design_only"
+  },
+  {
+   "case_id": "original_149_redux_theme",
+   "base_authority": {
+    "adaptation": null,
+    "fixture": "flowchart/nightly-check/redux-color-subgraphs/13-should-render-subgraphs-subgraph-containers.mmd",
+    "manifest_global_ordinal": 810,
+    "model_json": null,
+    "model_sha256": null,
+    "oracle_record_sha256": "e3ba29c41338d0fad5d0a891434a49d5e2f2e605a49bb1ee6042854a1776e84f",
+    "ordinal": 149,
+    "source_bytes": 542,
+    "source_git_blob": "5d3bedcfb01b4748b7fa17af939131ad6e929a22",
+    "source_sha256": "b4ad214f15dd1e90f3f8188d999968abc80f35c051dff166e635b225fa819b6a"
+   },
+   "source": "---\ndescription: >-\n  Five sequential subgraphs (Ingest/Transform/Store/Serve/Observe), each\n  expected to take a distinct colour slot, rendered under the \"redux-dark\"\n  theme.\nconfig:\n  theme: \"redux-dark\"\n---\nflowchart TB\n    subgraph Ingest\n      A[Fetch] --> B[Validate]\n    end\n    subgraph Transform\n      C[Normalise] --> D[Enrich]\n    end\n    subgraph Store\n      E[(Warehouse)]\n    end\n    subgraph Serve\n      F[API] --> G[Cache]\n    end\n    subgraph Observe\n      H[Metrics]\n    end\n    B --> C\n    D --> E\n    E --> F\n    F --> H\n",
+   "source_sha256": "b4ad214f15dd1e90f3f8188d999968abc80f35c051dff166e635b225fa819b6a",
+   "typed_model_json": "{\"direction\":\"TB\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"Fetch\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"Validate\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"Normalise\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"Enrich\",\"shape\":\"rectangle\"}],[\"E\",{\"id\":\"E\",\"label\":\"Warehouse\",\"shape\":\"cylinder\"}],[\"F\",{\"id\":\"F\",\"label\":\"API\",\"shape\":\"rectangle\"}],[\"G\",{\"id\":\"G\",\"label\":\"Cache\",\"shape\":\"rectangle\"}],[\"H\",{\"id\":\"H\",\"label\":\"Metrics\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"F\",\"target\":\"G\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"D\",\"target\":\"E\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"E\",\"target\":\"F\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"F\",\"target\":\"H\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[{\"id\":\"Ingest\",\"label\":\"Ingest\",\"direction\":\"\",\"nodeIds\":[\"A\",\"B\"],\"children\":[]},{\"id\":\"Transform\",\"label\":\"Transform\",\"direction\":\"\",\"nodeIds\":[\"C\",\"D\"],\"children\":[]},{\"id\":\"Store\",\"label\":\"Store\",\"direction\":\"\",\"nodeIds\":[\"E\"],\"children\":[]},{\"id\":\"Serve\",\"label\":\"Serve\",\"direction\":\"\",\"nodeIds\":[\"F\",\"G\"],\"children\":[]},{\"id\":\"Observe\",\"label\":\"Observe\",\"direction\":\"\",\"nodeIds\":[\"H\"],\"children\":[]}]}",
+   "typed_model_sha256": "eff302707885751a2a9df0e40c4b65ef806a2e236272763bf1318e70ce6158a3",
+   "envelope": {
+    "profile": "description_config_theme",
+    "bytes": 211,
+    "sha256": "7c93ec5d4c6fff6ca5bb17676ede8d6afa280181a98a647cdda129874fc90e5b",
+    "text": "---\ndescription: >-\n  Five sequential subgraphs (Ingest/Transform/Store/Serve/Observe), each\n  expected to take a distinct colour slot, rendered under the \"redux-dark\"\n  theme.\nconfig:\n  theme: \"redux-dark\"\n---\n",
+    "description_form": "folded >-",
+    "root_keys": [
+     "description",
+     "config"
+    ],
+    "config": {
+     "theme": "\"redux-dark\""
+    },
+    "body_header": "flowchart TB",
+    "body_sha256": "c0dee8c59ffc58e3a3d92f388c1a894aa8ad080c91ab36cf36414188a8aa5f5a"
+   },
+   "native_requirement": {
+    "exact_rejections": 4,
+    "mutations": [
+     "cylinder_to_circle",
+     "first_label_to_absent",
+     "first_edge_endpoint_to_self",
+     "extra_ink"
+    ]
+   },
+   "formal_status": "unadmitted_design_only"
+  },
+  {
+   "case_id": "original_150_redux_theme",
+   "base_authority": {
+    "adaptation": null,
+    "fixture": "flowchart/nightly-check/redux-color-subgraphs/14-should-render-nested-subgraph-containers.mmd",
+    "manifest_global_ordinal": 811,
+    "model_json": null,
+    "model_sha256": null,
+    "oracle_record_sha256": "24b631770f6f0294423872b496afe7909b49a1702a2da6641a3654cbde5298bb",
+    "ordinal": 150,
+    "source_bytes": 603,
+    "source_git_blob": "556069baee739427da5da557f2bf036a7b629199",
+    "source_sha256": "6a8cd7ab3bcbbdbf0e5690864ad42de432dded4b9610b4978af040f1d36e01ea"
+   },
+   "source": "---\ndescription:\n  Renders a subgraph (Outer) containing two nested child subgraphs (InnerOne,\n  InnerTwo) alongside an unrelated top-level sibling subgraph (Sibling) under\n  the redux-dark-color theme, checking that nested containers are colored\n  distinctly from their parent and from the sibling at the outer level on a dark\n  background.\nconfig:\n  theme: \"redux-dark-color\"\n---\n\n  flowchart LR\n    subgraph Outer\n      subgraph InnerOne\n        A[one] --> B[two]\n      end\n      subgraph InnerTwo\n        C[three]\n      end\n    end\n    subgraph Sibling\n      D[four]\n    end\n    B --> C\n    C --> D\n",
+   "source_sha256": "6a8cd7ab3bcbbdbf0e5690864ad42de432dded4b9610b4978af040f1d36e01ea",
+   "typed_model_json": "{\"direction\":\"LR\",\"nodes\":[[\"A\",{\"id\":\"A\",\"label\":\"one\",\"shape\":\"rectangle\"}],[\"B\",{\"id\":\"B\",\"label\":\"two\",\"shape\":\"rectangle\"}],[\"C\",{\"id\":\"C\",\"label\":\"three\",\"shape\":\"rectangle\"}],[\"D\",{\"id\":\"D\",\"label\":\"four\",\"shape\":\"rectangle\"}]],\"edges\":[{\"source\":\"A\",\"target\":\"B\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"B\",\"target\":\"C\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true},{\"source\":\"C\",\"target\":\"D\",\"label\":\"\",\"style\":\"solid\",\"hasArrowStart\":false,\"hasArrowEnd\":true}],\"subgraphs\":[{\"id\":\"Outer\",\"label\":\"Outer\",\"direction\":\"\",\"nodeIds\":[],\"children\":[{\"id\":\"InnerOne\",\"label\":\"InnerOne\",\"direction\":\"\",\"nodeIds\":[\"A\",\"B\"],\"children\":[]},{\"id\":\"InnerTwo\",\"label\":\"InnerTwo\",\"direction\":\"\",\"nodeIds\":[\"C\"],\"children\":[]}]},{\"id\":\"Sibling\",\"label\":\"Sibling\",\"direction\":\"\",\"nodeIds\":[\"D\"],\"children\":[]}]}",
+   "typed_model_sha256": "d4518ed30582b9485232c7e5e04c77b1a20d46e5832aabdee135893486d6e794",
+   "envelope": {
+    "profile": "description_config_theme",
+    "bytes": 382,
+    "sha256": "df5f34004e760fe65f6edfd3d4b6d168d3b9aec38b7d37c8f0cef2da45dedef7",
+    "text": "---\ndescription:\n  Renders a subgraph (Outer) containing two nested child subgraphs (InnerOne,\n  InnerTwo) alongside an unrelated top-level sibling subgraph (Sibling) under\n  the redux-dark-color theme, checking that nested containers are colored\n  distinctly from their parent and from the sibling at the outer level on a dark\n  background.\nconfig:\n  theme: \"redux-dark-color\"\n---\n",
+    "description_form": "plain_multiline",
+    "root_keys": [
+     "description",
+     "config"
+    ],
+    "config": {
+     "theme": "\"redux-dark-color\""
+    },
+    "body_header": "flowchart LR",
+    "body_sha256": "76088f4d148c21f8e72cfa4d60b0b1f46af7358986cb37f4e5fe2f8eb2548bfd"
+   },
+   "native_requirement": {
+    "exact_rejections": 4,
+    "mutations": [
+     "cylinder_to_circle",
+     "first_label_to_absent",
+     "first_edge_endpoint_to_self",
+     "extra_ink"
+    ]
+   },
+   "formal_status": "unadmitted_design_only"
+  }
+ ]
+}

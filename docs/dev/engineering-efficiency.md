@@ -2879,3 +2879,12 @@ three REQUEST-CHANGES rounds before APPROVE; contract lens: one) and the
     apparently "dense git layout" problem into a bounded-envelope slice
     (eight rows, no grammar change). Any future row whose failure reason is
     generic should get the same probe before any layout work.
+
+18. **A proposal's excluded case is not a product verdict.** The Shapes4
+    proposal fixture marks its bang/cloud scene without
+    `terminal_projection_sha256`, and the Shapes4 consumer test skips such
+    cases with a comment saying the shape "remains excluded". Reading that as
+    a product statement would have kept the row fallback forever; the roster
+    (the live census) still listed it, and the real blocker was two grammar
+    tokens. Derive "is this row blocked?" from the live matrix/roster and the
+    renderer path, never from a proposal fixture's omissions.

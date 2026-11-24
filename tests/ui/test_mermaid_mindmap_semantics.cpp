@@ -273,7 +273,8 @@ TEST(MermaidMindmap10, UnsupportedGrammarAndResourceBoundariesKeepWholeSource) {
         "---\ndescription: good\ndescription: duplicate\n---\nmindmap\nroot\n",
         "---\ndescription: |\n  literal\n---\nmindmap\nroot\n",
         "mindmap\nroot[bad  spacing]\n",
-        "mindmap\nroot[box]\n child{{hex}}\n",
+        "mindmap\nroot[box]\n child{{hex}]\n",
+        "mindmap\nroot[box]\n child\n  {{hex}}\n",
         "mindmap\nroot\rbroken\n",
         "mindmap\nroot\n  <b>html</b>\n",
         "mindmap\nroot\n  `markdown`\n",
@@ -559,7 +560,7 @@ TEST(MermaidMindmapShapes4, OrdinaryControlKeepsCallerSourceHighlighting) {
     // An ordinary non-diagram alias preserves that source rendering; plain text
     // is not its foreground-equivalent control. Keep Original10 captures intact.
     const std::string source =
-        "---\ndescription: while preserving complete source\n---\nmindmap\nroot{{unsupported}}\n";
+        "---\ndescription: while preserving complete source\n---\nmindmap\nroot{{unsupported}]\n";
     mm::Work work;
     const auto frames = observe(source, work, "mermaid-source");
     lifecycle(frames);
@@ -757,7 +758,7 @@ TEST(MermaidMindmapShapes4, BoundsAndUnsupportedFramingKeepWholeSource) {
                                    "mindmap\nnode0(\n caption\n extra line\n )\n",
                                    "mindmap\nnode0((\n caption\n )\n",
                                    "mindmap\nnode0[\n caption\n ))\n",
-                                   "mindmap\nnode0(\n caption\n )\n ::icon(mdi:fire)\n",
+                                   "mindmap\nnode0(\n caption\n )\n ::icon()\n",
                                    "mindmap\nnode0(" + std::string(257, 'x') + ")\n",
                                    "mindmap\nnode0(" + std::string(1025, 'x') + ")\n"};
     // A valid 16-level tree still obeys the one remaining production budget.

@@ -156,17 +156,48 @@ std::optional<MindmapEnvelope> mindmap_body(std::string_view source, Work& work)
     return MindmapEnvelope{envelope->raw_body, config_seen};
 }
 
-// D-439: the admitted `config.layout: tidy-tree` leaf is inert for the native
-// projection. Disclose it on the canonical footer; a config-free source keeps
-// its frame byte-identical.
-bool mindmap_append_layout_notice(std::vector<std::string>& rows, bool tidy_tree, Work& work) {
-    if (!tidy_tree) return true;
-    static constexpr std::string_view kNotice =
-        "config.layout=tidy-tree -> external layout engine; not applied";
-    if (rows.size() >= 512u || !work.spend(256 + kNotice.size())) return false;
+// D-439/D-464: canonical disclosures for admitted-but-inert constructs. A
+// source that carries none keeps its frame byte-identical (no footer). Order
+// is fixed: layout, then shapes (bang, cloud, hex), then icons.
+struct MindmapNotices {
+    bool tidy_tree = false;
+    bool bang = false;
+    bool cloud = false;
+    bool hex = false;
+    bool icons = false;
+};
+
+struct MindmapNoticeRule {
+    bool MindmapNotices::*flag;
+    std::string_view text;
+};
+
+constexpr std::array<MindmapNoticeRule, 5> kMindmapNoticeRules{{
+    {&MindmapNotices::tidy_tree,
+     "config.layout=tidy-tree -> external layout engine; not applied"},
+    {&MindmapNotices::bang, "shape bang -> square frame; not applied"},
+    {&MindmapNotices::cloud, "shape cloud -> rounded frame; not applied"},
+    {&MindmapNotices::hex, "shape hex -> square frame; not applied"},
+    {&MindmapNotices::icons, "::icon annotations -> icon glyph; not applied"},
+}};
+
+bool mindmap_append_notices(std::vector<std::string>& rows, const MindmapNotices& flags,
+                            Work& work) {
+    std::array<std::string_view, kMindmapNoticeRules.size()> notices{};
+    std::size_t size = 0;
+    std::size_t extra = 256;
+    for (const auto& rule : kMindmapNoticeRules) {
+        if (!(flags.*rule.flag)) continue;
+        notices[size++] = rule.text;
+        extra += rule.text.size();
+    }
+    if (size == 0) return true;
+    // Preserve the pre-D-464 row guard exactly (a 510/511-row frame that drew
+    // before still draws); the notice rows are covered by the spend below.
+    if (rows.size() >= 512u || !work.spend(extra)) return false;
     rows.push_back(std::string{});
     rows.push_back("Mindmap native projection v1");
-    rows.push_back(std::string{kNotice});
+    for (std::size_t i = 0; i < size; ++i) rows.push_back(std::string{notices[i]});
     return true;
 }
 
@@ -425,12 +456,33 @@ std::optional<std::vector<std::string>> mindmap_original_layout(std::string_view
     if (!work.spend(output_bytes)) return {};
     auto result = canvas.lines();
     if (result.empty()) return {};
-    if (!mindmap_append_layout_notice(result, envelope->tidy_tree, work)) return {};
+    if (!mindmap_append_notices(result, MindmapNotices{.tidy_tree = envelope->tidy_tree},
+                                work))
+        return {};
     return result;
 }
 
 namespace {
-enum class MindmapShape { Default, Square, Rounded, Circle };
+enum class MindmapShape { Default, Square, Rounded, Circle, Bang, Cloud, Hex };
+
+// The shape delimiters this grammar admits. Bang and cloud open with a closing
+// bracket and close with an opening one, exactly as upstream spells them.
+struct ShapeToken {
+    std::string_view open;
+    std::string_view close;
+    MindmapShape shape;
+};
+
+// Longest opener first: `((`/`))`/`{{` before their one-character prefixes.
+std::optional<ShapeToken> mindmap_shape_token(std::string_view value) {
+    if (value.starts_with("((")) return ShapeToken{"((", "))", MindmapShape::Circle};
+    if (value.starts_with("{{")) return ShapeToken{"{{", "}}", MindmapShape::Hex};
+    if (value.starts_with("))")) return ShapeToken{"))", "((", MindmapShape::Bang};
+    if (value.starts_with('(')) return ShapeToken{"(", ")", MindmapShape::Rounded};
+    if (value.starts_with('[')) return ShapeToken{"[", "]", MindmapShape::Square};
+    if (value.starts_with(')')) return ShapeToken{")", "(", MindmapShape::Cloud};
+    return std::nullopt;
+}
 
 struct ShapedSpan {
     std::string_view raw, caption;
@@ -468,34 +520,43 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
     std::array<int, 16> indents{}, ancestors{};
     std::size_t count = 0, label_bytes = 0;
     int levels = 0;
-    bool shaped = false;
+    bool shaped = false, saw_icon = false, saw_bang = false, saw_cloud = false, saw_hex = false;
     while (mindmap_line(body, at, line)) {
         const auto leading = line.find_first_not_of(' ');
         if (leading == std::string_view::npos) continue;
         if (count == spans.size() || !work.spend(32)) return {};
         const int indent = static_cast<int>(leading);
         const auto declaration = line.substr(leading);
+        // D-464: an `::icon(...)` annotation attaches to the preceding node.
+        // The projection never draws an icon, so the directive is validated,
+        // dropped and disclosed; it creates no node and does not touch the
+        // indentation stack.
+        if (declaration.starts_with("::icon(")) {
+            const auto body_start = std::string_view{"::icon("}.size();
+            if (count == 0 || !declaration.ends_with(')') ||
+                declaration.size() <= body_start + 1u || !work.spend(declaration.size() + 16u))
+                return {};
+            const auto payload =
+                declaration.substr(body_start, declaration.size() - body_start - 1u);
+            if (payload.size() > 64u || payload.front() == ' ' || payload.back() == ' ' ||
+                payload.find_first_of("()") != std::string_view::npos ||
+                !unicode_text(payload))
+                return {};
+            saw_icon = true;
+            continue;
+        }
         auto raw = declaration, caption = declaration;
         auto shape = MindmapShape::Default;
-        const auto opening = declaration.find_first_of("[(");
+        const auto opening = declaration.find_first_of("[({)");
         if (opening != std::string_view::npos) {
-            if (!mindmap_id(declaration.substr(0, opening))) return {};
+            const auto token = mindmap_shape_token(declaration.substr(opening));
+            if (!token) return {};
+            const auto id = declaration.substr(0, opening);
+            // An id may be omitted only on the anonymous root shorthand.
+            if (id.empty() ? count != 0 : !mindmap_id(id)) return {};
+            shape = token->shape;
             auto value = declaration.substr(opening);
-            std::string_view begin, end;
-            if (value.starts_with("((")) {
-                begin = "((";
-                end = "))";
-                shape = MindmapShape::Circle;
-            } else if (value.starts_with('(')) {
-                begin = "(";
-                end = ")";
-                shape = MindmapShape::Rounded;
-            } else {
-                begin = "[";
-                end = "]";
-                shape = MindmapShape::Square;
-            }
-            value.remove_prefix(begin.size());
+            value.remove_prefix(token->open.size());
             if (value.empty()) {
                 // Keep the entire authored description, including CRLF/indent,
                 // separate from its one nonempty terminal caption line.
@@ -506,17 +567,21 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
                 const auto text_start = payload.find_first_not_of(' ');
                 const auto close_start = closing.find_first_not_of(' ');
                 if (text_start == std::string_view::npos || close_start == std::string_view::npos ||
-                    closing.substr(close_start) != end)
+                    closing.substr(close_start) != token->close)
                     return {};
                 const auto* raw_end = closing.data() + close_start;
                 raw = std::string_view(raw_start, static_cast<std::size_t>(raw_end - raw_start));
                 caption = payload.substr(text_start);
             } else {
-                if (!value.ends_with(end) || value.size() <= end.size()) return {};
-                raw = value.substr(0, value.size() - end.size());
+                if (!value.ends_with(token->close) || value.size() <= token->close.size())
+                    return {};
+                raw = value.substr(0, value.size() - token->close.size());
                 caption = raw;
             }
             shaped = true;
+            saw_bang = saw_bang || shape == MindmapShape::Bang;
+            saw_cloud = saw_cloud || shape == MindmapShape::Cloud;
+            saw_hex = saw_hex || shape == MindmapShape::Hex;
         }
         if (raw.empty() || raw.size() > 1024 || caption.empty() ||
             !mindmap_add(label_bytes, raw.size()))
@@ -650,7 +715,10 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
             for (int y = t + 2; y <= b - 2; ++y)
                 if (!put(l, y, "│") || !put(r, y, "│")) return {};
         } else {
-            const bool rounded = shape == MindmapShape::Rounded;
+            // D-464: bang and hex have no dedicated cell frame; the closest
+            // admitted frame is drawn and the substitution is disclosed.
+            const bool rounded =
+                shape == MindmapShape::Rounded || shape == MindmapShape::Cloud;
             if (!put(l, t, rounded ? "╭" : "┌") || !put(r, t, rounded ? "╮" : "┐") ||
                 !put(l, b, rounded ? "╰" : "└") || !put(r, b, rounded ? "╯" : "┘"))
                 return {};
@@ -690,7 +758,15 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
     if (!work.spend(output_bytes)) return {};
     auto result = canvas.lines();
     if (result.empty()) return {};
-    if (!mindmap_append_layout_notice(result, envelope->tidy_tree, work)) return {};
+    if (!mindmap_append_notices(
+            result,
+            MindmapNotices{.tidy_tree = envelope->tidy_tree,
+                           .bang = saw_bang,
+                           .cloud = saw_cloud,
+                           .hex = saw_hex,
+                           .icons = saw_icon},
+            work))
+        return {};
     return result;
 }
 }  // namespace

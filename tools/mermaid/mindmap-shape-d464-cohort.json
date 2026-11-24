@@ -1,0 +1,148 @@
+{
+  "schema": "loom_mermaid_mindmap_shape_d464_cohort/v1",
+  "decision": "D-464",
+  "stage": "mindmap shape vocabulary and ::icon annotations",
+  "admission": {
+    "mechanism": "the shaped tree parser admits `((`, `(`, `[`, `{{`, `))` and `)` delimiters with an optional node id (the id may be omitted only on the anonymous root shorthand) and skips validated `::icon(...)` lines",
+    "mapping": "bang and hex draw the square frame, cloud draws the rounded frame, and an icon is never drawn; every substitution is disclosed",
+    "scope": "the mindmap shaped-tree layout only; the original projection and every other family are untouched"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the five mindmap originals still in the fallback roster whose body parses once the wider shape vocabulary and the icon annotation lines are admitted",
+    "cohort_digest": "f555790038d0b2d4fbf8566ce01fe67a226da114532831f107d21ac1941d9f39"
+  },
+  "counts": {
+    "total": 5,
+    "by_family": {
+      "mindmap": 5
+    }
+  },
+  "review": {
+    "reviewer_agent": "one independent read-only adversarial review (task a4182dd596fc94a4e); round 1 REQUEST-CHANGES on the stale drawn_at_240 arithmetic, a pre-migration gates log cited as evidence, stale-linked D439/D444 binaries, ungated icon-payload rejection branches, the unasserted notice order and a row-guard tightening; all fixed and re-verified",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "Five mindmap originals were blocked only by the wider shape vocabulary and the icon annotation. The substitutions are disclosed; no geometry or syntax is invented."
+  },
+  "rows": [
+    {
+      "path": "mindmap/pr-check/4-tidy-tree-should-render-a-mindmap-with-children.mmd",
+      "family": "mindmap",
+      "sha256": "4f213e279f2e9d57d37cbf9998152435ac21d0864988af6340b20bfa94ef6ab7",
+      "manifest_sha256": "4f213e279f2e9d57d37cbf9998152435ac21d0864988af6340b20bfa94ef6ab7",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "config.layout=tidy-tree -> external layout engine; not applied"
+      ],
+      "expected_captions": [
+        "This is a mindmap",
+        "grandchild 6"
+      ],
+      "ledger_note": "shape/icon grammar only; every substituted surface is disclosed on the canonical footer"
+    },
+    {
+      "path": "mindmap/nightly-check/bang-and-cloud-shape.mmd",
+      "family": "mindmap",
+      "sha256": "a841ad433e2a9ae8c854106442b2b0155c4113585795812ab9d6f0d2ac72640b",
+      "manifest_sha256": "a841ad433e2a9ae8c854106442b2b0155c4113585795812ab9d6f0d2ac72640b",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "shape bang -> square frame; not applied",
+        "shape cloud -> rounded frame; not applied"
+      ],
+      "expected_captions": [
+        "Another bang",
+        "A cloud"
+      ],
+      "ledger_note": "shape/icon grammar only; every substituted surface is disclosed on the canonical footer"
+    },
+    {
+      "path": "mindmap/nightly-check/bang-and-cloud-shape-with-icons.mmd",
+      "family": "mindmap",
+      "sha256": "22d9aaa541c1fff34115ab4663285787593d26fd6bc9dc00108194ad45278bdb",
+      "manifest_sha256": "22d9aaa541c1fff34115ab4663285787593d26fd6bc9dc00108194ad45278bdb",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "shape bang -> square frame; not applied",
+        "shape cloud -> rounded frame; not applied"
+      ],
+      "expected_captions": [
+        "Another bang",
+        "A cloud"
+      ],
+      "ledger_note": "shape/icon grammar only; every substituted surface is disclosed on the canonical footer"
+    },
+    {
+      "path": "mindmap/nightly-check/a-root-with-an-icon.mmd",
+      "family": "mindmap",
+      "sha256": "591dc08383518699f8c5794817f9a95155e77114e71643a6693cf51331a8a86c",
+      "manifest_sha256": "591dc08383518699f8c5794817f9a95155e77114e71643a6693cf51331a8a86c",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "::icon annotations -> icon glyph; not applied"
+      ],
+      "expected_captions": [
+        "root"
+      ],
+      "ledger_note": "shape/icon grammar only; every substituted surface is disclosed on the canonical footer"
+    },
+    {
+      "path": "mindmap/nightly-check/all-shapes-with-mdi-fire-icon.mmd",
+      "family": "mindmap",
+      "sha256": "62fe762a3e110621c39162e075dbf6b9c59e0083aeeea2346b048425b31aca4e",
+      "manifest_sha256": "62fe762a3e110621c39162e075dbf6b9c59e0083aeeea2346b048425b31aca4e",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "shape bang -> square frame; not applied",
+        "shape cloud -> rounded frame; not applied",
+        "shape hex -> square frame; not applied",
+        "::icon annotations -> icon glyph; not applied"
+      ],
+      "expected_captions": [
+        "MindMap",
+        "I am a square",
+        "I am a rounded square",
+        "I am a circle",
+        "I am a bang",
+        "I am a cloud",
+        "I am a hexagon",
+        "I am the default shape"
+      ],
+      "ledger_note": "shape/icon grammar only; every substituted surface is disclosed on the canonical footer"
+    }
+  ]
+}

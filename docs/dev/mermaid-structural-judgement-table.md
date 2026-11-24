@@ -40,8 +40,8 @@ identified, sized change, **D** = dispatch/authorization gap.
 Totals over the eight categories (252 rows): **C 219 / S 11 / I 5 / D 17**
 (63+36+34+30+28+28+17+16 = 252; C = 55+34+34+28+27+25+16, S = 8+1+2,
 I = 1+1+3, D = 17). The remaining 124 rows of the 376 baseline sit below the
-eight largest categories; the live roster is 368 after D-463's eight
-admissions.
+eight largest categories; the live roster is 363 after D-463's eight and
+D-464's five admissions.
 
 ## Implementable-now block (evidence: budget / config probes)
 
@@ -69,8 +69,9 @@ admissions.
   contract, so the budget is a second blocker, not the operative one.
 - `family_residual:xychart` 10: 3 label-rotation rows are the frozen xychart
   rotation debt; the point-label rows need a definition-domain decision.
-- `family_residual:mindmap` 7: shapes (`))`, `)`, `{{ }}`), `::icon` glyphs,
-  `layout: tidy-tree` and backtick labels — renderer features, not contracts.
+- `family_residual:mindmap` 2 (after D-464's five shape/`::icon` rows):
+  markdown-string labels (backticks with inline bold/italic and a line break)
+  and an HTML-entity line break — renderer features, not contracts.
 - `family_residual:git` 11 (after D-463's 8): label rotation/horizontal
   orientation and >8 branches with variable overrides — rotation is
   structurally inexpressible; the variable-override rows need the override

@@ -6053,3 +6053,39 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Paired negatives.** Malformed git sources still fail closed
   (`merge nonexistent`, a bare `branch`), so the envelope cannot admit a
   graph the grammar rejected.
+
+## D-464 — mindmap shape vocabulary and `::icon` annotations (2026-11-24)
+
+- **Problem.** Five mindmap originals were the shaped-tree parser's leftovers.
+  Four used shape delimiters the grammar did not tokenize — bang
+  (`))text((`), cloud (`)text(`), hex (`{{text}}`) — or the anonymous root
+  shorthand (`((text))`); one attached an `::icon(...)` annotation line.
+- **Mechanism.** The shaped span parser now recognizes six delimiters with an
+  optional node id (two-character openers first: `((` before `(`, `))` before
+  `)`), permits an empty id only on the anonymous root shorthand, and skips a
+  validated `::icon(...)` line (payload non-empty, at most 64 bytes, no
+  parentheses, no edge spaces) that requires a preceding node.
+- **Projection.** A cell grid has no bang/cloud/hex stroke and no icon glyph.
+  Bang and hex draw the square frame, cloud the rounded frame, and no icon is
+  drawn; the substitution is disclosed on the canonical footer in a fixed
+  order (layout, bang, cloud, hex, icons). A source carrying none of these
+  constructs keeps its frame byte-identical — that is what preserves the
+  existing Original10 and Shapes4 frames.
+- **Boundary.** Bang and cloud open with `)`, so the tokenizer tries the
+  two-character openers first; a caption containing any delimiter
+  character was already rejected by `mindmap_plain`, so no once-drawn row can
+  change classification. Icon lines never touch the indentation stack.
+- **Ledger.** `tools/mermaid/mindmap-shape-d464-cohort.json` (5 rows) with the
+  generator, the cohort gate `test_mermaid_mindmap_shape_d464_cohort`, the
+  matrix branch + rule-38 reach proof, and the generator `--check` ctest.
+- **Measured result.** 1782 drawn / 363 fallback / 0 error, `drawn_at_240`
+  1596, roster 363 rows / 26 categories, `family_residual:mindmap` 7 -> 2,
+  mindmap family fallback/drawn 16/17 -> 11/22. All five rows keep whole source at 40 because
+  the disclosure footer is wider than the fence.
+- **Paired negatives.** An empty icon payload, an icon before any node, a
+  mismatched close, a non-root anonymous shorthand, an invalid id and an
+  icon-only document all keep whole source.
+- **Remaining mindmap debt.** The last two body rows need markdown-string
+  labels (backtick spans carrying inline bold/italic and an explicit line
+  break) and an HTML-entity line break; both are renderer features, not
+  contract questions.

@@ -6821,6 +6821,35 @@ const JourneyCohortEntry* d463_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-464: the five mindmap originals admitted by the wider shape vocabulary
+// (bang, cloud, hex, anonymous root shorthand) and `::icon(...)` annotation
+// lines. Per-row gate: test_mermaid_mindmap_shape_d464_cohort.
+const std::map<std::string, JourneyCohortEntry>& d464_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path =
+            kRoot / "../../../tools/mermaid/mindmap-shape-d464-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-464 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-464 cohort ledger must be approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* d464_cohort_row(std::string_view path) {
+    const auto& rows = d464_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-440 flowchart closed-theme cohort: the one non-contract `flowchart`-header
 // original whose only non-admitted input is an inert `config.theme: forest`
 // leaf (every `flowchart/` fixture belongs to the frozen Flow400 contract).
@@ -12740,6 +12769,32 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // D-464: the five mindmap originals draw through the wider shape
+            // vocabulary and `::icon` annotation grammar. The post-loop reach
+            // proof asserts every ledger row is observed here (rule 38).
+            if (class_path.is_str()) {
+                const auto* cohort = d464_cohort_row(class_path.as_str());
+                if (cohort) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "mindmap";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-464 mindmap shape and icon cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // D-462: the two composite originals draw once the derived scope
             // width accounts for an internal caption. This branch precedes the
             // E2b ledger (both rows were its former routing-debt members) and
@@ -14282,6 +14337,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d463 == expected_d463,
                     "D-463 branch reach set must equal its ledger");
+        }
+
+        // D-464 rule-38 reach proof: every mindmap shape ledger row must be
+        // observed through its own branch, and the branch must not match
+        // anything else.
+        {
+            const auto ledger_d464 = json::parse(
+                read_file(kRoot / "../../../tools/mermaid/mindmap-shape-d464-cohort.json"));
+            require(ledger_d464.has_value(), "D-464 cohort ledger must parse");
+            std::set<std::string> expected_d464;
+            ledger_d464->root().get("rows").iter([&](const JsonVal row) {
+                expected_d464.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d464;
+            for (const auto& row : observations) {
+                if (row.track == "original" && row.reason == "D-464 mindmap shape and icon cohort")
+                    reached_d464.insert(row.path);
+            }
+            require(reached_d464 == expected_d464,
+                    "D-464 branch reach set must equal its ledger");
         }
 
         // D-462 rule-38 reach proof: every scope-caption ledger row must be

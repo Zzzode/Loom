@@ -6,8 +6,8 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1777 drawn /
-368 source_fallback / 0 error at 240 wide**, after D-463 (`local`,
+**Current totals (the last row of the history table below): 1782 drawn /
+363 source_fallback / 0 error at 240 wide**, after D-464 (`local`,
 2026-11-24). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
@@ -100,9 +100,10 @@ are not whole-original errors).
 | After D-461 stage 4 `info` directive version panel (3 rows) | 2026-11-24 | local | 1767 | 378 | 0 |
 | After D-462 derived state scope caption width (2 rows) | 2026-11-24 | local | 1769 | 376 | 0 |
 | After D-463 bounded git Work envelope (8 rows) | 2026-11-24 | local | 1777 | 368 | 0 |
+| After D-464 mindmap shape and `::icon` grammar (5 rows) | 2026-11-24 | local | 1782 | 363 | 0 |
 
 The formal counters behind the newest row: `original_drawing_coverage.drawn_at_240`
-= 1591 (1559 + 19 + 3 + 2 + 8) and `mandatory_gaps` = 48 (frozen; the 48
+= 1596 (1559 + 19 + 3 + 2 + 8 + 5) and `mandatory_gaps` = 48 (frozen; the 48
 body-diagnostic errors are unchanged).
 
 Row-level detail for the newest rows:
@@ -186,6 +187,17 @@ Row-level detail for the newest rows:
   Their whole renders need 1.79M-3.58M Work; a bounded canvas-derived git
   envelope (`w*h*768 + 65536`) funds them. Listed in
   `tools/mermaid/git-envelope-d463-cohort.json`.
+- **D-464 (5)**: the five mindmap originals whose only unadmitted input was
+  the wider shape vocabulary (bang `))text((`, cloud `)text(`, hex `{{text}}`,
+  anonymous root `((text))`) or an `::icon(...)` annotation line. Bang and hex
+  draw the square frame, cloud the rounded frame, and icon glyphs are never
+  drawn; each substitution is disclosed on the canonical footer in a fixed
+  order (layout, bang, cloud, hex, icons). Every source carrying none of these
+  constructs keeps its frame byte-identical. All five rows keep whole source
+  at 40 because the footer is wider than the fence. Listed in
+  `tools/mermaid/mindmap-shape-d464-cohort.json`. The remaining two mindmap
+  rows need markdown-string labels (backticks with inline bold/italic) and
+  HTML-entity line breaks.
 - **D-460 (15)**: every remaining er-diagram original whose only non-admitted
   input is the closed ER style surface —
   `er-diagram/visual-check/entities-with-styles-applied-from-class-statement-
@@ -268,7 +280,7 @@ stage-4 reconciliation (`state-diagram-v2` 2/101 -> 1/102 and the Total
 | quadrant-chart | 0 | 14 | renderer added 2026-11-13; D-450 (2026-11-23) admits the 5 leading closed `%%{init}%%` tuning/theme rows; D-457 (2026-11-24) admits the last 2 body-style rows (`classDef`, `:::class` point suffixes and the closed inline point-style suffix, validated, dropped and disclosed with a style-stripped twin), so the family is closed at 14 originals; live census 14/0/0 from 14 |
 | ishikawa | 0 | 13 | renderer added 2026-11-13; RFC 0043 (2026-11-22) admits the forest/dark theme rows through a closed two-value table with a disclosure footer (both body-identical to `pr-check/1`); RFC 0046 admits the 3 `config.ishikawa.*` tuning rows through the closed namespace (1 corpus twin, 2 synthetic); only the handdrawn-look row stays source; live census 12/1/0 from 13; live census 13/0/0 (D-459 matrix reconciliation; the slice prose above is historical) |
 | kanban | 0 | 11 | renderer added 2026-11-13; all eleven originals clean (description-only frontmatter; cards with optional @{...} structural metadata, no color contract) |
-| mindmap | 16 | 17 | |
+| mindmap | 11 | 22 | D-464 (2026-11-24) admits five shape/`::icon` rows (bang, cloud, hex, anonymous root shorthand, icon annotations, all disclosed); the 11 remaining are htmllabels 1, look_neo 7, multiline-label 1 and the two markdown/HTML-entity body rows |
 | venn | 0 | 21 | renderer added 2026-11-12; RFC 0043 (2026-11-22) admits the dark/redux-color/redux-dark-color theme rows through a closed three-value table (the redux pair body-identical to `pr-check/16`, `dark` synthetic); 3 look/handDrawnSeed frontmatter rows and 4 body style/classDef rows stay source; live census 14/7/0 from 21; live census 21/0/0 (D-459 matrix reconciliation; the slice prose above is historical); measured narrow_40 is 0/3 |
 | wardley | 0 | 10 | renderer added 2026-11-13 (verbatim outline, no map canvas/colour); D-437 (2026-11-23) admits the four `config.theme` rows through the closed palette table and accepts the upstream column-0 body spelling (theme inert and disclosed, art equals the config-stripped twin); family closed at wide 240; live census 10/0/0 from 10 |
 | railroad | 0 | 9 | renderer added 2026-11-13; first multi-dialect family (railroad-beta IR + abnf/ebnf/peg-beta); RFC 0043 (2026-11-22) admits the single dark-theme row through a closed one-value table (synthetic twin), so no frontmatter-gated row remains; live census 9/0/0 from 9; measured narrow_40 is 0/1; only non-ASCII byte is in one frontmatter description |
@@ -282,7 +294,7 @@ stage-4 reconciliation (`state-diagram-v2` 2/101 -> 1/102 and the Total
 | info | 0 | 2 | renderer added 2026-11-24 (D-461 stage 4): the fixed upstream version panel; both originals draw at 240 and 40; live census 2/0/0 from 2 |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **368** | **1777** | |
+| **Total** | **363** | **1782** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 

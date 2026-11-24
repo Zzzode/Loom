@@ -230,14 +230,17 @@ TEST(MermaidMindmapTidyD439Cohort, ClosedLayoutNegativesStayWholeSource) {
         EXPECT_FALSE(native_frame(source, kWide)) << tail;
     }
     // The config block must follow the description, and the body grammar is
-    // unchanged: icons and the anonymous root shorthand stay whole-source.
+    // unchanged: a malformed icon and an anonymous shorthand outside the root
+    // stay whole-source (D-464 admits the well-formed icon line and the
+    // anonymous root itself).
     EXPECT_FALSE(draws("---\nconfig:\n  layout: tidy-tree\ndescription: >-\n  probe\n---\n" +
                            std::string(kBody),
                        kWide));
     EXPECT_FALSE(draws(probe("config:\n  layout: tidy-tree\n",
-                             "mindmap\n  root((probe))\n    A\n      ::icon(fa fa-book)\n"),
+                             "mindmap\n  root((probe))\n    A\n      ::icon()\n"),
                        kWide));
-    EXPECT_FALSE(draws(probe("config:\n  layout: tidy-tree\n", "mindmap\n  ((probe))\n    A\n"),
+    EXPECT_FALSE(draws(probe("config:\n  layout: tidy-tree\n",
+                             "mindmap\n  root((probe))\n    ((probe))\n"),
                        kWide));
     // A config-free mindmap keeps no disclosure footer.
     EXPECT_EQ(capture("mindmap\n  root((probe))\n    A\n", "mermaid", kWide)

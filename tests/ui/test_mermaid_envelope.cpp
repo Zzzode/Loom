@@ -752,6 +752,46 @@ TEST(MermaidEnvelopeWork, BoundaryPositionIndependentOfFeeDecomposition) {
     EXPECT_FALSE(b.spend(1));
 }
 
+// D-461: the native state projection draws a second bounded envelope derived
+// from the actual post-prepare canvas. These pin the formula's two measured
+// points and the split/fail-closed semantics; the corpus rows that actually
+// need it are pinned by the state cohort gate.
+TEST(MermaidEnvelopeWork, StateEnvelopeIsCanvasDerivedAndFailsClosed) {
+    using loom::ui::mermaid::testing::state_envelope_layout_allowance;
+    EXPECT_EQ(state_envelope_layout_allowance(64u, 134u), 1'650'688u);
+    EXPECT_EQ(state_envelope_layout_allowance(99u, 267u), 5'079'232u);
+    const auto allowance = state_envelope_layout_allowance(64u, 134u);
+    Work work;
+    EXPECT_FALSE(work.envelope_enabled);
+    work.enable_envelope(allowance);
+    EXPECT_TRUE(work.envelope_enabled);
+    EXPECT_EQ(work.available(), kWorkLimit + allowance);
+    // Primary-first split routing.
+    ASSERT_TRUE(work.spend(kWorkLimit - 10u));
+    EXPECT_EQ(work.remaining, 10u);
+    EXPECT_EQ(work.available(), 10u + allowance);
+    EXPECT_TRUE(work.spend(25u));
+    EXPECT_EQ(work.remaining, 0u);
+    EXPECT_EQ(work.supplemental_remaining, allowance - 15u);
+    // Exact combined ceiling, then fail closed with both pools drained.
+    EXPECT_TRUE(work.spend(allowance - 15u));
+    EXPECT_EQ(work.available(), 0u);
+    EXPECT_FALSE(work.spend(1u));
+    EXPECT_EQ(work.remaining, 0u);
+    EXPECT_EQ(work.supplemental_remaining, 0u);
+}
+
+// D-461: non-state families keep the historical single-balance clamp: the
+// envelope must stay inactive for a class source even though the shared
+// relations layout runs.
+TEST(MermaidEnvelopeWork, NonStateFamiliesNeverEnableTheEnvelope) {
+    namespace mtest = loom::ui::mermaid::testing;
+    Work work;
+    EXPECT_TRUE(mtest::layout_succeeds("classDiagram\nA --> B\n", false, work));
+    EXPECT_FALSE(work.envelope_enabled);
+    EXPECT_EQ(work.supplemental_remaining, 0u);
+}
+
 // RFC 0034 Phase 1 (design §3.2): sweep every ER fixture whose frontmatter
 // reaches an active projection (the 97 look-envelope originals) with a fresh
 // DEFAULT production Work (primary kWorkLimit; the supplemental stays inactive

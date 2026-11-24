@@ -65,6 +65,15 @@ is roughly 10.7k full-width renders per run, plus 400 body-diagnostic rows.
    and the dual-preset byte-identical gate already proves equivalence. Use
    debug for the changed-surface tests and one closing matrix on each
    preset; do not pay the debug matrix cost on every iteration.
+2a. **The dual-preset gate is a manual comparison and needs a written
+   carrier.** No test asserts cross-preset equality: each preset's
+   `MermaidCapabilityReport.OfficialMatrix` run writes
+   `build/<preset>/tests/ui/mermaid-official-matrix.json`, and the gate is
+   `sha256sum` on both (plus `cmp`) run after both suites. Capture the
+   producer commands, the two hashes and the `cmp` exit status into
+   `/tmp/<slice>-dual-preset.sha` and cite that path in the commit message
+   and the efficiency numbers table; "the two JSONs matched" without a log
+   is an unverifiable claim (D-460 evidence-gap lesson).
 3. **A target-only build can leave `test_mermaid_official` stale-linked and
    produce a false green.** After a production change, do a full build before
    trusting an OfficialMatrix verdict (FS-sgtm lesson: the first "green"
@@ -2729,7 +2738,7 @@ flip; both returned REQUEST-CHANGES and both found something real.
 | Debug mermaid suite, final (post-roster) | 1645 tests, **310.67 s** wall (4197.06 s*proc), 100% passed | `/tmp/loom-logs/d460-mermaid-suite2.log` |
 | Debug mermaid suite, first (pre-roster) | 1645 tests, 362.85 s, 100% passed | `/tmp/loom-logs/d460-mermaid-suite.log` |
 | Release OfficialMatrix, final | 27.06 s, 1745 drawn / 400 fallback, `drawn_at_240` 1559, gaps 48 | `/tmp/d460-matrix-rel3.log` |
-| Dual-preset byte gate | debug == release sha256 `2ff7cb2a…` (unchanged by the roster regeneration) | both matrix JSONs |
+| Dual-preset byte gate | debug == release sha256 `2ff7cb2a…` (unchanged by the roster regeneration) | `/tmp/d460-dual-preset.sha` (producer + `sha256sum`/`cmp` command text and output) |
 | Roster regeneration | `--emit` 400 rows / 28 categories; `--self-test` and `--matrix` drift gate both green | `/tmp/roster-{emit,self,matrix}-d460.log` |
 | Targeted cohort gate | 8.99 s twin + 1.59 s negatives (15 rows, 240x900 renders) | suite log |
 | Envelope sweep | 268 ms (97 fixtures, pins 92/5) | debug run |
@@ -2740,3 +2749,70 @@ part was again not the compiler but the **review rounds** (correctness lens:
 three REQUEST-CHANGES rounds before APPROVE; contract lens: one) and the
 **whole-preset rebuild cycles** lost to test-edit churn during linking
 (rule 6 above; one of them was also the rule-4 pin that review caught).
+
+## D-461 stage 1-2 retro (2026-11-24)
+
+1. **`layout_succeeds` is not the render path.** The state envelope was first
+   sized from `layout_succeeds` (which stops after `relations_layout` and its
+   styled-payload prepay); the public render path then bills the styled
+   `finish` emission (per row and per run) on the same Work, ~270k more for the
+   binding row, so every staged row still fell back. Size any Work envelope
+   against `render_mermaid_with_work` with a `FinalEmissionTrace`, not against
+   the layout seam.
+2. **Namespace structure is part of the edit.** Two whole-preset builds were
+   lost to helpers inserted after a forward-declared definition inside the
+   state TU's anonymous namespace: the exported helpers need external linkage
+   and a strict order (`state_style_identifier` before `state_click_binding`,
+   both after `}  // namespace`). Read the `namespace {`/`}  // namespace`
+   layout before inserting a definition.
+3. **A wrapped command's exit code is not the task status.** Commands that end
+   in `echo "EXIT=$?"` always exit 0, so a failed 447-step build surfaced as a
+   "completed" task. Read the `EXIT=` line in the log before believing a
+   build's verdict.
+4. **Budget admission needs a render-level probe with a per-row cost, not a
+   yes/no.** `probe3` (layout) and `probe4` (render) reported different
+   pass/fail sets for the same fixtures; the diff was exactly the finish fees.
+   Both probes were needed to separate "budget" rows from "geometry" rows
+   before any code changed.
+5. **`drawn != text fence` is not proof of art.** A render that keeps only the
+   disclosure payload (legend records, config notices, the projection header)
+   still differs from the raw-source fence, and both sides of a stripped-twin
+   comparison can be empty. Every admission gate needs a positive art
+   assertion: a non-empty region above the legend, a frame glyph, and at least
+   one declared label (D-461's `expected_art_labels` is derived renderer-free
+   from `state X` / `X: Description` / `[*] --> X` forms).
+6. **Cohort membership is not ownership.** Four of the D-461 rows were already
+   listed in an earlier ledger (two in `e2a-cohort.json`'s sha-bound
+   next-line-brace debt, two in `e2b-cohort.json`'s click/italic detectors).
+   Those earlier gates render their ledgers live, so the new production
+   admission turns them red and their cross-cohort pins drift (D-461 also had
+   to move `test_mermaid_state_0038_cohort.cpp`'s E2b footer pin 53 -> 55).
+   Run a ledger-overlap scan (`python` over `tools/mermaid/*-cohort.json`)
+   before adding a matrix branch, retire or narrow the earlier detector in the
+   same slice, regenerate that ledger, and re-pin every cross-cohort count.
+7. **Rule 2a carrier this slice:** the dual-preset gate logs producer commands,
+   both `sha256sum` values and the `cmp` exit to `/tmp/d461-dual-preset.sha`,
+   cited in the commit body.
+8. **A comment edit in an imported `.cppm` is a full fan-out.** One sentence
+   reworded in `mermaid.cppm`'s `Work::enable_envelope` comment (no semantic
+   change) invalidated the BMI and forced a second 534-step dual-preset
+   rebuild after the first full build had finished. Batch every interface-file
+   edit — comments included — before the closure build; only `.cpp` body edits
+   are cheap.
+9. **Verify that the sanctioned generator is byte-idempotent before trusting
+   a `--write` closure.** `verify_e6c_gap_roster.py --write` rewrote the whole
+   `review` object from a hard-coded 2026-10-24 block (dropping the extended
+   audit keys and the reviewed note) and never updated `kGateRowCounts`; the
+   committed procedure docs still said `--write`, "never ad hoc". Running the
+   tool would have silently destroyed the audit trail of a protected ledger.
+   Fix the tool (`write_roster` now preserves every non-`gates` field and the
+   run updates the count table) and prove it with a no-op `--write` (byte
+   comparison before/after) before citing it as evidence.
+10. **One owner per working tree.** A second Claude session started the same
+    D-461 slice in this checkout while the full-suite run was going; it edited
+    `test_mermaid_relations_semantics.cpp` and compiled it mid-gate. The user
+    resolved ownership, but the window cost a stale-link rebuild and a
+    three-test failure investigation. Before a long closure run, check
+    `ListAgents` (other sessions) and `ps` for foreign `cmake`/`ctest`
+    processes, and treat a foreign `/tmp/<slice>` log as a stop-and-coordinate
+    signal rather than a file to share.

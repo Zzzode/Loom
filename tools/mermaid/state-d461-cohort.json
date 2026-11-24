@@ -1,0 +1,330 @@
+{
+  "schema": "loom_mermaid_state_d461_cohort/v1",
+  "decision": "D-461",
+  "stage": "1-2: state layout envelope, click bindings, font-style",
+  "admission": {
+    "envelope": "relations_layout enables the two-pool meter for RelationFamily::State from the actual canvas: state_envelope_layout_allowance(w,h) = w*h*192 + 4096",
+    "click": "`click <id> \"<url>\" [\"<tooltip>\"]`: closed grammar, declared-target resolution, consumed and dropped (FS-2)",
+    "font-style": "`font-style: italic|normal` validated and dropped"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "every state-diagram-v2 fallback whose remaining blocker is the fixed 1M layout primary or the click/font-style vocabulary",
+    "cohort_digest": "3d1e6bbf9444da63436be876ce0b174b5a7508195c1354fff35b241d6e28793a"
+  },
+  "deferred": {
+    "stage3_routing_geometry": [
+      "state-diagram-v2/nightly-check/basic-states-neo-look-neo-theme.mmd",
+      "state-diagram-v2/nightly-check/basic-states-neo-look-neo-dark-theme.mmd",
+      "state-diagram-v2/nightly-check/basic-states-neo-look-redux-theme.mmd",
+      "state-diagram-v2/nightly-check/basic-states-neo-look-redux-dark-theme.mmd",
+      "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams-with-labels.mmd",
+      "state-diagram-v2/pr-check/v2-should-render-composite-states.mmd",
+      "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd"
+    ],
+    "stage4_info_directive": [
+      "state-diagram-v2/nightly-check/v2-should-render-a-simple-info.mmd"
+    ]
+  },
+  "counts": {
+    "total": 13,
+    "by_family": {
+      "state-diagram-v2": 13
+    }
+  },
+  "review": {
+    "reviewer_agent": "two independent read-only adversarial reviews, fresh general-purpose agents, D-461 state-v2 stage 1-2, 2026-11-24. Gate/render lens (task a600ac6947bd3d80d): REQUEST-CHANGES then APPROVE after the art proof (`expected_art_labels`, frame glyph, >= 4 art rows) and the e2a/e2b ledger migration. Correctness lens (task a5d9c76642d33eaa0): REQUEST-CHANGES on the pending verdict, the stale 0038 E2b footer pin 53 -> 55, the roster, doc Work-rate wording and the e2b detector mirror; all items addressed or rebutted in the same slice (the residual MINORs -- the E2a narrow field and the E2b declaration-list mirror -- were fixed after the verdict and re-checked by the generators' --check).",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "Stage 1-2 only: the bounded canvas-derived state layout envelope and the two vocabulary admissions (`click` and `font-style`). The seven routing-geometry rows and the bare `info` row are deferred and listed under `deferred`; the ledger grows in the same slice."
+  },
+  "rows": [
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "58c12aa3f1a7b6836690c04773491f325332c5cbfb0c40471d44ee86d1e42dca",
+      "manifest_sha256": "58c12aa3f1a7b6836690c04773491f325332c5cbfb0c40471d44ee86d1e42dca",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [
+        "classDef pinned fill:#111827,stroke:#F59E0B,color:#F9FAFB",
+        "class Pinned pinned"
+      ],
+      "expected_art_labels": [
+        "Outer",
+        "Pinned",
+        "Plain"
+      ],
+      "ledger_note": "layout Work envelope only; art contract unchanged"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-dark-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "4e7a58206857e1135ee7dc105d5aec92baae664788cad8040d0f83394339f254",
+      "manifest_sha256": "4e7a58206857e1135ee7dc105d5aec92baae664788cad8040d0f83394339f254",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [
+        "classDef pinned fill:#111827,stroke:#F59E0B,color:#F9FAFB",
+        "class Pinned pinned"
+      ],
+      "expected_art_labels": [
+        "Outer",
+        "Pinned",
+        "Plain"
+      ],
+      "ledger_note": "layout Work envelope only; art contract unchanged"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-color-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "314cfd4c3b9a0b700b0e9db2ff8a64e8fa2ef490e0a276822b4c2fb250abcbc8",
+      "manifest_sha256": "314cfd4c3b9a0b700b0e9db2ff8a64e8fa2ef490e0a276822b4c2fb250abcbc8",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [
+        "classDef pinned fill:#111827,stroke:#F59E0B,color:#F9FAFB",
+        "class Pinned pinned"
+      ],
+      "expected_art_labels": [
+        "Outer",
+        "Pinned",
+        "Plain"
+      ],
+      "ledger_note": "layout Work envelope only; art contract unchanged"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-dark-color-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "893bea3a9a7f84ddedc89785e20a8972e62478356b5a2bd7d8d83d82bb1f3086",
+      "manifest_sha256": "893bea3a9a7f84ddedc89785e20a8972e62478356b5a2bd7d8d83d82bb1f3086",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [
+        "classDef pinned fill:#111827,stroke:#F59E0B,color:#F9FAFB",
+        "class Pinned pinned"
+      ],
+      "expected_art_labels": [
+        "Outer",
+        "Pinned",
+        "Plain"
+      ],
+      "ledger_note": "layout Work envelope only; art contract unchanged"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "17b56a7e4fa7634d528bfcf5dd2c42ef67bc88c610b48cc5af13d2d9111fb387",
+      "manifest_sha256": "17b56a7e4fa7634d528bfcf5dd2c42ef67bc88c610b48cc5af13d2d9111fb387",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [
+        "classDef pinned fill:#111827,stroke:#F59E0B,color:#F9FAFB",
+        "class Split pinned"
+      ],
+      "expected_art_labels": [
+        "Split",
+        "Neighbour"
+      ],
+      "ledger_note": "layout Work envelope only; art contract unchanged"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-dark-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "09c3bacfd2c6c35ccc5920b2d0b939e60c81d05b06600b55b7df1badc5e89147",
+      "manifest_sha256": "09c3bacfd2c6c35ccc5920b2d0b939e60c81d05b06600b55b7df1badc5e89147",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [
+        "classDef pinned fill:#111827,stroke:#F59E0B,color:#F9FAFB",
+        "class Split pinned"
+      ],
+      "expected_art_labels": [
+        "Split",
+        "Neighbour"
+      ],
+      "ledger_note": "layout Work envelope only; art contract unchanged"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-color-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "254237d5abc35e026622b149e52699f94974c0f6801b951e158c16faae879959",
+      "manifest_sha256": "254237d5abc35e026622b149e52699f94974c0f6801b951e158c16faae879959",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [
+        "classDef pinned fill:#111827,stroke:#F59E0B,color:#F9FAFB",
+        "class Split pinned"
+      ],
+      "expected_art_labels": [
+        "Split",
+        "Neighbour"
+      ],
+      "ledger_note": "layout Work envelope only; art contract unchanged"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-dark-color-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "5266cb9c3300e75ce9df7b0b707c86fc2fbd3d33795e6044508c037f7cdc6a54",
+      "manifest_sha256": "5266cb9c3300e75ce9df7b0b707c86fc2fbd3d33795e6044508c037f7cdc6a54",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [
+        "classDef pinned fill:#111827,stroke:#F59E0B,color:#F9FAFB",
+        "class Split pinned"
+      ],
+      "expected_art_labels": [
+        "Split",
+        "Neighbour"
+      ],
+      "ledger_note": "layout Work envelope only; art contract unchanged"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "8f5f84b56734e20aa522613ae397585b37aaa248cae2880bd85bcfa39134733c",
+      "manifest_sha256": "8f5f84b56734e20aa522613ae397585b37aaa248cae2880bd85bcfa39134733c",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [],
+      "expected_art_labels": [
+        "State1_____________",
+        "State2_____________",
+        "State3_____________"
+      ],
+      "ledger_note": "layout Work envelope only; art contract unchanged"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "1e359f909af210d7338db0674c6f86daaf25b5a3959bd70b0649e92ee0c8f3f3",
+      "manifest_sha256": "1e359f909af210d7338db0674c6f86daaf25b5a3959bd70b0649e92ee0c8f3f3",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [],
+      "expected_art_labels": [
+        "State1_____________",
+        "State2_____________",
+        "State3_____________"
+      ],
+      "ledger_note": "layout Work envelope only; art contract unchanged"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/clickable-state-with-tooltip.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "118bb9e5614059ec742c74ea51f08056c1295c3f0c4498824d4dfbf8fb73185b",
+      "manifest_sha256": "118bb9e5614059ec742c74ea51f08056c1295c3f0c4498824d4dfbf8fb73185b",
+      "prior_status": "source_fallback",
+      "oracle": "noop-twin",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [],
+      "expected_art_labels": [
+        "Google"
+      ],
+      "ledger_note": "the click binding paints nothing; the twin is cell-equal"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/clickable-state-with-tooltip-handdrawn-look.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "4ed2696ff296c23ceaca5f363c49ebdb91e1724ca6b43465a414353566d91f3e",
+      "manifest_sha256": "4ed2696ff296c23ceaca5f363c49ebdb91e1724ca6b43465a414353566d91f3e",
+      "prior_status": "source_fallback",
+      "oracle": "noop-twin",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [],
+      "expected_art_labels": [
+        "Google"
+      ],
+      "ledger_note": "the click binding paints nothing; the twin is cell-equal"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-can-have-multiple-classes-applied-to-multiple-states.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "24b76518cba69707bfbdc6717ec4b0b853ffed08170472eed1d56c718d49641b",
+      "manifest_sha256": "24b76518cba69707bfbdc6717ec4b0b853ffed08170472eed1d56c718d49641b",
+      "prior_status": "source_fallback",
+      "oracle": "style-twin",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [
+        "classDef notMoving fill:white",
+        "classDef movement font-style:italic;",
+        "classDef badBadEvent fill:#f00,color:white,font-weight:bold",
+        "class Still notMoving",
+        "class Moving, Crash movement",
+        "class Crash badBadEvent"
+      ],
+      "expected_art_labels": [
+        "Still",
+        "Moving",
+        "Crash"
+      ],
+      "ledger_note": "font-style is dropped; art above the legend is twin-equal"
+    }
+  ]
+}

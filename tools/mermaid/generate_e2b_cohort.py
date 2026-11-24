@@ -33,6 +33,7 @@ import argparse
 import hashlib
 import json
 import pathlib
+import re
 import sys
 
 import yaml
@@ -42,6 +43,13 @@ MANIFEST = pathlib.Path("tests/fixtures/mermaid_official/manifest.json")
 LEDGER = pathlib.Path("tools/mermaid/e2b-cohort.json")
 
 SCHEMA = "loom_mermaid_e2b_cohort/v1"
+
+# D-461 closed state click grammar: `click <id> "<arg>" ["<arg>"]`, args
+# non-empty and free of control characters (the production parser also
+# requires the target to be a declared state; see the D-461 gate).
+CLOSED_CLICK = re.compile(
+    r'click[ \t]+[A-Za-z_][A-Za-z0-9_]{0,63}[ \t]+"[^"\x00-\x1f\x7f]{1,512}"'
+    r'(?:[ \t]+"[^"\x00-\x1f\x7f]{1,512}")?')
 
 WHITELIST = {
     "logLevel": {"0", "1", "2"},
@@ -71,15 +79,19 @@ WITNESS = {
     ),
     "state-unrepresentable-italic": (
         "src/ui/visual/mermaid_cells_impl.cpp SemanticCellStyle (no italic attribute)",
-        "A classDef sets font-style:italic, but the terminal cell style model has only "
-        "color/bold/underline and FTXUI has no italic attribute; admitting it would silently "
-        "drop the requested style, so the whole source stays fallback. D228 parses the other "
-        "state classDef/class/style properties (fill/stroke/color/border/bold) natively.",
+        "A classDef sets a `font-style` value other than `italic` or `normal`, but the "
+        "terminal cell style model has only color/bold/underline and FTXUI has no italic "
+        "attribute; admitting it would silently drop the requested style, so the whole "
+        "source stays fallback. D228 parses the other state classDef/class/style properties; "
+        "D-461 admits `font-style: italic|normal` as validated-but-unpainted (the legend "
+        "echoes the authored line verbatim as the disclosure).",
     ),
     "state-click-statement": (
         "src/ui/visual/mermaid_relations_core_impl.cpp (no state click statement parse)",
-        "A click callback/tooltip statement has no terminal interaction layer and no state "
-        "statement parser; it stays whole-source.",
+        "A click statement outside the closed `click <id> \"<url>\" [\"<tooltip>\"]` "
+        "grammar (`href`/`call` forms, unquoted or empty arguments) has no terminal "
+        "interaction layer; it stays whole-source. D-461 admits the closed form as a "
+        "validated, target-resolved, non-visual binding that is consumed and dropped.",
     ),
     "state-envelope-description-tab": (
         "src/ui/visual/mermaid_relations_core_impl.cpp (state folded-description validator) "
@@ -193,12 +205,29 @@ def state_blocker(rel, source_sha256, body_lines):
     # guarded by the renderer's own gates, not by a source-shape detector.
     for line in (l.strip() for l in body_lines):
         if line.startswith("click") and (len(line) == 5 or line[5] in (" ", "\t")):
-            return "state-click-statement"
+            # D-461 admits exactly `click <id> "<url>" ["<tooltip>"]`: declared
+            # target, one or two non-empty double-quoted arguments, no control
+            # characters. Everything else (`href`/`call`, unquoted arguments,
+            # empty or third arguments) still gates the whole source. Target
+            # resolution and the production grammar are enforced by
+            # test_mermaid_state_d461_cohort, not mirrored here.
+            if not CLOSED_CLICK.fullmatch(line):
+                return "state-click-statement"
     # D228: representable classDef/class/style (fill/stroke/color/border/
-    # font-weight) now parse and draw. The one property the terminal cannot
-    # model is font-style:italic, which still gates the whole source.
+    # font-weight) now parse and draw. D-461 admits `font-style: italic|normal`
+    # as validated-but-unpainted; any other font-style value still gates.
     for line in (l.strip().lower() for l in body_lines):
-        if "font-style" in line and "italic" in line:
+        # Split the declaration list on both separators, collect every
+        # `font-style` component and mirror production: one component whose
+        # value is italic|normal is admitted; a duplicate component (comma or
+        # semicolon) or any other value stays blocked.
+        components = [part.strip() for part in re.split(r"[;,]", line)]
+        styles = [part.split("font-style", 1)[1].split(":", 1)[1].strip()
+                  for part in components
+                  if "font-style" in part and ":" in part]
+        if len(styles) > 1:
+            return "state-unrepresentable-italic"
+        if styles and styles[0] not in ("italic", "normal"):
             return "state-unrepresentable-italic"
     body = "\n".join(body_lines)
     # D223 retired detectors: [[choice]], &lt;&lt;fork/join&gt;&gt;, the stray-tab
@@ -335,7 +364,12 @@ def build(repo_root):
                     "direct fill/stroke/color:red stay whole-source fallback (fail-closed), "
                     "keeping the frozen State85 and StateScoped closed profiles byte-identical. "
                     "The legacy D223 seven rows and all frozen gates remain unchanged. Approved "
-                    "51/10 partition and five-frame gate.",
+                    "51/10 partition and five-frame gate. D-461 (2026-11-24) narrows two "
+                    "detectors: `font-style: italic|normal` is validated and unpainted (other "
+                    "values still gate), and the closed `click <id> \"<url>\" [\"<tooltip>\"]` "
+                    "form is validated, target-resolved and dropped (see "
+                    "tools/mermaid/state-d461-cohort.json); the clickable-tooltip and "
+                    "v2-multiple-classes rows move to predicted-draw (both D-461 review agents verified this migration).",
         },
         "counts": {
             "total": total,

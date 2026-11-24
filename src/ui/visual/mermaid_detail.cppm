@@ -44,6 +44,7 @@ using loom::ui::mermaid::testing::GitType;
 using loom::ui::mermaid::testing::kWorkLimit;
 using loom::ui::mermaid::testing::kErElementWorkLimit;
 using loom::ui::mermaid::testing::kErEnvelopeLayoutAllowance;
+using loom::ui::mermaid::testing::state_envelope_layout_allowance;
 using loom::ui::mermaid::testing::kBlockElementWorkLimit;
 using loom::ui::mermaid::testing::kBlockPayloadWorkLimit;
 using loom::ui::mermaid::testing::MermaidProbeDecision;
@@ -827,6 +828,13 @@ std::optional<std::string> state_transition_label(std::string_view raw);
 bool state_parse_classdef(std::string_view line, Work& work, StateStyleDefinition& out);
 bool state_parse_class_assignment(std::string_view line, Work& work, StateStyleAssignment& out);
 bool state_parse_direct_style(std::string_view line, Work& work, StateStyleDirect& out);
+// D-461: `click <id> "<url>" ["<tooltip>"]` is a non-visual interaction binding
+// (FS-2 precedent). The keyword probe lets the dispatcher distinguish "not a
+// click line" from "malformed click line"; the binding parser validates the
+// closed grammar, resolves the target against the already-declared states and
+// returns true when the line may be dropped.
+bool state_click_keyword(std::string_view line);
+bool state_click_binding(std::string_view line, const RelationDiagram& diagram, Work& work);
 // D228: resolve the state style ledger onto diagram.direct_styles (Rounded and
 // nested entities admitted); the family-agnostic paint path then renders it.
 bool build_state_direct_styles(

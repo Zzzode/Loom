@@ -43,9 +43,9 @@ inline constexpr std::string_view kRosterRelPath = "tools/mermaid/e6c-mandatory-
 
 // Frozen ledger pins. The verifier script parses these exact constants, so
 // there is a single source of truth for size and SHA-256.
-inline constexpr std::size_t kRosterBytes = 45096;
+inline constexpr std::size_t kRosterBytes = 45694;
 inline constexpr std::string_view kRosterSha256 =
-    "908b088f6339fed88da92d07b92ddc3a24a90881dd6a69eb829447376f655a01";
+    "87e85e7f91d69bff1cd6576e8b95c1d39502636064e61f1e7726fb629f53bfcf";
 
 // Flow400CompleteSources deliberately has no roster: its pending/decoded
 // membership is determined by immutable Model authority assets and is pinned
@@ -75,7 +75,9 @@ inline constexpr std::array<std::pair<std::string_view, std::size_t>, 11> kGateR
     {"class481", 137},
     {"class285", 25},
     {"class_endpoint29", 0},
-    {"state85", 14},
+    // D-461 removed the closed-click mandatory positive
+    // merman/2f8341799bbc976b1bf7: 14 -> 13.
+    {"state85", 13},
     {"class_caption_starvation8", 1},
     {"state_reverse_escape", 1},
     {"class_notes18", 0},

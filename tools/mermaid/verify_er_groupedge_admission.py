@@ -69,12 +69,16 @@ PROTECTED = [
      "8f35938eb74591a428823aae3c1279c4a333fa8240b7d92181e77e7f22ed18ba", 72136),
     ("tests/fixtures/mermaid_native/er206_native_whole_source_authority.config62.v1.json",
      "76d54ecbc725e59645501f7079f9387b272172d584703f0ea72f143c83c469db", 622036),
+    # D-461 (owner-authorized reconciliation): the state85 closed-click
+    # mandatory positive was met, so the E6c ledger drops exactly one row and
+    # the matching C++ pins/count table move with it. Every other entry is
+    # unchanged.
     ("tools/mermaid/e6c-mandatory-gap-roster.json",
-     "908b088f6339fed88da92d07b92ddc3a24a90881dd6a69eb829447376f655a01", 45096),
+     "87e85e7f91d69bff1cd6576e8b95c1d39502636064e61f1e7726fb629f53bfcf", 45694),
     ("tests/support/mermaid_relations_oracle.hpp",
      "ce9d3fd7d54eab66b469d630b77f0f5b7acf9f72524124c758c576fc7808c3cd", 169038),
     ("tests/support/mermaid_gap_roster.hpp",
-     "45012318fb59e6e27c1dabba02e5a2d5f920c27fd7cec0e284a2a12d917510e8", 11591),
+     "eea5017567a24646afa7473266d3683bf8acd60c8458be7b26c240c48f5a84fe", 11694),
 ]
 
 # The historical reviewed Work-ceiling exclusion. Ordinal 198 carries two debts;

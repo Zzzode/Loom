@@ -1,10 +1,10 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 400,
+  "total_fallback": 387,
   "category_counts": {
-    "classdef_styling": 16,
-    "click_interactive_callback": 18,
+    "classdef_styling": 7,
+    "click_interactive_callback": 16,
     "dagre_layout_tuning": 7,
     "edge_animation_metadata": 63,
     "elk_layout_engine": 5,
@@ -17,7 +17,7 @@
     "family_residual:requirement": 1,
     "family_residual:sankey": 17,
     "family_residual:state-diagram": 2,
-    "family_residual:state-diagram-v2": 6,
+    "family_residual:state-diagram-v2": 4,
     "family_residual:xychart": 10,
     "family_residual:zenuml": 1,
     "git_cherry_pick": 6,
@@ -65,15 +65,15 @@
   "predicate_sufficiency": {
     "classdef_styling": {
       "originals_matching_predicate": 147,
-      "drawn_among_matches": 93,
-      "fallback_among_matches": 54,
+      "drawn_among_matches": 102,
+      "fallback_among_matches": 45,
       "sufficient_blocker": false
     },
     "click_interactive_callback": {
       "originals_matching_predicate": 18,
-      "drawn_among_matches": 0,
-      "fallback_among_matches": 18,
-      "sufficient_blocker": true
+      "drawn_among_matches": 2,
+      "fallback_among_matches": 16,
+      "sufficient_blocker": false
     },
     "dagre_layout_tuning": {
       "originals_matching_predicate": 167,
@@ -125,8 +125,8 @@
     },
     "look_handdrawn": {
       "originals_matching_predicate": 206,
-      "drawn_among_matches": 143,
-      "fallback_among_matches": 63,
+      "drawn_among_matches": 144,
+      "fallback_among_matches": 62,
       "sufficient_blocker": false
     },
     "look_neo": {
@@ -143,8 +143,8 @@
     },
     "securitylevel_directive": {
       "originals_matching_predicate": 87,
-      "drawn_among_matches": 40,
-      "fallback_among_matches": 47,
+      "drawn_among_matches": 42,
+      "fallback_among_matches": 45,
       "sufficient_blocker": false
     },
     "special_link_markers": {
@@ -161,7 +161,6 @@
     }
   },
   "proven_compact_cohort_candidates": [
-    "click_interactive_callback",
     "linkstyle_directive"
   ],
   "detector_order": [
@@ -199,10 +198,6 @@
   ],
   "optional_gains": [
     {
-      "category": "click_interactive_callback",
-      "note": "proven sufficient blocker (zero drawn co-occurrence); a future compact owned cohort may close it like RFC 0033 group-edge. Recorded per TechLead D-325/D-327, not actioned during registry landing. Cross-check corpus_isolation_findings for real-corpus closeability."
-    },
-    {
       "category": "linkstyle_directive",
       "note": "proven sufficient blocker (zero drawn co-occurrence); a future compact owned cohort may close it like RFC 0033 group-edge. Recorded per TechLead D-325/D-327, not actioned during registry landing. Cross-check corpus_isolation_findings for real-corpus closeability."
     }
@@ -215,16 +210,7 @@
       "flowchart/visual-check/5-should-style-nodes-via-a-class.mmd",
       "flowchart/visual-check/with-styling-and-classes-2.mmd",
       "flowchart/visual-check/with-styling-and-classes.mmd",
-      "requirement/visual-check/with-a-theme-default.mmd",
-      "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-color-theme.mmd",
-      "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-dark-color-theme.mmd",
-      "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-dark-theme.mmd",
-      "state-diagram-v2/nightly-check/user-styled-composite-containers-redux-theme.mmd",
-      "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-color-theme.mmd",
-      "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-dark-color-theme.mmd",
-      "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-dark-theme.mmd",
-      "state-diagram-v2/nightly-check/user-styled-with-regions-composite-containers-redux-theme.mmd",
-      "state-diagram-v2/nightly-check/v2-can-have-multiple-classes-applied-to-multiple-states.mmd"
+      "requirement/visual-check/with-a-theme-default.mmd"
     ],
     "click_interactive_callback": [
       "flowchart/nightly-check/dagre/v2-dagre-16-render-stadium-shape.mmd",
@@ -242,9 +228,7 @@
       "flowchart/visual-check/26-set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-enabled.mmd",
       "flowchart/visual-check/27-set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-disabled.mmd",
       "flowchart/visual-check/32-render-subroutine-shape.mmd",
-      "flowchart/visual-check/v2-16-render-stadium-shape.mmd",
-      "state-diagram-v2/nightly-check/clickable-state-with-tooltip-handdrawn-look.mmd",
-      "state-diagram-v2/nightly-check/clickable-state-with-tooltip.mmd"
+      "flowchart/visual-check/v2-16-render-stadium-shape.mmd"
     ],
     "dagre_layout_tuning": [
       "flowchart/nightly-check/dagre/new-line-in-node-and-formatted-edge-label-2.mmd",
@@ -405,8 +389,6 @@
       "state-diagram/pr-check/should-render-composite-states.mmd"
     ],
     "family_residual:state-diagram-v2": [
-      "state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd",
-      "state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd",
       "state-diagram-v2/nightly-check/v2-should-render-a-simple-info.mmd",
       "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams-with-labels.mmd",
       "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd",

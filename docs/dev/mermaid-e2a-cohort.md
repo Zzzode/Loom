@@ -350,7 +350,11 @@ stateDiagram-v2
 
 ### 11. `state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd`
 
-- **predicted-blocked** — `state-composite-brace-on-next-line`
+- **predicted-draw (D-461)** — the next-line-brace grammar was admitted after
+  this witness was written; the only remaining blocker was the fixed 1M layout
+  Work primary, now funded by the bounded canvas-derived state envelope
+  (`tools/mermaid/state-d461-cohort.json`). Historical witness below.
+- **historical** — `state-composite-brace-on-next-line`
 - Witness: `src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)` — A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected.
 
 ```mermaid-source
@@ -377,7 +381,10 @@ stateDiagram-v2
 
 ### 12. `state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd`
 
-- **predicted-blocked** — `state-composite-brace-on-next-line`
+- **predicted-draw (D-461)** — same retirement as §11 (budget-funded by the
+  state envelope; `tools/mermaid/state-d461-cohort.json`). Historical witness
+  below.
+- **historical** — `state-composite-brace-on-next-line`
 - Witness: `src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)` — A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected.
 
 ```mermaid-source
@@ -499,8 +506,8 @@ stateDiagram-v2
 | `git/pr-check/67-should-render-a-simple-gitgraph-overlapping-commits-vertical-branch-bottom-to-top.mmd` | gitGraph | description | predicted-draw | drawn/source/drawn | — |
 | `state-diagram-v2/nightly-check/1433-should-render-a-simple-state-diagram-with-a-title.mmd` | stateDiagram-v2 | description | predicted-draw | drawn/source/drawn | — |
 | `state-diagram-v2/nightly-check/should-align-dividers-correctly.mmd` | stateDiagram-v2 | description | predicted-blocked | source/source/source | state-composite-divider |
-| `state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd` | stateDiagram-v2 | description | predicted-blocked | source/source/source | state-composite-brace-on-next-line |
-| `state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd` | stateDiagram-v2 | description | predicted-blocked | source/source/source | state-composite-brace-on-next-line |
+| `state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd` | stateDiagram-v2 | description | predicted-draw | drawn/drawn/drawn | — (D-461; historical `state-composite-brace-on-next-line`) |
+| `state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd` | stateDiagram-v2 | description | predicted-draw | drawn/source/drawn | — (D-461; historical `state-composite-brace-on-next-line`) |
 | `state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd` | stateDiagram-v2 | description | predicted-blocked | source/source/source | state-composite-brace-on-next-line |
 
 ## Independent review

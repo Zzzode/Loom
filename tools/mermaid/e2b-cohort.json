@@ -34,14 +34,14 @@
     "reviewer_agent": "independent read-only adversarial re-review agent, D228 state style group (fresh general-purpose agent; full-diff audit, independent 104-assertion probes plus a rerun of the author's 27-assertion dual-seam probe, 269/269 native suite, frozen invariant and 51/10 partition verification); the D223 approval covered only the 47/14 partition",
     "date": "2026-11-14",
     "verdict": "approved",
-    "note": "D228 moves four more rows to predicted-draw by giving state its own classDef/class/style parser and resolver (Rounded and nested entities admitted, palette-role colors, border shorthand to stroke, bold to pixels); the fifth style fixture stays blocked because font-style:italic has no terminal cell attribute. Inline Node:::class edge syntax and a direct fill/stroke/color:red stay whole-source fallback (fail-closed), keeping the frozen State85 and StateScoped closed profiles byte-identical. The legacy D223 seven rows and all frozen gates remain unchanged. Approved 51/10 partition and five-frame gate."
+    "note": "D228 moves four more rows to predicted-draw by giving state its own classDef/class/style parser and resolver (Rounded and nested entities admitted, palette-role colors, border shorthand to stroke, bold to pixels); the fifth style fixture stays blocked because font-style:italic has no terminal cell attribute. Inline Node:::class edge syntax and a direct fill/stroke/color:red stay whole-source fallback (fail-closed), keeping the frozen State85 and StateScoped closed profiles byte-identical. The legacy D223 seven rows and all frozen gates remain unchanged. Approved 51/10 partition and five-frame gate. D-461 (2026-11-24) narrows two detectors: `font-style: italic|normal` is validated and unpainted (other values still gate), and the closed `click <id> \"<url>\" [\"<tooltip>\"]` form is validated, target-resolved and dropped (see tools/mermaid/state-d461-cohort.json); the clickable-tooltip and v2-multiple-classes rows move to predicted-draw (both D-461 review agents verified this migration)."
   },
   "counts": {
     "total": 61,
     "state_v2": 38,
     "state_v1": 23,
-    "predicted_draw": 53,
-    "predicted_blocked": 8
+    "predicted_draw": 55,
+    "predicted_blocked": 6
   },
   "blocker_vocabulary": [
     "state-non-state-body",
@@ -72,19 +72,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-click-statement",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (no state click statement parse)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (no state click statement parse)",
-        "detail": "A click callback/tooltip statement has no terminal interaction layer and no state statement parser; it stays whole-source."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram-v2/nightly-check/should-allow-styles-to-take-effect-in-subgraphs.mmd",
@@ -176,19 +171,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-unrepresentable-italic",
-        "site": "src/ui/visual/mermaid_cells_impl.cpp SemanticCellStyle (no italic attribute)",
-        "evidence": "src/ui/visual/mermaid_cells_impl.cpp SemanticCellStyle (no italic attribute)",
-        "detail": "A classDef sets font-style:italic, but the terminal cell style model has only color/bold/underline and FTXUI has no italic attribute; admitting it would silently drop the requested style, so the whole source stays fallback. D228 parses the other state classDef/class/style properties (fill/stroke/color/border/bold) natively."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram-v2/nightly-check/v2-it-should-be-possible-to-use-a-choice.mmd",

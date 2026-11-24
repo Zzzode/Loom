@@ -5773,3 +5773,135 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   is unaffected.
 - **Rollback.** One commit; reverting it restores the previous parser and the
   previous ledger. No persisted format, wire shape or public contract changes.
+
+## State-v2 closure: layout envelope, style vocabulary, click bindings and routing (D-461)
+
+- **Scope.** The 21 remaining `state-diagram-v2` originals (the v1
+  `state-diagram` residuals are a separate 7-row family and are not part of
+  this decision). Recon measured four independent blockers, not one:
+  (a) **render budget** — 10 rows (the eight `user-styled-*` composite
+  containers and the two `should-render-edge-labels-correctly*` grids) need
+  1.47M-2.65M whole-render Work against the fixed 1M primary and fail closed
+  on Work exhaustion, not on syntax;
+  (b) **vocabulary/binding** — 3 rows (`click A "url" "title"` in the two
+  `clickable-state-with-tooltip*` fixtures, `font-style:italic` in
+  `v2-can-have-multiple-classes-...`);
+  (c) **routing geometry** — 7 rows (four `basic-states-neo-look-*` dense
+  fully-connected graphs, the labeled fan-out `v2-should-render-a-simple-
+  state-diagrams-with-labels`, the labeled composite `v2-should-render-
+  composite-states` and `should-render-edge-labels-correctly-with-multiple-
+  transitions`): `route_scope` rejects when a crossing/congested edge has no
+  free-cell path, independent of budget;
+  (d) **foreign directive** — 1 row, `v2-should-render-a-simple-info`, whose
+  body is the bare `info` directive (Mermaid's version panel), not a state
+  diagram.
+- **Shared-change gate (Work accounting).** Owning module:
+  `loom.ui.visual.mermaid` (`Work` meter + `relations_layout`). Proposed
+  shared change: `relations_layout` calls `Work::enable_envelope` for
+  `RelationFamily::State` with a canvas-derived bound
+  (`state_envelope_layout_allowance(w,h) = w*h*192 + 4096`, computed after
+  `RelationLayout::prepare()` so it follows the actual drawing area).
+  Measured whole-render totals against the 1M primary: 2,054,958 for a
+  user-styled composite container (64x134 = 8,576 cells; the binding case
+  needs 1,054,958 SUPPLEMENTAL over the 1M primary, i.e. 123/cell — the
+  whole-render rate is 240/cell), 1,664,827 for its concurrent-region variant
+  (6,808 cells, 665k supplemental) and 2,647,645 for
+  `should-render-edge-labels-correctly` (99x267 = 26,433 cells, 1,648k
+  supplemental, 62/cell); 192/cell leaves the binding case ~56% headroom. The bound must
+  cover the styled finish emission (per row and per run), not only the layout
+  charges — a layout-only measurement (`layout_succeeds`) is ~270k short of
+  what the public render path needs.
+  Why local closure is insufficient: the failing charge is the
+  established styled/routing payload fee (`paint_class_direct_styles`,
+  `extract_styled_rows`, `prepay_styled_payload`, the styled `finish`, routing
+  tables) already paid by other families; shrinking it for state alone would
+  either under-charge real allocations or fork the shared payload contract.
+  Alternatives considered: (1) raise `kWorkLimit` globally — changes every
+  family's fail-closed threshold, largest blast radius; (2) reduce the
+  styled-payload multiplier — under-charges Class/ER/Block which share the
+  same function; (3) per-source retry with a larger primary — no bound, and
+  double charges on success; (4) the chosen bounded supplemental pool —
+  precedented by RFC 0034, opt-in per family, primary-first, fail-closed at
+  `kWorkLimit + allowance`. Callers/contracts: `Work` is used by every
+  mermaid family; the change is inert unless `enable_envelope` is called, so
+  all other families keep byte-identical charges and rejection thresholds
+  (pinned by `MermaidEnvelopeWork.NonStateFamiliesNeverEnableTheEnvelope`).
+  Compatibility: no persisted format or public API change. Smallest viable
+  change: one `enable_envelope` call in the state branch plus a derived
+  allowance constant. Verification: no other row's disposition moves — the
+  roster drift gate (`fallback_attribution.py --matrix`) plus the emitted
+  roster diff account for exactly the 13 admitted rows — while the dual-preset
+  matrix byte gate proves the two presets agree (`/tmp/d461-dual-preset.sha`,
+  carrier producer commands included);
+  `MermaidEnvelopeWork.StateEnvelopeIsCanvasDerivedAndFailsClosed` pins the
+  formula, split routing and the fail-closed ceiling. Rollback: revert the
+  commit; the meter returns to the single-balance clamp.
+- **Render equivalence.** Unstyled and previously-drawn state rows keep
+  byte-identical art because the envelope is drawn only after the primary is
+  exhausted; every other family never enables it. The per-row gates compare
+  each admitted fixture against a stripped/label-free twin where a twin
+  exists (a `click`-deleted or `font-style`-twinned frame must be
+  cell-identical), require a non-empty frame-glyph-bearing art region above
+  the legend, and pin restored-frame determinism (the second wide capture is
+  cell-identical to the first).
+- **Vocabulary and bindings.** `click <id> "<url>" ["<tooltip>"]` is a
+  non-visual interaction binding (FS-2 precedent): the closed grammar accepts
+  exactly an identifier and one or two non-empty double-quoted arguments with
+  no control characters, the target must resolve to an already-declared state
+  (an unknown target stays whole-source), and the directive is consumed and
+  dropped because the terminal grid has no interaction layer. `href`/`call`
+  forms and unquoted arguments stay closed. `font-style: italic|normal` joins
+  the state style grammar as a validated property that is dropped without a
+  legend token: the terminal cell grid has no italic face, and the legend's key
+  line is part of already-drawn rows' art, so adding a token there would break
+  byte identity; the declaration's verbatim record in the legend remains the
+  disclosure.
+- **Routing geometry (stage 3).** Measured cause, per row: the dense
+  `basic-states-*` graphs and `should-render-edge-labels-correctly-with-multiple-
+  transitions` fail after several long edges have been painted, because
+  `RouteSearch` routes only through free cells and each painted long edge cuts
+  the available margin; the labeled rows additionally fail earlier because the
+  state-only `free_regions` prefilter finds the two endpoint ports in different
+  free-cell components (the Class and ER families already skip that prefilter
+  and prove label connectivity with the actual split A* paths).
+  Planned mechanism, confined to a **second routing pass that runs only after
+  the first pass fails**: (a) the pass enables perpendicular edge crossings —
+  an A* step may traverse a cell that carries a *straight* routed line when the
+  move is perpendicular to it, at a cost penalty, and `paint_path` merges the
+  bits into the existing glyph (`┼`) after validating that the crossing is
+  straight-through (no turn on a crossed cell); (b) the pass drops the
+  state-only `free_regions` prefilter for labeled edges, mirroring Class/ER.
+  Both changes are inert on the first pass, so every already-drawn row keeps
+  byte-identical art; a failing row pays the layout twice, which the envelope
+  must cover (it will be re-sized from the measured two-pass cost).
+- **The `info` directive.** Not a state diagram. Admitted as a minimal
+  native `info` panel (`Mermaid <upstream tag>` plus the pinned version line)
+  only if it can be rendered without inventing content; otherwise it becomes
+  a documented permanent foreign row with the evidence table entry.
+- **Protection-corpus migration (owner-authorized).** Admitting the closed
+  `click` binding meets the previously unmet RFC 0031 E6c mandatory positive
+  `merman/2f8341799bbc976b1bf7` (`stateDiagram-v2\nS1\nclick S1 "https://example.com" "Go"`),
+  so the protected E6c ledger drops exactly that one row (state85 14 -> 13,
+  248 -> 247 rows) and `tests/support/mermaid_gap_roster.hpp` re-pins
+  45694 bytes / `87e85e7f...` plus `kGateRowCounts` state85=13. The state
+  bare/alias native-control corpus upgrades `retained_click_profile` from a
+  closed profile to a complete `S1` Model (re-pinned container sha
+  `dd5fff3e...`, 9082 bytes; 10 positives / 9 closed profiles), and
+  `MermaidStateStyles.MalformedStylesFailClosed` flips `font-style:italic`
+  to a positive with `font-style:oblique` as the paired still-rejected
+  negative. `verify_e6c_gap_roster.py --write` was itself fixed: it used to
+  rewrite the whole `review` object from a hard-coded block (dropping the
+  extended audit keys and the reviewed note) and never updated
+  `kGateRowCounts`; it now preserves every non-`gates` field and rewrites the
+  count table, so re-running it is byte-idempotent. The protected-file
+  reconciliation was reviewed by an independent agent (task
+  a096d008e18077c55).
+- **Stage 1-2 result (measured).** 13 of the 21 rows draw at 240 columns
+  (the ten budget rows, the two `click` rows and the `font-style` row); only
+  `should-render-edge-labels-correctly-with-multiple-states` still draws at 40
+  columns. The other eight keep whole source at both widths and are listed
+  under the cohort ledger's `deferred` set.
+- **Slice order.** Stages 1-2 ship as one commit (envelope + meter test and
+  the click/`font-style` vocabulary share the single reviewed cohort ledger
+  and its gate); (3) routing geometry; (4) `info`. Every commit cites D-461
+  and keeps the family suite green.

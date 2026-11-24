@@ -85,11 +85,13 @@ def read_header_pins() -> tuple[int, str]:
 
 
 def write_header_pins(size: int, sha: str) -> None:
+    # Replace only the literal values so the surrounding layout (and a wrapped
+    # continuation line) survives the rewrite.
     text = HEADER.read_text(encoding="utf-8")
-    text, n1 = re.subn(r"kRosterBytes\s*=\s*\d+\s*;", f"kRosterBytes = {size};", text)
+    text, n1 = re.subn(r"(kRosterBytes\s*=\s*)\d+(\s*;)", rf"\g<1>{size}\g<2>", text)
     text, n2 = re.subn(
-        r'kRosterSha256\s*=\s*"(?:[0-9a-f]{64})?"\s*;',
-        f'kRosterSha256 = "{sha}";',
+        r'(kRosterSha256\s*=\s*")(?:[0-9a-f]{64})?("\s*;)',
+        rf"\g<1>{sha}\g<2>",
         text,
     )
     if n1 != 1 or n2 != 1:
@@ -108,32 +110,63 @@ def collect_gates(build_dir: Path) -> dict[str, list[object]]:
     return gates
 
 
+DEFAULT_DESCRIPTION = (
+    "RFC 0031 E6c reviewed ledger of mandatory-completion capability "
+    "gaps still open in the native terminal Mermaid renderer. Generated "
+    "from serialized report mandatory_gaps arrays, independently audited "
+    "row by row, then frozen by byte size and SHA-256 in "
+    "tests/support/mermaid_gap_roster.hpp. Renderer output is not "
+    "expectation evidence: every change here requires ledger review."
+)
+
+DEFAULT_REVIEW = {
+    "status": "reviewed",
+    "date": "2026-10-24",
+    "phase": "RFC 0031 E6c",
+    "note": (
+        "Every row audited against its converted reporter, report and "
+        "pinned authority source: exact error-message mapping for "
+        "official_matrix, frozen ids/outcomes for the ten id/name/"
+        "ordinal-keyed gates, counts reconciled with strict EXPECT pins."
+    ),
+}
+
+
 def write_roster(gates: dict[str, list[object]]) -> None:
-    payload = {
-        "schema": SCHEMA,
-        "description": (
-            "RFC 0031 E6c reviewed ledger of mandatory-completion capability "
-            "gaps still open in the native terminal Mermaid renderer. Generated "
-            "from serialized report mandatory_gaps arrays, independently audited "
-            "row by row, then frozen by byte size and SHA-256 in "
-            "tests/support/mermaid_gap_roster.hpp. Renderer output is not "
-            "expectation evidence: every change here requires ledger review."
-        ),
-        "review": {
-            "status": "reviewed",
-            "date": "2026-10-24",
-            "phase": "RFC 0031 E6c",
-            "note": (
-                "Every row audited against its converted reporter, report and "
-                "pinned authority source: exact error-message mapping for "
-                "official_matrix, frozen ids/outcomes for the ten id/name/"
-                "ordinal-keyed gates, counts reconciled with strict EXPECT pins."
-            ),
-        },
-        "gates": {gate: gates[gate] for gate in GATE_REPORTS},
-    }
+    """Replace only the gate arrays; preserve every other reviewed field.
+
+    The committed roster carries an extended review block (dated entries,
+    per-family audit keys). Rewriting it from a hard-coded literal silently
+    destroyed that audit trail, so new keys are carried over verbatim: the
+    reviewer edits the review text deliberately, the tool only moves rows.
+    """
+    payload: dict[str, object] = {}
+    if ROSTER.exists():
+        existing = json.loads(ROSTER.read_text(encoding="utf-8"))
+        if isinstance(existing, dict):
+            payload = existing
+    payload.setdefault("schema", SCHEMA)
+    payload.setdefault("description", DEFAULT_DESCRIPTION)
+    payload.setdefault("review", DEFAULT_REVIEW)
+    payload["gates"] = {gate: gates[gate] for gate in GATE_REPORTS}
     text = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
     ROSTER.write_text(text, encoding="utf-8")
+
+
+def write_gate_counts(gates: dict[str, list[object]]) -> None:
+    """Rewrite kGateRowCounts in the support header from the new roster.
+
+    The frozen count table is part of the integrity contract
+    (load_verified_roster checks it); leaving it stale failed only at test
+    time with a confusing message.
+    """
+    text = HEADER.read_text(encoding="utf-8")
+    for gate, rows in gates.items():
+        pattern = r'(\{"' + re.escape(gate) + r'",\s*)\d+(\})'
+        text, count = re.subn(pattern, lambda m: f"{m.group(1)}{len(rows)}{m.group(2)}", text)
+        if count != 1:
+            raise ValueError(f"failed rewriting kGateRowCounts entry for {gate}")
+    HEADER.write_text(text, encoding="utf-8")
 
 
 def verify_build_dir(build_dir: Path, roster_gates: dict[str, list[object]]) -> list[str]:
@@ -174,9 +207,10 @@ def main() -> int:
         size = len(data)
         sha = hashlib.sha256(data).hexdigest()
         write_header_pins(size, sha)
+        write_gate_counts(gates)
         print(f"wrote {ROSTER.relative_to(ROOT)}: {total} gap rows")
         print(f"  bytes={size} sha256={sha}")
-        print(f"pins rewritten in {HEADER.relative_to(ROOT)}")
+        print(f"pins and kGateRowCounts rewritten in {HEADER.relative_to(ROOT)}")
         return 0
 
     problems: list[str] = []

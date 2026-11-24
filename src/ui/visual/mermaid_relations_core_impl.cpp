@@ -3209,6 +3209,14 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
                 continue;
             }
         }
+        // D-461: `click <id> "<url>" ["<tooltip>"]` is a non-visual interaction
+        // binding (FS-2 precedent): closed grammar, target must be a declared
+        // state, consumed and dropped because the terminal grid has no
+        // interaction layer. Malformed forms stay whole-source.
+        if (diagram.family == RelationFamily::State && state_click_keyword(line)) {
+            if (!state_click_binding(line, diagram, work)) return {};
+            continue;
+        }
         if (diagram.family == RelationFamily::State && line == "--") {
             // RFC 0048: a standalone divider advances the enclosing composite's
             // region cursor. Top-level dividers and `A -- B` stay invalid; the
@@ -9729,6 +9737,17 @@ relations_layout(std::string_view source, Work& work, bool class_envelope, bool 
         (diagram->diagram_title->size() > static_cast<std::size_t>(kWidthLimit) ||
          layout.canvas_height > kHeightLimit - 2))
         return {};
+    // D-461: the state projection's payload/routing fees are cell-proportional
+    // and the measured compound/styled corpus needs up to 2.6M whole-render
+    // Work; fund a bounded supplemental pool sized from the actual canvas.
+    // Every other family keeps the single-balance meter, so their charge
+    // sequences and rejection thresholds are byte-identical.
+    if (diagram->family == RelationFamily::State) {
+        if (layout.canvas_width <= 0 || layout.canvas_height <= 0) return {};
+        work.enable_envelope(state_envelope_layout_allowance(
+            static_cast<std::size_t>(layout.canvas_width),
+            static_cast<std::size_t>(layout.canvas_height)));
+    }
     if (!work.spend(static_cast<std::size_t>(layout.canvas_width * layout.canvas_height)))
         return {};
     Canvas canvas(layout.canvas_width, layout.canvas_height, work);

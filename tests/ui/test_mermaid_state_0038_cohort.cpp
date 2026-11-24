@@ -477,6 +477,8 @@ TEST(MermaidState0038Cohort, E2bFootersAreUnchanged) {
         EXPECT_EQ(frame.find("config.theme="), std::string::npos) << rel;
     });
     // RFC 0048 promotes the two concurrency-region rows, so the E2b draw set
-    // grows by exactly two; their footers are unchanged.
-    EXPECT_EQ(drawn, 53);
+    // grows by exactly two; their footers are unchanged. D-461 narrows the
+    // click and font-style detectors, moving two more E2b members to
+    // predicted-draw: 53 -> 55.
+    EXPECT_EQ(drawn, 55);
 }

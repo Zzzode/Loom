@@ -172,6 +172,30 @@ inline constexpr std::size_t kErEnvelopeLayoutAllowance =
 // cells 245,760 * 122 + 4,096.
 static_assert(kErEnvelopeLayoutAllowance == 29'986'816u);
 
+// D-461: bounded supplemental Work for the native state projection. The state
+// path is not free of post-primary fees: a styled source charges the paint
+// plane (12/cell), extract_styled_rows (per line and cell),
+// prepay_styled_payload (512 per styled byte * 6 plus 512 per source byte * 4)
+// and the styled finish emission (per row and per run); compound sources charge
+// the routing tables. Measured whole-render totals against the 1M primary:
+// 2,054,958 for a user-styled composite container (64x134 = 8,576 cells,
+// 123/cell — the binding case), 1,664,827 for the concurrent-region variant
+// (6,808 cells) and 2,647,645 for `should-render-edge-labels-correctly`
+// (99x267 = 26,433 cells, 62/cell). Unlike the ER allowance, this bound is
+// derived from the *actual* post-prepare canvas, so it stays proportional to
+// the drawing area (192/cell + 4,096 gives the binding row ~56% headroom); it
+// is drawn ONLY by a Work the state branch explicitly enables, and every
+// default Work keeps the historical single-balance clamp. Degenerate inputs
+// whose fee is dominated by the source-bytes term rather than by cells still
+// fail closed.
+constexpr std::size_t state_envelope_layout_allowance(std::size_t width,
+                                                      std::size_t height) {
+    const std::size_t cells = width * height;
+    return cells * 192u + 4096u;
+}
+static_assert(state_envelope_layout_allowance(64u, 134u) == 1'650'688u);
+static_assert(state_envelope_layout_allowance(99u, 267u) == 5'079'232u);
+
 struct Work {
     std::size_t remaining = kWorkLimit;
     // RFC 0034: optional supplemental pool, inactive unless enable_envelope()
@@ -181,8 +205,11 @@ struct Work {
     std::size_t supplemental_remaining = 0;
     bool envelope_enabled = false;
 
-    // Turn this Work into the two-pool active-ER envelope meter. Idempotent;
-    // only relations_layout on an ER diagram with an er_presentation calls it.
+    // Turn this Work into the two-pool envelope meter. Called once per render
+    // by relations_layout: for an ER diagram with an er_presentation (RFC 0034)
+    // and for a native state diagram (D-461), each with its own bound. A second
+    // call REFILLS the pool, so a retry pass must be sized explicitly rather
+    // than re-enabled.
     void enable_envelope(std::size_t allowance) {
         envelope_enabled = true;
         supplemental_remaining = allowance;

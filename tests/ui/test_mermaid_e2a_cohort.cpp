@@ -41,6 +41,7 @@ const fs::path kD441Ledger = kTestsDir / "../tools/mermaid/state-layout-d441-coh
 const fs::path kD446Ledger =
     kTestsDir / "../tools/mermaid/state-leading-comment-d446-cohort.json";
 const fs::path kD449Ledger = kTestsDir / "../tools/mermaid/state-description-d449-cohort.json";
+const fs::path kD461Ledger = kTestsDir / "../tools/mermaid/state-d461-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -161,8 +162,9 @@ TEST(MermaidE2aCohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(counts.get_int("git"), 64);
     EXPECT_EQ(counts.get_int("state_v2"), 5);
     EXPECT_EQ(counts.get_int("state_v1_qualified"), 0);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 61);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 8);
+    // D-461 retires the two budget-blocked next-line-brace draws: 61/8 -> 63/6.
+    EXPECT_EQ(counts.get_int("predicted_draw"), 63);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 6);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -214,10 +216,12 @@ TEST(MermaidE2aCohort, EveryDrawRowDrawsAndEveryBlockedRowKeepsSourceAt240) {
         }
         EXPECT_EQ(row.wide, is_drawn ? "drawn" : "source");
     }
-    // D-435 moved the titled gitGraph row from blocked to drawn.
-    EXPECT_EQ(drawn, 61);
-    // D-435 retired the title blocker, so exactly eight rows stay blocked.
-    EXPECT_EQ(blocked, 8);
+    // D-435 moved the titled gitGraph row from blocked to drawn; D-461 moved
+    // the two layout-budget next-line-brace rows.
+    EXPECT_EQ(drawn, 63);
+    // D-435 retired the title blocker; D-461 retired the two budget-blocked
+    // brace draws, so exactly six rows stay blocked.
+    EXPECT_EQ(blocked, 6);
 }
 
 TEST(MermaidE2aCohort, DescriptionIsNeverRendered) {
@@ -362,6 +366,14 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
         cohort.insert(rel);
         if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
     });
+    // D-461 admits the ten budget-funded state originals plus the two `click`
+    // and one `font-style` rows; the per-row gate is
+    // test_mermaid_state_d461_cohort. The config-bearing subset leaves this
+    // whole-source scan; `checked` below is pinned to the post-promotion value.
+    auto d461 = json::parse(read_file(kD461Ledger));
+    ASSERT_TRUE(d461.has_value()) << "D-461 cohort ledger must parse";
+    d461->root().get("rows").iter(
+        [&](const JsonVal row) { cohort.insert(row.get_string("path")); });
     std::set<std::string> git_skipped;
     std::set<std::string> state_skipped;
     std::set<std::string> skipped_by_rfc0048;
@@ -399,8 +411,10 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     // closed-boolean cohort, so the exact value drops 80 -> 62. D-436 moves
     // the 14 trunk-config rows out too: 62 -> 48. D-441 moves the 3 state
     // layout rows out: 48 -> 45. D-446/D-449 move their 5 state rows out:
-    // 45 -> 40.
-    EXPECT_EQ(checked, 40);
+    // 45 -> 40. D-461 moves 11 config-bearing state rows out (the eight
+    // user-styled composite containers, the two clickable-tooltip rows and the
+    // multiple-class row): 40 -> 29.
+    EXPECT_EQ(checked, 29);
     EXPECT_EQ(skipped_by_rfc0048.size(), 24u);
     // Under-listing fails here (an admitted row that really changes surface is
     // scanned again); over-listing a missing or non-config-bearing path fails

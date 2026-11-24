@@ -216,14 +216,35 @@ Ledger/evidence (E2b requirement 4), mirroring E2a:
   pixels are gated exclusively by the dedicated cohort test, so no row
   can be admitted without its pixel gate.
 
+D-461 amendment (2026-11-24): two detectors were narrowed. `state-click-statement`
+now fires only outside the closed `click <id> "<url>" ["<tooltip>"]` grammar
+(the closed form is validated, target-resolved and dropped as a non-visual
+binding), and `state-unrepresentable-italic` now fires only for a `font-style`
+value other than `italic`/`normal` (those two are validated and unpainted; the
+legend echoes the authored line verbatim as the disclosure). Both admitted rows
+are recorded in `tools/mermaid/state-d461-cohort.json`; the ledger partition is
+55 predicted-draw / 6 predicted-blocked.
+
 Roster pins that can move and must be re-pinned together through the
 reviewed `verify_e6c_gap_roster.py --write` path (never ad hoc): the
 e6c roster json gates and the matching C++ pins in
-`tests/support/mermaid_gap_roster.hpp` (state85=14 and
+`tests/support/mermaid_gap_roster.hpp` (state85=13 and
 state_reverse_escape=1 lines are checked for overlap; any gate whose
 report count drops is re-pinned in the same commit with the before/after
 enumerated). official_matrix=48 is a body-error gate and is not expected
 to move; the run confirms.
+
+D-461 fixed `--write` itself: before that change it rewrote the whole
+`review` object from a hard-coded 2026-10-24 block, dropping the extended
+audit keys (`class_style13`, `class_defined6`, `rebase_integration`) and the
+long reviewed note, and it never rewrote `kGateRowCounts`, so following this
+instruction would silently destroy the audit trail and leave a stale count
+table. The tool now preserves every existing non-`gates` field, rewrites
+only the gate arrays, and updates `kGateRowCounts`; re-running `--write`
+against an up-to-date ledger is byte-idempotent. The review text (date,
+note, per-family keys) is edited deliberately by the reviewer on top of the
+regenerated gates, then the verifier and the two `MermaidCapabilityRoster`
+tests are the gate.
 
 ## 6. Acceptance and rollback
 

@@ -112,13 +112,33 @@ NATIVE_ROUTE_DEBT: set[str] = set()
 # Only these independently observed complete originals retain the historical
 # next-line-brace tag. The grammar now accepts that opener; neither its presence
 # nor a future source revision predicts a geometry failure without new review.
+# D-461 retires the two rows whose only remaining blocker was the fixed 1M
+# layout Work primary (the bounded canvas-derived state envelope funds them);
+# they move to REVIEWED_BRACE_DRAW below. The `multiple-transitions` row stays:
+# its blocker is routing geometry, not budget, and it is deferred to D-461
+# stage 3.
 STATE_COMPOSITE_EXECUTION_DEBT = {
+    "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd":
+        "b6ef22abdcd251e866c6ab5a9ee7d68d98e1092a8d65f294de849d4aa3b68c4a",
+}
+
+# D-461: reviewed next-line-brace originals admitted to draw (each sha-bound, so
+# a source revision requires a new independent review). They are the two
+# `should-render-edge-labels-correctly*` grids whose composite containers use
+# the next-line-brace opener and whose whole render cost (1.66M-2.65M) exceeds
+# the fixed 1M primary.
+# D-461 measured narrow exception: this grid still draws at 40 columns (the
+# narrow set is measured live, rule 34). The E2a ledger otherwise pre-registers
+# only the 240-column admission.
+NARROW_DRAW = {
+    "state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd",
+}
+
+REVIEWED_BRACE_DRAW = {
     "state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd":
         "1e359f909af210d7338db0674c6f86daaf25b5a3959bd70b0649e92ee0c8f3f3",
     "state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd":
         "8f5f84b56734e20aa522613ae397585b37aaa248cae2880bd85bcfa39134733c",
-    "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd":
-        "b6ef22abdcd251e866c6ab5a9ee7d68d98e1092a8d65f294de849d4aa3b68c4a",
 }
 
 
@@ -177,6 +197,11 @@ def state_blocker(rel, source_sha256, body_lines):
         if source_sha256 != STATE_COMPOSITE_EXECUTION_DEBT[rel]:
             raise ValueError(f"State execution-debt source changed; independent review required: {rel}")
         return "state-composite-brace-on-next-line"
+    if rel in REVIEWED_BRACE_DRAW:
+        if source_sha256 != REVIEWED_BRACE_DRAW[rel]:
+            raise ValueError(
+                f"Reviewed next-line-brace source changed; independent review required: {rel}")
+        return None
     if any(line.strip() == "{" for line in body_lines):
         raise ValueError(f"Unreviewed next-line-brace source; independent review required: {rel}")
     # RFC 0048 retires the standalone-divider blocker: a concurrent-region
@@ -244,7 +269,7 @@ def build(repo_root):
                 "prediction": "predicted-blocked" if blocked else "predicted-draw",
                 "expected_states": {
                     "wide_240": wide,
-                    "narrow_40": "source",
+                    "narrow_40": "drawn" if entry["path"] in NARROW_DRAW else "source",
                     "restored_240": wide,
                 },
                 "blocker": (
@@ -270,8 +295,8 @@ def build(repo_root):
         "selection": {
             "rule": "frontmatter original containing neither a top-level config key nor a body %%{init}%% directive",
             "roots": ["git", "state-diagram-v2", "state-diagram"],
-            "blocker_detection": "three fixed source-content detectors plus two execution-attested reviewed sets (native parent-route debt and path/SHA-bound State composite debt); no generator-time rendering; new execution-debt entries require independent review. D235 retired the empty-quoted-tag detector (empty tag now parses to no label, guarded by MermaidGitGraphEmptyTag); D-435 retired the title detector (the frontmatter title is projected as the frame's first row).",
-            "width_policy": "E2a pre-registers the 240-column admission; narrow_40 is uniformly 'source'.",
+            "blocker_detection": "three fixed source-content detectors plus three execution-attested reviewed sets (native parent-route debt, path/SHA-bound State composite debt, and the path/SHA-bound next-line-brace draw witnesses D-461 admits); no generator-time rendering; new execution-debt entries require independent review. D235 retired the empty-quoted-tag detector (empty tag now parses to no label, guarded by MermaidGitGraphEmptyTag); D-435 retired the title detector (the frontmatter title is projected as the frame's first row); D-461 retired the two budget-blocked next-line-brace draws.",
+            "width_policy": "E2a pre-registers the 240-column admission; narrow_40 is 'source' except the one D-461-measured grid that also draws at 40.",
         },
         "review": {
             "reviewer_agent": "independent read-only adversarial D235 re-review "
@@ -287,7 +312,13 @@ def build(repo_root):
                     "gitGraph cherry-pick originals (two TB/LR orientations and a BT) move to "
                     "predicted-draw, guarded by MermaidGitGraphEmptyTag native gtests. The "
                     "other six blockers and all frozen gates remain unchanged. Approved "
-                    "59/10 partition.",
+                    "59/10 partition. D-461 (2026-11-24) retires the two "
+                    "should-render-edge-labels-correctly* next-line-brace rows: their only "
+                    "remaining blocker was the fixed 1M layout Work primary, now funded by "
+                    "the bounded canvas-derived state envelope (see "
+                    "tools/mermaid/state-d461-cohort.json and test_mermaid_state_d461_cohort). "
+                    "The brace-on-next-line tag survives only for the multiple-transitions "
+                    "row, whose blocker is routing geometry (D-461 stage 3).",
         },
         "counts": {
             "total": total,

@@ -743,9 +743,10 @@ python3 -I tools/mermaid/verify_e6c_gap_roster.py \
   --build-dirs build/debug/tests/ui,build/release/tests/ui
 ```
 
-The roster (`tools/mermaid/e6c-mandatory-gap-roster.json`, 62087 bytes,
-SHA-256 `8ebea8348439d0b93dc9e50fdc6101ce321968141a149f155d89acb66da33f2b`)
-is byte-stable across presets. Renames: `MermaidOfficial.CompleteCapabilityMatrix`
+The roster (`tools/mermaid/e6c-mandatory-gap-roster.json`, 45694 bytes,
+SHA-256 `87e85e7f91d69bff1cd6576e8b95c1d39502636064e61f1e7726fb629f53bfcf`,
+re-pinned by D-461 after the state85 click positive was met) is byte-stable
+across presets. Renames: `MermaidOfficial.CompleteCapabilityMatrix`
 → `MermaidCapabilityReport.OfficialMatrix`;
 `MermaidFlowSemantics.Official400CompleteSourceNativeMandatoryGate` →
 `MermaidCapabilityReport.Flow400CompleteSources`;

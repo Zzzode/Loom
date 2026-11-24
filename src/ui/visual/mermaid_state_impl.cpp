@@ -275,6 +275,7 @@ bool state_style_properties(std::string_view rest, ClassStyleProperties& propert
                              : property == "color"        ? 4u
                              : property == "font-weight"  ? 8u
                              : property == "border"       ? 16u
+                             : property == "font-style"   ? 32u
                                                           : 0u;
         if (!bit || (seen & bit)) return false;
         seen |= bit;
@@ -291,6 +292,12 @@ bool state_style_properties(std::string_view rest, ClassStyleProperties& propert
             const auto weight = state_ascii_lower(value);
             if (weight != "bold" && weight != "normal") return false;
             properties.bold = weight == "bold";
+        } else if (property == "font-style") {
+            // D-461: validated and dropped. The terminal cell grid has no italic
+            // face, so the property neither paints nor joins the legend tokens
+            // (the declaration's verbatim legend record is the disclosure).
+            const auto style = state_ascii_lower(value);
+            if (style != "italic" && style != "normal") return false;
         } else if (!state_border_shorthand(value, properties)) {
             return false;
         }
@@ -417,6 +424,47 @@ bool state_parse_direct_style(std::string_view line, Work& work, StateStyleDirec
     out.targets = std::move(*targets);
     out.verbatim = std::string(line);
     return state_style_properties(rest.substr(split), out.properties);
+}
+
+// D-461: `click` directive probe and closed non-visual binding parser.
+bool state_click_keyword(std::string_view line) {
+    return line.size() > 6u && line.starts_with("click") &&
+           (line[5] == ' ' || line[5] == '\t');
+}
+
+bool state_click_binding(std::string_view line, const RelationDiagram& diagram, Work& work) {
+    if (!state_click_keyword(line) || !work.spend(line.size() * 4u + 128u)) return false;
+    auto rest = trim_relation(line.substr(5u));
+    const auto split = rest.find_first_of(" \t");
+    if (split == std::string_view::npos) return false;
+    const auto target = trim_relation(rest.substr(0, split));
+    if (!state_style_identifier(target)) return false;
+    rest = trim_relation(rest.substr(split));
+    // One or two double-quoted arguments (url, optional tooltip title). The
+    // corpus form is `click A "https://google.com" "Visit Google"`; `href`/`call`
+    // forms and unquoted arguments stay whole-source. Separation between two
+    // quoted arguments is optional: after one argument is consumed the next
+    // token only has to start with a quote. The binding is dropped, so nothing
+    // downstream depends on the split.
+    std::size_t quoted = 0u;
+    while (!rest.empty()) {
+        if (rest.front() != '"') return false;
+        std::size_t at = 1u;
+        std::size_t bytes = 0u;
+        for (; at < rest.size() && rest[at] != '"'; ++at) {
+            const auto c = static_cast<unsigned char>(rest[at]);
+            if (c < 0x20u || c == 0x7fu) return false;
+            ++bytes;
+        }
+        if (at >= rest.size() || bytes == 0u || bytes > 512u) return false;
+        rest = trim_relation(rest.substr(at + 1u));
+        if (++quoted > 2u) return false;
+    }
+    if (quoted == 0u) return false;
+    // The binding names an already-declared state; anything else stays closed.
+    for (const auto& entity : diagram.entities)
+        if (entity.id == target) return true;
+    return false;
 }
 
 bool build_state_direct_styles(RelationDiagram& diagram,

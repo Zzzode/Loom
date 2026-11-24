@@ -387,7 +387,8 @@ the current failure path is now diagnosed and fixed in the test, as recorded
 above, and both current 826-test suites pass. Rule for later phases: any
 renderer-driven outcome change (gain or loss) must update the roster (via
 `--write`, followed by independent review) and the frozen constants **in the
-same change**; expectation changes still go only through this ledger, never
+same change** (D-461 made `--write` preserve the reviewed `review` block and
+rewrite `kGateRowCounts`, so a hand edit is no longer needed or safe); expectation changes still go only through this ledger, never
 through renderer output. T1-A required no roster rewrite: official_matrix
 exempts E2a cohort rows, so its gap rows and the SHA pin stayed byte-identical.
 

@@ -36,6 +36,7 @@ const fs::path kD446Ledger =
     kTestsDir / "../tools/mermaid/state-leading-comment-d446-cohort.json";
 const fs::path kD449Ledger = kTestsDir / "../tools/mermaid/state-description-d449-cohort.json";
 const fs::path kRfc0048Ledger = kTestsDir / "../tools/mermaid/state-region-0048-cohort.json";
+const fs::path kD461Ledger = kTestsDir / "../tools/mermaid/state-d461-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 constexpr std::string_view kFooterHeader = "State native projection v1";
@@ -156,8 +157,9 @@ TEST(MermaidE2bCohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(counts.get_int("total"), 61);
     EXPECT_EQ(counts.get_int("state_v2"), 38);
     EXPECT_EQ(counts.get_int("state_v1"), 23);
-    EXPECT_EQ(counts.get_int("predicted_draw"), 53);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 8);
+    // D-461 narrows the click and font-style detectors: 53/8 -> 55/6.
+    EXPECT_EQ(counts.get_int("predicted_draw"), 55);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 6);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -214,8 +216,8 @@ TEST(MermaidE2bCohort, EveryDrawRowDrawsWithFooterAndBlockedRowKeepsSourceAt240)
         }
         EXPECT_EQ(row.wide, is_drawn ? "drawn" : "source");
     }
-    EXPECT_EQ(drawn, 53);
-    EXPECT_EQ(blocked, 8);
+    EXPECT_EQ(drawn, 55);
+    EXPECT_EQ(blocked, 6);
 }
 
 TEST(MermaidE2bCohort, DescriptionIsNeverRendered) {
@@ -301,6 +303,15 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
             if (rel.rfind("state-diagram", 0) == 0) state_admitted.insert(rel);
         });
     }
+    // D-461 admits the ten budget-funded state originals plus the two `click`
+    // and one `font-style` rows; the per-row gate is
+    // test_mermaid_state_d461_cohort. The config-bearing subset leaves this
+    // whole-source scan (the click and multiple-class rows are E2b members, so
+    // they were already excluded by `cohort` above).
+    auto d461 = json::parse(read_file(kD461Ledger));
+    ASSERT_TRUE(d461.has_value()) << "D-461 cohort ledger must parse";
+    d461->root().get("rows").iter(
+        [&](const JsonVal row) { cohort.insert(row.get_string("path")); });
     cohort.insert(admitted.begin(), admitted.end());
     std::set<std::string> skipped_by_rfc0038;
     std::set<std::string> skipped_by_rfc0046;
@@ -349,7 +360,9 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
     }
     // D-441 population migration: the 3 state layout rows leave the scan
     // (25 -> 22). D-446/D-449 move their 5 state rows out too: 22 -> 17.
-    EXPECT_EQ(checked, 17);
+    // D-461 moves 9 config-bearing state rows out (the eight user-styled
+    // composite containers and the handdrawn clickable-tooltip row): 17 -> 8.
+    EXPECT_EQ(checked, 8);
     EXPECT_EQ(skipped_by_rfc0048.size(), 16u);
     // Under-listing fails here (an admitted row that really changes surface is
     // no longer excluded, so the whole-source assertion above goes red);

@@ -5914,10 +5914,27 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   (23,775 -> 27,693); both pins are updated. The retry is scoped to
   `stateDiagram-v2`; the classic `stateDiagram` twin rows keep the original
   path and stay whole-source.
-- **The `info` directive.** Not a state diagram. Admitted as a minimal
-  native `info` panel (`Mermaid <upstream tag>` plus the pinned version line)
-  only if it can be rendered without inventing content; otherwise it becomes
-  a documented permanent foreign row with the evidence table entry.
+- **The `info` directive (stage 4).** Not a state diagram; it is its own
+  family (`MermaidProbeFamily::Info`, dispatched on a body whose only
+  non-comment line is `info` or `info showInfo`). Upstream renders a fixed
+  panel whose only content is the running Mermaid version text — the fixture
+  descriptions state exactly that — so the projection paints one banner line,
+  `Mermaid <pinned version>`, inside a plain frame and nothing else. The
+  version comes from the single pin in `src/ui/visual/mermaid_info_impl.cpp`
+  (`kPinnedMermaidVersion`); the cohort gate reads the fixture manifest's
+  `upstream.tag` and fails if the banner and the manifest disagree, so a
+  manifest bump without a renderer bump is caught. The optional frontmatter
+  grammar is closed: a YAML `description` (plain or block) and an indent-2
+  `config:` map limited to the E2b leaf whitelist (`logLevel` 0/1/2,
+  `fontFamily` courier, `securityLevel` loose/sandbox); accepted leaves are
+  disclosed as `config.<key>=<value> -> <role>; not applied` lines below the
+  panel, in alphabetical key order, exactly like the state-family footer.
+  Because that footer is wider than 40 columns, the one admitted row that
+  carries config leaves keeps whole source at narrow_40 while the two
+  config-free `info/` rows draw at both widths — the same narrow policy E2b
+  pre-registers for its footer rows. Completed by
+  `tools/mermaid/generate_info_d461_cohort.py` and gated by
+  `test_mermaid_info_d461_cohort`.
 - **Protection-corpus migration (owner-authorized).** Admitting the closed
   `click` binding meets the previously unmet RFC 0031 E6c mandatory positive
   `merman/2f8341799bbc976b1bf7` (`stateDiagram-v2\nS1\nclick S1 "https://example.com" "Go"`),
@@ -5936,6 +5953,15 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   count table, so re-running it is byte-idempotent. The protected-file
   reconciliation was reviewed by an independent agent (task
   a096d008e18077c55).
+- **Stage 4 result (measured).** The bare `info` directive is admitted as its
+  own family; the three corpus rows (the two `info/` originals and the
+  `state-diagram-v2` fixture carrying the same directive behind a frontmatter
+  fence) all draw at 240. The two config-free rows also draw at 40; the
+  frontmatter row keeps whole source at 40 because its disclosure footer is
+  wider than the fence. Census moves to 1767 drawn / 378 fallback / 0 error,
+  `drawn_at_240` 1581, roster 378 rows / 27 categories (the
+  `family_residual:info` category and the state-v2 `info` deferral both
+  disappear).
 - **Stage 3 result (measured).** 19 of the 21 rows draw at 240 columns; the
   two remaining are the labeled composite whose 42-column edge label is wider
   than its owning composite and the bare `info` directive. The six crossing rows draw

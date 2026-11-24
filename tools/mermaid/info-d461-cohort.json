@@ -1,0 +1,98 @@
+{
+  "schema": "loom_mermaid_info_d461_cohort/v1",
+  "decision": "D-461",
+  "stage": "4: bare `info` directive admitted as the fixed version panel",
+  "panel_version": "12.2.0",
+  "admission": {
+    "body": "exactly one non-comment body line, `info` or `info showInfo`; any other shape fails closed",
+    "frontmatter": "optional `---` fence with a YAML `description` (plain or block) and an indent-2 `config:` map limited to logLevel 0/1/2, fontFamily courier, securityLevel loose/sandbox; accepted leaves are disclosed, nothing else",
+    "panel": "one banner line `Mermaid <pinned tag version>`; the directive carries no content, so no other text is painted"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the three originals whose body is the bare `info` directive",
+    "cohort_digest": "80bd499b8232758ac0fb273758a8d5d085e208896b09b9b82ef648557c23bf92"
+  },
+  "counts": {
+    "total": 3,
+    "by_family": {
+      "info": 2,
+      "state-diagram-v2": 1
+    }
+  },
+  "review": {
+    "reviewer_agent": "stage 4: one independent read-only adversarial review (task a5d854b3334464816; round 1 REQUEST-CHANGES on the stale state-ledger review note, the d117 family columns/Total, unverified post-fix suites, the pre-charge parse/allocation order and the empty-config admission; all fixed and re-verified; round 2 APPROVE). The review recorded the panel content decision (pinned upstream version only), the closed frontmatter grammar and the paired negative set.",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "Stages 1-4: stage 4 admits the bare `info` directive as a fixed native panel naming the pinned upstream version; the closed body grammar is `info` or `info showInfo` behind an optional description/config frontmatter limited to the E2b leaf whitelist."
+  },
+  "rows": [
+    {
+      "path": "info/pr-check/should-handle-an-info-definition.mmd",
+      "family": "info",
+      "sha256": "187b50a28a9934c3071e4019c877eab0587def406d7da9363522e5f369798374",
+      "manifest_sha256": "187b50a28a9934c3071e4019c877eab0587def406d7da9363522e5f369798374",
+      "prior_status": "source_fallback",
+      "oracle": "info-banner",
+      "directive": "info",
+      "config_leaves": [],
+      "expected_notices": [],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "the directive carries no body content; the panel is the pinned upstream version banner"
+    },
+    {
+      "path": "info/pr-check/should-handle-an-info-definition-with-showinfo.mmd",
+      "family": "info",
+      "sha256": "ba82e4ceea7541abe354012d6802cb18ce3a9fa6f872ace9332f6c483d589040",
+      "manifest_sha256": "ba82e4ceea7541abe354012d6802cb18ce3a9fa6f872ace9332f6c483d589040",
+      "prior_status": "source_fallback",
+      "oracle": "info-banner",
+      "directive": "info showInfo",
+      "config_leaves": [],
+      "expected_notices": [],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "the directive carries no body content; the panel is the pinned upstream version banner"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-simple-info.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "34569bb15cc373d53d6b14d07611fd37c6b601f61fc72d4ce38d49ee8bdee355",
+      "manifest_sha256": "34569bb15cc373d53d6b14d07611fd37c6b601f61fc72d4ce38d49ee8bdee355",
+      "prior_status": "source_fallback",
+      "oracle": "info-banner",
+      "directive": "info",
+      "config_leaves": [
+        {
+          "key": "fontFamily",
+          "value": "courier"
+        },
+        {
+          "key": "logLevel",
+          "value": "1"
+        }
+      ],
+      "expected_notices": [
+        "config.fontFamily=\"courier\" -> terminal font; not applied",
+        "config.logLevel=1 -> logger only; not applied"
+      ],
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "ledger_note": "the directive carries no body content; the panel is the pinned upstream version banner"
+    }
+  ]
+}

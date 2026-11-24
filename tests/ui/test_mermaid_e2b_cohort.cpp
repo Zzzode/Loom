@@ -37,6 +37,7 @@ const fs::path kD446Ledger =
 const fs::path kD449Ledger = kTestsDir / "../tools/mermaid/state-description-d449-cohort.json";
 const fs::path kRfc0048Ledger = kTestsDir / "../tools/mermaid/state-region-0048-cohort.json";
 const fs::path kD461Ledger = kTestsDir / "../tools/mermaid/state-d461-cohort.json";
+const fs::path kInfoD461Ledger = kTestsDir / "../tools/mermaid/info-d461-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 constexpr std::string_view kFooterHeader = "State native projection v1";
@@ -154,13 +155,14 @@ TEST(MermaidE2bCohort, LedgerMatchesSchemaAndReviewed) {
     const auto root = ledger.root();
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_e2b_cohort/v1");
     const auto counts = root.get("counts");
-    EXPECT_EQ(counts.get_int("total"), 61);
-    EXPECT_EQ(counts.get_int("state_v2"), 38);
+    EXPECT_EQ(counts.get_int("total"), 60);
+    EXPECT_EQ(counts.get_int("state_v2"), 37);
     EXPECT_EQ(counts.get_int("state_v1"), 23);
     // D-461 narrows the click and font-style detectors (53/8 -> 55/6); stage
-    // 3's crossing retry draws the v2 labeled fan-out (56/5).
+    // 3's crossing retry draws the v2 labeled fan-out (56/5); stage 4 hands the
+    // lone `info`-body row to its own family cohort (56/4).
     EXPECT_EQ(counts.get_int("predicted_draw"), 56);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 5);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 4);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -218,7 +220,7 @@ TEST(MermaidE2bCohort, EveryDrawRowDrawsWithFooterAndBlockedRowKeepsSourceAt240)
         EXPECT_EQ(row.wide, is_drawn ? "drawn" : "source");
     }
     EXPECT_EQ(drawn, 56);
-    EXPECT_EQ(blocked, 5);
+    EXPECT_EQ(blocked, 4);
 }
 
 TEST(MermaidE2bCohort, DescriptionIsNeverRendered) {
@@ -313,6 +315,13 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
     ASSERT_TRUE(d461.has_value()) << "D-461 cohort ledger must parse";
     d461->root().get("rows").iter(
         [&](const JsonVal row) { cohort.insert(row.get_string("path")); });
+    // D-461 stage 4 hands the `info`-body row to its own family cohort; it is
+    // config-bearing and leaves this whole-source scan with the other
+    // admitted state rows.
+    auto info_d461 = json::parse(read_file(kInfoD461Ledger));
+    ASSERT_TRUE(info_d461.has_value()) << "D-461 info cohort ledger must parse";
+    info_d461->root().get("rows").iter(
+        [&](const JsonVal row) { cohort.insert(row.get_string("path")); });
     cohort.insert(admitted.begin(), admitted.end());
     std::set<std::string> skipped_by_rfc0038;
     std::set<std::string> skipped_by_rfc0046;
@@ -364,7 +373,8 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
     // D-461 moves 9 config-bearing state rows out (the eight user-styled
     // composite containers and the handdrawn clickable-tooltip row): 17 -> 8.
     // Stage 3 moves four more out (the four basic-states look/theme rows):
-    // 8 -> 4.
+    // 8 -> 4. Stage 4 moves the `info`-body row from the E2b ledger to its own
+    // cohort ledger; it was already outside this scan, so the count stays 4.
     EXPECT_EQ(checked, 4);
     EXPECT_EQ(skipped_by_rfc0048.size(), 16u);
     // Under-listing fails here (an admitted row that really changes surface is

@@ -6736,6 +6736,34 @@ const JourneyCohortEntry* state_d461_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-461 stage 4: the three originals whose body is the bare `info` directive.
+// Upstream renders a fixed version panel, so the terminal projection is the
+// pinned-version banner; the per-row gate is test_mermaid_info_d461_cohort.
+const std::map<std::string, JourneyCohortEntry>& info_d461_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/info-d461-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-461 info cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-461 info cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* info_d461_cohort_row(std::string_view path) {
+    const auto& rows = info_d461_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-440 flowchart closed-theme cohort: the one non-contract `flowchart`-header
 // original whose only non-admitted input is an inert `config.theme: forest`
 // leaf (every `flowchart/` fixture belongs to the frozen Flow400 contract).
@@ -12598,6 +12626,35 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // D-461 stage 4: the bare `info` directive renders as the fixed
+            // version panel. This branch precedes the state-family ledgers; the
+            // state-v2 fixture it admits is also an E2b member, and E2b's
+            // selection no longer claims a recognized foreign directive. The
+            // post-loop reach proof below asserts every ledger row is observed
+            // here (rule 38).
+            if (class_path.is_str()) {
+                const auto* cohort = info_d461_cohort_row(class_path.as_str());
+                if (cohort) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = (*fs::path(row.path).begin()).string();
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-461 info directive cohort (TL review-exempt)";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // D-461 state-v2 cohort (stages 1-2): the ten budget rows funded
             // by the bounded canvas-derived state envelope, the two `click`
             // bindings and the one `font-style` classDef, states read per row.
@@ -14071,6 +14128,27 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d449 == expected_d449,
                     "D-449 branch reach set must equal its ledger");
+        }
+
+        // D-461 stage 4 rule-38 reach proof: every `info` cohort row must be
+        // observed through its own branch, and the branch must not match
+        // anything else.
+        {
+            const auto ledger_info_d461 = json::parse(
+                read_file(kRoot / "../../../tools/mermaid/info-d461-cohort.json"));
+            require(ledger_info_d461.has_value(), "D-461 info cohort ledger must parse");
+            std::set<std::string> expected_info_d461;
+            ledger_info_d461->root().get("rows").iter([&](const JsonVal row) {
+                expected_info_d461.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_info_d461;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == "D-461 info directive cohort (TL review-exempt)")
+                    reached_info_d461.insert(row.path);
+            }
+            require(reached_info_d461 == expected_info_d461,
+                    "D-461 info branch reach set must equal its ledger");
         }
 
         // D-461 rule-38 reach proof: every ledger row must be observed through

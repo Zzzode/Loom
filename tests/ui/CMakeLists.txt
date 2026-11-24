@@ -302,6 +302,16 @@ add_test(NAME MermaidStateD461Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidStateD461Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-461 stage 4: the `info` directive cohort ledger is generated from the
+# fixtures; the check fails on a hand edit that the generator would not
+# reproduce.
+add_test(NAME MermaidInfoD461Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_info_d461_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidInfoD461Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-460: the ER style-admission cohort ledger is generated from the fixtures;
 # the check fails on a hand edit that the generator would not reproduce.
 add_test(NAME MermaidErD460Cohort.GeneratorIsReproducible
@@ -1357,6 +1367,15 @@ add_executable(test_mermaid_state_d461_cohort
 target_link_libraries(test_mermaid_state_d461_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_state_d461_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# D-461 stage 4: the bare `info` directive renders the fixed version panel.
+add_executable(test_mermaid_info_d461_cohort
+    test_mermaid_info_d461_cohort.cpp)
+target_link_libraries(test_mermaid_info_d461_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_info_d461_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

@@ -113,6 +113,18 @@ TEST(MermaidProbe, StateFrontmatterResolvesRelationsState) {
     EXPECT_EQ(state->family, MermaidProbeFamily::State);
 }
 
+TEST(MermaidProbe, InfoDirectiveResolvesItsOwnFamily) {
+    // D-461 stage 4: the bare directive is a family, not the Charts fallback.
+    EXPECT_EQ(classify("info\n")->family, MermaidProbeFamily::Info);
+    EXPECT_EQ(classify("info showInfo\n")->family, MermaidProbeFamily::Info);
+    auto frontmatter = classify("---\ndescription: x\n---\ninfo\n");
+    ASSERT_TRUE(frontmatter.has_value());
+    EXPECT_EQ(frontmatter->family, MermaidProbeFamily::Info);
+    // Anything else keeps the old terminal fallback.
+    EXPECT_EQ(classify("info showinfo\n")->family, MermaidProbeFamily::Charts);
+    EXPECT_EQ(classify("info\nextra 1\n")->family, MermaidProbeFamily::Info);
+}
+
 TEST(MermaidProbe, ChartsIsTheFinalFallback) {
     EXPECT_EQ(classify("pie\n\"a\" : 1\n")->family, MermaidProbeFamily::Charts);
     EXPECT_EQ(classify("xychart-beta\nbar [1]\n")->family, MermaidProbeFamily::Charts);

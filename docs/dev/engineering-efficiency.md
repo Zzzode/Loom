@@ -2846,3 +2846,18 @@ three REQUEST-CHANGES rounds before APPROVE; contract lens: one) and the
     scene class first (cross-owner vs same-owner edges, v1 vs v2), run the frozen Model gates
     before any census claim, and record the rejected control as the reason for
     the scope.
+
+14. **A reused disclosure policy carries its width behaviour.** Stage 4's
+    `info` panel reuses the state family's config-disclosure footer; that
+    footer is wider than 40 columns, so the one row carrying leaves keeps
+    whole source at narrow_40 while the config-free rows draw at both widths.
+    The first ledger draft pre-registered `drawn` for all three rows and the
+    gate caught it in one run. Measure `narrow_40` per row after the artifact
+    exists; never infer it from the art's own width.
+15. **An admission can falsify a sibling ledger's premise.** E2b registered
+    the lone `info`-body row as `state-non-state-body` predicted-blocked; once
+    the directive had an owning family that premise became false and the
+    blocked-row gate would have failed. Admission slices must re-derive every
+    sibling ledger whose selection rule names the newly admitted shape, and
+    the migration must be a paired edit (skip + comment here, count re-pin
+    there), not a loosened assertion.

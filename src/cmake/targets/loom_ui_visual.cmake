@@ -65,6 +65,7 @@ target_sources(loom_ui_visual PRIVATE
     ui/visual/mermaid_railroad_impl.cpp
     ui/visual/mermaid_radar_impl.cpp
     ui/visual/mermaid_packet_impl.cpp
+    ui/visual/mermaid_info_impl.cpp
     ui/visual/mermaid_eventmodeling_impl.cpp
     ui/visual/mermaid_agentflow_impl.cpp
     ui/visual/mermaid_sankey_impl.cpp

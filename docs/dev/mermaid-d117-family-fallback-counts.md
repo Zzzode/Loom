@@ -6,8 +6,8 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1764 drawn /
-381 source_fallback / 0 error at 240 wide**, after D-461 stage 3 (`local`,
+**Current totals (the last row of the history table below): 1767 drawn /
+378 source_fallback / 0 error at 240 wide**, after D-461 stage 4 (`local`,
 2026-11-24). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
@@ -97,10 +97,11 @@ are not whole-original errors).
 | After D-460 ER body style admission (15 rows) | 2026-11-24 | local | 1745 | 400 | 0 |
 | After D-461 state-v2 layout envelope + click/font-style vocabulary (13 rows) | 2026-11-24 | local | 1758 | 387 | 0 |
 | After D-461 stage 3 state crossing-retry routing (6 rows) | 2026-11-24 | local | 1764 | 381 | 0 |
+| After D-461 stage 4 `info` directive version panel (3 rows) | 2026-11-24 | local | 1767 | 378 | 0 |
 
-The formal counters behind the D-461 stage 3 row: `original_drawing_coverage.drawn_at_240`
-= 1578 (1559 + 19) and `mandatory_gaps` = 48 (frozen; the 48 body-diagnostic
-errors are unchanged).
+The formal counters behind the newest row: `original_drawing_coverage.drawn_at_240`
+= 1581 (1559 + 19 + 3) and `mandatory_gaps` = 48 (frozen; the 48
+body-diagnostic errors are unchanged).
 
 Row-level detail for the newest rows:
 - **D-450 (5)**: `quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd`,
@@ -158,6 +159,17 @@ Row-level detail for the newest rows:
   legend. The eight deferred rows (seven routing geometry, one `info`) stay
   whole source at 240 and 40 and are listed in
   `tools/mermaid/state-d461-cohort.json`'s `deferred` set.
+- **D-461 stage 4 (3)**: the bare `info` directive, which upstream renders as
+  a fixed version panel rather than a graph —
+  `info/pr-check/should-handle-an-info-definition`,
+  `info/pr-check/should-handle-an-info-definition-with-showinfo` and
+  `state-diagram-v2/nightly-check/v2-should-render-a-simple-info` (the same
+  directive behind a frontmatter fence). The projection is one banner line,
+  `Mermaid <pinned version>`, gated against the fixture manifest's
+  `upstream.tag`; accepted frontmatter leaves are disclosed below the panel.
+  The two config-free rows draw at both widths; the frontmatter row keeps
+  whole source at 40 because its disclosure footer is wider than the fence.
+  Listed in `tools/mermaid/info-d461-cohort.json`.
 - **D-460 (15)**: every remaining er-diagram original whose only non-admitted
   input is the closed ER style surface —
   `er-diagram/visual-check/entities-with-styles-applied-from-class-statement-
@@ -210,15 +222,17 @@ disposition (fix or documented infeasibility).
 
 Both numeric columns were reconciled against the D-459 OfficialMatrix (2026-11-24);
 several rows had drifted as earlier slices moved rows without updating them. Each
-later slice updates only its own family row and the Total; the D-460 rerun
-(`er-diagram` 24/182 -> 9/197) is the newest such patch.
+later slice updates only its own family row and the Total; the newest such
+patches are the D-460 rerun (`er-diagram` 24/182 -> 9/197) and the D-461
+stage-4 reconciliation (`state-diagram-v2` 2/101 -> 1/102 and the Total
+400/1745 -> 378/1767, matching the measured 1767 drawn / 378 fallback).
 
 | Family | Remaining fallback | Drawn | Notes |
 |---|---:|---:|---|
 | flowchart | 240 | 160 | active track; see breakdown below |
 | requirement | 2 | 170 | renderer extended 2026-11-14; RFC 0037 admitted 120 look/theme/title rows, D-066 F0 8 htmlLabels rows and RFC 0044 23 `layout: elk` rows (bodies byte-identical to drawn non-ELK twins, footer-disclosed); the 5 remaining are 3 rows with a nested `config.flowchart.*` map (one ELK, no twin), 1 leading-blank source and 1 indented-fence malformed envelope; live census 167/5/0 from 172; live census 170/2/0 (D-459 matrix reconciliation; the slice prose above is historical) |
 | git | 20 | 115 | RFC 0039 admitted the 12 look/theme rows; RFC 0045 (2026-11-22) admits the 12 `config.gitGraph.parallelCommits`-only rows through a single-namespace boolean leaf; D-424 (2026-11-22, TL review-exempt family slice) admits the 18 rows whose `config.gitGraph` block carries exactly the four closed booleans `showBranches`/`showCommitLabel`/`rotateCommitLabel`/`parallelCommits`, where `showBranches: false` and `showCommitLabel: false` really hide the branch references and commit ids and the other two are inert and disclosed (semantic oracle: no caption glyph adjacent to a commit marker in the hidden row, every explicit id caption-adjacent in the visible twin; rotate/parallel pairs render identical canvases). The 35 remaining = 16 `family_residual:git` rows (custom `mainBranchName`/`mainBranchOrder`, rotated-label geometry, >8 branches, `switch`, in-body title), 12 `git_cherry_pick` body rows, 6 `look: neo` density rows that also carry `mainBranchName`, and 1 multiline-label row; live census 100/35/0 from 135; live census 115/20/0 (D-459 matrix reconciliation; the slice prose above is historical); D235's `tag: ""` note is historical; D-435 (2026-11-23) admits the one frontmatter-`title` row (drawn as the frame's first row; the RFC 0031 E2a title blocker retired); the 15 remaining are body `%%{init}%%` directives (8), >8-branch capacity (4), `switch` keyword (1), custom `mainBranchName`/`mainBranchOrder` (2); D-436 (2026-11-23) admits 14 rows carrying `config.gitGraph.mainBranchName`/`mainBranchOrder` (trunk identity and lane order honoured; 12 also carry the closed look/theme tables); the 13 remaining are body `%%{init}%%` directives (8), >8-branch capacity (4), `switch` keyword (1) |
-| state-diagram-v2 | 2 | 101 | RFC 0046 (2026-11-22) admits the 2 `state.useMaxWidth` rows through the closed tuning namespace with a disclosure footer (synthetic twins); D223 batch one: +4; D228: +4 representable classDef/class/style originals; RFC 0048 admits the 20 concurrent-region rows (16 at P1 including the six look-leaf rows the roster had filed under `look_handdrawn`/`look_neo`, 4 at P2 through the leading `%%{init}%%` table and the accTitle/accDescr no-ops; dividers drawn, frame = twin + footer); the 1 italic fixture, 1 click, 1 description-tab, 4 user-styled region rows, the labeled composite/fan-out rows and the inline `Node:::class` edge form stay gated; live census 74/29/0 from 103; live census 82/21/0 (D-459 matrix reconciliation; the slice prose above is historical) | D-461 (2026-11-24) admits 13 originals through three mechanisms: the ten budget rows (the eight `user-styled-*` composite containers and the two `should-render-edge-labels-correctly*` grids, whose whole-render cost is 1.66M-2.65M against the fixed 1M primary) are funded by a bounded canvas-derived state layout envelope (`w*h*192 + 4096`, supplemental pool, primary-first, fail-closed); the two `click <id> "<url>" ["<tooltip>"]` fixtures and the one `font-style:italic` classDef are validated, disclosed and dropped (the click binding is non-visual, the italic face does not exist in the cell grid). This shrinks `classdef_styling` by 9 (16 -> 7), `click_interactive_callback` by 2 (18 -> 16; the state family's share is now zero) and `family_residual:state-diagram-v2` by 2 (6 -> 4); the 8 remaining are 7 routing-geometry rows (four dense `basic-states-neo-look-*` graphs, filed under `look_neo`, plus the labeled fan-out `v2-should-render-a-simple-state-diagrams-with-labels`, the labeled composite `v2-should-render-composite-states` and `should-render-edge-labels-correctly-with-multiple-transitions`) plus the bare `info` directive (`v2-should-render-a-simple-info`); live census 95/8/0 from 103. D-461 stage 3 (2026-11-24) admits six routing-geometry rows through a crossing retry pass (a failed state pass is undone from a per-cell pre-image and re-routed with perpendicular crossings of straight lines and no label prefilter): the four dense `basic-states-neo-look-*` graphs, `v2-should-render-a-simple-state-diagrams-with-labels` and `should-render-edge-labels-correctly-with-multiple-transitions`; all six stay whole-source at 40 columns. The 2 remaining are the labeled composite (`v2-should-render-composite-states`: the label is wider than its owning composite and the projection keeps labels in-row inside their scope) and the bare `info` directive; live census 101/2/0 from 103.
+| state-diagram-v2 | 1 | 102 | RFC 0046 (2026-11-22) admits the 2 `state.useMaxWidth` rows through the closed tuning namespace with a disclosure footer (synthetic twins); D223 batch one: +4; D228: +4 representable classDef/class/style originals; RFC 0048 admits the 20 concurrent-region rows (16 at P1 including the six look-leaf rows the roster had filed under `look_handdrawn`/`look_neo`, 4 at P2 through the leading `%%{init}%%` table and the accTitle/accDescr no-ops; dividers drawn, frame = twin + footer); the 1 italic fixture, 1 click, 1 description-tab, 4 user-styled region rows, the labeled composite/fan-out rows and the inline `Node:::class` edge form stay gated; live census 74/29/0 from 103; live census 82/21/0 (D-459 matrix reconciliation; the slice prose above is historical) | D-461 (2026-11-24) admits 13 originals through three mechanisms: the ten budget rows (the eight `user-styled-*` composite containers and the two `should-render-edge-labels-correctly*` grids, whose whole-render cost is 1.66M-2.65M against the fixed 1M primary) are funded by a bounded canvas-derived state layout envelope (`w*h*192 + 4096`, supplemental pool, primary-first, fail-closed); the two `click <id> "<url>" ["<tooltip>"]` fixtures and the one `font-style:italic` classDef are validated, disclosed and dropped (the click binding is non-visual, the italic face does not exist in the cell grid). This shrinks `classdef_styling` by 9 (16 -> 7), `click_interactive_callback` by 2 (18 -> 16; the state family's share is now zero) and `family_residual:state-diagram-v2` by 2 (6 -> 4); the 8 remaining are 7 routing-geometry rows (four dense `basic-states-neo-look-*` graphs, filed under `look_neo`, plus the labeled fan-out `v2-should-render-a-simple-state-diagrams-with-labels`, the labeled composite `v2-should-render-composite-states` and `should-render-edge-labels-correctly-with-multiple-transitions`) plus the bare `info` directive (`v2-should-render-a-simple-info`); live census 95/8/0 from 103. D-461 stage 3 (2026-11-24) admits six routing-geometry rows through a crossing retry pass (a failed state pass is undone from a per-cell pre-image and re-routed with perpendicular crossings of straight lines and no label prefilter): the four dense `basic-states-neo-look-*` graphs, `v2-should-render-a-simple-state-diagrams-with-labels` and `should-render-edge-labels-correctly-with-multiple-transitions`; all six stay whole-source at 40 columns. The 2 remaining are the labeled composite (`v2-should-render-composite-states`: the label is wider than its owning composite and the projection keeps labels in-row inside their scope) and the bare `info` directive; live census 101/2/0 from 103. D-461 stage 4 (2026-11-24) moves the bare `info` row out of the family (it is its own family now, `info-d461-cohort.json`); the only remaining fallback is the labeled composite `v2-should-render-composite-states` (42-column edge label wider than its owning composite); live census 102/1/0 from 103.
 | gantt | 2 | 50 | renderer added 2026-11-12; RFC 0040 admitted the 11 look/theme rows (footer-disclosed); RFC 0047 leaves the gantt directive switch disabled, so the family is unchanged; 2 malformed-date fixtures fail closed; live census 50/2/0 from 52 |
 | swimlanes | 46 | 0 | hard wall, no renderer; re-confirmed 2026-11-14 through the production render_markdown seam (0 drawn / 46 fallback): every fixture is swimlane-beta (LR/TD 23 each) and carries a `config.flowchart.htmlLabels` + `useMaxWidth` visual/layout contract (46/46), 18 add theme/look and 5 carry body classDef/class/style; native text rendering cannot honor the lane geometry without silently dropping those contracts, so the whole family stays gated; unblock needs a real lane-geometry renderer |
 | xychart | 10 | 38 | D236: +11 folded-description envelope originals (description-only `>-` frontmatter now family-agnostic, not pie-only); 5 SHA-bound E2c rows stay source (4 inline per-point quoted labels, 1 over-limit multi-series), remaining are config/theme/title/init gates |
@@ -249,10 +263,10 @@ later slice updates only its own family row and the Total; the D-460 rerun
 | packet | 0 | 6 | renderer added 2026-11-14; packet/packet-beta alias, single-bit and ranged fields; D-429 (2026-11-23) admits the last 2 rows through the closed `config.packet` namespace (`showBits`/`bitOrder`/`bitsPerRow` are inert because the native projection transcribes fields, never a bit grid) and honours the frontmatter `title:` as the body's own `title <text>` form; art equals the config-stripped twin; live census 6/0/0 from a candidate pool of 6; all bodies pure ASCII |
 | radar | 0 | 6 | renderer added 2026-11-14 (transcribed outline, no polygon/colour); D-430 (2026-11-23) admits the last 3 rows through a closed frontmatter table: `theme: base`, `themeVariables.{fontSize, cScale0, radar.axisColor}` and `config.radar.{marginTop, axisScaleFactor}`, all inert and disclosed under `Radar native projection v1`; art equals the config-stripped twin; live census 6/0/0 from a candidate pool of 6 |
 | conf-and-directives | 2 | 2 | |
-| info | 2 | 0 | |
+| info | 0 | 2 | renderer added 2026-11-24 (D-461 stage 4): the fixed upstream version panel; both originals draw at 240 and 40; live census 2/0/0 from 2 |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **400** | **1745** | |
+| **Total** | **378** | **1767** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 

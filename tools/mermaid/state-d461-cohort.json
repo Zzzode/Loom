@@ -20,9 +20,6 @@
   "deferred": {
     "stage3_label_width": [
       "state-diagram-v2/pr-check/v2-should-render-composite-states.mmd"
-    ],
-    "stage4_info_directive": [
-      "state-diagram-v2/nightly-check/v2-should-render-a-simple-info.mmd"
     ]
   },
   "counts": {
@@ -35,7 +32,7 @@
     "reviewer_agent": "stage 3: one independent read-only adversarial review (task a7878335a4df1179a; round 1 REQUEST-CHANGES on the classic stateDiagram leak, note-border crossings, port pre-images, compound-scope painter/step agreement and stale Work pins; all fixed and re-verified). Stage 1-2 was reviewed by two independent adversarial agents, fresh general-purpose agents, D-461 state-v2 stage 1-2, 2026-11-24. Gate/render lens (task a600ac6947bd3d80d): REQUEST-CHANGES then APPROVE after the art proof (`expected_art_labels`, frame glyph, >= 4 art rows) and the e2a/e2b ledger migration. Correctness lens (task a5d9c76642d33eaa0): REQUEST-CHANGES on the pending verdict, the stale 0038 E2b footer pin 53 -> 55, the roster, doc Work-rate wording and the e2b detector mirror; all items addressed or rebutted in the same slice (the residual MINORs -- the E2a narrow field and the E2b declaration-list mirror -- were fixed after the verdict and re-checked by the generators' --check). Final pre-commit review (task ab05c66c561a29d02, fresh read-only adversarial agent): APPROVE with no BLOCKER/MAJOR; its MINOR/NIT items were all addressed in the same slice (design-record Work delta 13,580, the cross-owner scoping wording, `Canvas::segment` routed through the undo log, a per-row oracle partition pin in the gate, stage labels and a dead generator branch).",
     "date": "2026-11-24",
     "verdict": "approved",
-    "note": "Stages 1-3: the bounded canvas-derived state layout envelope, the two vocabulary admissions (`click` and `font-style`) and the crossing retry that admits six routing-geometry rows. One labeled composite (42-column edge label wider than its owning scope) and the bare `info` row stay under `deferred`."
+    "note": "Stages 1-3: the bounded canvas-derived state layout envelope, the two vocabulary admissions (`click` and `font-style`) and the crossing retry that admits six routing-geometry rows. One labeled composite (42-column edge label wider than its owning scope) stays under `deferred`; the bare `info` directive left the state family in D-461 stage 4 (its own family and cohort ledger)."
   },
   "rows": [
     {

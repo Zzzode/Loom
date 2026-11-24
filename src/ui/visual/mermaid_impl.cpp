@@ -6273,6 +6273,10 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
     bool agentflow = header == "agentflow-beta" ||
                      header.starts_with("agentflow-beta ");
     bool sankey = header == "sankey-beta";
+    // D-461 stage 4: the bare `info` directive is its own family (upstream
+    // renders a fixed version panel, not a graph); the closed body grammar is
+    // re-validated by the owner, this flag only selects it.
+    bool info_directive = header == "info" || header == "info showInfo";
     bool block_input = header == "block" || header == "block-beta";
     if (header == "---") {
         has_frontmatter_peek = true;
@@ -6364,6 +6368,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
             agentflow = line == "agentflow-beta" ||
                         line.starts_with("agentflow-beta ");
             sankey = line == "sankey-beta";
+            info_directive = line == "info" || line == "info showInfo";
             block_input = line == "block" || line == "block-beta";
             if (line.starts_with("classDiagram")) {
                 class_peek = class_prefix_header(line);
@@ -6443,6 +6448,7 @@ std::optional<detail::MermaidProbeDecision> detail::classify_mermaid(std::string
                           : eventmodeling ? MermaidProbeFamily::EventModeling
                           : agentflow   ? MermaidProbeFamily::Agentflow
                           : sankey      ? MermaidProbeFamily::Sankey
+                          : info_directive ? MermaidProbeFamily::Info
                                       : MermaidProbeFamily::Charts;
         return decision;
     }
@@ -6894,6 +6900,9 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             break;
         case detail::MermaidProbeFamily::Packet:
             lines = detail::packet_layout(source, work);
+            break;
+        case detail::MermaidProbeFamily::Info:
+            lines = detail::info_layout(source, work);
             break;
         case detail::MermaidProbeFamily::EventModeling:
             lines = detail::eventmodeling_layout(source, work);

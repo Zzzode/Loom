@@ -42,6 +42,7 @@ const fs::path kD446Ledger =
     kTestsDir / "../tools/mermaid/state-leading-comment-d446-cohort.json";
 const fs::path kD449Ledger = kTestsDir / "../tools/mermaid/state-description-d449-cohort.json";
 const fs::path kD461Ledger = kTestsDir / "../tools/mermaid/state-d461-cohort.json";
+const fs::path kInfoD461Ledger = kTestsDir / "../tools/mermaid/info-d461-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -375,6 +376,12 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     ASSERT_TRUE(d461.has_value()) << "D-461 cohort ledger must parse";
     d461->root().get("rows").iter(
         [&](const JsonVal row) { cohort.insert(row.get_string("path")); });
+    // D-461 stage 4 admits the `info` directive as its own family; its one
+    // state-diagram-v2 row is config-bearing and leaves this scan too.
+    auto info_d461 = json::parse(read_file(kInfoD461Ledger));
+    ASSERT_TRUE(info_d461.has_value()) << "D-461 info cohort ledger must parse";
+    info_d461->root().get("rows").iter(
+        [&](const JsonVal row) { cohort.insert(row.get_string("path")); });
     std::set<std::string> git_skipped;
     std::set<std::string> state_skipped;
     std::set<std::string> skipped_by_rfc0048;
@@ -416,8 +423,9 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     // user-styled composite containers, the two clickable-tooltip rows and the
     // multiple-class row): 40 -> 29. D-461 stage 3 moves five more
     // config-bearing rows out (the four basic-states look/theme rows and the
-    // labeled multiple-transitions row): 29 -> 24.
-    EXPECT_EQ(checked, 24);
+    // labeled multiple-transitions row): 29 -> 24. D-461 stage 4 moves the
+    // `info`-body row out (its own family): 24 -> 23.
+    EXPECT_EQ(checked, 23);
     EXPECT_EQ(skipped_by_rfc0048.size(), 24u);
     // Under-listing fails here (an admitted row that really changes surface is
     // scanned again); over-listing a missing or non-config-bearing path fails

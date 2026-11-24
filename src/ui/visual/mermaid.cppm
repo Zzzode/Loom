@@ -415,7 +415,8 @@ enum class MermaidProbeFamily : unsigned char {
     EventModeling,
     Agentflow,
     Sankey,
-    Block
+    Block,
+    Info
 };
 
 struct MermaidProbeDecision {

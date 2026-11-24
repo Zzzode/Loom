@@ -82,7 +82,6 @@ CROSSING = [
 # label cannot be placed without widening the composite past its authored
 # bounds.
 DEFERRED_LABEL_WIDTH = [PR + "v2-should-render-composite-states.mmd"]
-DEFERRED_INFO = [NIGHTLY + "v2-should-render-a-simple-info.mmd"]
 
 REVIEW = {
     "reviewer_agent": ("stage 3: one independent read-only adversarial review "
@@ -115,8 +114,9 @@ REVIEW = {
     "note": ("Stages 1-3: the bounded canvas-derived state layout envelope, "
              "the two vocabulary admissions (`click` and `font-style`) and the "
              "crossing retry that admits six routing-geometry rows. One labeled "
-             "composite (42-column edge label wider than its owning scope) and "
-             "the bare `info` row stay under `deferred`."),
+             "composite (42-column edge label wider than its owning scope) stays "
+             "under `deferred`; the bare `info` directive left the state family "
+             "in D-461 stage 4 (its own family and cohort ledger)."),
 }
 
 
@@ -269,7 +269,6 @@ def build(repo_root):
         },
         "deferred": {
             "stage3_label_width": DEFERRED_LABEL_WIDTH,
-            "stage4_info_directive": DEFERRED_INFO,
         },
         "counts": {"total": len(rows), "by_family": {"state-diagram-v2": len(rows)}},
         "review": REVIEW,

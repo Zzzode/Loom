@@ -221,6 +221,16 @@ D-461 stage 3 amendment (2026-11-24): the v2 labeled fan-out
 `state-native-routing-debt` set once the crossing retry draws it; its v1 twin
 and both composite rows keep the debt. The ledger partition is 56/5.
 
+D-461 stage 4 amendment (2026-11-24): the lone `info`-body row
+(`state-diagram-v2/nightly-check/v2-should-render-a-simple-info`) leaves E2b
+entirely. Its body is a recognized foreign directive, not an unowned foreign
+body, so it now has an owning family (`MermaidProbeFamily::Info`) and its own
+reviewed cohort (`tools/mermaid/info-d461-cohort.json`); `collect_root`
+skips a `state-non-state-body` classification instead of registering it as a
+predicted-blocked row (the detector stays in the closed vocabulary so an
+unrecognized body still aborts generation). The ledger partition is 56
+predicted-draw / 4 predicted-blocked over 60 rows (state_v2 37, state_v1 23).
+
 D-461 amendment (2026-11-24): two detectors were narrowed. `state-click-statement`
 now fires only outside the closed `click <id> "<url>" ["<tooltip>"]` grammar
 (the closed form is validated, target-resolved and dropped as a non-visual

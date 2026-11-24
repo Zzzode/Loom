@@ -266,6 +266,18 @@ def collect_root(cases, root_rel):
             kind = "state-envelope-description-tab"
         else:
             kind = state_blocker(rel, source_sha, body)
+        # D-461 stage 4: a body that opens with the `info` directive now has an
+        # owning family and its own reviewed cohort ledger
+        # (tools/mermaid/info-d461-cohort.json); it is not a state-family
+        # fallback and E2b no longer registers it. Every other foreign body
+        # keeps its predicted-blocked row, so a silently drawing foreign body
+        # still fails the blocked-row gate. No live row exercises the other
+        # foreign-body path today (the detector is retained as the fail-closed
+        # shape for a future fixture).
+        first = next((line.strip() for line in body
+                      if line.strip() and not line.lstrip().startswith("%%")), "")
+        if kind == "state-non-state-body" and first in ("info", "info showInfo"):
+            continue
         rows.append({"path": rel, "leaves": leaves, "blocker": kind})
     return rows
 

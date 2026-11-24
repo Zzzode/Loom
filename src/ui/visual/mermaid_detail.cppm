@@ -160,6 +160,7 @@ std::optional<std::vector<std::string>> wardley_layout(std::string_view source, 
 std::optional<std::vector<std::string>> railroad_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> radar_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> packet_layout(std::string_view source, Work& work);
+std::optional<std::vector<std::string>> info_layout(std::string_view source, Work& work);
 std::optional<std::vector<std::string>> eventmodeling_layout(std::string_view source,
                                                              Work& work);
 std::optional<std::vector<std::string>> agentflow_layout(std::string_view source, Work& work);

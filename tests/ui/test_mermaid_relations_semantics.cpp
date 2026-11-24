@@ -24940,7 +24940,7 @@ void class_unused_defs_sources(bool positive) {
     json::JsonMutDoc report;
     auto root = report.object(), records = root.make_arr();
     int observed = 0, decoded = 0, strong = 0, mutated = 0, closed = 0, fallbacks = 0,
-        geometry_errors = 0, oracle_errors = 0, observation_errors = 0;
+        geometry_errors = 0, oracle_errors = 0, observation_errors = 0, d459_admitted = 0;
     for (std::size_t n = positive ? 0u : 11u; n < (positive ? 11u : 30u); ++n) {
         Work work{(n == 19u || n == 15u) ? 128u * 1024u * 1024u : 8000000u};
         const auto row = document.root().get("cases").at(n);
@@ -25074,6 +25074,25 @@ void class_unused_defs_sources(bool positive) {
                 if (!good || !done)
                     errors.emplace_back("D1a synthetic control requires complete graph, exact "
                                         "legend, all attributes and eight decisive negatives");
+            } else if (pin.name == "unknown_css_association") {
+                // D-459: this boundary source's only non-admitted input is an
+                // association naming a class the source never declares. It is
+                // inert (no classDef rule), disclosed once in the reviewed
+                // legend, and renders identical art to its stripped twin, so
+                // the source is admitted instead of preserved whole. The other
+                // sixteen boundaries stay pinned below.
+                phase = "d459_inert_unknown_class_association";
+                bool disclosed = false;
+                for (int y = 0; y < frames.wide.height; ++y)
+                    disclosed |=
+                        frames.wide.row(y).find("undefined; not applied") != std::string::npos;
+                good = frames.wide != frames.ordinary && frames.narrow == frames.small &&
+                       frames.restored == frames.wide && observations.empty() && disclosed;
+                if (good)
+                    ++d459_admitted;
+                else
+                    errors.emplace_back("D-459 inert unknown class association must draw with its "
+                                        "disclosure");
             } else {
                 phase = "unreviewed_complete_source_boundary";
                 good = frames.wide == frames.ordinary && frames.narrow == frames.small &&
@@ -25100,7 +25119,8 @@ void class_unused_defs_sources(bool positive) {
     }
     root.set("qualification",
              "Complete11 legacy positives including all3 original unused-definition "
-             "applications,17 finite whole-source boundaries and two independently checked "
+             "applications,16 finite whole-source boundaries, one D-459-admitted inert "
+             "unknown-class association, and two independently checked "
              "synthetic style positives. The immutable historical asset is unchanged; only its "
              "exact active_inline_style and applied_declaration_suffix controls use the separate "
              "complete graph/legend/attribute domain with eight decisive negatives; this earns no "
@@ -25113,6 +25133,7 @@ void class_unused_defs_sources(bool positive) {
     root.set("complete_geometry_matches", strong);
     root.set("sources_with_mutations", mutated);
     root.set("whole_source_boundaries", closed);
+    root.set("d459_inert_associations", d459_admitted);
     root.set("positive_fallbacks", fallbacks);
     root.set("geometry_errors", geometry_errors);
     root.set("oracle_or_resource_errors", oracle_errors);
@@ -25126,7 +25147,8 @@ void class_unused_defs_sources(bool positive) {
     EXPECT_EQ(decoded, positive ? 11 : 2);
     EXPECT_EQ(strong, positive ? 11 : 2);
     EXPECT_EQ(mutated, positive ? 11 : 2);
-    EXPECT_EQ(closed, positive ? 0 : 17);
+    EXPECT_EQ(closed, positive ? 0 : 16);
+    EXPECT_EQ(d459_admitted, positive ? 0 : 1);
     EXPECT_EQ(fallbacks, 0);
     EXPECT_EQ(geometry_errors, 0);
     EXPECT_EQ(oracle_errors, 0);

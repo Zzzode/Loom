@@ -713,16 +713,13 @@ TEST(MermaidClassDefinedStyles, DeferredDefinitionsAssignmentOrderAndDirectLastC
         }
 }
 
-TEST(MermaidClassDefinedStyles, UnknownReferencesUnsupportedFormsAndLegacyDefinitionsStayClosed) {
-    constexpr std::array<std::string_view, 17> closed{
-        {"class A:::missing\n", "class A {\nclassDef pink fill:#f9f\n}\nclass B:::pink\n",
-         "class A {\nclassDef default fill:#f9f\n}\nclass B:::default\n",
+TEST(MermaidClassDefinedStyles, UnsupportedFormsAndLegacyDefinitionsStayClosed) {
+    constexpr std::array<std::string_view, 13> closed{
+        {"class A {\nclassDef default fill:#f9f\n}\nclass B:::default\n",
          "class A :::pink\nclassDef pink fill:#f9f\n",
          "class `A`:::pink\nclassDef pink fill:#f9f\n",
          "class A\ncssClass \"B\" pink\nclassDef pink fill:#f9f\n",
          "class A:::pink:::bold\nclassDef pink fill:#f9f\nclassDef bold stroke:#333\n",
-         "class A:::pink {\nint x\n}\nclassDef pink fill:#f9f\n",
-         "class A\nclass B\ncssClass \"A,B\" pink\nclassDef pink fill:#f9f\n",
          "class A:::pink\nclassDef pink fill:white\n", "class A:::pink\nclassDef pink fill:#f9f0\n",
          "class A:::pink\nclassDef pink fill:#f9f,stroke-width:65px\n",
          "class A:::pink\nclassDef pink fill:#f9f\nclassDef pink stroke:#333\n",
@@ -734,6 +731,45 @@ TEST(MermaidClassDefinedStyles, UnknownReferencesUnsupportedFormsAndLegacyDefini
         SCOPED_TRACE(body);
         EXPECT_FALSE(loom::ui::mermaid::render_mermaid(
             std::string("classDiagram\n") + std::string(body), ftxui::text("STYLE_FALLBACK")));
+    }
+    // D-459 replaced the fatal unknown-reference rule with an inert one. The
+    // paired admitted positives: an unknown class is validated, dropped from
+    // the paint and disclosed once; the inline `:::` member-body form and a
+    // comma-separated cssClass target list now resolve their declared class.
+    // A `classDef` line inside a class body is a member declaration, not a
+    // definition, so `pink` stays undefined and inert there as well.
+    const auto member_def = loom::ui::mermaid::render_mermaid(
+        "classDiagram\nclass A {\nclassDef pink fill:#f9f\n}\nclass B:::pink\n",
+        ftxui::text("STYLE_FALLBACK"));
+    ASSERT_TRUE(member_def);
+    EXPECT_NE(style_screen(*member_def).ToString().find("class:pink undefined; not applied"),
+              std::string::npos);
+    const auto inert = loom::ui::mermaid::render_mermaid(
+        "classDiagram\nclass A:::missing\n", ftxui::text("STYLE_FALLBACK"));
+    ASSERT_TRUE(inert);
+    EXPECT_NE(style_screen(*inert).ToString().find("class:missing undefined; not applied"),
+              std::string::npos);
+    const auto body_form = loom::ui::mermaid::render_mermaid(
+        "classDiagram\nclass A:::pink {\nint x\n}\nclassDef pink fill:#f9f\n",
+        ftxui::text("STYLE_FALLBACK"));
+    ASSERT_TRUE(body_form);
+    EXPECT_EQ(style_screen(*body_form).ToString().find("undefined"), std::string::npos);
+    const auto list = loom::ui::mermaid::render_mermaid(
+        "classDiagram\nclass A\nclass B\ncssClass \"A,B\" pink\nclassDef pink fill:#f9f\n",
+        ftxui::text("STYLE_FALLBACK"));
+    ASSERT_TRUE(list);
+    EXPECT_EQ(style_screen(*list).ToString().find("undefined"), std::string::npos);
+    // The new fail-closed guards: a built-in theme selector is never
+    // "undefined", and a classDef differing only by letter case keeps the
+    // whole-source fallback.
+    for (const auto& body : {
+             std::string{"class A\ncssClass \"A\" default\n"},
+             std::string{"class A\nclass A:::cluster\n"},
+             std::string{"class A\nclassDef Pink fill:#f9f\ncssClass \"A\" pink\n"},
+         }) {
+        SCOPED_TRACE(body);
+        EXPECT_FALSE(loom::ui::mermaid::render_mermaid(
+            std::string("classDiagram\n") + body, ftxui::text("STYLE_FALLBACK")));
     }
     const auto unused = loom::ui::mermaid::render_mermaid(
         "classDiagram\nclass A\nclassDef dormant fill:#abc,stroke-width:65px\n",

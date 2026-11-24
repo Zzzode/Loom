@@ -624,6 +624,11 @@ bool class_direct_style(std::string_view line, std::string_view source, Relation
 bool class_style_assignment(std::string_view statement, std::string_view source,
                             std::string_view target, std::string_view name,
                             RelationDiagram& diagram, Work& work);
+// D-459: one statement may carry a comma-separated quoted target list
+// (`cssClass "A, B" c`); every target shares the statement's verbatim record.
+bool class_style_assignments(std::string_view statement, std::string_view source,
+                             std::span<const std::string_view> targets, std::string_view name,
+                             RelationDiagram& diagram, Work& work);
 bool class_css_assignment(std::string_view line, std::string_view source, RelationDiagram& diagram,
                           Work& work);
 bool resolve_class_direct_styles(RelationDiagram& diagram, Work& work,
@@ -783,6 +788,10 @@ std::optional<Member> class_member_display(std::string_view raw, Work& work);
 bool class_inactive_definition(std::string_view line, std::string_view original,
                                std::vector<std::string_view>& definitions, bool& source_checked,
                                Work& work);
+// D-459: `link`/`callback` are interaction bindings with no static rendering
+// surface; a well-formed statement is consumed as a non-visual no-op (FS-2
+// precedent). Malformed bindings fall through to the ordinary grammar.
+bool class_interactive_noop(std::string_view line, Work& work);
 std::optional<ClassEnvelope> class_source_envelope(std::string_view source, Work& work);
 std::optional<testing::ClassAccessibilityMetadata>
 class_accessibility_metadata(std::string_view source, Work& work, bool class_envelope);

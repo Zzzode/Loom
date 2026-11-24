@@ -4990,7 +4990,17 @@ struct StageCCounts {
     std::size_t visited = 0, observed = 0, bound = 0, decoded = 0, pending = 0, admitted = 0,
                 dagre = 0, classifier = 0, unused_definitions = 0, notes = 0, accessibility = 0,
                 styles = 0, defined_styles = 0, errors = 0, resources = 0;
+    // D-459: the class originals a reviewed cohort admits directly, without a
+    // whole-source Model decode. They stay in `visited/observed/bound/admitted`
+    // so the Class ledger keeps all 285 originals, and are reported separately
+    // so `decoded + pending + cohort == visited` stays checkable.
+    std::size_t cohort = 0;
 };
+
+// D-459 cohort reason string. One constant so the dispatch branch, the ledger
+// accounting and the rule-38 reach proof cannot drift apart.
+constexpr std::string_view kD459CohortReason =
+    "D-459 class shared style-admission cohort (TL review-exempt)";
 
 Observation run_class285_case(JsonVal, std::size_t,
                               const relations_oracle::OfficialClass285Documents&,
@@ -6569,6 +6579,36 @@ const std::map<std::string, JourneyCohortEntry>& state_layout_d441_cohort_map() 
 }
 const JourneyCohortEntry* state_layout_d441_cohort_row(std::string_view path) {
     const auto& rows = state_layout_d441_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
+// D-459 class-diagram shared style-admission cohort: the 25 class originals
+// whose only non-admitted inputs are an inert undefined-class assignment
+// (`cssClass "<id-list>" <class>` / one `class X:::class` annotation) and the
+// non-visual `link`/`callback` bindings. States are read per row; the per-row
+// gate is test_mermaid_class_d459_cohort.
+const std::map<std::string, JourneyCohortEntry>& class_d459_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/class-d459-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-459 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-459 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* class_d459_cohort_row(std::string_view path) {
+    const auto& rows = class_d459_cohort_map();
     const auto found = rows.find(std::string(path));
     return found == rows.end() ? nullptr : &found->second;
 }
@@ -9767,8 +9807,11 @@ void emit_report(const std::vector<Observation>& rows,
             ++originals;
             // Class formal coverage requires the complete whole-source contract;
             // per-state aggregates above still preserve an independently good wide.
+            // D-459: the cohort rows are credited through `classes.admitted`,
+            // never by this generic counter, so every original is counted once.
             if (class_style13_owned(row) || class_defined6_owned(row) ||
                 official_flow_p0_owned(row) || requirement_markdown_owned(row) ||
+                row.reason == kD459CohortReason ||
                 row.raw_active_schema == kStageCContract ||
                 row.raw_active_schema == kOfficialFlow400Contract ||
                 row.raw_active_schema == kOfficialEr206Contract ||
@@ -9881,6 +9924,10 @@ void emit_report(const std::vector<Observation>& rows,
     class_summary.set("complete_bindings", static_cast<std::int64_t>(classes.bound));
     class_summary.set("Models_decoded", static_cast<std::int64_t>(classes.decoded));
     class_summary.set("whole_null_pending", static_cast<std::int64_t>(classes.pending));
+    // D-459: `Models_decoded + whole_null_pending + cohort_admitted` is the
+    // whole-source split; cohort rows are admitted by the reviewed cohort
+    // ledger, not by a decoded whole-source Model.
+    class_summary.set("cohort_admitted", static_cast<std::int64_t>(classes.cohort));
     class_summary.set("whole_sources_admitted", static_cast<std::int64_t>(classes.admitted));
     class_summary.set("resource_errors", static_cast<std::int64_t>(classes.resources));
     class_summary.set("target_whole_sources_admitted", static_cast<std::int64_t>(285));
@@ -12955,6 +13002,33 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     observations.capacity()));
                 continue;
             }
+            // D-459 class shared style-admission cohort: the 25 class originals
+            // whose only non-admitted inputs are an inert undefined-class
+            // assignment and non-visual interaction bindings, states read per
+            // row. Placed before the class-diagram source authorities (exact
+            // path match, disjoint sets); the post-loop reach proof asserts
+            // each ledger row is observed here (rule 38).
+            if (class_path.is_str()) {
+                if (const auto* cohort = class_d459_cohort_row(class_path.as_str())) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "class-diagram";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = std::string(kD459CohortReason);
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
             if (class_path.is_str() && class_path.as_str().starts_with("class-diagram/")) {
                 const auto styles = class_style13::index(class_path.as_str()),
                            defined = class_defined6::index(class_path.as_str());
@@ -13992,6 +14066,28 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     "D-446 branch reach set must equal its ledger");
         }
 
+        // D-459 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d459 = json::parse(
+                read_file(kRoot / "../../../tools/mermaid/class-d459-cohort.json"));
+            require(ledger_d459.has_value(), "D-459 cohort ledger must parse");
+            std::set<std::string> expected_d459;
+            ledger_d459->root().get("rows").iter([&](const JsonVal row) {
+                expected_d459.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d459;
+            for (const auto& row : observations) {
+                if (row.track == "original" &&
+                    row.reason == kD459CohortReason)
+                    reached_d459.insert(row.path);
+            }
+            require(reached_d459 == expected_d459,
+                    "D-459 branch reach set must equal its ledger");
+            require(expected_d459.size() == 25u && reached_d459.size() == 25u,
+                    "D-459 ledger rows must be 25 unique paths");
+        }
+
         // D-441 rule-38 reach proof: every ledger row must be observed through
         // its own branch, and the branch must not match anything else.
         {
@@ -14641,6 +14737,9 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         write_file(fs::path(LOOM_MERMAID_REPORT_DIR) / "mermaid-block58-official-verdict.json",
                    official_block58_verdict(observations));
         const auto classes = stage_c_counts(observations);
+        // D-459 moves 25 class originals from the StageC whole-null contract to
+        // the reviewed cohort: they stay visited/observed/bound/admitted, leave
+        // `pending`, and are named by `cohort` so the Class ledger stays whole.
         EXPECT_EQ(classes.visited, 285u);
         EXPECT_EQ(classes.observed, 285u);
         EXPECT_EQ(classes.bound, 285u);
@@ -14651,11 +14750,14 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         EXPECT_EQ(classes.classifier, 26u);
         EXPECT_EQ(classes.unused_definitions, 3u);
         EXPECT_EQ(classes.notes, 18u);
-        EXPECT_EQ(classes.pending, 25u);
+        EXPECT_EQ(classes.pending, 0u);
+        EXPECT_EQ(classes.cohort, 25u);
         EXPECT_EQ(classes.errors, 0u);
         EXPECT_EQ(classes.resources, 0u);
-        // Every decoded complete Model is independently validated at wide width.
-        EXPECT_EQ(classes.admitted, 260u);
+        // Every decoded complete Model is independently validated at wide width;
+        // the remaining admissions come from the reviewed D-459 cohort.
+        EXPECT_EQ(classes.admitted, 285u);
+        EXPECT_EQ(classes.decoded + classes.pending + classes.cohort, classes.visited);
         EXPECT_EQ(classes.accessibility, 4u);
     } catch (const std::exception& error) {
         integrity_errors.push_back(error.what());
@@ -17563,6 +17665,17 @@ StageCCounts stage_c_counts(const std::vector<Observation>& rows) {
             counts.defined_styles += proof.decoded;
             counts.errors += !row.errors.empty();
             counts.resources += proof.resource;
+            continue;
+        }
+        if (row.reason == kD459CohortReason) {
+            // D-459: the reviewed cohort owns this original's whole-source
+            // admission (ledger + twin gate), so it never enters the StageC
+            // whole-null contract and never books a pending row.
+            ++counts.visited;
+            ++counts.observed;
+            ++counts.bound;
+            ++counts.admitted;
+            ++counts.cohort;
             continue;
         }
         if (row.raw_active_schema != kStageCContract) continue;

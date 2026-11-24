@@ -5526,3 +5526,144 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   D-458 gate pins them with the same style-stripped twin, and
   `15-animation-variants` leaves the narrow-draw set because its footer no
   longer fits 40 columns.
+
+## relations-core shared style admission: undefined classes and family style grammar (D-459)
+
+- **Ownership.** The owning module is `loom.ui.visual.mermaid`. The shared
+  change surface is `mermaid_style_impl.cpp` (the style seam: the closed
+  property table, assignment resolution and the legend projector),
+  `mermaid_class_impl.cpp` (Class-owned statement grammar), the new ER
+  statement grammar in `mermaid_er_impl.cpp`, the State-owned copy in
+  `mermaid_state_impl.cpp`, the dispatch in `mermaid_relations_core_impl.cpp`
+  and the declarations in `mermaid_detail.cppm`. Every caller is enumerated
+  per slice below; no other module imports these terms.
+- **Measured motivation.** At the D-458 boundary the whole-original tally is
+  **1705 drawn / 440 source_fallback / 0 error** (2145 originals). The
+  matrix's drawn counter, `original_drawing_coverage.drawn_at_240`, is 1519 of
+  2145 before this slice (it credits each original exactly once, through the
+  generic counter or through its owning authority's admitted aggregate). The 440 decompose by family as: flowchart 240 (frozen Flow400
+  contract), swimlanes 46, class-diagram 25, er-diagram 24, state-diagram-v2
+  21, git 20, sankey 17 (TL decision pending), mindmap 16, xychart 10,
+  state-diagram 7, katex 4, and 2+2+2+2+1+1 across requirement, gantt, info,
+  conf-and-directives, zenuml and tree-view. At most **2–4 rows are reachable
+  by local closure**: of the 14 rows spread over katex (4),
+  conf-and-directives (2), gantt (2), info (2), requirement (2), zenuml (1) and
+  tree-view (1), most are foreign-engine or body debt that each need their own
+  family work, and no single one of those families can close more than a
+  handful. The next milestone `fallback ≤ 400` needs 40 rows, and the largest remainder with a
+  common cause is the relations-core style block: class-diagram **25**,
+  er-diagram **24**, state-diagram-v2 **21** (state-v1 adds 7; `state-v2` is
+  the slice-3 target).
+- **Why local closure is insufficient.** All three families parse through one
+  shared relation parser. The class body grammar, `cssClass`/`class`/`style`
+  dispatch and the assignment resolver live in the shared core/style seam, so
+  a Class fixture whose `cssClass` names an undefined stylesheet class is
+  rejected inside `resolve_assigned_class_styles`, not inside a Class-local
+  file; ER has no body styling grammar at all (`classDef`/`class`/`style`
+  dispatch is gated on `RelationFamily::Class`), and the shared property table
+  (`parse_style_properties`) is also the flowchart seam, so extending the
+  closed value vocabulary is by construction a shared edit. Claiming these
+  rows inside a family would mean duplicating the parser, the legend
+  projector and the property table per family — the exact duplication the
+  shared seam exists to prevent.
+- **What stays family-local.** Every family-specific statement shape remains
+  in its own unit: the Class `:::`/`cssClass`/`link`/`callback` grammar in
+  `mermaid_class_impl.cpp`, the ER `classDef`/`class`/`style`/`:::` grammar in
+  `mermaid_er_impl.cpp`, the State property copy in `mermaid_state_impl.cpp`.
+  The core only gains *generic* style admission: an assignment whose classDef
+  is absent is inert rather than fatal, and the property table accepts the
+  closed named-colour and font vocabulary. No family-specific branch is added
+  to the shared value grammar.
+- **Alternatives rejected.** (1) *Do nothing at these rows*: the milestone is
+  unreachable (2–4 local rows against a 40-row gap). (2) *Lower the target*:
+  the TL rejected shrinking capability. (3) *Adopt the ELK/handDrawn/neo
+  foreign engines*: byte-faithful projection is not achievable in a terminal
+  and would weaken the never-mis-draw-foreign-semantics invariant; those rows
+  stay fallback. (4) *Per-family duplicated parsers*: duplicated invariants
+  and three legends to keep in sync. (5) *A new shared statement layer*: no
+  concrete problem the existing seam cannot solve; it would add an abstraction
+  with no second user.
+- **Slice 1 — class (D-459).** Shared: an assignment naming an absent
+  classDef is **inert** (validated, no paint, disclosed) instead of fatal, with
+  two fail-closed guards — a built-in selector name (`default` is the implicit
+  class every node carries, plus the pinned theme's `node`/`label`/`cluster`/
+  `edgePath`/`…` set) is never "undefined", and a declared classDef that
+  differs only by letter case keeps the whole-source fallback because an
+  upstream rule could still match it. Class-local: one trailing `{`/`{}` after
+  `class X:::cls`, comma-separated `cssClass "<id-list>"`, and
+  `link`/`callback` interactive bindings consumed as no-ops on the FS-2
+  precedent (`mermaid_impl.cpp:1843`, required separator after the id). The 25
+  rows are the class-diagram fallbacks whose only non-admitted inputs are
+  exactly these shapes. Callers: `class_css_assignment`,
+  `class_style_assignment`/`class_style_assignments` (the new multi-target
+  seam), `class_style_targets`, `class_interactive_noop`, the relation
+  dispatcher (the `:::`-with-brace split and the `link`/`callback` dispatch)
+  and `resolve_assigned_class_styles` (also reached by the ER/Requirement
+  seam, which produces no assignments today, so behaviour there is unchanged).
+- **Slice 2 — er (D-460).** Not part of the slice-1 diff; the approved plan,
+  narrowed by slice-1 recon: ER already owns an independent closed CSS grammar
+  (`er_presentation_css`) and statement dispatch (`er_presentation_line` for
+  `classDef`/`class`/`style`, `er_inline_classes` for `:::`), so **no shared
+  property-table change is needed** — the slice is family-local. The measured
+  gaps are: the CSS value set lacks the corpus's named colours
+  (`lightblue`/`pink`/`green`/`grey`/`blue`) and `font-size`/`font-weight`;
+  the statement dispatcher rejects these lines while a presentation profile
+  is active (`if (diagram.er_presentation) return {}`), which is exactly the
+  eight `look`/`htmlLabels` rows; and the accepted statements need one
+  disclosure line each in the ER footer. Callers: `er_presentation_css`,
+  `er_presentation_line`, `er_inline_classes` and the ER accounting branch of
+  the matrix (the 13 style rows go through `run_official_er206_case` today, so
+  moving them needs the same explicit authority bucket slice 1 added for
+  Class).
+- **Slice 3 — state-v2 (D-461).** Not part of the slice-1 diff. State-local:
+  the named-colour and `font-style` vocabulary in `state_style_properties`,
+  and the composite container policy. Shared: none beyond slice 2.
+- **Render equivalence (release precondition).** For every slice, sources that
+  do not use the new syntax must render **byte-identically** to the current
+  output: the per-family cohort gate asserts art equality between the fixture
+  and its new-syntax-stripped twin at the same fixture and viewport, and the
+  batch gate re-runs the dual-preset matrix and compares the sha256 of
+  `mermaid-official-matrix.json`. Slice 1 cannot change a drawn row because
+  every currently-drawn Class assignment resolves to a defined classDef; the
+  new path only takes inputs that fall back today.
+- **Disclosure.** Class reuses the reviewed legend rows. Every legend record is
+  `<verbatim> -> <projection>`; an inert assignment appends
+  `<verbatim> -> class:<name> undefined; not applied`, where `<verbatim>` is
+  the authored statement line (so a `class X:::cls` row prints that form, not a
+  `cssClass` form), one record per distinct statement — a comma-separated
+  target list shares one verbatim record and an exactly repeated statement
+  collapses. The records sit above the existing `key: hue roles…` line. ER
+  gains a footer line per accepted statement; state reuses its D228 legend. A
+  row that cannot fit its footer in the height or the width budget keeps the
+  whole source (fail-closed, never a truncated footer). `link`/`callback` add
+  no record: they carry no visual input (FS-2).
+- **Verification.** Per-family: the family's targeted ctest set and the
+  new cohort gate (`test_mermaid_class_d459_cohort`,
+  `test_mermaid_er_d460_cohort`, `test_mermaid_state_style_d461_cohort`) that
+  pins the ledger (including 25 unique paths), the twin equality above the
+  legend, the residue of the stripped twin, the closed negatives and the
+  drawn-row blast radius. Slice 1's negatives are: an unquoted/empty/
+  trailing-comma `cssClass` target list, an empty/numeric-leading/duplicated/
+  trailing-garbage `:::` annotation, a binding without a separator or with a
+  missing/trailing argument, an unquoted class-name list, a built-in selector
+  name, and a classDef that differs only by letter case. (The property-table
+  negatives — malformed property list, unknown property key — belong to slice
+  2 and are not claimed here.) The full mermaid suite runs once per family
+  closure. The batch closes with the release full suite, the dual-preset byte
+  gate and the roster regeneration.
+- **Ledger accounting.** The 25 rows leave the Class StageC whole-null
+  contract: `MermaidCapabilityReport.OfficialMatrix` now counts them in a new
+  `cohort` bucket (`visited/observed/bound/admitted` 285, `decoded` 260,
+  `pending` 0, `cohort` 25, so `decoded + pending + cohort == visited`). The
+  independent `MermaidCapabilityReport.Class285` report still iterates all 285
+  class originals from its own facts document, so its 25 whole-null rows stay
+  recorded there and the e6c gap roster is unchanged. The family's release
+  metric is the OfficialMatrix `Class_native_whole_source` summary (published
+  with the explicit `cohort_admitted` field), not that per-oracle report.
+  Measured after approval: `drawn_at_240` 1544 (1519 + 25), 1730 drawn / 415
+  fallback, mandatory gaps 48, Class `Models_decoded` 260 + `cohort_admitted`
+  25 + `whole_null_pending` 0 = 285 admitted.
+- **Rollback.** Each slice is one commit; `git revert` restores the previous
+  parser and the previous roster. The cohort ledger is data, so reverting the
+  commit reverts the admission with it. No persisted format, wire shape or
+  public contract changes.

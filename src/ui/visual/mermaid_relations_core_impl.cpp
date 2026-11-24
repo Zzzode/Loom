@@ -2705,6 +2705,15 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
             if (owner() >= 0 || !class_css_assignment(line, original, diagram, work)) return {};
             continue;
         }
+        // D-459: `link` / `callback` are interaction bindings with no static
+        // rendering surface (FS-2: the terminal has no interaction layer). A
+        // well-formed binding is consumed here; a malformed one falls through
+        // so the ordinary statement grammar owns it unchanged.
+        if (diagram.family == RelationFamily::Class && owner() < 0 &&
+            (line.starts_with("link ") || line.starts_with("link\t") ||
+             line.starts_with("callback ") || line.starts_with("callback\t")) &&
+            class_interactive_noop(line, work))
+            continue;
         if (line.starts_with("direction ")) {
             const auto direction = trim_relation(line.substr(10));
             // Only a complete State direction value is a DirectionStatement;
@@ -3072,11 +3081,25 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
                 if (token.size() != operand->id.size() + line.size() ||
                     !token.starts_with(operand->id) || token.substr(operand->id.size()) != line)
                     return {};
-                if (owner() >= 0 || operand->type ||
-                    !class_style_assignment(declaration, original, operand->id, line.substr(3u),
-                                            diagram, work))
+                // D-459: `class X:::cls { ... }` combines the annotation with the
+                // member-body opener. Split the optional trailing brace first,
+                // hand the class name to the assignment seam, then let the
+                // existing declaration path see the brace it already understands.
+                auto annotated = trim_relation(line.substr(3u));
+                std::string_view suffix;
+                if (annotated.ends_with("{}")) {
+                    suffix = annotated.substr(annotated.size() - 2u);
+                    annotated.remove_suffix(2u);
+                } else if (annotated.ends_with("{")) {
+                    suffix = annotated.substr(annotated.size() - 1u);
+                    annotated.remove_suffix(1u);
+                }
+                annotated = trim_relation(annotated);
+                if (owner() >= 0 || operand->type) return {};
+                if (!class_style_assignment(declaration, original, operand->id, annotated, diagram,
+                                            work))
                     return {};
-                line = {};
+                line = suffix;
             }
             const int target =
                 diagram.class_entity(operand->id, owner(), work, true, operand->type);

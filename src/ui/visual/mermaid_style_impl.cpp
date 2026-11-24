@@ -15,6 +15,31 @@ std::string ascii_lower(std::string_view value) {
     return result;
 }
 
+// D-459: case folding is ASCII-only, matching the closed style identifier
+// alphabet. Used to fail closed when a declared classDef differs from the
+// assigned name by letter case only (an upstream rule could still match it).
+bool ascii_fold_equal(std::string_view a, std::string_view b) {
+    if (a.size() != b.size()) return false;
+    for (std::size_t n = 0; n < a.size(); ++n) {
+        const auto fold = [](char c) {
+            return c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : c;
+        };
+        if (fold(a[n]) != fold(b[n])) return false;
+    }
+    return true;
+}
+
+// D-459: the implicit `default` class and the pinned theme's built-in class
+// selectors are not "undefined": they always exist, so an assignment naming one
+// cannot be discharged as inert and keeps the whole-source fallback.
+bool class_style_builtin(std::string_view name) {
+    constexpr std::array<std::string_view, 17> kBuiltin{
+        {"default", "node", "label", "cluster", "edgePath", "edgeLabel", "relation",
+         "relationLabel", "classGroup", "classTitle", "annotation", "members", "methods",
+         "divider", "title", "marker", "root"}};
+    return std::ranges::find(kBuiltin, name) != kBuiltin.end();
+}
+
 std::string_view role_name(SemanticColorRole role) {
     switch (role) {
     case SemanticColorRole::Red:
@@ -247,25 +272,62 @@ bool class_direct_style(std::string_view line, std::string_view source, Relation
     return true;
 }
 
-bool class_style_assignment(std::string_view statement, std::string_view source,
-                            std::string_view target, std::string_view name,
-                            RelationDiagram& diagram, Work& work) {
-    if (!style_identifier(target) || !style_identifier(name)) return false;
+namespace {
+// A quoted target list is one comma-separated statement (`cssClass "A, B" c`),
+// never an implicit empty member: a trailing comma keeps the source gated.
+// Only a list pays this scan; a single target keeps the reviewed pre-D-459
+// charge sequence exactly.
+std::optional<std::vector<std::string_view>> class_style_targets(std::string_view text,
+                                                                Work& work) {
+    if (!work.spend(text.size() * 4u + 64u)) return std::nullopt;
+    std::vector<std::string_view> targets;
+    while (!text.empty()) {
+        const auto comma = text.find(',');
+        const auto item = trim_relation(text.substr(0, comma));
+        if (item.empty() || targets.size() >= 64u) return std::nullopt;
+        targets.push_back(item);
+        if (comma == std::string_view::npos) break;
+        text = text.substr(comma + 1u);
+        if (trim_relation(text).empty()) return std::nullopt;
+    }
+    return targets;
+}
+}  // namespace
+
+bool class_style_assignments(std::string_view statement, std::string_view source,
+                             std::span<const std::string_view> targets, std::string_view name,
+                             RelationDiagram& diagram, Work& work) {
+    if (targets.empty() || targets.size() > 64u || !style_identifier(name)) return false;
+    std::size_t target_bytes = 0u;
+    for (const auto target : targets) {
+        if (!style_identifier(target)) return false;
+        target_bytes += target.size();
+    }
     const auto physical = style_physical_record(statement, source, work);
     if (!physical) return false;
     if (!ensure_class_styles(diagram, work)) return false;
     auto& assignments = diagram.direct_styles->assignments;
-    if (assignments.size() >= 64u ||
-        !work.spend((target.size() + name.size() + physical->first.size()) * 8u +
-                    4u * sizeof(ClassStyleAssignment) + 256u))
+    // A single target keeps the reviewed pre-D-459 charge exactly; a target
+    // list pays each extra target's identity and record.
+    if (assignments.size() + targets.size() > 64u ||
+        !work.spend((target_bytes + (name.size() + physical->first.size()) * targets.size()) * 8u +
+                    targets.size() * 4u * sizeof(ClassStyleAssignment) + 256u))
         return false;
     if (assignments.empty()) {
         if (!work.spend(64u * 4u * sizeof(ClassStyleAssignment) + 256u)) return false;
         assignments.reserve(64u);
     }
-    assignments.push_back(
-        {std::string(target), std::string(name), std::string(physical->first), physical->second});
+    for (const auto target : targets)
+        assignments.push_back({std::string(target), std::string(name),
+                               std::string(physical->first), physical->second});
     return true;
+}
+
+bool class_style_assignment(std::string_view statement, std::string_view source,
+                            std::string_view target, std::string_view name,
+                            RelationDiagram& diagram, Work& work) {
+    const std::array<std::string_view, 1> targets{target};
+    return class_style_assignments(statement, source, targets, name, diagram, work);
 }
 
 bool class_css_assignment(std::string_view line, std::string_view source, RelationDiagram& diagram,
@@ -277,8 +339,15 @@ bool class_css_assignment(std::string_view line, std::string_view source, Relati
     if (close == std::string_view::npos || close + 1u >= rest.size() ||
         (rest[close + 1u] != ' ' && rest[close + 1u] != '\t'))
         return false;
-    const auto target = rest.substr(1u, close - 1u), name = trim_relation(rest.substr(close + 1u));
-    return class_style_assignment(line, source, target, name, diagram, work);
+    const auto target_text = rest.substr(1u, close - 1u);
+    // A single target keeps the reviewed pre-D-459 path (and charge) exactly.
+    if (target_text.find(',') == std::string_view::npos)
+        return class_style_assignment(line, source, target_text,
+                                      trim_relation(rest.substr(close + 1u)), diagram, work);
+    const auto targets = class_style_targets(target_text, work);
+    if (!targets) return false;
+    const auto name = trim_relation(rest.substr(close + 1u));
+    return class_style_assignments(line, source, *targets, name, diagram, work);
 }
 
 namespace {
@@ -331,7 +400,20 @@ bool resolve_assigned_class_styles(RelationDiagram& diagram,
     if (count > 128u || !work.spend(count * 4u * sizeof(ClassDirectStyle) + 256u)) return false;
     std::vector<ClassDirectStyle> merged;
     merged.reserve(count);
-    for (const auto& assignment : styles.assignments) {
+    // D-459: an assignment naming a classDef that this source never declares is
+    // inert — upstream attaches a CSS class attribute and the pinned stylesheet
+    // carries no rule for an undeclared user name, so no painted cell can come
+    // from it. Two guards keep that claim honest and fail closed instead:
+    //  - a built-in selector name (`default` is the implicit class every node
+    //    already carries) is never "undefined";
+    //  - a declared classDef differing only by letter case can be matched by an
+    //    upstream rule, so the source keeps its whole-source fallback rather
+    //    than silently dropping the style.
+    // The bounded 64-assignment set is held on the stack; no heap is charged.
+    std::array<std::size_t, 64> inert{};
+    std::size_t inert_count = 0;
+    for (std::size_t index = 0; index < styles.assignments.size(); ++index) {
+        const auto& assignment = styles.assignments[index];
         std::optional<std::size_t> selected;
         for (std::size_t n = 0; n < definitions.size(); ++n) {
             if (!work.spend(definitions[n].name.size() + assignment.class_name.size() + 32u))
@@ -341,7 +423,18 @@ bool resolve_assigned_class_styles(RelationDiagram& diagram,
                 break;
             }
         }
-        if (!selected) return false;
+        if (!selected) {
+            if (!work.spend(assignment.class_name.size() * 4u + 64u)) return false;
+            if (class_style_builtin(assignment.class_name)) return false;
+            for (const auto& definition : definitions) {
+                if (!work.spend(definition.name.size() + assignment.class_name.size() + 32u))
+                    return false;
+                if (ascii_fold_equal(definition.name, assignment.class_name)) return false;
+            }
+            if (inert_count >= inert.size()) return false;
+            inert[inert_count++] = index;
+            continue;
+        }
         auto& definition = definitions[*selected];
         if (!work.spend((assignment.target.size() + assignment.class_name.size() +
                          assignment.verbatim.size()) *
@@ -444,7 +537,39 @@ bool resolve_assigned_class_styles(RelationDiagram& diagram,
             *text += std::to_string(occurrences);
         }
         if (ftxui::string_width(*text) > kWidthLimit) return false;
+        // One comma-separated target list of a declared class yields one
+        // declaration per target with the same verbatim and properties; their
+        // rendered records are identical, so collapse them to one row.
+        bool duplicate = false;
+        for (const auto& record : records)
+            if (!work.spend(record.text.size() + 32u) || record.text == *text) duplicate = true;
+        if (duplicate) continue;
         records.push_back({declaration.source_offset, std::move(*text)});
+    }
+    // One disclosure line per inert statement (a comma-separated target list
+    // shares one verbatim record; a repeated statement collapses).
+    for (std::size_t slot = 0; slot < inert_count; ++slot) {
+        const auto& assignment = styles.assignments[inert[slot]];
+        bool prior = false;
+        for (std::size_t earlier = 0; earlier < slot; ++earlier) {
+            if (!work.spend(assignment.verbatim.size() + 32u)) return false;
+            if (styles.assignments[inert[earlier]].verbatim == assignment.verbatim) prior = true;
+        }
+        if (prior) continue;
+        if (records.size() >= 7u) return false;
+        auto text = raw_record(assignment.verbatim);
+        if (!text) return false;
+        *text += " class:";
+        *text += assignment.class_name;
+        *text += " undefined; not applied";
+        if (ftxui::string_width(*text) > kWidthLimit) return false;
+        // A multi-target list of one class emits one declaration per target;
+        // their identical verbatim/properties records collapse to one row.
+        bool duplicate = false;
+        for (const auto& record : records)
+            if (!work.spend(record.text.size() + 32u) || record.text == *text) duplicate = true;
+        if (duplicate) continue;
+        records.push_back({assignment.source_offset, std::move(*text)});
     }
     for (const auto& definition : definitions) {
         if (!work.spend(32u)) return false;

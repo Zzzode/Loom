@@ -1029,6 +1029,45 @@ bool class_inactive_definition(std::string_view line, std::string_view original,
     return true;
 }
 
+// D-459: `link` / `callback` bind a class to an interaction target. The
+// terminal has no interaction surface, so a well-formed binding is consumed as
+// a non-visual no-op on the FS-2 precedent (the flowchart `click` grammar in
+// mermaid_impl.cpp). Accepted shapes are the pinned Class forms:
+//   link <id> "<url>" "<tooltip>"
+//   callback <id> "<function>" "<tooltip>"
+// The bound id need not name a declared class: an inert binding creates no
+// geometry. Anything else returns false and falls through to the ordinary
+// statement grammar, so a relation whose endpoint is literally `link` keeps
+// its existing behavior.
+bool class_interactive_noop(std::string_view line, Work& work) {
+    std::size_t prefix = 0u;
+    if (line.starts_with("link ") || line.starts_with("link\t"))
+        prefix = 4u;
+    else if (line.starts_with("callback ") || line.starts_with("callback\t"))
+        prefix = 8u;
+    else
+        return false;
+    if (!work.spend(line.size() * 6u + 64u)) return false;
+    std::string_view rest = line.substr(prefix);
+    const auto token = trim_relation(rest);
+    auto id = class_identifier(rest, work);
+    if (!id) return false;
+    // The FS-2 precedent requires a separator between the id and the first
+    // quoted argument; `link A"url"` is not a binding. The identifier trims its
+    // remainder, so test the authored token boundary instead.
+    if (token.size() <= id->size() || token.front() == '`' ||
+        (token[id->size()] != ' ' && token[id->size()] != '\t'))
+        return false;
+    std::string_view tail = trim_relation(rest);
+    for (int argument = 0; argument < 2; ++argument) {
+        if (tail.size() < 2u || tail.front() != '"') return false;
+        const auto close = tail.find('"', 1u);
+        if (close == std::string_view::npos) return false;
+        tail = trim_relation(tail.substr(close + 1u));
+    }
+    return tail.empty();
+}
+
 // Source-only two-face decision. No layout, label, cardinality or route is copied
 // from output, and no future endpoint is reserved in the occupancy canvas.
 bool reciprocal_plan(const RelationDiagram& diagram, const RelationLayout& layout, int owner,

@@ -293,6 +293,16 @@ add_test(NAME MermaidUsecaseBodyD458Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidUsecaseBodyD458Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-459: the class-diagram shared style-admission cohort ledger is generated
+# from the fixtures; the check fails on a hand edit that the generator would not
+# reproduce (the live cohort gate is the authority for the rendered states).
+add_test(NAME MermaidClassD459Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_class_d459_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidClassD459Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-452: the treemap classDef cohort ledger is a generator constant; the check
 # fails on a hand edit or an unreviewed expectation change.
 add_test(NAME MermaidTreemapClassdefD452Cohort.GeneratorIsReproducible
@@ -1320,6 +1330,15 @@ add_executable(test_mermaid_venn_style_d453_cohort
 target_link_libraries(test_mermaid_venn_style_d453_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_venn_style_d453_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# D-459: class-diagram shared style-admission cohort gate.
+add_executable(test_mermaid_class_d459_cohort
+    test_mermaid_class_d459_cohort.cpp)
+target_link_libraries(test_mermaid_class_d459_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_class_d459_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

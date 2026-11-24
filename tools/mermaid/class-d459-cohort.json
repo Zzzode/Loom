@@ -1,0 +1,582 @@
+{
+  "schema": "loom_mermaid_class_d459_cohort/v1",
+  "decision": "D-459",
+  "admission": {
+    "shape": "a `cssClass \"<id-list>\" <class>` statement naming a class the source never declares, one trailing `:::class` annotation on a `class` declaration (optionally followed by the member-body opener), and `link` / `callback` interaction bindings",
+    "legend": {
+      "record": "<statement> -> class:<name> undefined; not applied",
+      "terminator": "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin is the same fixture with the cssClass statements, the :::class annotations and the link/callback statements removed; the art above the legend must be cell-equal"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "every remaining class-diagram fallback whose only non-admitted inputs are the inert undefined-class surface and non-visual interaction bindings",
+    "cohort_digest": "48065145be286fd73b069ca605d88d7755b97d911ba77fed73b47b0d61c15706"
+  },
+  "counts": {
+    "total": 25,
+    "by_family": {
+      "class-diagram": 25
+    }
+  },
+  "review": {
+    "reviewer_agent": "two independent read-only adversarial reviews, fresh general-purpose agents, D-459 class shared style admission, 2026-11-24: seam review round 1 REQUEST-CHANGES (BLOCKER ledger pending; MAJOR built-in/implicit `default` selector names judged inert; MAJOR case-only classDef mismatch silently inert; MINOR charge/coverage/nits), round 2 APPROVE after fixes (task a0bd8b12fafda36c5); ledger/integration review round 1 REQUEST-CHANGES (BLOCKER Class StageC pins 285/25 broken by the cohort branch; MINOR docs/ledger nits), round 2 REQUEST-CHANGES (MAJOR drawn_at_240 double-counted the 25 rows), round 3 APPROVE after the counter and report fixes (task a29e4b1f54dd53c6e)",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "Measured after approval: release OfficialMatrix 2145 originals 1730 drawn / 415 source_fallback, drawn_at_240 1544, gaps 48, Class summary 260 decoded + 0 pending + 25 cohort = 285 admitted."
+  },
+  "rows": [
+    {
+      "path": "class-diagram/nightly-check/10-should-render-a-simple-class-diagram-with-clickable-callback-2.mmd",
+      "family": "class-diagram",
+      "sha256": "0675bd254bf509c21ceac6d05dcf5ac8f08e0c43f35e37ac1fec0a663c59c2c3",
+      "manifest_sha256": "0675bd254bf509c21ceac6d05dcf5ac8f08e0c43f35e37ac1fec0a663c59c2c3",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/10-should-render-a-simple-class-diagram-with-clickable-callback-2.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/10-should-render-a-simple-class-diagram-with-clickable-callback-3.mmd",
+      "family": "class-diagram",
+      "sha256": "4711a1e128c9ce6cb4bcd6fcd3b65258ced7a8def7ead5e8ddb8ab728063f6c5",
+      "manifest_sha256": "4711a1e128c9ce6cb4bcd6fcd3b65258ced7a8def7ead5e8ddb8ab728063f6c5",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/10-should-render-a-simple-class-diagram-with-clickable-callback-3.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/10-should-render-a-simple-class-diagram-with-clickable-callback.mmd",
+      "family": "class-diagram",
+      "sha256": "ed2deb066e170594d331afbb39e813b81106bc116b77340776eab0bbc711051a",
+      "manifest_sha256": "ed2deb066e170594d331afbb39e813b81106bc116b77340776eab0bbc711051a",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/10-should-render-a-simple-class-diagram-with-clickable-callback.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/13-should-render-a-simple-class-diagram-with-css-classes-applied-2.mmd",
+      "family": "class-diagram",
+      "sha256": "c8b149b8c2f4bdfc74453881d8994d1e046fd08c602397f0f6ea7140f10ec960",
+      "manifest_sha256": "c8b149b8c2f4bdfc74453881d8994d1e046fd08c602397f0f6ea7140f10ec960",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  cssClass \"Class10\" exClass2 -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/13-should-render-a-simple-class-diagram-with-css-classes-applied-2.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/13-should-render-a-simple-class-diagram-with-css-classes-applied-3.mmd",
+      "family": "class-diagram",
+      "sha256": "aaac310031b2e3d4f415e90897cbbf783a9a04c655fe60980f1bf541327b5e37",
+      "manifest_sha256": "aaac310031b2e3d4f415e90897cbbf783a9a04c655fe60980f1bf541327b5e37",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  class Class10:::exClass2 -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/13-should-render-a-simple-class-diagram-with-css-classes-applied-3.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/13-should-render-a-simple-class-diagram-with-css-classes-applied.mmd",
+      "family": "class-diagram",
+      "sha256": "62766a0918d638d959bc55751aad5d9821a5c4b614f26b98ad8bac1746ce74c2",
+      "manifest_sha256": "62766a0918d638d959bc55751aad5d9821a5c4b614f26b98ad8bac1746ce74c2",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  cssClass \"Class10\" exClass2 -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/13-should-render-a-simple-class-diagram-with-css-classes-applied.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/14-should-render-a-simple-class-diagram-with-css-classes-applied-directly-2.mmd",
+      "family": "class-diagram",
+      "sha256": "ee851992464600060029fb6eb781f27ba6eeb35df09bb3a1ef85193ba241270c",
+      "manifest_sha256": "ee851992464600060029fb6eb781f27ba6eeb35df09bb3a1ef85193ba241270c",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  class Class10:::exClass2 { -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/14-should-render-a-simple-class-diagram-with-css-classes-applied-directly-2.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/14-should-render-a-simple-class-diagram-with-css-classes-applied-directly-3.mmd",
+      "family": "class-diagram",
+      "sha256": "f7224d71a459adbff4221688eebef41a04f444193c73d51922089c49b33c47b8",
+      "manifest_sha256": "f7224d71a459adbff4221688eebef41a04f444193c73d51922089c49b33c47b8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  class Class10:::exClass2 { -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/14-should-render-a-simple-class-diagram-with-css-classes-applied-directly-3.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/14-should-render-a-simple-class-diagram-with-css-classes-applied-directly.mmd",
+      "family": "class-diagram",
+      "sha256": "eae3b6000eedb5ed904eab13d307037fbd59ab47637866e96778ca32f6d23014",
+      "manifest_sha256": "eae3b6000eedb5ed904eab13d307037fbd59ab47637866e96778ca32f6d23014",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  class Class10:::exClass2 { -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/14-should-render-a-simple-class-diagram-with-css-classes-applied-directly.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/15-should-render-a-simple-class-diagram-with-css-classes-applied-to-multiple-classes.mmd",
+      "family": "class-diagram",
+      "sha256": "9a2a94d7827c93c7d06eec3627efcc482f4bfc8b94df0800ac111dc9fde7d700",
+      "manifest_sha256": "9a2a94d7827c93c7d06eec3627efcc482f4bfc8b94df0800ac111dc9fde7d700",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  cssClass \"Class10, Class20\" exClass2 -> class:exClass2 undefined; not applied",
+        "  class Class20:::exClass2 -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/15-should-render-a-simple-class-diagram-with-css-classes-applied-to-multiple-classes.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes-2.mmd",
+      "family": "class-diagram",
+      "sha256": "71165f27b7c15bd5a8bb46fed39e60df619486914746247cd849e6539d8a52e3",
+      "manifest_sha256": "71165f27b7c15bd5a8bb46fed39e60df619486914746247cd849e6539d8a52e3",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  cssClass \"Class10, class20\" exClass2 -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes-2.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes.mmd",
+      "family": "class-diagram",
+      "sha256": "ccf0e7507d0a042842a3aa7f37e856443d28850e500b26fcda7b9661797fb16c",
+      "manifest_sha256": "ccf0e7507d0a042842a3aa7f37e856443d28850e500b26fcda7b9661797fb16c",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  cssClass \"Class10, class20\" exClass2 -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link-2.mmd",
+      "family": "class-diagram",
+      "sha256": "e6f3fb6a2ac53d584f8a70aa7d5d07b9deb41972769d3c647d5db30ca18a0822",
+      "manifest_sha256": "e6f3fb6a2ac53d584f8a70aa7d5d07b9deb41972769d3c647d5db30ca18a0822",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link-2.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link-3.mmd",
+      "family": "class-diagram",
+      "sha256": "9a3f4fa57582b8e08333e17b8a03c298629a1368a6f19a829dbc1837c4a4034f",
+      "manifest_sha256": "9a3f4fa57582b8e08333e17b8a03c298629a1368a6f19a829dbc1837c4a4034f",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link-3.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link.mmd",
+      "family": "class-diagram",
+      "sha256": "fbc73cc6df8c68c73d82c1540c6ac407f95e96b5882341c7992b533642635e1f",
+      "manifest_sha256": "fbc73cc6df8c68c73d82c1540c6ac407f95e96b5882341c7992b533642635e1f",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/dagre/dagre-10-should-render-a-simple-class-diagram-with-clickable-callback.mmd",
+      "family": "class-diagram",
+      "sha256": "d2403ee6f1a7777904a4c4bec8cca9ecee604f26fab9804c8cbf0f99825de0d0",
+      "manifest_sha256": "d2403ee6f1a7777904a4c4bec8cca9ecee604f26fab9804c8cbf0f99825de0d0",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/dagre/dagre-10-should-render-a-simple-class-diagram-with-clickable-callback.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/dagre/dagre-13-should-render-a-simple-class-diagram-with-css-classes-applied.mmd",
+      "family": "class-diagram",
+      "sha256": "bbef7992f269b1e37418d26163172ac64d0c7a3078bdd5480d175e6d8d9f5156",
+      "manifest_sha256": "bbef7992f269b1e37418d26163172ac64d0c7a3078bdd5480d175e6d8d9f5156",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  cssClass \"Class10\" exClass2 -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/dagre/dagre-13-should-render-a-simple-class-diagram-with-css-classes-applied.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/dagre/dagre-14-should-render-a-simple-class-diagram-with-css-classes-applied-directly.mmd",
+      "family": "class-diagram",
+      "sha256": "2231f82b754de0d2047cf4d1c2f3a2572464ada7e5aaafaea813b3c616195412",
+      "manifest_sha256": "2231f82b754de0d2047cf4d1c2f3a2572464ada7e5aaafaea813b3c616195412",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  class Class10:::exClass2 { -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/dagre/dagre-14-should-render-a-simple-class-diagram-with-css-classes-applied-directly.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/dagre/dagre-15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes.mmd",
+      "family": "class-diagram",
+      "sha256": "f6b7898eabbd298b3ca312cd91cb81992fe8fbbc5219abdb2d62b6010a6a60a8",
+      "manifest_sha256": "f6b7898eabbd298b3ca312cd91cb81992fe8fbbc5219abdb2d62b6010a6a60a8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  cssClass \"Class10, class20\" exClass2 -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/dagre/dagre-15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/dagre/dagre-9-should-render-a-simple-class-diagram-with-clickable-link.mmd",
+      "family": "class-diagram",
+      "sha256": "8c323640a8cc669658e6f3d8230964fa444d93d666891bf2b6ffdd75d9fdc218",
+      "manifest_sha256": "8c323640a8cc669658e6f3d8230964fa444d93d666891bf2b6ffdd75d9fdc218",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/dagre/dagre-9-should-render-a-simple-class-diagram-with-clickable-link.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/handdrawn/hd-10-should-render-a-simple-class-diagram-with-clickable-callback.mmd",
+      "family": "class-diagram",
+      "sha256": "0e29ae66995c0b8ec9a6f01144fd80327c50b18fff6bced26137aabeb4fd130d",
+      "manifest_sha256": "0e29ae66995c0b8ec9a6f01144fd80327c50b18fff6bced26137aabeb4fd130d",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/handdrawn/hd-10-should-render-a-simple-class-diagram-with-clickable-callback.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/handdrawn/hd-13-should-render-a-simple-class-diagram-with-css-classes-applied.mmd",
+      "family": "class-diagram",
+      "sha256": "1d995d6db342a6f7de61bce642334ab29ae550860eca101c85fae1adf2c9e1c8",
+      "manifest_sha256": "1d995d6db342a6f7de61bce642334ab29ae550860eca101c85fae1adf2c9e1c8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  cssClass \"Class10\" exClass2 -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/handdrawn/hd-13-should-render-a-simple-class-diagram-with-css-classes-applied.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/handdrawn/hd-14-should-render-a-simple-class-diagram-with-css-classes-applied-directly.mmd",
+      "family": "class-diagram",
+      "sha256": "58b16f4f8d452ce43233dc713d91362ff8ea7f6dae74a5e248372636a05c5e01",
+      "manifest_sha256": "58b16f4f8d452ce43233dc713d91362ff8ea7f6dae74a5e248372636a05c5e01",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  class Class10:::exClass2 { -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/handdrawn/hd-14-should-render-a-simple-class-diagram-with-css-classes-applied-directly.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/handdrawn/hd-15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes.mmd",
+      "family": "class-diagram",
+      "sha256": "725d1ad5003fb8d200f83bc4d6552ef10a86602e3a8329203133a5df2cc8b8d8",
+      "manifest_sha256": "725d1ad5003fb8d200f83bc4d6552ef10a86602e3a8329203133a5df2cc8b8d8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [
+        "  cssClass \"Class10, class20\" exClass2 -> class:exClass2 undefined; not applied",
+        "key: hue roles use palette; width>=4=bold border; color on fill not projected; monochrome/ANSI16 may share shades; source TAB=\\t"
+      ],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/handdrawn/hd-15-should-render-a-simple-class-diagram-with-css-classes-applied-two-multiple-classes.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    },
+    {
+      "path": "class-diagram/nightly-check/handdrawn/hd-9-should-render-a-simple-class-diagram-with-clickable-link.mmd",
+      "family": "class-diagram",
+      "sha256": "690808ceb0a1416a515f602eaec98a201b347b6c9a0f680a309cf9966cbc1c2a",
+      "manifest_sha256": "690808ceb0a1416a515f602eaec98a201b347b6c9a0f680a309cf9966cbc1c2a",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "drawn",
+        "restored_240": "drawn"
+      },
+      "expected_legend_lines": [],
+      "twin": {
+        "kind": "inert-styling-stripped",
+        "path": "class-diagram/nightly-check/handdrawn/hd-9-should-render-a-simple-class-diagram-with-clickable-link.mmd"
+      },
+      "ledger_note": "the undefined stylesheet class is inert (no classDef rule) and the interaction binding has no terminal surface; the stripped twin renders identical art"
+    }
+  ]
+}

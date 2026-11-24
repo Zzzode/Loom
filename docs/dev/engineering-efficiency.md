@@ -2591,3 +2591,80 @@ once at the batch boundary.
    art and footer. Regenerate the older ledger with an explicit
    `review.decisions.<new-id>` record and make its twin comparison
    footer-aware, instead of loosening the assertion.
+
+## D-459 class shared style-admission retro (2026-11-24)
+
+Scope: the first slice of the shared relations-core style admission (25 class
+rows). Two independent adversarial reviews ran before the ledger flip; both
+returned REQUEST-CHANGES and both found something real.
+
+1. **A reviewed cohort branch silently changes an existing ledger's pins.**
+   The 25 rows used to be Class StageC whole-null rows. Adding the cohort
+   branch before the `class-diagram/` dispatch stopped them from reaching
+   `run_class285_case`, so `stage_c_counts` would have reported
+   visited/observed/bound 285→260 and pending 25→0 without any test noticing
+   until the matrix ran. Rule: when a cohort branch intercepts rows that a
+   different authority already counts, grep that authority's counter and pins
+   in the same edit; give the moved rows an explicit bucket (`cohort`) instead
+   of letting them fall out of the ledger. `decoded + pending + cohort ==
+   visited` is now pinned.
+2. **"No matching definition" is not the same claim as "no visual effect".**
+   The inert admission is only sound for names the pinned stylesheet cannot
+   select. The implicit `default` class and the theme's built-in selectors
+   exist on every node, and a declared classDef that differs only by letter
+   case may still match upstream. Both now fail closed, with corpus-indexed
+   negatives. Rule: an inertness claim needs the closed set of names the
+   consumer can style, not just "I found no definition".
+3. **A stricter no-op grammar must be re-run against the admitted corpus.**
+   Requiring the FS-2 separator between an id and its first quoted argument
+   was right, but the first implementation tested the *trimmed* remainder that
+   `class_identifier` returns, so it rejected every valid binding and turned
+   ten admitted rows red. Test the authored token boundary, and re-run the
+   full cohort gate after tightening a grammar — not just the new negative.
+4. **Keep existing charge paths byte-for-byte when adding a list form.**
+   Splitting a quoted target list by routing every `cssClass` through the new
+   splitter shrank the single-target Work charge on already-drawn rows. Route
+   the single-target case through the original function and pay the scan only
+   when a comma is present; `std::array` (bounded by the 64-assignment cap) is
+   enough for the inert index set, so no heap charge was needed.
+5. **The ledger mirror needs the renderer's dedup key, not a friendlier one.**
+   The renderer dedups on the physical verbatim, so a Python mirror that
+   dedups on the trimmed line would describe a footer the renderer does not
+   print. Mirror the key, the whitespace class and the identifier alphabet;
+   the live gate is the authority, and the mirror must not be the only place
+   a divergence can hide.
+6. **A published aggregate can double-count a cohort that moves between
+   authorities.** Adding the 25 rows to `stage_c_counts`' admitted total while
+   they also satisfied the generic `originals_drawn` loop counted them twice:
+   `drawn_at_240` went 1519 -> 1569 instead of 1544, with no failing test
+   because nothing asserts that number directly. Whenever a cohort changes who
+   owns a row, read every aggregate that sums rows (report coverage, family
+   summaries, d117 totals) in the same edit, and pin the invariant the pie
+   cohort comment states (`src` credit is XOR an owning authority's admitted
+   total). A second adversarial round caught this; the first did not.
+
+## D-459 efficiency numbers (2026-11-24)
+
+| Measurement | Value | Log |
+|---|---|---|
+| Debug mermaid suite, final | 1641 tests, **514.37 s** wall (4104.90 s*proc), 100% passed | `/tmp/loom-logs/d459-mermaid-suite2.log` |
+| Debug mermaid suite, first run | 1641 tests, 515.59 s, **2 failed** (old-contract oracles) | `/tmp/loom-logs/d459-mermaid-suite.log` |
+| Release OfficialMatrix, final | 27.45 s, `drawn_at_240` 1544 | `/tmp/d459-matrix-rel2.log` |
+| Dual-preset byte gate | debug == release sha256 `a1692368…` | matrix JSONs both presets |
+| Targeted cohort gate | 20.1 s (4 tests, 25 rows + 8 blast-radius rows, 240x900 renders) | ctest |
+
+Cost per admitted row ≈ 514 s / 25 ≈ **20.6 s**, about a quarter of the
+D-456…D-457 batch's 90.8 s per row: this slice reused the existing legend and
+matrix plumbing instead of adding a new renderer, and its only renderer change
+was a fail-closed predicate. The expensive part was not the compiler but the
+**two red oracle binaries** the first suite run exposed.
+
+7. **A behaviour-change slice must grep the oracles that pin the old rule before
+   the full suite, not after.** Two suites (`MermaidClassDefinedStyles.*`,
+   `MermaidClassInactiveDefinitions.*`) pinned the pre-D-459 "unknown reference
+   is fatal" contract and went red only in the 8.5-minute full run. Both were
+   updated the right way (admitted positives plus still-closed negatives, and a
+   named D-459 exception with its own disclosure assertion), but the run was
+   wasted. Rule: before the first full-suite run of a slice that changes a
+   rejection rule, `grep` the rule's message/identifier in `tests/ui/` and read
+   every hit.

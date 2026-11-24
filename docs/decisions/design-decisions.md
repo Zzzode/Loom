@@ -6174,3 +6174,48 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   (`er_project_fields`/`er_projection_wrap`), so admitting them is a contract
   decision, not a config-leaf addition; the rows move from implementable to
   decision-gated and no ER code changes here.
+
+## D-467 — gitGraph closed pre-header init profile (2026-11-25)
+
+- **Problem.** Twelve gitGraph originals were the last family residue; nine
+  carry a body `%%{init: ...}%%` directive that the parser rejected because it
+  accepted only a one-line, double-quoted `%%{init: {"gitGraph": {...}}}%%`.
+  All nine spell it across physical lines with single-quoted strings and
+  inert keys for the terminal projection:
+  `logLevel`, `theme: 'default'`, `gitGraph.rotateCommitLabel` and
+  `themeVariables.gitBranchLabel0..7`. One of them (57) additionally ends its
+  nested object with a trailing comma — legal JavaScript, not strict JSON —
+  which was the only thing still blocking it after the quote/multi-line work
+  (measured: removing the comma makes it draw exactly like its admitted TB
+  twin, row 22). The other two fallbacks (29, 64) are nine-branch TB/BT graphs
+  that exceed the width cap (276 columns); the last (97) is a multi-line
+  quoted branch label.
+- **Mechanism.** A pre-header directive may span up to sixteen continuation
+  lines; the payload is normalized from Mermaid's single-quoted spelling to
+  JSON (control bytes, escapes and stray double quotes reject; one trailing
+  comma before `}` or `]` is dropped, two in a row reject) and validated
+  against the closed profile. `mainBranchName` / `showCommitLabel: true` keep
+  their D-436 semantics. The frontmatter path no longer rejects a body init
+  outright — the closed profile in the parser is the gate.
+- **Projection.** Every admitted key is inert. The terminal draws labels
+  horizontally and no colour, discloses each key once on the canonical footer
+  in a fixed order (logLevel, theme, rotateCommitLabel, themeVariables), and
+  leaves the graph art unchanged. Component rows with no init directive keep
+  byte-identical frames. The ASCII profile renders no disclosure footer for
+  any family (RFC 0039 convention), so an ASCII render of a body-init source
+  consumes the directive silently; the unicode profile is the documented
+  surface for disclosures.
+- **Ledger.** `tools/mermaid/git-init-d467-cohort.json` (9 rows) with the
+  generator, the cohort gate `test_mermaid_git_init_d467_cohort`, the matrix
+  branch + rule-38 reach proof, and the generator `--check` ctest.
+- **Measured result.** 1794 drawn / 351 fallback / 0 error, `drawn_at_240`
+  1608, mandatory gaps 48, roster 351 rows / 25 categories, git family
+  fallback/drawn 12/123 -> 3/132 (`family_residual:git` 11 -> 2; the third
+  git fallback is the `multiline_label` row 97). All nine rows keep whole
+  source at 40 because the footer is wider than the fence.
+- **Paired negatives.** Unknown keys, unknown levels/themes, a non-hex or
+  out-of-range branch-label variable, duplicate keys, an empty payload, an
+  empty `gitGraph` block, two trailing commas, an unterminated quote, a stray
+  double quote, a backslash escape, a post-header directive and a directive
+  over sixteen continuation lines all keep whole source; one trailing comma,
+  mixed quote spellings and a multi-line directive draw.

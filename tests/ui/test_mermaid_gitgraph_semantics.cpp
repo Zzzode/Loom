@@ -2128,7 +2128,10 @@ TEST(MermaidGitGraphEnvelope, ConfigFrontmatterStaysSource) {
     EXPECT_FALSE(native_drawn(text)) << text;
 }
 
-TEST(MermaidGitGraphEnvelope, InitBearingFrontmatterStaysSource) {
+TEST(MermaidGitGraphEnvelope, AdmittedInitWithFrontmatterDraws) {
+    // D-467: a body init directive is admitted by the closed parser profile
+    // even when the source also carries frontmatter; before D-467 this pair
+    // stayed whole source.
     const std::string source = "---\n"
                                "description: >-\n"
                                "  d\n"
@@ -2137,7 +2140,17 @@ TEST(MermaidGitGraphEnvelope, InitBearingFrontmatterStaysSource) {
                                "gitGraph LR:\n"
                                "  commit id:\"1\"\n";
     const auto text = render_text(source);
-    EXPECT_FALSE(native_drawn(text)) << text;
+    EXPECT_TRUE(native_drawn(text)) << text;
+    // Paired negative: an init directive outside the closed profile still
+    // keeps the whole source.
+    const std::string unadmitted = "---\n"
+                                   "description: >-\n"
+                                   "  d\n"
+                                   "---\n"
+                                   "%%{init: {\"colour\": \"red\"}}%%\n"
+                                   "gitGraph LR:\n"
+                                   "  commit id:\"1\"\n";
+    EXPECT_FALSE(native_drawn(render_text(unadmitted)));
 }
 
 TEST(MermaidGitGraphEnvelope, MultilineQuotedBranchLabelStaysSource) {

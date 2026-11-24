@@ -357,6 +357,9 @@ struct GitGraph {
     std::string current_branch = "main";
     std::vector<GitCommit> commits;
     std::vector<GitBranch> branches;
+    // D-467: canonical disclosure lines for admitted-but-inert pre-header
+    // `%%{init: ...}%%` keys, in a fixed order.
+    std::vector<std::string> init_notices;
     std::size_t automatic_id = 0u;
     bool commit_after_reset = false;
 };

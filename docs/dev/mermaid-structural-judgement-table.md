@@ -41,8 +41,8 @@ Totals over the eight categories (251 rows after D-466): **C 219 / S 11 /
 I 0 / D 21** (63+36+34+30+27+28+17+16 = 251; C = 55+34+34+28+27+25+16,
 S = 8+1+2, D = 17 + 3 + 1 (sankey + the ER presentation-profile rows)). The
 remaining 125 rows of the 376 baseline sit below the eight largest categories;
-the live roster is 360 after D-463's eight, D-464's five, D-465's two and
-D-466's one admissions.
+the live roster is 351 after D-463's eight, D-464's five, D-465's two,
+D-466's one and D-467's nine admissions.
 
 ## Implementable-now block (evidence: budget / config probes)
 
@@ -77,10 +77,14 @@ decision-gated on the presentation profile's label contract).
   showed that the wide row was *both* a caption-grammar gap and a Work-budget
   gap: the shaped canvas exhausted the fixed 1M primary, so the prefix bisect
   and the canvas envelope belong together.
-- `family_residual:git` 11 (after D-463's 8): label rotation/horizontal
-  orientation and >8 branches with variable overrides — rotation is
-  structurally inexpressible; the variable-override rows need the override
-  namespaces closed.
+- `family_residual:git` 2 (after D-463's eight and D-467's nine; the git
+  family total is 3 with the `multiline_label` row): the two TB/BT nine-branch
+  capacity rows (29, 64; 276 columns, over the width cap) plus the one
+  multi-line quoted branch label (97). D-467 showed that the
+  rotate/horizontal and themeVariables rows were init-directive grammar debt
+  (multi-line, single-quoted, one trailing comma), not structural; rotation is
+  disclosed as always-horizontal, and row 57 draws once its trailing comma is
+  dropped.
 
 - `family_residual:gantt` 2: invalid-date issue fixtures; upstream's own
   error path, fallback is the honest projection.

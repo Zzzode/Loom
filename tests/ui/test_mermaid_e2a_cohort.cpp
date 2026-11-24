@@ -45,6 +45,7 @@ const fs::path kD461Ledger = kTestsDir / "../tools/mermaid/state-d461-cohort.jso
 const fs::path kD463Ledger = kTestsDir / "../tools/mermaid/git-envelope-d463-cohort.json";
 const fs::path kInfoD461Ledger = kTestsDir / "../tools/mermaid/info-d461-cohort.json";
 const fs::path kD462Ledger = kTestsDir / "../tools/mermaid/state-scope-caption-d462-cohort.json";
+const fs::path kD467Ledger = kTestsDir / "../tools/mermaid/git-init-d467-cohort.json";
 constexpr int kWide = 240;
 constexpr int kHeight = 400;
 
@@ -403,6 +404,17 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     ASSERT_TRUE(d462.has_value()) << "D-462 cohort ledger must parse";
     d462->root().get("rows").iter(
         [&](const JsonVal row) { cohort.insert(row.get_string("path")); });
+    // D-467 admits the nine git init-directive originals; the per-row gate is
+    // test_mermaid_git_init_d467_cohort. Every one carries frontmatter and a
+    // body init directive, so all nine leave the whole-source scan and the
+    // skip set below pins them.
+    auto d467 = json::parse(read_file(kD467Ledger));
+    ASSERT_TRUE(d467.has_value()) << "D-467 cohort ledger must parse";
+    d467->root().get("rows").iter([&](const JsonVal row) {
+        const auto rel = row.get_string("path");
+        cohort.insert(rel);
+        if (has_config_or_init(read_file(kCases / rel))) git_admitted.insert(rel);
+    });
     std::set<std::string> git_skipped;
     std::set<std::string> state_skipped;
     std::set<std::string> skipped_by_rfc0048;
@@ -448,13 +460,14 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     // `info`-body row out (its own family): 24 -> 23. D-462 moves the two
     // composite originals out: 23 -> 21. D-463 moves the six config-bearing
     // cherry-pick rows out (the git Work envelope admits them): 21 -> 15.
-    EXPECT_EQ(checked, 15);
+    // D-467 moves the nine git init-directive rows out: 15 -> 6.
+    EXPECT_EQ(checked, 6);
     EXPECT_EQ(skipped_by_rfc0048.size(), 24u);
     // Under-listing fails here (an admitted row that really changes surface is
     // scanned again); over-listing a missing or non-config-bearing path fails
     // the local set equality above, and an admitted-without-drawing row fails
-    // test_mermaid_gitgraph_0039_cohort, test_mermaid_git_0045_cohort or
-    // test_mermaid_git_work_d463_cohort.
+    // test_mermaid_gitgraph_0039_cohort, test_mermaid_git_0045_cohort,
+    // test_mermaid_git_work_d463_cohort or test_mermaid_git_init_d467_cohort.
     EXPECT_EQ(git_skipped, git_admitted);
     EXPECT_EQ(state_skipped, state_admitted);
 }

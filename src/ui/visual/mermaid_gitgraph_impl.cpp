@@ -366,39 +366,165 @@ bool parse_reset(GitGraph& graph, std::string_view line) {
     return true;
 }
 
-bool parse_init(GitGraph& graph, std::string_view line) {
-    line = trim_git(line);
-    constexpr std::string_view prefix = "%%{init:";
-    if (!line.starts_with(prefix) || !line.ends_with("}%%")) return false;
-    const auto document = loom::utils::json::parse(
-        std::string(line.substr(prefix.size(), line.size() - prefix.size() - 3u)));
+constexpr std::size_t kGitNoticeLineLimit = 96u;
+
+// D-467: the closed pre-header init profile. `mainBranchName` and
+// `showCommitLabel: true` change graph semantics (D-436); `logLevel`, `theme`,
+// `gitGraph.rotateCommitLabel` and `themeVariables.gitBranchLabel0..7` are
+// inert for the terminal projection and are disclosed once each.
+// D-467: legacy Mermaid spells the directive payload with single quotes, and
+// the directive may span physical lines. Normalize the single-quoted strings
+// to JSON under the same structural rule as the other families; a control
+// byte, an unterminated quote, a backslash inside a single-quoted string or a
+// stray double quote keeps the whole source.
+bool git_init_payload(std::string_view payload, std::string& normalized, Work& work) {
+    normalized.clear();
+    normalized.reserve(payload.size());
+    char quote = 0;
+    // Mermaid is JavaScript: a trailing comma before `}` or `]` is legal
+    // source and one corpus directive uses it. One such comma is dropped; two
+    // in a row, or a comma anywhere else, keeps the JSON strict.
+    bool pending_comma = false;
+    for (const char c : payload) {
+        if (!work.spend()) return false;
+        // The closed spelling has no escapes and no control bytes.
+        if (static_cast<unsigned char>(c) < 0x20u || c == '\\') return false;
+        if (quote) {
+            if (c == quote) {
+                normalized.push_back('"');
+                quote = 0;
+                continue;
+            }
+            // A double quote cannot live inside a single-quoted string.
+            if (c == '"' && quote == '\'') return false;
+            normalized.push_back(c);
+            continue;
+        }
+        if (c == ',') {
+            if (pending_comma) return false;
+            pending_comma = true;
+            continue;
+        }
+        // Tabs are control bytes and were rejected above.
+        if (c == ' ') {
+            normalized.push_back(c);
+            continue;
+        }
+        if (pending_comma) {
+            if (c != '}' && c != ']') normalized.push_back(',');
+            pending_comma = false;
+        }
+        if (c == '\'') {
+            normalized.push_back('"');
+            quote = '\'';
+            continue;
+        }
+        if (c == '"') {
+            normalized.push_back('"');
+            quote = '"';
+            continue;
+        }
+        normalized.push_back(c);
+    }
+    if (pending_comma) normalized.push_back(',');
+    return quote == 0;
+}
+
+bool parse_init(GitGraph& graph, std::string_view payload, Work& work) {
+    std::string normalized;
+    if (!git_init_payload(payload, normalized, work) || !work.spend(normalized.size() * 8u + 64u))
+        return false;
+    const auto document = loom::utils::json::parse(normalized);
     if (!document || !document->root().is_obj()) return false;
-    bool valid = true, seen_name = false, seen_commit_label = false;
-    std::size_t root_fields = 0u, graph_fields = 0u;
+    bool valid = true, seen_graph = false, seen_name = false, seen_commit_label = false,
+         seen_log = false, seen_theme = false, seen_rotate = false, seen_vars = false;
+    std::string log_value, theme_value, rotate_value;
+    std::array<bool, 8> seen_labels{};
+    std::size_t label_count = 0u;
+    std::size_t root_fields = 0u, graph_fields = 0u, var_fields = 0u;
+    const auto hex_colour = [](std::string_view text) {
+        if (text.size() != 7u || text.front() != '#') return false;
+        for (std::size_t n = 1u; n < text.size(); ++n)
+            if (!((text[n] >= '0' && text[n] <= '9') || (text[n] >= 'a' && text[n] <= 'f') ||
+                  (text[n] >= 'A' && text[n] <= 'F')))
+                return false;
+        return true;
+    };
     document->root().iter_obj(
         [&](loom::utils::json::JsonVal key, loom::utils::json::JsonVal value) {
             ++root_fields;
-            if (key.as_str() != "gitGraph" || !value.is_obj()) {
+            const auto name = key.as_str();
+            if (name == "logLevel") {
+                constexpr std::array<std::string_view, 6> levels{
+                    {"trace", "debug", "info", "warn", "error", "fatal"}};
+                if (seen_log || !value.is_str() ||
+                    std::ranges::find(levels, std::string_view{value.as_str()}) == levels.end()) {
+                    valid = false;
+                    return;
+                }
+                seen_log = true;
+                log_value.assign(value.as_str());
+                return;
+            }
+            if (name == "theme") {
+                if (seen_theme || !value.is_str() || value.as_str() != "default") {
+                    valid = false;
+                    return;
+                }
+                seen_theme = true;
+                theme_value.assign(value.as_str());
+                return;
+            }
+            if (name == "themeVariables") {
+                if (seen_vars || !value.is_obj() || value.size() == 0u || value.size() > 8u) {
+                    valid = false;
+                    return;
+                }
+                seen_vars = true;
+                value.iter_obj([&](loom::utils::json::JsonVal var_key,
+                                   loom::utils::json::JsonVal var_value) {
+                    ++var_fields;
+                    static constexpr std::string_view kPrefixVar = "gitBranchLabel";
+                    const auto var_name = std::string_view{var_key.as_str()};
+                    if (!var_name.starts_with(kPrefixVar) || var_name.size() != 15u ||
+                        var_name[14] < '0' || var_name[14] > '7' || !var_value.is_str() ||
+                        !hex_colour(std::string_view{var_value.as_str()})) {
+                        valid = false;
+                        return;
+                    }
+                    const auto index = static_cast<std::size_t>(var_name[14] - '0');
+                    if (seen_labels[index]) {
+                        valid = false;
+                        return;
+                    }
+                    seen_labels[index] = true;
+                    ++label_count;
+                });
+                return;
+            }
+            if (name != "gitGraph" || !value.is_obj() || seen_graph) {
                 valid = false;
                 return;
             }
+            seen_graph = true;
             value.iter_obj(
                 [&](loom::utils::json::JsonVal child_key, loom::utils::json::JsonVal child_value) {
                     ++graph_fields;
-                    if (child_key.as_str() == "mainBranchName") {
+                    const auto child = child_key.as_str();
+                    if (child == "mainBranchName") {
                         if (seen_name || !child_value.is_str()) {
                             valid = false;
                             return;
                         }
                         seen_name = true;
-                        const auto name = git_label(child_value.as_str());
-                        if (!name || *name == "∅") {
+                        const auto branch = git_label(child_value.as_str());
+                        if (!branch || *branch == "∅") {
                             valid = false;
                             return;
                         }
-                        graph.main_branch = *name;
-                        graph.current_branch = *name;
-                    } else if (child_key.as_str() == "showCommitLabel") {
+                        graph.main_branch = *branch;
+                        graph.current_branch = *branch;
+                    } else if (child == "showCommitLabel") {
                         // The explicit true setting has the same visible semantics as
                         // this ID-caption profile. False needs a separate hidden-ID profile.
                         if (seen_commit_label || !child_value.is_bool() || !child_value.as_bool()) {
@@ -406,11 +532,42 @@ bool parse_init(GitGraph& graph, std::string_view line) {
                             return;
                         }
                         seen_commit_label = true;
+                    } else if (child == "rotateCommitLabel") {
+                        if (seen_rotate || !child_value.is_bool()) {
+                            valid = false;
+                            return;
+                        }
+                        seen_rotate = true;
+                        rotate_value.assign(child_value.as_bool() ? "true" : "false");
                     } else
                         valid = false;
                 });
         });
-    return valid && root_fields == 1u && graph_fields >= 1u && graph_fields <= 2u;
+    if (!valid || root_fields == 0u || root_fields > 4u || graph_fields > 3u || var_fields > 8u)
+        return false;
+    // An empty `gitGraph` block is not part of the closed profile (the same
+    // rule the frontmatter envelope applies to an empty config block).
+    if (seen_graph && graph_fields == 0u) return false;
+    if (seen_vars && label_count != var_fields) return false;
+    auto notice = [&](std::string line_text) {
+        if (line_text.size() > kGitNoticeLineLimit || !work.spend(line_text.size() + 64u))
+            return false;
+        graph.init_notices.push_back(std::move(line_text));
+        return true;
+    };
+    if (seen_log && !notice("init.logLevel=" + log_value + " -> logger only; not applied"))
+        return false;
+    if (seen_theme && !notice("init.theme=" + theme_value + " -> colour palette; not applied"))
+        return false;
+    if (seen_rotate &&
+        !notice("init.gitGraph.rotateCommitLabel=" + rotate_value +
+                " -> label rotation; not applied"))
+        return false;
+    if (seen_vars &&
+        !notice("init.themeVariables.gitBranchLabel0-7 (" + std::to_string(label_count) +
+                ") -> branch label colours; not applied"))
+        return false;
+    return true;
 }
 
 }  // namespace
@@ -445,9 +602,27 @@ std::optional<GitGraph> parse_gitgraph(std::string_view source, Work& work,
         // pre-header position and only for the one fully represented init
         // shape below; a generic comment remains non-semantic.
         if (line.starts_with("%%{")) {
-            if (seen_header || seen_init || !line.starts_with("%%{init:") ||
-                !parse_init(graph, line))
-                return {};
+            constexpr std::string_view kInitPrefix = "%%{init:";
+            constexpr std::string_view kInitSuffix = "}%%";
+            if (seen_header || seen_init || !line.starts_with(kInitPrefix)) return {};
+            std::string directive{line};
+            if (!work.spend(directive.size() * 2u + 64u)) return {};
+            // D-467: the directive may span physical lines (the corpus spells
+            // a nested object over several lines). At most 16 extra lines.
+            for (int extra = 0; !directive.ends_with(kInitSuffix); ++extra) {
+                if (extra == 16 || source.empty()) return {};
+                const auto end = source.find('\n');
+                const auto next = source.substr(0, end);
+                source = end == std::string_view::npos ? std::string_view{}
+                                                       : source.substr(end + 1u);
+                if (!work.spend(next.size() * 2u + 64u)) return {};
+                directive += ' ';
+                directive += trim_git(next);
+            }
+            if (directive.size() <= kInitPrefix.size() + kInitSuffix.size()) return {};
+            const auto payload = std::string_view{directive}.substr(
+                kInitPrefix.size(), directive.size() - kInitPrefix.size() - kInitSuffix.size());
+            if (!parse_init(graph, payload, work)) return {};
             seen_init = true;
             continue;
         }
@@ -998,11 +1173,10 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
 // renderer. RFC 0045 admits exactly one namespaced subtree, `gitGraph` with the
 // single boolean leaf `parallelCommits` (the upstream parallel-lane compaction
 // switch, inert here and disclosed in the same footer). Every other namespaced
-// `config.gitGraph.*` key, an empty config block, any body init directive, any
-// title (gitGraph has no title projection) or any other key keeps the whole
-// source.
-constexpr std::size_t kGitNoticeLineLimit = 96u;
-
+// `config.gitGraph.*` key, an empty config block, any title (gitGraph has no
+// title projection) or any other key keeps the whole source. D-467 admits a
+// pre-header body init directive only through the closed profile in
+// parse_gitgraph; the envelope no longer rejects it here.
 struct GitEnvelope {
     std::string_view body;
     std::vector<std::string> config_notices;
@@ -1080,7 +1254,9 @@ bool git_notice_line(std::vector<std::string>& notices, std::string_view line, W
 
 std::optional<GitEnvelope> git_frontmatter(std::string_view source, Work& work) {
     const auto envelope = detail::parse_envelope(source, work);
-    if (!envelope || !envelope->has_frontmatter || !envelope->init.empty()) return {};
+    // D-467: a body init directive is admitted only by the closed profile in
+    // parse_gitgraph, so the frontmatter path no longer rejects it here.
+    if (!envelope || !envelope->has_frontmatter) return {};
     bool description_seen = false, config_seen = false, title_seen = false;
     std::optional<std::string> title;
     enum : unsigned {
@@ -1287,11 +1463,19 @@ std::optional<std::vector<std::string>> gitgraph_layout(std::string_view source,
         flags = admitted->flags;
         admitted_title = std::move(admitted->title);
     }
-    const auto graph = detail::parse_gitgraph(
+    auto graph = detail::parse_gitgraph(
         body, work, flags.main_branch_name ? std::string_view{*flags.main_branch_name}
                                            : std::string_view{"main"},
         flags.main_branch_order);
     if (!graph) return {};
+    // D-467: disclose admitted-but-inert init keys after any frontmatter
+    // notices. A source without them keeps its byte-identical frame.
+    if (!graph->init_notices.empty()) {
+        if (!work.spend((graph->init_notices.size() + 1u) * (4u * sizeof(std::string) + 64u)))
+            return {};
+        if (notices.empty()) notices.emplace_back("GitGraph native projection v1");
+        for (auto& line : graph->init_notices) notices.push_back(std::move(line));
+    }
     auto lines = layout_gitgraph(*graph, work, use_ascii, flags);
     if (!lines) return {};
     if (admitted_title) {

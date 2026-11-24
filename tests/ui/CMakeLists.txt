@@ -348,6 +348,15 @@ add_test(NAME MermaidMindmapMarkdownD465Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidMindmapMarkdownD465Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-467: the gitGraph multi-line init directive, closed inert profile.
+add_executable(test_mermaid_git_init_d467_cohort
+    test_mermaid_git_init_d467_cohort.cpp)
+target_link_libraries(test_mermaid_git_init_d467_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_git_init_d467_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
 # D-466: the tree-view combined-annotation ledger is generated from the
 # fixtures; the check fails on a hand edit the generator would not reproduce.
 add_test(NAME MermaidTreeviewCombinedD466Cohort.GeneratorIsReproducible
@@ -355,6 +364,15 @@ add_test(NAME MermaidTreeviewCombinedD466Cohort.GeneratorIsReproducible
         "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_treeview_combined_d466_cohort.py" --check
         --repo-root "${CMAKE_SOURCE_DIR}")
 set_tests_properties(MermaidTreeviewCombinedD466Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+# D-467: the gitGraph init cohort ledger is generated from the fixtures; the
+# check fails on a hand edit the generator would not reproduce.
+add_test(NAME MermaidGitInitD467Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_git_init_d467_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidGitInitD467Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
 # D-460: the ER style-admission cohort ledger is generated from the fixtures;

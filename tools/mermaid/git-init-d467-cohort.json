@@ -1,0 +1,236 @@
+{
+  "schema": "loom_mermaid_git_init_d467_cohort/v1",
+  "decision": "D-467",
+  "stage": "gitGraph multi-line init directive, closed inert profile",
+  "admission": {
+    "mechanism": "a pre-header `%%{init: ...}%%` may span physical lines; single-quoted strings are normalized to JSON (one trailing comma before a closing brace is dropped) and a closed key profile is validated (logLevel/theme/gitGraph.rotateCommitLabel/themeVariables.gitBranchLabel0..7, plus the existing mainBranchName/showCommitLabel semantics)",
+    "scope": "the gitGraph parser only; every admitted key is inert for the terminal projection and disclosed"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the gitGraph originals still in the fallback roster whose body init directive is the closed inert profile",
+    "cohort_digest": "91a71914654cc6e428deba4078f1d0961e5682b96f0ee98c7b997d8e1a0254a8"
+  },
+  "counts": {
+    "total": 9,
+    "by_family": {
+      "git": 9
+    }
+  },
+  "review": {
+    "reviewer_agent": "task abfc9b5165c0e702b round 1 REQUEST-CHANGES (2 MAJOR, 1 minor, 1 nit) -> round 2 APPROVE",
+    "date": "2026-11-25",
+    "verdict": "approved",
+    "note": "Nine gitGraph originals carry a multi-line, single-quoted init directive whose keys are inert for the terminal projection; one directive ends its nested object with a trailing comma that the normalizer drops. Admitted and disclosed; no rendering semantics change. Round 1: row 57 was misdescribed as capacity-blocked when its trailing comma was the blocker (now admitted) and the review record was a placeholder; round 2 APPROVE."
+  },
+  "rows": [
+    {
+      "path": "git/nightly-check/10-should-render-a-simple-gitgraph-with-horizontal-labels.mmd",
+      "family": "git",
+      "sha256": "7e452dab156e0cfe8fa7ce43b6bae929abdc91f8388a25122b56a546d98b451b",
+      "manifest_sha256": "7e452dab156e0cfe8fa7ce43b6bae929abdc91f8388a25122b56a546d98b451b",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "init.logLevel=debug -> logger only; not applied",
+        "init.theme=default -> colour palette; not applied",
+        "init.gitGraph.rotateCommitLabel=false -> label rotation; not applied"
+      ],
+      "expected_captions": [
+        "Alpha",
+        "Delta"
+      ],
+      "ledger_note": "closed inert init profile; the terminal draws labels horizontally and no colour"
+    },
+    {
+      "path": "git/nightly-check/24-should-render-a-simple-gitgraph-with-horizontal-labels-vertical-branch.mmd",
+      "family": "git",
+      "sha256": "632e5a6a27446b57f03336a324f59e0734990fd24b4394523221d8196435725b",
+      "manifest_sha256": "632e5a6a27446b57f03336a324f59e0734990fd24b4394523221d8196435725b",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "init.logLevel=debug -> logger only; not applied",
+        "init.theme=default -> colour palette; not applied",
+        "init.gitGraph.rotateCommitLabel=false -> label rotation; not applied"
+      ],
+      "expected_captions": [
+        "Alpha",
+        "Delta"
+      ],
+      "ledger_note": "closed inert init profile; the terminal draws labels horizontally and no colour"
+    },
+    {
+      "path": "git/pr-check/59-should-render-a-simple-gitgraph-with-horizontal-labels-vertical-branch-bottom-to-top.mmd",
+      "family": "git",
+      "sha256": "0563999f39a49e4f8b8e845755b4f07bc013697b0005105c3c1982cbbc6cb763",
+      "manifest_sha256": "0563999f39a49e4f8b8e845755b4f07bc013697b0005105c3c1982cbbc6cb763",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "init.logLevel=debug -> logger only; not applied",
+        "init.theme=default -> colour palette; not applied",
+        "init.gitGraph.rotateCommitLabel=false -> label rotation; not applied"
+      ],
+      "expected_captions": [
+        "Alpha",
+        "Delta"
+      ],
+      "ledger_note": "closed inert init profile; the terminal draws labels horizontally and no colour"
+    },
+    {
+      "path": "git/nightly-check/9-should-render-a-simple-gitgraph-with-rotated-labels.mmd",
+      "family": "git",
+      "sha256": "9a5e87dc2fadcb3082ae4ef2fb01de26bde9cc12ff6ba26d52dcee962980c8fb",
+      "manifest_sha256": "9a5e87dc2fadcb3082ae4ef2fb01de26bde9cc12ff6ba26d52dcee962980c8fb",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "init.logLevel=debug -> logger only; not applied",
+        "init.theme=default -> colour palette; not applied",
+        "init.gitGraph.rotateCommitLabel=true -> label rotation; not applied"
+      ],
+      "expected_captions": [
+        "75f7219e"
+      ],
+      "ledger_note": "closed inert init profile; the terminal draws labels horizontally and no colour"
+    },
+    {
+      "path": "git/nightly-check/58-should-render-a-simple-gitgraph-with-rotated-labels-vertical-branch-bottom-to-top.mmd",
+      "family": "git",
+      "sha256": "8d4bdf42b17017d67764fea9f4ea0aa3effe84a0861cc8c5f148c383494c4a23",
+      "manifest_sha256": "8d4bdf42b17017d67764fea9f4ea0aa3effe84a0861cc8c5f148c383494c4a23",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "init.logLevel=debug -> logger only; not applied",
+        "init.theme=default -> colour palette; not applied",
+        "init.gitGraph.rotateCommitLabel=true -> label rotation; not applied"
+      ],
+      "expected_captions": [
+        "75f7219e"
+      ],
+      "ledger_note": "closed inert init profile; the terminal draws labels horizontally and no colour"
+    },
+    {
+      "path": "git/pr-check/23-should-render-a-simple-gitgraph-with-rotated-labels-vertical-branch.mmd",
+      "family": "git",
+      "sha256": "607a19d76e5e7fd8a8a4ba146ef6e13743dc4e6b5a0260603100b6e5dde06958",
+      "manifest_sha256": "607a19d76e5e7fd8a8a4ba146ef6e13743dc4e6b5a0260603100b6e5dde06958",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "init.logLevel=debug -> logger only; not applied",
+        "init.theme=default -> colour palette; not applied",
+        "init.gitGraph.rotateCommitLabel=true -> label rotation; not applied"
+      ],
+      "expected_captions": [
+        "75f7219e"
+      ],
+      "ledger_note": "closed inert init profile; the terminal draws labels horizontally and no colour"
+    },
+    {
+      "path": "git/nightly-check/8-should-render-a-simple-gitgraph-with-more-than-8-branches-overriding-variables.mmd",
+      "family": "git",
+      "sha256": "68d8694d349873ed5fb9484901b18f2968bb6d9bfcd8517a70bd62c6a7d06f4e",
+      "manifest_sha256": "68d8694d349873ed5fb9484901b18f2968bb6d9bfcd8517a70bd62c6a7d06f4e",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "init.logLevel=debug -> logger only; not applied",
+        "init.theme=default -> colour palette; not applied",
+        "init.themeVariables.gitBranchLabel0-7 (8) -> branch label colours; not applied"
+      ],
+      "expected_captions": [
+        "branch1",
+        "branch9"
+      ],
+      "ledger_note": "closed inert init profile; the terminal draws labels horizontally and no colour"
+    },
+    {
+      "path": "git/nightly-check/57-should-render-a-simple-gitgraph-with-more-than-8-branches-overriding-variables-vertical-branch-bottom-to-top.mmd",
+      "family": "git",
+      "sha256": "a84c7f9afa90ba29cae5674c2bffa5b4609ed9b307b3cd0b58ea89d66c2be69c",
+      "manifest_sha256": "a84c7f9afa90ba29cae5674c2bffa5b4609ed9b307b3cd0b58ea89d66c2be69c",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "init.logLevel=debug -> logger only; not applied",
+        "init.theme=default -> colour palette; not applied",
+        "init.themeVariables.gitBranchLabel0-7 (8) -> branch label colours; not applied"
+      ],
+      "expected_captions": [
+        "branch1",
+        "branch9"
+      ],
+      "ledger_note": "closed inert init profile; the terminal draws labels horizontally and no colour"
+    },
+    {
+      "path": "git/pr-check/22-should-render-a-simple-gitgraph-with-more-than-8-branches-overriding-variables-vertical-branch.mmd",
+      "family": "git",
+      "sha256": "4bf9a0a84a22a8323bd61b28d59cb7e552155236c6103a90dfc42d0f4cc56274",
+      "manifest_sha256": "4bf9a0a84a22a8323bd61b28d59cb7e552155236c6103a90dfc42d0f4cc56274",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "init.logLevel=debug -> logger only; not applied",
+        "init.theme=default -> colour palette; not applied",
+        "init.themeVariables.gitBranchLabel0-7 (8) -> branch label colours; not applied"
+      ],
+      "expected_captions": [
+        "branch1",
+        "branch9"
+      ],
+      "ledger_note": "closed inert init profile; the terminal draws labels horizontally and no colour"
+    }
+  ]
+}

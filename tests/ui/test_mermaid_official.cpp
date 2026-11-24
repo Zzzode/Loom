@@ -6908,6 +6908,34 @@ const JourneyCohortEntry* d466_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-467: the eight gitGraph originals whose multi-line, single-quoted init
+// directive is a closed inert profile. Per-row gate:
+// test_mermaid_git_init_d467_cohort.
+const std::map<std::string, JourneyCohortEntry>& d467_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/git-init-d467-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-467 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-467 cohort ledger must be approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* d467_cohort_row(std::string_view path) {
+    const auto& rows = d467_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-440 flowchart closed-theme cohort: the one non-contract `flowchart`-header
 // original whose only non-admitted input is an inert `config.theme: forest`
 // leaf (every `flowchart/` fixture belongs to the frozen Flow400 contract).
@@ -12907,6 +12935,32 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // D-467: the eight gitGraph init-directive originals draw through
+            // the closed inert profile. The post-loop reach proof asserts
+            // every ledger row is observed here (rule 38).
+            if (class_path.is_str()) {
+                const auto* cohort = d467_cohort_row(class_path.as_str());
+                if (cohort) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "git";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-467 gitGraph init profile cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // D-462: the two composite originals draw once the derived scope
             // width accounts for an internal caption. This branch precedes the
             // E2b ledger (both rows were its former routing-debt members) and
@@ -14511,6 +14565,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d466 == expected_d466,
                     "D-466 branch reach set must equal its ledger");
+        }
+
+        // D-467 rule-38 reach proof: every gitGraph init ledger row must be
+        // observed through its own branch, and the branch must not match
+        // anything else.
+        {
+            const auto ledger_d467 = json::parse(
+                read_file(kRoot / "../../../tools/mermaid/git-init-d467-cohort.json"));
+            require(ledger_d467.has_value(), "D-467 cohort ledger must parse");
+            std::set<std::string> expected_d467;
+            ledger_d467->root().get("rows").iter([&](const JsonVal row) {
+                expected_d467.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d467;
+            for (const auto& row : observations) {
+                if (row.track == "original" && row.reason == "D-467 gitGraph init profile cohort")
+                    reached_d467.insert(row.path);
+            }
+            require(reached_d467 == expected_d467,
+                    "D-467 branch reach set must equal its ledger");
         }
 
         // D-462 rule-38 reach proof: every scope-caption ledger row must be

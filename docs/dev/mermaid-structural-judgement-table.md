@@ -41,8 +41,8 @@ Totals over the eight categories (251 rows after D-466): **C 219 / S 11 /
 I 0 / D 21** (63+36+34+30+27+28+17+16 = 251; C = 55+34+34+28+27+25+16,
 S = 8+1+2, D = 17 + 3 + 1 (sankey + the ER presentation-profile rows)). The
 remaining 125 rows of the 376 baseline sit below the eight largest categories;
-the live roster is 351 after D-463's eight, D-464's five, D-465's two,
-D-466's one and D-467's nine admissions.
+the live roster is 345 after D-463's eight, D-464's five, D-465's two,
+D-466's one, D-467's nine and D-468's six admissions.
 
 ## Implementable-now block (evidence: budget / config probes)
 
@@ -59,7 +59,7 @@ decision-gated on the presentation profile's label contract).
 ## Categories below the top eight (summary)
 
 - `family_residual:flowchart` 13, `special_link_markers` 16 (er-diagram 4,
-  flowchart 9, swimlanes 3), `look_neo` 14 (mindmap 7, state 4, swimlanes 3),
+  flowchart 9, swimlanes 3), `look_neo` 8 (mindmap 1, state 4, swimlanes 3),
   `linkstyle_directive` 12, `classdef_styling` 7, `dagre_layout_tuning` 7,
   `multiline_label` 7, `elk_layout_engine` 5: flowchart-dominated (Flow400)
   plus ER/Class/state body-style rows whose evidence lives in the per-family
@@ -72,8 +72,9 @@ decision-gated on the presentation profile's label contract).
 - `family_residual:xychart` 10: 3 label-rotation rows are the frozen xychart
   rotation debt; the point-label rows need a definition-domain decision.
 - `family_residual:mindmap` 0 (D-464's five shape/`::icon` rows plus D-465's
-  markdown-string/escaped-break pair close the family body; the 9 remaining
-  mindmap rows are htmllabels 1, look_neo 7 and multiline-label 1). D-465 also
+  markdown-string/escaped-break pair close the family body; D-468 admits the
+  six closed look/theme rows; the 3 remaining mindmap rows are htmllabels 1,
+  look_neo 1 (`depth-colors`) and multiline-label 1). D-465 also
   showed that the wide row was *both* a caption-grammar gap and a Work-budget
   gap: the shaped canvas exhausted the fixed 1M primary, so the prefix bisect
   and the canvas envelope belong together.

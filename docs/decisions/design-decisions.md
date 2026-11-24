@@ -6219,3 +6219,42 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   double quote, a backslash escape, a post-header directive and a directive
   over sixteen continuation lines all keep whole source; one trailing comma,
   mixed quote spellings and a multi-line directive draw.
+
+## D-468 — mindmap closed look/theme frontmatter (2026-11-25)
+
+- **Problem.** Six mindmap `all-shapes-neo-look-*` originals were the family's
+  largest remaining block. Their bodies draw today (D-464 shapes, D-465
+  markdown), but the frontmatter config block carried `look: neo` and one of
+  the six theme names, and the D-439 envelope accepted only
+  `config.layout: tidy-tree`. A measured probe confirmed the body draws with
+  the frontmatter stripped, so the blocker was the config leaf, not geometry.
+- **Mechanism.** The mindmap envelope now accepts, alongside the existing
+  `config.layout: tidy-tree` leaf, the closed `config.look: neo` leaf and the
+  closed six-name `config.theme` palette (`neo`, `neo-dark`, `redux`,
+  `redux-dark`, `redux-color`, `redux-dark-color` — the same set RFC 0039
+  closed for gitGraph). At most three config leaves, each once; an unknown
+  look, an unknown theme, a duplicate, a malformed line, an empty config block,
+  a config block before the description or any other key keeps the whole
+  source.
+- **Projection.** A cell grid has no sketch stroke and no colour, so both
+  leaves are inert. Each is disclosed once on the canonical footer
+  (`config.look=neo -> source node style; not applied`, `config.theme=<name>
+  -> colour palette; not applied`) before the D-439 layout line. The drawing
+  equals the config-free twin row for row; a config-free source keeps its
+  byte-identical frame.
+- **Ledger.** `tools/mermaid/mindmap-look-d468-cohort.json` (6 rows) with the
+  generator, the cohort gate `test_mermaid_mindmap_look_d468_cohort`, the
+  matrix branch + rule-38 reach proof, and the generator `--check` ctest.
+- **Measured result.** 1800 drawn / 345 fallback / 0 error, `drawn_at_240`
+  1614, mandatory gaps 48, roster 345 rows / 25 categories, mindmap family
+  fallback/drawn 9/24 -> 3/30 (`look_neo` 14 -> 8). All six rows keep whole
+  source at 40 because the footer is wider than the fence.
+- **Paired migration.** The D-439 gate listed `config.theme: neo` and
+  `layout: tidy-tree` + `theme: neo` as negatives; D-468 admits both, so those
+  two entries are now their unadmitted near-misses (`theme: base`) and the
+  admitted `theme: neo` leaf is asserted as a positive with its disclosure. No
+  assertion was deleted or loosened.
+- **Remaining mindmap rows.** `depth-colors` also carries
+  `config.mindmap.colorBy: depth` and a `themeVariables` table, a larger
+  surface deferred to its own slice; the htmllabels and multiline-label rows
+  stay body-gated.

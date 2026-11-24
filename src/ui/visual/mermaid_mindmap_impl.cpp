@@ -86,18 +86,28 @@ bool mindmap_description(std::string_view value) {
 // inert and disclosed (`Mindmap native projection v1`); every other config
 // key, init directive, title or extra field keeps the whole source on
 // fallback.
+// D-468: the same config block may carry the closed `look: neo` leaf and the
+// closed six-name `theme` palette. A cell grid has no sketch stroke and no
+// colour, so both are inert and disclosed once each.
 struct MindmapEnvelope {
     std::string_view body;
     bool tidy_tree = false;
+    bool look = false;
+    std::string theme;
 };
+
+bool mindmap_theme_name(std::string_view value) {
+    return value == "neo" || value == "neo-dark" || value == "redux" ||
+           value == "redux-dark" || value == "redux-color" || value == "redux-dark-color";
+}
 
 std::optional<MindmapEnvelope> mindmap_body(std::string_view source, Work& work) {
     std::size_t at = 0;
     std::string_view line;
     if (!mindmap_line(source, at, line)) return {};
-    if (line != "---") return MindmapEnvelope{source, false};
+    if (line != "---") return MindmapEnvelope{source, false, false, std::string{}};
     bool seen = false, folded = false, payload = false, closed = false, config_seen = false,
-         layout_seen = false;
+         layout_seen = false, look_seen = false, theme_seen = false;
     std::size_t block_indent = 0;
     while (mindmap_line(source, at, line)) {
         if (line == "---") {
@@ -113,9 +123,21 @@ std::optional<MindmapEnvelope> mindmap_body(std::string_view source, Work& work)
             continue;
         }
         if (config_seen) {
-            if (line != "  layout: tidy-tree" || layout_seen) return {};
-            layout_seen = true;
-            continue;
+            if (line == "  layout: tidy-tree" && !layout_seen) {
+                layout_seen = true;
+                continue;
+            }
+            if (line == "  look: neo" && !look_seen) {
+                look_seen = true;
+                continue;
+            }
+            constexpr std::string_view kThemePrefix = "  theme: ";
+            if (line.starts_with(kThemePrefix) && !theme_seen &&
+                mindmap_theme_name(line.substr(kThemePrefix.size()))) {
+                theme_seen = true;
+                continue;
+            }
+            return {};
         }
         if (line == "config:") {
             if (!seen) return {};
@@ -130,17 +152,36 @@ std::optional<MindmapEnvelope> mindmap_body(std::string_view source, Work& work)
         else if (!mindmap_description(value))
             return {};
     }
-    if (!closed || !seen || (folded && !payload) || (config_seen && !layout_seen)) return {};
+    if (!closed || !seen || (folded && !payload) ||
+        (config_seen && !layout_seen && !look_seen && !theme_seen))
+        return {};
     const auto envelope = detail::parse_envelope(source, work);
     if (!envelope || !envelope->has_frontmatter || !envelope->description || envelope->title ||
         !envelope->init.empty())
         return {};
+    std::string theme_value;
     if (config_seen) {
-        if (envelope->config.size() != 1u) return {};
-        const auto& event = envelope->config.front();
-        if (event.path != "layout" || event.indent != 2 || event.namespace_entry ||
-            event.comment || event.blank || event.form != EnvelopeScalarForm::Plain ||
-            event.value != "tidy-tree")
+        if (envelope->config.empty() || envelope->config.size() > 3u) return {};
+        bool layout_event = false, look_event = false, theme_event = false;
+        for (const auto& event : envelope->config) {
+            if (event.indent != 2 || event.namespace_entry || event.comment || event.blank ||
+                event.form != EnvelopeScalarForm::Plain)
+                return {};
+            if (event.path == "layout") {
+                if (layout_event || event.value != "tidy-tree") return {};
+                layout_event = true;
+            } else if (event.path == "look") {
+                if (look_event || event.value != "neo") return {};
+                look_event = true;
+            } else if (event.path == "theme") {
+                if (theme_event || !mindmap_theme_name(event.value)) return {};
+                theme_event = true;
+                theme_value.assign(event.value);
+            } else {
+                return {};
+            }
+        }
+        if (layout_event != layout_seen || look_event != look_seen || theme_event != theme_seen)
             return {};
     } else if (!envelope->config.empty()) {
         return {};
@@ -158,17 +199,22 @@ std::optional<MindmapEnvelope> mindmap_body(std::string_view source, Work& work)
             if (config_seen && event.namespace_entry && event.path == "config") continue;
             return {};
         }
-        if (config_seen && event.path == "layout") continue;
+        if (config_seen && (event.path == "layout" || event.path == "look" ||
+                            event.path == "theme"))
+            continue;
         return {};
     }
     if (fields != 1) return {};
-    return MindmapEnvelope{envelope->raw_body, config_seen};
+    return MindmapEnvelope{envelope->raw_body, config_seen, look_seen, std::move(theme_value)};
 }
 
-// D-439/D-464/D-465: canonical disclosures for admitted-but-inert constructs.
-// A source that carries none keeps its frame byte-identical (no footer). Order
-// is fixed: layout, shapes (bang, cloud, hex), icons, markdown emphasis.
+// D-439/D-464/D-465/D-468: canonical disclosures for admitted-but-inert
+// constructs. A source that carries none keeps its frame byte-identical (no
+// footer). Order is fixed: look, theme, layout, shapes (bang, cloud, hex),
+// icons, markdown emphasis.
 struct MindmapNotices {
+    bool look = false;
+    std::string theme;
     bool tidy_tree = false;
     bool bang = false;
     bool cloud = false;
@@ -194,9 +240,19 @@ constexpr std::array<MindmapNoticeRule, 6> kMindmapNoticeRules{{
 
 bool mindmap_append_notices(std::vector<std::string>& rows, const MindmapNotices& flags,
                             Work& work) {
-    std::array<std::string_view, kMindmapNoticeRules.size()> notices{};
+    std::array<std::string_view, kMindmapNoticeRules.size() + 2> notices{};
     std::size_t size = 0;
     std::size_t extra = 256;
+    std::string theme_notice;
+    if (flags.look) {
+        notices[size++] = "config.look=neo -> source node style; not applied";
+        extra += notices[0].size();
+    }
+    if (!flags.theme.empty()) {
+        theme_notice = "config.theme=" + flags.theme + " -> colour palette; not applied";
+        notices[size++] = theme_notice;
+        extra += theme_notice.size();
+    }
     for (const auto& rule : kMindmapNoticeRules) {
         if (!(flags.*rule.flag)) continue;
         notices[size++] = rule.text;
@@ -505,7 +561,9 @@ std::optional<std::vector<std::string>> mindmap_original_layout(std::string_view
     if (!work.spend(output_bytes)) return {};
     auto result = canvas.lines();
     if (result.empty()) return {};
-    if (!mindmap_append_notices(result, MindmapNotices{.tidy_tree = envelope->tidy_tree},
+    if (!mindmap_append_notices(result, MindmapNotices{.look = envelope->look,
+                                                       .theme = envelope->theme,
+                                                       .tidy_tree = envelope->tidy_tree},
                                 work))
         return {};
     return result;
@@ -949,7 +1007,9 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
     if (result.empty()) return {};
     if (!mindmap_append_notices(
             result,
-            MindmapNotices{.tidy_tree = envelope->tidy_tree,
+            MindmapNotices{.look = envelope->look,
+                           .theme = envelope->theme,
+                           .tidy_tree = envelope->tidy_tree,
                            .bang = saw_bang,
                            .cloud = saw_cloud,
                            .hex = saw_hex,

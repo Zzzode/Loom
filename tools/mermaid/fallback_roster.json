@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 351,
+  "total_fallback": 345,
   "category_counts": {
     "classdef_styling": 7,
     "click_interactive_callback": 16,
@@ -23,7 +23,7 @@
     "linkstyle_directive": 12,
     "look_classic_other": 0,
     "look_handdrawn": 28,
-    "look_neo": 14,
+    "look_neo": 8,
     "multiline_label": 7,
     "securitylevel_directive": 34,
     "special_link_markers": 16,
@@ -125,8 +125,8 @@
     },
     "look_neo": {
       "originals_matching_predicate": 349,
-      "drawn_among_matches": 292,
-      "fallback_among_matches": 57,
+      "drawn_among_matches": 298,
+      "fallback_among_matches": 51,
       "sufficient_blocker": false
     },
     "multiline_label": {
@@ -486,12 +486,6 @@
       "swimlanes/nightly-check/synthetic-default-lane-handdrawn.mmd"
     ],
     "look_neo": [
-      "mindmap/nightly-check/all-shapes-neo-look-neo-dark-theme.mmd",
-      "mindmap/nightly-check/all-shapes-neo-look-neo-theme.mmd",
-      "mindmap/nightly-check/all-shapes-neo-look-redux-color-theme.mmd",
-      "mindmap/nightly-check/all-shapes-neo-look-redux-dark-color-theme.mmd",
-      "mindmap/nightly-check/all-shapes-neo-look-redux-dark-theme.mmd",
-      "mindmap/nightly-check/all-shapes-neo-look-redux-theme.mmd",
       "mindmap/pr-check/depth-colors.mmd",
       "state-diagram/nightly-check/transitions-with-labels-neo-look-neo-dark-theme.mmd",
       "state-diagram/nightly-check/transitions-with-labels-neo-look-neo-theme.mmd",

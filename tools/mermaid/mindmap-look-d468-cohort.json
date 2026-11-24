@@ -1,0 +1,176 @@
+{
+  "schema": "loom_mermaid_mindmap_look_d468_cohort/v1",
+  "decision": "D-468",
+  "stage": "mindmap closed look/theme frontmatter table",
+  "admission": {
+    "mechanism": "the mindmap envelope accepts, alongside the D-439 `config.layout: tidy-tree` leaf, the closed `config.look: neo` leaf and the closed six-name `config.theme` palette (neo, neo-dark, redux, redux-dark, redux-color, redux-dark-color); each is disclosed once and the graph art is unchanged",
+    "scope": "the mindmap frontmatter profile only; no renderer change and no colour or sketch stroke is applied"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the mindmap originals still in the fallback roster whose only non-admitted input is the closed look/theme pair",
+    "cohort_digest": "147423e1be9c8ba92e4e2ce98dc138cbb8f8e6f47b3e38124828c93db40bcd87"
+  },
+  "counts": {
+    "total": 6,
+    "by_family": {
+      "mindmap": 6
+    }
+  },
+  "review": {
+    "reviewer_agent": "task a28cf46e7351de47d round 1 REQUEST-CHANGES (2 MAJOR, 4 NIT) -> round 2 APPROVE",
+    "date": "2026-11-25",
+    "verdict": "approved",
+    "note": "Six mindmap originals carry the closed `look: neo` leaf and one closed theme name. Both are inert for the terminal projection (no sketch stroke, no colour); admitted and disclosed, and the art equals the config-free twin with cells compared verbatim. Round 1: the review record was a placeholder and the post-fix release/dual-preset evidence was missing; round 2 APPROVE, subject to the ledger finalization rebuild-and-rerun."
+  },
+  "rows": [
+    {
+      "path": "mindmap/nightly-check/all-shapes-neo-look-neo-theme.mmd",
+      "family": "mindmap",
+      "sha256": "95625d755f00b2fd2a252bd1b41435e01b9a77435af1ce6b564f5ec4c25600d7",
+      "manifest_sha256": "95625d755f00b2fd2a252bd1b41435e01b9a77435af1ce6b564f5ec4c25600d7",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo -> colour palette; not applied"
+      ],
+      "expected_captions": [
+        "All Shapes",
+        "Square Branch",
+        "Hexagon Node",
+        "Another Default"
+      ],
+      "ledger_note": "closed look/theme frontmatter; the terminal draws no sketch stroke and no colour"
+    },
+    {
+      "path": "mindmap/nightly-check/all-shapes-neo-look-neo-dark-theme.mmd",
+      "family": "mindmap",
+      "sha256": "759f72d43a99fb7706beacd78668c8873f0972207ef6dfd837d4adea3292403c",
+      "manifest_sha256": "759f72d43a99fb7706beacd78668c8873f0972207ef6dfd837d4adea3292403c",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "config.look=neo -> source node style; not applied",
+        "config.theme=neo-dark -> colour palette; not applied"
+      ],
+      "expected_captions": [
+        "All Shapes",
+        "Square Branch",
+        "Hexagon Node",
+        "Another Default"
+      ],
+      "ledger_note": "closed look/theme frontmatter; the terminal draws no sketch stroke and no colour"
+    },
+    {
+      "path": "mindmap/nightly-check/all-shapes-neo-look-redux-theme.mmd",
+      "family": "mindmap",
+      "sha256": "221dd1fc68a9ba0219934671f7b5f5e08caf271cbe20842fc0aa7121e9801d6f",
+      "manifest_sha256": "221dd1fc68a9ba0219934671f7b5f5e08caf271cbe20842fc0aa7121e9801d6f",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux -> colour palette; not applied"
+      ],
+      "expected_captions": [
+        "All Shapes",
+        "Square Branch",
+        "Hexagon Node",
+        "Another Default"
+      ],
+      "ledger_note": "closed look/theme frontmatter; the terminal draws no sketch stroke and no colour"
+    },
+    {
+      "path": "mindmap/nightly-check/all-shapes-neo-look-redux-dark-theme.mmd",
+      "family": "mindmap",
+      "sha256": "120907cf39fd1a5f7e4920887668450f3e938962557d3850b92f2ba99248ba4c",
+      "manifest_sha256": "120907cf39fd1a5f7e4920887668450f3e938962557d3850b92f2ba99248ba4c",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark -> colour palette; not applied"
+      ],
+      "expected_captions": [
+        "All Shapes",
+        "Square Branch",
+        "Hexagon Node",
+        "Another Default"
+      ],
+      "ledger_note": "closed look/theme frontmatter; the terminal draws no sketch stroke and no colour"
+    },
+    {
+      "path": "mindmap/nightly-check/all-shapes-neo-look-redux-color-theme.mmd",
+      "family": "mindmap",
+      "sha256": "529ab4c4c76ae28e7d77ca2683b532686a6e71f5038a6a079104b7f63fbfa14f",
+      "manifest_sha256": "529ab4c4c76ae28e7d77ca2683b532686a6e71f5038a6a079104b7f63fbfa14f",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-color -> colour palette; not applied"
+      ],
+      "expected_captions": [
+        "All Shapes",
+        "Square Branch",
+        "Hexagon Node",
+        "Another Default"
+      ],
+      "ledger_note": "closed look/theme frontmatter; the terminal draws no sketch stroke and no colour"
+    },
+    {
+      "path": "mindmap/nightly-check/all-shapes-neo-look-redux-dark-color-theme.mmd",
+      "family": "mindmap",
+      "sha256": "8ad6a05a26c6c66570afbac1ae4257f91b08c85275d4be5cafd9e33a38335f5b",
+      "manifest_sha256": "8ad6a05a26c6c66570afbac1ae4257f91b08c85275d4be5cafd9e33a38335f5b",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "config.look=neo -> source node style; not applied",
+        "config.theme=redux-dark-color -> colour palette; not applied"
+      ],
+      "expected_captions": [
+        "All Shapes",
+        "Square Branch",
+        "Hexagon Node",
+        "Another Default"
+      ],
+      "ledger_note": "closed look/theme frontmatter; the terminal draws no sketch stroke and no colour"
+    }
+  ]
+}

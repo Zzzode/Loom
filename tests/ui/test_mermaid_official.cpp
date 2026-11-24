@@ -6908,7 +6908,7 @@ const JourneyCohortEntry* d466_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
-// D-467: the eight gitGraph originals whose multi-line, single-quoted init
+// D-467: the nine gitGraph originals whose multi-line, single-quoted init
 // directive is a closed inert profile. Per-row gate:
 // test_mermaid_git_init_d467_cohort.
 const std::map<std::string, JourneyCohortEntry>& d467_cohort_map() {
@@ -6932,6 +6932,36 @@ const std::map<std::string, JourneyCohortEntry>& d467_cohort_map() {
 }
 const JourneyCohortEntry* d467_cohort_row(std::string_view path) {
     const auto& rows = d467_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
+// D-468: the six mindmap originals whose only non-admitted input is the closed
+// `config.look: neo` leaf plus one closed theme name. Per-row gate:
+// test_mermaid_mindmap_look_d468_cohort.
+const std::map<std::string, JourneyCohortEntry>& d468_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/mindmap-look-d468-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-468 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-468 cohort ledger must be approved");
+        require(parsed->root().get("review").get_string("reviewer_agent").starts_with("task "),
+                "D-468 cohort ledger must name the reviewer agent");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* d468_cohort_row(std::string_view path) {
+    const auto& rows = d468_cohort_map();
     const auto found = rows.find(std::string(path));
     return found == rows.end() ? nullptr : &found->second;
 }
@@ -12935,7 +12965,7 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
-            // D-467: the eight gitGraph init-directive originals draw through
+            // D-467: the nine gitGraph init-directive originals draw through
             // the closed inert profile. The post-loop reach proof asserts
             // every ledger row is observed here (rule 38).
             if (class_path.is_str()) {
@@ -12948,6 +12978,32 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     row.source_sha256 = fixture.get_string("sha256");
                     row.expected = "drawn";
                     row.reason = "D-467 gitGraph init profile cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
+            // D-468: the six mindmap look/theme originals draw through the
+            // closed frontmatter table. The post-loop reach proof asserts every
+            // ledger row is observed here (rule 38).
+            if (class_path.is_str()) {
+                const auto* cohort = d468_cohort_row(class_path.as_str());
+                if (cohort) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "mindmap";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-468 mindmap look/theme cohort";
                     const auto state_status = [](const std::string& state) {
                         return state == "drawn" ? "drawn" : "source_fallback";
                     };
@@ -14585,6 +14641,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_d467 == expected_d467,
                     "D-467 branch reach set must equal its ledger");
+        }
+
+        // D-468 rule-38 reach proof: every mindmap look/theme ledger row must
+        // be observed through its own branch, and the branch must not match
+        // anything else.
+        {
+            const auto ledger_d468 = json::parse(
+                read_file(kRoot / "../../../tools/mermaid/mindmap-look-d468-cohort.json"));
+            require(ledger_d468.has_value(), "D-468 cohort ledger must parse");
+            std::set<std::string> expected_d468;
+            ledger_d468->root().get("rows").iter([&](const JsonVal row) {
+                expected_d468.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d468;
+            for (const auto& row : observations) {
+                if (row.track == "original" && row.reason == "D-468 mindmap look/theme cohort")
+                    reached_d468.insert(row.path);
+            }
+            require(reached_d468 == expected_d468,
+                    "D-468 branch reach set must equal its ledger");
         }
 
         // D-462 rule-38 reach proof: every scope-caption ledger row must be

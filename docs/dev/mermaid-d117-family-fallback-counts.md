@@ -6,8 +6,8 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1794 drawn /
-351 source_fallback / 0 error at 240 wide**, after D-467 (`local`,
+**Current totals (the last row of the history table below): 1800 drawn /
+345 source_fallback / 0 error at 240 wide**, after D-468 (`local`,
 2026-11-25). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
@@ -104,9 +104,10 @@ are not whole-original errors).
 | After D-465 mindmap markdown strings, escaped break and canvas envelope (2 rows) | 2026-11-24 | local | 1784 | 361 | 0 |
 | After D-466 tree-view combined `:::class` annotation (1 row) | 2026-11-25 | local | 1785 | 360 | 0 |
 | After D-467 gitGraph closed inert init profile (9 rows) | 2026-11-25 | local | 1794 | 351 | 0 |
+| After D-468 mindmap closed look/theme frontmatter (6 rows) | 2026-11-25 | local | 1800 | 345 | 0 |
 
 The formal counters behind the newest row: `original_drawing_coverage.drawn_at_240`
-= 1608 (1559 + 19 + 3 + 2 + 8 + 5 + 2 + 1 + 9) and `mandatory_gaps` = 48 (frozen; the 48
+= 1614 (1559 + 19 + 3 + 2 + 8 + 5 + 2 + 1 + 9 + 6) and `mandatory_gaps` = 48 (frozen; the 48
 body-diagnostic errors are unchanged).
 
 Row-level detail for the newest rows:
@@ -213,6 +214,14 @@ Row-level detail for the newest rows:
   between the label and the existing `icon(...)`/`## description` suffixes.
   Only the class token is dropped (disclosed); the suffixes stay verbatim.
   Listed in `tools/mermaid/treeview-combined-d466-cohort.json`.
+- **D-468 (6)**: the mindmap `all-shapes-neo-look-*` originals whose only
+  non-admitted input is the closed frontmatter pair `config.look: neo` and one
+  of the six closed theme names (`neo`, `neo-dark`, `redux`, `redux-dark`,
+  `redux-color`, `redux-dark-color`). A cell grid has no sketch stroke and no
+  colour, so both leaves are inert; each is disclosed once on the canonical
+  footer and the art equals the config-free twin. All six keep whole source at
+  40 because the footer is wider than the fence. Listed in
+  `tools/mermaid/mindmap-look-d468-cohort.json`.
 - **D-467 (9)**: the gitGraph originals carrying a multi-line,
   single-quoted `%%{init: ...}%%` directive whose keys are inert for the
   terminal projection (logLevel, theme, rotateCommitLabel,
@@ -304,7 +313,7 @@ stage-4 reconciliation (`state-diagram-v2` 2/101 -> 1/102 and the Total
 | quadrant-chart | 0 | 14 | renderer added 2026-11-13; D-450 (2026-11-23) admits the 5 leading closed `%%{init}%%` tuning/theme rows; D-457 (2026-11-24) admits the last 2 body-style rows (`classDef`, `:::class` point suffixes and the closed inline point-style suffix, validated, dropped and disclosed with a style-stripped twin), so the family is closed at 14 originals; live census 14/0/0 from 14 |
 | ishikawa | 0 | 13 | renderer added 2026-11-13; RFC 0043 (2026-11-22) admits the forest/dark theme rows through a closed two-value table with a disclosure footer (both body-identical to `pr-check/1`); RFC 0046 admits the 3 `config.ishikawa.*` tuning rows through the closed namespace (1 corpus twin, 2 synthetic); only the handdrawn-look row stays source; live census 12/1/0 from 13; live census 13/0/0 (D-459 matrix reconciliation; the slice prose above is historical) |
 | kanban | 0 | 11 | renderer added 2026-11-13; all eleven originals clean (description-only frontmatter; cards with optional @{...} structural metadata, no color contract) |
-| mindmap | 9 | 24 | D-464 (2026-11-24) admits five shape/`::icon` rows (bang, cloud, hex, anonymous root shorthand, icon annotations, all disclosed); D-465 (2026-11-24) admits the last two body rows (escaped row break, markdown-string labels with disclosed emphasis drop, and a shaped-canvas Work envelope); the 9 remaining are htmllabels 1, look_neo 7 and multiline-label 1 |
+| mindmap | 3 | 30 | D-464 (2026-11-24) admits five shape/`::icon` rows (bang, cloud, hex, anonymous root shorthand, icon annotations, all disclosed); D-465 (2026-11-24) admits the last two body rows (escaped row break, markdown-string labels with disclosed emphasis drop, and a shaped-canvas Work envelope); D-468 (2026-11-25) admits six `all-shapes-neo-look-*` rows through the closed frontmatter `look: neo` leaf and six-name theme table (both inert and disclosed, art equals the config-free twin); the 3 remaining are htmllabels 1, look_neo 1 (`depth-colors`, which also carries `mindmap.colorBy` and a `themeVariables` table) and multiline-label 1 |
 | venn | 0 | 21 | renderer added 2026-11-12; RFC 0043 (2026-11-22) admits the dark/redux-color/redux-dark-color theme rows through a closed three-value table (the redux pair body-identical to `pr-check/16`, `dark` synthetic); 3 look/handDrawnSeed frontmatter rows and 4 body style/classDef rows stay source; live census 14/7/0 from 21; live census 21/0/0 (D-459 matrix reconciliation; the slice prose above is historical); measured narrow_40 is 0/3 |
 | wardley | 0 | 10 | renderer added 2026-11-13 (verbatim outline, no map canvas/colour); D-437 (2026-11-23) admits the four `config.theme` rows through the closed palette table and accepts the upstream column-0 body spelling (theme inert and disclosed, art equals the config-stripped twin); family closed at wide 240; live census 10/0/0 from 10 |
 | railroad | 0 | 9 | renderer added 2026-11-13; first multi-dialect family (railroad-beta IR + abnf/ebnf/peg-beta); RFC 0043 (2026-11-22) admits the single dark-theme row through a closed one-value table (synthetic twin), so no frontmatter-gated row remains; live census 9/0/0 from 9; measured narrow_40 is 0/1; only non-ASCII byte is in one frontmatter description |
@@ -318,7 +327,7 @@ stage-4 reconciliation (`state-diagram-v2` 2/101 -> 1/102 and the Total
 | info | 0 | 2 | renderer added 2026-11-24 (D-461 stage 4): the fixed upstream version panel; both originals draw at 240 and 40; live census 2/0/0 from 2 |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **351** | **1794** | |
+| **Total** | **345** | **1800** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 

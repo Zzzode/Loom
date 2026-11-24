@@ -212,9 +212,11 @@ TEST(MermaidMindmapTidyD439Cohort, ClosedLayoutNegativesStayWholeSource) {
              // Other layout engines and other config leaves stay unadmitted.
              "config:\n  layout: elk\n",
              "config:\n  layout: dagre\n",
-             "config:\n  theme: neo\n",
+             // D-468 admits the closed `theme: neo` leaf and the closed six-name
+             // palette, so the former negatives use an unadmitted theme.
+             "config:\n  theme: base\n",
              "config:\n  look: classic\n",
-             "config:\n  layout: tidy-tree\n  theme: neo\n",
+             "config:\n  layout: tidy-tree\n  theme: base\n",
              // Shape and ordering.
              "config:\n   layout: tidy-tree\n",
              "config:\n    layout: tidy-tree\n",
@@ -242,6 +244,16 @@ TEST(MermaidMindmapTidyD439Cohort, ClosedLayoutNegativesStayWholeSource) {
     EXPECT_FALSE(draws(probe("config:\n  layout: tidy-tree\n",
                              "mindmap\n  root((probe))\n    ((probe))\n"),
                        kWide));
+    // D-468 paired positive: the leaf that used to be a negative now draws
+    // and discloses.
+    {
+        const auto source = probe("config:\n  theme: neo\n");
+        ASSERT_TRUE(draws(source, kWide));
+        ASSERT_TRUE(native_frame(source, kWide));
+        EXPECT_NE(capture(source, "mermaid", kWide)
+                      .text.find("config.theme=neo -> colour palette; not applied"),
+                  std::string::npos);
+    }
     // A config-free mindmap keeps no disclosure footer.
     EXPECT_EQ(capture("mindmap\n  root((probe))\n    A\n", "mermaid", kWide)
                   .text.find("Mindmap native projection v1"),

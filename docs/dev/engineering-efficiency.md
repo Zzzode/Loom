@@ -2861,3 +2861,14 @@ three REQUEST-CHANGES rounds before APPROVE; contract lens: one) and the
     sibling ledger whose selection rule names the newly admitted shape, and
     the migration must be a paired edit (skip + comment here, count re-pin
     there), not a loosened assertion.
+
+16. **A derived dimension may be widened; an authored one may not.** The last
+    state-v2 fallback looked structural ("the label is wider than the
+    composite"), but the composite width is *derived* by `layout_scope`, so
+    the honest reading was "the derivation ignored captions". Widen a derived
+    dimension by the exact deficit the consumer needs (`label width + 4` free
+    columns plus the two borders), gate the branch on that deficit so every
+    scene that already fits keeps its bytes, and prove the boundary with the
+    official matrix rather than with prose. Before classifying a row as
+    structurally impossible, ask which dimensions are authored in the source
+    and which are computed.

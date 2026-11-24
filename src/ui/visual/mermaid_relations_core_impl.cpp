@@ -7973,6 +7973,30 @@ bool RelationLayout::measure_scope(int owner, std::size_t depth, const std::vect
     if (owner >= 0 && !region)
         width = std::max(width,
                          label_width(diagram.entities[static_cast<std::size_t>(owner)].label) + 4);
+    if (diagram.family == RelationFamily::State && owner >= 0 && !region && !horizontal) {
+        // A composite's width is derived, never authored. label_place scans
+        // the free run `x-2 .. x+w+1` (w+4 columns), so the scope must expose
+        // `caption width + 4` free columns between its two border columns:
+        // width = caption width + 6. Widen by that exact deficit and leave
+        // every scope whose captions already fit at its pre-existing width
+        // (byte-identical for all drawn scenes; the guard also keeps the
+        // widening inside kWidthLimit, so an over-limit caption still fails
+        // closed).
+        if (!work.spend(4u * sizeof(std::size_t) + 16u)) return false;
+        int caption_w = 0;
+        for (const int edge_index : scope_edge_list) {
+            const auto& edge = diagram.edges[static_cast<std::size_t>(edge_index)];
+            // label_width owns split-row vector growth and temporary strings;
+            // prepay the same shape the ER branch charges.
+            if (edge.label.size() > kSourceLimit ||
+                !work.spend((edge.label.size() + 1u) *
+                                (8u * sizeof(std::string_view) + 4u * sizeof(std::string) + 64u) +
+                            4u * sizeof(std::vector<std::string_view>) + 256u))
+                return false;
+            caption_w = std::max(caption_w, label_width(edge.label));
+        }
+        if (caption_w + 6 > width && caption_w + 6 <= kWidthLimit) width = caption_w + 6;
+    }
     // Pay the new eligibility predicate on every final linear scope.
     if (!work.spend(8u * sizeof(bool) + 16u)) return false;
     if (diagram.family == RelationFamily::Er && owner < 0 && !horizontal &&

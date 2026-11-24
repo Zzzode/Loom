@@ -1,0 +1,71 @@
+{
+  "schema": "loom_mermaid_state_scope_caption_d462_cohort/v1",
+  "decision": "D-462",
+  "stage": "state scope caption: derived-width deficit only",
+  "admission": {
+    "mechanism": "layout_scope widens a State composite (owner >= 0, no region, vertical) by the exact deficit when the widest internal caption needs `label width + 4` free columns that label_place scans; scopes whose captions already fit keep their previous width",
+    "scope": "RelationFamily::State only; every other family's layout path is untouched"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the two `should-render-composite-states` originals whose internal caption is wider than the derived composite",
+    "cohort_digest": "950b0882e56b6e9cf1d17bca1774ecba4eb8ccc0e814c434609749201b795bd6"
+  },
+  "counts": {
+    "total": 2,
+    "by_family": {
+      "state-diagram": 1,
+      "state-diagram-v2": 1
+    }
+  },
+  "review": {
+    "reviewer_agent": "one independent read-only adversarial review (task ab456d7fd1ac4491a; round 1 REQUEST-CHANGES on a tautological restored-equality assertion, the stale fallback roster, the D-467 attribution, the 42/46-column caption framing, a stale docstring, the per-edge Work prepay and the widening oracle's strength; all fixed and re-verified; round 2 APPROVE conditional on the roster emit, which landed at 376 rows / 26 categories)",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "The two composite originals draw once the derived scope width accounts for an internal caption. The caption, not the layout, is the authored part: no source geometry is overridden."
+  },
+  "rows": [
+    {
+      "path": "state-diagram/pr-check/should-render-composite-states.mmd",
+      "family": "state-diagram",
+      "sha256": "c512386e92a656dcc486e843065695f0384d51e62fe22434724d9b0b9690a46d",
+      "manifest_sha256": "c512386e92a656dcc486e843065695f0384d51e62fe22434724d9b0b9690a46d",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_art_labels": [
+        "NotShooting",
+        "A",
+        "B"
+      ],
+      "ledger_note": "derived scope width only; the caption and the graph are unchanged"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/v2-should-render-composite-states.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "f502ffd285c4cad4e13e08129e175cb31f9703ba1160a42cda1830a2cfea2a22",
+      "manifest_sha256": "f502ffd285c4cad4e13e08129e175cb31f9703ba1160a42cda1830a2cfea2a22",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_art_labels": [
+        "NotShooting",
+        "A",
+        "B"
+      ],
+      "ledger_note": "derived scope width only; the caption and the graph are unchanged"
+    }
+  ]
+}

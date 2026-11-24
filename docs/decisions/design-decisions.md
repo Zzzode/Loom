@@ -5975,3 +5975,44 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   the click/`font-style` vocabulary share the single reviewed cohort ledger
   and its gate); (3) routing geometry; (4) `info`. Every commit cites D-461
   and keeps the family suite green.
+
+## D-462 — derived state scope width for an internal caption (2026-11-24)
+
+- **Problem.** The two `should-render-composite-states` originals (the v1
+  `stateDiagram` twin and its `stateDiagram-v2` twin) carry internal
+  transition captions inside a composite: a 42-column `öong` label and the
+  46-column `EvConfig  EvConfig EvConfig  EvConfig EvConfig` row (internal
+  spacing is preserved). `label_place` scans the `w+4` free run
+  `x-2 .. x+w+1`, so a caption can only be placed when the owning scope
+  exposes `caption width + 4` free columns; the derived scope width ignored
+  captions entirely, so the row fell back although every input is
+  well-formed.
+- **Mechanism.** `layout_scope` now computes the widest caption among the
+  scope's own edges and, for `RelationFamily::State` scopes with an owner
+  (a composite), no region table and a vertical direction, widens the scope
+  to `caption width + 6` — the interior that yields the required free run —
+  when the current width is smaller. The width is *derived*, never authored:
+  no source geometry is overridden, and the caption itself is unchanged.
+- **Byte-identity boundary (the TL's D-467 shared-layer rule).** The
+  predicate fires only when `caption width + 6 > width`, so the widened width
+  is the widest caption plus 6 (52 for these rows, driven by the 46-column
+  `EvConfig` caption). Every scope whose captions already fit keeps its
+  pre-existing width; every other family (and the state root scope,
+  `owner < 0`) never enters the branch. The official matrix is the evidence:
+  all non-cohort originals stay byte-identical (1767 -> 1769 drawn is exactly
+  the two admitted rows; `body_diagnostic` stays 372/173/48; the frozen 48
+  gaps are unchanged).
+- **Ledger.** `tools/mermaid/state-scope-caption-d462-cohort.json` (2 rows,
+  `native-frame` oracle) with the generator and gate
+  `test_mermaid_state_scope_d462_cohort`. Both rows are former E2b
+  `state-native-routing-debt` members and leave that ledger
+  (`SCOPE_CAPTION_ADMITTED` sha-pinned skip); the D-461 state ledger now
+  carries no deferral at all.
+- **Measured result.** 1769 drawn / 376 fallback / 0 error,
+  `drawn_at_240` 1583, roster 376 rows / 26 categories
+  (`family_residual:state-diagram-v2` empties, `family_residual:state-diagram`
+  drops to 1). Both rows keep whole source at 40 because their disclosure
+  footer is wider than the fence.
+- **Paired negatives.** An unclosed composite still fails closed; a caption
+  that fits keeps the previous scope width (the caption-free twin is strictly
+  narrower), so the branch is not a blanket widening.

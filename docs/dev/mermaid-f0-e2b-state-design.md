@@ -221,6 +221,15 @@ D-461 stage 3 amendment (2026-11-24): the v2 labeled fan-out
 `state-native-routing-debt` set once the crossing retry draws it; its v1 twin
 and both composite rows keep the debt. The ledger partition is 56/5.
 
+D-462 amendment (2026-11-24): the two `should-render-composite-states`
+originals leave E2b for the scope-caption cohort
+(`tools/mermaid/state-scope-caption-d462-cohort.json`); the derived State
+scope width now accounts for an internal caption that cannot fit. They were
+predicted-blocked `state-native-routing-debt` rows and really draw (their
+config footer is unchanged). The ledger partition is 56 predicted-draw / 2
+predicted-blocked over 58 rows (state_v2 36, state_v1 22); the routing-debt
+set keeps only the v1 labeled fan-out.
+
 D-461 stage 4 amendment (2026-11-24): the lone `info`-body row
 (`state-diagram-v2/nightly-check/v2-should-render-a-simple-info`) leaves E2b
 entirely. Its body is a recognized foreign directive, not an unowned foreign

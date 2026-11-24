@@ -312,6 +312,15 @@ add_test(NAME MermaidInfoD461Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidInfoD461Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-462: the scope-caption cohort ledger is generated from the fixtures; the
+# check fails on a hand edit that the generator would not reproduce.
+add_test(NAME MermaidStateScopeD462Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_state_scope_d462_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidStateScopeD462Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-460: the ER style-admission cohort ledger is generated from the fixtures;
 # the check fails on a hand edit that the generator would not reproduce.
 add_test(NAME MermaidErD460Cohort.GeneratorIsReproducible
@@ -1367,6 +1376,16 @@ add_executable(test_mermaid_state_d461_cohort
 target_link_libraries(test_mermaid_state_d461_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_state_d461_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# D-462: the two composite originals draw once the derived scope width
+# accounts for an internal caption.
+add_executable(test_mermaid_state_scope_d462_cohort
+    test_mermaid_state_scope_d462_cohort.cpp)
+target_link_libraries(test_mermaid_state_scope_d462_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_state_scope_d462_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

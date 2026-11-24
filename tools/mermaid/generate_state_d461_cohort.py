@@ -24,9 +24,10 @@ Oracles:
   retry pass (a failed state pass is undone from its pre-image and re-routed
   with perpendicular crossings). Structural assertions match `native-frame`.
 
-Six routing-geometry rows (stage 3) are admitted through the crossing retry;
-the one labeled composite whose 42-column edge label is wider than its scope and
-the bare `info` directive remain under `deferred`.
+Six routing-geometry rows (stage 3) are admitted through the crossing retry.
+The bare `info` directive left the state family in stage 4 (its own family and
+cohort ledger) and the labeled composite left it in D-462 (derived scope
+width), so this ledger carries no deferral.
 
 Usage: python3 tools/mermaid/generate_state_d461_cohort.py --repo-root . [--check]
 """
@@ -76,12 +77,9 @@ CROSSING = [
     NIGHTLY + "v2-should-render-a-simple-state-diagrams-with-labels.mmd",
     PR + "should-render-edge-labels-correctly-with-multiple-transitions.mmd",
 ]
-# The failing edge carries a 42-column label (`Yet another long long öong öong
-# öong label`) inside a composite narrower than the label: the
-# terminal projection keeps labels in-row inside their owning scope, so the
-# label cannot be placed without widening the composite past its authored
-# bounds.
-DEFERRED_LABEL_WIDTH = [PR + "v2-should-render-composite-states.mmd"]
+# The labeled composite left the state family in D-462: the derived scope
+# width now accounts for an internal caption that cannot fit
+# (tools/mermaid/state-scope-caption-d462-cohort.json).
 
 REVIEW = {
     "reviewer_agent": ("stage 3: one independent read-only adversarial review "
@@ -113,10 +111,10 @@ REVIEW = {
     "verdict": "approved",
     "note": ("Stages 1-3: the bounded canvas-derived state layout envelope, "
              "the two vocabulary admissions (`click` and `font-style`) and the "
-             "crossing retry that admits six routing-geometry rows. One labeled "
-             "composite (42-column edge label wider than its owning scope) stays "
-             "under `deferred`; the bare `info` directive left the state family "
-             "in D-461 stage 4 (its own family and cohort ledger)."),
+             "crossing retry that admits six routing-geometry rows. The bare "
+             "`info` directive left the state family in stage 4 (its own family "
+             "and cohort ledger) and the labeled composite left it in D-462 "
+             "(derived scope width), so no deferral remains."),
 }
 
 
@@ -266,9 +264,6 @@ def build(repo_root):
                      "vocabulary, or routing geometry that the crossing retry "
                      "closes"),
             "cohort_digest": cohort_digest(rows),
-        },
-        "deferred": {
-            "stage3_label_width": DEFERRED_LABEL_WIDTH,
         },
         "counts": {"total": len(rows), "by_family": {"state-diagram-v2": len(rows)}},
         "review": REVIEW,

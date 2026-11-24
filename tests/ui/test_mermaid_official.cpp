@@ -6764,6 +6764,35 @@ const JourneyCohortEntry* info_d461_cohort_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-462: the two composite originals admitted by the derived scope width
+// (an internal caption wider than the scope could fit). Per-row gate:
+// test_mermaid_state_scope_d462_cohort.
+const std::map<std::string, JourneyCohortEntry>& d462_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path =
+            kRoot / "../../../tools/mermaid/state-scope-caption-d462-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-462 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-462 cohort ledger must be approved");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* d462_cohort_row(std::string_view path) {
+    const auto& rows = d462_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // D-440 flowchart closed-theme cohort: the one non-contract `flowchart`-header
 // original whose only non-admitted input is an inert `config.theme: forest`
 // leaf (every `flowchart/` fixture belongs to the frozen Flow400 contract).
@@ -12655,6 +12684,34 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                 }
             }
 
+            // D-462: the two composite originals draw once the derived scope
+            // width accounts for an internal caption. This branch precedes the
+            // E2b ledger (both rows were its former routing-debt members) and
+            // the post-loop reach proof asserts every ledger row is observed
+            // here (rule 38).
+            if (class_path.is_str()) {
+                const auto* cohort = d462_cohort_row(class_path.as_str());
+                if (cohort) {
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = (*fs::path(row.path).begin()).string();
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = "D-462 state scope-caption cohort";
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
+
             // D-461 state-v2 cohort (stages 1-2): the ten budget rows funded
             // by the bounded canvas-derived state envelope, the two `click`
             // bindings and the one `font-style` classDef, states read per row.
@@ -14149,6 +14206,26 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
             }
             require(reached_info_d461 == expected_info_d461,
                     "D-461 info branch reach set must equal its ledger");
+        }
+
+        // D-462 rule-38 reach proof: every scope-caption ledger row must be
+        // observed through its own branch, and the branch must not match
+        // anything else.
+        {
+            const auto ledger_d462 = json::parse(
+                read_file(kRoot / "../../../tools/mermaid/state-scope-caption-d462-cohort.json"));
+            require(ledger_d462.has_value(), "D-462 cohort ledger must parse");
+            std::set<std::string> expected_d462;
+            ledger_d462->root().get("rows").iter([&](const JsonVal row) {
+                expected_d462.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d462;
+            for (const auto& row : observations) {
+                if (row.track == "original" && row.reason == "D-462 state scope-caption cohort")
+                    reached_d462.insert(row.path);
+            }
+            require(reached_d462 == expected_d462,
+                    "D-462 branch reach set must equal its ledger");
         }
 
         // D-461 rule-38 reach proof: every ledger row must be observed through

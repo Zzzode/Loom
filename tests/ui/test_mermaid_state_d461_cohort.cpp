@@ -185,11 +185,10 @@ TEST(MermaidStateD461Cohort, LedgerSchemaReviewsAndPins) {
     EXPECT_EQ(root.get("counts").get_int("total"), 19);
     EXPECT_EQ(root.get("counts").get("by_family").get_int("state-diagram-v2"), 19);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
-    // The one remaining deferral is explicit: the labeled composite whose edge
-    // label is wider than its owning scope. The bare `info` directive left the
-    // state family in stage 4 (tools/mermaid/info-d461-cohort.json).
-    EXPECT_EQ(root.get("deferred").get("stage3_label_width").size(), 1u);
-    EXPECT_FALSE(root.get("deferred").has("stage4_info_directive"));
+    // No deferral remains: the bare `info` directive left the state family in
+    // stage 4 (tools/mermaid/info-d461-cohort.json) and the labeled composite
+    // left it in D-462 (tools/mermaid/state-scope-caption-d462-cohort.json).
+    EXPECT_FALSE(root.has("deferred"));
     const auto manifest = parse_doc(kManifest);
     std::map<std::string, JsonVal> manifest_rows;
     manifest.root().get("fixtures").iter(

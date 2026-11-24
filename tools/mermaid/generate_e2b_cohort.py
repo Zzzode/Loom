@@ -16,7 +16,7 @@ Selection (mechanical, byte-level, never derived from renderer output):
 Each selected row is pre-registered predicted-draw or predicted-blocked.
 Nine closed source-content blocker detectors classify the grammar/feature
 debts; one sha-bound reviewed set (state-native-routing-debt) covers the
-labeled-edge composite/fan-out plans the bounded router cannot close,
+labeled-edge fan-out plan the bounded router cannot close,
 which no lexical detector can honestly predict. D223 retired five of the
 lexical detectors (the constructs are native now) and added one envelope
 description-tab detector; D228 retired the generic style-statement detector
@@ -112,14 +112,24 @@ WITNESS = {
 # review row; --check never grows it.
 NATIVE_ROUTING_DEBT = {
     # D-461 stage 3: the v2 labeled fan-out draws through the crossing retry;
-    # its v1 twins keep the routing debt.
+    # its v1 twin keeps the routing debt. D-462 admits the two
+    # `should-render-composite-states` originals through the derived-scope-width
+    # deficit (see SCOPE_CAPTION_ADMITTED below), so they leave this set.
 
     "state-diagram/pr-check/should-render-a-simple-state-diagrams-with-labels.mmd":
         "ba4df81bd51e6f5eb27e2155ab0a50ff8429e450a14f2b66db8ab766b1868255",
-    "state-diagram-v2/pr-check/v2-should-render-composite-states.mmd":
-        "f502ffd285c4cad4e13e08129e175cb31f9703ba1160a42cda1830a2cfea2a22",
+}
+
+# D-462: derived composite width now accounts for an internal caption that
+# cannot fit. The two rows are recorded in
+# tools/mermaid/state-scope-caption-d462-cohort.json; E2b no longer registers
+# them (their config footer is unchanged). The sha pins keep the skip bound to
+# the reviewed bytes.
+SCOPE_CAPTION_ADMITTED = {
     "state-diagram/pr-check/should-render-composite-states.mmd":
         "c512386e92a656dcc486e843065695f0384d51e62fe22434724d9b0b9690a46d",
+    "state-diagram-v2/pr-check/v2-should-render-composite-states.mmd":
+        "f502ffd285c4cad4e13e08129e175cb31f9703ba1160a42cda1830a2cfea2a22",
 }
 
 
@@ -274,6 +284,11 @@ def collect_root(cases, root_rel):
         # still fails the blocked-row gate. No live row exercises the other
         # foreign-body path today (the detector is retained as the fail-closed
         # shape for a future fixture).
+        if rel in SCOPE_CAPTION_ADMITTED:
+            if sha256_file(path) != SCOPE_CAPTION_ADMITTED[rel]:
+                raise ValueError(
+                    f"State scope-caption source changed; independent review required: {rel}")
+            continue
         first = next((line.strip() for line in body
                       if line.strip() and not line.lstrip().startswith("%%")), "")
         if kind == "state-non-state-body" and first in ("info", "info showInfo"):
@@ -381,7 +396,7 @@ def build(repo_root):
                     "values still gate), and the closed `click <id> \"<url>\" [\"<tooltip>\"]` "
                     "form is validated, target-resolved and dropped (see "
                     "tools/mermaid/state-d461-cohort.json); the clickable-tooltip and "
-                    "v2-multiple-classes rows move to predicted-draw (both D-461 review agents verified this migration). D-461 stage 3 removes the v2 labeled fan-out from the routing-debt set once the crossing retry draws it.",
+                    "v2-multiple-classes rows move to predicted-draw (both D-461 review agents verified this migration). D-461 stage 3 removes the v2 labeled fan-out from the routing-debt set once the crossing retry draws it; stage 4 hands the lone `info`-body row to its own family cohort. D-462 removes the two `should-render-composite-states` originals from the routing-debt set (the derived State scope width now accounts for an internal caption) and hands them to tools/mermaid/state-scope-caption-d462-cohort.json; the routing-debt set keeps only the v1 labeled fan-out.",
         },
         "counts": {
             "total": total,

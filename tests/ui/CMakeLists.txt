@@ -339,6 +339,15 @@ add_test(NAME MermaidMindmapShapeD464Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidMindmapShapeD464Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-465: the mindmap markdown/break cohort ledger is generated from the
+# fixtures; the check fails on a hand edit the generator would not reproduce.
+add_test(NAME MermaidMindmapMarkdownD465Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_mindmap_markdown_d465_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidMindmapMarkdownD465Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-460: the ER style-admission cohort ledger is generated from the fixtures;
 # the check fails on a hand edit that the generator would not reproduce.
 add_test(NAME MermaidErD460Cohort.GeneratorIsReproducible
@@ -1404,6 +1413,16 @@ add_executable(test_mermaid_git_work_d463_cohort
 target_link_libraries(test_mermaid_git_work_d463_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_git_work_d463_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# D-465: the last two mindmap body rows draw through markdown-string labels,
+# the escaped row break and the shaped-canvas Work envelope.
+add_executable(test_mermaid_mindmap_markdown_d465_cohort
+    test_mermaid_mindmap_markdown_d465_cohort.cpp)
+target_link_libraries(test_mermaid_mindmap_markdown_d465_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_mindmap_markdown_d465_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

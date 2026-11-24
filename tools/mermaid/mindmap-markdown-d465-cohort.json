@@ -1,0 +1,80 @@
+{
+  "schema": "loom_mermaid_mindmap_markdown_d465_cohort/v1",
+  "decision": "D-465",
+  "stage": "mindmap markdown-string labels, escaped row break and canvas envelope",
+  "admission": {
+    "mechanism": "a backtick markdown-string bracket payload may span physical lines; `**bold**`/`*italic*` spans are stripped and every other marker form rejects. Any caption may split on the exact escape `&lt;br/>`. The shaped layout enables a canvas-derived Work envelope before its area-proportional charges",
+    "bound": "mindmap_envelope_layout_allowance(w,h) = w*h*(2*sizeof(Cell)+17) + 262144, i.e. exactly the canvas fee plus one unit per emitted cell and a fixed margin; a tree that fits the primary never reaches the clamp",
+    "scope": "the mindmap shaped-tree layout only; the original projection and every other family are untouched"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the two mindmap originals still in the fallback roster after D-464",
+    "cohort_digest": "a6f2de3b9153cf3821abf363c2f6ed8a36407530f15c7777a79e2bcba4748e29"
+  },
+  "counts": {
+    "total": 2,
+    "by_family": {
+      "mindmap": 2
+    }
+  },
+  "review": {
+    "reviewer_agent": "one independent read-only adversarial review (task a691a0c10b0b8b073); round 1 REQUEST-CHANGES on the Shapes4 deep-chain budget negative that the envelope now draws (BLOCKER), a 40-unit pre-envelope charge, CRLF leakage, an uncapped default row count, a misplaced CMake comment and this placeholder provenance; all fixed and re-verified",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "The last two mindmap body rows: an escaped row break and a markdown-string label. The text is preserved; only emphasis is dropped, and it is disclosed."
+  },
+  "rows": [
+    {
+      "path": "mindmap/pr-check/3-tidy-tree-should-render-a-mindmap-with-different-shapes.mmd",
+      "family": "mindmap",
+      "sha256": "7c6023dc0ae1e8bfc39375c69f00cd1dd0f0c722d1fa7e48ca249ba7a1b73a35",
+      "manifest_sha256": "7c6023dc0ae1e8bfc39375c69f00cd1dd0f0c722d1fa7e48ca249ba7a1b73a35",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "::icon annotations -> icon glyph; not applied"
+      ],
+      "expected_captions": [
+        "On effectiveness",
+        "and features",
+        "British popular psychology author Tony Buzan",
+        "I am a cloud",
+        "I am a bang"
+      ],
+      "ledger_note": "row breaks are drawn; markdown emphasis is dropped and disclosed; the shaped canvas is funded from a bounded canvas-derived pool"
+    },
+    {
+      "path": "mindmap/pr-check/formatted-label-with-linebreak-and-a-wrapping-label-and-emojis.mmd",
+      "family": "mindmap",
+      "sha256": "86f0d1de88ad4fae231ffafe4610ae59bbec397d5a9b101103e009c34fa27434",
+      "manifest_sha256": "86f0d1de88ad4fae231ffafe4610ae59bbec397d5a9b101103e009c34fa27434",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_notices": [
+        "markdown emphasis -> plain text; not applied"
+      ],
+      "expected_captions": [
+        "Start with",
+        "second line",
+        "The dog in",
+        "hog..."
+      ],
+      "ledger_note": "row breaks are drawn; markdown emphasis is dropped and disclosed; the shaped canvas is funded from a bounded canvas-derived pool"
+    }
+  ]
+}

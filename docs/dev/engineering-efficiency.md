@@ -2888,3 +2888,15 @@ three REQUEST-CHANGES rounds before APPROVE; contract lens: one) and the
     (the live census) still listed it, and the real blocker was two grammar
     tokens. Derive "is this row blocked?" from the live matrix/roster and the
     renderer path, never from a proposal fixture's omissions.
+
+19. **A Work-budget exhaustion can masquerade as a grammar rejection.** The
+    last tidy-tree mindmap row still failed after its caption grammar was
+    implemented; deleting the longest sibling and the deepest branch each
+    made it draw, which pointed at width/stride rather than parsing. A
+    prefix bisect (render the first N body lines) plus two temporary layout
+    prints located the real stop: the area-proportional canvas fee left only
+    ~24k Work for a 221x37 canvas, and the drawing fees then failed. When a
+    row fails after the obvious blocker is fixed, bisect the *body* and
+    instrument the stage boundary before inventing more grammar; a documented
+    canvas-derived envelope (the state/git precedent) was the fix, and the
+    judgement table's "renderer feature, not budget" line was corrected.

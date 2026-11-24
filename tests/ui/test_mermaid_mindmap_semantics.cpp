@@ -761,21 +761,18 @@ TEST(MermaidMindmapShapes4, BoundsAndUnsupportedFramingKeepWholeSource) {
                                    "mindmap\nnode0(\n caption\n )\n ::icon()\n",
                                    "mindmap\nnode0(" + std::string(257, 'x') + ")\n",
                                    "mindmap\nnode0(" + std::string(1025, 'x') + ")\n"};
-    // A valid 16-level tree still obeys the one remaining production budget.
-    // Its full shaped canvas exceeds that budget; it must remain exact source.
-    std::string deep = "mindmap\n";
-    for (int n = 0; n < 16; ++n)
-        deep += std::string(static_cast<std::size_t>(n) * 2, ' ') + "node" + std::to_string(n) +
-                "((x))\n";
-    // Source-owned dimensions: max circle width9 => stride13, depth15;
-    // height16*9+15*2. Even just Cell's string member exceeds the 1M prepay.
-    constexpr std::size_t minimum_canvas_fee = 204u * 174u * (2u * sizeof(std::string) + 16u);
-    EXPECT_GT(minimum_canvas_fee, loom::ui::mermaid::testing::kWorkLimit);
-    cases.push_back(deep);
     std::string many = "mindmap\nnode0(root)\n";
     for (int n = 0; n < 64; ++n)
         many += "  child" + std::to_string(n) + "\n";
     cases.push_back(many);
+    // D-465: shape dimensions, not the Work primary, are the ceiling for an
+    // area-dominated tree. A 16-level chain whose circle captions push the
+    // stride past the width limit still keeps whole source.
+    std::string wide = "mindmap\n";
+    for (int n = 0; n < 16; ++n)
+        wide += std::string(static_cast<std::size_t>(n) * 2, ' ') + "node" + std::to_string(n) +
+                "((" + std::string(30, 'x') + "))\n";
+    cases.push_back(wide);
     for (const auto& source : cases) {
         SCOPED_TRACE(source.substr(0, 120));
         mm::Work work;
@@ -784,4 +781,16 @@ TEST(MermaidMindmapShapes4, BoundsAndUnsupportedFramingKeepWholeSource) {
         EXPECT_TRUE(same_surface(frames[0], frames[3]));
         EXPECT_TRUE(same_surface(frames[1], frames[4]));
     }
+    // D-465: the shaped canvas is funded from a canvas-derived envelope, so a
+    // valid 16-level tree (204x174) draws instead of falling back on the fixed
+    // 1M primary. Previously this was the budget negative; the dimension caps
+    // are now the real ceiling.
+    std::string deep = "mindmap\n";
+    for (int n = 0; n < 16; ++n)
+        deep += std::string(static_cast<std::size_t>(n) * 2, ' ') + "node" + std::to_string(n) +
+                "((x))\n";
+    mm::Work deep_work;
+    const auto deep_frames = observe(deep, deep_work, "mermaid-source");
+    lifecycle(deep_frames);
+    EXPECT_FALSE(same_surface(deep_frames[0], deep_frames[3]));
 }

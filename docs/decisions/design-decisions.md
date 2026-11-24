@@ -6089,3 +6089,51 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   labels (backtick spans carrying inline bold/italic and an explicit line
   break) and an HTML-entity line break; both are renderer features, not
   contract questions.
+
+## D-465 — mindmap markdown-string labels, escaped break and canvas envelope (2026-11-24)
+
+- **Problem.** The last two mindmap body rows. One carries the escaped break
+  `&lt;br/>` inside a default-node caption; the other uses backtick
+  markdown-string labels (a bracket whose payload is backtick-quoted) with
+  `**bold**`/`*italic*` spans and a physical line break. The first row then failed *after* the grammar fix: its
+  shaped canvas (221x37) exhausts the fixed 1M Work primary before the
+  area-proportional canvas fee and the drawing fees.
+- **Caption grammar.** A bracket payload may open with a backtick and span
+  physical lines; the closing sequence is a backtick plus the shape's close
+  token. Each physical line is stripped of `**bold**`/`*italic*` spans
+  (non-empty, no nested marker, no edge space) and validated as plain text;
+  every other marker form rejects. Any caption may split on the exact escape
+  `&lt;br/>`; every other entity stays rejected, including inside a
+  markdown-string label.
+- **Projection.** The text is kept and the emphasis is dropped (a cell grid
+  carries no weight); that substitution is disclosed on the canonical footer
+  (`markdown emphasis -> plain text; not applied`), after the existing
+  notices. Each explicit line is drawn as its own row: a shaped node wraps
+  every line at 32 cells, a default node draws one row per line under its
+  single `●` marker (capped at 256 rows). A CR from a CRLF source is stripped
+  per physical line, and a caption that begins or ends with the escaped break
+  rejects.
+- **Canvas envelope.** `mindmap_shapes_layout` enables
+  `mindmap_envelope_layout_allowance(w, h) = w*h*(2*sizeof(Cell)+17) + 262144`
+  before the area-proportional charges, i.e. exactly the canvas fee plus one
+  unit per emitted cell and a fixed margin. A tree that fits the primary never
+  reaches the clamp, so its charge sequence is unchanged; nodes (<= 64),
+  per-node rows (<= 256) and both dimensions (`kWidthLimit`/`kHeightLimit`)
+  are bounded independently, so the pool ceiling is finite. Consequence: the
+  shaped Work budget no longer binds area-dominated trees inside
+  `kWidthLimit` x `kHeightLimit` — the dimension caps are the ceiling. The
+  synthetic 16-level chain in the Shapes4 bounds gate moved from its negative
+  set to a drawn assertion accordingly, and its new negative is a
+  stride-driven width overflow.
+- **Ledger.** `tools/mermaid/mindmap-markdown-d465-cohort.json` (2 rows) with
+  the generator, the cohort gate
+  `test_mermaid_mindmap_markdown_d465_cohort`, the matrix branch + rule-38
+  reach proof, and the generator `--check` ctest.
+- **Measured result.** 1784 drawn / 361 fallback / 0 error, `drawn_at_240`
+  1598, roster 361 rows / 25 categories, `family_residual:mindmap` 2 -> 0,
+  mindmap family fallback/drawn 11/22 -> 9/24. Both rows keep whole source at
+  40 because their art is wider than the fence.
+- **Paired negatives.** Unclosed strong/italic spans, edge spaces or nested
+  markers inside an emphasis span, a stray marker, a blank line inside a
+  markdown string, an unclosed markdown string, an unknown escape, an escape
+  inside a markdown string and a truncated escape all keep whole source.

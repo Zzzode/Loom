@@ -39,6 +39,15 @@ bool mindmap_term(std::size_t& total, std::size_t count, std::size_t rate) {
     return mindmap_add(total, count * rate);
 }
 
+// D-465: the shaped canvas charge is `2*sizeof(Cell)+16` per cell; one further
+// unit per emitted cell covers the output copy. A canvas-derived supplemental
+// pool of exactly that plus a fixed margin funds a wide/deep shaped tree
+// without changing any charge a tree that fits the primary would make.
+constexpr std::size_t mindmap_envelope_layout_allowance(std::size_t width, std::size_t height) {
+    const std::size_t cells = width * height;
+    return cells * (2u * sizeof(Cell) + 17u) + 262'144u;
+}
+
 // Views only: CRLF is accepted, but the entry scan rejects every bare CR.
 bool mindmap_line(std::string_view source, std::size_t& at, std::string_view& line) {
     if (at >= source.size()) return false;
@@ -156,15 +165,16 @@ std::optional<MindmapEnvelope> mindmap_body(std::string_view source, Work& work)
     return MindmapEnvelope{envelope->raw_body, config_seen};
 }
 
-// D-439/D-464: canonical disclosures for admitted-but-inert constructs. A
-// source that carries none keeps its frame byte-identical (no footer). Order
-// is fixed: layout, then shapes (bang, cloud, hex), then icons.
+// D-439/D-464/D-465: canonical disclosures for admitted-but-inert constructs.
+// A source that carries none keeps its frame byte-identical (no footer). Order
+// is fixed: layout, shapes (bang, cloud, hex), icons, markdown emphasis.
 struct MindmapNotices {
     bool tidy_tree = false;
     bool bang = false;
     bool cloud = false;
     bool hex = false;
     bool icons = false;
+    bool markdown = false;
 };
 
 struct MindmapNoticeRule {
@@ -172,13 +182,14 @@ struct MindmapNoticeRule {
     std::string_view text;
 };
 
-constexpr std::array<MindmapNoticeRule, 5> kMindmapNoticeRules{{
+constexpr std::array<MindmapNoticeRule, 6> kMindmapNoticeRules{{
     {&MindmapNotices::tidy_tree,
      "config.layout=tidy-tree -> external layout engine; not applied"},
     {&MindmapNotices::bang, "shape bang -> square frame; not applied"},
     {&MindmapNotices::cloud, "shape cloud -> rounded frame; not applied"},
     {&MindmapNotices::hex, "shape hex -> square frame; not applied"},
     {&MindmapNotices::icons, "::icon annotations -> icon glyph; not applied"},
+    {&MindmapNotices::markdown, "markdown emphasis -> plain text; not applied"},
 }};
 
 bool mindmap_append_notices(std::vector<std::string>& rows, const MindmapNotices& flags,
@@ -225,14 +236,14 @@ bool mindmap_plain(std::string_view label) {
 // Rows are views into the stable validated label, not copied word strings.
 // FTXUI's second wide-cell slot stays attached even if it holds a combining
 // character. The final partial long-word chunk remains open for the next word.
-bool mindmap_wrap(const std::string& label, const std::vector<std::string>& glyphs,
+bool mindmap_wrap(std::string_view label, const std::vector<std::string>& glyphs,
                   std::vector<CaptionRow>& rows, Work& work) {
     rows.reserve(glyphs.size());
     std::size_t row_begin = 0, row_end = 0, byte = 0, i = 0;
     int row_cells = 0;
     const auto flush = [&]() {
         if (row_cells == 0 || rows.size() >= 256 || !work.spend(4)) return false;
-        rows.push_back({std::string_view(label).substr(row_begin, row_end - row_begin), row_cells});
+        rows.push_back({label.substr(row_begin, row_end - row_begin), row_cells});
         row_cells = 0;
         return true;
     };
@@ -281,6 +292,44 @@ bool mindmap_wrap(const std::string& label, const std::vector<std::string>& glyp
         }
     }
     return row_cells != 0 && flush();
+}
+
+// D-465: a markdown-string label keeps its text and drops its emphasis. Only
+// `**bold**` and `*italic*` spans are admitted: each must be non-empty, hold
+// no nested marker and have no edge space; every other marker form rejects.
+bool mindmap_markdown_plain(std::string_view value, std::string& out, Work& work) {
+    out.clear();
+    out.reserve(value.size());
+    const auto find_single = [&](std::size_t from) {
+        while (from < value.size()) {
+            const auto pos = value.find('*', from);
+            if (pos == std::string_view::npos) return pos;
+            if (pos + 1 < value.size() && value[pos + 1] == '*') {
+                from = pos + 2;
+                continue;
+            }
+            return pos;
+        }
+        return std::string_view::npos;
+    };
+    for (std::size_t i = 0; i < value.size();) {
+        if (!work.spend()) return false;
+        if (value[i] != '*') {
+            out.push_back(value[i++]);
+            continue;
+        }
+        const bool strong = i + 1 < value.size() && value[i + 1] == '*';
+        const std::size_t marker = strong ? 2u : 1u;
+        const auto close = strong ? value.find("**", i + marker) : find_single(i + marker);
+        if (close == std::string_view::npos || close == i + marker) return false;
+        const auto span = value.substr(i + marker, close - i - marker);
+        if (span.front() == ' ' || span.back() == ' ' ||
+            span.find('*') != std::string_view::npos || !work.spend(span.size()))
+            return false;
+        out.append(span);
+        i = close + marker;
+    }
+    return !out.empty();
 }
 
 }  // namespace
@@ -487,6 +536,7 @@ std::optional<ShapeToken> mindmap_shape_token(std::string_view value) {
 struct ShapedSpan {
     std::string_view raw, caption;
     MindmapShape shape = MindmapShape::Default;
+    bool markdown = false;
     int depth = 0, parent = -1;
 };
 
@@ -520,7 +570,8 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
     std::array<int, 16> indents{}, ancestors{};
     std::size_t count = 0, label_bytes = 0;
     int levels = 0;
-    bool shaped = false, saw_icon = false, saw_bang = false, saw_cloud = false, saw_hex = false;
+    bool shaped = false, saw_icon = false, saw_bang = false, saw_cloud = false, saw_hex = false,
+         saw_emphasis = false;
     while (mindmap_line(body, at, line)) {
         const auto leading = line.find_first_not_of(' ');
         if (leading == std::string_view::npos) continue;
@@ -547,6 +598,7 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
         }
         auto raw = declaration, caption = declaration;
         auto shape = MindmapShape::Default;
+        bool markdown = false;
         const auto opening = declaration.find_first_of("[({)");
         if (opening != std::string_view::npos) {
             const auto token = mindmap_shape_token(declaration.substr(opening));
@@ -557,7 +609,32 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
             shape = token->shape;
             auto value = declaration.substr(opening);
             value.remove_prefix(token->open.size());
-            if (value.empty()) {
+            // D-465: a backtick markdown-string payload may span physical
+            // lines; the closing sequence is ` + the shape's close token.
+            const auto markdown_ends = [&](std::string_view text) {
+                return text.size() > token->close.size() && text.ends_with(token->close) &&
+                       text[text.size() - token->close.size() - 1] == '`';
+            };
+            if (value.starts_with('`')) {
+                // The payload is contiguous in the source, so the raw span runs
+                // from the opening backtick through the closing one even when
+                // the label spans lines.
+                const auto* raw_start = value.data() + 1;
+                while (!markdown_ends(value)) {
+                    std::string_view next;
+                    if (!mindmap_line(body, at, next)) return {};
+                    const auto start = next.find_first_not_of(' ');
+                    if (start == std::string_view::npos || !work.spend(next.size() + 16u))
+                        return {};
+                    value = next.substr(start);
+                }
+                const auto* raw_end = value.data() + value.size() - token->close.size() - 1;
+                if (raw_end < raw_start) return {};
+                raw = std::string_view(raw_start, static_cast<std::size_t>(raw_end - raw_start));
+                caption = raw;
+                markdown = true;
+                saw_emphasis = saw_emphasis || raw.find('*') != std::string_view::npos;
+            } else if (value.empty()) {
                 // Keep the entire authored description, including CRLF/indent,
                 // separate from its one nonempty terminal caption line.
                 const auto* raw_start = value.data();
@@ -602,7 +679,7 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
             if (levels <= 1 || indent != indents[static_cast<std::size_t>(levels - 1)]) return {};
             parent = ancestors[static_cast<std::size_t>(levels - 2)];
         }
-        spans[count] = {raw, caption, shape, levels - 1, parent};
+        spans[count] = {raw, caption, shape, markdown, levels - 1, parent};
         ancestors[static_cast<std::size_t>(levels - 1)] = static_cast<int>(count++);
     }
     if (!shaped || count == 0 || label_bytes > source.size()) return {};
@@ -614,33 +691,128 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
     int largest_width = 0, height = 0;
     for (std::size_t i = 0; i < count; ++i) {
         const auto caption = spans[i].caption;
-        if (!work.spend(caption.size() + 32) || !mindmap_plain(caption) || caption.front() == ' ' ||
-            caption.find("  ") != std::string_view::npos)
-            return {};
-        auto label = validated_plain_label(caption);
-        if (!label) return {};
+        if (!work.spend(caption.size() + 32)) return {};
         auto& node = nodes[i];
-        node.caption = std::move(*label);
-        const auto glyphs = ftxui::Utf8ToGlyphs(node.caption);
-        const int cells = ftxui::string_width(node.caption);
-        if (cells < 1 || cells > 256 || glyphs.size() != static_cast<std::size_t>(cells)) return {};
-        if (spans[i].shape == MindmapShape::Default) {
-            node.width = cells + 2;
-            node.height = 1;
-        } else {
-            if (!mindmap_wrap(node.caption, glyphs, node.rows, work)) return {};
-            int widest = 0;
-            for (const auto& row : node.rows) {
-                if (!work.spend()) return {};
-                widest = std::max(widest, row.cells);
+        const bool entity_break =
+            !spans[i].markdown && caption.find("&lt;br/>") != std::string_view::npos;
+        if (!spans[i].markdown && !entity_break) {
+            // The single-line path is unchanged: every pre-D-465 row keeps its
+            // exact validation, width and height.
+            if (!mindmap_plain(caption) || caption.front() == ' ' ||
+                caption.find("  ") != std::string_view::npos)
+                return {};
+            auto label = validated_plain_label(caption);
+            if (!label) return {};
+            node.caption = std::move(*label);
+            const auto glyphs = ftxui::Utf8ToGlyphs(node.caption);
+            const int cells = ftxui::string_width(node.caption);
+            if (cells < 1 || cells > 256 || glyphs.size() != static_cast<std::size_t>(cells))
+                return {};
+            if (spans[i].shape == MindmapShape::Default) {
+                node.width = cells + 2;
+                node.height = 1;
+            } else {
+                if (!mindmap_wrap(node.caption, glyphs, node.rows, work)) return {};
+                int widest = 0;
+                for (const auto& row : node.rows) {
+                    if (!work.spend()) return {};
+                    widest = std::max(widest, row.cells);
+                }
+                node.width = widest + 4;
+                node.height = static_cast<int>(node.rows.size()) + 2;
+                if (spans[i].shape == MindmapShape::Circle) {
+                    node.width = std::max(9, widest + 6);
+                    node.width |= 1;
+                    node.height = std::max(9, static_cast<int>(node.rows.size()) + 4);
+                    node.height |= 1;
+                }
             }
-            node.width = widest + 4;
-            node.height = static_cast<int>(node.rows.size()) + 2;
-            if (spans[i].shape == MindmapShape::Circle) {
-                node.width = std::max(9, widest + 6);
-                node.width |= 1;
-                node.height = std::max(9, static_cast<int>(node.rows.size()) + 4);
-                node.height |= 1;
+        } else {
+            // D-465: a markdown-string label splits on its physical lines
+            // (emphasis stripped); any other caption splits on the escaped
+            // break `&lt;br/>`. Every resulting line is validated on its own.
+            std::string text;
+            std::size_t at = 0;
+            for (;;) {
+                std::string_view line;
+                std::size_t next_at = 0;
+                if (!spans[i].markdown && (caption.starts_with("&lt;br/>") ||
+                                           caption.ends_with("&lt;br/>")))
+                    return {};
+                if (spans[i].markdown) {
+                    const auto nl = caption.find('\n', at);
+                    line = caption.substr(at, nl == std::string_view::npos ? caption.size() - at
+                                                                           : nl - at);
+                    next_at = nl == std::string_view::npos ? caption.size() : nl + 1;
+                } else {
+                    const auto br = caption.find("&lt;br/>", at);
+                    line = caption.substr(at, br == std::string_view::npos ? caption.size() - at
+                                                                           : br - at);
+                    next_at = br == std::string_view::npos ? caption.size() : br + 8;
+                }
+                std::string stripped;
+                if (spans[i].markdown) {
+                    // The raw span is contiguous, so a CRLF source leaves a
+                    // CR on every non-final line; the tree view never does.
+                    if (line.ends_with('\r')) line.remove_suffix(1);
+                    // Continuation-line indentation is significant to the
+                    // terminal tree, never to the label text.
+                    const auto lead = line.find_first_not_of(' ');
+                    if (lead == std::string_view::npos) return {};
+                    line = line.substr(lead);
+                    if (line.empty() || line.front() == ' ' || line.back() == ' ' ||
+                        line.find("  ") != std::string_view::npos ||
+                        !mindmap_markdown_plain(line, stripped, work))
+                        return {};
+                    line = stripped;
+                }
+                if (line.empty() || !mindmap_plain(line) || line.front() == ' ' ||
+                    line.find("  ") != std::string_view::npos)
+                    return {};
+                if (!text.empty()) text.push_back('\n');
+                text.append(line);
+                if (text.size() > 1024) return {};
+                if (next_at >= caption.size()) break;
+                at = next_at;
+            }
+            node.caption = std::move(text);
+            std::size_t line_at = 0;
+            int widest = 0;
+            for (;;) {
+                const auto nl = node.caption.find('\n', line_at);
+                const auto line = std::string_view{node.caption}.substr(
+                    line_at, nl == std::string::npos ? node.caption.size() - line_at : nl - line_at);
+                const auto glyphs = ftxui::Utf8ToGlyphs(std::string{line});
+                const int cells = ftxui::string_width(std::string{line});
+                if (cells < 1 || cells > 256 ||
+                    glyphs.size() != static_cast<std::size_t>(cells))
+                    return {};
+                if (spans[i].shape == MindmapShape::Default) {
+                    if (node.rows.size() >= 256u) return {};
+                    widest = std::max(widest, cells);
+                    node.rows.push_back({line, cells});
+                } else {
+                    if (!mindmap_wrap(line, glyphs, node.rows, work)) return {};
+                }
+                if (nl == std::string::npos) break;
+                line_at = nl + 1;
+            }
+            if (spans[i].shape == MindmapShape::Default) {
+                node.width = widest + 2;
+                node.height = static_cast<int>(node.rows.size());
+            } else {
+                for (const auto& row : node.rows) {
+                    if (!work.spend()) return {};
+                    widest = std::max(widest, row.cells);
+                }
+                node.width = widest + 4;
+                node.height = static_cast<int>(node.rows.size()) + 2;
+                if (spans[i].shape == MindmapShape::Circle) {
+                    node.width = std::max(9, widest + 6);
+                    node.width |= 1;
+                    node.height = std::max(9, static_cast<int>(node.rows.size()) + 4);
+                    node.height |= 1;
+                }
             }
         }
         if (node.width > kWidthLimit || node.height > kHeightLimit ||
@@ -680,6 +852,16 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
                 return {};
         }
     }
+    // D-465: the shaped canvas charge is area-proportional, so a wide/deep
+    // tree can exhaust the fixed 1M primary before its own drawing fees. Fund
+    // exactly this canvas from a bounded supplemental pool; enabling the pool
+    // allocates nothing and charges nothing, so a tree that fits the primary
+    // never reaches the clamp and its charge sequence is unchanged. Nodes
+    // (<= 64), per-node rows (<= 256) and both dimensions (kWidthLimit/
+    // kHeightLimit) are bounded independently, so the dimension caps — not the
+    // Work primary — are the ceiling for an area-dominated tree.
+    work.enable_envelope(mindmap_envelope_layout_allowance(
+        static_cast<std::size_t>(width), static_cast<std::size_t>(height)));
     fee = 0;
     if (!mindmap_term(fee, visits, 2 * sizeof(Point) + 16) || !work.spend(fee)) return {};
     fee = 1024;
@@ -698,9 +880,16 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
             return canvas.put({x, y}, glyph);
         };
         if (shape == MindmapShape::Default) {
-            if (!put(l, t, "●") || !work.spend(n.caption.size()) ||
-                !canvas.text({l + 2, t}, n.caption))
-                return {};
+            if (!put(l, t, "●") || !work.spend(n.caption.size())) return {};
+            // A D-465 multi-line default node draws one row per caption line
+            // under the single marker; a single-line node keeps its exact draw.
+            if (n.rows.empty()) {
+                if (!canvas.text({l + 2, t}, n.caption)) return {};
+            } else {
+                for (std::size_t j = 0; j < n.rows.size(); ++j)
+                    if (!canvas.text({l + 2, t + static_cast<int>(j)}, n.rows[j].text))
+                        return {};
+            }
             continue;
         }
         if (shape == MindmapShape::Circle) {
@@ -764,7 +953,8 @@ std::optional<std::vector<std::string>> mindmap_shapes_layout(std::string_view s
                            .bang = saw_bang,
                            .cloud = saw_cloud,
                            .hex = saw_hex,
-                           .icons = saw_icon},
+                           .icons = saw_icon,
+                           .markdown = saw_emphasis},
             work))
         return {};
     return result;

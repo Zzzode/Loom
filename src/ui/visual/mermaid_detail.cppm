@@ -446,6 +446,11 @@ struct RelationDiagram {
     // D-066 F0: the same disclosure channel for accepted non-terminal
     // requirement frontmatter leaves (htmlLabels, logLevel 0-2, fontFamily).
     std::vector<std::string> requirement_config_notices;
+    // D-460: accepted ER body style statements (`classDef`/`class`/`style`
+    // and inline `:::class`). The ER projection paints no class surface, so
+    // each statement is disclosed once in the footer. Empty for every other
+    // family and for style-free ER sources, which keeps their art identical.
+    std::vector<std::string> er_style_notices;
     // RFC 0048: State concurrent-region membership. Both tables stay empty
     // unless the source actually uses a `--` divider, so every region-free
     // diagram keeps its byte-identical model and Work charge sequence.
@@ -469,6 +474,10 @@ struct RelationDiagram {
     int control(EntityShape shape, int owner, Work& work, int region = 0);
     int entity(std::string id, int owner, Work* er_work = nullptr, int region = 0);
 };
+
+// D-460: the ER projection footer header. One constant so the presentation
+// footer, the style-record footer and the projection-notice seam cannot drift.
+constexpr std::string_view kErProjectionHeader = "ER native projection v1";
 
 struct ErTableGeometry {
     std::vector<int> roles, widths, heights;

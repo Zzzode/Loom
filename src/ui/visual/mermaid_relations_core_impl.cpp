@@ -804,7 +804,13 @@ bool er_presentation_number(std::string_view text, bool positive) {
            std::isfinite(value) && (positive ? value > 0 : value >= 0);
 }
 
-bool er_presentation_css(std::string_view text, Work& work) {
+bool er_presentation_css(std::string_view text, Work& work, bool& new_surface) {
+    // D-460: the closed named-colour table is corpus-backed (the ER style
+    // fixtures use exactly these) and deliberately case-sensitive: CSS accepts
+    // `Red`, so an unseen spelling falls back to whole-source rather than
+    // risking a mis-draw. Anything else must be a hex literal.
+    constexpr std::array<std::string_view, 6> kNamedColors{
+        {"red", "lightblue", "pink", "green", "grey", "blue"}};
     text = trim_relation(text);
     if (text.ends_with(';')) text = trim_relation(text.substr(0, text.size() - 1));
     if (text.empty()) return false;
@@ -823,13 +829,19 @@ bool er_presentation_css(std::string_view text, Work& work) {
                 if (digits.size() != 3 && digits.size() != 6) return false;
                 if (digits.find_first_not_of("0123456789abcdefABCDEF") != std::string_view::npos)
                     return false;
-            } else if (value != "red")
+            } else if (std::ranges::find(kNamedColors, value) == kNamedColors.end())
                 return false;
-        } else if (key == "stroke-width") {
+            else if (value != "red")
+                new_surface = true;
+        } else if (key == "stroke-width" || key == "font-size") {
             auto number = value;
             if (!number.ends_with("px")) return false;
             number.remove_suffix(2);
             if (!er_presentation_number(number, true)) return false;
+            if (key == "font-size") new_surface = true;
+        } else if (key == "font-weight") {
+            if (value != "bold" && value != "normal") return false;
+            new_surface = true;
         } else if (key == "stroke-dasharray") {
             auto rest = value;
             while (!rest.empty()) {
@@ -847,7 +859,7 @@ bool er_presentation_css(std::string_view text, Work& work) {
     return false;
 }
 
-bool er_presentation_line(ErCursor& cursor, bool class_binding) {
+bool er_presentation_line(ErCursor& cursor, bool class_binding, bool& new_surface) {
     auto end = cursor.at;
     if (!cursor.spend()) return false;
     while (end < cursor.source.size() && cursor.source[end] != '\n') {
@@ -865,9 +877,40 @@ bool er_presentation_line(ErCursor& cursor, bool class_binding) {
                values = trim_relation(line.substr(split));
     if (!er_presentation_ids(targets, cursor.work, class_binding)) return false;
     if (class_binding ? !er_presentation_ids(values, cursor.work, true)
-                      : !er_presentation_css(values, cursor.work))
+                      : !er_presentation_css(values, cursor.work, new_surface))
         return false;
     cursor.at = end;
+    return true;
+}
+
+// D-460: one footer record per accepted ER style statement or inline class
+// annotation. The ER projection paints no class surface, so the record states
+// exactly what was accepted and that nothing was applied.
+bool er_style_notice(RelationDiagram& diagram, std::string_view source, std::size_t at,
+                     Work& work) {
+    const auto line_begin_at = source.rfind('\n', at);
+    const auto line_begin = line_begin_at == std::string_view::npos ? 0u : line_begin_at + 1u;
+    const auto line_end = source.find('\n', at);
+    const auto line = trim_relation(
+        source.substr(line_begin, (line_end == std::string_view::npos ? source.size() : line_end) -
+                                       line_begin));
+    if (line.empty() || line.size() > 1024u || diagram.er_style_notices.size() >= 64u ||
+        !work.spend(line.size() * 8u + 256u))
+        return false;
+    std::string notice;
+    notice.reserve(line.size() * 2u + 40u);
+    for (const auto c : line) {
+        if (c == '\t')
+            notice += "\\t";
+        else
+            notice += c;
+    }
+    notice += " -> class surface; not applied";
+    // The parser bound must be at least as strict as the paint path's byte
+    // guard, so an admitted record can never force a whole-source fallback
+    // there. Display width and byte length are both checked.
+    if (ftxui::string_width(notice) > kWidthLimit || notice.size() > kWidthLimit) return false;
+    diagram.er_style_notices.push_back(std::move(notice));
     return true;
 }
 
@@ -1433,8 +1476,13 @@ std::optional<RelationDiagram> parse_plain_er(std::string_view source, Work& wor
             return false;
         if (!er_inline_classes(cursor, entity_end)) return false;
         if (present) {
-            if (groups || diagram.er_presentation) return false;
+            if (groups) return false;
             presentation_seen = true;
+            // Profile-free inline classes were already admitted silently;
+            // only the newly admitted profile-active form is disclosed.
+            if (diagram.er_presentation &&
+                !er_style_notice(diagram, source, entity_end, work))
+                return false;
         }
         return true;
     };
@@ -1502,24 +1550,38 @@ std::optional<RelationDiagram> parse_plain_er(std::string_view source, Work& wor
         }
         if (er_presentation_keyword(cursor, "classDef") ||
             er_presentation_keyword(cursor, "style")) {
-            if (diagram.er_presentation) return {};
+            // D-460: a style statement is accepted alongside a presentation
+            // profile; the ER projection paints no class surface, so it is
+            // disclosed once in the footer instead of rejecting the source.
             if (groups &&
                 !cursor.spend((source.size() - cursor.at) * (24u * sizeof(std::string) +
                                                              16u * sizeof(std::string_view) + 96u) +
                               128u))
                 return {};
-            if (!er_presentation_line(cursor, false) || groups) return {};
+            const auto style_start = cursor.at;
+            bool new_surface = false;
+            if (!er_presentation_line(cursor, false, new_surface) || groups) return {};
+            // A statement the pre-D-460 grammar already admitted in a
+            // profile-free source keeps its byte-identical art (no record); a
+            // newly admitted one is disclosed.
+            if ((diagram.er_presentation || new_surface) &&
+                !er_style_notice(diagram, cursor.source, style_start, work))
+                return {};
             presentation_seen = true;
             continue;
         }
         if (er_presentation_keyword(cursor, "class")) {
-            if (diagram.er_presentation) return {};
             if (groups &&
                 !cursor.spend((source.size() - cursor.at) * (24u * sizeof(std::string) +
                                                              16u * sizeof(std::string_view) + 96u) +
                               128u))
                 return {};
-            if (!er_presentation_line(cursor, true) || groups) return {};
+            const auto class_start = cursor.at;
+            bool new_surface = false;
+            if (!er_presentation_line(cursor, true, new_surface) || groups) return {};
+            if ((diagram.er_presentation || new_surface) &&
+                !er_style_notice(diagram, cursor.source, class_start, work))
+                return {};
             presentation_seen = true;
             continue;
         }
@@ -3707,18 +3769,32 @@ std::optional<std::string> er_projection_notices_json(std::string_view source, W
     if (!diagram || diagram->family != RelationFamily::Er) return std::nullopt;
     json::JsonMutDoc doc;
     auto root = doc.object();
-    root.set("has_projection", static_cast<bool>(diagram->er_presentation));
     auto rows = root.make_arr();
     std::size_t count = 0;
     // A non-projection ER source legitimately renders no footer; report an empty
     // block rather than nullopt so callers can use one boundary formula. Only a
     // budget exhaustion while building the notices fails the seam.
+    std::vector<std::string> all;
     if (diagram->er_presentation) {
         const auto notices = er_projection_notices(*diagram, work);
         if (!notices) return std::nullopt;
-        for (const auto& notice : *notices) rows.append(rows.make_str(notice));
-        count = notices->size();
+        all = *notices;
     }
+    // D-460: the rendered footer also carries the accepted style records (and
+    // the projection header when no presentation profile supplies one), so the
+    // seam must report the same rows the layout appends.
+    if (!diagram->er_style_notices.empty()) {
+        if (!work.spend((diagram->er_style_notices.size() + 1u) * (sizeof(std::string) + 64u)))
+            return std::nullopt;
+        if (all.empty()) all.push_back(std::string(kErProjectionHeader));
+        for (const auto& line : diagram->er_style_notices) all.push_back(line);
+    }
+    for (const auto& notice : all) rows.append(rows.make_str(notice));
+    count = all.size();
+    // D-460: the flag states "this source carries a footer", which is exactly
+    // the notice block's emptiness — a profile-free source can now carry style
+    // records without a presentation profile. ER198 consumes this equality.
+    root.set("has_projection", count > 0u);
     root.add("notice_rows", rows);
     root.set("notice_count", static_cast<int64_t>(count));
     doc.set_root(root);
@@ -8828,8 +8904,16 @@ struct ErPaint {
         if (right < left || bottom < top || !work.spend(canvas.cells.size() * 8u + 128u)) return {};
         const int width = right - left + 3, height = bottom - top + 3;
         if (width > kWidthLimit || height > kHeightLimit) return {};
-        const auto notices = er_projection_notices(diagram, work);
+        auto notices = er_projection_notices(diagram, work);
         if (!notices) return {};
+        const auto projection_notices = notices->size();
+        // D-460: accepted ER style statements are disclosed after every
+        // existing notice, so style-free sources keep a byte-identical footer.
+        if (!diagram.er_style_notices.empty()) {
+            if (!work.spend((diagram.er_style_notices.size() + 1u) * (sizeof(std::string) + 64u)))
+                return {};
+            for (const auto& line : diagram.er_style_notices) notices->push_back(line);
+        }
         const auto rows = static_cast<std::size_t>(height) + 1u + notices->size();
         if (rows > static_cast<std::size_t>(kHeightLimit)) return {};
         // Pre-count actual UTF-8 bytes, role cells and style runs before any
@@ -8857,8 +8941,12 @@ struct ErPaint {
                 }
             }
         }
-        for (const auto& line : *notices) {
-            if (line.size() > 32u) return {};
+        for (std::size_t n = 0; n < notices->size(); ++n) {
+            const auto& line = (*notices)[n];
+            // Projection notices keep their 32-byte guard; a style record is a
+            // whole authored statement and may be as wide as the render width.
+            if (line.size() > (n < projection_notices ? 32u : static_cast<std::size_t>(kWidthLimit)))
+                return {};
             bytes += line.size();
             cells += line.size();
             if (!line.empty()) ++runs;
@@ -8886,7 +8974,11 @@ struct ErPaint {
         out.rows.emplace_back();
         for (const auto& line : *notices) {
             out.rows.push_back(line);
-            out.styles.insert(out.styles.end(), line.size(), style(1, 0));
+            // D-460: one style slot per DISPLAY cell, not per byte — a footer
+            // record may carry non-ASCII source text and the packed-styles
+            // validation counts cells per UTF-8 scalar.
+            const auto cells_in_line = ftxui::Utf8ToGlyphs(line).size();
+            out.styles.insert(out.styles.end(), cells_in_line, style(1, 0));
         }
         return out;
     }
@@ -9816,18 +9908,28 @@ relations_layout(std::string_view source, Work& work, bool class_envelope, bool 
         config_notices = &diagram->state_config_notices;
     else if (diagram->family == RelationFamily::Requirement)
         config_notices = &diagram->requirement_config_notices;
+    else if (diagram->family == RelationFamily::Er)
+        config_notices = &diagram->er_style_notices;
     if (config_notices && !config_notices->empty()) {
         const auto& notices = *config_notices;
+        // D-460: a style-only ER source carries no presentation profile, so its
+        // block still needs the projection header the presentation footer has.
+        const std::size_t header_rows = diagram->family == RelationFamily::Er ? 1u : 0u;
+        const std::size_t line_limit =
+            diagram->family == RelationFamily::Er ? kWidthLimit : kStateNoticeLineLimit;
         std::size_t bytes = 0u;
         for (const auto& line : notices) {
-            if (line.size() > kStateNoticeLineLimit) return {};
+            if (line.size() > line_limit) return {};
             bytes += line.size();
         }
-        if (result.size() + 1u + notices.size() > static_cast<std::size_t>(kHeightLimit) ||
-            !work.spend((1u + notices.size()) * (4u * sizeof(std::string) + 256u) + bytes * 2u +
-                        256u))
+        if (result.size() + 1u + header_rows + notices.size() >
+                static_cast<std::size_t>(kHeightLimit) ||
+            !work.spend((1u + header_rows + notices.size()) *
+                            (4u * sizeof(std::string) + 256u) +
+                        bytes * 2u + 256u))
             return {};
         result.emplace_back();
+        if (header_rows) result.push_back(std::string(kErProjectionHeader));
         for (const auto& line : notices)
             result.push_back(line);
     }

@@ -5001,6 +5001,8 @@ struct StageCCounts {
 // accounting and the rule-38 reach proof cannot drift apart.
 constexpr std::string_view kD459CohortReason =
     "D-459 class shared style-admission cohort (TL review-exempt)";
+constexpr std::string_view kD460CohortReason =
+    "D-460 ER body style-admission cohort (TL review-exempt)";
 
 Observation run_class285_case(JsonVal, std::size_t,
                               const relations_oracle::OfficialClass285Documents&,
@@ -5066,6 +5068,10 @@ struct OfficialErProgress {
 struct OfficialErCounts {
     std::size_t visited = 0, observed = 0, published = 0, bound = 0, decoded = 0, pending = 0,
                 admitted = 0, mutated = 0, unmet = 0, errors = 0, resources = 0;
+    // D-460: ER originals a reviewed cohort admits directly, without a decoded
+    // whole-source Model. They stay in visited/observed/bound/admitted so the
+    // ER ledger keeps all 206 originals; `decoded + pending + cohort == visited`.
+    std::size_t cohort = 0;
 };
 
 Observation run_official_er206_case(JsonVal, std::size_t, std::size_t,
@@ -6609,6 +6615,35 @@ const std::map<std::string, JourneyCohortEntry>& class_d459_cohort_map() {
 }
 const JourneyCohortEntry* class_d459_cohort_row(std::string_view path) {
     const auto& rows = class_d459_cohort_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
+// D-460 ER body style-admission cohort: the 15 er-diagram originals whose only
+// non-admitted inputs are the closed ER `classDef`/`class`/`style` statements
+// and inline `:::class` annotations. States are read per row; the per-row gate
+// is test_mermaid_er_d460_cohort.
+const std::map<std::string, JourneyCohortEntry>& er_d460_cohort_map() {
+    static const std::map<std::string, JourneyCohortEntry> map = [] {
+        std::map<std::string, JourneyCohortEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/er-d460-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-460 cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-460 cohort ledger must be approved (TL review exemption in the ledger)");
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            const auto states = row.get("expected_states");
+            rows.emplace(row.get_string("path"),
+                         JourneyCohortEntry{{states.get_string("wide_240"),
+                                             states.get_string("narrow_40"),
+                                             states.get_string("restored_240")}});
+        });
+        return rows;
+    }();
+    return map;
+}
+const JourneyCohortEntry* er_d460_cohort_row(std::string_view path) {
+    const auto& rows = er_d460_cohort_map();
     const auto found = rows.find(std::string(path));
     return found == rows.end() ? nullptr : &found->second;
 }
@@ -9811,7 +9846,7 @@ void emit_report(const std::vector<Observation>& rows,
             // never by this generic counter, so every original is counted once.
             if (class_style13_owned(row) || class_defined6_owned(row) ||
                 official_flow_p0_owned(row) || requirement_markdown_owned(row) ||
-                row.reason == kD459CohortReason ||
+                row.reason == kD459CohortReason || row.reason == kD460CohortReason ||
                 row.raw_active_schema == kStageCContract ||
                 row.raw_active_schema == kOfficialFlow400Contract ||
                 row.raw_active_schema == kOfficialEr206Contract ||
@@ -10004,9 +10039,11 @@ void emit_report(const std::vector<Observation>& rows,
     er_summary.set("complete_bindings", static_cast<int64_t>(ers.bound));
     er_summary.set("complete_Models_decoded", static_cast<int64_t>(ers.decoded));
     er_summary.set("whole_null_pending", static_cast<int64_t>(ers.pending));
+    er_summary.set("cohort_admitted", static_cast<int64_t>(ers.cohort));
     er_summary.set("whole_sources_admitted", static_cast<int64_t>(ers.admitted));
     er_summary.set("target_whole_sources_admitted", static_cast<int64_t>(206));
-    er_summary.set("mandatory_remaining", static_cast<int64_t>(138));
+    er_summary.set("mandatory_remaining",
+                   static_cast<int64_t>(206u - ers.admitted));
     er_summary.set("meaningfully_mutated", static_cast<int64_t>(ers.mutated));
     er_summary.set("failed_rows", static_cast<int64_t>(ers.errors));
     er_summary.set("mandatory_positive_source_fallbacks", static_cast<int64_t>(ers.unmet));
@@ -10015,7 +10052,8 @@ void emit_report(const std::vector<Observation>& rows,
     er_summary.set("original_foreign_assertions_certified", 0);
     er_summary.set("glyph_golden_required", false);
     er_summary.set("scope", "Complete206 original ER sources; immutable base62/144 plus "
-                            "source-approved rich6, active68 admitted/138 pending. Null art is not "
+                            "source-approved rich6, active68 plus the D-460 style cohort15 "
+                            "admitted/123 pending. Null art is not "
                             "drawing/empty admission; browser/API/SVG assertions remain pending.");
     root.add("ER_native_whole_source", er_summary);
     auto requirement_summary = root.make_obj();
@@ -12843,6 +12881,55 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     continue;
                 }
             }
+            // D-460 ER body style-admission cohort: the 15 er-diagram originals
+            // whose only non-admitted inputs are the closed ER style surface.
+            // Placed before the ER whole-source authorities (exact path match,
+            // disjoint sets); the post-loop reach proof asserts each ledger row
+            // is observed here (rule 38).
+            if (class_path.is_str()) {
+                if (const auto* cohort = er_d460_cohort_row(class_path.as_str())) {
+                    // The ER206 authority owns every ER original ordinal. The
+                    // cohort only replaces the disposition, so consume that
+                    // ordinal exactly as the ER206 branch would have and prove
+                    // the full manifest tuple still binds (path, global index,
+                    // manifest sha) — the same tuple `run_official_er206_case`
+                    // enforces.
+                    require(static_cast<bool>(official_er_documents) &&
+                                official_er_ordinal <
+                                    relations_oracle::kEr206Pins.size() &&
+                                !official_er_consumed[official_er_ordinal],
+                            "D-460 cohort ordinal must be an unconsumed ER206 original");
+                    const auto cohort_pin =
+                        relations_oracle::er206_active_pin(*official_er_documents,
+                                                           official_er_ordinal);
+                    relations_oracle::Work cohort_work;
+                    const auto cohort_canonical = relations_oracle::class481_canonical(
+                        fixture, cohort_work);
+                    require(cohort_pin.path == class_path.as_str() && cohort_pin.global == i &&
+                                digest(cohort_canonical) == cohort_pin.manifest_sha,
+                            "D-460 cohort ordinal must bind the exact ER206 manifest tuple");
+                    relations_oracle::er206_consume(official_er_ordinal, official_er_consumed,
+                                                    official_er_setup);
+                    ++official_er_ordinal;
+                    Observation row;
+                    row.path = std::string(class_path.as_str());
+                    row.track = "original";
+                    row.type = "er-diagram";
+                    row.source_sha256 = fixture.get_string("sha256");
+                    row.expected = "drawn";
+                    row.reason = std::string(kD460CohortReason);
+                    const auto state_status = [](const std::string& state) {
+                        return state == "drawn" ? "drawn" : "source_fallback";
+                    };
+                    row.status = {state_status(cohort->states[0]),
+                                  state_status(cohort->states[1]),
+                                  state_status(cohort->states[2])};
+                    row.expected_states = cohort->states;
+                    row.decision_reasons.fill(row.reason);
+                    observations.push_back(std::move(row));
+                    continue;
+                }
+            }
             if (class_path.is_str() && class_path.as_str().starts_with("er-diagram/")) {
                 if (const auto selected = official_er107::select(i, class_path.as_str(),
                                                                  fixture.get_string("sha256"))) {
@@ -14088,6 +14175,27 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                     "D-459 ledger rows must be 25 unique paths");
         }
 
+        // D-460 rule-38 reach proof: every ledger row must be observed through
+        // its own branch, and the branch must not match anything else.
+        {
+            const auto ledger_d460 =
+                json::parse(read_file(kRoot / "../../../tools/mermaid/er-d460-cohort.json"));
+            require(ledger_d460.has_value(), "D-460 cohort ledger must parse");
+            std::set<std::string> expected_d460;
+            ledger_d460->root().get("rows").iter([&](const JsonVal row) {
+                expected_d460.insert(row.get_string("path"));
+            });
+            std::set<std::string> reached_d460;
+            for (const auto& row : observations) {
+                if (row.track == "original" && row.reason == kD460CohortReason)
+                    reached_d460.insert(row.path);
+            }
+            require(reached_d460 == expected_d460,
+                    "D-460 branch reach set must equal its ledger");
+            require(expected_d460.size() == 15u && reached_d460.size() == 15u,
+                    "D-460 ledger rows must be 15 unique paths");
+        }
+
         // D-441 rule-38 reach proof: every ledger row must be observed through
         // its own branch, and the branch must not match anything else.
         {
@@ -14509,10 +14617,12 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         EXPECT_EQ(ers.published, 206u);
         EXPECT_EQ(ers.bound, 206u);
         EXPECT_EQ(ers.decoded, 68u);
-        EXPECT_EQ(ers.pending, 138u);
+        EXPECT_EQ(ers.pending, 123u);
+        EXPECT_EQ(ers.cohort, 15u);
         EXPECT_EQ(ers.errors, 0u);
         EXPECT_EQ(ers.resources, 0u);
-        EXPECT_EQ(ers.admitted, 68u);
+        EXPECT_EQ(ers.admitted, 83u);
+        EXPECT_EQ(ers.decoded + ers.pending + ers.cohort, ers.visited);
         EXPECT_EQ(ers.mutated, 68u);
         require(static_cast<bool>(official_requirement11_diagnostics) &&
                     std::ranges::all_of(official_requirement11_consumed,
@@ -22840,6 +22950,17 @@ OfficialErCounts official_er_counts(const std::vector<Observation>& rows,
     OfficialErCounts out;
     std::array<bool, 206> seen{};
     for (const auto& row : rows) {
+        if (row.reason == kD460CohortReason) {
+            // D-460: the reviewed cohort owns this original's whole-source
+            // admission; it never enters the ER whole-null contract.
+            ++out.visited;
+            ++out.observed;
+            ++out.published;
+            ++out.bound;
+            ++out.admitted;
+            ++out.cohort;
+            continue;
+        }
         if (row.raw_active_schema != kOfficialEr206Contract &&
             row.raw_active_schema != kOfficialEr107Contract &&
             row.raw_active_schema != kOfficialGroupEdgeContract &&

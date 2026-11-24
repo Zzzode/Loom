@@ -424,7 +424,7 @@ std::optional<std::vector<std::string>> er_projection_notices(const RelationDiag
         }
         return true;
     };
-    if (!append({"ER native projection v1"})) return {};
+    if (!append({kErProjectionHeader})) return {};
     bool layout = false, html = false, viewport = false;
     for (const auto& notice : profile.config_notices) {
         if (!work.spend(notice.size() + 1u) || !append({notice})) return {};

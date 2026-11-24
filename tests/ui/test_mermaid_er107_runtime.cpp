@@ -80,10 +80,14 @@ TEST(MermaidER107Runtime, ClosedNewProfileRejectsIncompleteProjection) {
         succeeds("---\nconfig:\n  look: neo\n  er.useMaxWidth: false\n---\nerDiagram\nA\n"));
     EXPECT_FALSE(
         succeeds("---\nconfig:\n  look: neo\n  er:\n  er.useMaxWidth: false\n---\nerDiagram\nA\n"));
+    // D-460 admits the closed ER style surface (inline `:::class` annotations
+    // and `classDef`/`style`/`class` statements) through the projection profile:
+    // the surface is disclosed in the footer and dropped, so the source draws.
+    EXPECT_TRUE(succeeds(prefix + "A:::x\n"));
+    EXPECT_TRUE(succeeds(prefix + "A\nclassDef x fill:red\n"));
     for (const auto body : {"A[\"_caption_\"]\n", "A[\"[caption](url)\"]\n", "A[\"![](url)\"]\n",
                             "A[\"# heading\"]\n", "A[\"- item\"]\n", "A {\n int na~me~\n}\n",
-                            "A {\n int id \"<strong>x</strong>\"\n}\n", "A:::x\n",
-                            "A\nclassDef x fill:red\n", "A[\"<br>\"]\n"})
+                            "A {\n int id \"<strong>x</strong>\"\n}\n", "A[\"<br>\"]\n"})
         EXPECT_FALSE(succeeds(prefix + body)) << body;
     for (const auto config : {"  look: unknown\n", "  htmlLabels: true\n",
                               "  look: neo\n  theme: forest\n", "  look: neo\n  fontSize: 12\n",

@@ -6,8 +6,8 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1730 drawn /
-415 source_fallback / 0 error at 240 wide**, after D-459 (`local`,
+**Current totals (the last row of the history table below): 1745 drawn /
+400 source_fallback / 0 error at 240 wide**, after D-460 (`local`,
 2026-11-24). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
@@ -94,6 +94,7 @@ are not whole-original errors).
 | After D-457 quadrant/tree-view body styles (3 rows) | 2026-11-24 | local | 1697 | 448 | 0 |
 | After D-458 usecase body grammar (8 rows, usecase family closed) | 2026-11-24 | local | 1705 | 440 | 0 |
 | After D-459 class shared style admission (25 rows, class family closed) | 2026-11-24 | local | 1730 | 415 | 0 |
+| After D-460 ER body style admission (15 rows) | 2026-11-24 | local | 1745 | 400 | 0 |
 
 Row-level detail for the newest rows:
 - **D-450 (5)**: `quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd`,
@@ -137,6 +138,27 @@ Row-level detail for the newest rows:
   suffix, all validated, dropped and disclosed), plus
   `tree-view/pr-check/should-render-class-annotations-for-highlighting`
   (one trailing `:::highlight` node annotation, dropped and disclosed).
+- **D-460 (15)**: every remaining er-diagram original whose only non-admitted
+  input is the closed ER style surface —
+  `er-diagram/visual-check/entities-with-styles-applied-from-class-statement-
+  {default,without-htmllabels-default,elk-layout,handdrawn-look,
+  without-htmllabels-elk-layout,without-htmllabels-handdrawn-look}` (six; they
+  carry `classDef` + `class` bindings and, except under a profile-free
+  frontmatter, an inline `p[PERSON]:::blue`),
+  `...-from-style-statement-<same six variants>` (six `style` statements) and
+  `...-from-the-default-class-and-other-styles-{default,elk-layout,
+  handdrawn-look}` (three). The closed ER CSS table gains the corpus named
+  colours (`lightblue`/`pink`/`green`/`grey`/`blue`) and `font-size` /
+  `font-weight`; accepted statements are dropped (the ER projection paints no
+  class surface) and each newly disclosed input is recorded once as
+  `<authored line> -> class surface; not applied`. Disclosure preserves the
+  pre-D-460 surface byte-for-byte: a presentation-profile source discloses
+  every accepted input, while a profile-free one (including the three
+  `layout: elk` rows, where `layout` is not a projection trigger) discloses
+  only the newly admissible vocabulary. The cohort rows stay owned by the
+  ER206 authority (each ordinal consumed and bound once), so
+  `originals_drawn`/`drawn_at_240` credit them exactly once through the ER
+  summary's admitted total rather than twice.
 - **D-459 (25)**: every remaining class-diagram original. Nine carry a
   `cssClass "<id-list>" <class>` naming an undeclared class (13, 13-2, 15,
   15-two-multiple, 15-two-multiple-2, dagre-13, dagre-15, hd-13, hd-15); seven
@@ -166,8 +188,10 @@ disposition (fix or documented infeasibility).
 
 ## Remaining fallback by family (whole original, 240 wide)
 
-Both numeric columns were reconciled against the D-459 OfficialMatrix; several
-rows had drifted as earlier slices moved rows without updating them.
+Both numeric columns were reconciled against the D-459 OfficialMatrix (2026-11-24);
+several rows had drifted as earlier slices moved rows without updating them. Each
+later slice updates only its own family row and the Total; the D-460 rerun
+(`er-diagram` 24/182 -> 9/197) is the newest such patch.
 
 | Family | Remaining fallback | Drawn | Notes |
 |---|---:|---:|---|
@@ -181,7 +205,7 @@ rows had drifted as earlier slices moved rows without updating them.
 | agentflow | 0 | 38 | renderer added 2026-11-14; full agentflow-beta grammar (flow/global/connector containers, @{ } metadata, four edge vocabularies, labeled branches) validated and projected as a bounded native outline, not a flowchart approximation; RFC 0041 (2026-11-22) admits the 9 theme-only rows through a closed seven-value table with a disclosure footer, so the live census is 36/2/0 from 38 (the 2 `look`+`handDrawnSeed` rows stay source); 19 of 27 native rows draw at 40 columns and 0 of 9 admitted rows do (the footer exceeds the viewport) |
 | c4 | 0 | 32 | renderer added 2026-11-12; D-432 (2026-11-23) admits the single `config.wrap` frontmatter row through a tri-state closed parser (the leaf is inert and disclosed, art equals the config-stripped twin); the 8 remaining rows are Update*Style/UpdateLayoutConfig statements with no color/layout contract; live census 24/8/0 from 32; live census 32/0/0 (D-459 matrix reconciliation; the slice prose above is historical) |
 | usecase | 0 | 32 | renderer added 2026-11-13; D-447 (2026-11-23) admits the closed `config.usecase` namespace + accessibility no-op row; D-456 (2026-11-24) admits the nine themed originals through the closed top-level `config.theme`/`config.look` and `config.usecase` leaves, the quoted `systemBoundary "Title"` label and the `json <id>@{ ... }` block; D-458 (2026-11-24) admits the last eight through the closed body styling surface (`classDef`/`class`/`style`), one `:::class` annotation, flat `@{...}` properties and single-line json payloads (validated, dropped, disclosed; style-stripped twin), so the family is closed at 32 originals; live census 32/0/0 from 32 |
-| er-diagram | 24 | 182 | |
+| er-diagram | 9 | 197 | D-460 (2026-11-24) admits the 15 `entities-with-styles-applied-*` originals through the closed ER style surface: `classDef`/`class`/`style` statements and inline `:::class` annotations over the corpus named-colour table plus `font-size`/`font-weight`, validated, dropped and disclosed once in the ER footer (a presentation-profile source discloses every accepted input; a profile-free source, including the three `layout: elk` variants where `layout` is not a projection trigger, discloses only the new vocabulary so its art stays byte-identical); the ER206 authority keeps the rows' ordinals in a `cohort` bucket (decoded 68 + pending 123 + cohort 15 = 206, admitted 83). The 9 remaining are 4 `an-er-diagram-with-unicode-text*` and 4 `...-relationships-with-unicode-text*` markdown/unicode bodies plus the one `<br/>`-separated relationship-label row: body-grammar debt, not style debt; live census 197/9/0 from 206 |
 | timeline | 0 | 30 | renderer added 2026-11-11; RFC 0040 admitted 16 look/theme rows and RFC 0047 admits the 5 inert leading `%%{init}%%` theme directives (footer-disclosed, synthetic directive-free twins); D-454 (2026-11-24) admits the last 2 rows through the closed nested `timeline.disableMulticolor` boolean and `themeVariables.cScale0..11` colour table, including a directive spanning several body lines (twin deletes the whole directive block); the family is closed at 30 originals; live census 30/0/0 from 30 |
 | class-diagram | 0 | 285 | renderer added with the original Class native projection; D-459 (2026-11-24) admits the last 25 originals through the shared relations-core style seam: an assignment naming a class the source never declares with `classDef` is inert and disclosed in the reviewed legend (`<verbatim> -> class:<name> undefined; not applied`), comma-separated `cssClass "<id-list>"` and the `class X:::cls { … }` member-body form are accepted, and `link`/`callback` bindings are non-visual no-ops (FS-2). Built-in selector names (`default`, `node`, `cluster`, …) and a classDef differing only by letter case fail closed. The family is closed at 285 originals; the Class StageC whole-null contract now books them in a `cohort` bucket (decoded 260 + cohort 25 + pending 0 = visited 285, admitted 285); live census 285/0/0 from 285 |
 | treemap | 0 | 26 | RFC 0031 treemap reviewed renderer admits the 10 plain originals; D-427 (2026-11-23, TL review-exempt) admits the 6 `config.treemap.valueFormat` rows through the closed d3-format subset (`$0,0`, `.1%`, `.2f`, `$.2f`, `$,.2f`), honoured in the drawn leaf labels by exact decimal string arithmetic (renderer-free Python mirror in the ledger generator; negative values are not in the corpus). The 10 remaining are all `classdef_styling` rows; measured narrow_40 is 6/24 (the six formatted rows wrap instead of falling back) |
@@ -208,7 +232,7 @@ rows had drifted as earlier slices moved rows without updating them.
 | info | 2 | 0 | |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **415** | **1730** | |
+| **Total** | **400** | **1745** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 

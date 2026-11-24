@@ -6125,9 +6125,16 @@ TEST(MermaidErPresentation12Admission,
         const auto source = std::string("erDiagram\n") + std::string(prefix) + body.substr(10);
         EXPECT_NO_THROW(er_present_public(source, model, true));
     }
+    // D-460: the newly admitted spellings (`font-size:<n>px`, `font-weight`,
+    // the other named colours) draw with a disclosure footer; their paired
+    // positives live in `test_mermaid_er_d460_cohort` because
+    // `validate_impl` (the protected ER presentation geometry oracle) binds a
+    // frame to its Model with no footer concept. The closed negatives below
+    // keep an unadmitted spelling (`99em`), a bare/unknown key and malformed
+    // forms whole-source.
     for (const std::string_view statement :
          {"style A display:none", "style A fill:url(evil)", "style A stroke-width:-1px",
-          "style A visibility:hidden", "style A font-size:99px", "classDef foo transform:scale(0)",
+          "style A visibility:hidden", "style A font-size:99em", "classDef foo transform:scale(0)",
           "classDef foo fill:red; unknown text", "accDescr { incomplete",
           "style A fill:", "classDef foo", "class A", "style A unknown:true",
           "accTitle: <b>Unreviewed HTML</b>", "accDescr: &unknown;"}) {

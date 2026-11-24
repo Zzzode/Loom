@@ -2668,3 +2668,75 @@ was a fail-closed predicate. The expensive part was not the compiler but the
    wasted. Rule: before the first full-suite run of a slice that changes a
    rejection rule, `grep` the rule's message/identifier in `tests/ui/` and read
    every hit.
+
+## D-460 ER body style-admission retro (2026-11-24)
+
+Scope: the second slice of the shared style-admission program (15 ER rows), one
+commit after D-459. Two independent adversarial reviews ran before the ledger
+flip; both returned REQUEST-CHANGES and both found something real.
+
+1. **A disclosure added to a previously silent path is an art change — scope
+   it to what the slice newly admits.** ER's profile-free grammar already
+   accepted the old CSS surface (hex, `red`, `stroke-width`,
+   `stroke-dasharray`) and inline `:::` annotations and dropped them silently.
+   Disclosing every accepted input would have changed the art of sources that
+   never used the new vocabulary. The implemented rule emits a record only when
+   a presentation profile is active or the statement needed the new vocabulary
+   (`font-size`, `font-weight`, named colours other than `red`), and the corpus
+   measurement (none of the 191 non-cohort ER originals carries any style token
+   or `:::`) proves no other matrix row can move. Rule: before adding a
+   footer/legend to an existing silent acceptance path, enumerate the
+   populations that already pass through it and decide explicitly which ones
+   get the new output.
+2. **A renderer-free mirror must model the disclosure condition, not just the
+   syntax.** The first mirror emitted one record per statement; the renderer
+   emits only disclosed ones, so four fixtures carried 4 expected records
+   against 2/3 rendered. The footer-tail oracle caught it. Mirror the
+   predicate (`profile || new_surface`) and pin the per-row record count.
+3. **A footer-tail oracle must know the block shape.** `footer_tail(last N
+   lines)` with N derived from the record count silently included the blank
+   line and the `ER native projection v1` header when the count was wrong, so
+   the failure looked like a record-text mismatch. Derive the count from the
+   ledger, compare the last N lines, and assert the single header separately —
+   then a missing record fails as a missing record.
+4. **The blast-radius pin can live outside the family's obvious oracles.** The
+   ER construct-rejection sweep in `test_mermaid_envelope.cpp` counts
+   `drawable`/`construct_rejected` over the 97 `handdrawn-look`/`-neo` ER
+   fixtures; admitting five moves that split 87/10 -> 92/5. D-459's rule 7 said
+   to grep a changed rejection's message; extend it: also grep numeric
+   aggregates over the affected family (`EXPECT_EQ(drawable`, `scanned`,
+   `rejected`) before the first full run.
+5. **An authority a cohort borrows must be bound as tightly as the branch it
+   pre-empts.** The cohort branch consumes the ER206 ordinal, so it must assert
+   the pin's `path`, `global` index and `manifest_sha` — the full tuple
+   `run_official_er206_case` enforces. A path-only check would accept a
+   manifest reorder that keeps the path at the same ordinal.
+6. **An edit that duplicates a block boundary costs two whole-preset builds.**
+   One `Edit` whose `old_string` ended mid-structure left the old tail behind,
+   so both presets failed on the same TU. Rule: after a block-boundary edit,
+   read the file tail or compile the single TU before launching a preset build;
+   a ~1000-step module fan-out should never be the first syntax check.
+7. **A latent width bound must be enforced at the parser, not only at the
+   paint.** `er_style_notice` bounded display cells while the paint path
+   bounded bytes, so a non-ASCII statement could pass the parser and then force
+   a whole-source fallback. Bound both in the parser so the paint guard is
+   unreachable for admitted records.
+
+## D-460 efficiency numbers (2026-11-24)
+
+| Measurement | Value | Log |
+|---|---|---|
+| Debug mermaid suite, final (post-roster) | 1645 tests, **310.67 s** wall (4197.06 s*proc), 100% passed | `/tmp/loom-logs/d460-mermaid-suite2.log` |
+| Debug mermaid suite, first (pre-roster) | 1645 tests, 362.85 s, 100% passed | `/tmp/loom-logs/d460-mermaid-suite.log` |
+| Release OfficialMatrix, final | 27.06 s, 1745 drawn / 400 fallback, `drawn_at_240` 1559, gaps 48 | `/tmp/d460-matrix-rel3.log` |
+| Dual-preset byte gate | debug == release sha256 `2ff7cb2a…` (unchanged by the roster regeneration) | both matrix JSONs |
+| Roster regeneration | `--emit` 400 rows / 28 categories; `--self-test` and `--matrix` drift gate both green | `/tmp/roster-{emit,self,matrix}-d460.log` |
+| Targeted cohort gate | 8.99 s twin + 1.59 s negatives (15 rows, 240x900 renders) | suite log |
+| Envelope sweep | 268 ms (97 fixtures, pins 92/5) | debug run |
+
+Cost per admitted row ≈ 310.67 s / 15 ≈ **20.7 s**, the same as D-459's
+20.6 s: the slice reused the ER footer and matrix plumbing, and the expensive
+part was again not the compiler but the **review rounds** (correctness lens:
+three REQUEST-CHANGES rounds before APPROVE; contract lens: one) and the
+**whole-preset rebuild cycles** lost to test-edit churn during linking
+(rule 6 above; one of them was also the rule-4 pin that review caught).

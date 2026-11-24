@@ -5608,13 +5608,15 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   gaps are: the CSS value set lacks the corpus's named colours
   (`lightblue`/`pink`/`green`/`grey`/`blue`) and `font-size`/`font-weight`;
   the statement dispatcher rejects these lines while a presentation profile
-  is active (`if (diagram.er_presentation) return {}`), which is exactly the
-  eight `look`/`htmlLabels` rows; and the accepted statements need one
+  is active (`if (diagram.er_presentation) return {}`), which covers most of
+  the measured fifteen-row cohort (the plan predicted eight `look`/`htmlLabels`
+  rows; recon measured fifteen, the remainder being default-look rows whose
+  CSS vocabulary alone was unadmitted); and the accepted statements need one
   disclosure line each in the ER footer. Callers: `er_presentation_css`,
   `er_presentation_line`, `er_inline_classes` and the ER accounting branch of
-  the matrix (the 13 style rows go through `run_official_er206_case` today, so
-  moving them needs the same explicit authority bucket slice 1 added for
-  Class).
+  the matrix (the fifteen style rows go through `run_official_er206_case`
+  today, so moving them needs the same explicit authority bucket slice 1 added
+  for Class).
 - **Slice 3 — state-v2 (D-461).** Not part of the slice-1 diff. State-local:
   the named-colour and `font-style` vocabulary in `state_style_properties`,
   and the composite container policy. Shared: none beyond slice 2.
@@ -5667,3 +5669,107 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   parser and the previous roster. The cohort ledger is data, so reverting the
   commit reverts the admission with it. No persisted format, wire shape or
   public contract changes.
+
+## ER body style admission (D-460)
+
+- **Scope.** The fifteen remaining er-diagram fallbacks whose only
+  non-admitted inputs are the closed ER style surface: `classDef` / `class` /
+  `style` statements and inline `:::class` entity annotations. Nine carry an
+  already-admitted presentation profile (`look`, `htmlLabels`); the other six —
+  three `*-default` and three `*-elk-layout` variants — are **profile-free**:
+  `config.layout: elk` is a validated leaf but not a projection trigger
+  (its bit is outside the `512|1024|2048` mask in `mermaid_er_impl.cpp`), so
+  those sources already drew in the default native orthogonal layout before
+  this slice and keep doing so; the only change is that their style statements
+  are now accepted and disclosed. A layout-aware ER projection is out of
+  scope. The other nine ER
+  fallbacks (eight unicode/markdown bodies and one `<br>`-separated
+  relationship-label row) are untouched: they are body-grammar debt, not style
+  debt.
+- **Why local closure, and alternatives.** Local closure is sufficient because
+  ER already owns an independent CSS grammar and statement dispatch; no shared
+  relations-core property table is involved, so the blast radius is one family.
+  Rejected alternatives: (a) widen the shared Class style table — ER's grammar
+  differs (`class` binding, `:::` annotation forms), so it would couple two
+  families for no gain; (b) reject style sources whose CSS renders nothing
+  (status quo) — that keeps 15 rows permanently unrenderable for a purely
+  cosmetic, validated-and-ignorable input; (c) emit the footer for every
+  accepted input in every source — changes art for sources that never used the
+  new vocabulary, violating the byte-equivalence precondition. Chosen: accept,
+  drop, and disclose only what the slice newly admits, plus everything under a
+  presentation profile.
+- **Ownership and change surface.** `loom.ui.visual.mermaid`, family-local:
+  `er_presentation_css` (closed CSS table), `er_style_notice` (the footer
+  record), the two statement branches in `parse_plain_er`, `er_inline_classes`,
+  the generic layout footer block and `ErPaint::finish`, plus
+  `RelationDiagram::er_style_notices`. **No shared property table changed** —
+  the slice-1 plan predicted a shared `parse_style_properties` widening, and
+  recon showed ER owns an independent CSS grammar, so the shared surface stayed
+  untouched. Callers of the changed pieces: the ER parser, the generic
+  relation layout (state/requirement footer arm now has an ER arm), and
+  `ErPaint::finish`. No other module imports them.
+- **Mechanism.** The closed CSS table gains the corpus-backed named colours
+  (`red`, `lightblue`, `pink`, `green`, `grey`, `blue`) and `font-size` /
+  `font-weight`; the statement branches and the inline-annotation path no
+  longer reject when a presentation profile is active, because the ER
+  projection paints no class surface. Disclosure follows the pre-D-460
+  behaviour it must preserve: a source with an active presentation profile
+  (the reviewed frontmatter leaf table) discloses every accepted input, while
+  a profile-free source — which already admitted the old surface silently —
+  discloses only the newly admissible vocabulary (`font-size`, `font-weight`,
+  the named colours other than `red`); its `:::` annotations and `class`
+  bindings carry no CSS and stay silent there. Each disclosed input becomes
+  one record `<authored line> -> class surface; not applied`, appended after
+  the existing config notices, in a footer block that always begins with the
+  `ER native projection v1` header. The footer line budget for
+  ER records is the render width limit, not the 96-byte state/requirement
+  limit, because a `style` statement record is longer than a config leaf. A
+  record is the authored physical line, so several accepted inputs on one line
+  produce several records with the same text; no corpus fixture writes more
+  than one style input per line.
+- **Render equivalence.** The style-stripped twin renders identical art above
+  the footer for all fifteen rows (the gate compares `art_above_footer` cells),
+  the footer tail equals the disclosed records in source order, and the narrow
+  40 state stays source for every row. Style-free ER sources are byte-identical
+  because the new vector is empty and the footer block is skipped; sources
+  that only use the pre-D-460 surface under a profile-free frontmatter are
+  byte-identical too, because the disclosure condition excludes them (measured:
+  none of the 191 non-cohort ER originals carries any style statement or
+  `:::` annotation in the corpus bytes, so no other ER row can move either
+  way).
+- **Ledger accounting.** The fifteen rows keep their ER206 authority ordinal
+  (the cohort branch consumes `official_er_ordinal`, marks
+  `official_er_consumed`, and proves the ordinal still binds the exact ER206
+  manifest tuple — path, global index, and the canonical record digest, the
+  same checks `run_official_er206_case` enforces)
+  but move into a `cohort` disposition bucket:
+  `visited/observed/published/bound` 206, `decoded` 68, `pending` 123,
+  `admitted` 83, `cohort` 15, `mandatory_remaining` 123 (`206 - admitted`), and
+  `decoded + pending + cohort == visited`. The two completeness invariants
+  (`official_er_ordinal == 206` and every consumed slot) therefore still hold;
+  the independent ER206 report keeps its own evidence; the generic
+  `originals_drawn` counter skips cohort rows so `drawn_at_240` is not
+  double-counted (the D-459 lesson). The projection-notice seam
+  (`er_projection_notices_json`) reports the style records too, and footer
+  style slots are counted per display cell rather than per byte so a non-ASCII
+  record cannot desynchronize the packed-styles validation.
+- **Verification.** `test_mermaid_er_d460_cohort` (ledger pins and 15 unique
+  paths, style-stripped twin equality above the footer, footer tail, restored
+  cell equality, closed negatives for an unknown CSS key, an unknown named
+  colour, a decimal/unit-less size, a trailing CSS or target comma, a malformed
+  annotation and a style inside a subgraph) plus the full mermaid suite and the
+  dual-preset matrix byte gate at the family closure. Two pre-existing pins
+  moved with the slice and are updated with paired coverage:
+  `MermaidER107Runtime.ClosedNewProfileRejectsIncompleteProjection` (the two
+  profile style bodies are now admitted — its eight body and six config
+  negatives stay closed) and `test_mermaid_envelope.cpp`'s construct-rejection
+  sweep over the 97 `handdrawn-look`/`-neo` ER fixtures (`drawable` 87 -> 92,
+  `construct_rejected` 10 -> 5; ordinal 198 stays the unique budget crosser).
+  Boundary: the protected ER presentation geometry oracle
+  (`validate_impl` in `tests/support/mermaid_relations_oracle.hpp`) binds a
+  frame to its Model and has no footer concept, so the admitted-positive form
+  of a style statement is gated by the D-460 cohort test rather than by that
+  oracle; no pinned ER107/ER198 input carries a style statement, so the oracle
+  is unaffected.
+- **Rollback.** One commit; reverting it restores the previous parser and the
+  previous ledger. No persisted format, wire shape or public contract changes.

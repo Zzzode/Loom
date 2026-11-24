@@ -1,0 +1,403 @@
+{
+  "schema": "loom_mermaid_er_d460_cohort/v1",
+  "decision": "D-460",
+  "admission": {
+    "shape": "closed `classDef` / `class` / `style` statements over the ER CSS table (hex or named colour, stroke-width, font-size, font-weight) and inline `:::class` entity annotations",
+    "disclosure": "a presentation-profile source discloses every accepted input; a profile-free source (whose old surface was already admitted silently) discloses only the newly admissible vocabulary, so its art stays byte-identical",
+    "footer": {
+      "header": "ER native projection v1",
+      "record_suffix": " -> class surface; not applied"
+    },
+    "width_policy": "wide_240 admission only; narrow_40 measured live",
+    "twin_rule": "the twin is the same fixture with the style statements removed and the `:::class` suffixes cut; the art above the footer must be cell-equal"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "every remaining er-diagram fallback whose only non-admitted inputs are the closed ER style surface",
+    "cohort_digest": "648b081e69210feee70cd74b000b4926f6ffca2d2d0ab11f110aa6a967a0b7d4"
+  },
+  "counts": {
+    "total": 15,
+    "by_family": {
+      "er-diagram": 15
+    }
+  },
+  "review": {
+    "reviewer_agent": "two independent read-only adversarial reviews, fresh general-purpose agents, D-460 ER body style admission, 2026-11-24. Correctness/blast radius: round 1 REQUEST-CHANGES (BLOCKER ER206 ordinal bypass; BLOCKER two stale oracles; MINOR legend-suffix loss, footer limits, per-cell styles), round 2 REQUEST-CHANGES (BLOCKER envelope construct-rejection pins 87/10 missed; MINOR path-only ordinal binding), round 3 REQUEST-CHANGES (BLOCKER the C3 fix compared the raw fixture sha against the canonical-record manifest sha), round 4 APPROVE after the canonical tuple fix (task ab84de2ca4d731a22). Contract/process/oracle strength: round 1 REQUEST-CHANGES (BLOCKER ledger pending; MAJOR d117 counts 1745/400; MAJOR `layout` misstated as a projection trigger; MINOR alternatives/disclosure/width-bound/has_projection), round 2 APPROVE (task a18a34f8b7b6f3961) conditional on the mechanical flip and the green matrix/suite runs.",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "Approval is void if the post-flip release OfficialMatrix, the dual-preset byte gate or the full debug mermaid suite is red. The fallback roster is regenerated with `--emit` from the approved matrix rerun (never hand-edited); the d117 totals land in the same commit. Measured after approval: release OfficialMatrix 2145 originals 1745 drawn / 400 source_fallback, drawn_at_240 1559, gaps 48, ER summary 68 decoded + 123 pending + 15 cohort = 206 admitted."
+  },
+  "rows": [
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-default.mmd",
+      "family": "er-diagram",
+      "sha256": "e8485231ed78abb2fe6255fd46e8b210115b9b51f5116560d1ceebd26c34aecb",
+      "manifest_sha256": "e8485231ed78abb2fe6255fd46e8b210115b9b51f5116560d1ceebd26c34aecb",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "classDef bold font-size:24px, font-weight: bold -> class surface; not applied",
+        "classDef blue stroke:lightblue, color: #0000FF -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-default.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-without-htmllabels-default.mmd",
+      "family": "er-diagram",
+      "sha256": "a431ab3c35bc0a2af35dd6dafee2906bf5556f3dfc1e73efdc8ca27e54d47064",
+      "manifest_sha256": "a431ab3c35bc0a2af35dd6dafee2906bf5556f3dfc1e73efdc8ca27e54d47064",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "p[PERSON]:::blue -> class surface; not applied",
+        "classDef bold font-size:24px, font-weight: bold -> class surface; not applied",
+        "classDef blue stroke:lightblue, color: #0000FF -> class surface; not applied",
+        "class c,p bold -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-without-htmllabels-default.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-elk-layout.mmd",
+      "family": "er-diagram",
+      "sha256": "7ffcb62f468663c2a77611f2d67d48eed53252adbb4a3356c47d348bc18e9332",
+      "manifest_sha256": "7ffcb62f468663c2a77611f2d67d48eed53252adbb4a3356c47d348bc18e9332",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "classDef bold font-size:24px, font-weight: bold -> class surface; not applied",
+        "classDef blue stroke:lightblue, color: #0000FF -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-elk-layout.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-handdrawn-look.mmd",
+      "family": "er-diagram",
+      "sha256": "4ad3e3829ec46863371c758e11c05c2efec1e9e3df98f6e6cd5c72533dc0f8b2",
+      "manifest_sha256": "4ad3e3829ec46863371c758e11c05c2efec1e9e3df98f6e6cd5c72533dc0f8b2",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "p[PERSON]:::blue -> class surface; not applied",
+        "classDef bold font-size:24px, font-weight: bold -> class surface; not applied",
+        "classDef blue stroke:lightblue, color: #0000FF -> class surface; not applied",
+        "class c,p bold -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-handdrawn-look.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-without-htmllabels-elk-layout.mmd",
+      "family": "er-diagram",
+      "sha256": "be0fba2f35752caead14e602e21d94138486a8f4863522a69b347fefbaeb088c",
+      "manifest_sha256": "be0fba2f35752caead14e602e21d94138486a8f4863522a69b347fefbaeb088c",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "p[PERSON]:::blue -> class surface; not applied",
+        "classDef bold font-size:24px, font-weight: bold -> class surface; not applied",
+        "classDef blue stroke:lightblue, color: #0000FF -> class surface; not applied",
+        "class c,p bold -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-without-htmllabels-elk-layout.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-without-htmllabels-handdrawn-look.mmd",
+      "family": "er-diagram",
+      "sha256": "5fb84057fc949adc24a5c4340b549abdf1b670eb9c63494c36c3775d49a15dc1",
+      "manifest_sha256": "5fb84057fc949adc24a5c4340b549abdf1b670eb9c63494c36c3775d49a15dc1",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "p[PERSON]:::blue -> class surface; not applied",
+        "classDef bold font-size:24px, font-weight: bold -> class surface; not applied",
+        "classDef blue stroke:lightblue, color: #0000FF -> class surface; not applied",
+        "class c,p bold -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-class-statement-without-htmllabels-handdrawn-look.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-default.mmd",
+      "family": "er-diagram",
+      "sha256": "05cf456e0d2c1c7150a8427f5a5b6a0a7760e96082c97a4f294e42455e883bfa",
+      "manifest_sha256": "05cf456e0d2c1c7150a8427f5a5b6a0a7760e96082c97a4f294e42455e883bfa",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "style c,p fill:#f9f,stroke:blue, color:grey, font-size:24px,font-weight:bold -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-default.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-without-htmllabels-default.mmd",
+      "family": "er-diagram",
+      "sha256": "c38b74eb370c6d681e5d3e67d7de195125c9d682fe51533d8d564729cd8cda5e",
+      "manifest_sha256": "c38b74eb370c6d681e5d3e67d7de195125c9d682fe51533d8d564729cd8cda5e",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "style c,p fill:#f9f,stroke:blue, color:grey, font-size:24px,font-weight:bold -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-without-htmllabels-default.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-elk-layout.mmd",
+      "family": "er-diagram",
+      "sha256": "a5ac3f72d6c67c217ab96295ff033d947b7bfdfa94eda843bfe242e27ac382a8",
+      "manifest_sha256": "a5ac3f72d6c67c217ab96295ff033d947b7bfdfa94eda843bfe242e27ac382a8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "style c,p fill:#f9f,stroke:blue, color:grey, font-size:24px,font-weight:bold -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-elk-layout.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-handdrawn-look.mmd",
+      "family": "er-diagram",
+      "sha256": "4bad1ad476053031c33528e0ee9bb51f71600951aee2559aa5398158061707aa",
+      "manifest_sha256": "4bad1ad476053031c33528e0ee9bb51f71600951aee2559aa5398158061707aa",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "style c,p fill:#f9f,stroke:blue, color:grey, font-size:24px,font-weight:bold -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-handdrawn-look.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-without-htmllabels-elk-layout.mmd",
+      "family": "er-diagram",
+      "sha256": "36fcca80c704a238f8fc8a6dc042a7c294012794702bc26970497033d15076b7",
+      "manifest_sha256": "36fcca80c704a238f8fc8a6dc042a7c294012794702bc26970497033d15076b7",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "style c,p fill:#f9f,stroke:blue, color:grey, font-size:24px,font-weight:bold -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-without-htmllabels-elk-layout.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-without-htmllabels-handdrawn-look.mmd",
+      "family": "er-diagram",
+      "sha256": "0134dc474045c66639e58a4cf00a790770c015c6757b8df5b79361e26e0784ae",
+      "manifest_sha256": "0134dc474045c66639e58a4cf00a790770c015c6757b8df5b79361e26e0784ae",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "style c,p fill:#f9f,stroke:blue, color:grey, font-size:24px,font-weight:bold -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-style-statement-without-htmllabels-handdrawn-look.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-the-default-class-and-other-styles-default.mmd",
+      "family": "er-diagram",
+      "sha256": "5f271efc85e01aa809c8b0cc1a4d2b55d7c1bf7bbb6f78904b6902d118e13144",
+      "manifest_sha256": "5f271efc85e01aa809c8b0cc1a4d2b55d7c1bf7bbb6f78904b6902d118e13144",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "classDef blue stroke:lightblue, color: #0000FF -> class surface; not applied",
+        "classDef default fill:pink -> class surface; not applied",
+        "style c color:green -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-the-default-class-and-other-styles-default.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-the-default-class-and-other-styles-elk-layout.mmd",
+      "family": "er-diagram",
+      "sha256": "599cadcb8cf55254870d533a9a31a2fb4814be3b67263cf644eab7741b7f9ff4",
+      "manifest_sha256": "599cadcb8cf55254870d533a9a31a2fb4814be3b67263cf644eab7741b7f9ff4",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "classDef blue stroke:lightblue, color: #0000FF -> class surface; not applied",
+        "classDef default fill:pink -> class surface; not applied",
+        "style c color:green -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-the-default-class-and-other-styles-elk-layout.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    },
+    {
+      "path": "er-diagram/visual-check/entities-with-styles-applied-from-the-default-class-and-other-styles-handdrawn-look.mmd",
+      "family": "er-diagram",
+      "sha256": "f93af83a352799c5edcb02bb2197b295e7dbc29aa5ef484a0950f709437be0f8",
+      "manifest_sha256": "f93af83a352799c5edcb02bb2197b295e7dbc29aa5ef484a0950f709437be0f8",
+      "prior_status": "source_fallback",
+      "prediction": "predicted-draw",
+      "track_scope": "whole-only",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_footer_header": "ER native projection v1",
+      "expected_style_notices": [
+        "p[PERSON]:::blue -> class surface; not applied",
+        "classDef blue stroke:lightblue, color: #0000FF -> class surface; not applied",
+        "classDef default fill:pink -> class surface; not applied",
+        "style c color:green -> class surface; not applied"
+      ],
+      "twin": {
+        "kind": "style-stripped",
+        "path": "er-diagram/visual-check/entities-with-styles-applied-from-the-default-class-and-other-styles-handdrawn-look.mmd"
+      },
+      "ledger_note": "the ER projection paints no class surface; each disclosed input is recorded once and the stripped twin renders identical art"
+    }
+  ]
+}

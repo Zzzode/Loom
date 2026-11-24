@@ -825,12 +825,15 @@ TEST(MermaidEnvelopeWork, SupplementalAllowanceIsDrawnByOnlyOrdinal198) {
         }
     }
 
-    // 97 look-envelope ER fixtures = 87 drawable (86 within the bare 1M cap plus
-    // the now-admitted ordinal 198) + 10 construct-gated fallbacks. Before the
-    // allowance this split was 86/11; exactly one budget-gated row moved.
+    // 97 look-envelope ER fixtures = 92 drawable (91 within the bare 1M cap plus
+    // the now-admitted ordinal 198) + 5 construct-gated fallbacks. Before the
+    // allowance this split was 86/11; exactly one budget-gated row moved. D-460
+    // then admitted five `entities-with-styles-applied-*-handdrawn-look` rows
+    // through the closed ER style surface, moving them off the construct gate:
+    // 87/10 -> 92/5 (the unicode-script handdrawn-look rows stay gated).
     EXPECT_EQ(scanned, 97u);
-    EXPECT_EQ(construct_rejected, 10u);
-    EXPECT_EQ(drawable, 87u);
+    EXPECT_EQ(construct_rejected, 5u);
+    EXPECT_EQ(drawable, 92u);
     EXPECT_EQ(over_cap, 1u)
         << "exactly one drawable ER look-envelope fixture exceeds the bare 1M primary";
     EXPECT_EQ(sole_crosser, sole_crosser_path);

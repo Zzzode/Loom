@@ -197,8 +197,27 @@ bool Canvas::free(Point p) const {
     return work.spend() && inside(p) && !at(p).blocked;
 }
 
+bool Canvas::record_undo(Point p) {
+    if (!undo) return true;
+    if (!work.spend(sizeof(CellUndo) + 8u)) return false;
+    if (undo->size() == undo->capacity() &&
+        !work.spend(undo->size() * sizeof(CellUndo) + sizeof(CellUndo) + 64u))
+        return false;
+    const auto& cell = at(p);
+    undo->push_back({static_cast<std::size_t>(index(p)), cell.glyph, cell.bits, cell.blocked,
+                     cell.allowed});
+    return true;
+}
+
+bool Canvas::block(Point p, bool value) {
+    if (!inside(p) || !record_undo(p)) return false;
+    at(p).blocked = value;
+    return true;
+}
+
 bool Canvas::put(Point p, std::string_view glyph, bool block) {
     if (!inside(p) || !work.spend()) return false;
+    if (!record_undo(p)) return false;
     at(p).glyph = glyph;
     at(p).blocked = block;
     return true;
@@ -289,6 +308,11 @@ bool Canvas::segment(Point from, Point to, bool dashed) {
     const Point step{(to.x > from.x) - (to.x < from.x), (to.y > from.y) - (to.y < from.y)};
     for (Point p = from;; p = p + step) {
         if (!inside(p) || !work.spend()) return false;
+        // D-461 stage 3: routing-site mutations must be reversible from the
+        // undo log. Every current caller runs before the log is armed (the
+        // guarded record is free then), but recording here keeps a future
+        // in-window segment from silently corrupting the retry pre-image.
+        if (!record_undo(p)) return false;
         auto& cell = at(p);
         cell.blocked = true;
         if (p != from) cell.bits |= direction_bits(Point{} - step);

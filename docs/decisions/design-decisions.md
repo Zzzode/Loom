@@ -5856,24 +5856,64 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   line is part of already-drawn rows' art, so adding a token there would break
   byte identity; the declaration's verbatim record in the legend remains the
   disclosure.
-- **Routing geometry (stage 3).** Measured cause, per row: the dense
-  `basic-states-*` graphs and `should-render-edge-labels-correctly-with-multiple-
-  transitions` fail after several long edges have been painted, because
-  `RouteSearch` routes only through free cells and each painted long edge cuts
-  the available margin; the labeled rows additionally fail earlier because the
-  state-only `free_regions` prefilter finds the two endpoint ports in different
-  free-cell components (the Class and ER families already skip that prefilter
-  and prove label connectivity with the actual split A* paths).
-  Planned mechanism, confined to a **second routing pass that runs only after
-  the first pass fails**: (a) the pass enables perpendicular edge crossings —
-  an A* step may traverse a cell that carries a *straight* routed line when the
-  move is perpendicular to it, at a cost penalty, and `paint_path` merges the
-  bits into the existing glyph (`┼`) after validating that the crossing is
-  straight-through (no turn on a crossed cell); (b) the pass drops the
-  state-only `free_regions` prefilter for labeled edges, mirroring Class/ER.
-  Both changes are inert on the first pass, so every already-drawn row keeps
-  byte-identical art; a failing row pays the layout twice, which the envelope
-  must cover (it will be re-sized from the measured two-pass cost).
+- **Routing geometry (stage 3, implemented).** Measured cause, per row: the
+  dense `basic-states-*` graphs and the labeled rows fail after several long
+  edges have been painted, because `RouteSearch` routes only through free
+  cells and each painted long edge cuts the available margin; the labeled rows
+  additionally fail earlier because the state-only `free_regions` prefilter
+  finds the two endpoint ports in different free-cell components (Class and ER
+  already skip it and prove label connectivity with the actual split paths).
+  Mechanism: a **second routing pass that runs only after the first fails**.
+  The first pass records a per-cell pre-image (`CellUndo`: glyph, bits,
+  blocked, allowed) through `Canvas::record_undo`, armed only for
+  `stateDiagram-v2` and only around `route_scope`; `Canvas::put` and every direct
+  `blocked` write during routing go through the log. On failure the log is
+  replayed in reverse (restoring exactly the drawn frame), the log is cleared,
+  and `route_scope` runs again with `RouteSearch::crossing` set for every
+  scope: `free()` admits a cell only when it carries a *straight* routed line
+  (`glyph == line_glyph(bits)`), `step()` requires the move into it to be
+  perpendicular, and `paint_path` merges the union of the crossed line and the
+  new segment into a real junction glyph (a perpendicular pass yields `┼`; a
+  bend on the crossed cell yields a T). A merged cell is no longer straight,
+  so it cannot be crossed again; a parallel routed-provenance array (armed
+  with the log and cleared on restore) marks only cells painted by
+  `paint_path`, keeping box and note borders (also blocked and straight) out
+  of the crossing domain, so nothing else is newly traversable. The retry
+  also drops the state-only `free_regions` label prefilter, mirroring
+  Class/ER. It is scoped to `stateDiagram-v2` scenes with **no cross-owner
+  edge** (`!layout.compound_scope`: the flag is set only by an edge whose
+  endpoints have different owners). Scenes with a cross-owner edge keep the
+  pre-existing structural compound route, because a re-routed composite can
+  produce a relation set its reviewed Model does not describe — the b91
+  reverse-escape control (`state_narrow_reciprocal_controls`, nine-endpoint
+  composite) drew through the retry but failed its Model's relation-endpoint
+  comparison, so it stays on the old path and remains whole-source. The same
+  predicate keeps the classic `stateDiagram` v1 family out entirely. Composite
+  *scenes* whose edges all stay inside one owner are not compound by this
+  predicate and do take the retry — `state-diagram-v2/pr-check/
+  should-render-edge-labels-correctly-with-multiple-transitions` is exactly
+  that case (nine `state X { c }` groups, all edges top-level). The retry is
+  inert when the first pass
+  succeeds (same bytes), and
+  the undo log and routed-provenance array are charged only on the
+  `stateDiagram-v2` path, so every other family's charges (including the
+  classic `stateDiagram` v1 family, which keeps the original routing path) are
+  unchanged.
+  Measured: six of the seven geometry rows now draw (the four dense
+  `basic-states-neo-look-*` graphs, `v2-should-render-a-simple-state-diagrams-
+  with-labels` and `should-render-edge-labels-correctly-with-multiple-
+  transitions`); all six stay whole-source at 40 columns. The seventh,
+  `v2-should-render-composite-states`, still fails: its 42-column edge label
+  (`Yet another long long öong öong öong label`) sits on a transition *inside*
+  a composite narrower than the label, and the
+  terminal projection keeps each label in-row inside its owning scope, so the
+  label cannot be placed without widening the composite past its authored
+  geometry. That row is deferred as `stage3_label_width` with that evidence.
+  The undo log plus the routed-provenance allocation add 13,580 Work to the
+  small pinned state row (28,796 -> 42,376) and 3,918 to its frontmatter twin
+  (23,775 -> 27,693); both pins are updated. The retry is scoped to
+  `stateDiagram-v2`; the classic `stateDiagram` twin rows keep the original
+  path and stay whole-source.
 - **The `info` directive.** Not a state diagram. Admitted as a minimal
   native `info` panel (`Mermaid <upstream tag>` plus the pinned version line)
   only if it can be rendered without inventing content; otherwise it becomes
@@ -5896,6 +5936,10 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   count table, so re-running it is byte-idempotent. The protected-file
   reconciliation was reviewed by an independent agent (task
   a096d008e18077c55).
+- **Stage 3 result (measured).** 19 of the 21 rows draw at 240 columns; the
+  two remaining are the labeled composite whose 42-column edge label is wider
+  than its owning composite and the bare `info` directive. The six crossing rows draw
+  only through the retry pass.
 - **Stage 1-2 result (measured).** 13 of the 21 rows draw at 240 columns
   (the ten budget rows, the two `click` rows and the `font-style` row); only
   `should-render-edge-labels-correctly-with-multiple-states` still draws at 40

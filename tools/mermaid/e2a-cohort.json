@@ -21,15 +21,15 @@
     "reviewer_agent": "independent read-only adversarial D235 re-review (fresh general-purpose agent; full-diff audit, independent 14-case dual-seam probe, own whole-corpus HEAD-vs-working A/B, frozen-invariant verification); prior agent:rfc0031-e2a-ledger-review covered the 56/13 partition",
     "date": "2026-11-14",
     "verdict": "approved",
-    "note": "D235 retires the gitgraph-empty-quoted-tag detector: Cursor::take_tag now accepts an explicit empty quoted tag (tag: \"\") which carries no glyphs and projects to no label, identical to an omitted tag. Three gitGraph cherry-pick originals (two TB/LR orientations and a BT) move to predicted-draw, guarded by MermaidGitGraphEmptyTag native gtests. The other six blockers and all frozen gates remain unchanged. Approved 59/10 partition. D-461 (2026-11-24) retires the two should-render-edge-labels-correctly* next-line-brace rows: their only remaining blocker was the fixed 1M layout Work primary, now funded by the bounded canvas-derived state envelope (see tools/mermaid/state-d461-cohort.json and test_mermaid_state_d461_cohort). The brace-on-next-line tag survives only for the multiple-transitions row, whose blocker is routing geometry (D-461 stage 3)."
+    "note": "D235 retires the gitgraph-empty-quoted-tag detector: Cursor::take_tag now accepts an explicit empty quoted tag (tag: \"\") which carries no glyphs and projects to no label, identical to an omitted tag. Three gitGraph cherry-pick originals (two TB/LR orientations and a BT) move to predicted-draw, guarded by MermaidGitGraphEmptyTag native gtests. The other six blockers and all frozen gates remain unchanged. Approved 59/10 partition. D-461 (2026-11-24) retires the two should-render-edge-labels-correctly* next-line-brace rows: their only remaining blocker was the fixed 1M layout Work primary, now funded by the bounded canvas-derived state envelope (see tools/mermaid/state-d461-cohort.json and test_mermaid_state_d461_cohort). D-461 stage 3's crossing retry then admits the multiple-transitions fan-out too, so no row carries the brace tag any more."
   },
   "counts": {
     "total": 69,
     "git": 64,
     "state_v2": 5,
     "state_v1_qualified": 0,
-    "predicted_draw": 63,
-    "predicted_blocked": 6
+    "predicted_draw": 64,
+    "predicted_blocked": 5
   },
   "blocker_vocabulary": [
     "gitgraph-multiline-quoted-branch-label",
@@ -1919,19 +1919,14 @@
       ],
       "has_config": false,
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-composite-brace-on-next-line",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (State composite parse and relations_layout)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (State composite parse and relations_layout)",
-        "detail": "The historical next-line-brace cohort remains whole-scene execution debt: the State parser now accepts a standalone next-line opener, but the three complete pinned originals still fall back at 240 columns. This source-profile tag does not assert a lexical rejection or establish a layout root cause."
-      },
-      "ledger_note": "Pending complete-original execution; no grammar/layout root cause claimed"
+      "blocker": null,
+      "ledger_note": "E2a description-only admission"
     }
   ]
 }

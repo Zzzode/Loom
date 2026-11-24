@@ -34,14 +34,14 @@
     "reviewer_agent": "independent read-only adversarial re-review agent, D228 state style group (fresh general-purpose agent; full-diff audit, independent 104-assertion probes plus a rerun of the author's 27-assertion dual-seam probe, 269/269 native suite, frozen invariant and 51/10 partition verification); the D223 approval covered only the 47/14 partition",
     "date": "2026-11-14",
     "verdict": "approved",
-    "note": "D228 moves four more rows to predicted-draw by giving state its own classDef/class/style parser and resolver (Rounded and nested entities admitted, palette-role colors, border shorthand to stroke, bold to pixels); the fifth style fixture stays blocked because font-style:italic has no terminal cell attribute. Inline Node:::class edge syntax and a direct fill/stroke/color:red stay whole-source fallback (fail-closed), keeping the frozen State85 and StateScoped closed profiles byte-identical. The legacy D223 seven rows and all frozen gates remain unchanged. Approved 51/10 partition and five-frame gate. D-461 (2026-11-24) narrows two detectors: `font-style: italic|normal` is validated and unpainted (other values still gate), and the closed `click <id> \"<url>\" [\"<tooltip>\"]` form is validated, target-resolved and dropped (see tools/mermaid/state-d461-cohort.json); the clickable-tooltip and v2-multiple-classes rows move to predicted-draw (both D-461 review agents verified this migration)."
+    "note": "D228 moves four more rows to predicted-draw by giving state its own classDef/class/style parser and resolver (Rounded and nested entities admitted, palette-role colors, border shorthand to stroke, bold to pixels); the fifth style fixture stays blocked because font-style:italic has no terminal cell attribute. Inline Node:::class edge syntax and a direct fill/stroke/color:red stay whole-source fallback (fail-closed), keeping the frozen State85 and StateScoped closed profiles byte-identical. The legacy D223 seven rows and all frozen gates remain unchanged. Approved 51/10 partition and five-frame gate. D-461 (2026-11-24) narrows two detectors: `font-style: italic|normal` is validated and unpainted (other values still gate), and the closed `click <id> \"<url>\" [\"<tooltip>\"]` form is validated, target-resolved and dropped (see tools/mermaid/state-d461-cohort.json); the clickable-tooltip and v2-multiple-classes rows move to predicted-draw (both D-461 review agents verified this migration). D-461 stage 3 removes the v2 labeled fan-out from the routing-debt set once the crossing retry draws it."
   },
   "counts": {
     "total": 61,
     "state_v2": 38,
     "state_v1": 23,
-    "predicted_draw": 55,
-    "predicted_blocked": 6
+    "predicted_draw": 56,
+    "predicted_blocked": 5
   },
   "blocker_vocabulary": [
     "state-non-state-body",
@@ -531,19 +531,14 @@
         }
       ],
       "has_init": false,
-      "prediction": "predicted-blocked",
+      "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
-      "blocker": {
-        "kind": "state-native-routing-debt",
-        "site": "src/ui/visual/mermaid_relations_core_impl.cpp (relations_layout)",
-        "evidence": "src/ui/visual/mermaid_relations_core_impl.cpp (relations_layout)",
-        "detail": "The parser accepts the graph but the bounded native router cannot place the multiple labeled fan-out edges (including labeled composite entry/exit rows) without overlap. Not predictable lexically; sha-bound independent review set."
-      },
-      "ledger_note": "Blocked by a closed source-content detector or the sha-bound routing-debt review set"
+      "blocker": null,
+      "ledger_note": "E2b non-terminal config admission with disclosure footer"
     },
     {
       "path": "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams.mmd",

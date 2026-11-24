@@ -2598,9 +2598,10 @@ std::optional<RelationDiagram> parse_relations(std::string_view source, Work& wo
     }
     if (lines[0] == "classDiagram" || lines[0] == "classDiagram-v2")
         diagram.family = RelationFamily::Class;
-    else if (lines[0] == "stateDiagram-v2" || lines[0] == "stateDiagram")
+    else if (lines[0] == "stateDiagram-v2" || lines[0] == "stateDiagram") {
         diagram.family = RelationFamily::State;
-    else
+        diagram.state_v2 = lines[0] == "stateDiagram-v2";
+    } else
         return {};
     if (diagram.family == RelationFamily::Class) {
         auto logical = class_statement_lines(original, work);
@@ -8310,8 +8311,24 @@ bool RouteSearch::inside(Point p) const {
     return true;
 }
 
-bool RouteSearch::free(Point p) const {
-    if (!compound_route) return inside(p) && !canvas.at(p).blocked;
+bool RouteSearch::free(Point p) const { return free_impl(p, true); }
+
+bool RouteSearch::free_impl(Point p, bool allow_crossing) const {
+    if (!compound_route) {
+        if (!inside(p)) return false;
+        const auto& cell = canvas.at(p);
+        if (!cell.blocked) return true;
+        // D-461 stage 3: a straight line painted by paint_path is traversable
+        // by the state retry pass, which may only cross it perpendicularly
+        // (step()). The routed provenance excludes box/note borders, which
+        // are also blocked and straight but are not edges.
+        if (!crossing || !allow_crossing) return false;
+        const auto bits = cell.bits;
+        if (bits != (kUp | kDown) && bits != (kLeft | kRight)) return false;
+        if (cell.glyph != line_glyph(bits)) return false;
+        return canvas.routed &&
+               (*canvas.routed)[static_cast<std::size_t>(canvas.index(p))] != 0;
+    }
     if (!inside(p)) return false;
     if (!canvas.at(p).blocked) return true;
     const auto bits = compound_route->structural(p);
@@ -8324,7 +8341,20 @@ bool RouteSearch::free(Point p) const {
 }
 
 bool RouteSearch::step(Point from, Point to) const {
-    return !compound_route || compound_route->step(from, to);
+    if (compound_route && !compound_route->step(from, to)) return false;
+    // Compound scopes keep the structural-frame rule only: their free() admits
+    // structural bits (straight or L-shaped), and paint_path unions them the
+    // same way, so the crossing perpendicular rule does not apply there.
+    if (!crossing || compound_route) return true;
+    // A crossed cell must be a straight line and the move must be
+    // perpendicular to it; a turn on a crossed cell would need a glyph the
+    // terminal line table does not distinguish from a real junction.
+    const auto& cell = canvas.at(to);
+    if (!cell.blocked) return true;
+    const auto bits = cell.bits;
+    if (bits == (kUp | kDown)) return from.x != to.x;
+    if (bits == (kLeft | kRight)) return from.y != to.y;
+    return false;
 }
 
 std::optional<std::vector<Point>> RouteSearch::path(Point start, Point goal) {
@@ -8396,7 +8426,7 @@ std::optional<std::vector<Point>> RouteSearch::path(Point start, Point goal) {
         for (const auto step : kSteps) {
             if (!work.spend()) return {};
             const auto next = p + step;
-            if (!free(next) || (compound_route && !this->step(p, next))) continue;
+            if (!free(next) || !this->step(p, next)) continue;
             const int at = canvas.index(next), cost = current_cost + 1;
             if (stamp[static_cast<std::size_t>(at)] == generation &&
                 distance[static_cast<std::size_t>(at)] <= cost)
@@ -8429,8 +8459,7 @@ std::optional<std::vector<int>> free_regions(RouteSearch& search) {
             for (const auto step : kSteps) {
                 if (!canvas.work.spend()) return {};
                 const auto next = queue[n] + step;
-                if (!search.free(next) || (search.compound_route && !search.step(queue[n], next)))
-                    continue;
+                if (!search.free(next) || !search.step(queue[n], next)) continue;
                 const auto index = static_cast<std::size_t>(canvas.index(next));
                 if (regions[index] < 0) {
                     regions[index] = region;
@@ -8571,7 +8600,8 @@ std::vector<EndpointPort> ports_for(const RelationEntity& entity, const Relation
                     4u +
                     4u * search.layout.children[static_cast<std::size_t>(search.owner + 1)].size()))
                 return;
-            if (!search.free({border.x + normal.x * n, border.y + normal.y * n})) return;
+            if (!search.free_impl({border.x + normal.x * n, border.y + normal.y * n}, false))
+                return;
         }
         if (prepaid && !er_vector_room(ports, search.work)) return;
         ports.push_back({border, normal, route, marker});
@@ -8607,7 +8637,7 @@ std::vector<EndpointPort> ports_for(const RelationEntity& entity, const Relation
 }
 
 bool paint_path(Canvas& canvas, std::span<const Point> path, Point before, Point after, bool dotted,
-                const CompoundScopeRoute* compound_route) {
+                const CompoundScopeRoute* compound_route, bool crossing) {
     for (std::size_t n = 0; n < path.size(); ++n) {
         const Point p = path[n], previous = n ? path[n - 1] : before,
                     next = n + 1 < path.size() ? path[n + 1] : after;
@@ -8617,9 +8647,51 @@ bool paint_path(Canvas& canvas, std::span<const Point> path, Point before, Point
         auto glyph = line_glyph(bits);
         if (dotted && bits == (kLeft | kRight)) glyph = "┄";
         if (dotted && bits == (kUp | kDown)) glyph = "┆";
+        // D-461 stage 3: the state retry pass may run through a cell that
+        // already holds a perpendicular straight routed line; paint the union
+        // (a real junction) instead of overwriting it. Only the crossing pass
+        // can see an occupied cell here, because free() refuses it otherwise.
+        // Compound scopes keep the structural-frame path below (their free()
+        // admits the structural bits, and paint unions them the same way).
+        if (crossing && !compound_route && canvas.at(p).blocked && canvas.at(p).bits) {
+            // The A* entry into this cell was perpendicular (step()); the path
+            // may leave in any direction, so paint the union of the crossed
+            // straight line and the new segment (a real junction glyph).
+            const unsigned existing = canvas.at(p).bits;
+            const bool perpendicular =
+                (existing == (kUp | kDown) && (bits & (kLeft | kRight))) ||
+                (existing == (kLeft | kRight) && (bits & (kUp | kDown)));
+            if (!perpendicular) return false;
+            const unsigned merged = existing | bits;
+            if (!canvas.put(p, line_glyph(merged))) return false;
+            canvas.at(p).bits = merged;
+            if (canvas.routed)
+                (*canvas.routed)[static_cast<std::size_t>(canvas.index(p))] = 1;
+            continue;
+        }
         if (!canvas.put(p, glyph)) return false;
         canvas.at(p).bits = bits;
+        if (canvas.routed) (*canvas.routed)[static_cast<std::size_t>(canvas.index(p))] = 1;
     }
+    return true;
+}
+
+// D-461 stage 3: restore every cell the failed state routing pass touched, so
+// the crossing retry starts from exactly the drawn frame the original pass saw.
+// Entries replay in reverse order, so repeated pre-images of one cell collapse
+// to its earliest state.
+bool restore_canvas_undo(Canvas& canvas) {
+    if (!canvas.undo) return false;
+    auto& log = *canvas.undo;
+    if (!canvas.work.spend(log.size() * (sizeof(CellUndo) + 16u) + 64u)) return false;
+    for (auto it = log.rbegin(); it != log.rend(); ++it) {
+        auto& cell = canvas.cells[it->index];
+        cell.glyph = it->glyph;
+        cell.bits = it->bits;
+        cell.blocked = it->blocked;
+        cell.allowed = it->allowed;
+    }
+    log.clear();
     return true;
 }
 
@@ -8628,10 +8700,13 @@ bool paint_port(Canvas& canvas, const EndpointPort& port, bool attach_er) {
     // Perimeter geometry keeps its genuine corner family. A markerless
     // relationship adds exactly the used normal to its selected port.
     if (port.marker == Marker::None || attach_er) {
-        auto& cell = canvas.at(port.border);
+        const auto& cell = canvas.at(port.border);
         if (cell.bits) {
-            cell.bits |= direction_bits(port.normal);
-            if (!canvas.put(port.border, line_glyph(cell.bits))) return false;
+            // Compute first so put() records the true pre-image in the undo log
+            // (the log is armed for the state routing pass).
+            const unsigned bits = cell.bits | direction_bits(port.normal);
+            if (!canvas.put(port.border, line_glyph(bits))) return false;
+            canvas.at(port.border).bits = bits;
         }
     }
     for (int n = 1; n <= size; ++n) {
@@ -8716,7 +8791,7 @@ std::optional<LabelPlacement> label_place(Canvas& canvas, const RouteSearch& sea
         bool okay = true;
         for (int row = y - 1; okay && row <= y + h; ++row)
             for (int col = x - 2; col <= x + w + 1; ++col) {
-                if (!canvas.work.spend() || !search.free({col, row}) ||
+                if (!canvas.work.spend() || !search.free_impl({col, row}, false) ||
                     (search.compound_route && search.compound_route->structural({col, row}))) {
                     okay = false;
                     break;
@@ -9035,8 +9110,10 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
     }
     std::optional<std::vector<int>> regions;
     // Class and ER connectors prove endpoint and label connectivity with the
-    // actual split A* paths below. State retains its free-region prefilter.
-    if (diagram.family == RelationFamily::State && !edge.label.empty()) {
+    // actual split A* paths below. State retains its free-region prefilter on
+    // the original pass; the D-461 crossing retry proves connectivity with the
+    // actual paths instead, mirroring Class/ER.
+    if (diagram.family == RelationFamily::State && !edge.label.empty() && !search.crossing) {
         regions = free_regions(search);
         if (!regions) return false;
     }
@@ -9297,8 +9374,12 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
                 reservation_funded = false;
                 return;
             }
-            canvas.at(point).blocked =
-                search.compound_route && search.compound_route->structural(point) != 0;
+            if (!canvas.block(point,
+                              search.compound_route && search.compound_route->structural(point) !=
+                                  0)) {
+                reservation_funded = false;
+                return;
+            }
         };
         auto reserve = [&](Point point) {
             if (er_paint && !canvas.work.spend(8u)) {
@@ -9306,13 +9387,16 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
                 return;
             }
             if (point == p.route || point == q.route) return;
-            if (search.free(point)) {
+            if (search.free_impl(point, false)) {
                 if (er_paint && (!er_vector_room(reservations, canvas.work) ||
                                  !canvas.work.spend(sizeof(bool) + 8u))) {
                     reservation_funded = false;
                     return;
                 }
-                canvas.at(point).blocked = true;
+                if (!canvas.block(point)) {
+                    reservation_funded = false;
+                    return;
+                }
                 reservations.push_back(point);
             }
         };
@@ -9337,7 +9421,7 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
             if (!reservation_funded) return false;
             if (!path) continue;
             if (!paint_path(canvas, *path, p.route - p.normal, q.route - q.normal, edge.dotted,
-                            search.compound_route) ||
+                            search.compound_route, search.crossing) ||
                 !paint_port(canvas, p, diagram.family == RelationFamily::Er) ||
                 !paint_port(canvas, q, diagram.family == RelationFamily::Er))
                 return false;
@@ -9389,15 +9473,15 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
             const bool reserve_target = q.route != entrance;
             if (er_paint && reserve_target && !canvas.work.spend(2u * sizeof(bool) + 16u))
                 return false;
-            if (reserve_target) canvas.at(q.route).blocked = true;
+            if (reserve_target && !canvas.block(q.route)) return false;
             auto left = search.path(p.route, entrance);
-            if (reserve_target) canvas.at(q.route).blocked = false;
+            if (reserve_target && !canvas.block(q.route, false)) return false;
             if (left)
                 for (const auto point : *left) {
                     if (er_paint && (!er_vector_room(reservations, canvas.work) ||
                                      !canvas.work.spend(sizeof(bool) + 8u)))
                         return false;
-                    canvas.at(point).blocked = true;
+                    if (!canvas.block(point)) return false;
                     reservations.push_back(point);
                 }
             auto right = left ? search.path(exit, q.route) : std::nullopt;
@@ -9410,9 +9494,9 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
                 unreserve(point);
             if (!reservation_funded) return false;
             if (!paint_path(canvas, *left, p.route - p.normal, entrance + across, edge.dotted,
-                            search.compound_route) ||
+                            search.compound_route, search.crossing) ||
                 !paint_path(canvas, *right, exit - across, q.route - q.normal, edge.dotted,
-                            search.compound_route) ||
+                            search.compound_route, search.crossing) ||
                 !canvas.multiline({label->x, label->y}, edge.label, label->w) ||
                 !paint_port(canvas, p, diagram.family == RelationFamily::Er) ||
                 !paint_port(canvas, q, diagram.family == RelationFamily::Er))
@@ -9428,7 +9512,7 @@ bool connect_relation(Canvas& canvas, RouteSearch& search, const RelationDiagram
                 return false;
             for (int y = label->y - 1; y <= label->y + label->h; ++y)
                 for (int x = label->x - 1; x <= label->x + label->w; ++x)
-                    canvas.at({x, y}).blocked = true;
+                    if (!canvas.block({x, y})) return false;
             return true;
         }
         for (const auto point : reservations)
@@ -9502,10 +9586,10 @@ bool retry_class_caption_scope(Canvas& canvas, RouteSearch& search, const Relati
 }
 
 bool route_scope(Canvas& canvas, const RelationDiagram& diagram, const RelationLayout& layout,
-                 int owner, ErPaint* er_paint = nullptr) {
+                 int owner, ErPaint* er_paint = nullptr, bool crossing = false) {
     for (const int child : layout.children[static_cast<std::size_t>(owner + 1)])
         if (diagram.entities[static_cast<std::size_t>(child)].shape == EntityShape::Group &&
-            !route_scope(canvas, diagram, layout, child, er_paint))
+            !route_scope(canvas, diagram, layout, child, er_paint, crossing))
             return false;
     if (layout.scope_edges[static_cast<std::size_t>(owner + 1)].empty()) return true;
     std::optional<ReciprocalPlan> reciprocal;
@@ -9533,6 +9617,7 @@ bool route_scope(Canvas& canvas, const RelationDiagram& diagram, const RelationL
                            4u * sizeof(RouteSearch) + 128u))
         return false;
     RouteSearch search(canvas, layout, owner);
+    search.crossing = crossing;
     if (!diagram.state_scope_directions.empty()) {
         const auto selected = diagram.state_direction(owner, canvas.work);
         if (!selected) return false;
@@ -9871,7 +9956,38 @@ relations_layout(std::string_view source, Work& work, bool class_envelope, bool 
             return {};
         note_boxes.push_back(box);
     }
-    if (!route_scope(canvas, *diagram, layout, -1, er_paint ? &*er_paint : nullptr)) return {};
+    // D-461 stage 3: a failed state pass is retried once from its pre-image
+    // with perpendicular crossings enabled; a successful first pass never
+    // touches the retry, so already-drawn rows keep byte-identical art.
+    std::vector<CellUndo> state_undo;
+    std::vector<unsigned char> state_routed;
+    // The crossing retry targets stateDiagram-v2 scenes with no cross-owner
+    // edge (`compound_scope` is set only by an edge whose endpoints have
+    // different owners). Scenes with a cross-owner edge keep the pre-existing
+    // structural compound route, whose scope-level admission is a reviewed
+    // contract (a re-routed composite can render a relation set the reviewed
+    // Model does not describe). A composite scene whose edges all stay inside
+    // one owner is not compound by this predicate and does take the retry.
+    const bool crossing_eligible = diagram->family == RelationFamily::State &&
+                                   diagram->state_v2 && !layout.compound_scope;
+    if (crossing_eligible) {
+        if (!work.spend(sizeof(std::vector<CellUndo>) + sizeof(CellUndo) + 64u)) return {};
+        canvas.undo = &state_undo;
+        if (!work.spend(canvas.cells.size() / 8u + sizeof(std::vector<unsigned char>) + 16u))
+            return {};
+        state_routed.assign(canvas.cells.size(), 0u);
+        canvas.routed = &state_routed;
+    }
+    bool routed = route_scope(canvas, *diagram, layout, -1, er_paint ? &*er_paint : nullptr);
+    if (!routed && crossing_eligible) {
+        if (!restore_canvas_undo(canvas)) return {};
+        if (!work.spend(state_routed.size() + 16u)) return {};
+        std::ranges::fill(state_routed, 0u);
+        routed = route_scope(canvas, *diagram, layout, -1, er_paint ? &*er_paint : nullptr, true);
+    }
+    canvas.undo = nullptr;
+    canvas.routed = nullptr;
+    if (!routed) return {};
     if (er_paint) {
         auto payload = er_paint->finish(*diagram);
         if (!payload) return {};

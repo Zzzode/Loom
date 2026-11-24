@@ -238,13 +238,35 @@ struct LabelRun {
     bool operator==(const LabelRun&) const = default;
 };
 
+// D-461 stage 3: one pre-image of a cell, captured before a routing mutation
+// so a failed state pass can be undone and retried with crossings enabled.
+struct CellUndo {
+    std::size_t index;
+    std::string glyph;
+    unsigned bits;
+    bool blocked;
+    unsigned allowed;
+};
+
 struct Canvas {
     int width;
     int height;
     Work& work;
     std::vector<Cell> cells;
     std::unique_ptr<std::vector<SemanticCellStyle>> styles;
+    // Armed only around the state routing pass; null everywhere else, so the
+    // record branch is inert for every other family and for the pre-routing
+    // frame drawing.
+    std::vector<CellUndo>* undo = nullptr;
+    // Routed-line provenance for the crossing retry: only cells painted by
+    // paint_path are marked, so note/box borders (also blocked with straight
+    // bits) can never be crossed.
+    std::vector<unsigned char>* routed = nullptr;
     Canvas(int w, int h, Work& budget);
+    bool record_undo(Point p);
+    // Set the blocked flag through the undo log (armed only for the state
+    // routing pass; a no-op logger otherwise).
+    bool block(Point p, bool value = true);
     bool inside(Point p) const;
     int index(Point p) const;
     Cell& at(Point p);
@@ -428,6 +450,9 @@ struct ErPresentation;
 
 struct RelationDiagram {
     RelationFamily family = RelationFamily::Class;
+    // D-461 stage 3: the crossing retry is scoped to stateDiagram-v2; the
+    // classic stateDiagram family keeps the original routing path.
+    bool state_v2 = false;
     std::string direction = "TB";
     std::vector<RelationEntity> entities;
     std::vector<Relationship> edges;
@@ -753,9 +778,13 @@ struct RouteSearch {
     const std::vector<Point>* compound_reservations = nullptr;
     int reciprocal_face = 0, reciprocal_spine = 0, reciprocal_inset = 0;
     Point reciprocal_start{}, reciprocal_goal{};
+    // D-461 stage 3: the state retry pass may cross an already-routed straight
+    // line perpendicularly. Inert on the original pass (byte identity).
+    bool crossing = false;
     RouteSearch(Canvas& c, const RelationLayout& l, int scope);
     bool inside(Point p) const;
     bool free(Point p) const;
+    bool free_impl(Point p, bool allow_crossing) const;
     bool step(Point from, Point to) const;
     std::optional<std::vector<Point>> path(Point start, Point goal);
 };
@@ -767,7 +796,7 @@ std::vector<EndpointPort> ports_for(const RelationEntity& entity, const Relation
                                     Marker marker, const RouteSearch& search,
                                     const std::vector<int>& dividers = {});
 bool paint_path(Canvas& canvas, std::span<const Point> path, Point before, Point after, bool dotted,
-                const CompoundScopeRoute* compound_route = nullptr);
+                const CompoundScopeRoute* compound_route = nullptr, bool crossing = false);
 bool paint_port(Canvas& canvas, const EndpointPort& port, bool attach_er = false);
 std::optional<LabelPlacement> label_place(Canvas& canvas, const RouteSearch& search,
                                           const Relationship& edge, const EndpointPort& from,

@@ -411,7 +411,9 @@ stateDiagram-v2
 
 ### 13. `state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd`
 
-- **predicted-blocked** — `state-composite-brace-on-next-line`
+- **predicted-draw (D-461 stage 3)** — the crossing retry closes this labeled
+  fan-out; no row carries the brace tag any more. Historical witness below.
+- **historical** — `state-composite-brace-on-next-line`
 - Witness: `src/ui/visual/mermaid_relations_impl.cpp (state composite parse; same-line `{` required)` — A composite opens only when '{' is on the same state-declaration line; a standalone next-line '{' falls through to the edge parser and is rejected.
 
 ```mermaid-source
@@ -508,7 +510,7 @@ stateDiagram-v2
 | `state-diagram-v2/nightly-check/should-align-dividers-correctly.mmd` | stateDiagram-v2 | description | predicted-blocked | source/source/source | state-composite-divider |
 | `state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd` | stateDiagram-v2 | description | predicted-draw | drawn/drawn/drawn | — (D-461; historical `state-composite-brace-on-next-line`) |
 | `state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd` | stateDiagram-v2 | description | predicted-draw | drawn/source/drawn | — (D-461; historical `state-composite-brace-on-next-line`) |
-| `state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd` | stateDiagram-v2 | description | predicted-blocked | source/source/source | state-composite-brace-on-next-line |
+| `state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd` | stateDiagram-v2 | description | predicted-draw | drawn/source/drawn | — (D-461 stage 3) |
 
 ## Independent review
 

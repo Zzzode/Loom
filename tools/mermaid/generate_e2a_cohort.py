@@ -117,10 +117,7 @@ NATIVE_ROUTE_DEBT: set[str] = set()
 # they move to REVIEWED_BRACE_DRAW below. The `multiple-transitions` row stays:
 # its blocker is routing geometry, not budget, and it is deferred to D-461
 # stage 3.
-STATE_COMPOSITE_EXECUTION_DEBT = {
-    "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd":
-        "b6ef22abdcd251e866c6ab5a9ee7d68d98e1092a8d65f294de849d4aa3b68c4a",
-}
+STATE_COMPOSITE_EXECUTION_DEBT: dict[str, str] = {}
 
 # D-461: reviewed next-line-brace originals admitted to draw (each sha-bound, so
 # a source revision requires a new independent review). They are the two
@@ -135,6 +132,10 @@ NARROW_DRAW = {
 }
 
 REVIEWED_BRACE_DRAW = {
+    # D-461 stage 3 retires the last routing-geometry entry: the crossing retry
+    # closes the multiple-transitions fan-out.
+    "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd":
+        "b6ef22abdcd251e866c6ab5a9ee7d68d98e1092a8d65f294de849d4aa3b68c4a",
     "state-diagram-v2/nightly-check/should-render-edge-labels-correctly-with-multiple-states.mmd":
         "1e359f909af210d7338db0674c6f86daaf25b5a3959bd70b0649e92ee0c8f3f3",
     "state-diagram-v2/nightly-check/should-render-edge-labels-correctly.mmd":
@@ -317,8 +318,8 @@ def build(repo_root):
                     "remaining blocker was the fixed 1M layout Work primary, now funded by "
                     "the bounded canvas-derived state envelope (see "
                     "tools/mermaid/state-d461-cohort.json and test_mermaid_state_d461_cohort). "
-                    "The brace-on-next-line tag survives only for the multiple-transitions "
-                    "row, whose blocker is routing geometry (D-461 stage 3).",
+                    "D-461 stage 3's crossing retry then admits the multiple-transitions "
+                    "fan-out too, so no row carries the brace tag any more.",
         },
         "counts": {
             "total": total,

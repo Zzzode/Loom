@@ -1,11 +1,12 @@
 {
   "schema": "loom_mermaid_state_d461_cohort/v1",
   "decision": "D-461",
-  "stage": "1-2: state layout envelope, click bindings, font-style",
+  "stage": "1-3: state layout envelope, click bindings, font-style, crossing retry",
   "admission": {
     "envelope": "relations_layout enables the two-pool meter for RelationFamily::State from the actual canvas: state_envelope_layout_allowance(w,h) = w*h*192 + 4096",
     "click": "`click <id> \"<url>\" [\"<tooltip>\"]`: closed grammar, declared-target resolution, consumed and dropped (FS-2)",
-    "font-style": "`font-style: italic|normal` validated and dropped"
+    "font-style": "`font-style: italic|normal` validated and dropped",
+    "crossing": "a failed state routing pass is undone from a pre-image log and retried once with perpendicular crossings and no free-region label prefilter; the retry is inert when the first pass succeeds"
   },
   "upstream": {
     "tag": "mermaid@12.2.0",
@@ -13,34 +14,28 @@
     "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
   },
   "selection": {
-    "rule": "every state-diagram-v2 fallback whose remaining blocker is the fixed 1M layout primary or the click/font-style vocabulary",
-    "cohort_digest": "3d1e6bbf9444da63436be876ce0b174b5a7508195c1354fff35b241d6e28793a"
+    "rule": "every state-diagram-v2 fallback whose remaining blocker is the fixed 1M layout primary, the click/font-style vocabulary, or routing geometry that the crossing retry closes",
+    "cohort_digest": "5314b69c41da652236445600ff29200c9a04520f4001e342ddd9150604c80dfa"
   },
   "deferred": {
-    "stage3_routing_geometry": [
-      "state-diagram-v2/nightly-check/basic-states-neo-look-neo-theme.mmd",
-      "state-diagram-v2/nightly-check/basic-states-neo-look-neo-dark-theme.mmd",
-      "state-diagram-v2/nightly-check/basic-states-neo-look-redux-theme.mmd",
-      "state-diagram-v2/nightly-check/basic-states-neo-look-redux-dark-theme.mmd",
-      "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams-with-labels.mmd",
-      "state-diagram-v2/pr-check/v2-should-render-composite-states.mmd",
-      "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd"
+    "stage3_label_width": [
+      "state-diagram-v2/pr-check/v2-should-render-composite-states.mmd"
     ],
     "stage4_info_directive": [
       "state-diagram-v2/nightly-check/v2-should-render-a-simple-info.mmd"
     ]
   },
   "counts": {
-    "total": 13,
+    "total": 19,
     "by_family": {
-      "state-diagram-v2": 13
+      "state-diagram-v2": 19
     }
   },
   "review": {
-    "reviewer_agent": "two independent read-only adversarial reviews, fresh general-purpose agents, D-461 state-v2 stage 1-2, 2026-11-24. Gate/render lens (task a600ac6947bd3d80d): REQUEST-CHANGES then APPROVE after the art proof (`expected_art_labels`, frame glyph, >= 4 art rows) and the e2a/e2b ledger migration. Correctness lens (task a5d9c76642d33eaa0): REQUEST-CHANGES on the pending verdict, the stale 0038 E2b footer pin 53 -> 55, the roster, doc Work-rate wording and the e2b detector mirror; all items addressed or rebutted in the same slice (the residual MINORs -- the E2a narrow field and the E2b declaration-list mirror -- were fixed after the verdict and re-checked by the generators' --check).",
+    "reviewer_agent": "stage 3: one independent read-only adversarial review (task a7878335a4df1179a; round 1 REQUEST-CHANGES on the classic stateDiagram leak, note-border crossings, port pre-images, compound-scope painter/step agreement and stale Work pins; all fixed and re-verified). Stage 1-2 was reviewed by two independent adversarial agents, fresh general-purpose agents, D-461 state-v2 stage 1-2, 2026-11-24. Gate/render lens (task a600ac6947bd3d80d): REQUEST-CHANGES then APPROVE after the art proof (`expected_art_labels`, frame glyph, >= 4 art rows) and the e2a/e2b ledger migration. Correctness lens (task a5d9c76642d33eaa0): REQUEST-CHANGES on the pending verdict, the stale 0038 E2b footer pin 53 -> 55, the roster, doc Work-rate wording and the e2b detector mirror; all items addressed or rebutted in the same slice (the residual MINORs -- the E2a narrow field and the E2b declaration-list mirror -- were fixed after the verdict and re-checked by the generators' --check). Final pre-commit review (task ab05c66c561a29d02, fresh read-only adversarial agent): APPROVE with no BLOCKER/MAJOR; its MINOR/NIT items were all addressed in the same slice (design-record Work delta 13,580, the cross-owner scoping wording, `Canvas::segment` routed through the undo log, a per-row oracle partition pin in the gate, stage labels and a dead generator branch).",
     "date": "2026-11-24",
     "verdict": "approved",
-    "note": "Stage 1-2 only: the bounded canvas-derived state layout envelope and the two vocabulary admissions (`click` and `font-style`). The seven routing-geometry rows and the bare `info` row are deferred and listed under `deferred`; the ledger grows in the same slice."
+    "note": "Stages 1-3: the bounded canvas-derived state layout envelope, the two vocabulary admissions (`click` and `font-style`) and the crossing retry that admits six routing-geometry rows. One labeled composite (42-column edge label wider than its owning scope) and the bare `info` row stay under `deferred`."
   },
   "rows": [
     {
@@ -325,6 +320,126 @@
         "Crash"
       ],
       "ledger_note": "font-style is dropped; art above the legend is twin-equal"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/basic-states-neo-look-neo-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "2bb60eb3ca3ce3fdea98bf325367f40f38ce5d33478e90206315c1718f010455",
+      "manifest_sha256": "2bb60eb3ca3ce3fdea98bf325367f40f38ce5d33478e90206315c1718f010455",
+      "prior_status": "source_fallback",
+      "oracle": "crossing-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [],
+      "expected_art_labels": [
+        "State1",
+        "State2",
+        "State3"
+      ],
+      "ledger_note": "routing geometry only; the row draws through the crossing retry pass"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/basic-states-neo-look-neo-dark-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "2fee8dd28373870b5234ecba5fd8684412393ae2260d5a033b95c65e94a45002",
+      "manifest_sha256": "2fee8dd28373870b5234ecba5fd8684412393ae2260d5a033b95c65e94a45002",
+      "prior_status": "source_fallback",
+      "oracle": "crossing-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [],
+      "expected_art_labels": [
+        "State1",
+        "State2",
+        "State3"
+      ],
+      "ledger_note": "routing geometry only; the row draws through the crossing retry pass"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/basic-states-neo-look-redux-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "a9823e5ae68e52d3991f691f41a93cd09836580813ed80c310baffb65ae71db5",
+      "manifest_sha256": "a9823e5ae68e52d3991f691f41a93cd09836580813ed80c310baffb65ae71db5",
+      "prior_status": "source_fallback",
+      "oracle": "crossing-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [],
+      "expected_art_labels": [
+        "State1",
+        "State2",
+        "State3"
+      ],
+      "ledger_note": "routing geometry only; the row draws through the crossing retry pass"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/basic-states-neo-look-redux-dark-theme.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "855a8aff3b8b9b46e234de016785527f477cf0a440072fc121cc50bc2aefd718",
+      "manifest_sha256": "855a8aff3b8b9b46e234de016785527f477cf0a440072fc121cc50bc2aefd718",
+      "prior_status": "source_fallback",
+      "oracle": "crossing-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [],
+      "expected_art_labels": [
+        "State1",
+        "State2",
+        "State3"
+      ],
+      "ledger_note": "routing geometry only; the row draws through the crossing retry pass"
+    },
+    {
+      "path": "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams-with-labels.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "4bafaf78477395eca79617efbbcdccc107453a67424b2282deb8ed3fce05e996",
+      "manifest_sha256": "4bafaf78477395eca79617efbbcdccc107453a67424b2282deb8ed3fce05e996",
+      "prior_status": "source_fallback",
+      "oracle": "crossing-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [],
+      "expected_art_labels": [
+        "State1",
+        "State2",
+        "State3"
+      ],
+      "ledger_note": "routing geometry only; the row draws through the crossing retry pass"
+    },
+    {
+      "path": "state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd",
+      "family": "state-diagram-v2",
+      "sha256": "b6ef22abdcd251e866c6ab5a9ee7d68d98e1092a8d65f294de849d4aa3b68c4a",
+      "manifest_sha256": "b6ef22abdcd251e866c6ab5a9ee7d68d98e1092a8d65f294de849d4aa3b68c4a",
+      "prior_status": "source_fallback",
+      "oracle": "crossing-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_style_statements": [],
+      "expected_art_labels": [
+        "State1_____________",
+        "State2_____________",
+        "State3_____________"
+      ],
+      "ledger_note": "routing geometry only; the row draws through the crossing retry pass"
     }
   ]
 }

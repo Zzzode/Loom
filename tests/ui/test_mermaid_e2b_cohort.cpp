@@ -157,9 +157,10 @@ TEST(MermaidE2bCohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(counts.get_int("total"), 61);
     EXPECT_EQ(counts.get_int("state_v2"), 38);
     EXPECT_EQ(counts.get_int("state_v1"), 23);
-    // D-461 narrows the click and font-style detectors: 53/8 -> 55/6.
-    EXPECT_EQ(counts.get_int("predicted_draw"), 55);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 6);
+    // D-461 narrows the click and font-style detectors (53/8 -> 55/6); stage
+    // 3's crossing retry draws the v2 labeled fan-out (56/5).
+    EXPECT_EQ(counts.get_int("predicted_draw"), 56);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 5);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -216,8 +217,8 @@ TEST(MermaidE2bCohort, EveryDrawRowDrawsWithFooterAndBlockedRowKeepsSourceAt240)
         }
         EXPECT_EQ(row.wide, is_drawn ? "drawn" : "source");
     }
-    EXPECT_EQ(drawn, 55);
-    EXPECT_EQ(blocked, 6);
+    EXPECT_EQ(drawn, 56);
+    EXPECT_EQ(blocked, 5);
 }
 
 TEST(MermaidE2bCohort, DescriptionIsNeverRendered) {
@@ -362,7 +363,9 @@ TEST(MermaidE2bCohort, NonWhitelistedConfigRowsKeepWholeSource) {
     // (25 -> 22). D-446/D-449 move their 5 state rows out too: 22 -> 17.
     // D-461 moves 9 config-bearing state rows out (the eight user-styled
     // composite containers and the handdrawn clickable-tooltip row): 17 -> 8.
-    EXPECT_EQ(checked, 8);
+    // Stage 3 moves four more out (the four basic-states look/theme rows):
+    // 8 -> 4.
+    EXPECT_EQ(checked, 4);
     EXPECT_EQ(skipped_by_rfc0048.size(), 16u);
     // Under-listing fails here (an admitted row that really changes surface is
     // no longer excluded, so the whole-source assertion above goes red);

@@ -1,4 +1,4 @@
-// D-461 state-v2 admission cohort gate, stages 1-2.
+// D-461 state-v2 admission cohort gate, stages 1-3.
 //
 // Stage 1 (`native-frame` rows): ten originals whose only blocker was the fixed
 // 1M layout Work primary; the bounded canvas-derived state envelope funds them.
@@ -10,6 +10,9 @@
 // click-deleted twin must be cell-identical; `font-style` is dropped and
 // unprojectable, so replacing it with the equally unpainted `font-weight:
 // normal` must leave the art above the legend cell-identical.
+// Stage 3 (`crossing-frame` rows): six routing-geometry rows that draw only
+// through the crossing retry pass; their art assertions are the same structural
+// ones as `native-frame`.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -120,6 +123,27 @@ std::vector<std::string> art_above_legend(const CellCapture& capture, int width)
     return art;
 }
 
+// The oracle partition is pinned per row here (not only carried in the
+// ledger): a stage-1/2 row that silently drifted to `crossing-frame`, or a
+// crossing row that regressed to a plain frame, fails the gate by name.
+const std::set<std::string> kCrossingRows = {
+    "state-diagram-v2/nightly-check/basic-states-neo-look-neo-theme.mmd",
+    "state-diagram-v2/nightly-check/basic-states-neo-look-neo-dark-theme.mmd",
+    "state-diagram-v2/nightly-check/basic-states-neo-look-redux-theme.mmd",
+    "state-diagram-v2/nightly-check/basic-states-neo-look-redux-dark-theme.mmd",
+    "state-diagram-v2/nightly-check/v2-should-render-a-simple-state-diagrams-with-labels.mmd",
+    "state-diagram-v2/pr-check/"
+    "should-render-edge-labels-correctly-with-multiple-transitions.mmd",
+};
+
+const std::map<std::string, std::string> kTwinOracle = {
+    {"state-diagram-v2/nightly-check/clickable-state-with-tooltip.mmd", "noop-twin"},
+    {"state-diagram-v2/nightly-check/clickable-state-with-tooltip-handdrawn-look.mmd",
+     "noop-twin"},
+    {"state-diagram-v2/nightly-check/v2-can-have-multiple-classes-applied-to-multiple-states.mmd",
+     "style-twin"},
+};
+
 // Remove the `click ...` directive lines (the non-visual binding). Mirrors the
 // production keyword predicate: `click` followed by a space or a tab.
 std::string click_stripped(const std::string& source) {
@@ -158,12 +182,12 @@ TEST(MermaidStateD461Cohort, LedgerSchemaReviewsAndPins) {
     const auto& root = ledger.root();
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_state_d461_cohort/v1");
     EXPECT_EQ(root.get_string("decision"), "D-461");
-    EXPECT_EQ(root.get("counts").get_int("total"), 13);
-    EXPECT_EQ(root.get("counts").get("by_family").get_int("state-diagram-v2"), 13);
+    EXPECT_EQ(root.get("counts").get_int("total"), 19);
+    EXPECT_EQ(root.get("counts").get("by_family").get_int("state-diagram-v2"), 19);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
-    // The deferred sets stay explicit: seven routing-geometry rows and the
-    // bare `info` directive row.
-    EXPECT_EQ(root.get("deferred").get("stage3_routing_geometry").size(), 7u);
+    // The deferred sets stay explicit: the one labeled composite whose edge
+    // label is wider than its owning scope, and the bare `info` directive.
+    EXPECT_EQ(root.get("deferred").get("stage3_label_width").size(), 1u);
     EXPECT_EQ(root.get("deferred").get("stage4_info_directive").size(), 1u);
     const auto manifest = parse_doc(kManifest);
     std::map<std::string, JsonVal> manifest_rows;
@@ -188,8 +212,8 @@ TEST(MermaidStateD461Cohort, LedgerSchemaReviewsAndPins) {
         unique_paths.insert(rel);
         digest_input.emplace_back(rel, row.get_string("sha256"));
     });
-    EXPECT_EQ(digest_input.size(), 13u);
-    EXPECT_EQ(unique_paths.size(), 13u);
+    EXPECT_EQ(digest_input.size(), 19u);
+    EXPECT_EQ(unique_paths.size(), 19u);
     std::ranges::sort(digest_input);
     std::string payload;
     for (const auto& [rel, sha] : digest_input) payload += rel + "\t" + sha + "\n";
@@ -233,6 +257,13 @@ TEST(MermaidStateD461Cohort, AdmittedRowsDrawAndPinTheirStates) {
             if (!text.empty()) EXPECT_NE(art_text.find(text), std::string::npos) << rel << text;
         });
         const auto oracle = row.get_string("oracle");
+        if (const auto twin = kTwinOracle.find(rel); twin != kTwinOracle.end()) {
+            EXPECT_EQ(oracle, twin->second) << rel;
+        } else if (kCrossingRows.contains(rel)) {
+            EXPECT_EQ(oracle, "crossing-frame") << rel;
+        } else {
+            EXPECT_EQ(oracle, "native-frame") << rel;
+        }
         if (oracle == "noop-twin") {
             const auto twin = click_stripped(source);
             EXPECT_NE(twin, source) << rel << " (the twin must strip the click binding)";
@@ -245,8 +276,6 @@ TEST(MermaidStateD461Cohort, AdmittedRowsDrawAndPinTheirStates) {
             EXPECT_EQ(art_above_legend(wide, kWide),
                       art_above_legend(capture(twin, "mermaid", kWide), kWide))
                 << rel << " the dropped font-style changed the art";
-        } else {
-            EXPECT_EQ(oracle, "native-frame") << rel;
         }
         // Every authored style statement is echoed in the legend.
         row.get("expected_style_statements").iter([&](JsonVal statement) {
@@ -255,7 +284,7 @@ TEST(MermaidStateD461Cohort, AdmittedRowsDrawAndPinTheirStates) {
         });
         ++checked;
     });
-    EXPECT_EQ(checked, 13);
+    EXPECT_EQ(checked, 19);
 }
 
 TEST(MermaidStateD461Cohort, ClosedNegatives) {

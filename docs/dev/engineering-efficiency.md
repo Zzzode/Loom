@@ -2750,7 +2750,9 @@ three REQUEST-CHANGES rounds before APPROVE; contract lens: one) and the
 **whole-preset rebuild cycles** lost to test-edit churn during linking
 (rule 6 above; one of them was also the rule-4 pin that review caught).
 
-## D-461 stage 1-2 retro (2026-11-24)
+## D-461 retro (2026-11-24)
+
+### Stage 1-2
 
 1. **`layout_succeeds` is not the render path.** The state envelope was first
    sized from `layout_succeeds` (which stops after `relations_layout` and its
@@ -2816,3 +2818,31 @@ three REQUEST-CHANGES rounds before APPROVE; contract lens: one) and the
     `ListAgents` (other sessions) and `ps` for foreign `cmake`/`ctest`
     processes, and treat a foreign `/tmp/<slice>` log as a stop-and-coordinate
     signal rather than a file to share.
+### Stage 3
+
+11. **A* admission and paint admission must agree.** The first crossing
+    implementation let A* enter a crossed cell perpendicularly but allowed any
+    exit, while `paint_path` accepted only a straight perpendicular pass. A*
+    then returned paths that the painter rejected, so the retry failed one
+    edge earlier than the original pass and nothing changed. Rule: for every
+    traversal rule, check that the *painter* accepts every path the *search*
+    can return; when the painter must accept a bend, paint the union glyph and
+    say so in the search predicate's comment.
+12. **A retry that restores a canvas needs a pre-image, not a re-draw.** The
+    class caption retry re-draws the flat scene; a state canvas carries entity
+    boxes, group headers, region dividers and notes, so a second draw pass
+    would have to duplicate all of it. A per-cell undo log armed only for the
+    state family is smaller, exact, and testable (byte identity on every
+    already-drawn row), at the cost of changing the two pinned Work totals;
+    re-pin them with the measured delta in the pin comment.
+
+13. **A new routing pass must be validated against the reviewed Model corpora
+    before it is widened.** The crossing retry, once armed for every
+    `stateDiagram-v2`, also admitted the b91 reverse-escape control
+    (`state_narrow_reciprocal_controls`): the frame drew, but its relation
+    endpoints no longer matched the reviewed complete Model, and it also
+    leaked four classic `stateDiagram` v1 rows into `error`. Both were found
+    by frozen conformance gates, not by the cohort gate. Scope a new pass by
+    scene class first (cross-owner vs same-owner edges, v1 vs v2), run the frozen Model gates
+    before any census claim, and record the rejected control as the reason for
+    the scope.

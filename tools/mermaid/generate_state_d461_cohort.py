@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the D-461 state-v2 admission cohort ledger (stages 1-2).
+"""Generate the D-461 state-v2 admission cohort ledger (stages 1-3).
 
 Renderer-free. Stage 1 admits the ten `state-diagram-v2` originals whose only
 non-admitted input was the fixed 1M layout Work primary: the eight
@@ -20,9 +20,13 @@ Oracles:
 * `native-frame`: the layout Work envelope changed, not the art contract; the
   gate pins the wide/narrow/restored states, restored cell equality, and that
   every authored style statement appears verbatim in the legend.
+* `crossing-frame`: routing geometry only; the row draws through the crossing
+  retry pass (a failed state pass is undone from its pre-image and re-routed
+  with perpendicular crossings). Structural assertions match `native-frame`.
 
-The eight remaining rows are listed under `deferred` with their mechanisms:
-seven routing-geometry rows (stage 3) and the bare `info` directive (stage 4).
+Six routing-geometry rows (stage 3) are admitted through the crossing retry;
+the one labeled composite whose 42-column edge label is wider than its scope and
+the bare `info` directive remain under `deferred`.
 
 Usage: python3 tools/mermaid/generate_state_d461_cohort.py --repo-root . [--check]
 """
@@ -63,20 +67,30 @@ NOOP = [
     NIGHTLY + "clickable-state-with-tooltip-handdrawn-look.mmd",
 ]
 STYLE = [NIGHTLY + "v2-can-have-multiple-classes-applied-to-multiple-states.mmd"]
-
-DEFERRED_GEOMETRY = [
+# Stage 3: routing geometry. These draw only through the crossing retry pass.
+CROSSING = [
     NIGHTLY + "basic-states-neo-look-neo-theme.mmd",
     NIGHTLY + "basic-states-neo-look-neo-dark-theme.mmd",
     NIGHTLY + "basic-states-neo-look-redux-theme.mmd",
     NIGHTLY + "basic-states-neo-look-redux-dark-theme.mmd",
     NIGHTLY + "v2-should-render-a-simple-state-diagrams-with-labels.mmd",
-    PR + "v2-should-render-composite-states.mmd",
     PR + "should-render-edge-labels-correctly-with-multiple-transitions.mmd",
 ]
+# The failing edge carries a 42-column label (`Yet another long long öong öong
+# öong label`) inside a composite narrower than the label: the
+# terminal projection keeps labels in-row inside their owning scope, so the
+# label cannot be placed without widening the composite past its authored
+# bounds.
+DEFERRED_LABEL_WIDTH = [PR + "v2-should-render-composite-states.mmd"]
 DEFERRED_INFO = [NIGHTLY + "v2-should-render-a-simple-info.mmd"]
 
 REVIEW = {
-    "reviewer_agent": ("two independent read-only adversarial reviews, fresh "
+    "reviewer_agent": ("stage 3: one independent read-only adversarial review "
+                       "(task a7878335a4df1179a; round 1 REQUEST-CHANGES on the "
+                       "classic stateDiagram leak, note-border crossings, port "
+                       "pre-images, compound-scope painter/step agreement and "
+                       "stale Work pins; all fixed and re-verified). Stage 1-2 "
+                       "was reviewed by two independent adversarial agents, fresh "
                        "general-purpose agents, D-461 state-v2 stage 1-2, "
                        "2026-11-24. Gate/render lens (task a600ac6947bd3d80d): "
                        "REQUEST-CHANGES then APPROVE after the art proof "
@@ -88,14 +102,21 @@ REVIEW = {
                        "mirror; all items addressed or rebutted in the same "
                        "slice (the residual MINORs -- the E2a narrow field and "
                        "the E2b declaration-list mirror -- were fixed after the "
-                       "verdict and re-checked by the generators' --check)."),
+                       "verdict and re-checked by the generators' --check). "
+                       "Final pre-commit review (task ab05c66c561a29d02, fresh "
+                       "read-only adversarial agent): APPROVE with no "
+                       "BLOCKER/MAJOR; its MINOR/NIT items were all addressed in "
+                       "the same slice (design-record Work delta 13,580, the "
+                       "cross-owner scoping wording, `Canvas::segment` routed "
+                       "through the undo log, a per-row oracle partition pin in "
+                       "the gate, stage labels and a dead generator branch)."),
     "date": "2026-11-24",
     "verdict": "approved",
-    "note": ("Stage 1-2 only: the bounded canvas-derived state layout envelope "
-             "and the two vocabulary admissions (`click` and `font-style`). "
-             "The seven routing-geometry rows and the bare `info` row are "
-             "deferred and listed under `deferred`; the ledger grows in the "
-             "same slice."),
+    "note": ("Stages 1-3: the bounded canvas-derived state layout envelope, "
+             "the two vocabulary admissions (`click` and `font-style`) and the "
+             "crossing retry that admits six routing-geometry rows. One labeled "
+             "composite (42-column edge label wider than its owning scope) and "
+             "the bare `info` row stay under `deferred`."),
 }
 
 
@@ -188,7 +209,8 @@ def build(repo_root):
     rows = []
     for path, oracle in ([(p, "native-frame") for p in BUDGET] +
                          [(p, "noop-twin") for p in NOOP] +
-                         [(p, "style-twin") for p in STYLE]):
+                         [(p, "style-twin") for p in STYLE] +
+                         [(p, "crossing-frame") for p in CROSSING]):
         text = (repo_root / CASES / path).read_text()
         observed = sha256_file(repo_root / CASES / path)
         if observed != manifest_rows[path]["sha256"]:
@@ -213,12 +235,14 @@ def build(repo_root):
             "native-frame": "layout Work envelope only; art contract unchanged",
             "noop-twin": "the click binding paints nothing; the twin is cell-equal",
             "style-twin": "font-style is dropped; art above the legend is twin-equal",
+            "crossing-frame": ("routing geometry only; the row draws through the "
+                               "crossing retry pass"),
         }[oracle]
         rows.append(row)
     return {
         "schema": SCHEMA,
         "decision": DECISION,
-        "stage": "1-2: state layout envelope, click bindings, font-style",
+        "stage": "1-3: state layout envelope, click bindings, font-style, crossing retry",
         "admission": {
             "envelope": ("relations_layout enables the two-pool meter for "
                          "RelationFamily::State from the actual canvas: "
@@ -226,6 +250,10 @@ def build(repo_root):
             "click": ("`click <id> \"<url>\" [\"<tooltip>\"]`: closed grammar, "
                       "declared-target resolution, consumed and dropped (FS-2)"),
             "font-style": "`font-style: italic|normal` validated and dropped",
+            "crossing": ("a failed state routing pass is undone from a pre-image "
+                         "log and retried once with perpendicular crossings and "
+                         "no free-region label prefilter; the retry is inert when "
+                         "the first pass succeeds"),
         },
         "upstream": {
             "tag": manifest["upstream"]["tag"],
@@ -234,12 +262,13 @@ def build(repo_root):
         },
         "selection": {
             "rule": ("every state-diagram-v2 fallback whose remaining blocker "
-                     "is the fixed 1M layout primary or the click/font-style "
-                     "vocabulary"),
+                     "is the fixed 1M layout primary, the click/font-style "
+                     "vocabulary, or routing geometry that the crossing retry "
+                     "closes"),
             "cohort_digest": cohort_digest(rows),
         },
         "deferred": {
-            "stage3_routing_geometry": DEFERRED_GEOMETRY,
+            "stage3_label_width": DEFERRED_LABEL_WIDTH,
             "stage4_info_directive": DEFERRED_INFO,
         },
         "counts": {"total": len(rows), "by_family": {"state-diagram-v2": len(rows)}},

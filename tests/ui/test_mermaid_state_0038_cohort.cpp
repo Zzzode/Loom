@@ -478,7 +478,7 @@ TEST(MermaidState0038Cohort, E2bFootersAreUnchanged) {
     });
     // RFC 0048 promotes the two concurrency-region rows, so the E2b draw set
     // grows by exactly two; their footers are unchanged. D-461 narrows the
-    // click and font-style detectors, moving two more E2b members to
-    // predicted-draw: 53 -> 55.
-    EXPECT_EQ(drawn, 55);
+    // click and font-style detectors (53 -> 55), and stage 3's crossing
+    // retry draws the v2 labeled fan-out: 55 -> 56.
+    EXPECT_EQ(drawn, 56);
 }

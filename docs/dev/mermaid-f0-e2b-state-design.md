@@ -216,6 +216,11 @@ Ledger/evidence (E2b requirement 4), mirroring E2a:
   pixels are gated exclusively by the dedicated cohort test, so no row
   can be admitted without its pixel gate.
 
+D-461 stage 3 amendment (2026-11-24): the v2 labeled fan-out
+(`v2-should-render-a-simple-state-diagrams-with-labels`) leaves the
+`state-native-routing-debt` set once the crossing retry draws it; its v1 twin
+and both composite rows keep the debt. The ledger partition is 56/5.
+
 D-461 amendment (2026-11-24): two detectors were narrowed. `state-click-statement`
 now fires only outside the closed `click <id> "<url>" ["<tooltip>"]` grammar
 (the closed form is validated, target-resolved and dropped as a non-visual

@@ -162,9 +162,10 @@ TEST(MermaidE2aCohort, LedgerMatchesSchemaAndReviewed) {
     EXPECT_EQ(counts.get_int("git"), 64);
     EXPECT_EQ(counts.get_int("state_v2"), 5);
     EXPECT_EQ(counts.get_int("state_v1_qualified"), 0);
-    // D-461 retires the two budget-blocked next-line-brace draws: 61/8 -> 63/6.
-    EXPECT_EQ(counts.get_int("predicted_draw"), 63);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 6);
+    // D-461 retires the two budget-blocked next-line-brace draws (61/8 ->
+    // 63/6); stage 3's crossing retry retires the last one (64/5).
+    EXPECT_EQ(counts.get_int("predicted_draw"), 64);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 5);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -217,11 +218,11 @@ TEST(MermaidE2aCohort, EveryDrawRowDrawsAndEveryBlockedRowKeepsSourceAt240) {
         EXPECT_EQ(row.wide, is_drawn ? "drawn" : "source");
     }
     // D-435 moved the titled gitGraph row from blocked to drawn; D-461 moved
-    // the two layout-budget next-line-brace rows.
-    EXPECT_EQ(drawn, 63);
-    // D-435 retired the title blocker; D-461 retired the two budget-blocked
-    // brace draws, so exactly six rows stay blocked.
-    EXPECT_EQ(blocked, 6);
+    // the two layout-budget next-line-brace rows and stage 3 the last one.
+    EXPECT_EQ(drawn, 64);
+    // D-435 retired the title blocker; D-461 retired the three brace draws,
+    // so exactly five rows stay blocked.
+    EXPECT_EQ(blocked, 5);
 }
 
 TEST(MermaidE2aCohort, DescriptionIsNeverRendered) {
@@ -413,8 +414,10 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     // layout rows out: 48 -> 45. D-446/D-449 move their 5 state rows out:
     // 45 -> 40. D-461 moves 11 config-bearing state rows out (the eight
     // user-styled composite containers, the two clickable-tooltip rows and the
-    // multiple-class row): 40 -> 29.
-    EXPECT_EQ(checked, 29);
+    // multiple-class row): 40 -> 29. D-461 stage 3 moves five more
+    // config-bearing rows out (the four basic-states look/theme rows and the
+    // labeled multiple-transitions row): 29 -> 24.
+    EXPECT_EQ(checked, 24);
     EXPECT_EQ(skipped_by_rfc0048.size(), 24u);
     // Under-listing fails here (an admitted row that really changes surface is
     // scanned again); over-listing a missing or non-config-bearing path fails

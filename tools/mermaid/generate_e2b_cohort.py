@@ -111,9 +111,9 @@ WITNESS = {
 # Sha-bound independently reviewed routing-debt set. Additions require a new
 # review row; --check never grows it.
 NATIVE_ROUTING_DEBT = {
-    "state-diagram-v2/nightly-check/"
-    "v2-should-render-a-simple-state-diagrams-with-labels.mmd":
-        "4bafaf78477395eca79617efbbcdccc107453a67424b2282deb8ed3fce05e996",
+    # D-461 stage 3: the v2 labeled fan-out draws through the crossing retry;
+    # its v1 twins keep the routing debt.
+
     "state-diagram/pr-check/should-render-a-simple-state-diagrams-with-labels.mmd":
         "ba4df81bd51e6f5eb27e2155ab0a50ff8429e450a14f2b66db8ab766b1868255",
     "state-diagram-v2/pr-check/v2-should-render-composite-states.mmd":
@@ -369,7 +369,7 @@ def build(repo_root):
                     "values still gate), and the closed `click <id> \"<url>\" [\"<tooltip>\"]` "
                     "form is validated, target-resolved and dropped (see "
                     "tools/mermaid/state-d461-cohort.json); the clickable-tooltip and "
-                    "v2-multiple-classes rows move to predicted-draw (both D-461 review agents verified this migration).",
+                    "v2-multiple-classes rows move to predicted-draw (both D-461 review agents verified this migration). D-461 stage 3 removes the v2 labeled fan-out from the routing-debt set once the crossing retry draws it.",
         },
         "counts": {
             "total": total,

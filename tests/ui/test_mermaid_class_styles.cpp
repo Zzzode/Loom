@@ -42,14 +42,17 @@ TEST(MermaidClassStyleBaseline, PlainGlyphsAndMeasuredWorkRemainUnchanged) {
           true, 11636u, "8496805458e312cf261790f29488422b9ab8dd97285750405ecf4007b6000609"},
          {"er", "erDiagram\nPERSON ||--o{ ORDER : places\n", false, 12580u,
           "603ce1720d358d2dd79213893a348e974ababfdfe7db7bb9cbe1894c0a9a3585"},
-         {"state", "stateDiagram-v2\n[*] --> Waiting\nWaiting --> Done : next\n", false, 28796u,
+        // D-461 stage 3: every stateDiagram-v2 row pays the crossing-retry
+        // undo log (one pre-image per mutated cell) plus the routed-provenance
+        // array, even when the first pass succeeds: 28796 -> 42376.
+        {"state", "stateDiagram-v2\n[*] --> Waiting\nWaiting --> Done : next\n", false, 42376u,
           "e8fa51965fffa49f6f8d81e600d826940f36f6341deae8eeed3fd46f10277f77"},
         // Frontmatter State recurses through parse_relations; the ADR 0032
         // 384 relocation keeps its outer+inner schedule byte-identical.
         {"state_frontmatter",
           "---\ndescription: >-\n  StateEnvelopeBaselineToken\n---\nstateDiagram-v2\n"
           "  [*] --> State1\n  State1 --> [*]\n",
-          false, 23775u, "4c7f95b173fca26b69f79b3459d75929a4f392e98409896b906b423b57c63231"}}};
+          false, 27693u, "4c7f95b173fca26b69f79b3459d75929a4f392e98409896b906b423b57c63231"}}};
     for (const auto& item : cases) {
         SCOPED_TRACE(item.name);
         testing::Work work;

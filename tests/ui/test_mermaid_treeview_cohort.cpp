@@ -93,9 +93,11 @@ TEST(MermaidTreeviewCohort, LedgerSchemaReviewCountsAndManifest) {
     // D-455 moves the two residual rows into their own decision cohort.
     EXPECT_EQ(root.get("selection").get_int("frontmatter_gated_count"), 3);
     EXPECT_EQ(root.get("selection").get_int("d455_admitted_count"), 2);
-    // D-457 moves the `:::class` node-annotation row into its own cohort.
-    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 1);
+    // D-457 moves the `:::class` node-annotation row into its own cohort;
+    // D-466 moves the combined `:::class icon(...) ## description` row.
+    EXPECT_EQ(root.get("selection").get_int("body_style_gated_count"), 0);
     EXPECT_EQ(root.get("selection").get_int("d457_admitted_count"), 1);
+    EXPECT_EQ(root.get("selection").get_int("d466_admitted_count"), 1);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     const auto manifest = parse_doc(kManifest);
@@ -196,6 +198,20 @@ TEST(MermaidTreeviewCohort, GatedTreeviewsStayWholeSource) {
         ++moved457;
     });
     EXPECT_EQ(moved457, 1);
+    // D-466: the combined-annotation row draws and discloses; the class token
+    // is dropped and the icon/description suffixes stay verbatim.
+    int moved466 = 0;
+    selection.get("d466_admitted").iter([&](JsonVal value) {
+        const auto rel = value.as_str();
+        const std::string source = read_file(kCases / rel);
+        EXPECT_TRUE(draws(source, kWide)) << rel;
+        const auto text = capture(source, "mermaid", kWide).text;
+        EXPECT_NE(text.find("TreeView native projection v1"), std::string::npos) << rel;
+        EXPECT_NE(text.find("App.tsx icon(fa:bell) ## main component"), std::string::npos) << rel;
+        EXPECT_EQ(text.find(":::highlight"), std::string::npos) << rel;
+        ++moved466;
+    });
+    EXPECT_EQ(moved466, 1);
 }
 
 // Key-based gate: prose mentioning "config"/"theme" is not a gate; a

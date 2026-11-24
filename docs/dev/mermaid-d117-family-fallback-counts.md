@@ -6,9 +6,9 @@ Living per-family count of ordinary fallback across the pinned Mermaid
 TechLead 19:30 milestone workflow (2026-11-07). Updated at every family
 closure from the serial `MermaidCapabilityReport.OfficialMatrix` JSON.
 
-**Current totals (the last row of the history table below): 1784 drawn /
-361 source_fallback / 0 error at 240 wide**, after D-465 (`local`,
-2026-11-24). Every earlier row is dated history; the historical D236 row
+**Current totals (the last row of the history table below): 1785 drawn /
+360 source_fallback / 0 error at 240 wide**, after D-466 (`local`,
+2026-11-25). Every earlier row is dated history; the historical D236 row
 (2026-11-15, 1232/913) and the "Counts unchanged (still 1232/913)" note inside
 the D237/D241 narrative describe that attempt only, not the current count.
 
@@ -102,9 +102,10 @@ are not whole-original errors).
 | After D-463 bounded git Work envelope (8 rows) | 2026-11-24 | local | 1777 | 368 | 0 |
 | After D-464 mindmap shape and `::icon` grammar (5 rows) | 2026-11-24 | local | 1782 | 363 | 0 |
 | After D-465 mindmap markdown strings, escaped break and canvas envelope (2 rows) | 2026-11-24 | local | 1784 | 361 | 0 |
+| After D-466 tree-view combined `:::class` annotation (1 row) | 2026-11-25 | local | 1785 | 360 | 0 |
 
 The formal counters behind the newest row: `original_drawing_coverage.drawn_at_240`
-= 1598 (1559 + 19 + 3 + 2 + 8 + 5 + 2) and `mandatory_gaps` = 48 (frozen; the 48
+= 1599 (1559 + 19 + 3 + 2 + 8 + 5 + 2 + 1) and `mandatory_gaps` = 48 (frozen; the 48
 body-diagnostic errors are unchanged).
 
 Row-level detail for the newest rows:
@@ -206,6 +207,11 @@ Row-level detail for the newest rows:
   canvas-derived pool (`w*h*(2*sizeof(Cell)+17) + 262144`). Both rows keep
   whole source at 40 because their art is wider than the fence. Listed in
   `tools/mermaid/mindmap-markdown-d465-cohort.json`.
+- **D-466 (1)**: the tree-view combined-annotation row
+  (`should-render-combined-annotations`), whose node places a `:::class`
+  between the label and the existing `icon(...)`/`## description` suffixes.
+  Only the class token is dropped (disclosed); the suffixes stay verbatim.
+  Listed in `tools/mermaid/treeview-combined-d466-cohort.json`.
 - **D-460 (15)**: every remaining er-diagram original whose only non-admitted
   input is the closed ER style surface —
   `er-diagram/visual-check/entities-with-styles-applied-from-class-statement-
@@ -284,7 +290,7 @@ stage-4 reconciliation (`state-diagram-v2` 2/101 -> 1/102 and the Total
 | journey | 0 | 18 | renderer added 2026-11-11; RFC 0040 admitted the 4 `config: theme: redux*` rows and RFC 0047 admits the 4 inert leading `%%{init}%%` theme directives (footer-disclosed, synthetic twin); live census 18/0/0 from 18 |
 | pie | 0 | 24 | RFC 0042 (2026-11-22) admits 5 theme-only rows through a closed five-value table with a disclosure footer; D-425 (2026-11-22) admits the 8 rows whose only non-admitted input is the closed `config.pie` namespace (art equals the config-free twin, footer-disclosed); D-426 (2026-11-23) admits the last 4 rows: scalar `accTitle:`/`accDescr:` are validated no-ops (accessibility metadata; a text terminal has no separate accessibility tree) and the closed theme table gains `default`/`forest`/`neutral`, so the whole family is closed at 24 originals; frame equality against the acc-line-deleted twin is the oracle; measured narrow_40 is 2/24 (two baseline rows fit 40 columns) |
 | state-diagram | 6 | 36 | RFC 0046 (2026-11-22) admits the 2 `state.useMaxWidth` rows through the closed tuning namespace with a disclosure footer (synthetic twins); D223 batch one: +3 (HTML-entity fork/join top-level and nested, edge literal `\n`); RFC 0048 admits the concurrency row at P1 and the 4 in-body `%%{init}%%` theme rows at P2 (region dividers, footer-disclosed, synthetic twins); the v1 note twin stays gated by a real tab in its folded description and the labeled composite rows stay gated; live census 35/7/0 from 42 |
-| tree-view | 1 | 14 | renderer added 2026-11-13 (verbatim node-row transcription, no icons/colour); D-433 (2026-11-23) admits the two closed `config.treeView` rows and D-434 the closed `filenameIcons`/`extensionIcons` maps (every entry inert and disclosed, art equals the config-stripped twin); D-455 (2026-11-24) admits the trailing-space-fence custom-config row (the shared classify peek closes `---`+whitespace only when the next body line is exactly `treeView-beta`) and the `icon(none)` / empty-`icon()` suppression row; the 2 remaining are the `:::class` body row (`classdef_styling`) and the combined-annotations icon row (`icon_font_glyphs`); D-457 (2026-11-24) admits the one trailing `:::class` node annotation (drop + disclose, class-stripped twin), so the only remaining row is the combined-annotations icon row; live census 14/1/0 from 15 |
+| tree-view | 0 | 15 | renderer added 2026-11-13 (verbatim node-row transcription, no icons/colour); D-433 (2026-11-23) admits the two closed `config.treeView` rows and D-434 the closed `filenameIcons`/`extensionIcons` maps (every entry inert and disclosed, art equals the config-stripped twin); D-455 (2026-11-24) admits the trailing-space-fence custom-config row (the shared classify peek closes `---`+whitespace only when the next body line is exactly `treeView-beta`) and the `icon(none)` / empty-`icon()` suppression row; the 2 remaining are the `:::class` body row (`classdef_styling`) and the combined-annotations icon row (`icon_font_glyphs`); D-457 (2026-11-24) admits the one trailing `:::class` node annotation (drop + disclose, class-stripped twin), so the only remaining row is the combined-annotations icon row; live census 14/1/0 from 15; D-466 (2026-11-25) admits that last row by allowing the class token to precede the icon/description suffixes (the token is dropped and disclosed); the family body is closed, census 15/0/0 |
 | quadrant-chart | 0 | 14 | renderer added 2026-11-13; D-450 (2026-11-23) admits the 5 leading closed `%%{init}%%` tuning/theme rows; D-457 (2026-11-24) admits the last 2 body-style rows (`classDef`, `:::class` point suffixes and the closed inline point-style suffix, validated, dropped and disclosed with a style-stripped twin), so the family is closed at 14 originals; live census 14/0/0 from 14 |
 | ishikawa | 0 | 13 | renderer added 2026-11-13; RFC 0043 (2026-11-22) admits the forest/dark theme rows through a closed two-value table with a disclosure footer (both body-identical to `pr-check/1`); RFC 0046 admits the 3 `config.ishikawa.*` tuning rows through the closed namespace (1 corpus twin, 2 synthetic); only the handdrawn-look row stays source; live census 12/1/0 from 13; live census 13/0/0 (D-459 matrix reconciliation; the slice prose above is historical) |
 | kanban | 0 | 11 | renderer added 2026-11-13; all eleven originals clean (description-only frontmatter; cards with optional @{...} structural metadata, no color contract) |
@@ -302,7 +308,7 @@ stage-4 reconciliation (`state-diagram-v2` 2/101 -> 1/102 and the Total
 | info | 0 | 2 | renderer added 2026-11-24 (D-461 stage 4): the fixed upstream version panel; both originals draw at 240 and 40; live census 2/0/0 from 2 |
 | katex | 4 | 0 | candidate infeasible, see below |
 | zenuml | 1 | 0 | |
-| **Total** | **361** | **1784** | |
+| **Total** | **360** | **1785** | |
 
 ## Flowchart internal breakdown (263 whole-original fallback)
 

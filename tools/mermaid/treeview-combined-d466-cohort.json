@@ -1,0 +1,50 @@
+{
+  "schema": "loom_mermaid_treeview_combined_d466_cohort/v1",
+  "decision": "D-466",
+  "stage": "tree-view combined node annotations",
+  "admission": {
+    "mechanism": "one `:::class` token may follow the label directly, before the existing `icon(...)`/`## description` suffixes; it is validated as an identifier, dropped and disclosed",
+    "scope": "the tree-view node annotation stripper only; the trailing-class form and every other family are untouched"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the one tree-view original whose body places `:::class` before its suffix tokens",
+    "cohort_digest": "be8bbef0ca850180563d2844d5b3bbb42b8cf0ed42c61475f4a603de6a7c2804"
+  },
+  "counts": {
+    "total": 1,
+    "by_family": {
+      "tree-view": 1
+    }
+  },
+  "review": {
+    "reviewer_agent": "one independent read-only adversarial review (task ab1e1ff5db298db0c); round 1 REQUEST-CHANGES required the family-closure release/dual-preset byte gate and full mermaid suite (no code defect found), plus a D-457 transcription pin, provenance, the ER reclassification note and three NITs; all addressed and re-verified",
+    "date": "2026-11-25",
+    "verdict": "approved",
+    "note": "One tree-view row combines a class annotation with the existing icon/description suffixes. Only the class token is dropped, and it is disclosed."
+  },
+  "rows": [
+    {
+      "path": "tree-view/nightly-check/should-render-combined-annotations.mmd",
+      "family": "tree-view",
+      "sha256": "b38be555067545805703f58f6edd75688cceefd0eb782a5d0b8258b4cbd90c86",
+      "manifest_sha256": "b38be555067545805703f58f6edd75688cceefd0eb782a5d0b8258b4cbd90c86",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_excerpts": [
+        "App.tsx icon(fa:bell) ## main component",
+        "index.js ## entry point"
+      ],
+      "ledger_note": "the class token is dropped and disclosed; icon and description suffixes stay verbatim"
+    }
+  ]
+}

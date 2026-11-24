@@ -29,30 +29,32 @@ identified, sized change, **D** = dispatch/authorization gap.
 | Category | Rows | Composition | Verdict | Evidence | Fallback path | Change surface if pursued |
 |---|---:|---|---|---|---|---|
 | `edge_animation_metadata` | 63 | flowchart 55, swimlanes 8 | **C** (55) + **S** (8) | Flow400: paragraph under `flowchart/` are pending-model rows; drawing one fails `flow_whole_null_unmet` (8 errors, gaps 48→57, d439 §4). Swimlanes are the htmlLabels+useMaxWidth hard wall (46/46 rows, unsupported diagram type). 2 flowchart rows draw under a 500M budget but stay pending. | whole source, reviewed | Flow400 re-baseline (protected, TL decision) / swimlanes are a new renderer |
-| `htmllabels_false` | 36 | flowchart 9, swimlanes 25, er-diagram 1, mindmap 1 | **C** (34) + **I** (1) + **S** (1) | ER row draws with the frontmatter stripped (`an-er-diagram-…-without-htmllabels-default`, probe): only the closed config leaf `htmlLabels: false` blocks it. Mindmap `6-should-centre-svg-text-labels…` fails on the body (shape/text centring), not on config. | whole source | ER: add `htmlLabels` to its closed inert-leaf table with disclosure (small, ER-local) |
+| `htmllabels_false` | 36 | flowchart 9, swimlanes 25, er-diagram 1, mindmap 1 | **C** (34) + **S** (1) + **D** (1) | The ER row's body draws with the frontmatter stripped, but the config-bearing presentation profile enforces an explicitly reviewed ASCII-only label contract (`er_project_fields` / `er_projection_wrap`; "the source authority does not establish arbitrary Unicode/Markdown behavior"), and this row's labels carry emoji/markdown emphasis. Admitting it is a contract decision on that profile, not a config-leaf addition. Mindmap `6-should-centre-svg-text-labels…` fails on the body (shape/text centring). | whole source | ER: decision on the presentation profile's label surface (extend it, or render neutral profiles on the plain path + footer) |
 | `securitylevel_directive` | 34 | flowchart 34 | **C** | Flow400 pending rows; 1 row draws under a 500M budget but remains contract-blocked. | whole source | Flow400 re-baseline |
 | `subgraph_nesting` | 30 | flowchart 28, conf-and-directives 2 | **C** (28) + **S** (2) | Flow400 (28). The two `conf-and-directives` rows are directive-only documents whose body carries no diagram content (probe: fallback with frontmatter stripped) — there is nothing to lay out. | whole source | Flow400 / none |
-| `icon_font_glyphs` | 28 | flowchart 27, tree-view 1 | **C** (27) + **I** (1) | Flow400 (27). The tree-view row combines `:::class`, `icon(fa:bell)` and a `## description` on one node; the icon glyph has no cell representation (can only be dropped and disclosed), but the combined annotation grammar is not admitted (D-455 admitted icons/`:::class` separately). | whole source | tree-view: admit the combined annotation form, drop+disclose the icon (1 row) |
-| `look_handdrawn` | 28 | flowchart 19, swimlanes 6, er-diagram 3 | **C** (25) + **I** (3) | Flow400 (19) + swimlanes (6). All 3 ER rows draw with the *entire* frontmatter stripped, which makes `look: handDrawn` a **candidate** blocker, not a proven one: the probe cannot attribute the failure to that leaf, one row also carries `htmlLabels`, and the close needs per-leaf admission plus a twin check (art must equal the classic twin). A cell grid has no sketch stroke, so the look is inert with disclosure (agentflow D-442 precedent admitted exactly this). | whole source | ER: closed `look: handDrawn` leaf, art equals the classic twin, disclosure footer (small, ER-local; per-row admission required) |
+| `icon_font_glyphs` | 27 (28 before D-466) | flowchart 27 | **C** (27) | Flow400. The tree-view row that combined `:::class`, `icon(fa:bell)` and a `## description` on one node was admitted by D-466 (the class token is dropped and disclosed; the suffix text stays verbatim). | whole source | Flow400 re-baseline only |
+| `look_handdrawn` | 28 | flowchart 19, swimlanes 6, er-diagram 3 | **C** (25) + **D** (3) | Flow400 (19) + swimlanes (6). All 3 ER rows draw with the *entire* frontmatter stripped, but the blocker is again the presentation profile's ASCII-only label contract (these rows carry emoji/markdown/`<br/>` labels), not the `look: handDrawn` leaf itself: a synthetic ASCII body with `look: handDrawn` draws today. A cell grid has no sketch stroke, so the look is inert with disclosure (agentflow D-442 precedent); the open question is the profile's label surface. | whole source | ER: decide the presentation label contract, then the `look` leaf is inert + disclosed |
 | `family_residual:sankey` | 17 | sankey 17 | **D** | The classifier dispatches only `sankey-beta`; these bodies use the bare `sankey` header. The shelved patch (`/tmp/d438-sankey-config.patch`) widens the shared predicate; D-438 was a NO-GO pending a TL decision because it changes shared dispatch for a foreign family. | whole source | shared `classify_mermaid` predicate (small diff, shared layer → authorization) |
 | `click_interactive_callback` | 16 | flowchart 16 | **C** | Flow400 pending rows; stripping every `click` line still leaves them fallback (probe), so the binding is not even the operative blocker. | whole source | Flow400 re-baseline |
 
-Totals over the eight categories (252 rows): **C 219 / S 11 / I 5 / D 17**
-(63+36+34+30+28+28+17+16 = 252; C = 55+34+34+28+27+25+16, S = 8+1+2,
-I = 1+1+3, D = 17). The remaining 124 rows of the 376 baseline sit below the
-eight largest categories; the live roster is 361 after D-463's eight,
-D-464's five and D-465's two admissions.
+Totals over the eight categories (251 rows after D-466): **C 219 / S 11 /
+I 0 / D 21** (63+36+34+30+27+28+17+16 = 251; C = 55+34+34+28+27+25+16,
+S = 8+1+2, D = 17 + 3 + 1 (sankey + the ER presentation-profile rows)). The
+remaining 125 rows of the 376 baseline sit below the eight largest categories;
+the live roster is 360 after D-463's eight, D-464's five, D-465's two and
+D-466's one admissions.
 
 ## Implementable-now block (evidence: budget / config probes)
 
 | Family / block | Rows | Blocker | Mechanism | Size |
 |---|---:|---|---|---|
-| git >8-branch + cherry-pick | 8 | fixed 1M Work primary | bounded canvas-derived git Work envelope (state/ER envelope precedent), primary-first, fail-closed, inert when unused | **done, D-463** (commit pending) |
-| ER `look: handDrawn` | 3 | closed config leaf (candidate) | inert look + disclosure, art = classic twin; per-row admission + twin check | small |
-| ER `htmlLabels: false` | 1 | closed config leaf (candidate) | inert leaf + disclosure | small |
-| tree-view combined annotations | 1 | icon glyph + combined form | grammar admission, icon dropped + disclosed | small |
+| git >8-branch + cherry-pick | 8 | fixed 1M Work primary | bounded canvas-derived git Work envelope (state/ER envelope precedent), primary-first, fail-closed, inert when unused | **done, D-463** (4a4cc36b) |
+| ER `look: handDrawn` | 3 | presentation-profile label contract (decision needed) | inert look + disclosure, art = classic twin; per-row admission + twin check | medium (contract decision first) |
+| ER `htmlLabels: false` | 1 | presentation-profile label contract (decision needed) | inert leaf + disclosure | medium (contract decision first) |
+| tree-view combined annotations | 1 | class placement + suffix form | grammar admission, class token dropped + disclosed; suffix text verbatim | **done, D-466** |
 
-13 rows: 8 admitted (D-463), 5 open.
+13 rows: 9 admitted (D-463's eight + D-466's tree-view row), 4 open (ER,
+decision-gated on the presentation profile's label contract).
 
 ## Categories below the top eight (summary)
 

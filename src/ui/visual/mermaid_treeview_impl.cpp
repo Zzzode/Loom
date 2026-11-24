@@ -55,18 +55,20 @@ std::string_view tree_body(std::string_view source) {
     }
 }
 
-// D-457: a node line may carry one trailing `:::class` annotation
-// (`Button.tsx :::highlight`). The terminal draws no highlight colour, so the
-// suffix is validated against an identifier, dropped from the transcribed row
-// and disclosed once in the footer. A suffix without the separating space, a
-// second `:::` or a non-identifier name is malformed.
-std::optional<std::string_view> tree_strip_class(std::string_view content, bool& had_class) {
+// D-457/D-466: a node line may carry one `:::class` annotation. It follows the
+// label (either as the trailing annotation or immediately before an
+// `icon(...)`/`## description` suffix). The terminal draws no highlight colour,
+// so the suffix is validated against an identifier, dropped from the
+// transcribed row and disclosed once in the footer. A suffix without the
+// separating space, a second `:::` or a non-identifier name is malformed.
+std::optional<std::string> tree_strip_class(std::string_view content, bool& had_class) {
     const auto at = content.rfind(":::");
-    if (at == std::string_view::npos) return content;
+    if (at == std::string_view::npos) return std::string{content};
     if (at == 0 || content[at - 1] != ' ') return std::nullopt;
     if (content.rfind(":::", at - 1) != std::string_view::npos) return std::nullopt;
-    std::string_view name = content.substr(at + 3);
-    while (!name.empty() && name.back() == ' ') name.remove_suffix(1);
+    const std::string_view rest = content.substr(at + 3);
+    const auto space = rest.find(' ');
+    const std::string_view name = space == std::string_view::npos ? rest : rest.substr(0, space);
     if (name.empty() || name.size() > 64u) return std::nullopt;
     if (!((name.front() >= 'a' && name.front() <= 'z') ||
           (name.front() >= 'A' && name.front() <= 'Z') || name.front() == '_'))
@@ -75,17 +77,30 @@ std::optional<std::string_view> tree_strip_class(std::string_view content, bool&
         if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
               c == '-' || c == '_'))
             return std::nullopt;
-    had_class = true;
-    std::string_view stripped = content.substr(0, at - 1);
-    while (!stripped.empty() && stripped.back() == ' ') stripped.remove_suffix(1);
-    while (!stripped.empty() && stripped.front() == ' ') stripped.remove_prefix(1);
+    std::string_view head = content.substr(0, at - 1);
+    while (!head.empty() && head.back() == ' ') head.remove_suffix(1);
+    while (!head.empty() && head.front() == ' ') head.remove_prefix(1);
     // The annotation attaches to a bare or quoted label only: it must not
     // follow an icon(...) or `## description` suffix, where the tail is free
     // text and dropping it would silently lose authored content.
-    if (stripped.find("icon(") != std::string_view::npos ||
-        stripped.find("##") != std::string_view::npos)
+    if (head.find("icon(") != std::string_view::npos ||
+        head.find("##") != std::string_view::npos)
         return std::nullopt;
-    return stripped;
+    if (space == std::string_view::npos) {
+        had_class = true;
+        return std::string{head};
+    }
+    const std::string_view tail = rest.substr(space);
+    if (tail.find_first_not_of(' ') == std::string_view::npos) {
+        had_class = true;
+        return std::string{head};
+    }
+    // A class placed before the suffix tokens may only be followed by them.
+    if (!(tail.starts_with(" icon(") || tail.starts_with(" ## "))) return std::nullopt;
+    had_class = true;
+    std::string result{head};
+    result += tail;
+    return result;
 }
 
 // Validate one node content (indent already stripped): a leading quoted label

@@ -156,11 +156,22 @@ def build(repo_root):
         raise ValueError(
             f"D-457 rows drifted out of the body-style partition: {sorted(moved457)}")
     body_gate -= d457
-    if (len(draw), len(fm_gate), len(body_gate)) != (8, 3, 1):
+    # D-466: the combined `:::class icon(...) ## description` node row moves
+    # into its own cohort; the class token is dropped and disclosed, the
+    # icon/description suffixes stay verbatim.
+    d466 = {
+        "tree-view/nightly-check/should-render-combined-annotations.mmd",
+    }
+    moved466 = body_gate & d466
+    if len(moved466) != 1:
+        raise ValueError(
+            f"D-466 rows drifted out of the body-style partition: {sorted(moved466)}")
+    body_gate -= d466
+    if (len(draw), len(fm_gate), len(body_gate)) != (8, 3, 0):
         raise ValueError(
             f"tree-view partition drift: draw={len(draw)} "
             f"frontmatter={len(fm_gate)} body_style={len(body_gate)} "
-            f"(expected 8/3/1; the D-455 and D-457 rows moved out)")
+            f"(expected 8/3/0; the D-455, D-457 and D-466 rows moved out)")
 
     rows = []
     for rel in sorted(draw):
@@ -208,7 +219,8 @@ def build(repo_root):
                 "a frontmatter theme/look/config key, an %%{init}%% directive "
                 "or a body classDef/style statement keeps the whole original "
                 "on source fallback; a :::class node annotation is owned by "
-                "the D-457 cohort"),
+                "the D-457 cohort, and the combined `:::class icon(...) ## "
+                "description` form by the D-466 cohort"),
         },
         "upstream": {
             "tag": manifest["upstream"]["tag"],
@@ -228,6 +240,8 @@ def build(repo_root):
             "body_style_gated": sorted(body_gate),
             "d457_admitted_count": len(moved457),
             "d457_admitted": sorted(moved457),
+            "d466_admitted_count": len(moved466),
+            "d466_admitted": sorted(moved466),
         },
         "review": build_review(repo_root),
         "counts": {

@@ -1,7 +1,7 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 361,
+  "total_fallback": 360,
   "category_counts": {
     "classdef_styling": 7,
     "click_interactive_callback": 16,
@@ -19,7 +19,7 @@
     "family_residual:zenuml": 1,
     "git_cherry_pick": 0,
     "htmllabels_false": 36,
-    "icon_font_glyphs": 28,
+    "icon_font_glyphs": 27,
     "linkstyle_directive": 12,
     "look_classic_other": 0,
     "look_handdrawn": 28,
@@ -59,8 +59,8 @@
   "predicate_sufficiency": {
     "classdef_styling": {
       "originals_matching_predicate": 147,
-      "drawn_among_matches": 102,
-      "fallback_among_matches": 45,
+      "drawn_among_matches": 103,
+      "fallback_among_matches": 44,
       "sufficient_blocker": false
     },
     "click_interactive_callback": {
@@ -101,8 +101,8 @@
     },
     "icon_font_glyphs": {
       "originals_matching_predicate": 61,
-      "drawn_among_matches": 26,
-      "fallback_among_matches": 35,
+      "drawn_among_matches": 27,
+      "fallback_among_matches": 34,
       "sufficient_blocker": false
     },
     "linkstyle_directive": {
@@ -447,8 +447,7 @@
       "flowchart/visual-check/dark-theme-legacy-graph.mmd",
       "flowchart/visual-check/default-theme-legacy-graph.mmd",
       "flowchart/visual-check/forest-theme-legacy-graph.mmd",
-      "flowchart/visual-check/neutral-theme-legacy-graph.mmd",
-      "tree-view/nightly-check/should-render-combined-annotations.mmd"
+      "flowchart/visual-check/neutral-theme-legacy-graph.mmd"
     ],
     "linkstyle_directive": [
       "flowchart/nightly-check/dagre/59-dagre-handle-styling-of-subgraphs-and-links.mmd",

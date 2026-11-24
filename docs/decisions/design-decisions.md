@@ -6137,3 +6137,40 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   markers inside an emphasis span, a stray marker, a blank line inside a
   markdown string, an unclosed markdown string, an unknown escape, an escape
   inside a markdown string and a truncated escape all keep whole source.
+
+## D-466 — tree-view combined node annotations (2026-11-25)
+
+- **Problem.** The last tree-view fallback puts three annotations on one node:
+  `App.tsx :::highlight icon(fa:bell) ## main component`. D-457 admitted a
+  *trailing* `:::class`; the combined form places the class between the label
+  and the already-admitted `icon(...)`/`## description` suffixes, which the
+  stripper rejected because it only accepted a single trailing token.
+- **Mechanism.** `tree_strip_class` validates one `:::identifier` token after
+  the label. It may be the trailing annotation (unchanged) or be followed
+  immediately by ` icon(` or ` ## `; a token after an icon/description, a
+  second `:::`, a missing separating space or any other tail stays malformed.
+  The label part must not itself contain `icon(` or `##`.
+- **Projection.** The terminal has no highlight colour: the class token is
+  dropped from the transcribed row and disclosed once on the canonical footer
+  (`body class annotations -> highlight colour; not applied`). The icon and
+  description suffixes stay verbatim, exactly as D-455 left them.
+- **Ledger.** `tools/mermaid/treeview-combined-d466-cohort.json` (1 row) with
+  the generator, the cohort gate
+  `test_mermaid_treeview_combined_d466_cohort`, the matrix branch + rule-38
+  reach proof, and the generator `--check` ctest. The tree-view family ledger
+  moves the row out of `body_style_gated` (1 -> 0) and adds `d466_admitted`.
+- **Measured result.** 1785 drawn / 360 fallback / 0 error, `drawn_at_240`
+  1599, roster 360 rows / 25 categories, tree-view family fallback/drawn
+  1/14 -> 0/15. The row keeps whole source at 40 because its annotated node
+  line is wider than the fence.
+- **Paired negatives.** A non-identifier class before an icon, two `:::`
+  tokens, a missing separating space, stray text after the class, an empty
+  description or unclosed icon after a class, and a class placed after an
+  icon or a description all keep whole source.
+- **Judgement-table correction (scope note).** The same slice corrects the
+  table's classification of the four ER `look`/`htmlLabels` rows. A probe
+  showed their *bodies* draw, but the config-bearing ER presentation profile
+  enforces an explicitly reviewed ASCII-only label contract
+  (`er_project_fields`/`er_projection_wrap`), so admitting them is a contract
+  decision, not a config-leaf addition; the rows move from implementable to
+  decision-gated and no ER code changes here.

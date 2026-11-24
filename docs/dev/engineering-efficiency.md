@@ -2872,3 +2872,10 @@ three REQUEST-CHANGES rounds before APPROVE; contract lens: one) and the
     official matrix rather than with prose. Before classifying a row as
     structurally impossible, ask which dimensions are authored in the source
     and which are computed.
+
+17. **Probe the Work budget before designing renderer work.** Rendering every
+    fallback row under a 500M budget (18 of 376 rows changed disposition)
+    separated budget blockers from semantic ones in one pass and turned an
+    apparently "dense git layout" problem into a bounded-envelope slice
+    (eight rows, no grammar change). Any future row whose failure reason is
+    generic should get the same probe before any layout work.

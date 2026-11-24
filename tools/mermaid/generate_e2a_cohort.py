@@ -22,9 +22,12 @@ parse_gitgraph accepts the body but plan_parent_routes cannot close an edge. Tha
 this pinned corpus and additions require a new review row. The original
 16-row attested set was retired by the bounded strict-first parent-router
 retry (14 rows now draw; the two LR 9-branch rows are capacity debt and
-classify via the branch-count detector), so the reviewed set is currently
-empty. The classification vocabulary is closed and enforced by the C++
-cohort gate.
+classify via the branch-count detector). D-463 then admitted those two rows
+through the bounded git Work envelope: they leave this ledger through the
+sha-bound GIT_ENVELOPE_ADMITTED map and are owned by
+tools/mermaid/git-envelope-d463-cohort.json, so the reviewed set stays empty
+and the canvas-dimension-overflow class has no live row. The classification
+vocabulary is closed and enforced by the C++ cohort gate.
 
 E2a pre-registers the 240-column admission only. ``narrow_40`` is uniformly
 ``source`` and ``restored_240`` must equal ``wide_240``; this conservative
@@ -65,7 +68,9 @@ WITNESS = {
         "With nine declared branches the TB/BT lane layout is 276 columns and is "
         "rejected by checked_dimension (kWidthLimit=240); the LR layouts are 218 columns "
         "but the bounded strict-first parent router (strict pass plus one relaxed "
-        "whole-plan retry) still cannot close an edge in the packed ten-lane canvas.",
+        "whole-plan retry) still cannot close an edge in the packed ten-lane canvas. "
+        "D-463 admitted both rows through the bounded git Work envelope, so this "
+        "witness is retained for the closed vocabulary but has no live row.",
     ),
     "gitgraph-native-parent-route-debt": (
         "src/ui/visual/mermaid_gitgraph_impl.cpp:457-637 (plan_parent_routes)",
@@ -213,6 +218,18 @@ def state_blocker(rel, source_sha256, body_lines):
     return None
 
 
+# D-463: the two 9-branch originals are admitted by the bounded git Work
+# envelope and recorded in tools/mermaid/git-envelope-d463-cohort.json; E2a no
+# longer registers them as canvas-dimension-overflow. The sha pins keep the
+# skip bound to the reviewed bytes.
+GIT_ENVELOPE_ADMITTED = {
+    "git/nightly-check/12-should-render-commits-for-more-than-8-branches.mmd":
+        "c6e08cd9843e64593279c50f6e8680a733c1f0fcf65f0574dca1c9ba3ffcf9e8",
+    "git/nightly-check/74-should-render-commits-for-more-than-8-branches-using-switch-instead-of-checkout.mmd":
+        "ac8600ffaf7582b8ccda078e4a7229be2058de8d19149621fe9411567fb81291",
+}
+
+
 def sha256_file(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -229,6 +246,11 @@ def collect_root(cases, root_rel, family):
         frontmatter, body = split
         keys = top_level_keys(frontmatter)
         if "config" in keys or body_has_init(body):
+            continue
+        if rel in GIT_ENVELOPE_ADMITTED:
+            if GIT_ENVELOPE_ADMITTED[rel] not in (None, sha256_file(path)):
+                raise ValueError(
+                    f"git envelope source changed; independent review required: {rel}")
             continue
         blocker_kind = (git_blocker(rel, keys, body) if family == "gitGraph"
                         else state_blocker(rel, sha256_file(path), body))

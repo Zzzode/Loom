@@ -42,6 +42,7 @@ const fs::path kD446Ledger =
     kTestsDir / "../tools/mermaid/state-leading-comment-d446-cohort.json";
 const fs::path kD449Ledger = kTestsDir / "../tools/mermaid/state-description-d449-cohort.json";
 const fs::path kD461Ledger = kTestsDir / "../tools/mermaid/state-d461-cohort.json";
+const fs::path kD463Ledger = kTestsDir / "../tools/mermaid/git-envelope-d463-cohort.json";
 const fs::path kInfoD461Ledger = kTestsDir / "../tools/mermaid/info-d461-cohort.json";
 const fs::path kD462Ledger = kTestsDir / "../tools/mermaid/state-scope-caption-d462-cohort.json";
 constexpr int kWide = 240;
@@ -160,14 +161,16 @@ TEST(MermaidE2aCohort, LedgerMatchesSchemaAndReviewed) {
     const auto root = ledger.root();
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_e2a_cohort/v1");
     const auto counts = root.get("counts");
-    EXPECT_EQ(counts.get_int("total"), 69);
-    EXPECT_EQ(counts.get_int("git"), 64);
+    // D-463 moves two 9-branch rows out of the E2a cohort (69/64 -> 67/62).
+    EXPECT_EQ(counts.get_int("total"), 67);
+    EXPECT_EQ(counts.get_int("git"), 62);
     EXPECT_EQ(counts.get_int("state_v2"), 5);
     EXPECT_EQ(counts.get_int("state_v1_qualified"), 0);
     // D-461 retires the two budget-blocked next-line-brace draws (61/8 ->
-    // 63/6); stage 3's crossing retry retires the last one (64/5).
+    // 63/6); stage 3's crossing retry retires the last one (64/5). D-463's git
+    // Work envelope retires the two >8-branch rows (64/5 -> 64/3).
     EXPECT_EQ(counts.get_int("predicted_draw"), 64);
-    EXPECT_EQ(counts.get_int("predicted_blocked"), 5);
+    EXPECT_EQ(counts.get_int("predicted_blocked"), 3);
     EXPECT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -222,9 +225,9 @@ TEST(MermaidE2aCohort, EveryDrawRowDrawsAndEveryBlockedRowKeepsSourceAt240) {
     // D-435 moved the titled gitGraph row from blocked to drawn; D-461 moved
     // the two layout-budget next-line-brace rows and stage 3 the last one.
     EXPECT_EQ(drawn, 64);
-    // D-435 retired the title blocker; D-461 retired the three brace draws,
-    // so exactly five rows stay blocked.
-    EXPECT_EQ(blocked, 5);
+    // D-435 retired the title blocker; D-461 retired the three brace draws and
+    // D-463's git envelope the two 9-branch rows, so exactly three stay blocked.
+    EXPECT_EQ(blocked, 3);
 }
 
 TEST(MermaidE2aCohort, DescriptionIsNeverRendered) {
@@ -318,6 +321,17 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     ASSERT_TRUE(d436.has_value()) << "D-436 cohort ledger must parse";
     d436->root().get("rows").iter(
         [&](const JsonVal row) { git_admitted.insert(row.get_string("path")); });
+    // D-463 admits the eight git Work-envelope originals; the per-row gate is
+    // test_mermaid_git_work_d463_cohort. Only the six config-bearing cherry-pick
+    // rows reach this whole-source scan (the two 9-branch rows carry no
+    // frontmatter config), so only those join the pinned skip set.
+    auto d463 = json::parse(read_file(kD463Ledger));
+    ASSERT_TRUE(d463.has_value()) << "D-463 cohort ledger must parse";
+    d463->root().get("rows").iter([&](const JsonVal row) {
+        const auto rel = row.get_string("path");
+        cohort.insert(rel);
+        if (has_config_or_init(read_file(kCases / rel))) git_admitted.insert(rel);
+    });
     cohort.insert(git_admitted.begin(), git_admitted.end());
     // RFC 0048 admits the reviewed State concurrent-region cohort; the per-row
     // gate is test_mermaid_state_region_0048_cohort. Only the config/init-bearing
@@ -432,13 +446,15 @@ TEST(MermaidE2aCohort, ConfigAndInitRowsKeepWholeSource) {
     // config-bearing rows out (the four basic-states look/theme rows and the
     // labeled multiple-transitions row): 29 -> 24. D-461 stage 4 moves the
     // `info`-body row out (its own family): 24 -> 23. D-462 moves the two
-    // composite originals out: 23 -> 21.
-    EXPECT_EQ(checked, 21);
+    // composite originals out: 23 -> 21. D-463 moves the six config-bearing
+    // cherry-pick rows out (the git Work envelope admits them): 21 -> 15.
+    EXPECT_EQ(checked, 15);
     EXPECT_EQ(skipped_by_rfc0048.size(), 24u);
     // Under-listing fails here (an admitted row that really changes surface is
     // scanned again); over-listing a missing or non-config-bearing path fails
     // the local set equality above, and an admitted-without-drawing row fails
-    // test_mermaid_gitgraph_0039_cohort (or test_mermaid_git_0045_cohort).
+    // test_mermaid_gitgraph_0039_cohort, test_mermaid_git_0045_cohort or
+    // test_mermaid_git_work_d463_cohort.
     EXPECT_EQ(git_skipped, git_admitted);
     EXPECT_EQ(state_skipped, state_admitted);
 }

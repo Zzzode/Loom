@@ -904,6 +904,14 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
         height = route_rows + static_cast<int>(graph.branches.size()) * lane_step + 2 +
                  static_cast<int>(graph.branches.size());
         int planned_width = 0, planned_height = 0;
+        // D-463: fund the grid, route and emission fees from the planned
+        // canvas. Fitting graphs never reach the clamp, so their charge
+        // sequence is unchanged; the envelope only lifts the fixed 1M primary
+        // for dense graphs (an empirical rate -- a crafted denser graph can
+        // exceed it and then fails closed).
+        if (!work.spend(4u * sizeof(std::size_t) + 8u)) return {};
+        work.enable_envelope(git_envelope_layout_allowance(
+            static_cast<std::size_t>(width), static_cast<std::size_t>(height)));
         if (!checked_dimension(static_cast<std::size_t>(width), static_cast<std::size_t>(height),
                                planned_width, planned_height, work))
             return {};
@@ -953,6 +961,10 @@ std::optional<std::vector<std::string>> layout_gitgraph(const GitGraph& graph, W
     }
     height = std::max(height, state_y + static_cast<int>(graph.branches.size()));
     int planned_width = 0, planned_height = 0;
+    // D-463: same bounded envelope on the vertical attempt.
+    if (!work.spend(4u * sizeof(std::size_t) + 8u)) return {};
+    work.enable_envelope(git_envelope_layout_allowance(
+        static_cast<std::size_t>(width), static_cast<std::size_t>(height)));
     if (!checked_dimension(static_cast<std::size_t>(width), static_cast<std::size_t>(height),
                            planned_width, planned_height, work))
         return {};

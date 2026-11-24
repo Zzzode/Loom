@@ -1,0 +1,201 @@
+{
+  "schema": "loom_mermaid_git_envelope_d463_cohort/v1",
+  "decision": "D-463",
+  "stage": "git Work envelope: bounded canvas-derived supplemental pool",
+  "admission": {
+    "mechanism": "gitgraph_layout enables the two-pool meter from the planned canvas before the grid/route/emission fees (git_envelope_layout_allowance(w,h) = w*h*768 + 65536)",
+    "bound": "measured whole-render totals 3,575,502 (216x29, 571/cell) and 1,788,063 (148x30, 403/cell); the bound is 768/cell plus 65,536, i.e. >=34% headroom at the binding row. The rate is empirical, not a worst-case proof: a crafted denser graph can exceed it and then fails closed to whole source",
+    "scope": "enabled only by the git layout; every other family and every default Work keeps the single-balance clamp"
+  },
+  "upstream": {
+    "tag": "mermaid@12.2.0",
+    "commit": "1fb7869866dd619168d840291c9c54b4f129758b",
+    "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
+  },
+  "selection": {
+    "rule": "the eight gitGraph originals whose whole render exceeds the 1M primary but completes under a larger budget (probe /tmp/d461/bigwork-all.log)",
+    "cohort_digest": "2eaad3cfdffa61d42c78bac1e96403c2e61089bcf71308bf77e398a543b3749a"
+  },
+  "counts": {
+    "total": 8,
+    "by_family": {
+      "git": 8
+    }
+  },
+  "review": {
+    "reviewer_agent": "one independent read-only adversarial review (task a7fe534c4a6a6808e); round 1 REQUEST-CHANGES on the stale E2a count pins, a gates log without the E2a target, unreproducible judgement-table totals and composition counts, an overclaimed byte-identity argument and an overstated envelope bound; all fixed, round 2 APPROVE",
+    "date": "2026-11-24",
+    "verdict": "approved",
+    "note": "Eight complete gitGraph originals were blocked only by the fixed 1M Work primary. A bounded canvas-derived pool admits them; no grammar or geometry changes."
+  },
+  "rows": [
+    {
+      "path": "git/nightly-check/12-should-render-commits-for-more-than-8-branches.mmd",
+      "family": "git",
+      "sha256": "c6e08cd9843e64593279c50f6e8680a733c1f0fcf65f0574dca1c9ba3ffcf9e8",
+      "manifest_sha256": "c6e08cd9843e64593279c50f6e8680a733c1f0fcf65f0574dca1c9ba3ffcf9e8",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_branch_refs": [
+        "main",
+        "branch1",
+        "branch2",
+        "branch3",
+        "branch4"
+      ],
+      "ledger_note": "the fixed 1M Work primary was the only blocker; the art contract is unchanged"
+    },
+    {
+      "path": "git/nightly-check/74-should-render-commits-for-more-than-8-branches-using-switch-instead-of-checkout.mmd",
+      "family": "git",
+      "sha256": "ac8600ffaf7582b8ccda078e4a7229be2058de8d19149621fe9411567fb81291",
+      "manifest_sha256": "ac8600ffaf7582b8ccda078e4a7229be2058de8d19149621fe9411567fb81291",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_branch_refs": [
+        "main",
+        "branch1",
+        "branch2",
+        "branch3",
+        "branch4"
+      ],
+      "ledger_note": "the fixed 1M Work primary was the only blocker; the art contract is unchanged"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-neo-dark-theme.mmd",
+      "family": "git",
+      "sha256": "9ab1e7c172e1a94d91a5d0f1f1d3016c05bd32f0d4084619a456db0244630572",
+      "manifest_sha256": "9ab1e7c172e1a94d91a5d0f1f1d3016c05bd32f0d4084619a456db0244630572",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_branch_refs": [
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5"
+      ],
+      "ledger_note": "the fixed 1M Work primary was the only blocker; the art contract is unchanged"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-neo-theme.mmd",
+      "family": "git",
+      "sha256": "c88f41faad78e698b3dae370c41a6c1937eba92a4a94db82e5df8a9deb7c4ff2",
+      "manifest_sha256": "c88f41faad78e698b3dae370c41a6c1937eba92a4a94db82e5df8a9deb7c4ff2",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_branch_refs": [
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5"
+      ],
+      "ledger_note": "the fixed 1M Work primary was the only blocker; the art contract is unchanged"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-redux-color-theme.mmd",
+      "family": "git",
+      "sha256": "798aea76b96eaa96046c20f0923fc0c6bd68f43497980b2fe69f3f16ed3b2ccc",
+      "manifest_sha256": "798aea76b96eaa96046c20f0923fc0c6bd68f43497980b2fe69f3f16ed3b2ccc",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_branch_refs": [
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5"
+      ],
+      "ledger_note": "the fixed 1M Work primary was the only blocker; the art contract is unchanged"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-redux-dark-color-theme.mmd",
+      "family": "git",
+      "sha256": "25d3ffb705a59b3d138631d54321c57fe6d81af80f2ee03370a56edd790b677d",
+      "manifest_sha256": "25d3ffb705a59b3d138631d54321c57fe6d81af80f2ee03370a56edd790b677d",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_branch_refs": [
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5"
+      ],
+      "ledger_note": "the fixed 1M Work primary was the only blocker; the art contract is unchanged"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-redux-dark-theme.mmd",
+      "family": "git",
+      "sha256": "3b3859a5d8e3bb7bd2e64251a25884a00dc5bd69a07373dd31c8d7a15d5a3496",
+      "manifest_sha256": "3b3859a5d8e3bb7bd2e64251a25884a00dc5bd69a07373dd31c8d7a15d5a3496",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_branch_refs": [
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5"
+      ],
+      "ledger_note": "the fixed 1M Work primary was the only blocker; the art contract is unchanged"
+    },
+    {
+      "path": "git/visual-check/multiple-branches-cycling-theme-color-limit-and-cherry-pick-merge-commit-with-parent-neo-look-redux-theme.mmd",
+      "family": "git",
+      "sha256": "d4d20a2c10c2f0b91c146b921d4f9ce89d9938ec3d383143d477e8674cef2525",
+      "manifest_sha256": "d4d20a2c10c2f0b91c146b921d4f9ce89d9938ec3d383143d477e8674cef2525",
+      "prior_status": "source_fallback",
+      "oracle": "native-frame",
+      "expected_states": {
+        "wide_240": "drawn",
+        "narrow_40": "source_fallback",
+        "restored_240": "drawn"
+      },
+      "expected_branch_refs": [
+        "b1",
+        "b2",
+        "b3",
+        "b4",
+        "b5"
+      ],
+      "ledger_note": "the fixed 1M Work primary was the only blocker; the art contract is unchanged"
+    }
+  ]
+}

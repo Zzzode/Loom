@@ -321,6 +321,15 @@ add_test(NAME MermaidStateScopeD462Cohort.GeneratorIsReproducible
 set_tests_properties(MermaidStateScopeD462Cohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
 
+# D-463: the git envelope cohort ledger is generated from the fixtures; the
+# check fails on a hand edit that the generator would not reproduce.
+add_test(NAME MermaidGitWorkD463Cohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_git_work_d463_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidGitWorkD463Cohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
 # D-460: the ER style-admission cohort ledger is generated from the fixtures;
 # the check fails on a hand edit that the generator would not reproduce.
 add_test(NAME MermaidErD460Cohort.GeneratorIsReproducible
@@ -1376,6 +1385,16 @@ add_executable(test_mermaid_state_d461_cohort
 target_link_libraries(test_mermaid_state_d461_cohort
     PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
 gtest_discover_tests(test_mermaid_state_d461_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 600 LABELS "mermaid")
+
+# D-463: eight complete gitGraph originals are funded by the bounded git Work
+# envelope.
+add_executable(test_mermaid_git_work_d463_cohort
+    test_mermaid_git_work_d463_cohort.cpp)
+target_link_libraries(test_mermaid_git_work_d463_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+gtest_discover_tests(test_mermaid_git_work_d463_cohort
     DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
     PROPERTIES TIMEOUT 600 LABELS "mermaid")
 

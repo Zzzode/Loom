@@ -196,6 +196,21 @@ constexpr std::size_t state_envelope_layout_allowance(std::size_t width,
 static_assert(state_envelope_layout_allowance(64u, 134u) == 1'650'688u);
 static_assert(state_envelope_layout_allowance(99u, 267u) == 5'079'232u);
 
+// D-463: the git projection's grid, parent-route BFS and emission fees are
+// cell-proportional too. Measured whole-render totals against the 1M primary:
+// 3,575,502 for a nine-branch graph on a 216x29 canvas (571/cell) and
+// 1,788,063 for the cherry-pick graph on 148x30 (403/cell). The allowance is
+// derived from the actual planned canvas and leaves >=34% headroom at the
+// binding row; it is drawn ONLY by a Work the git layout explicitly enables,
+// so every other family and every default Work keeps the historical
+// single-balance clamp.
+constexpr std::size_t git_envelope_layout_allowance(std::size_t width, std::size_t height) {
+    const std::size_t cells = width * height;
+    return cells * 768u + 65536u;
+}
+static_assert(git_envelope_layout_allowance(216u, 29u) == 4'876'288u);
+static_assert(git_envelope_layout_allowance(148u, 30u) == 3'475'456u);
+
 struct Work {
     std::size_t remaining = kWorkLimit;
     // RFC 0034: optional supplemental pool, inactive unless enable_envelope()

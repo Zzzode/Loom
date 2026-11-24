@@ -6016,3 +6016,40 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
 - **Paired negatives.** An unclosed composite still fails closed; a caption
   that fits keeps the previous scope width (the caption-free twin is strictly
   narrower), so the branch is not a blanket widening.
+
+## D-463 — bounded git Work envelope for complete graphs (2026-11-24)
+
+- **Problem.** Eight complete gitGraph originals exceeded the fixed 1M Work
+  primary: the two 9-branch graphs and the six cherry-pick graphs. A probe of
+  all 376 fallback rows under a 500M budget showed their whole renders
+  complete (3,575,502 Work on a 216x29 canvas, 571/cell; 1,788,063 on 148x30,
+  403/cell), i.e. the blocker was the budget, not the grammar.
+- **Mechanism.** `gitgraph_layout` enables the two-pool meter from the planned
+  canvas, immediately before `checked_dimension`, on both the LR and the TB
+  attempt:
+  `git_envelope_layout_allowance(w, h) = w*h*768 + 65536` (>=34% headroom over
+  the binding measurement on the official corpus). The per-cell rate is an
+  *empirical* bound, not a worst-case proof: a crafted denser graph can exceed
+  it, and then the render fails closed to whole source — the envelope never
+  turns a rejection into a wrong drawing. The pool is drawn only by this
+  family; every other family and every default Work keeps the single-balance
+  clamp.
+- **Byte-identity boundary.** A graph that fits the 1M primary never reaches
+  the clamp, so its charge sequence is unchanged by construction (`available()`
+  only queries the supplemental pool after the primary is spent); the matrix
+  shows drawn counts move only by the eight admitted rows (1769 -> 1777) and
+  no other census status moves. Byte-equality of the already-drawn originals
+  rests on that code argument here; the dual-preset byte gate that would
+  measure it is deferred to the milestone closure.
+- **Ledger.** `tools/mermaid/git-envelope-d463-cohort.json` (8 rows,
+  `native-frame` oracle) with the generator and gate
+  `test_mermaid_git_work_d463_cohort`. The two 9-branch rows leave the E2a
+  ledger's `gitgraph-canvas-dimension-overflow` set through the sha-bound
+  `GIT_ENVELOPE_ADMITTED` skip (E2a 69 -> 67 rows, 64 draw / 3 blocked).
+- **Measured result.** 1777 drawn / 368 fallback / 0 error, `drawn_at_240`
+  1591, roster 368 rows / 26 categories (`git_cherry_pick` empties,
+  `family_residual:git` 13 -> 11). All eight rows keep whole source at 40
+  because the git captions exceed the fence.
+- **Paired negatives.** Malformed git sources still fail closed
+  (`merge nonexistent`, a bare `branch`), so the envelope cannot admit a
+  graph the grammar rejected.

@@ -45,6 +45,7 @@ using loom::ui::mermaid::testing::kWorkLimit;
 using loom::ui::mermaid::testing::kErElementWorkLimit;
 using loom::ui::mermaid::testing::kErEnvelopeLayoutAllowance;
 using loom::ui::mermaid::testing::state_envelope_layout_allowance;
+using loom::ui::mermaid::testing::git_envelope_layout_allowance;
 using loom::ui::mermaid::testing::kBlockElementWorkLimit;
 using loom::ui::mermaid::testing::kBlockPayloadWorkLimit;
 using loom::ui::mermaid::testing::MermaidProbeDecision;

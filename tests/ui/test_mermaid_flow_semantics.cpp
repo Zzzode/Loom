@@ -7815,10 +7815,12 @@ TEST(MermaidFlowRouter, StrictFirstRelaxedRetryRescuesDenseTopology) {
 }
 
 TEST(MermaidFlowRouter, RelaxedRetryIsBoundedAndKeepsWholeSourceWhenUncloseable) {
-    // K8 exhausts the strict pass against the fixed 1,000,000 Work budget; the
-    // single retry cannot be funded, so the complete source is retained
-    // exactly as before T1-B. No canvas growth, no partial art.
-    check_source_policy(t1b_complete_graph(8));
+    // D-470: the canvas-derived flow envelope now funds K8's relaxed retry, so
+    // the binding row moved out to K12, whose route plan still exceeds the
+    // bounded envelope: the single retry cannot be funded, so the complete
+    // source is retained exactly as before T1-B. No canvas growth, no partial
+    // art.
+    check_source_policy(t1b_complete_graph(12));
 }
 
 TEST(MermaidFlowP0Length, SourceAliasRetainsIndependentIdentityProfileAndResourceGuards) {

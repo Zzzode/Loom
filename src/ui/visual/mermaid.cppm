@@ -211,6 +211,34 @@ constexpr std::size_t git_envelope_layout_allowance(std::size_t width, std::size
 static_assert(git_envelope_layout_allowance(216u, 29u) == 4'876'288u);
 static_assert(git_envelope_layout_allowance(148u, 30u) == 3'475'456u);
 
+// D-470: the flow projection's paint, route and styled-emission fees are
+// canvas-proportional: the five-subgraph body at 55x194 cells costs 1,333,535
+// for the whole render, of which 333,535 falls outside the fixed 1M primary
+// (measured by the D-470 work probe; the nested body at 118x56 stays inside
+// the primary). The allowance is derived from the actual planned canvas and
+// is drawn ONLY by a Work the flow layout explicitly enables, so every other
+// family and every default Work keeps the historical single-balance clamp.
+// Stages before the canvas is known (frontmatter decode, parse, placement)
+// remain primary-funded, so a source whose pre-canvas cost alone exceeds the
+// primary still fails closed.
+constexpr std::size_t flow_envelope_layout_allowance(std::size_t width,
+                                                     std::size_t height) {
+    const std::size_t cells = width * height;
+    return cells * 64u + 32768u;
+}
+static_assert(flow_envelope_layout_allowance(55u, 194u) == 715'648u);
+static_assert(flow_envelope_layout_allowance(118u, 56u) == 455'680u);
+
+// D-470: parse-stage pool for the frontmatter flow path. The reviewed
+// full-profile prepayment charges 8*body_bytes per capped edge, so a 334-byte
+// five-subgraph body alone needs ~1.08M before the canvas exists; the pool is
+// exactly that analytic prepayment total (a bound, never a tuned constant),
+// and the layout stage REFILLS the same meter with the canvas-derived bound
+// above.
+constexpr std::size_t flow_parse_envelope_allowance(std::size_t prepay_total) {
+    return prepay_total + 4096u;
+}
+
 struct Work {
     std::size_t remaining = kWorkLimit;
     // RFC 0034: optional supplemental pool, inactive unless enable_envelope()

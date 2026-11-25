@@ -46,6 +46,8 @@ using loom::ui::mermaid::testing::kErElementWorkLimit;
 using loom::ui::mermaid::testing::kErEnvelopeLayoutAllowance;
 using loom::ui::mermaid::testing::state_envelope_layout_allowance;
 using loom::ui::mermaid::testing::git_envelope_layout_allowance;
+using loom::ui::mermaid::testing::flow_envelope_layout_allowance;
+using loom::ui::mermaid::testing::flow_parse_envelope_allowance;
 using loom::ui::mermaid::testing::kBlockElementWorkLimit;
 using loom::ui::mermaid::testing::kBlockPayloadWorkLimit;
 using loom::ui::mermaid::testing::MermaidProbeDecision;
@@ -123,6 +125,11 @@ struct NativeLayout {
     // re-debited. Unused for ER and non-packed families.
     Work payload_work{};
     std::size_t measured_payload_work = 0u;
+    // D-470: the canvas-derived flow envelope allowance the miss used (0 for
+    // every non-flow layout). The cache re-enables the same bounded pool on a
+    // hit so the styled emission below the retained rows cannot diverge from
+    // the miss.
+    std::size_t flow_envelope_allowance = 0u;
 };
 
 // RFC 0031 FS-3a graduated classDef/class/direct-style projection; only the

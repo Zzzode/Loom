@@ -58,12 +58,9 @@ ROWS = {
     "flowchart/visual-check/5059-should-render-when-subgraph-contains-only-subgraphs-has-link-to-outside-and-itself-is-part-of-a-link.mmd":
         ("whole-and-body", None),
     "flowchart/nightly-check/dagre/dagre-should-keep-the-entry-node-on-top-of-a-recursive-flow-nested-in-a-subgraph-with-dagre-keepentrynodeontop-true-7827.mmd":
-        ("body-only",
-         "whole-source envelope render rejects at the 1,000,000 Work "
-         "ceiling (kWorkLimit); all its frontmatter keys are admitted and "
-         "the bare body draws, so only the deferred FS-1b gas-meter "
-         "recalibration remains (also listed in "
-         "docs/dev/mermaid-unsuccessful-cases.md)"),
+        # D-470 round 809: the canvas-derived flow Work envelope funds the
+        # whole render; the untrusted-compound guard still applies.
+        ("whole-and-body", None),
     "flowchart/visual-check/3258-should-render-subgraphs-with-large-nodespacing-and-rankspacing.mmd":
         ("whole-and-body", None),
     "flowchart/visual-check/3258-should-render-subgraphs-with-main-graph-nodespacing-and-rankspacing.mmd":

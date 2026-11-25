@@ -1,0 +1,276 @@
+{
+ "schema": "loom_mermaid_d470_projection_draws_cohort/v1",
+ "decision": "TL round 809: classify, do not add Models",
+ "selection": {
+  "rule": "palette-opening and D-470 envelope projection draws with no Flow400 Model; source bytes pinned to the official manifest",
+  "rows": 18
+ },
+ "review": {
+  "reviewer_agent": "independent adversarial reviewer (Claude Code, model deepseek-v4.1-flash)",
+  "date": "2026-11-25",
+  "verdict": "approved",
+  "note": "Round 1 REQUEST-CHANGES (CMake blast radius accidentally deleting unrelated registrations, generator/ledger verdict split, cache miss/hit parity for envelope-funded flow rows, stale 14-row comments) and round 2 APPROVE after every finding was fixed. Every row is a projection draw, not a Model admission: the durable gate renders each row at 240/40/240 and pins the disclosure footer and source bytes."
+ },
+ "rows": [
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/01-should-render-subgraphs-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "e427673c1cb813892bc7ec61b1ff4eca26246c095f54c816d54aa7abdf8bd36e",
+   "manifest_sha256": "e427673c1cb813892bc7ec61b1ff4eca26246c095f54c816d54aa7abdf8bd36e",
+   "cause": "five-sibling-subgraph original blocked only by config.theme; the required palette disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "footer": {
+    "theme": "redux"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/05-should-render-subgraphs-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "0cc4ea4d40527a3bd819b9dc914f9e01fd4fb90c6a5f0acaebc4b0a9a9715051",
+   "manifest_sha256": "0cc4ea4d40527a3bd819b9dc914f9e01fd4fb90c6a5f0acaebc4b0a9a9715051",
+   "cause": "five-sibling-subgraph original blocked only by config.theme; the required palette disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "footer": {
+    "theme": "redux-color"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/09-should-render-subgraphs-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "325fc021010e8353e63bfb5ae256c059c11d7bc3edd82b7a2c0d9eae94b89cdb",
+   "manifest_sha256": "325fc021010e8353e63bfb5ae256c059c11d7bc3edd82b7a2c0d9eae94b89cdb",
+   "cause": "five-sibling-subgraph original blocked only by config.theme; the required palette disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "footer": {
+    "theme": "redux-dark-color"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/13-should-render-subgraphs-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "b4ad214f15dd1e90f3f8188d999968abc80f35c051dff166e635b225fa819b6a",
+   "manifest_sha256": "b4ad214f15dd1e90f3f8188d999968abc80f35c051dff166e635b225fa819b6a",
+   "cause": "five-sibling-subgraph original blocked only by config.theme; the required palette disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "footer": {
+    "theme": "redux-dark"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/02-should-render-nested-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "dd90e3fd9b0c3c728f8b52c3f9f07a9e55916450b1b385c7bda899acb4e48f54",
+   "manifest_sha256": "dd90e3fd9b0c3c728f8b52c3f9f07a9e55916450b1b385c7bda899acb4e48f54",
+   "cause": "nested subgraph original blocked only by config.theme; the required palette disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "footer": {
+    "theme": "redux"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/06-should-render-nested-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "eab28e978fb364666ba430c11a4b767d8feb67a94685e5afb7716b60f2dc4a6a",
+   "manifest_sha256": "eab28e978fb364666ba430c11a4b767d8feb67a94685e5afb7716b60f2dc4a6a",
+   "cause": "nested subgraph original blocked only by config.theme; the required palette disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "footer": {
+    "theme": "redux-color"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/10-should-render-nested-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "91e9d2e0e7a11d438a63b4781db592aaf0c9657ad4b6a129dad1b1c1701727b3",
+   "manifest_sha256": "91e9d2e0e7a11d438a63b4781db592aaf0c9657ad4b6a129dad1b1c1701727b3",
+   "cause": "nested subgraph original blocked only by config.theme; the required palette disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "footer": {
+    "theme": "redux-dark"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/14-should-render-nested-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "6a8cd7ab3bcbbdbf0e5690864ad42de432dded4b9610b4978af040f1d36e01ea",
+   "manifest_sha256": "6a8cd7ab3bcbbdbf0e5690864ad42de432dded4b9610b4978af040f1d36e01ea",
+   "cause": "nested subgraph original blocked only by config.theme; the required palette disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "footer": {
+    "theme": "redux-dark-color"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/03-should-render-collapsed-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "6fdf541d7fb1d3a7e02b11faf07cc00a48fa09d152ac7344cc5ebe38332b11d9",
+   "manifest_sha256": "6fdf541d7fb1d3a7e02b11faf07cc00a48fa09d152ac7344cc5ebe38332b11d9",
+   "cause": "collapsed subgraph (`@{ view: collapsed }`) renders through the reviewed FS-7b projection; the flow Model schema cannot express a collapsed flag and the palette footer blocks the geometry oracle, so the row admits on reviewed source-byte identity",
+   "footer": {
+    "theme": "redux"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/07-should-render-collapsed-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "15f344629fc9c03a098bb90cadabf818ee976a8aeaa074f5a748bae2c4137b6b",
+   "manifest_sha256": "15f344629fc9c03a098bb90cadabf818ee976a8aeaa074f5a748bae2c4137b6b",
+   "cause": "collapsed subgraph (`@{ view: collapsed }`) renders through the reviewed FS-7b projection; the flow Model schema cannot express a collapsed flag and the palette footer blocks the geometry oracle, so the row admits on reviewed source-byte identity",
+   "footer": {
+    "theme": "redux-color"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/11-should-render-collapsed-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "aa0c3b4743fde40112e5545864c69c8cf012a5ddde503c6d7567329237871700",
+   "manifest_sha256": "aa0c3b4743fde40112e5545864c69c8cf012a5ddde503c6d7567329237871700",
+   "cause": "collapsed subgraph (`@{ view: collapsed }`) renders through the reviewed FS-7b projection; the flow Model schema cannot express a collapsed flag and the palette footer blocks the geometry oracle, so the row admits on reviewed source-byte identity",
+   "footer": {
+    "theme": "redux-dark-color"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/redux-color-subgraphs/15-should-render-collapsed-subgraph-containers.mmd",
+   "family": "flowchart",
+   "sha256": "f2cc0d907884b44b3f12f4982c967963ac1e039ba6b84e61e9b9491ef3f90598",
+   "manifest_sha256": "f2cc0d907884b44b3f12f4982c967963ac1e039ba6b84e61e9b9491ef3f90598",
+   "cause": "collapsed subgraph (`@{ view: collapsed }`) renders through the reviewed FS-7b projection; the flow Model schema cannot express a collapsed flag and the palette footer blocks the geometry oracle, so the row admits on reviewed source-byte identity",
+   "footer": {
+    "theme": "redux-dark"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/visual-check/issue-4648-sibling-subgraphs-with-different-directions-and-external-connections.mmd",
+   "family": "flowchart",
+   "sha256": "9bcfd24d8f213bab9921a233dba1bc52e47592e120db5a69ac1e3093bc260b04",
+   "manifest_sha256": "9bcfd24d8f213bab9921a233dba1bc52e47592e120db5a69ac1e3093bc260b04",
+   "cause": "sibling subgraphs with per-group directions; the whole source needs more than the fixed 1M Work primary and renders natively inside the bounded D-470 canvas envelope under the admitted strict htmlLabels profile (no footer: the strict profile is non-terminal)",
+   "footer": null,
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/dagre/dagre-should-keep-the-entry-node-on-top-of-a-recursive-flow-nested-in-a-subgraph-with-dagre-keepentrynodeontop-true-7827.mmd",
+   "family": "flowchart",
+   "sha256": "a4df0847a6680b16ad68770bd06d2ce9289417cb602e244e3e02e153628f91db",
+   "manifest_sha256": "a4df0847a6680b16ad68770bd06d2ce9289417cb602e244e3e02e153628f91db",
+   "cause": "recursive flow nested in a subgraph under config.layout=dagre; the whole source renders natively inside the bounded D-470 canvas envelope and the untrusted-compound guard still applies, with no footer",
+   "footer": null,
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/dagre/6080-should-handle-diamond-shape-intersections.mmd",
+   "family": "flowchart",
+   "sha256": "6fdbab6613773a69e6ea51cc52ca0e139096675e157b9dbb3d02ded563aac90b",
+   "manifest_sha256": "6fdbab6613773a69e6ea51cc52ca0e139096675e157b9dbb3d02ded563aac90b",
+   "cause": "frontmatter flow source whose reviewed full-profile parse prepayment exceeds the fixed 1M Work primary; the whole source renders natively inside the bounded parse-stage pool, so it admits on reviewed source-byte identity without a Model",
+   "footer": null,
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/dagre/6088-4-should-handle-diamond-shape-intersections.mmd",
+   "family": "flowchart",
+   "sha256": "d58ffd1ff891fed3cfef05fce74af44c6473e855584b5e948455dd4e74ff2741",
+   "manifest_sha256": "d58ffd1ff891fed3cfef05fce74af44c6473e855584b5e948455dd4e74ff2741",
+   "cause": "frontmatter flow source whose reviewed full-profile parse prepayment exceeds the fixed 1M Work primary; the whole source renders natively inside the bounded parse-stage pool, so it admits on reviewed source-byte identity without a Model",
+   "footer": null,
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/visual-check/forest-theme-legacy-graph.mmd",
+   "family": "flowchart",
+   "sha256": "2da3419fa82156b3416ac14ccc686d0a4667d44ded95bbfbfbd378e438715da1",
+   "manifest_sha256": "2da3419fa82156b3416ac14ccc686d0a4667d44ded95bbfbfbd378e438715da1",
+   "cause": "frontmatter flow source whose reviewed full-profile parse prepayment exceeds the fixed 1M Work primary; the whole source renders natively inside the bounded parse-stage pool, so it admits on reviewed source-byte identity without a Model",
+   "footer": {
+    "theme": "forest"
+   },
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/visual-check/v2-18-should-render-nested-subgraphs-with-edge-from-cluster-containing-extractable-subgraph.mmd",
+   "family": "flowchart",
+   "sha256": "96b5313f34f7a55a86ce23f298b72d257f9c86d70c1a066aee73c2a439effed0",
+   "manifest_sha256": "96b5313f34f7a55a86ce23f298b72d257f9c86d70c1a066aee73c2a439effed0",
+   "cause": "frontmatter flow source whose reviewed full-profile parse prepayment exceeds the fixed 1M Work primary; the whole source renders natively inside the bounded parse-stage pool, so it admits on reviewed source-byte identity without a Model",
+   "footer": null,
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  }
+ ]
+}

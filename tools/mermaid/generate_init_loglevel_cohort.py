@@ -14,8 +14,10 @@ back on two body-only parser gaps, both non-visual:
 Both are now consumed through closed whitelists (the directive
 normalizer mirrors the class family's class_init_meta; accessibility
 scalars mirror its class_accessibility contract), so the four bodies
-draw. Their whole originals stay source: the frontmatter sets
-`config.theme`, which matches no whole-source envelope admission
+draw. Their whole originals stay source: the frontmatter sets a
+`config.theme` outside the admitted palette table (except the forest row,
+which D-470 round 809 now admits through its reviewed projection-draw
+cohort)
 profile. The four "new-syntax" siblings are not selected: their
 directive also carries a `theme` key (outside the whitelist) and their
 bodies bind x/o edge markers, so they stay fail-closed.
@@ -145,12 +147,20 @@ def build(repo_root):
             "manifest_sha256": manifest_rows[rel]["sha256"],
             "prior_status": manifest_rows[rel]["raw"],
             "prediction": "predicted-draw",
-            "track_scope": "body-only",
-            "expected_states": {  # whole original stays source (theme gate)
-                "wide_240": "source",
-                "narrow_40": "source",
-                "restored_240": "source",
-            },
+            "track_scope": ("whole-and-body"
+                            if rel.endswith("forest-theme-legacy-graph.mmd")
+                            else "body-only"),
+            # D-470 round 809: the forest palette is admitted through the
+            # reviewed projection-draw cohort, so that whole original draws
+            # (the disclosure footer keeps it source at 40 columns). The other
+            # theme rows keep the closed-profile whole-source fallback.
+            "expected_states": (
+                {"wide_240": "drawn", "narrow_40": "source",
+                 "restored_240": "drawn"}
+                if rel.endswith("forest-theme-legacy-graph.mmd") else
+                {"wide_240": "source", "narrow_40": "source",
+                 "restored_240": "source"}
+            ),
             "expected_body_states": {
                 "wide_240": "drawn",
                 "narrow_40": "source",

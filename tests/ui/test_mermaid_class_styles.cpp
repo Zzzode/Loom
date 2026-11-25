@@ -1223,14 +1223,17 @@ TEST(MermaidFlowStyleBaseline, PlainPublicGlyphAndWorkRemainUnchanged) {
     };
 
     const std::array<Case, 4> cases{
-        {{"chain_lr", "flowchart LR\nLorem --> Ipsum --> Dolor\n", 329177u,
+        // D-470: the flow layout's canvas-derived envelope adds a fixed
+        // 4*sizeof(size_t)+8 = 40 pre-enable charge to every flow render; the
+        // glyph pins are unchanged.
+        {{"chain_lr", "flowchart LR\nLorem --> Ipsum --> Dolor\n", 329217u,
           "2553afc1eb724e9747196a17e853cf7aaa48330f6f65206da761485b3cb648eb"},
-         {"chain_td", "flowchart TD\nA[Start] --> B[Process]\nB --> C[End]\n", 344485u,
+         {"chain_td", "flowchart TD\nA[Start] --> B[Process]\nB --> C[End]\n", 344525u,
           "03a1bdfdd526242e84c3f0fee78305c01accdba070958dc833afb09fcb302c3e"},
-         {"rounded", "flowchart LR\nA(First) --> B[Second]\n", 323796u,
+         {"rounded", "flowchart LR\nA(First) --> B[Second]\n", 323836u,
           "946d04076eb42cd0a4752daf3b07401110a05c16d788689f0da5a9923731a074"},
          {"grouped", "flowchart TD\nsubgraph G[Group]\nA[One] --> B[Two]\nend\nB --> C[Three]\n",
-          374376u, "0c41890ce8c2566b33a404d7fee262281d089a6c954c5f056264ff9a8078bd1f"}}};
+          374416u, "0c41890ce8c2566b33a404d7fee262281d089a6c954c5f056264ff9a8078bd1f"}}};
     for (const auto& item : cases) {
         const auto source = item.source;
         SCOPED_TRACE(item.name);
@@ -1385,22 +1388,30 @@ TEST(MermaidFlowStyle4Prototype,
             EXPECT_EQ(exact.remaining, 0u);
             EXPECT_TRUE(complete.preflight_complete);
             EXPECT_TRUE(complete.returned_native);
+            // D-470: flow layouts run on the two-pool envelope meter, so a
+            // primary one unit short no longer rejects -- the canvas-derived
+            // supplemental funds exactly that unit while the primary still
+            // drains to zero (the same shape as RFC 0034's ER107 boundary).
+            // The combined-ceiling fail-closed boundary is pinned separately in
+            // MermaidEnvelopeWork.FlowEnvelopeIsCanvasDerivedAndFailsClosed, and
+            // the end-to-end render-level negative (a route plan beyond the
+            // bounded envelope keeps the whole source) is
+            // MermaidFlowRouter.RelaxedRetryIsBoundedAndKeepsWholeSourceWhenUncloseable.
             testing::Work short_work{spent - 1u};
             testing::FinalEmissionTrace cut;
-            const auto failed =
+            const auto short_native =
                 testing::render_mermaid_with_work(source, fallback, false, short_work, &cut);
-            EXPECT_FALSE(failed);
-            EXPECT_TRUE(cut.styled_entered);
-            EXPECT_FALSE(cut.preflight_complete);
-            EXPECT_FALSE(cut.allocation_started);
-            EXPECT_EQ(cut.failed_debit, trace.last_debit);
-            EXPECT_EQ(cut.preflight_debits, trace.preflight_debits);
+            ASSERT_TRUE(short_native);
+            EXPECT_TRUE(short_work.envelope_enabled);
             EXPECT_EQ(short_work.remaining, 0u);
-            defined6::Work oracle{128000000u};
-            const auto preserved = defined6::capture(failed ? *failed : fallback, 240, 40, oracle);
-            const auto ordinary = defined6::capture(fallback, 240, 40, oracle);
-            EXPECT_EQ(preserved.glyphs, ordinary.glyphs);
-            EXPECT_EQ(preserved.attributes, ordinary.attributes);
+            EXPECT_GT(short_work.supplemental_remaining, 0u);
+            EXPECT_TRUE(cut.styled_entered);
+            EXPECT_TRUE(cut.preflight_complete);
+            EXPECT_TRUE(cut.returned_native);
+            auto short_screen =
+                ftxui::Screen::Create(ftxui::Dimension::Fixed(240), ftxui::Dimension::Fixed(96));
+            ftxui::Render(short_screen, *short_native);
+            EXPECT_EQ(short_screen.ToString(), actual);
         }
     }
 }

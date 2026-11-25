@@ -61,28 +61,36 @@ ROWS = {
          "whole": ("drawn", "drawn", "drawn"),
          "body": ("drawn", "drawn", "drawn")},
     "flowchart/nightly-check/redux-color-subgraphs/03-should-render-collapsed-subgraph-containers.mmd":
-        {"scope": "body-only",
-         "note": "remap lets the body draw the collapse geometry; whole "
-                 "original stays source behind the theme: redux frontmatter",
-         "whole": ("source", "source", "source"),
+        {"scope": "whole-and-body",
+         "note": "remap lets the body draw the collapse geometry; the whole "
+                 "original draws once the redux palette admits (D-470 "
+                 "cohort), and the disclosure footer keeps it source at 40 "
+                 "columns",
+         "whole": ("drawn", "source", "drawn"),
          "body": ("drawn", "drawn", "drawn")},
     "flowchart/nightly-check/redux-color-subgraphs/07-should-render-collapsed-subgraph-containers.mmd":
-        {"scope": "body-only",
-         "note": "remap lets the body draw the collapse geometry; whole "
-                 "original stays source behind the theme: redux frontmatter",
-         "whole": ("source", "source", "source"),
+        {"scope": "whole-and-body",
+         "note": "remap lets the body draw the collapse geometry; the whole "
+                 "original draws once the redux palette admits (D-470 "
+                 "cohort), and the disclosure footer keeps it source at 40 "
+                 "columns",
+         "whole": ("drawn", "source", "drawn"),
          "body": ("drawn", "drawn", "drawn")},
     "flowchart/nightly-check/redux-color-subgraphs/11-should-render-collapsed-subgraph-containers.mmd":
-        {"scope": "body-only",
-         "note": "remap lets the body draw the collapse geometry; whole "
-                 "original stays source behind the theme: redux frontmatter",
-         "whole": ("source", "source", "source"),
+        {"scope": "whole-and-body",
+         "note": "remap lets the body draw the collapse geometry; the whole "
+                 "original draws once the redux palette admits (D-470 "
+                 "cohort), and the disclosure footer keeps it source at 40 "
+                 "columns",
+         "whole": ("drawn", "source", "drawn"),
          "body": ("drawn", "drawn", "drawn")},
     "flowchart/nightly-check/redux-color-subgraphs/15-should-render-collapsed-subgraph-containers.mmd":
-        {"scope": "body-only",
-         "note": "remap lets the body draw the collapse geometry; whole "
-                 "original stays source behind the theme: redux frontmatter",
-         "whole": ("source", "source", "source"),
+        {"scope": "whole-and-body",
+         "note": "remap lets the body draw the collapse geometry; the whole "
+                 "original draws once the redux palette admits (D-470 "
+                 "cohort), and the disclosure footer keeps it source at 40 "
+                 "columns",
+         "whole": ("drawn", "source", "drawn"),
          "body": ("drawn", "drawn", "drawn")},
 }
 

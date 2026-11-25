@@ -98,11 +98,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",

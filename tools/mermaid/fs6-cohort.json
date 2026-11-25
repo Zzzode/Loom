@@ -40,7 +40,7 @@
     "total": 54,
     "predicted_draw": 38,
     "predicted_blocked": 16,
-    "predicted_original_draw": 21
+    "predicted_original_draw": 24
   },
   "blocker_vocabulary": [
     "flow-fa-unknown-icon",
@@ -278,11 +278,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -371,11 +371,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -1709,11 +1709,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -1724,7 +1724,7 @@
         "car"
       ],
       "blocker": null,
-      "ledger_note": "FS-init body-only: whitelisted logLevel directive and accTitle/accDescr scalars admitted; the frontmatter theme gate keeps the whole original source"
+      "ledger_note": "FS-6 FontAwesome marker projected to a fixed terminal cell on the body track"
     },
     {
       "path": "flowchart/visual-check/forest-theme-new-syntax.mmd",

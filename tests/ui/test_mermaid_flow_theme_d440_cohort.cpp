@@ -199,7 +199,9 @@ TEST(MermaidFlowchartThemeD440Cohort, ThemeIsInertAgainstTwins) {
 TEST(MermaidFlowchartThemeD440Cohort, ClosedPaletteNegativesStayWholeSource) {
     // Every admitted palette draws, bare or double-quoted, and discloses the
     // dequoted name.
-    for (const auto* theme : {"forest"}) {
+    // D-470 rounds 804-809: the four redux palettes are admitted through the
+    // reviewed projection-draw cohort; the forest row keeps its D-440 gate.
+    for (const auto* theme : {"forest", "redux", "redux-color", "redux-dark", "redux-dark-color"}) {
         for (const auto& form : {std::string("  theme: ") + theme + "\n",
                                  std::string("  theme: \"") + theme + "\"\n"}) {
             const auto source = probe("config:\n" + form);
@@ -214,11 +216,15 @@ TEST(MermaidFlowchartThemeD440Cohort, ClosedPaletteNegativesStayWholeSource) {
     for (const auto* tail : {
              // Palettes outside the corpus-backed flowchart table (every
              // `flowchart/` theme fixture is Flow400-frozen; D-440 finding).
-             "config:\n  theme: redux\n",
-             "config:\n  theme: \"redux\"\n",
-             "config:\n  theme: redux-dark\n",
-             "config:\n  theme: redux-color\n",
-             "config:\n  theme: redux-dark-color\n",
+             // TL rounds 804-809 open the four redux palettes through the
+             // reviewed projection-draw cohort, so the former negatives become
+             // near-misses and the admitted values are asserted above. A
+             // trailing space (bare or quoted) is trimmed and therefore
+             // admitted by design, so the near-miss is an unknown value.
+             "config:\n  theme: redux-extra\n",
+             "config:\n  theme: Redux\n",
+             "config:\n  theme: reduxdark\n",
+             "config:\n  theme: \"redux\n",
              "config:\n  theme: dark\n",
              "config:\n  theme: default\n",
              "config:\n  theme: neutral\n",

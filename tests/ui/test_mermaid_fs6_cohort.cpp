@@ -121,7 +121,8 @@ TEST(MermaidFs6Cohort, LedgerMatchesSchemaReviewAndCounts) {
     EXPECT_EQ(counts.get_int("total"), 54);
     EXPECT_EQ(counts.get_int("predicted_draw"), 38);
     EXPECT_EQ(counts.get_int("predicted_blocked"), 16);
-    EXPECT_EQ(counts.get_int("predicted_original_draw"), 21);
+    // D-470 round 809: three rows moved from body-only to whole draws.
+    EXPECT_EQ(counts.get_int("predicted_original_draw"), 24);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -133,10 +134,11 @@ TEST(MermaidFs6Cohort, LedgerMatchesSchemaReviewAndCounts) {
 
     // RFC 0031 FS-init: the four legacy theme fixtures migrated from
     // blocked to body-only draw; their whole originals stay source.
+    // D-470 round 809 moved the forest row to the whole-draw set (its palette
+    // is admitted through the reviewed projection-draw cohort).
     const std::set<std::string> kFsInitRows{
         "flowchart/visual-check/dark-theme-legacy-graph.mmd",
         "flowchart/visual-check/default-theme-legacy-graph.mmd",
-        "flowchart/visual-check/forest-theme-legacy-graph.mmd",
         "flowchart/visual-check/neutral-theme-legacy-graph.mmd"};
 
     // Every draw row binds only the closed icon vocabulary; blocked rows
@@ -174,9 +176,10 @@ TEST(MermaidFs6Cohort, LedgerMatchesSchemaReviewAndCounts) {
     }
     EXPECT_EQ(draw, 38);
     EXPECT_EQ(blocked, 16);
-    EXPECT_EQ(original_draw, 21);
-    EXPECT_EQ(body_only, 17);
-    EXPECT_EQ(fs_init, 4);
+    // D-470 round 809: three rows moved from body-only to whole draws.
+    EXPECT_EQ(original_draw, 24);
+    EXPECT_EQ(body_only, 14);
+    EXPECT_EQ(fs_init, 3);
 }
 
 TEST(MermaidFs6Cohort, BodyStatesMatchLedgerWithMarkerProjection) {
@@ -222,5 +225,5 @@ TEST(MermaidFs6Cohort, WholeOriginalStatesMatchLedger) {
             EXPECT_TRUE(same_surface(wide, capture(bytes, "text", kWide))) << row.path;
         }
     }
-    EXPECT_EQ(original_draw, 21);
+    EXPECT_EQ(original_draw, 24);
 }

@@ -7896,6 +7896,61 @@ const Fs1CohortEntry* fs1_any_cohort_row(std::string_view path) {
     return fs1g_cohort_row(path);
 }
 
+// D-470 round 809: reviewed projection-draw cohort. Eighteen Flow400 originals
+// that the palette opening and the bounded flow Work envelopes admit without a
+// Model: the twelve redux-color theme rows (eight subgraph/nested whose palette
+// disclosure footer is unclaimed ink for the Flow400 geometry oracle, four
+// collapsed siblings), two envelope-funded originals and four whose
+// frontmatter prepayment exceeds the fixed primary. Each is source-pinned with
+// a concrete per-row cause; the durable gate is
+// test_mermaid_d470_projection_draws_cohort.
+struct D470ProjectionEntry {
+    std::array<std::string, 3> original_states;
+    std::string footer;  // "" | "theme:<palette>" | "html_labels:true"
+    std::string cause;
+    std::string sha256;
+};
+
+const std::map<std::string, D470ProjectionEntry>& d470_projection_map() {
+    static const std::map<std::string, D470ProjectionEntry> map = [] {
+        std::map<std::string, D470ProjectionEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/d470-projection-draws-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D470 projection cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D470 projection cohort ledger must be independently approved");
+        std::size_t count = 0u;
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            D470ProjectionEntry entry;
+            const auto states = row.get("expected_states");
+            entry.original_states = {states.get_string("wide_240"),
+                                     states.get_string("narrow_40"),
+                                     states.get_string("restored_240")};
+            const auto footer = row.get("footer");
+            if (footer.is_obj() && footer.get("theme").is_str())
+                entry.footer = "theme:" + std::string(footer.get_string("theme"));
+            else if (footer.is_obj() && footer.get("html_labels").is_bool() &&
+                     footer.get("html_labels").as_bool())
+                entry.footer = "html_labels:true";
+            entry.cause = row.get_string("cause");
+            require(!entry.cause.empty(), "D470 projection cohort row must carry a cause");
+            entry.sha256 = row.get_string("sha256");
+            require(entry.sha256.size() == 64u, "D470 projection cohort row must pin a SHA");
+            rows.emplace(row.get_string("path"), std::move(entry));
+            ++count;
+        });
+        require(count == 18u, "D470 projection cohort ledger denominator");
+        return rows;
+    }();
+    return map;
+}
+
+const D470ProjectionEntry* d470_projection_row(std::string_view path) {
+    const auto& rows = d470_projection_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0031 FS-2 click-no-op body cohort: the reviewed ledger at
 // tools/mermaid/fs2-cohort.json. Whole originals stay source; only the
 // frontmatter-free body disposition is recorded, so the entry carries just
@@ -15448,6 +15503,13 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         // Shape aliases include the independently checked filled Fork/Join
         // contour. Body diagnostics add no original-file drawing credit.
         EXPECT_EQ(flows.decoded, 85u);
+        const auto d470_projection_selected =
+            std::ranges::count_if(observations, [](const Observation& row) {
+                return row.raw_active_schema == kOfficialFlow400Contract &&
+                       row.raw_source_authority ==
+                           "immutable_Flow400_8Models_plus_D470ProjectionDraws18";
+            });
+        EXPECT_EQ(d470_projection_selected, 18);
         // RFC 0031 FS-1 admits ledger-reviewed Markdown originals on
         // source-byte identity (no upstream Model): two label originals move
         // pending 315 -> 313, then one Markdown subgraph-heading original
@@ -15476,11 +15538,11 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         // elk.rectpacking layout-engine original 243 -> 242. FS-maxwidth moves
         // two dagre+useMaxWidth composite-profile originals 242 -> 240. All
         // count admitted but not decoded.
-        EXPECT_EQ(flows.pending, 240u);
+        EXPECT_EQ(flows.pending, 222u);
         EXPECT_EQ(flows.errors, 0u);
         EXPECT_EQ(flows.resources, 0u);
-        EXPECT_EQ(flows.admitted, 160u);
-        EXPECT_EQ(flows.mutated, 160u);
+        EXPECT_EQ(flows.admitted, 178u);
+        EXPECT_EQ(flows.mutated, 178u);
         for (const auto count : applications)
             projection_consumed(count);
         role_batch_consumed(role_counts, role_batch.facts.root());
@@ -20267,6 +20329,66 @@ Observation run_official_flow400_case(
                     "OfficialFlow400 FS1 ledger evidence write failed");
             return row;
         }
+        // D-470 round 809: reviewed projection-draw cohort. Eighteen Flow400
+        // originals admitted on source-byte identity with a per-row concrete
+        // cause and an inline five-frame proof, deliberately without a Model:
+        // the twelve redux-color theme rows (palette disclosure footer), two
+        // originals whose Work outgrew the fixed primary and four whose
+        // frontmatter prepayment exceeds it, all now inside the bounded
+        // parse/layout envelope pools.
+        if (const auto* d470 = d470_projection_row(path); d470) {
+            require(row.source_sha256 == d470->sha256,
+                    "D470 projection draw source identity");
+            p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
+            const bool wide_source = flow_oracle::flow400_same(*frames[0], *frames[3], work);
+            p.narrow_ordinary = flow_oracle::flow400_same(*frames[1], *frames[4], work);
+            std::string wide_text;
+            wide_text.reserve(static_cast<std::size_t>(frames[0]->width) *
+                              static_cast<std::size_t>(frames[0]->height));
+            for (int y = 0; y < frames[0]->height; ++y)
+                wide_text += frames[0]->row(y);
+            require(!wide_source && p.restored,
+                    "D470 projection draw frame protocol (wide native, restore)");
+            const bool narrow_drawn = d470->original_states[1] == "drawn";
+            require(p.narrow_ordinary == !narrow_drawn,
+                    "D470 projection draw narrow frame disagrees with ledger");
+            if (d470->footer.starts_with("theme:")) {
+                const auto palette = d470->footer.substr(6u);
+                require(wide_text.find("config.theme=" + palette +
+                                       " -> colour palette; not applied") != std::string::npos,
+                        "D470 projection draw missing palette disclosure");
+            } else if (d470->footer == "html_labels:true") {
+                require(wide_text.find("config.htmlLabels=true -> native text labels; "
+                                       "not applied") != std::string::npos,
+                        "D470 projection draw missing htmlLabels disclosure");
+            } else {
+                require(wide_text.find("not applied") == std::string::npos,
+                        "D470 projection draw unexpectedly carries a disclosure footer");
+            }
+            static_cast<void>(flow_oracle::flow400_following(*frames[0], work, kSentinel));
+            row.status = {"drawn", narrow_drawn ? "drawn" : "source_fallback", "drawn"};
+            row.expected = "drawn";
+            row.expected_states = {"drawn", narrow_drawn ? "drawn" : "source", "drawn"};
+            row.reason = "D-470 reviewed projection draw (TL round 809)";
+            row.decision_reasons.fill(row.reason);
+            row.role_model_sha = row.source_sha256;  // ledger-pinned source identity
+            row.raw_source_authority = "immutable_Flow400_8Models_plus_D470ProjectionDraws18";
+            p.phase = "complete";
+            p.admitted = true;
+            p.mutated = true;
+            p.remaining[2] = p.remaining[3] = p.remaining[4] = p.remaining[5] =
+                p.remaining[6] = work.remaining;
+            row.raw_source_constraints = official_flow_info(p, work.remaining);
+            data.set("contract", kOfficialFlow400Contract);
+            data.set("actual", row.raw_source_constraints);
+            data.set("foreign_assertions_certified", 0);
+            data.set("causality", d470->cause);
+            diagnostic.set_root(data);
+            diagnostics << diagnostic.to_string() << '\n';
+            require(static_cast<bool>(diagnostics),
+                    "OfficialFlow400 D470 projection evidence write failed");
+            return row;
+        }
         // RFC 0031 FS-3a: three of the four FlowStyle4 authority originals
         // (the non-handDrawn rows) admit on ledger-pinned source bytes once
         // the classDef/class/direct-style projection graduated to production.
@@ -21290,6 +21412,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         row.raw_source_authority == "immutable_Flow400_8Models_plus_Issue4648";
     const bool fs1_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS1Cohort2";
+    const bool d470_projection_selected =
+        row.raw_source_authority == "immutable_Flow400_8Models_plus_D470ProjectionDraws18";
     const bool fs3_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS3StyleCohort3";
     const bool fs6_selected =
@@ -21464,7 +21588,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         // five-frame proof; they deliberately carry no upstream Model, so
         // whole_Model_decoded is exempt only for those reviewed authorities.
         require(captured && bound &&
-                    (decoded || fs1_selected || fs3_selected || fs6_selected || fs4h_selected ||
+                    (decoded || fs1_selected || d470_projection_selected || fs3_selected ||
+                     fs6_selected || fs4h_selected ||
                      fs5a_selected || fs5b_selected || fs5c_selected || fs5d_selected ||
                      fs5e_selected || fs5g1_selected || fs5g2_selected ||
                      fs5g3_selected || fs5g4_selected || fs5g5_selected ||
@@ -21488,7 +21613,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
     }
     require(selected || typed || classic_selected || link_selected || group_selected ||
                 title_selected || title_margin_selected || shape_alias_selected ||
-                issue4648_selected || strand_selected || fs1_selected || fs3_selected ||
+                issue4648_selected || strand_selected || fs1_selected ||
+                d470_projection_selected || fs3_selected ||
                 fs6_selected || fs4h_selected || fs5a_selected || fs5b_selected ||
                 fs5c_selected || fs5d_selected || fs5e_selected || fs5g1_selected ||
                 fs5g2_selected || fs5g3_selected || fs5g4_selected || fs5g5_selected ||

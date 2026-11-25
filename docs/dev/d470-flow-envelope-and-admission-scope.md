@@ -1,4 +1,4 @@
-# D-470 — the flow Work envelope and the admission set it forces
+# D-470 — the flow Work envelopes and the admission set they force
 
 Round 806 authorized a canvas-derived, flow-family-only Work envelope
 (blocker A), the reviewed `disclosure_footer` cohort path for the four nested
@@ -71,10 +71,55 @@ Model", not "syntax not modelled".
   combined-ceiling fail-closed negative is pinned in
   `MermaidEnvelopeWork.FlowEnvelopeIsCanvasDerivedAndFailsClosed`.
 
-## Status
+## Round 809 outcome (implemented)
 
-Nothing is committed: with the two pending draws unresolved the matrix is red
-(2 errors), and admitting them plus the four collapsed siblings is a census
-change beyond round 806's authorized eight rows. The implementation is
-shelved in `stash@{0}` for the next round; the phase-1 supplement and its
-models are unchanged.
+Round 809 authorized classification instead of Models ("按类准入"). Measurement
+then showed the palette disclosure footer is unclaimed ink for the Flow400
+geometry oracle for **both** redux bodies, so none of the eight theme rows can
+use the Model path; the phase-1 `flow400_theme8` supplement and its gate were
+deleted as superseded (they certified Models the oracle cannot accept). The
+oracle itself was not changed and does not know about footers.
+
+A second wall surfaced on the way: the reviewed full-profile parse
+prepayment (`flow_parse_prepay_total`) for a 334-byte five-subgraph body is
+~1.08M, charged before any canvas exists, so a canvas-derived envelope cannot
+fund it. The flow path therefore now runs two bounded pools:
+
+- **parse pool** — `flow_parse_envelope_allowance(prepay_total) =
+  prepay_total + 4096`, i.e. exactly the analytic prepayment bound, enabled
+  before the prepayment in the frontmatter Flow branch;
+- **layout/emission pool** — `flow_envelope_layout_allowance(width, height) =
+  cells * 64 + 32768`, enabled once the planned canvas is known and refilled
+  there (the same meter, so the parse pool is replaced, not added).
+  The flow path's `remaining`-based predicates (`flow_parse_prepay` bounds,
+  the router loop and the target loop) read `available()`, the two-pool rule
+  `Work` already documents.
+
+The reviewed projection-draw cohort landed with **18 rows** — the 12
+redux-color originals (8 theme, 4 collapsed), the two envelope rows and four
+sources whose frontmatter prepayment exceeds the fixed primary
+(6080/6088-4 diamond intersections, forest-theme-legacy-graph, v2-18 nested
+subgraphs). Each row carries its own cause in
+`tools/mermaid/d470-projection-draws-cohort.json`; the durable gate is
+`test_mermaid_d470_projection_draws_cohort` plus the generator `--check`.
+
+The adversarial review found a latent production hole on the first cut: the
+`LayoutRowsCache` hit path re-debited only the cached primary-only layout work
+against a flag-off meter, so a future envelope-funded **styled** flow row would
+fall back on the next token-driven re-render (today's corpus has no >1M styled
+flow row, so this is a defensive fix rather than a reproduced regression).
+`NativeLayout` now carries `flow_envelope_allowance` (0 for non-flow layouts),
+the cache re-enables the same bounded pool on a hit, and the success check
+reads `available()`; a new miss/hit byte-parity test renders the five-subgraph
+source (legacy rows plus the palette footer) through the real cache.
+
+The official matrix is green with `flows.pending 240 -> 222`,
+`admitted/mutated 160 -> 178`, `decoded` unchanged at 85; the mandatory gap
+roster is unchanged (48). The three exact-budget gates were re-baselined with
+intent preserved (K8 -> K12 binding row, +40 fixed-charge pins, ER107-shaped
+envelope boundary) and a new meter test pins the parse pool.
+
+The round-806 attribution for the four collapsed siblings — "collapsed-subgraph
+syntax not modelled" — is **refuted by measurement**: the FS-7b projection
+already draws their bodies at every width, and their whole sources draw once
+the palettes admit. The accurate cause is now recorded per row.

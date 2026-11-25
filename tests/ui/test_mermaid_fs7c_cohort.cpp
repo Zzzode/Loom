@@ -85,7 +85,8 @@ TEST(MermaidFs7cCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get_string("schema"), "loom_mermaid_fs7c_collapsed_remap_cohort/v1");
     EXPECT_EQ(root.get("counts").get_int("total"), 6);
     EXPECT_EQ(root.get("counts").get_int("predicted_draw"), 6);
-    EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 2);
+    // D-470 round 809: the four redux collapsed rows now draw whole as well.
+    EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 6);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     const auto manifest = parse_doc(kManifest);

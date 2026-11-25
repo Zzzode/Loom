@@ -95,7 +95,12 @@ TEST(MermaidInitLoglevelCohort, LedgerSchemaReviewCountsAndManifest) {
         EXPECT_EQ(loom::utils::crypto::sha256(read_file(kCases / rel)),
                   it->second.get_string("sha256"))
             << rel;
-        EXPECT_EQ(row.get_string("track_scope"), "body-only") << rel;
+        // D-470 round 809: the forest row draws whole once its palette is
+        // admitted; the three still-gated theme rows stay body-only.
+        EXPECT_EQ(row.get_string("track_scope"),
+                  rel.ends_with("forest-theme-legacy-graph.mmd") ? "whole-and-body"
+                                                                 : "body-only")
+            << rel;
     });
 }
 
@@ -116,8 +121,12 @@ TEST(MermaidInitLoglevelCohort, BodyDrawsButWholeOriginalStaysSource) {
         EXPECT_EQ(wide.text.find("accDescr"), std::string::npos) << rel;
         // The directive is disclosed, never painted raw.
         EXPECT_EQ(wide.text.find("%%{"), std::string::npos) << rel;
-        // Whole original stays source at every width behind the theme gate.
-        EXPECT_FALSE(draws(whole, kWide)) << rel;
-        EXPECT_FALSE(draws(whole, kNarrow)) << rel;
+        // Whole original follows the ledger: the three still-gated theme rows
+        // stay source at every width; the forest row draws once D-470 round 809
+        // admits its palette (the disclosure footer keeps it source at 40).
+        const auto whole_states = row.get("expected_states");
+        EXPECT_EQ(draws(whole, kWide), whole_states.get_string("wide_240") == "drawn") << rel;
+        EXPECT_EQ(draws(whole, kNarrow), whole_states.get_string("narrow_40") == "drawn")
+            << rel;
     });
 }

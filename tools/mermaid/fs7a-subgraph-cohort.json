@@ -27,7 +27,7 @@
     "total": 7,
     "predicted_draw": 7,
     "predicted_blocked": 0,
-    "predicted_original_draw": 5
+    "predicted_original_draw": 6
   },
   "rows": [
     {
@@ -125,18 +125,18 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
         "narrow_40": "source",
         "restored_240": "drawn"
       },
-      "ledger_note": "FS-7a subgraph grammar admits the body only; whole-source envelope render rejects at the 1,000,000 Work ceiling (kWorkLimit); all its frontmatter keys are admitted and the bare body draws, so only the deferred FS-1b gas-meter recalibration remains (also listed in docs/dev/mermaid-unsuccessful-cases.md)"
+      "ledger_note": "FS-7a subgraph grammar (direction-less header and forward group references) admitted"
     },
     {
       "path": "flowchart/visual-check/3258-should-render-subgraphs-with-large-nodespacing-and-rankspacing.mmd",

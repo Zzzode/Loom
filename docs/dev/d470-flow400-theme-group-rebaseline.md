@@ -1,4 +1,12 @@
-# D-470 — Flow400 theme-group re-baseline (phase 1: models)
+# D-470 — Flow400 theme-group re-baseline (phase 1: models; SUPERSEDED by round 809)
+
+> **Superseded.** Round 809 replaced the Model path with the reviewed
+> projection-draw cohort: the palette disclosure footer is unclaimed ink for
+> the Flow400 geometry oracle for both bodies, so the theme8 supplement and
+> this phase-1 gate were deleted. See
+> `docs/dev/d470-flow-envelope-and-admission-scope.md` for the current record.
+> The model certification below remains the evidence that the ceiling was a
+> budget/protocol wall, not a geometry wall.
 
 TL round 804 (2026-11-25) authorizes a **per-group** Flow400 re-baseline for
 the eight `flowchart/nightly-check/redux-color-subgraphs/` originals whose only

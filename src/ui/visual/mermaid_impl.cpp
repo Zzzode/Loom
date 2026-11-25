@@ -23,6 +23,9 @@ using namespace detail;
 // (FS-8) is still unadmitted and available only through the reviewed test
 // facade.
 thread_local bool flow_handdrawn_preview = false;
+// D-470: the allowance the last flow_layout enabled, so layout_mermaid_content
+// can carry it into NativeLayout for the cache's hit path.
+thread_local std::size_t flow_layout_envelope_allowance = 0u;
 
 std::string_view trim(std::string_view value) {
     while (!value.empty() && (value.front() == ' ' || value.front() == '\t'))
@@ -2432,14 +2435,16 @@ bool flow_parse_prepay(std::string_view body, Work& work, bool full_profile, boo
             return work.spend(0);
         }
         const auto delta = full - bare;
-        if (delta > work.remaining) {
+        // D-470: the parse-stage envelope is a funded pool; solvency is the
+        // combined balance, never the primary alone.
+        if (delta > work.available()) {
             static_cast<void>(work.spend(std::numeric_limits<std::size_t>::max()));
             return false;
         }
         return work.spend(delta);
     }
     const auto charge = [&](std::size_t count, std::size_t unit) {
-        if (unit && count > work.remaining / unit) {
+        if (unit && count > work.available() / unit) {
             static_cast<void>(work.spend(std::numeric_limits<std::size_t>::max()));
             return false;
         }
@@ -2493,7 +2498,7 @@ bool flow_parse_prepay(std::string_view body, Work& work, bool full_profile, boo
         constexpr std::size_t kIdentifierUnit =
             8u * sizeof(std::vector<std::size_t>) + 8u * sizeof(std::size_t) + 64u +
             (64u + kGroupLimit + 8u) * (2u * sizeof(std::size_t) + 8u);
-        if (body.size() > work.remaining / kBarePerByte) return false;
+        if (body.size() > work.available() / kBarePerByte) return false;
         if (!work.spend(kBarePerByte * body.size()) || !charge(identifiers + 1u, kIdentifierUnit) ||
             !charge(kBareLinearVertices * kBareLinearEdges, kBareLinearUnit) ||
             !work.spend(kBareFixed))
@@ -2710,11 +2715,15 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
                 auto scalar = trim(event.value);
                 if (scalar.size() >= 2u && scalar.front() == '"' && scalar.back() == '"')
                     scalar = trim(scalar.substr(1u, scalar.size() - 2u));
-                // The only palette with a corpus row outside the frozen Flow400
-                // contract: every flowchart-footer theme fixture is one of the
-                // contract's 400 sources, so admitting another palette value
-                // there would draw a contract-pending row (D-440 finding).
-                constexpr std::array<std::string_view, 1> themes{{"forest"}};
+                // D-440 admitted the one palette whose corpus row lies outside
+                // the frozen Flow400 contract. TL rounds 804-809 authorize a
+                // per-group re-baseline: the four redux palettes are admitted
+                // through the reviewed projection-draw cohort (the required
+                // palette disclosure footer is unclaimed ink for the Flow400
+                // geometry oracle, so those rows carry no Model), making this an
+                // intentional contract extension, not drift.
+                constexpr std::array<std::string_view, 5> themes{
+                    {"forest", "redux", "redux-color", "redux-dark", "redux-dark-color"}};
                 if (!mark(Theme) || std::ranges::find(themes, scalar) == themes.end()) return {};
                 theme_value = std::string(scalar);
             } else {
@@ -5054,7 +5063,7 @@ bool connect(Canvas& canvas, Router& router, const Port& from, const Port& to,
     const int rows = *row_count;
     const Point ideal{(start.x + goal.x - length) / 2, (start.y + goal.y - rows + 1) / 2};
     // Try nearby label positions without an unbounded search over the plane.
-    for (int radius = 0; radius < 32 && canvas.work.remaining; ++radius) {
+    for (int radius = 0; radius < 32 && canvas.work.available(); ++radius) {
         const Point offsets[]{{0, radius}, {0, -radius}, {radius, 0}, {-radius, 0}};
         for (const auto offset : offsets) {
             const auto position = ideal + offset;
@@ -5251,6 +5260,7 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
             std::optional<StyledRows>* styled_output = nullptr,
             const RichLabels* rich = nullptr) {
     if (source_styles && (!styled_output || collector)) return {};
+    flow_layout_envelope_allowance = 0u;
     // Classify once for placement and both routing passes. Packed scalar keys
     // avoid a quadratic scan on the legacy dense-graph budget boundary.
     if (!work.spend(graph.edges.size() * 2u * (sizeof(std::uint64_t) + 4u) + 128u)) return {};
@@ -5484,6 +5494,18 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
     width =
         std::min(kWidthLimit, width + 12 + 2 * longest + static_cast<int>(graph.edges.size()) * 2);
     height = std::min(kHeightLimit, height + 12 + static_cast<int>(graph.edges.size()) * 3);
+    // D-470: fund the paint, route and styled-emission fees from the planned
+    // canvas. Fitting graphs never reach the clamp, so their charge sequence is
+    // unchanged; the envelope only lifts the fixed 1M primary for canvases whose
+    // fees outgrow it (an empirical rate -- a crafted denser graph can exceed it
+    // and then fails closed). Enabled here rather than in the dispatch branch
+    // because the bound must derive from the actual canvas, and the Work stays
+    // enabled through finish_native_layout's styled emission.
+    if (!work.spend(4u * sizeof(std::size_t) + 8u)) return {};
+    flow_layout_envelope_allowance =
+        flow_envelope_layout_allowance(static_cast<std::size_t>(width),
+                                       static_cast<std::size_t>(height));
+    work.enable_envelope(flow_layout_envelope_allowance);
     if (!work.spend(static_cast<std::size_t>(width * height) * 4)) return {};
     std::size_t literal_bytes = 0u;
     if (collector) {
@@ -5670,7 +5692,7 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
             for (const auto& source : sources) {
                 if (used_ports.contains(canvas.index(source.border))) continue;
                 for (const auto& target : targets) {
-                    if (!work.remaining) return false;
+                    if (!work.available()) return false;
                     if (used_ports.contains(canvas.index(target.border))) continue;
                     const std::vector<detail::LabelRun>* edge_rich = nullptr;
                     if (rich && edge_index < rich->edge.size() &&
@@ -6758,6 +6780,7 @@ std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<Layou
 std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_view source,
                                                                    bool use_ascii, Work& work) {
     const auto starting_work = work.remaining;
+    flow_layout_envelope_allowance = 0u;
     std::vector<std::uint16_t> packed_styles;
     // ER sets Er with an ErPaint-prepaid payload; Block sets Block with no
     // prepayment. Both route their real Element fees onto ElementWork
@@ -6800,7 +6823,16 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
         switch (decision->family) {
         case detail::MermaidProbeFamily::Flow: {
             const auto envelope = flow_envelope_body(source, work);
-            if (!envelope || !flow_envelope_parse_prepay(envelope->body, work)) return {};
+            if (!envelope) return {};
+            // D-470: the reviewed full-profile prepayment is source-derived and
+            // can exceed the fixed primary before any canvas exists (a 334-byte
+            // five-subgraph body needs ~1.08M). Funding it from its own analytic
+            // total keeps the bound exact; flow_layout REFILLS the meter with
+            // the canvas-derived bound once the differencing is planned.
+            if (!work.spend(8u * sizeof(std::size_t) + 64u)) return {};
+            work.enable_envelope(
+                flow_parse_envelope_allowance(flow_parse_prepay_total(envelope->body, true)));
+            if (!flow_envelope_parse_prepay(envelope->body, work)) return {};
             auto diagram = parse(envelope->body, work, true, &flow_styles, &rich);
             if (!diagram) return {};
             // FS-1: disclose the accepted non-terminal frontmatter key through
@@ -6924,8 +6956,15 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
     er_packed = er_packed && !packed_styles.empty();
     if (er_packed) packed_meter = PackedMeter::Er;
     if (packed_styles.empty()) packed_meter = PackedMeter::Off;
-    NativeLayout result{std::move(*lines), std::move(styles), 0u, std::move(packed_styles),
-                        packed_meter, payload_prepaid, std::move(payload_work), 0u};
+    NativeLayout result{std::move(*lines),
+                        std::move(styles),
+                        0u,
+                        std::move(packed_styles),
+                        packed_meter,
+                        payload_prepaid,
+                        std::move(payload_work),
+                        0u,
+                        flow_layout_envelope_allowance};
     Work* const block_prep =
         result.packed_meter == PackedMeter::Block ? &result.payload_work : nullptr;
     if (!result.packed_styles.empty() &&

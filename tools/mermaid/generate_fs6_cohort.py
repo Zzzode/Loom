@@ -93,9 +93,10 @@ LOG_LEVEL_NAMES = {"trace", "debug", "info", "warn", "error", "fatal"}
 # accDescr scalars are consumed. Their frontmatter still declares
 # `theme:`, so the body draws while the whole original stays source.
 BODY_ONLY_DRAW = {
+    # D-470 round 809: the forest row moved to ORIGINAL_DRAW (its palette is
+    # admitted through the reviewed projection-draw cohort).
     "flowchart/visual-check/dark-theme-legacy-graph.mmd",
     "flowchart/visual-check/default-theme-legacy-graph.mmd",
-    "flowchart/visual-check/forest-theme-legacy-graph.mmd",
     "flowchart/visual-check/neutral-theme-legacy-graph.mmd",
 }
 
@@ -163,6 +164,12 @@ def admitted_init_directive(line):
 # state must match the live renderer at all three widths); a fixture drift
 # fails --check and/or the gtest.
 ORIGINAL_DRAW = {
+    # D-470 round 809: the bounded parse-stage pool renders these three whole
+    # originals natively (their prepayment exceeds the fixed 1M primary; the
+    # forest palette is admitted through the reviewed projection-draw cohort).
+    "flowchart/nightly-check/dagre/6080-should-handle-diamond-shape-intersections.mmd",
+    "flowchart/nightly-check/dagre/6088-4-should-handle-diamond-shape-intersections.mmd",
+    "flowchart/visual-check/forest-theme-legacy-graph.mmd",
     "flowchart/nightly-check/classic/01-38-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
     "flowchart/nightly-check/classic/02-39-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
     "flowchart/nightly-check/dagre/02-1-dagre-should-render-a-simple-flowchart.mmd",
@@ -342,8 +349,10 @@ def build(repo_root):
                 "Blocked by a closed source-content feature detector; the "
                 "marker vocabulary itself is only admitted for car/code"),
         })
-    if (n_draw != 38 or n_blocked != 16 or n_original_draw != 21 or
-            n_body_only_scope != 17 or n_fs_init != 4):
+    # D-470 round 809 moved three FS-6 rows from body-only to whole draws
+    # (two parse-pool diamonds and the forest palette row).
+    if (n_draw != 38 or n_blocked != 16 or n_original_draw != 24 or
+            n_body_only_scope != 14 or n_fs_init != 3):
         raise ValueError(
             f"partition drift: draw={n_draw} blocked={n_blocked} "
             f"original_draw={n_original_draw} body_only_scope="

@@ -63,6 +63,7 @@ struct LayoutRowsCache::Impl {
         detail::PackedMeter packed_meter = detail::PackedMeter::Off;
         std::size_t payload_prepaid = 0u;
         std::size_t payload_work_used = 0u;
+        std::size_t flow_envelope_allowance = 0u;
         std::size_t bytes = 0;
 
         [[nodiscard]] bool matches(std::uint64_t h, std::string_view src,
@@ -131,6 +132,11 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
     if (const auto found = index.find(hash);
         found != index.end() && found->second->matches(hash, source, use_ascii)) {
         const auto& entry = *found->second;
+        // D-470: an envelope-funded flow layout re-opens the same bounded pool
+        // before the retained rows are finished, so the styled emission below
+        // the rows is funded exactly as on the miss.
+        if (entry.flow_envelope_allowance != 0u)
+            work.enable_envelope(entry.flow_envelope_allowance);
         if ((entry.styles || !entry.packed_styles.empty()) && !work.spend(entry.layout_work))
             return {};
         lru.splice(lru.end(), lru, found->second);
@@ -150,7 +156,8 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
                                     std::move(payload_work),
                                     entry.packed_meter == detail::PackedMeter::Block
                                         ? entry.payload_work_used
-                                        : 0u};
+                                        : 0u,
+                                    entry.flow_envelope_allowance};
     }
     ++miss_count;
     auto computed = detail::layout_mermaid_content(source, use_ascii, work);
@@ -163,7 +170,9 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
     // sequence, so miss failure and hit outcome cannot diverge; the
     // static_assert-derived canvas cap keeps that refusal unreachable for
     // any admitted geometry regardless.
-    if (!computed && work.remaining == 0u) return {};
+    // D-470: solvency is the combined two-pool balance, never the primary
+    // alone; with the envelope inactive available() == remaining.
+    if (!computed && work.available() == 0u) return {};
     auto fresh = computed ? std::move(*computed) : detail::NativeLayout{};
     const auto measured = (fresh.styles || !fresh.packed_styles.empty())
                               ? detail::styled_payload_bytes(fresh, source.size())
@@ -185,7 +194,7 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
         Entry entry{std::string(source), hash,           use_ascii,
                     fresh.rows,          fresh.styles,   fresh.measured_layout_work,
                     fresh.packed_styles, fresh.packed_meter, fresh.payload_prepaid,
-                    fresh.measured_payload_work,
+                    fresh.measured_payload_work, fresh.flow_envelope_allowance,
                     fresh_bytes};
         lru.push_back(std::move(entry));
         auto inserted = std::prev(lru.end());

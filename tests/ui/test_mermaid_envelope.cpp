@@ -781,6 +781,57 @@ TEST(MermaidEnvelopeWork, StateEnvelopeIsCanvasDerivedAndFailsClosed) {
     EXPECT_EQ(work.supplemental_remaining, 0u);
 }
 
+// D-470: the flow projection draws a canvas-derived bounded envelope as well.
+// The two pinned points are the two measured whole-source canvases of the
+// redux-color subgraph group (55x194 and 118x56); the binding one costs
+// 1,333,535 for the whole render, of which 333,535 is outside the 1M primary.
+TEST(MermaidEnvelopeWork, FlowEnvelopeIsCanvasDerivedAndFailsClosed) {
+    using loom::ui::mermaid::testing::flow_envelope_layout_allowance;
+    EXPECT_EQ(flow_envelope_layout_allowance(55u, 194u), 715'648u);
+    EXPECT_EQ(flow_envelope_layout_allowance(118u, 56u), 455'680u);
+    const auto allowance = flow_envelope_layout_allowance(55u, 194u);
+    Work work;
+    EXPECT_FALSE(work.envelope_enabled);
+    work.enable_envelope(allowance);
+    EXPECT_EQ(work.available(), kWorkLimit + allowance);
+    // Primary-first split routing.
+    ASSERT_TRUE(work.spend(kWorkLimit - 10u));
+    EXPECT_EQ(work.remaining, 10u);
+    EXPECT_TRUE(work.spend(25u));
+    EXPECT_EQ(work.remaining, 0u);
+    EXPECT_EQ(work.supplemental_remaining, allowance - 15u);
+    // Exact combined ceiling, then fail closed with both pools drained.
+    EXPECT_TRUE(work.spend(allowance - 15u));
+    EXPECT_EQ(work.available(), 0u);
+    EXPECT_FALSE(work.spend(1u));
+    EXPECT_EQ(work.remaining, 0u);
+    EXPECT_EQ(work.supplemental_remaining, 0u);
+}
+
+// D-470: the parse-stage pool is the reviewed full-profile prepayment total
+// plus a fixed slack, so the parse stage can never spend more than the exact
+// bound it was sized for.
+TEST(MermaidEnvelopeWork, FlowParseEnvelopeIsThePrepaymentBound) {
+    using loom::ui::mermaid::testing::flow_parse_envelope_allowance;
+    EXPECT_EQ(flow_parse_envelope_allowance(1'080'000u), 1'084'096u);
+    EXPECT_EQ(flow_parse_envelope_allowance(0u), 4096u);
+}
+
+// D-470: the flow envelope is enabled by the flow layout only. A class source
+// runs the shared relations layout and must leave the meter untouched.
+TEST(MermaidEnvelopeWork, NonFlowFamiliesNeverEnableTheEnvelope) {
+    namespace mtest = loom::ui::mermaid::testing;
+    Work work;
+    EXPECT_TRUE(mtest::layout_succeeds("classDiagram\nA --> B\n", false, work));
+    EXPECT_FALSE(work.envelope_enabled);
+    EXPECT_EQ(work.supplemental_remaining, 0u);
+    // A plain flow renders through the same path and DOES enable the bounded
+    // envelope (this is the flow-family-only scope of D-470).
+    Work flow_work;
+    EXPECT_TRUE(mtest::layout_succeeds("flowchart TD\nA --> B\n", false, flow_work));
+    EXPECT_TRUE(flow_work.envelope_enabled);
+}
+
 // D-461: non-state families keep the historical single-balance clamp: the
 // envelope must stay inactive for a class source even though the shared
 // relations layout runs.
@@ -964,6 +1015,63 @@ TEST(MermaidEnvelopeWork, GeometryInvariantAcrossPrimaryExhaustionBoundary) {
 // work means "primary Work consumed", not total). On the hit the cache
 // re-debits that cached primary-only amount against a fresh flag-off meter and
 // finishes the retained rows; the rendered terminal grid is byte-identical.
+// D-470: the same parity holds for an envelope-funded flow row. The miss
+// drains the primary in the frontmatter parse prepayment and the supplemental
+// pool funds the layout; the hit re-debits the cached layout work and re-opens
+// the same canvas-derived pool, so a future styled emission below the retained
+// rows is funded exactly as on the miss (this corpus row renders as legacy
+// rows plus the palette footer, so the styled trace stays clear).
+TEST(MermaidEnvelopeWork, LayoutCacheMissHitParityForEnvelopeFundedFlowRow) {
+    namespace mtest = loom::ui::mermaid::testing;
+    const auto path = std::filesystem::path(LOOM_TESTS_DIR) /
+                      "fixtures/mermaid_official/cases/flowchart/nightly-check/"
+                      "redux-color-subgraphs/01-should-render-subgraphs-subgraph-containers.mmd";
+    std::ifstream input(path, std::ios::binary);
+    ASSERT_TRUE(input);
+    const std::string source{std::istreambuf_iterator<char>(input),
+                             std::istreambuf_iterator<char>()};
+    ASSERT_FALSE(source.empty());
+    auto fallback = ftxui::text("D470_FLOW_FALLBACK");
+
+    loom::ui::mermaid::LayoutRowsCache cache(8, 4 * 1024 * 1024);
+    mtest::Work miss_work;
+    mtest::FinalEmissionTrace miss_trace;
+    auto miss_element =
+        mtest::CacheBudgetAccess::render(cache, source, false, fallback, miss_work, &miss_trace);
+    ASSERT_TRUE(miss_element.has_value());
+    EXPECT_EQ(cache.misses(), 1u);
+    EXPECT_EQ(cache.hits(), 0u);
+    EXPECT_EQ(miss_work.remaining, 0u);
+    // This corpus row renders as legacy rows plus the palette footer (it has
+    // no styled runs), so the styled-emission trace stays clear; the native
+    // frame is proven by the grid comparison below.
+    EXPECT_FALSE(miss_trace.returned_native);
+
+    mtest::Work hit_work;
+    mtest::FinalEmissionTrace hit_trace;
+    auto hit_element =
+        mtest::CacheBudgetAccess::render(cache, source, false, fallback, hit_work, &hit_trace);
+    ASSERT_TRUE(hit_element.has_value());
+    EXPECT_EQ(cache.hits(), 1u);
+    // The hit re-opens the cached canvas-derived pool before finishing, so a
+    // styled emission below the retained rows is funded exactly as on the miss.
+    EXPECT_TRUE(hit_work.envelope_enabled);
+    EXPECT_GT(hit_work.supplemental_remaining, 0u);
+    EXPECT_FALSE(hit_trace.returned_native);
+    const auto grid = [](ftxui::Element element) {
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(240),
+                                            ftxui::Dimension::Fixed(400));
+        ftxui::Render(screen, std::move(element));
+        return screen.ToString();
+    };
+    const auto hit_grid = grid(*hit_element);
+    EXPECT_EQ(hit_grid, grid(*miss_element));
+    // The frame is native and discloses the palette, not the source fallback.
+    EXPECT_NE(hit_grid.find("config.theme=redux -> colour palette; not applied"),
+              std::string::npos);
+    EXPECT_NE(hit_grid.find("Ingest"), std::string::npos);
+}
+
 TEST(MermaidEnvelopeWork, LayoutCacheMissHitParityForAdmittedRow) {
     namespace mtest = loom::ui::mermaid::testing;
     const std::string source = rfc0034_handdrawn_source();

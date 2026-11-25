@@ -27,7 +27,7 @@
     "total": 6,
     "predicted_draw": 6,
     "predicted_blocked": 0,
-    "predicted_original_draw": 2
+    "predicted_original_draw": 6
   },
   "rows": [
     {
@@ -98,18 +98,18 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
         "restored_240": "drawn"
       },
-      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; whole original stays source behind the theme: redux frontmatter"
+      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; the whole original draws once the redux palette admits (D-470 cohort), and the disclosure footer keeps it source at 40 columns"
     },
     {
       "path": "flowchart/nightly-check/redux-color-subgraphs/07-should-render-collapsed-subgraph-containers.mmd",
@@ -125,18 +125,18 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
         "restored_240": "drawn"
       },
-      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; whole original stays source behind the theme: redux frontmatter"
+      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; the whole original draws once the redux palette admits (D-470 cohort), and the disclosure footer keeps it source at 40 columns"
     },
     {
       "path": "flowchart/nightly-check/redux-color-subgraphs/11-should-render-collapsed-subgraph-containers.mmd",
@@ -152,18 +152,18 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
         "restored_240": "drawn"
       },
-      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; whole original stays source behind the theme: redux frontmatter"
+      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; the whole original draws once the redux palette admits (D-470 cohort), and the disclosure footer keeps it source at 40 columns"
     },
     {
       "path": "flowchart/nightly-check/redux-color-subgraphs/15-should-render-collapsed-subgraph-containers.mmd",
@@ -179,18 +179,18 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
         "restored_240": "drawn"
       },
-      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; whole original stays source behind the theme: redux frontmatter"
+      "ledger_note": "FS-7c: remap lets the body draw the collapse geometry; the whole original draws once the redux palette admits (D-470 cohort), and the disclosure footer keeps it source at 40 columns"
     }
   ]
 }

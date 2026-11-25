@@ -49,3 +49,17 @@
 - **Flow400 合同冻结 flowchart 全族 400 条**：其中 392 条是 pending/null，
   没有 model 就不能合法画出。这不是配置片能解决的，需要 Flow400 重基线
   （与 ER107 join、Block58 join 同型的受保护工作）。本片只吃掉合同外的 1 行。
+
+## 8. 契约扩展记录（TL 第 804/809 轮授权）
+
+**这是有意的契约扩展，不是漂移。** 第 804 轮授权按组重基线
+`redux-color-subgraphs` 八行；第 806 轮授权画布派生的有界 Flow Work 信封与
+`disclosure_footer` 已评审路径；第 809 轮裁定「按类准入、分类不补 Model」，
+并以实测推翻 806 轮对 4 个 collapsed 兄弟行的「语法未建模」归因（FS-7b 已支持
+collapsed 分组，基线里它们的 body 在 240/40 宽度下都已画出）。
+
+落地形态：`flow_envelope_body` 的 palette 表扩为
+`{forest, redux, redux-color, redux-dark, redux-dark-color}`；十八行准入走
+`tools/mermaid/d470-projection-draws-cohort.json` 的已评审投影绘制 cohort
+（每行一句具体因果 + 源字节钉 + 披露脚注钉），Flow400 oracle 未改动、不认脚注。
+详见 `docs/dev/d470-flow-envelope-and-admission-scope.md`。

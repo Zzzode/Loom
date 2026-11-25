@@ -131,3 +131,22 @@ The round-806 attribution for the four collapsed siblings — "collapsed-subgrap
 syntax not modelled" — is **refuted by measurement**: the FS-7b projection
 already draws their bodies at every width, and their whole sources draw once
 the palettes admit. The accurate cause is now recorded per row.
+
+## Reviewed-not-drawn rows (closure)
+
+Three row classes stay deliberately undrawn behind reviewed causes, recorded
+here so the census does not drift:
+
+- the untrusted dagre-compound rows: `flow_untrusted_dagre_compound()`
+  (`src/ui/visual/mermaid_impl.cpp`) rejects them on purpose regardless of the
+  Work budget; the guard is unchanged and the envelope does not bypass it;
+- the `flowchart.subGraphTitleMargin` rows: the non-zero margin has no
+  admitted whole-source profile, exactly like non-zero `titleTopMargin`;
+- the four `user-styled-subgraph-containers` siblings of the group: their
+  body style vocabulary is outside the flow admission surface, so they keep
+  ordinary fallback and stay in `family_residual:flowchart`.
+
+The remaining 327 fallbacks all carry exactly one D-325 category and a
+causality label (25/25 categories, zero unclassified); the mandatory gap
+roster stays at 48 and the flow contract, ER107 pins and protected files are
+unchanged.

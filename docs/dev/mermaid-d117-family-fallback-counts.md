@@ -278,7 +278,9 @@ Row-level detail for the newest rows:
 
 Goal: 2145 originals, 0 ordinary fallback, 0 unexpected error at 240
 wide; `ctest` green. The frozen 48 body gaps need a final-milestone
-disposition (fix or documented infeasibility).
+disposition (fix or documented infeasibility); the gate is body-track only and
+is not contradicted by whole-source draws (see
+`docs/dev/d814-body-gap-track-reconciliation.md`).
 
 ## Remaining fallback by family (whole original, 240 wide)
 

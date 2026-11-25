@@ -142,11 +142,30 @@ here so the census does not drift:
   Work budget; the guard is unchanged and the envelope does not bypass it;
 - the `flowchart.subGraphTitleMargin` rows: the non-zero margin has no
   admitted whole-source profile, exactly like non-zero `titleTopMargin`;
-- the four `user-styled-subgraph-containers` siblings of the group: their
-  body style vocabulary is outside the flow admission surface, so they keep
-  ordinary fallback and stay in `family_residual:flowchart`.
+- the four `user-styled-subgraph-containers` siblings of the group —
+  `flowchart/nightly-check/redux-color-subgraphs/04-…`,
+  `08-…`, `12-…` and `16-should-render-user-styled-subgraph-containers.mmd`
+  (not the `01/05/09/13-should-render-subgraphs-subgraph-containers.mmd`
+  rows, which do draw): their body style vocabulary is outside the flow
+  admission surface, so they keep ordinary fallback and stay in
+  `family_residual:flowchart`.
 
 The remaining 327 fallbacks all carry exactly one D-325 category and a
 causality label (25/25 categories, zero unclassified); the mandatory gap
 roster stays at 48 and the flow contract, ER107 pins and protected files are
 unchanged.
+
+### The six fixtures the cohort shares with the mandatory gap roster
+
+Six cohort fixtures (`01/05/09/13`, `issue-4648-sibling`, `v2-18`) also appear
+in `gates.official_matrix` of the E6c roster. That gate is a **body-track**
+census: all 48 of its rows are `track=body_diagnostic` with
+`ordinary_source_fallback_expected`, i.e. "the extracted body no longer
+matches the corpus diagnostic's declared `source` fallback". It says nothing
+about whole-source state, which is why the same fixture can be `drawn` on the
+`original` track and a declared gap on the body track. Measurement with the
+flow envelope forced off leaves the 48-row set identical and regresses only
+the 18 cohort `original` rows, so these entries predate and are independent of
+D-470; four of the six bodies additionally render clipped art at 40 columns,
+which is why the entries must not be retired. See
+`docs/dev/d814-body-gap-track-reconciliation.md` for the per-row table.

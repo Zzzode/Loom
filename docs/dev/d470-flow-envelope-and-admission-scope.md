@@ -119,6 +119,14 @@ roster is unchanged (48). The three exact-budget gates were re-baselined with
 intent preserved (K8 -> K12 binding row, +40 fixed-charge pins, ER107-shaped
 envelope boundary) and a new meter test pins the parse pool.
 
+The D-325 fallback roster is regenerated from this matrix (never hand-edited):
+`fallback_attribution.py --emit` reports 345 -> 327 fallback rows over 25
+categories, `--self-test` is reproducible with causality on 25/25 categories
+and `--matrix` shows no drift. The row-by-row change record is
+`docs/dev/d470-rebaseline-manifest.json`, generated mechanically by
+`tools/mermaid/d470_rebaseline_manifest.py` from the pre/post roster diff; it
+enumerates exactly the 18 flipped rows and their causes.
+
 The round-806 attribution for the four collapsed siblings — "collapsed-subgraph
 syntax not modelled" — is **refuted by measurement**: the FS-7b projection
 already draws their bodies at every width, and their whole sources draw once

@@ -4,8 +4,8 @@
 // restored; the narrow frame is measured per row (a collapsed graph can be
 // narrow enough to draw at 40 columns) and pinned explicitly. The two
 // whole-and-body rows also draw the full frontmatter original per their
-// pinned states; the handDrawn body-only row keeps its whole original on
-// ordinary source behind the look:handDrawn frontmatter gate.
+// pinned states; the handDrawn row now draws its whole original too, behind
+// the D-814 disclosure footer (narrow stays source).
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -88,7 +88,7 @@ TEST(MermaidFs7bCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get("counts").get_int("total"), 3);
     EXPECT_EQ(root.get("counts").get_int("predicted_draw"), 3);
     EXPECT_EQ(root.get("counts").get_int("predicted_blocked"), 0);
-    EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 2);
+    EXPECT_EQ(root.get("counts").get_int("predicted_original_draw"), 3);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     const auto manifest = parse_doc(kManifest);

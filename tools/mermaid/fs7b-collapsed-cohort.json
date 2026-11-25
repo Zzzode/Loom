@@ -29,13 +29,19 @@
     "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, FS-7b Slice B collapsed-subgraph, 2026-11-09, task acf9dfcbd2cb83b20, zero builds); r1 REQUEST-CHANGES -> r2 APPROVE",
     "date": "2026-11-09",
     "verdict": "approved",
-    "note": "r1 found two MAJORs, both fixed before approval: (1) an edge joining vertices hidden inside two DIFFERENT collapsed groups was silently dropped; the projection now distinguishes same-leaf internal edges (dropped) from different-leaf edges (fail-closed, deferred to Slice C remap), and the collapsed group's own visible endpoint is no longer misclassified as hidden; (2) the parser accept/reject matrix was untested, now locked by test_mermaid_fs7b_directive through the public render API with CellCapture comparisons. MINOR: the corpus drift regex now accepts both bare and double-quoted collapsed. Frozen contracts verified: no ungated hidden_vertex access, the non-collapsed path takes no new branch, sizeof(Group) stays 80 with no new unconditional Work spend, and the three fixtures are absent from the E6c 48-gap roster and every other cohort ledger. r2 APPROVE with no remaining MAJOR/MINOR/NIT."
+    "note": "r1 found two MAJORs, both fixed before approval: (1) an edge joining vertices hidden inside two DIFFERENT collapsed groups was silently dropped; the projection now distinguishes same-leaf internal edges (dropped) from different-leaf edges (fail-closed, deferred to Slice C remap), and the collapsed group's own visible endpoint is no longer misclassified as hidden; (2) the parser accept/reject matrix was untested, now locked by test_mermaid_fs7b_directive through the public render API with CellCapture comparisons. MINOR: the corpus drift regex now accepts both bare and double-quoted collapsed. Frozen contracts verified: no ungated hidden_vertex access, the non-collapsed path takes no new branch, sizeof(Group) stays 80 with no new unconditional Work spend, and the three fixtures are absent from the E6c 48-gap roster and every other cohort ledger. r2 APPROVE with no remaining MAJOR/MINOR/NIT.",
+    "d814": {
+      "reviewer_agent": "independent adversarial review (Claude Code subagent, D-814 medium-inert look cohort, 2026-11-26; r1 REQUEST-CHANGES -> r2 REQUEST-CHANGES -> r3 REQUEST-CHANGES -> r4 REQUEST-CHANGES -> r5 APPROVE)",
+      "date": "2026-11-26",
+      "verdict": "approved",
+      "note": "The handDrawn row now draws its whole original behind the D-814 medium-inert look disclosure footer; whole states re-baselined to drawn/source/drawn, body-track coverage unchanged."
+    }
   },
   "counts": {
     "total": 3,
     "predicted_draw": 3,
     "predicted_blocked": 0,
-    "predicted_original_draw": 2
+    "predicted_original_draw": 3
   },
   "rows": [
     {
@@ -106,18 +112,18 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
         "narrow_40": "drawn",
         "restored_240": "drawn"
       },
-      "ledger_note": "FS-7b admits the body only; whole original stays source behind the look: handDrawn (FS-8) frontmatter gate; the body track has no frontmatter and draws"
+      "ledger_note": "FS-7b collapsed-subgraph directive admitted; the group renders as a single titled rectangle"
     }
   ]
 }

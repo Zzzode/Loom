@@ -1,0 +1,348 @@
+{
+ "schema": "loom_mermaid_flow_look_cohort/v1",
+ "decision": "D-814: medium-inert sketch look admitted with disclosure",
+ "selection": {
+  "rule": "flowchart original whose config carries look: handDrawn (plus an optional positive handDrawnSeed) and whose body is otherwise admissible; the disclosure footer is unclaimed ink for the Flow400 geometry oracle",
+  "rows": 22
+ },
+ "review": {
+  "reviewer_agent": "independent adversarial review (Claude Code subagent, D-814 medium-inert look cohort, 2026-11-26; r1 REQUEST-CHANGES -> r2 REQUEST-CHANGES -> r3 REQUEST-CHANGES -> r4 REQUEST-CHANGES -> r5 APPROVE)",
+  "date": "2026-11-26",
+  "verdict": "approved",
+  "note": "Five adversarial rounds against the working tree: r1 REQUEST-CHANGES (matrix branch not wired into the flow accumulator, twelve-row overlap with the FS-3a/FS-4h/FS-6/FS-7b ledgers, ledger-approval vs generator-check conflict, missing twin assertion), r2 REQUEST-CHANGES (re-baselined ledger metadata described the old look gate), r3 REQUEST-CHANGES (spacing cohort framed look as a hard gate, FS-6 policy arithmetic, stale comments), r4 REQUEST-CHANGES (spacing addendum dropped by review preservation, two comment/docstring residuals), r5 APPROVE. The durable gate renders every row at 240/40/240 and compares every art row above the footer with the config-free body twin."
+ },
+ "rows": [
+  {
+   "path": "flowchart/nightly-check/handdrawn/01-fdh39-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+   "family": "flowchart",
+   "sha256": "26afbc81a26e17b619ba0d4332f444d8b86a629bb1cac4d9023e63cb02bc56e6",
+   "manifest_sha256": "26afbc81a26e17b619ba0d4332f444d8b86a629bb1cac4d9023e63cb02bc56e6",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/02-fdh38-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+   "family": "flowchart",
+   "sha256": "c171b3541d989268d771f59df46a768ce7cb689d9025d84dbcb8d63f201e4cfe",
+   "manifest_sha256": "c171b3541d989268d771f59df46a768ce7cb689d9025d84dbcb8d63f201e4cfe",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/chaining-of-nodes.mmd",
+   "family": "flowchart",
+   "sha256": "61c329dee3d54dee4a91f20b2cb8e86792872daa749fc60baf566d5906d5459c",
+   "manifest_sha256": "61c329dee3d54dee4a91f20b2cb8e86792872daa749fc60baf566d5906d5459c",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/fontawesome-icons-in-edge-labels.mmd",
+   "family": "flowchart",
+   "sha256": "a0725e07cecd9a98198f71550f8556a29852a3784e61d3420a57d846884ee639",
+   "manifest_sha256": "a0725e07cecd9a98198f71550f8556a29852a3784e61d3420a57d846884ee639",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/multiple-nodes-and-chaining-in-one-statement.mmd",
+   "family": "flowchart",
+   "sha256": "8aee9a1caf45c2dc2dc3406c3316460d29ae81deacc383c14a4eb16545cd1a97",
+   "manifest_sha256": "8aee9a1caf45c2dc2dc3406c3316460d29ae81deacc383c14a4eb16545cd1a97",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/render-a-simple-flowchart-with-nodespacing-set-to-100.mmd",
+   "family": "flowchart",
+   "sha256": "dab2f47f235e05f3c443fe545ace6b177926d29cb1359ae8d48526e4ea868662",
+   "manifest_sha256": "dab2f47f235e05f3c443fe545ace6b177926d29cb1359ae8d48526e4ea868662",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/render-a-simple-flowchart-with-rankspacing-set-to-100.mmd",
+   "family": "flowchart",
+   "sha256": "9cf3a610a60c1698ff4dbb9c166239427d1a12cede49035d1f9504ec7ed7e2de",
+   "manifest_sha256": "9cf3a610a60c1698ff4dbb9c166239427d1a12cede49035d1f9504ec7ed7e2de",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-honor-minimum-edge-length-as-specified-by-the-user.mmd",
+   "family": "flowchart",
+   "sha256": "26e1e180936d2cdae27749e9ad5fec0bc7e373f09b4c0a6ce55aa02ff681175a",
+   "manifest_sha256": "26e1e180936d2cdae27749e9ad5fec0bc7e373f09b4c0a6ce55aa02ff681175a",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied",
+    "config.handDrawnSeed=1 -> sketch jitter seed; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-not-slice-off-edges-that-are-to-the-left-of-the-left-most-vertex.mmd",
+   "family": "flowchart",
+   "sha256": "a2c7b77c44f921c4585a71eeec93be2a552eaa78b8b4e35f0d2f0c3eaa71dc29",
+   "manifest_sha256": "a2c7b77c44f921c4585a71eeec93be2a552eaa78b8b4e35f0d2f0c3eaa71dc29",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-redirect-a-collapsed-subgraph-using-the-handdrawn-look.mmd",
+   "family": "flowchart",
+   "sha256": "20c3ac86c7625f037ffe8c5ad4655b8392641619bbb07eaf819601aec0bb333b",
+   "manifest_sha256": "20c3ac86c7625f037ffe8c5ad4655b8392641619bbb07eaf819601aec0bb333b",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-no-htmllabels.mmd",
+   "family": "flowchart",
+   "sha256": "45018c7555d9f5652271e63c2960d913da6a3abd88639b2e2e5cd69c6def7874",
+   "manifest_sha256": "45018c7555d9f5652271e63c2960d913da6a3abd88639b2e2e5cd69c6def7874",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-comments.mmd",
+   "family": "flowchart",
+   "sha256": "fab060b2548ab46980633064b8e62573880e4fb0c7ba374cbcbd574a37876f65",
+   "manifest_sha256": "fab060b2548ab46980633064b8e62573880e4fb0c7ba374cbcbd574a37876f65",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-diagrampadding-set-to-0.mmd",
+   "family": "flowchart",
+   "sha256": "139b95807fa3f86137ee473c2e1bf8beb3733146dee1c8b7360dc5c2638cbfb8",
+   "manifest_sha256": "139b95807fa3f86137ee473c2e1bf8beb3733146dee1c8b7360dc5c2638cbfb8",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-line-breaks.mmd",
+   "family": "flowchart",
+   "sha256": "7c45a7765699a28221785e87f7065a6d4f4be059ae6e1748c14a7802cd742bbe",
+   "manifest_sha256": "7c45a7765699a28221785e87f7065a6d4f4be059ae6e1748c14a7802cd742bbe",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-trapezoid-and-inverse-trapezoid-vertex-options.mmd",
+   "family": "flowchart",
+   "sha256": "201393dc087d6cebc846a8c2e6c5d778a6881bacfb4342117aefed91517c10f1",
+   "manifest_sha256": "201393dc087d6cebc846a8c2e6c5d778a6881bacfb4342117aefed91517c10f1",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-render-escaped-without-html-labels.mmd",
+   "family": "flowchart",
+   "sha256": "05dd13707f0564b2127008583eb529bdfc775ac7ca3a437a45a10c97572cf420",
+   "manifest_sha256": "05dd13707f0564b2127008583eb529bdfc775ac7ca3a437a45a10c97572cf420",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-render-labels-with-numbers-at-the-start.mmd",
+   "family": "flowchart",
+   "sha256": "3b24cb07e9b03acd480803ca3853d6464e9655aa8d9dfd8245872ee92f298de7",
+   "manifest_sha256": "3b24cb07e9b03acd480803ca3853d6464e9655aa8d9dfd8245872ee92f298de7",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-render-non-escaped-with-html-labels.mmd",
+   "family": "flowchart",
+   "sha256": "f64a102d8189fa660ce4ec38a7ec650a54bc9088a3dcbbfdcc2665d02ef5cf81",
+   "manifest_sha256": "f64a102d8189fa660ce4ec38a7ec650a54bc9088a3dcbbfdcc2665d02ef5cf81",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-render-subgraphs-with-a-title-starting-with-a-digit.mmd",
+   "family": "flowchart",
+   "sha256": "e4b9df5ca59097445690eebf0463858c8693ad0f00683e60abbe33a21e54a5a7",
+   "manifest_sha256": "e4b9df5ca59097445690eebf0463858c8693ad0f00683e60abbe33a21e54a5a7",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/should-render-subgraphs.mmd",
+   "family": "flowchart",
+   "sha256": "a282760e1a869f653f1d6e9a7c35aadb6f3199678d9100d6aa4c0f9014dde8f2",
+   "manifest_sha256": "a282760e1a869f653f1d6e9a7c35aadb6f3199678d9100d6aa4c0f9014dde8f2",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/testing-the-label-width-in-percy.mmd",
+   "family": "flowchart",
+   "sha256": "38d4cbad533b67d26e880e60deaba7e534994a37651e2112d7b48b47c825c4bc",
+   "manifest_sha256": "38d4cbad533b67d26e880e60deaba7e534994a37651e2112d7b48b47c825c4bc",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied",
+    "config.handDrawnSeed=1 -> sketch jitter seed; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  },
+  {
+   "path": "flowchart/nightly-check/handdrawn/text-color-from-classes.mmd",
+   "family": "flowchart",
+   "sha256": "55e3d5fa087ae1584c2ad696372a9c02d56a4b1fb74d72a7f1167bf6b669c7d8",
+   "manifest_sha256": "55e3d5fa087ae1584c2ad696372a9c02d56a4b1fb74d72a7f1167bf6b669c7d8",
+   "cause": "config.look=handDrawn is the rough.js sketch skin; a terminal draws table glyphs, so the leaf is medium-inert: every art row above the disclosure footer equals the config-free body twin, and the footer names the unapplied skin. The disclosure footer is unclaimed ink for the Flow400 geometry oracle, so the row admits on reviewed source-byte identity instead of a Model",
+   "notices": [
+    "config.look=handDrawn -> source node style; not applied"
+   ],
+   "expected_states": {
+    "wide_240": "drawn",
+    "narrow_40": "source_fallback",
+    "restored_240": "drawn"
+   }
+  }
+ ]
+}

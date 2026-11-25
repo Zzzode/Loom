@@ -39,12 +39,15 @@ only for the simple graphs that fit it; the durable cohort gtest
 enforces every state live, so a geometry or vocabulary drift fails
 loudly even though the generator itself never renders.
 
-Draw bodies paint on the body track at 240 (wide + restored); 21 of the
-38 body-draw rows also draw the whole original at 240 (17 with admitted
-frontmatter, the 2 FS-spacing spacing-leaf rows, and the 2 FS-maxwidth
-dagre+useMaxWidth rows); the other 17 keep whole-original source
-(13 pre-existing plus the 4 FS-init body-only rows). The handDrawn-look
-rows keep whole-original source with FS-8.
+Draw bodies paint on the body track at 240 (wide + restored). The original
+FS-6 split was 21 whole draws (17 frontmatter, the 2 FS-spacing spacing-leaf
+rows and the 2 FS-maxwidth dagre+useMaxWidth rows) against 17 body-only
+rows; D-470 moved three of the latter (20 frontmatter) to 24 whole / 14
+body-only. D-814 then admitted the eight handDrawn-look rows as whole draws
+behind the look disclosure footer,
+so the current split is 32 whole draws and 6 body-only rows (the three
+theme-gated FS-init rows plus three body-draw rows whose frontmatter is
+still closed: two htmllabels rows and the sandbox-security row).
 
 Usage: python3 tools/mermaid/generate_fs6_cohort.py --repo-root . [--check]
 """
@@ -244,6 +247,20 @@ def sha256_file(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+# D-814: the medium-inert `look: handDrawn` leaf is admitted with a disclosure
+# footer, so these eight rows now draw their whole original too.
+LOOK_WHOLE_DRAW = {
+    "flowchart/nightly-check/handdrawn/01-fdh39-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+    "flowchart/nightly-check/handdrawn/02-fdh38-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+    "flowchart/nightly-check/handdrawn/fontawesome-icons-in-edge-labels.mmd",
+    "flowchart/nightly-check/handdrawn/render-a-simple-flowchart-with-nodespacing-set-to-100.mmd",
+    "flowchart/nightly-check/handdrawn/render-a-simple-flowchart-with-rankspacing-set-to-100.mmd",
+    "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-no-htmllabels.mmd",
+    "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-comments.mmd",
+    "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-diagrampadding-set-to-0.mmd",
+}
+
+
 def build(repo_root):
     manifest = json.loads((repo_root / MANIFEST).read_text())
     manifest_rows = {f["path"]: f for f in manifest["fixtures"]}
@@ -262,7 +279,7 @@ def build(repo_root):
         body_only = (not blocked) and rel in BODY_ONLY_DRAW
         original_draws = (not blocked) and not body_only and (
             rel in ORIGINAL_DRAW or rel in SPACING_WHOLE_DRAW or
-            rel in MAXWIDTH_WHOLE_DRAW)
+            rel in MAXWIDTH_WHOLE_DRAW or rel in LOOK_WHOLE_DRAW)
         # Geometry pin consistency checks: a narrow-draw path must draw wide.
         if rel in BODY_NARROW_DRAW and blocked:
             raise ValueError(f"body narrow-draw path is blocked: {rel}")
@@ -284,6 +301,8 @@ def build(repo_root):
         raise ValueError("pinned spacing whole-draw path missing from selection")
     if not MAXWIDTH_WHOLE_DRAW <= selected:
         raise ValueError("pinned maxwidth whole-draw path missing from selection")
+    if not LOOK_WHOLE_DRAW <= selected:
+        raise ValueError("pinned look whole-draw path missing from selection")
     if ORIGINAL_DRAW & BODY_ONLY_DRAW or SPACING_WHOLE_DRAW & BODY_ONLY_DRAW or \
             MAXWIDTH_WHOLE_DRAW & BODY_ONLY_DRAW:
         raise ValueError("whole-draw and body-only pin sets overlap")
@@ -350,9 +369,11 @@ def build(repo_root):
                 "marker vocabulary itself is only admitted for car/code"),
         })
     # D-470 round 809 moved three FS-6 rows from body-only to whole draws
-    # (two parse-pool diamonds and the forest palette row).
-    if (n_draw != 38 or n_blocked != 16 or n_original_draw != 24 or
-            n_body_only_scope != 14 or n_fs_init != 3):
+    # (two parse-pool diamonds and the forest palette row); D-814 moved the
+    # eight medium-inert handDrawn rows the same way (24 -> 32 whole draws,
+    # body-only scope 14 -> 6).
+    if (n_draw != 38 or n_blocked != 16 or n_original_draw != 32 or
+            n_body_only_scope != 6 or n_fs_init != 3):
         raise ValueError(
             f"partition drift: draw={n_draw} blocked={n_blocked} "
             f"original_draw={n_original_draw} body_only_scope="
@@ -382,13 +403,24 @@ def build(repo_root):
                                  "residual rows abort",
             "width_policy": "draw bodies paint at 240; the pinned simple "
                            "graphs also paint at narrow_40; whole originals "
-                           "paint for the 21 admitted rows (17 frontmatter, "
-                           "the 2 FS-spacing leaves, and the 2 FS-maxwidth "
-                           "dagre+useMaxWidth rows); the four FS-init "
-                           "body-only rows keep whole source behind the "
-                           "frontmatter theme gate.",
+                           "paint for the 32 admitted rows (20 frontmatter "
+                           "including the 3 D-470 parse-pool/palette rows, "
+                           "the 2 FS-spacing leaves, the 2 FS-maxwidth "
+                           "dagre+useMaxWidth rows and the 8 D-814 look rows, "
+                           "the latter classes behind their disclosure "
+                           "footers); the three FS-init body-only rows keep "
+                           "whole source behind the frontmatter theme gate.",
         },
         "review": {
+            "d814": {
+                "reviewer_agent": "independent adversarial review (Claude Code subagent, D-814 medium-inert look cohort, 2026-11-26; r1 REQUEST-CHANGES -> r2 REQUEST-CHANGES -> r3 REQUEST-CHANGES -> r4 REQUEST-CHANGES -> r5 APPROVE)",
+                "date": "2026-11-26",
+                "verdict": "approved",
+                "note": "The rows shared with flow-look-cohort.json now draw their "
+                        "whole originals behind the D-814 medium-inert look "
+                        "disclosure footer; whole states and counts re-baselined, "
+                        "body-track coverage unchanged.",
+            },
             "reviewer_agent": "independent read-only adversarial review "
                               "(D-066 FS-6 fontawesome icons, 2026-11-06; "
                               "FS-init follow-up 2026-11-08 task "

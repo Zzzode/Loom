@@ -19,10 +19,9 @@ namespace {
 
 using namespace detail;
 // RFC 0031 FS-3a: classDef/class/direct-style projection graduated to
-// production, so no style gate remains. The handDrawn look metadata profile
-// (FS-8) is still unadmitted and available only through the reviewed test
-// facade.
-thread_local bool flow_handdrawn_preview = false;
+// production, so no style gate remains. D-814 admits the medium-inert
+// `look: handDrawn` leaf with a disclosure footer; `look: neo` and every other
+// value stay whole-source.
 // D-470: the allowance the last flow_layout enabled, so layout_mermaid_content
 // can carry it into NativeLayout for the cache's hit path.
 thread_local std::size_t flow_layout_envelope_allowance = 0u;
@@ -2546,6 +2545,13 @@ struct FlowEnvelope {
     // table. The terminal never paints a palette, so the leaf is inert and
     // disclosed below the art.
     std::optional<std::string> theme;
+    // D-814: `config.look: handDrawn` is a rough.js stroke style. The terminal
+    // draws table glyphs, so the look is medium-inert (the art without the
+    // footer equals the twin without the key) and is disclosed below the art.
+    std::optional<std::string> look;
+    // D-814: the companion `config.handDrawnSeed` jitter seed, disclosed with
+    // the same rule. Closed to a positive decimal.
+    std::optional<std::string> seed;
 };
 
 std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& work) {
@@ -2581,14 +2587,16 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
         // ceiling (FS-1b) or carries a subgraph/body debt that the open
         // envelope would surface as unreviewed art, so only the single
         // verified rectpacking profile is admitted.
-        ElkEngine = 8192u
+        ElkEngine = 8192u,
+        // D-814: the rough.js sketch seed carried beside `look: handDrawn`.
+        Seed = 32768u
     };
 
     bool description = false, description_text = false, config = false, title = false;
     bool root_html_value = false, nested_html_value = false, log_one = false;
     bool title_top_margin_zero = false, diagram_padding_zero = false;
     std::optional<bool> use_max_width;
-    std::optional<std::string> theme_value;
+    std::optional<std::string> theme_value, look_value, seed_value;
     unsigned fields = 0;
     const auto mark = [&](unsigned bit) {
         if (fields & bit) return false;
@@ -2692,9 +2700,34 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
                     return {};
                 }
             } else if (event.path == "look") {
-                if (!flow_handdrawn_preview || !mark(Look) ||
-                    trim(event.value) != "handDrawn")
-                    return {};
+                // D-814: `look: handDrawn` is the rough.js stroke skin. A
+                // terminal has no sketch strokes, so the leaf is medium-inert:
+                // the drawing is the plain graph plus a disclosure footer, and
+                // every art row above the footer is byte-identical to the twin
+                // rendered without the key. `look: neo` and every other value stay
+                // whole-source (the D-442 agentflow negative is preserved).
+                if (!mark(Look)) return {};
+                auto scalar = trim(event.value);
+                if (scalar.size() >= 2u && ((scalar.front() == '"' && scalar.back() == '"') ||
+                                            (scalar.front() == '\'' && scalar.back() == '\'')))
+                    scalar = trim(scalar.substr(1u, scalar.size() - 2u));
+                if (scalar != "handDrawn") return {};
+                look_value = std::string(scalar);
+            } else if (event.path == "handDrawnSeed") {
+                // D-814: the sketch jitter seed only randomizes rough.js
+                // strokes upstream. Closed to a positive decimal of at most
+                // nine digits; zero, a sign, a fraction or a duplicate keeps
+                // the whole source.
+                if (!mark(Seed)) return {};
+                auto scalar = trim(event.value);
+                if (scalar.size() >= 2u && ((scalar.front() == '"' && scalar.back() == '"') ||
+                                            (scalar.front() == '\'' && scalar.back() == '\'')))
+                    scalar = trim(scalar.substr(1u, scalar.size() - 2u));
+                if (scalar.empty() || scalar.size() > 9u) return {};
+                for (const char ch : scalar)
+                    if (ch < '0' || ch > '9') return {};
+                if (scalar.front() == '0') return {};
+                seed_value = std::string(scalar);
             } else if (event.path == "fontFamily") {
                 const auto scalar = trim(event.value);
                 if (!mark(Font) || (scalar != "courier" && scalar != "\"courier\"")) return {};
@@ -2783,61 +2816,74 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
         }
         return {};
     }
+    // D-814: the jitter seed has no meaning without the sketch look it seeds.
+    if (seed_value.has_value() && !look_value.has_value()) return {};
     if ((!description && !config) || (description && !description_text)) return {};
     if (!config) {
         if (title) return {};
-        return FlowEnvelope{envelope->raw_body, {}, false, std::nullopt, std::nullopt};
+        return FlowEnvelope{envelope->raw_body, {}, false, std::nullopt, std::nullopt,
+                            std::nullopt, std::nullopt};
     }
-    const bool legacy_dagre = fields == Layout && !title;
-    const bool dagre_diagram_title = fields == Layout && title;
+    // D-814: `look: handDrawn` and `handDrawnSeed` are additive medium-inert
+    // leaves: they may accompany any already-admitted profile (or stand alone)
+    // because the terminal never paints sketch strokes. Every other key keeps
+    // its exact-bit profile.
+    const unsigned config_fields = fields & ~(Look | Seed);
+    const bool look_present = (fields & Look) != 0u;
+    const bool legacy_dagre = config_fields == Layout && !title;
+    const bool dagre_diagram_title = config_fields == Layout && title;
     // FS-elk: a single elk.rectpacking engine value. Layout stays marked, so
     // the FlowEnvelope.dagre_layout flag below is set and the
     // untrusted-compound gate still rejects a rectpacking graph that carries
     // a subgraph.
-    const bool elk_rectpacking_profile = fields == (Layout | ElkEngine);
+    const bool elk_rectpacking_profile = config_fields == (Layout | ElkEngine);
     // FS-maxwidth: useMaxWidth is responsive SVG sizing and is non-terminal,
     // and a dagre layout engine is non-terminal too. The no-layout profile
     // already exists; accept the conjunction so a quoted dagre engine can
     // coexist with the useMaxWidth leaf. Exact bit equality keeps every other
-    // co-key (look/theme/...) failing closed; Layout stays marked so the
-    // untrusted-compound guard still rejects a subgraph-bearing graph.
+    // co-key (theme/...) failing closed; the medium-inert look/seed leaves are
+    // additive (D-814), and Layout stays marked so the untrusted-compound
+    // guard still rejects a subgraph-bearing graph.
     const bool terminal_max_width =
-        (fields == (Flowchart | MaxWidth) ||
-         fields == (Layout | Flowchart | MaxWidth)) &&
+        (config_fields == (Flowchart | MaxWidth) ||
+         config_fields == (Layout | Flowchart | MaxWidth)) &&
         use_max_width.has_value();
-    const bool terminal_zero_diagram_padding = (fields == (Flowchart | DiagramPadding) ||
-                                                fields == (Layout | Flowchart | DiagramPadding)) &&
+    const bool terminal_zero_diagram_padding = (config_fields == (Flowchart | DiagramPadding) ||
+                                                config_fields == (Layout | Flowchart | DiagramPadding)) &&
                                                diagram_padding_zero;
     const bool title_top_margin_zero_without_layout =
-        fields == (Flowchart | TitleTopMargin) && title_top_margin_zero && !title;
+        config_fields == (Flowchart | TitleTopMargin) && title_top_margin_zero && !title;
     const bool dagre_title_top_margin_zero =
-        fields == (Layout | Flowchart | TitleTopMargin) && title_top_margin_zero && !title;
-    const bool courier_only = fields == Font;
+        config_fields == (Layout | Flowchart | TitleTopMargin) && title_top_margin_zero && !title;
+    const bool courier_only = config_fields == Font;
     const bool courier_nested_false =
-        fields == (Font | Flowchart | NestedHtml) && !nested_html_value;
-    const bool logging_false = fields == (Log | RootHtml) && log_one && !root_html_value;
+        config_fields == (Font | Flowchart | NestedHtml) && !nested_html_value;
+    const bool logging_false = config_fields == (Log | RootHtml) && log_one && !root_html_value;
     // FS-1: a lone top-level htmlLabels (either value) only switches SVG label
     // anchoring upstream; terminal text geometry is identical. Non-terminal,
     // disclosed per diagram.
-    const bool root_html_only = fields == RootHtml;
+    const bool root_html_only = config_fields == RootHtml;
     // D-440: a lone inert palette leaf is the whole admitted profile.
-    const bool theme_only = fields == Theme;
+    const bool theme_only = config_fields == Theme;
     const bool both_false =
-        fields == (RootHtml | Flowchart | NestedHtml) && !root_html_value && !nested_html_value;
+        config_fields == (RootHtml | Flowchart | NestedHtml) && !root_html_value && !nested_html_value;
     const unsigned strict_bits = RootHtml | Flowchart | NestedHtml | Security;
-    const bool strict = (fields == strict_bits || fields == (strict_bits | Layout) ||
-                         fields == (strict_bits | Look)) &&
-                        root_html_value && nested_html_value;
+    const bool strict =
+        (config_fields == strict_bits || config_fields == (strict_bits | Layout)) &&
+        root_html_value && nested_html_value;
+    // D-814: `look: handDrawn` (with an optional seed) may stand alone as the
+    // whole config, because the look is medium-inert and disclosed.
+    const bool bare_look = look_present && config_fields == 0u;
     // FS-spacing: a validated nodeSpacing/rankSpacing leaf is non-terminal,
     // so it may accompany one of two inert cores: a bare flowchart namespace
     // or a courier-font flowchart. Anything richer keeps its existing exact
     // profile below; this never admits a new visual key on its own.
     const unsigned spacing_mask = NodeSpacing | RankSpacing;
     const bool spacing_profile =
-        (fields & spacing_mask) && (fields & Flowchart) &&
-        ((fields & ~spacing_mask) == Flowchart ||
-         (fields & ~spacing_mask) == (Font | Flowchart));
-    if (legacy_dagre || dagre_diagram_title || elk_rectpacking_profile ||
+        (config_fields & spacing_mask) && (config_fields & Flowchart) &&
+        ((config_fields & ~spacing_mask) == Flowchart ||
+         (config_fields & ~spacing_mask) == (Font | Flowchart));
+    if (bare_look || legacy_dagre || dagre_diagram_title || elk_rectpacking_profile ||
         terminal_max_width || terminal_zero_diagram_padding ||
         title_top_margin_zero_without_layout || dagre_title_top_margin_zero ||
         root_html_only || theme_only || spacing_profile ||
@@ -2845,7 +2891,7 @@ std::optional<FlowEnvelope> flow_envelope_body(std::string_view source, Work& wo
          (courier_only || courier_nested_false || logging_false || both_false || strict))) {
         FlowEnvelope result{envelope->raw_body, {}, (fields & Layout) != 0u,
                             root_html_only ? std::optional<bool>{root_html_value} : std::nullopt,
-                            std::move(theme_value)};
+                            std::move(theme_value), std::move(look_value), std::move(seed_value)};
         if (title) {
             const auto& value = envelope->title->text;
             if (!work.spend(value.size() * 8u + sizeof(std::string) + 128u)) return {};
@@ -6024,16 +6070,6 @@ ftxui::Color style_role_color(SemanticColorRole role, bool background,
 }
 }  // namespace
 
-bool detail::set_flow_handdrawn_preview_for_testing(bool enabled) {
-    const bool previous = flow_handdrawn_preview;
-    flow_handdrawn_preview = enabled;
-    return previous;
-}
-
-bool detail::flow_handdrawn_preview_active() {
-    return flow_handdrawn_preview;
-}
-
 std::optional<ftxui::Element> detail::finish_native_layout(std::optional<NativeLayout> layout,
                                                            ftxui::Element fallback, Work& work,
                                                            FinalEmissionTrace* trace) {
@@ -6845,6 +6881,13 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
             if (envelope->theme)
                 rich.notices.push_back("config.theme=" + *envelope->theme +
                                        " -> colour palette; not applied");
+            // D-814: disclose the admitted medium-inert sketch look and seed.
+            if (envelope->look)
+                rich.notices.push_back("config.look=" + *envelope->look +
+                                       " -> source node style; not applied");
+            if (envelope->seed)
+                rich.notices.push_back("config.handDrawnSeed=" + *envelope->seed +
+                                       " -> sketch jitter seed; not applied");
             if (envelope->dagre_layout && flow_untrusted_dagre_compound(*diagram, work))
                 return {};
             lines = flow_layout(*diagram, work, nullptr, flow_styles.get(), &styles, &rich);

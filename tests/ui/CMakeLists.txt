@@ -2032,3 +2032,21 @@ add_test(NAME MermaidD470ProjectionDrawsCohort.GeneratorIsReproducible
         --repo-root "${CMAKE_SOURCE_DIR}")
 set_tests_properties(MermaidD470ProjectionDrawsCohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+# D-814: the medium-inert `look: handDrawn` disclosure cohort. The durable
+# gate renders every ledger row at 240/40/240 through the public API and pins
+# the disclosure footer; the generator --check rejects a hand edit.
+add_executable(test_mermaid_flow_look_cohort test_mermaid_flow_look_cohort.cpp)
+target_link_libraries(test_mermaid_flow_look_cohort
+    PRIVATE loom_ui loom_utils GTest::gtest loom_test_main)
+target_compile_definitions(test_mermaid_flow_look_cohort PRIVATE
+    LOOM_TESTS_DIR="${CMAKE_SOURCE_DIR}/tests")
+gtest_discover_tests(test_mermaid_flow_look_cohort
+    DISCOVERY_TIMEOUT ${LOOM_TEST_DISCOVERY_TIMEOUT}
+    PROPERTIES TIMEOUT 300 LABELS "mermaid")
+add_test(NAME MermaidFlowLookCohort.GeneratorIsReproducible
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_flow_look_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidFlowLookCohort.GeneratorIsReproducible
+    PROPERTIES LABELS "mermaid" TIMEOUT 120)

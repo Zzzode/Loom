@@ -19,13 +19,19 @@
     ],
     "draw_authority": "the draw set must exactly equal the four fixtures pinned by the immutable FlowStyle4 source-model proposal asset",
     "blocker_detection": "eleven fixed source-content detectors; no generator-time rendering; residual rows abort",
-    "width_policy": "authority rows draw body (and whole original except handDrawn) at 240 wide/restored and keep ordinary source at narrow_40."
+    "width_policy": "authority rows draw body and whole original at 240 wide/restored and keep ordinary source at narrow_40; the handDrawn authority row draws whole behind the D-814 look disclosure footer."
   },
   "review": {
+    "d814": {
+      "reviewer_agent": "independent adversarial review (Claude Code subagent, D-814 medium-inert look cohort, 2026-11-26; r1 REQUEST-CHANGES -> r2 REQUEST-CHANGES -> r3 REQUEST-CHANGES -> r4 REQUEST-CHANGES -> r5 APPROVE)",
+      "date": "2026-11-26",
+      "verdict": "approved",
+      "note": "The rows shared with flow-look-cohort.json now draw their whole originals behind the D-814 medium-inert look disclosure footer; whole states and counts re-baselined, body-track coverage unchanged."
+    },
     "reviewer_agent": "independent read-only adversarial review (D-066 FS-3a style graduation, 2026-11-05)",
     "date": "2026-11-05",
     "verdict": "approved",
-    "note": "Read-only adversarial review of the FS-3a production graduation (classDef/class/direct-style projection, fail-closed grammar unchanged; the handDrawn look stays a test-facade preview), the renderer-free selection and eleven blocker detectors with zero-residual abort, the exact draw-set binding to the immutable FlowStyle4 authority (four bodies, three originals), and the body/original matrix wiring. APPROVE: flow-only blast radius, no shared constants, gaps stay 48, three originals move pending 312->309."
+    "note": "Read-only adversarial review of the FS-3a production graduation (classDef/class/direct-style projection, fail-closed grammar unchanged; the handDrawn look was a test-facade preview at review time and is admitted by D-814), the renderer-free selection and eleven blocker detectors with zero-residual abort, the exact draw-set binding to the immutable FlowStyle4 authority (four bodies, three originals at review time; the handDrawn fourth draws whole via D-814), and the body/original matrix wiring. APPROVE: flow-only blast radius, no shared constants, gaps stay 48, three originals move pending 312->309."
   },
   "counts": {
     "total": 70,
@@ -1146,9 +1152,9 @@
       },
       "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",

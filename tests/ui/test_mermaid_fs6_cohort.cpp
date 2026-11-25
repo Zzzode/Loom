@@ -122,7 +122,7 @@ TEST(MermaidFs6Cohort, LedgerMatchesSchemaReviewAndCounts) {
     EXPECT_EQ(counts.get_int("predicted_draw"), 38);
     EXPECT_EQ(counts.get_int("predicted_blocked"), 16);
     // D-470 round 809: three rows moved from body-only to whole draws.
-    EXPECT_EQ(counts.get_int("predicted_original_draw"), 24);
+    EXPECT_EQ(counts.get_int("predicted_original_draw"), 32);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     std::set<std::string> vocabulary;
@@ -176,9 +176,10 @@ TEST(MermaidFs6Cohort, LedgerMatchesSchemaReviewAndCounts) {
     }
     EXPECT_EQ(draw, 38);
     EXPECT_EQ(blocked, 16);
-    // D-470 round 809: three rows moved from body-only to whole draws.
-    EXPECT_EQ(original_draw, 24);
-    EXPECT_EQ(body_only, 14);
+    // D-470 round 809 moved three rows and D-814 moved the eight handDrawn
+    // look rows from body-only to whole draws (24 -> 32, 14 -> 6).
+    EXPECT_EQ(original_draw, 32);
+    EXPECT_EQ(body_only, 6);
     EXPECT_EQ(fs_init, 3);
 }
 
@@ -225,5 +226,5 @@ TEST(MermaidFs6Cohort, WholeOriginalStatesMatchLedger) {
             EXPECT_TRUE(same_surface(wide, capture(bytes, "text", kWide))) << row.path;
         }
     }
-    EXPECT_EQ(original_draw, 24);
+    EXPECT_EQ(original_draw, 32);
 }

@@ -6,8 +6,8 @@
 // natively at 240 columns with the classDef/class/style statements consumed
 // into projected attributes and disclosed in a verbatim projection legend,
 // stay on ordinary source fallback at 40 columns, and restore
-// pixel-identically. The handDrawn-look row additionally keeps whole-original
-// source at every width (look metadata stays FS-8). Every one of the 66
+// pixel-identically. The handDrawn-look row now draws its whole original too,
+// behind the D-814 disclosure footer (narrow stays source). Every one of the 66
 // blocked bodies stays ordinary source at every width.
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>

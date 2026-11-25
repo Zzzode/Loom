@@ -597,11 +597,18 @@ TEST(MermaidEnvelope, InvalidSpacingValuesKeepWholeSource) {
         "config:\n  nodeSpacing: 100\n"
         "---\n"
         "flowchart TD\nA --> B\n"));
-    // A handDrawn look is an independent hard gate even with spacing.
-    EXPECT_FALSE(renders_natively(
+    // D-814: the handDrawn look is medium-inert and may accompany the spacing
+    // profile; `look: neo` stays a hard gate.
+    EXPECT_TRUE(renders_natively(
         "---\n"
         "description:\n  Flow.\n"
         "config:\n  look: handDrawn\n  flowchart:\n    nodeSpacing: 100\n"
+        "---\n"
+        "flowchart TD\nA --> B\n"));
+    EXPECT_FALSE(renders_natively(
+        "---\n"
+        "description:\n  Flow.\n"
+        "config:\n  look: neo\n  flowchart:\n    nodeSpacing: 100\n"
         "---\n"
         "flowchart TD\nA --> B\n"));
     // An unknown sibling indent-4 key keeps the whole source.

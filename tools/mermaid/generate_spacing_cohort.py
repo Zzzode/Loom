@@ -11,8 +11,8 @@ The pinned four visual-check fixtures have a body that already draws and
 a whole original held solely by the missing spacing profile; after
 admission both tracks draw at 240/restored and keep ordinary source at
 40 columns. The two nightly handDrawn lookalikes also set the keys but
-carry `look: handDrawn`, a separate gate (FS-8), so they are not
-selected and keep source.
+carry `look: handDrawn`; this cohort excludes look rows, and D-814 owns
+them (their whole originals draw behind the look disclosure footer).
 
 Usage: python3 tools/mermaid/generate_spacing_cohort.py --repo-root . [--check]
 """
@@ -38,7 +38,8 @@ PINNED = {
 }
 SPACING_KEYS = {"nodeSpacing", "rankSpacing"}
 # Indent-2 leaves already accepted by the envelope walker; any other
-# indent-2 key (look/theme/...) is a hard visual gate that keeps source.
+# indent-2 key (theme/...) disqualifies the row from this cohort. Look rows
+# are owned by the D-814 look cohort and palette rows by the D-440 cohort.
 # "flowchart" is the indent-2 namespace entry whose indent-4 children hold
 # the actual leaves.
 SAFE_INDENT2 = {"layout", "look", "fontFamily", "securityLevel", "logLevel",
@@ -93,8 +94,9 @@ INDENT4_VALUE_RULES = {
 
 def spacing_only_profile(frontmatter):
     """True when every config key is an accepted envelope leaf and the
-    only new leaves are nodeSpacing/rankSpacing with valid scalar values,
-    with no hard indent-2 visual gate. The value rules mirror the
+    only new leaves are nodeSpacing/rankSpacing with valid scalar values and
+    no look/theme leaf (look rows are owned by the D-814 cohort and theme
+    rows by the D-440 cohort). The value rules mirror the
     production walker so an unsupported value (elk layout, strict
     security, non-zero margin, ...) disqualifies the row rather than being
     silently ignored; the corpus drift guard still backs this up."""
@@ -116,8 +118,9 @@ def spacing_only_profile(frontmatter):
             key, value = indent2.group(1), indent2.group(2)
             if key not in SAFE_INDENT2:
                 return False
-            # look/theme are hard visual gates: a handDrawn look or any
-            # theme key disqualifies the row even with a spacing key.
+            # look/theme disqualify the row from this cohort even with a
+            # spacing key: look rows belong to the D-814 cohort and theme
+            # rows to the D-440 palette cohort.
             if key in ("look", "theme"):
                 return False
             if key in INDENT2_VALUE_RULES and not INDENT2_VALUE_RULES[key](value):
@@ -131,6 +134,14 @@ def sha256_file(path):
 
 def build_review(repo_root):
     review = {
+        "d814": {
+            "reviewer_agent": "independent adversarial review (Claude Code subagent, D-814 medium-inert look cohort, 2026-11-26; r1 REQUEST-CHANGES -> r2 REQUEST-CHANGES -> r3 REQUEST-CHANGES -> r4 REQUEST-CHANGES -> r5 APPROVE)",
+            "date": "2026-11-26",
+            "verdict": "approved",
+            "note": "The two handDrawn spacing lookalikes this cohort excludes "
+                    "now draw their whole originals through the D-814 look "
+                    "cohort; this ledger's four rows are unchanged.",
+        },
         "reviewer_agent": ("independent read-only adversarial review "
                            "(fresh general-purpose agent, FS-spacing "
                            "envelope cohort, 2026-11-09, task "
@@ -160,13 +171,22 @@ def build_review(repo_root):
             "impact)."),
     }
     # Preserve a recorded review across regeneration so re-running the
-    # generator cannot silently reset an approved verdict.
+    # generator cannot silently reset an approved verdict. The D-814 addendum
+    # is authored here and must survive the preservation step; setdefault keeps
+    # an already-stamped addendum on later runs.
+    authored_d814 = review["d814"]
     existing_path = repo_root / LEDGER
     if existing_path.exists():
         try:
             prior = json.loads(existing_path.read_text())
             if isinstance(prior.get("review"), dict):
                 review = prior["review"]
+                prior_d814 = review.get("d814")
+                if not (isinstance(prior_d814, dict) and
+                        prior_d814.get("verdict") == "approved"):
+                    # Keep a stamped addendum, but heal a pending one so the
+                    # authored record always reaches the ledger.
+                    review["d814"] = authored_d814
         except json.JSONDecodeError:
             pass
     return review
@@ -243,8 +263,8 @@ def build(repo_root):
             "rule": (
                 "visual-check flowchart fixture whose only unaccepted "
                 "envelope leaves are non-negative nodeSpacing/rankSpacing "
-                "scalars, with no look/theme hard gate; the handDrawn "
-                "nightly variants stay excluded"),
+                "scalars, with no look/theme sibling leaf; the handDrawn "
+                "nightly variants are owned by the D-814 look cohort"),
             "roots": ["flowchart"],
         },
         "review": build_review(repo_root),

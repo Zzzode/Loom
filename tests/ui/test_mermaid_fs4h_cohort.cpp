@@ -112,7 +112,7 @@ TEST(MermaidFs4hCohort, LedgerMatchesSchemaReviewCountsAndManifest) {
     EXPECT_EQ(counts.get_int("total"), 10);
     EXPECT_EQ(counts.get_int("predicted_draw"), 8);
     EXPECT_EQ(counts.get_int("predicted_blocked"), 2);
-    EXPECT_EQ(counts.get_int("predicted_original_draw"), 5);
+    EXPECT_EQ(counts.get_int("predicted_original_draw"), 7);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");
 
     const auto manifest = parse_doc(kManifest);
@@ -141,7 +141,7 @@ TEST(MermaidFs4hCohort, LedgerMatchesSchemaReviewCountsAndManifest) {
     }
     EXPECT_EQ(draw, 8);
     EXPECT_EQ(blocked, 2);
-    EXPECT_EQ(original_draw, 5);
+    EXPECT_EQ(original_draw, 7);
 }
 
 TEST(MermaidFs4hCohort, BodyStatesMatchLedgerAndMarkupIsConsumed) {
@@ -181,5 +181,5 @@ TEST(MermaidFs4hCohort, WholeOriginalStatesMatchLedger) {
             EXPECT_TRUE(same_surface(wide, capture(bytes, "text", kWide))) << row.path;
         }
     }
-    EXPECT_EQ(original_draw, 5);
+    EXPECT_EQ(original_draw, 7);
 }

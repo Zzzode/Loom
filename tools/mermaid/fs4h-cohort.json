@@ -24,9 +24,15 @@
       "flowchart"
     ],
     "blocker_detection": "one fixed source-content detector (image-label scanner limit); no generator-time rendering; residual rows abort",
-    "width_policy": "draw rows paint at 240, 40 and the restored frame; originals paint only for the five admitted-frontmatter rows."
+    "width_policy": "draw rows paint at 240, 40 and the restored frame; originals paint for the seven admitted-frontmatter rows (the five original pins plus the two D-814 look rows)."
   },
   "review": {
+    "d814": {
+      "reviewer_agent": "independent adversarial review (Claude Code subagent, D-814 medium-inert look cohort, 2026-11-26; r1 REQUEST-CHANGES -> r2 REQUEST-CHANGES -> r3 REQUEST-CHANGES -> r4 REQUEST-CHANGES -> r5 APPROVE)",
+      "date": "2026-11-26",
+      "verdict": "approved",
+      "note": "The rows shared with flow-look-cohort.json now draw their whole originals behind the D-814 medium-inert look disclosure footer; whole states and counts re-baselined, body-track coverage unchanged."
+    },
     "reviewer_agent": "independent read-only adversarial review (D-066 FS-4h inline HTML labels, 2026-11-06)",
     "date": "2026-11-06",
     "verdict": "approved",
@@ -36,7 +42,7 @@
     "total": 10,
     "predicted_draw": 8,
     "predicted_blocked": 2,
-    "predicted_original_draw": 5
+    "predicted_original_draw": 7
   },
   "blocker_vocabulary": [
     "flow-html-image-label"
@@ -117,9 +123,9 @@
       },
       "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -147,9 +153,9 @@
       },
       "prediction": "predicted-draw",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",

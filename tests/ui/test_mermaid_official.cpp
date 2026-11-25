@@ -7951,6 +7951,61 @@ const D470ProjectionEntry* d470_projection_row(std::string_view path) {
     return found == rows.end() ? nullptr : &found->second;
 }
 
+// D-814: the reviewed `config.look: handDrawn` disclosure cohort
+// (tools/mermaid/flow-look-cohort.json). The rough.js sketch skin is
+// medium-inert for a terminal: every art row above the disclosure footer equals
+// the twin rendered without the key, the footer names the unapplied skin, and the
+// footer is unclaimed ink for the Flow400 geometry oracle, so each row admits
+// on reviewed source-byte identity without a Model. The durable gate is
+// test_mermaid_flow_look_cohort plus the generator --check.
+struct FlowLookEntry {
+    std::array<std::string, 3> original_states;
+    std::vector<std::string> notices;
+    std::string cause;
+    std::string sha256;
+};
+
+const std::map<std::string, FlowLookEntry>& flow_look_map() {
+    static const std::map<std::string, FlowLookEntry> map = [] {
+        std::map<std::string, FlowLookEntry> rows;
+        const auto ledger_path = kRoot / "../../../tools/mermaid/flow-look-cohort.json";
+        auto parsed = json::parse(read_file(ledger_path));
+        require(parsed.has_value(), "D-814 look cohort ledger must parse");
+        require(parsed->root().get("review").get_string("verdict") == "approved",
+                "D-814 look cohort ledger must be independently approved");
+        std::size_t count = 0u;
+        parsed->root().get("rows").iter([&](const JsonVal row) {
+            FlowLookEntry entry;
+            const auto states = row.get("expected_states");
+            entry.original_states = {states.get_string("wide_240"),
+                                     states.get_string("narrow_40"),
+                                     states.get_string("restored_240")};
+            row.get("notices").iter([&](const JsonVal notice) {
+                require(notice.is_str() && notice.as_str().find("not applied") !=
+                                               std::string_view::npos,
+                        "D-814 look cohort notice must be a disclosure");
+                entry.notices.emplace_back(notice.as_str());
+            });
+            require(!entry.notices.empty(), "D-814 look cohort row must disclose the look");
+            entry.cause = row.get_string("cause");
+            require(!entry.cause.empty(), "D-814 look cohort row must carry a cause");
+            entry.sha256 = row.get_string("sha256");
+            require(entry.sha256.size() == 64u, "D-814 look cohort row must pin a SHA");
+            rows.emplace(row.get_string("path"), std::move(entry));
+            ++count;
+        });
+        require(count == 22u, "D-814 look cohort ledger denominator");
+        return rows;
+    }();
+    return map;
+}
+
+const FlowLookEntry* flow_look_row(std::string_view path) {
+    const auto& rows = flow_look_map();
+    const auto found = rows.find(std::string(path));
+    return found == rows.end() ? nullptr : &found->second;
+}
+
 // RFC 0031 FS-2 click-no-op body cohort: the reviewed ledger at
 // tools/mermaid/fs2-cohort.json. Whole originals stay source; only the
 // frontmatter-free body disposition is recorded, so the entry carries just
@@ -7987,9 +8042,9 @@ const Fs2CohortEntry* fs2_cohort_row(std::string_view path) {
 
 // RFC 0031 FS-3a style-projection cohort: the reviewed ledger at
 // tools/mermaid/fs3-cohort.json. Four draw rows are byte-bound to the
-// immutable FlowStyle4 authority asset; three of them also draw the whole
-// original at 240 (the handDrawn-look row stays whole source pending FS-8),
-// and all four bodies draw. The 66 blocked rows stay source on both tracks.
+// immutable FlowStyle4 authority asset; all four now draw the whole original at
+// 240 (the handDrawn-look row does so behind the D-814 disclosure footer), and
+// all four bodies draw. The 66 blocked rows stay source on both tracks.
 struct Fs3CohortEntry {
     bool draw = false;
     bool original_draws = false;
@@ -8667,9 +8722,9 @@ const Fs7aCohortEntry* fs7a_cohort_row(std::string_view path) {
 }
 
 // RFC 0031 FS-7b collapsed-subgraph cohort. Three rows draw on the body
-// track (a collapsed group renders as one titled rectangle); two also draw
-// as whole originals, while the handDrawn row is body-only behind the
-// look:handDrawn gate. Per-row narrow states are measured, not assumed.
+// track (a collapsed group renders as one titled rectangle); all three now
+// draw as whole originals too, the handDrawn row behind the D-814 disclosure
+// footer. Per-row narrow states are measured, not assumed.
 struct Fs7bCohortEntry {
     bool draw = false;
     bool original_draw = false;
@@ -15510,6 +15565,13 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
                            "immutable_Flow400_8Models_plus_D470ProjectionDraws18";
             });
         EXPECT_EQ(d470_projection_selected, 18);
+        const auto flow_look_selected =
+            std::ranges::count_if(observations, [](const Observation& row) {
+                return row.raw_active_schema == kOfficialFlow400Contract &&
+                       row.raw_source_authority ==
+                           "immutable_Flow400_8Models_plus_D814LookDraws22";
+            });
+        EXPECT_EQ(flow_look_selected, 22);
         // RFC 0031 FS-1 admits ledger-reviewed Markdown originals on
         // source-byte identity (no upstream Model): two label originals move
         // pending 315 -> 313, then one Markdown subgraph-heading original
@@ -15538,11 +15600,13 @@ TEST(MermaidCapabilityReport, OfficialMatrix) {
         // elk.rectpacking layout-engine original 243 -> 242. FS-maxwidth moves
         // two dagre+useMaxWidth composite-profile originals 242 -> 240. All
         // count admitted but not decoded.
-        EXPECT_EQ(flows.pending, 222u);
+        // D-814 moves the 22 medium-inert handDrawn-look originals 222 -> 200
+        // pending and 178 -> 200 admitted; all count admitted but not decoded.
+        EXPECT_EQ(flows.pending, 200u);
         EXPECT_EQ(flows.errors, 0u);
         EXPECT_EQ(flows.resources, 0u);
-        EXPECT_EQ(flows.admitted, 178u);
-        EXPECT_EQ(flows.mutated, 178u);
+        EXPECT_EQ(flows.admitted, 200u);
+        EXPECT_EQ(flows.mutated, 200u);
         for (const auto count : applications)
             projection_consumed(count);
         role_batch_consumed(role_counts, role_batch.facts.root());
@@ -20336,6 +20400,52 @@ Observation run_official_flow400_case(
         // originals whose Work outgrew the fixed primary and four whose
         // frontmatter prepayment exceeds it, all now inside the bounded
         // parse/layout envelope pools.
+        if (const auto* look = flow_look_row(path); look) {
+            // D-814: the sketch look is medium-inert and disclosed. The five
+            // captured frames prove the admission inline: wide native,
+            // restore byte-equal, narrow the exact ordinary fallback.
+            require(row.source_sha256 == look->sha256, "D-814 look cohort source identity");
+            p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
+            const bool wide_source = flow_oracle::flow400_same(*frames[0], *frames[3], work);
+            p.narrow_ordinary = flow_oracle::flow400_same(*frames[1], *frames[4], work);
+            const bool narrow_ordinary = p.narrow_ordinary;
+            std::string wide_text;
+            wide_text.reserve(static_cast<std::size_t>(frames[0]->width) *
+                              static_cast<std::size_t>(frames[0]->height));
+            for (int y = 0; y < frames[0]->height; ++y)
+                wide_text += frames[0]->row(y);
+            require(!wide_source && p.restored,
+                    "D-814 look cohort frame protocol (wide native, restore)");
+            const bool narrow_drawn = look->original_states[1] == "drawn";
+            require(narrow_ordinary == !narrow_drawn,
+                    "D-814 look cohort narrow frame disagrees with ledger");
+            for (const auto& notice : look->notices)
+                require(wide_text.find(notice) != std::string::npos,
+                        "D-814 look cohort missing its disclosure footer");
+            static_cast<void>(flow_oracle::flow400_following(*frames[0], work, kSentinel));
+            row.status = {"drawn", narrow_drawn ? "drawn" : "source_fallback", "drawn"};
+            row.expected = "drawn";
+            row.expected_states = {"drawn", narrow_drawn ? "drawn" : "source", "drawn"};
+            row.reason = "D-814 medium-inert sketch look (disclosed)";
+            row.decision_reasons.fill(row.reason);
+            row.role_model_sha = row.source_sha256;
+            row.raw_source_authority = "immutable_Flow400_8Models_plus_D814LookDraws22";
+            p.phase = "complete";
+            p.admitted = true;
+            p.mutated = true;
+            p.remaining[2] = p.remaining[3] = p.remaining[4] = p.remaining[5] =
+                p.remaining[6] = work.remaining;
+            row.raw_source_constraints = official_flow_info(p, work.remaining);
+            data.set("contract", kOfficialFlow400Contract);
+            data.set("actual", row.raw_source_constraints);
+            data.set("foreign_assertions_certified", 0);
+            data.set("causality", look->cause);
+            diagnostic.set_root(data);
+            diagnostics << diagnostic.to_string() << '\n';
+            require(static_cast<bool>(diagnostics),
+                    "OfficialFlow400 D-814 look evidence write failed");
+            return row;
+        }
         if (const auto* d470 = d470_projection_row(path); d470) {
             require(row.source_sha256 == d470->sha256,
                     "D470 projection draw source identity");
@@ -20396,7 +20506,7 @@ Observation run_official_flow400_case(
         // pixel/legend gate is test_mermaid_fs3_cohort and the full-scene
         // oracle is MermaidFlowStyle4OraclePrototype (eight negatives per
         // scene). decoded stays false (no upstream Model); the handDrawn
-        // authority row is absent from the original hook and keeps pending.
+        // authority row admits whole through the D-814 look branch above.
         if (const auto* fs3 = fs3_cohort_row(path); fs3 && fs3->draw && fs3->original_draws) {
             p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
             const bool wide_source = flow_oracle::flow400_same(*frames[0], *frames[3], work);
@@ -21085,10 +21195,10 @@ Observation run_official_flow400_case(
         }
         // RFC 0031 FS-7b: the two whole-and-body collapsed-subgraph fixtures
         // admit as whole originals once the view:collapsed directive parses
-        // and the group projects to one titled rectangle. The handDrawn
-        // body-only row falls through to the ordinary whole-null pending path.
+        // and the group projects to one titled rectangle.
         // Five frames prove each admission inline; the durable gate is
-        // test_mermaid_fs7b_cohort.
+        // test_mermaid_fs7b_cohort. The handDrawn row is owned by the D-814
+        // look branch above and draws whole there; it never reaches this one.
         if (const auto* fs7b = fs7b_cohort_row(path); fs7b && fs7b->draw &&
                                                        fs7b->original_draw) {
             p.restored = flow_oracle::flow400_same(*frames[0], *frames[2], work);
@@ -21414,6 +21524,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS1Cohort2";
     const bool d470_projection_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_D470ProjectionDraws18";
+    const bool flow_look_selected =
+        row.raw_source_authority == "immutable_Flow400_8Models_plus_D814LookDraws22";
     const bool fs3_selected =
         row.raw_source_authority == "immutable_Flow400_8Models_plus_FS3StyleCohort3";
     const bool fs6_selected =
@@ -21588,7 +21700,8 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
         // five-frame proof; they deliberately carry no upstream Model, so
         // whole_Model_decoded is exempt only for those reviewed authorities.
         require(captured && bound &&
-                    (decoded || fs1_selected || d470_projection_selected || fs3_selected ||
+                    (decoded || fs1_selected || d470_projection_selected || flow_look_selected ||
+                     fs3_selected ||
                      fs6_selected || fs4h_selected ||
                      fs5a_selected || fs5b_selected || fs5c_selected || fs5d_selected ||
                      fs5e_selected || fs5g1_selected || fs5g2_selected ||
@@ -21614,7 +21727,7 @@ void official_flow_accumulate_owned(JsonVal info, const Observation& row,
     require(selected || typed || classic_selected || link_selected || group_selected ||
                 title_selected || title_margin_selected || shape_alias_selected ||
                 issue4648_selected || strand_selected || fs1_selected ||
-                d470_projection_selected || fs3_selected ||
+                d470_projection_selected || flow_look_selected || fs3_selected ||
                 fs6_selected || fs4h_selected || fs5a_selected || fs5b_selected ||
                 fs5c_selected || fs5d_selected || fs5e_selected || fs5g1_selected ||
                 fs5g2_selected || fs5g3_selected || fs5g4_selected || fs5g5_selected ||

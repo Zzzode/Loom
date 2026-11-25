@@ -213,6 +213,16 @@ TEST(MermaidFlowchartThemeD440Cohort, ClosedPaletteNegativesStayWholeSource) {
                 << form;
         }
     }
+    // D-814: the medium-inert sketch look may accompany the palette leaf; both
+    // disclosures are emitted and the art is unchanged.
+    {
+        const auto source = probe("config:\n  theme: forest\n  look: handDrawn\n");
+        ASSERT_TRUE(draws(source, kWide));
+        const auto text = capture(source, "mermaid", kWide).text;
+        EXPECT_NE(text.find("config.theme=forest -> colour palette; not applied"), std::string::npos);
+        EXPECT_NE(text.find("config.look=handDrawn -> source node style; not applied"),
+                  std::string::npos);
+    }
     for (const auto* tail : {
              // Palettes outside the corpus-backed flowchart table (every
              // `flowchart/` theme fixture is Flow400-frozen; D-440 finding).
@@ -238,7 +248,7 @@ TEST(MermaidFlowchartThemeD440Cohort, ClosedPaletteNegativesStayWholeSource) {
              "config:\n    theme: forest\n",
              "theme: forest\n",
              // A sibling leaf or namespace keeps the profile closed.
-             "config:\n  theme: forest\n  look: handDrawn\n",
+             "config:\n  theme: forest\n  look: neo\n",
              "config:\n  theme: forest\n  htmlLabels: true\n",
              "config:\n  theme: forest\n  flowchart:\n    nodeSpacing: 100\n",
          }) {

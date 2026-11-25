@@ -1326,15 +1326,8 @@ TEST(MermaidFinalEmissionTrace, SamePublicLedgerReachesLastDebitAndPreservesComp
 }  // namespace
 
 namespace {
-struct FlowHanddrawnPreview {
-    bool previous = testing::set_flow_handdrawn_preview_for_testing(true);
-
-    ~FlowHanddrawnPreview() { testing::set_flow_handdrawn_preview_for_testing(previous); }
-};
-
 TEST(MermaidFlowStyle4Prototype,
      CompleteOriginalAndBodyInputsReachRealStyledEmissionWithoutCoverageCredit) {
-    FlowHanddrawnPreview preview;
     StyleThemeRestore restore;
     using namespace loom::ui::design::theme;
     set_theme(ThemeVariant::Dark);
@@ -1419,7 +1412,6 @@ TEST(MermaidFlowStyle4Prototype,
 
 namespace {
 TEST(MermaidFlowStyle4Diagnostic, LookRemovalIdentifiesCandidatesWithoutOriginalCredit) {
-    FlowHanddrawnPreview preview;
     const auto path =
         std::filesystem::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
     std::ifstream input(path, std::ios::binary);
@@ -1454,16 +1446,28 @@ TEST(MermaidFlowStyle4Diagnostic, LookRemovalIdentifiesCandidatesWithoutOriginal
 }  // namespace
 
 namespace {
-TEST(MermaidFlowStyle4Metadata, ExactStrictHandDrawnProfilePreservesOtherClosedConfigurations) {
-    FlowHanddrawnPreview preview;
+TEST(MermaidFlowStyle4Metadata, StrictHandDrawnProfileDisclosesLookAndKeepsOtherKeysClosed) {
     const std::string prefix =
         "---\ndescription: >-\n  Strict handDrawn metadata profile\nconfig:\n";
     const std::string strict = "  look: handDrawn\n  htmlLabels: true\n  flowchart:\n    "
                                "htmlLabels: true\n  securityLevel: loose\n";
     const std::string suffix = "---\nflowchart LR\nA-->B\n";
+    // D-814: the sketch skin is medium-inert, so the strict profile now renders
+    // in production (it used to require the FS-8 test facade).
+    const auto footer_of = [](const std::string& source) {
+        auto node = loom::ui::mermaid::render_mermaid(source, ftxui::text("CLOSED_METADATA"));
+        if (!node) return std::string{};
+        auto screen =
+            ftxui::Screen::Create(ftxui::Dimension::Fixed(240), ftxui::Dimension::Fixed(120));
+        ftxui::Render(screen, *node);
+        return screen.ToString();
+    };
     EXPECT_TRUE(loom::ui::mermaid::render_mermaid(prefix + strict + suffix,
                                                   ftxui::text("CLOSED_METADATA")));
-    for (const auto change : {0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u}) {
+    EXPECT_NE(footer_of(prefix + strict + suffix)
+                  .find("config.look=handDrawn -> source node style; not applied"),
+              std::string::npos);
+    for (const auto change : {0u, 1u, 2u, 3u, 4u, 6u}) {
         SCOPED_TRACE(change);
         auto config = strict;
         if (change == 0u) config += "  look: handDrawn\n";
@@ -1471,19 +1475,43 @@ TEST(MermaidFlowStyle4Metadata, ExactStrictHandDrawnProfilePreservesOtherClosedC
         if (change == 2u) config.replace(config.find("handDrawn"), 9u, "true");
         if (change == 3u) config += "  unknown: true\n";
         if (change == 4u) config.replace(config.find("htmlLabels: true"), 16u, "htmlLabels: false");
-        if (change == 5u) config += "  layout: dagre\n";
         if (change == 6u) config += "  fontFamily: courier\n";
-        if (change == 7u) config.replace(config.find("handDrawn"), 9u, "\"handDrawn\"");
         EXPECT_FALSE(loom::ui::mermaid::render_mermaid(prefix + config + suffix,
                                                        ftxui::text("CLOSED_METADATA")));
     }
-    EXPECT_FALSE(loom::ui::mermaid::render_mermaid(
+    // A quoted value and a dagre engine are both inert and admitted; the
+    // layout still runs the untrusted-compound gate.
+    {
+        auto config = strict;
+        config.replace(config.find("handDrawn"), 9u, "\"handDrawn\"");
+        EXPECT_TRUE(loom::ui::mermaid::render_mermaid(prefix + config + suffix,
+                                                      ftxui::text("CLOSED_METADATA")));
+    }
+    {
+        auto config = strict + "  layout: dagre\n";
+        EXPECT_TRUE(loom::ui::mermaid::render_mermaid(prefix + config + suffix,
+                                                      ftxui::text("CLOSED_METADATA")));
+    }
+    // The additive look may accompany the already-admitted courier profiles.
+    EXPECT_TRUE(loom::ui::mermaid::render_mermaid(
         prefix + "  look: handDrawn\n  fontFamily: courier\n" + suffix,
         ftxui::text("CLOSED_METADATA")));
-    EXPECT_FALSE(loom::ui::mermaid::render_mermaid(
+    EXPECT_TRUE(loom::ui::mermaid::render_mermaid(
         prefix + "  look: handDrawn\n  flowchart:\n    htmlLabels: false\n  fontFamily: courier\n" +
             suffix,
         ftxui::text("CLOSED_METADATA")));
+    // A bare look (no other config key) stands alone (D-814 bare_look).
+    EXPECT_TRUE(loom::ui::mermaid::render_mermaid(
+        prefix + "  look: handDrawn\n" + suffix, ftxui::text("CLOSED_METADATA")));
+    // Still-closed look values and seeds, and an unadmitted co-key.
+    for (const std::string& closed :
+         {std::string(prefix + "  look: neo\n" + suffix),
+          std::string(prefix + "  look: handDrawn\n  handDrawnSeed: 0\n" + suffix),
+          std::string(prefix + "  look: handDrawn\n  handDrawnSeed: 1234567890\n" + suffix),
+          std::string(prefix + "  handDrawnSeed: 1\n" + suffix),
+          std::string(prefix + "  look: handDrawn\n  fontFamily: times\n" + suffix)}) {
+        EXPECT_FALSE(loom::ui::mermaid::render_mermaid(closed, ftxui::text("CLOSED_METADATA")));
+    }
 }
 }  // namespace
 
@@ -1498,7 +1526,6 @@ std::string flow_style4_fenced(std::string_view source, std::string_view languag
 
 TEST(MermaidFlowStyle4OraclePrototype,
      EveryOriginalAndSeparateBodyRequiresWholeGraphLegendAndAllAttributes) {
-    FlowHanddrawnPreview preview;
     StyleThemeRestore restore;
     using namespace loom::ui::design::theme;
     set_theme(ThemeVariant::Dark);
@@ -1533,6 +1560,14 @@ TEST(MermaidFlowStyle4OraclePrototype,
             file.read(original.data(), static_cast<std::streamsize>(original.size()));
             ASSERT_EQ(file.gcount(), static_cast<std::streamsize>(original.size()));
             ASSERT_EQ(file.peek(), std::char_traits<char>::eof());
+            // D-814: the handDrawn original now carries the medium-inert look
+            // disclosure footer, which is unclaimed ink for this complete-screen
+            // oracle. The oracle is deliberately not taught about footers; the
+            // footer row is verified by test_mermaid_flow_look_cohort, and its
+            // frontmatter-free body still takes the complete-screen check here.
+            if (domain == flow_style4::Domain::Original &&
+                pin.fixture == "flowchart/nightly-check/handdrawn/text-color-from-classes.mmd")
+                continue;
             const auto source = domain == flow_style4::Domain::Original
                                     ? std::string_view(original)
                                     : std::string_view(original).substr(pin.front_bytes);
@@ -1590,14 +1625,13 @@ TEST(MermaidFlowStyle4OraclePrototype,
                 ++bodies;
         }
     }
-    EXPECT_EQ(originals, 4u);
+    EXPECT_EQ(originals, 3u);
     EXPECT_EQ(bodies, 4u);
 }
 }  // namespace
 
 namespace {
 TEST(MermaidFlowStyles, ExactRgbHueBoundaryBelongsToOrangeAndKeepsPaletteProjection) {
-    FlowHanddrawnPreview preview;
     StyleThemeRestore restore;
     using namespace loom::ui::design::theme;
     set_theme(ThemeVariant::Dark);
@@ -1707,7 +1741,6 @@ TEST(MermaidFlowStyle4Oracle,
 
 TEST(MermaidFlowStyles,
      OrderedReapplicationDirectLastAndClosedSourceGrammarKeepTheirActualMeanings) {
-    FlowHanddrawnPreview preview;
     StyleThemeRestore restore;
     using namespace loom::ui::design::theme;
     set_theme(ThemeVariant::Dark);
@@ -1749,11 +1782,11 @@ TEST(MermaidFlowStyles,
 
 namespace {
 // RFC 0031 FS-3a: flowchart classDef/class/direct-style projection graduated,
-// so styled flow layouts render and cache in the default path. The handDrawn
-// look metadata profile (FS-8) is the remaining test-facade-only preview: it
-// must neither render by default nor enter the production cache namespace.
-TEST(MermaidFlowHanddrawnPreview,
-     GraduatedStylesRenderAndCacheByDefaultWhileHandDrawnLookStaysClosed) {
+// so styled flow layouts render and cache in the default path. D-814 admits the
+// medium-inert `look: handDrawn` leaf on the same terms: the structure renders,
+// the disclosure footer names the unapplied skin, and the layout caches like any
+// other. `look: neo` and every other look value stay whole-source.
+TEST(MermaidFlowHanddrawnPreview, GraduatedStylesAndDisclosedLookCacheByDefault) {
     const std::string styled = "flowchart LR\nA-->B\nclassDef c fill:#f9f\nclass A c\n";
     EXPECT_TRUE(loom::ui::mermaid::render_mermaid(styled, ftxui::text("SOURCE")));
     loom::ui::mermaid::LayoutRowsCache cache(4u, 1u << 20u);
@@ -1761,20 +1794,21 @@ TEST(MermaidFlowHanddrawnPreview,
     EXPECT_EQ(cache.size(), 1u);
 
     const std::string handdrawn =
-        "---\ndescription: >-\n  Closed handDrawn profile\nconfig:\n"
+        "---\ndescription: >-\n  Disclosed handDrawn profile\nconfig:\n"
         "  look: handDrawn\n  htmlLabels: true\n  flowchart:\n"
         "    htmlLabels: true\n  securityLevel: loose\n---\nflowchart LR\nA-->B\n";
-    EXPECT_FALSE(loom::ui::mermaid::render_mermaid(handdrawn, ftxui::text("SOURCE")));
+    EXPECT_TRUE(loom::ui::mermaid::render_mermaid(handdrawn, ftxui::text("SOURCE")));
     loom::ui::mermaid::LayoutRowsCache hand_cache(4u, 1u << 20u);
-    {
-        FlowHanddrawnPreview preview;
-        EXPECT_TRUE(loom::ui::mermaid::render_mermaid(handdrawn, ftxui::text("SOURCE")));
-        // The facade renders the preview but keeps it out of the production
-        // cache namespace: a cache render returns a layout yet stores nothing.
-        EXPECT_TRUE(hand_cache.render(handdrawn, false, ftxui::text("SOURCE")));
-        EXPECT_EQ(hand_cache.size(), 0u);
+    EXPECT_TRUE(hand_cache.render(handdrawn, false, ftxui::text("SOURCE")));
+    EXPECT_EQ(hand_cache.size(), 1u);
+
+    for (const std::string& closed :
+         {std::string("---\ndescription:\n  x\nconfig:\n  look: neo\n---\nflowchart LR\nA-->B\n"),
+          std::string("---\ndescription:\n  x\nconfig:\n  look: handDrawn\n  handDrawnSeed: 0\n---\n"
+                      "flowchart LR\nA-->B\n"),
+          std::string("---\ndescription:\n  x\nconfig:\n  look: classic\n---\nflowchart LR\nA-->B\n")}) {
+        EXPECT_FALSE(loom::ui::mermaid::render_mermaid(closed, ftxui::text("SOURCE")));
     }
-    EXPECT_FALSE(loom::ui::mermaid::render_mermaid(handdrawn, ftxui::text("SOURCE")));
 }
 }  // namespace
 

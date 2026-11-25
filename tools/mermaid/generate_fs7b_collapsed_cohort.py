@@ -12,9 +12,10 @@ Three corpus rows draw on the BODY track after the directive parses:
 
 - two visual-check rows draw the WHOLE original too (description-only
   frontmatter, no envelope gate): whole-and-body;
-- one handDrawn nightly row draws the body only: its whole original
-  stays source behind the `look: handDrawn` (FS-8) frontmatter gate,
-  which the body track never sees.
+- one handDrawn nightly row draws whole-and-body: D-814 admits the
+  medium-inert `look: handDrawn` leaf behind a disclosure footer, so the
+  whole original draws and only the narrow frame stays source (the footer
+  line exceeds 40 columns).
 
 The other six collapsed fixtures stay on ordinary source for reasons
 independent of this directive and are pinned in OUT_OF_SCOPE so any
@@ -48,8 +49,10 @@ SCHEMA = "loom_mermaid_fs7b_collapsed_subgraph_cohort/v1"
 # Each row pins its full per-width state triples measured by CellCapture
 # against the live renderer (wide_240 / narrow_40 / restored_240). Collapsed
 # graphs are much narrower than the expanded form, so unlike FS-7a the narrow
-# frame is NOT uniformly source — single-node and the handDrawn body still fit
-# and draw at 40 columns. States are measured, never assumed.
+# frame is NOT uniformly source — single-node bodies and the handDrawn body (and
+# after D-814 that row's whole narrow frame is source because its disclosure
+# footer exceeds the viewport) still fit and draw at 40 columns. States are
+# measured, never assumed.
 #
 # path -> dict(scope, whole=(w,n,r), body=(w,n,r), blocker)
 ROWS = {
@@ -62,11 +65,12 @@ ROWS = {
          "whole": ("drawn", "source", "drawn"),
          "body": ("drawn", "source", "drawn")},
     "flowchart/nightly-check/handdrawn/should-redirect-a-collapsed-subgraph-using-the-handdrawn-look.mmd":
-        {"scope": "body-only",
-         "blocker": "whole original stays source behind the look: handDrawn "
-                    "(FS-8) frontmatter gate; the body track has no "
-                    "frontmatter and draws",
-         "whole": ("source", "source", "source"),
+        # D-814 admits the medium-inert handDrawn look with a disclosure footer,
+        # so the whole original now draws too (narrow stays source because the
+        # footer line exceeds the 40-column viewport).
+        {"scope": "whole-and-body",
+         "blocker": None,
+         "whole": ("drawn", "source", "drawn"),
          "body": ("drawn", "drawn", "drawn")},
 }
 
@@ -115,6 +119,15 @@ def build_review(repo_root):
             "agent, FS-7b Slice B collapsed-subgraph, 2026-11-09, task "
             "acf9dfcbd2cb83b20, zero builds); r1 REQUEST-CHANGES -> r2 APPROVE"),
         "date": "2026-11-09",
+        "d814": {
+            "reviewer_agent": "independent adversarial review (Claude Code subagent, D-814 medium-inert look cohort, 2026-11-26; r1 REQUEST-CHANGES -> r2 REQUEST-CHANGES -> r3 REQUEST-CHANGES -> r4 REQUEST-CHANGES -> r5 APPROVE)",
+            "date": "2026-11-26",
+            "verdict": "approved",
+            "note": "The handDrawn row now draws its whole original behind the "
+                    "D-814 medium-inert look disclosure footer; whole states "
+                    "re-baselined to drawn/source/drawn, body-track coverage "
+                    "unchanged.",
+        },
         "verdict": "approved",
         "note": (
             "r1 found two MAJORs, both fixed before approval: (1) an edge "
@@ -138,7 +151,11 @@ def build_review(repo_root):
         try:
             prior = json.loads(existing_path.read_text())
             if isinstance(prior.get("review"), dict):
-                review = prior["review"]
+                inherited = dict(prior["review"])
+                # The D-814 addendum is authored here, never inherited, so the
+                # re-baseline record cannot be silently dropped.
+                inherited["d814"] = review["d814"]
+                review = inherited
         except json.JSONDecodeError:
             pass
     return review

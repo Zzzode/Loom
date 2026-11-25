@@ -12,7 +12,7 @@
     "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
   },
   "selection": {
-    "rule": "visual-check flowchart fixture whose only unaccepted envelope leaves are non-negative nodeSpacing/rankSpacing scalars, with no look/theme hard gate; the handDrawn nightly variants stay excluded",
+    "rule": "visual-check flowchart fixture whose only unaccepted envelope leaves are non-negative nodeSpacing/rankSpacing scalars, with no look/theme sibling leaf; the handDrawn nightly variants are owned by the D-814 look cohort",
     "roots": [
       "flowchart"
     ]
@@ -21,7 +21,13 @@
     "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, FS-spacing envelope cohort, 2026-11-09, task aee66c1df9b510318)",
     "date": "2026-11-09",
     "verdict": "approved",
-    "note": "Independent read-only adversarial review (fresh general-purpose agent, 2026-11-09): APPROVE with no MAJOR findings. The nodeSpacing/rankSpacing scalar parser and the narrow spacing_profile bit predicate are fail-closed and additive; every bypass attempt (sign, fraction, exponent, quote mismatch, empty, structured, indent-2 placement, look/theme gate, unknown sibling key) is rejected. Pre-existing envelope profiles, the body track (170/182/48), Class285 and the 48-gap roster cannot move. Two MINORs (generator review preservation and selector value mirroring) and four NITs were resolved before approval. Four whole-and-body rows move whole 967 -> 971 / fallback 1178 -> 1174; Flow 251 -> 247, admitted/mutated 149 -> 153. Final cross-cohort-migration re-review (2026-11-09, task a91f43e0c0b606c1d, read-only adversarial agent, zero builds): APPROVE with zero MAJOR and zero functional MINOR; three NITs, the stale-count comments were corrected and the shadowed defensive matrix branches were proven inert (no run_case, no gap-roster or Class285 impact)."
+    "note": "Independent read-only adversarial review (fresh general-purpose agent, 2026-11-09): APPROVE with no MAJOR findings. The nodeSpacing/rankSpacing scalar parser and the narrow spacing_profile bit predicate are fail-closed and additive; every bypass attempt (sign, fraction, exponent, quote mismatch, empty, structured, indent-2 placement, look/theme gate, unknown sibling key) is rejected. Pre-existing envelope profiles, the body track (170/182/48), Class285 and the 48-gap roster cannot move. Two MINORs (generator review preservation and selector value mirroring) and four NITs were resolved before approval. Four whole-and-body rows move whole 967 -> 971 / fallback 1178 -> 1174; Flow 251 -> 247, admitted/mutated 149 -> 153. Final cross-cohort-migration re-review (2026-11-09, task a91f43e0c0b606c1d, read-only adversarial agent, zero builds): APPROVE with zero MAJOR and zero functional MINOR; three NITs, the stale-count comments were corrected and the shadowed defensive matrix branches were proven inert (no run_case, no gap-roster or Class285 impact).",
+    "d814": {
+      "reviewer_agent": "independent adversarial review (Claude Code subagent, D-814 medium-inert look cohort, 2026-11-26; r1 REQUEST-CHANGES -> r2 REQUEST-CHANGES -> r3 REQUEST-CHANGES -> r4 REQUEST-CHANGES -> r5 APPROVE)",
+      "date": "2026-11-26",
+      "verdict": "approved",
+      "note": "The two handDrawn spacing lookalikes this cohort excludes now draw their whole originals through the D-814 look cohort; this ledger's four rows are unchanged."
+    }
   },
   "counts": {
     "total": 4,

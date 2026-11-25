@@ -28,9 +28,15 @@
       "flowchart"
     ],
     "blocker_detection": "two fixed body-content detectors (unknown icon, non-whitelisted init directive); no generator-time rendering; residual rows abort",
-    "width_policy": "draw bodies paint at 240; the pinned simple graphs also paint at narrow_40; whole originals paint for the 21 admitted rows (17 frontmatter, the 2 FS-spacing leaves, and the 2 FS-maxwidth dagre+useMaxWidth rows); the four FS-init body-only rows keep whole source behind the frontmatter theme gate."
+    "width_policy": "draw bodies paint at 240; the pinned simple graphs also paint at narrow_40; whole originals paint for the 32 admitted rows (20 frontmatter including the 3 D-470 parse-pool/palette rows, the 2 FS-spacing leaves, the 2 FS-maxwidth dagre+useMaxWidth rows and the 8 D-814 look rows, the latter classes behind their disclosure footers); the three FS-init body-only rows keep whole source behind the frontmatter theme gate."
   },
   "review": {
+    "d814": {
+      "reviewer_agent": "independent adversarial review (Claude Code subagent, D-814 medium-inert look cohort, 2026-11-26; r1 REQUEST-CHANGES -> r2 REQUEST-CHANGES -> r3 REQUEST-CHANGES -> r4 REQUEST-CHANGES -> r5 APPROVE)",
+      "date": "2026-11-26",
+      "verdict": "approved",
+      "note": "The rows shared with flow-look-cohort.json now draw their whole originals behind the D-814 medium-inert look disclosure footer; whole states and counts re-baselined, body-track coverage unchanged."
+    },
     "reviewer_agent": "independent read-only adversarial review (D-066 FS-6 fontawesome icons, 2026-11-06; FS-init follow-up 2026-11-08 task a84b30aa96dc983db; FS-spacing follow-up 2026-11-09 task aee66c1df9b510318; final cross-cohort-migration re-review task a91f43e0c0b606c1d; FS-maxwidth follow-up 2026-11-10 task adbfe46e0fa362832)",
     "date": "2026-11-10",
     "verdict": "approved",
@@ -40,7 +46,7 @@
     "total": 54,
     "predicted_draw": 38,
     "predicted_blocked": 16,
-    "predicted_original_draw": 24
+    "predicted_original_draw": 32
   },
   "blocker_vocabulary": [
     "flow-fa-unknown-icon",
@@ -433,11 +439,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -464,11 +470,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -495,11 +501,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -526,11 +532,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -557,11 +563,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -628,11 +634,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -659,11 +665,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",
@@ -690,11 +696,11 @@
         }
       },
       "prediction": "predicted-draw",
-      "track_scope": "body-only",
+      "track_scope": "whole-and-body",
       "expected_states": {
-        "wide_240": "source",
+        "wide_240": "drawn",
         "narrow_40": "source",
-        "restored_240": "source"
+        "restored_240": "drawn"
       },
       "expected_body_states": {
         "wide_240": "drawn",

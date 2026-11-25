@@ -29,9 +29,10 @@ carrying only UNCLASSIFIED debt aborts generation with a sentinel
 outside the vocabulary rather than being silently mislabeled.
 
 Draw bodies paint on the body track at 240 columns (wide + restored) and
-stay on ordinary source fallback at narrow_40; whole originals draw too
-except the handDrawn row (look: handDrawn stays an unadmitted metadata
-profile, FS-8), and every draw row keeps ordinary source at narrow_40.
+stay on ordinary source fallback at narrow_40; whole originals draw too,
+including the handDrawn row since D-814 admits the medium-inert look leaf
+behind a disclosure footer, and every draw row keeps ordinary source at
+narrow_40.
 The live pixel/legend gate is tests/ui/test_mermaid_fs3_cohort.cpp; the
 full-scene oracle (eight negatives per scene) is
 MermaidFlowStyle4OraclePrototype in test_mermaid_class_styles.cpp.
@@ -224,7 +225,7 @@ def sha256_file(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def collect(repo_root, authority_paths, handdrawn_paths):
+def collect(repo_root, authority_paths):
     rows = []
     for path in sorted((repo_root / CASES / "flowchart").rglob("*.mmd")):
         text = path.read_text()
@@ -251,7 +252,10 @@ def collect(repo_root, authority_paths, handdrawn_paths):
             if any(kind not in BLOCKER_VOCABULARY for kind in kinds):
                 raise ValueError(f"Blocker outside closed vocabulary: {kinds}")
             blocked = True
-        original_draws = not blocked and rel not in handdrawn_paths
+        # D-814 admits the medium-inert `look: handDrawn` leaf, so the one
+        # authority row that used to hold whole source behind the look gate now
+        # draws whole (with the disclosure footer).
+        original_draws = not blocked
         rows.append({"path": rel, "blocked": blocked, "kinds": kinds,
                      "original_draws": original_draws})
     return rows
@@ -264,10 +268,7 @@ def build(repo_root):
     if authority["count"] != 4:
         raise ValueError("style4 authority must pin exactly four cases")
     authority_pins = {c["fixture"]: c for c in authority["cases"]}
-    handdrawn_paths = {
-        path for path, case in authority_pins.items()
-        if "look: handDrawn" in case["frontmatter_verbatim"]}
-    entries = collect(repo_root, set(authority_pins), handdrawn_paths)
+    entries = collect(repo_root, set(authority_pins))
     selected_paths = {row["path"] for row in entries}
     if not set(authority_pins).issubset(selected_paths):
         raise ValueError("style4 authority fixture missing in selection")
@@ -298,8 +299,8 @@ def build(repo_root):
             "style4_body_sha256": pin["body_sha256"] if pin else "",
             "prior_status": manifest_row["raw"],
             "prediction": "predicted-blocked" if blocked else "predicted-draw",
-            # The whole original draws except the handDrawn-look row (FS-8
-            # metadata stays closed); every draw row keeps source at 40.
+            # Every whole original draws (the handDrawn row since D-814, behind
+            # its disclosure footer); every draw row keeps source at 40.
             "expected_states": {
                 "wide_240": "source" if blocked or not original_draws else "drawn",
                 "narrow_40": "source",
@@ -349,22 +350,34 @@ def build(repo_root):
             "blocker_detection": "eleven fixed source-content detectors; "
                                  "no generator-time rendering; residual rows "
                                  "abort",
-            "width_policy": "authority rows draw body (and whole original "
-                            "except handDrawn) at 240 wide/restored and keep "
-                            "ordinary source at narrow_40.",
+            "width_policy": "authority rows draw body and whole original at "
+                            "240 wide/restored and keep ordinary source at "
+                            "narrow_40; the handDrawn authority row draws whole "
+                            "behind the D-814 look disclosure footer.",
         },
         "review": {
+            "d814": {
+                "reviewer_agent": "independent adversarial review (Claude Code subagent, D-814 medium-inert look cohort, 2026-11-26; r1 REQUEST-CHANGES -> r2 REQUEST-CHANGES -> r3 REQUEST-CHANGES -> r4 REQUEST-CHANGES -> r5 APPROVE)",
+                "date": "2026-11-26",
+                "verdict": "approved",
+                "note": "The rows shared with flow-look-cohort.json now draw their "
+                        "whole originals behind the D-814 medium-inert look "
+                        "disclosure footer; whole states and counts re-baselined, "
+                        "body-track coverage unchanged.",
+            },
             "reviewer_agent": "independent read-only adversarial review "
                               "(D-066 FS-3a style graduation, 2026-11-05)",
             "date": "2026-11-05",
             "verdict": "approved",
             "note": "Read-only adversarial review of the FS-3a production "
                     "graduation (classDef/class/direct-style projection, "
-                    "fail-closed grammar unchanged; the handDrawn look stays "
-                    "a test-facade preview), the renderer-free selection and "
+                    "fail-closed grammar unchanged; the handDrawn look was a "
+                    "test-facade preview at review time and is admitted by "
+                    "D-814), the renderer-free selection and "
                     "eleven blocker detectors with zero-residual abort, the "
                     "exact draw-set binding to the immutable FlowStyle4 "
-                    "authority (four bodies, three originals), and the "
+                    "authority (four bodies, three originals at review time; "
+                    "the handDrawn fourth draws whole via D-814), and the "
                     "body/original matrix wiring. APPROVE: flow-only blast "
                     "radius, no shared constants, gaps stay 48, three "
                     "originals move pending 312->309.",

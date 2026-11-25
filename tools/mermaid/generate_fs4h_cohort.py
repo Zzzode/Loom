@@ -60,11 +60,23 @@ IMG_RE = re.compile(r"<\s*img\b", re.IGNORECASE)
 # other three draw bodies keep whole-original source through their
 # frontmatter (dagre compound profile / handDrawn look).
 ORIGINAL_DRAW = {
+    # D-814: the medium-inert handDrawn look is admitted with a disclosure
+    # footer, so these two rows now draw their whole original too.
+    "flowchart/nightly-check/handdrawn/should-render-escaped-without-html-labels.mmd",
+    "flowchart/nightly-check/handdrawn/should-render-non-escaped-with-html-labels.mmd",
     "flowchart/nightly-check/dagre/6-dagre-should-render-non-escaped-with-html-labels.mmd",
     "flowchart/visual-check/36-should-render-escaped-without-html-labels.mmd",
     "flowchart/visual-check/37-should-render-non-escaped-with-html-labels.mmd",
     "flowchart/visual-check/5-should-render-escaped-without-html-labels.mmd",
     "flowchart/visual-check/6-should-render-non-escaped-with-html-labels.mmd",
+}
+
+
+# D-814: the two look rows' disclosure footer is wider than the 40-column
+# viewport, so the narrow frame is the exact ordinary fallback.
+NARROW_SOURCE = {
+    "flowchart/nightly-check/handdrawn/should-render-escaped-without-html-labels.mmd",
+    "flowchart/nightly-check/handdrawn/should-render-non-escaped-with-html-labels.mmd",
 }
 
 
@@ -107,7 +119,7 @@ def build(repo_root):
     n_draw = sum(1 for _, blocked, _ in entries if not blocked)
     n_blocked = len(entries) - n_draw
     n_original = sum(1 for _, _, od in entries if od)
-    if n_draw != 8 or n_blocked != 2 or n_original != 5:
+    if n_draw != 8 or n_blocked != 2 or n_original != 7:
         raise ValueError(
             f"partition drift: draw={n_draw} blocked={n_blocked} "
             f"original_draw={n_original}")
@@ -127,7 +139,8 @@ def build(repo_root):
             # Short graphs paint at every frame.
             "expected_states": {
                 "wide_240": "drawn" if original_draws else "source",
-                "narrow_40": "drawn" if original_draws else "source",
+                "narrow_40": ("drawn" if original_draws and rel not in NARROW_SOURCE
+                              else "source"),
                 "restored_240": "drawn" if original_draws else "source",
             },
             "expected_body_states": {
@@ -168,10 +181,20 @@ def build(repo_root):
                                  "(image-label scanner limit); no "
                                  "generator-time rendering; residual rows abort",
             "width_policy": "draw rows paint at 240, 40 and the restored "
-                           "frame; originals paint only for the five "
-                           "admitted-frontmatter rows.",
+                           "frame; originals paint for the seven "
+                           "admitted-frontmatter rows (the five original pins "
+                           "plus the two D-814 look rows).",
         },
         "review": {
+            "d814": {
+                "reviewer_agent": "independent adversarial review (Claude Code subagent, D-814 medium-inert look cohort, 2026-11-26; r1 REQUEST-CHANGES -> r2 REQUEST-CHANGES -> r3 REQUEST-CHANGES -> r4 REQUEST-CHANGES -> r5 APPROVE)",
+                "date": "2026-11-26",
+                "verdict": "approved",
+                "note": "The rows shared with flow-look-cohort.json now draw their "
+                        "whole originals behind the D-814 medium-inert look "
+                        "disclosure footer; whole states and counts re-baselined, "
+                        "body-track coverage unchanged.",
+            },
             "reviewer_agent": "independent read-only adversarial review "
                               "(D-066 FS-4h inline HTML labels, 2026-11-06)",
             "date": "2026-11-06",

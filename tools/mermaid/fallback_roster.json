@@ -1,12 +1,12 @@
 {
   "schema": "loom_mermaid_fallback_roster/v1",
   "description": "Reproducible whole-source fallback attribution. Every source_fallback original maps to exactly one category; family_residual:* means no shared cross-family debt was isolated at the D-325 census. Regenerate with fallback_attribution.py --emit, do not hand-edit. The predicate_sufficiency table records, from measured drawn/fallback co-occurrence, whether each debt is a proven sufficient blocker or only a co-occurring primary suspect.",
-  "total_fallback": 327,
+  "total_fallback": 305,
   "category_counts": {
     "classdef_styling": 7,
     "click_interactive_callback": 16,
     "dagre_layout_tuning": 7,
-    "edge_animation_metadata": 57,
+    "edge_animation_metadata": 56,
     "elk_layout_engine": 5,
     "family_residual:flowchart": 13,
     "family_residual:gantt": 2,
@@ -19,13 +19,13 @@
     "family_residual:zenuml": 1,
     "git_cherry_pick": 0,
     "htmllabels_false": 36,
-    "icon_font_glyphs": 26,
+    "icon_font_glyphs": 18,
     "linkstyle_directive": 12,
     "look_classic_other": 0,
-    "look_handdrawn": 28,
+    "look_handdrawn": 17,
     "look_neo": 8,
     "multiline_label": 7,
-    "securitylevel_directive": 33,
+    "securitylevel_directive": 31,
     "special_link_markers": 16,
     "subgraph_nesting": 20
   },
@@ -59,8 +59,8 @@
   "predicate_sufficiency": {
     "classdef_styling": {
       "originals_matching_predicate": 147,
-      "drawn_among_matches": 103,
-      "fallback_among_matches": 44,
+      "drawn_among_matches": 104,
+      "fallback_among_matches": 43,
       "sufficient_blocker": false
     },
     "click_interactive_callback": {
@@ -71,14 +71,14 @@
     },
     "dagre_layout_tuning": {
       "originals_matching_predicate": 167,
-      "drawn_among_matches": 131,
-      "fallback_among_matches": 36,
+      "drawn_among_matches": 134,
+      "fallback_among_matches": 33,
       "sufficient_blocker": false
     },
     "edge_animation_metadata": {
       "originals_matching_predicate": 242,
-      "drawn_among_matches": 185,
-      "fallback_among_matches": 57,
+      "drawn_among_matches": 186,
+      "fallback_among_matches": 56,
       "sufficient_blocker": false
     },
     "elk_layout_engine": {
@@ -95,14 +95,14 @@
     },
     "htmllabels_false": {
       "originals_matching_predicate": 220,
-      "drawn_among_matches": 135,
-      "fallback_among_matches": 85,
+      "drawn_among_matches": 141,
+      "fallback_among_matches": 79,
       "sufficient_blocker": false
     },
     "icon_font_glyphs": {
       "originals_matching_predicate": 61,
-      "drawn_among_matches": 30,
-      "fallback_among_matches": 31,
+      "drawn_among_matches": 38,
+      "fallback_among_matches": 23,
       "sufficient_blocker": false
     },
     "linkstyle_directive": {
@@ -119,8 +119,8 @@
     },
     "look_handdrawn": {
       "originals_matching_predicate": 206,
-      "drawn_among_matches": 144,
-      "fallback_among_matches": 62,
+      "drawn_among_matches": 166,
+      "fallback_among_matches": 40,
       "sufficient_blocker": false
     },
     "look_neo": {
@@ -131,14 +131,14 @@
     },
     "multiline_label": {
       "originals_matching_predicate": 91,
-      "drawn_among_matches": 46,
-      "fallback_among_matches": 45,
+      "drawn_among_matches": 48,
+      "fallback_among_matches": 43,
       "sufficient_blocker": false
     },
     "securitylevel_directive": {
       "originals_matching_predicate": 87,
-      "drawn_among_matches": 43,
-      "fallback_among_matches": 44,
+      "drawn_among_matches": 46,
+      "fallback_among_matches": 41,
       "sufficient_blocker": false
     },
     "special_link_markers": {
@@ -149,8 +149,8 @@
     },
     "subgraph_nesting": {
       "originals_matching_predicate": 195,
-      "drawn_among_matches": 88,
-      "fallback_among_matches": 107,
+      "drawn_among_matches": 92,
+      "fallback_among_matches": 103,
       "sufficient_blocker": false
     }
   },
@@ -237,7 +237,6 @@
       "flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd",
       "flowchart/nightly-check/elk-container-algorithms/elk-subgraph-with-box-algorithm.mmd",
       "flowchart/nightly-check/handdrawn/03-fdh49-should-add-edge-animation.mmd",
-      "flowchart/nightly-check/handdrawn/should-redirect-a-collapsed-subgraph-using-the-handdrawn-look.mmd",
       "flowchart/nightly-check/shape-themes/01-connect-all-shapes-with-each-other.mmd",
       "flowchart/nightly-check/shape-themes/02-connect-all-shapes-with-each-other.mmd",
       "flowchart/nightly-check/shape-themes/03-connect-all-shapes-with-each-other.mmd",
@@ -406,15 +405,7 @@
       "swimlanes/pr-check/query-process.mmd"
     ],
     "icon_font_glyphs": [
-      "flowchart/nightly-check/handdrawn/01-fdh39-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
-      "flowchart/nightly-check/handdrawn/02-fdh38-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
-      "flowchart/nightly-check/handdrawn/fontawesome-icons-in-edge-labels.mmd",
-      "flowchart/nightly-check/handdrawn/render-a-simple-flowchart-with-nodespacing-set-to-100.mmd",
-      "flowchart/nightly-check/handdrawn/render-a-simple-flowchart-with-rankspacing-set-to-100.mmd",
       "flowchart/nightly-check/handdrawn/should-render-a-flowchart-full-of-icons.mmd",
-      "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-no-htmllabels.mmd",
-      "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-comments.mmd",
-      "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-diagrampadding-set-to-0.mmd",
       "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-htmllabels.mmd",
       "flowchart/nightly-check/icon/01-should-render-registered-icons-on-theme-default.mmd",
       "flowchart/nightly-check/icon/02-should-render-icons-from-fontawesome-library-on-theme-default.mmd",
@@ -454,23 +445,12 @@
       "er-diagram/visual-check/relationship-labels-with-line-breaks-handdrawn-look.mmd",
       "flowchart/nightly-check/handdrawn/apply-default-class-to-all-nodes-which-do-not-have-another-class-assigned-htmllabels-disabled.mmd",
       "flowchart/nightly-check/handdrawn/apply-default-class-to-all-nodes-which-do-not-have-another-class-assigned-htmllabels-enabled.mmd",
-      "flowchart/nightly-check/handdrawn/chaining-of-nodes.mmd",
       "flowchart/nightly-check/handdrawn/multiple-nodes-and-chaining-in-one-statement-2.mmd",
-      "flowchart/nightly-check/handdrawn/multiple-nodes-and-chaining-in-one-statement.mmd",
       "flowchart/nightly-check/handdrawn/possibility-to-style-text-color-of-nodes-and-subgraphs-as-well-as-apply-classes-to-subgraphs.mmd",
-      "flowchart/nightly-check/handdrawn/should-honor-minimum-edge-length-as-specified-by-the-user.mmd",
-      "flowchart/nightly-check/handdrawn/should-not-slice-off-edges-that-are-to-the-left-of-the-left-most-vertex.mmd",
       "flowchart/nightly-check/handdrawn/should-render-a-flowchart-full-of-circles.mmd",
       "flowchart/nightly-check/handdrawn/should-render-a-flowchart-with-long-names-and-class-definitions.mmd",
-      "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-line-breaks.mmd",
-      "flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-trapezoid-and-inverse-trapezoid-vertex-options.mmd",
-      "flowchart/nightly-check/handdrawn/should-render-escaped-without-html-labels.mmd",
-      "flowchart/nightly-check/handdrawn/should-render-labels-with-numbers-at-the-start.mmd",
       "flowchart/nightly-check/handdrawn/should-render-styled-subgraphs.mmd",
-      "flowchart/nightly-check/handdrawn/should-render-subgraphs-with-a-title-starting-with-a-digit.mmd",
-      "flowchart/nightly-check/handdrawn/should-render-subgraphs.mmd",
       "flowchart/nightly-check/handdrawn/should-style-nodes-via-a-class.mmd",
-      "flowchart/nightly-check/handdrawn/testing-the-label-width-in-percy.mmd",
       "swimlanes/nightly-check/16-intake-cycle-lr.mmd",
       "swimlanes/nightly-check/coloured-lanes-handdrawn-look-redux-color-theme.mmd",
       "swimlanes/nightly-check/coloured-lanes-handdrawn-look-redux-dark-color-theme.mmd",
@@ -514,8 +494,6 @@
       "flowchart/nightly-check/handdrawn/fontawesome-icons-in-edge-labels-4.mmd",
       "flowchart/nightly-check/handdrawn/handle-styling-with-style-expressions.mmd",
       "flowchart/nightly-check/handdrawn/should-be-able-to-style-default-node-independently.mmd",
-      "flowchart/nightly-check/handdrawn/should-render-non-escaped-with-html-labels.mmd",
-      "flowchart/nightly-check/handdrawn/text-color-from-classes.mmd",
       "flowchart/pr-check/52-handle-nested-subgraphs-in-several-levels.mmd",
       "flowchart/visual-check/50-handle-nested-subgraphs-in-reverse-order.mmd",
       "flowchart/visual-check/53-handle-nested-subgraphs-with-edges-in-and-out.mmd",

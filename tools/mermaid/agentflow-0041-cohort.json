@@ -16,11 +16,17 @@
     "family_total": 38,
     "native_draw_count": 27,
     "admitted_count": 9,
-    "gated_count": 2,
+    "gated_count": 0,
+    "delegated_count": 2,
+    "delegated": [
+      "agentflow/pr-check/should-render-every-container-kind.mmd",
+      "agentflow/pr-check/should-render-several-collapsed-containers.mmd"
+    ],
+    "delegated_ledger": "tools/mermaid/agentflow-handdrawn-d442-cohort.json",
     "admitted_digest": "5874b783d99a18a8c7c14af4cf9371bf0646d018304546b40688d6fc3f267dfb",
     "twin_rule": "the frame must equal the body-identical corpus twin's frame plus the recorded footer delta, line by line, both sides through the same sentinel-bearing wrapper",
     "corpus_twins": "5 rows share agentflow/visual-check/10-every-container-kind.mmd and 4 share agentflow/visual-check/15-support-triage.mmd; all nine bodies are byte-identical after frontmatter removal",
-    "exclusions": "the 2 rows carrying look + handDrawnSeed stay whole-source (a seed is a geometry input, not an inert disclosure)",
+    "exclusions": "the 2 rows carrying look + handDrawnSeed are admitted by the reviewed D-442 sibling ledger (agentflow-handdrawn-d442-cohort.json) and recorded here as delegated, not gated",
     "width_policy": "wide_240 admission only; narrow_40 is measured per row."
   },
   "review": {

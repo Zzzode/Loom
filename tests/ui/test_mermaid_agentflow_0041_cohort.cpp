@@ -165,7 +165,8 @@ TEST(MermaidAgentflow0041Cohort, LedgerSchemaReviewsAndPins) {
     EXPECT_EQ(selection.get_int("family_total"), 38);
     EXPECT_EQ(selection.get_int("native_draw_count"), 27);
     EXPECT_EQ(selection.get_int("admitted_count"), 9);
-    EXPECT_EQ(selection.get_int("gated_count"), 2);
+    EXPECT_EQ(selection.get_int("gated_count"), 0);
+    EXPECT_EQ(selection.get_int("delegated_count"), 2);
 
     // The review verdict is approved only when the enabled phase carries an
     // approved record; while pending the matrix branch must refuse the ledger.
@@ -205,19 +206,31 @@ TEST(MermaidAgentflow0041Cohort, LedgerSchemaReviewsAndPins) {
     EXPECT_EQ(selection.get_string("admitted_digest"),
               family.root().get("selection").get_string("admitted_digest"));
     for (const auto& rel : admitted) EXPECT_FALSE(family_drawn.contains(rel)) << rel;
-    // The two rows the RFC 0041 ledger listed as gated are the seed rows;
-    // D-442 admits them through the closed inert look + seed pair, so they now
-    // draw and disclose under its own ledger (test_mermaid_agentflow_handdrawn_d442_cohort).
+    // The two rows RFC 0041 listed as gated are the seed rows; D-442 admits
+    // them through the closed inert look + seed pair, so the family ledger now
+    // records them as delegated to its reviewed ledger. They draw and disclose
+    // under that ledger's own gate (test_mermaid_agentflow_handdrawn_d442_cohort),
+    // and the family `gated` list must stay empty.
     int gated = 0;
-    family.root().get("selection").get("gated").iter([&](JsonVal value) {
-        ++gated;
-        const std::string rel(value.as_str());
-        EXPECT_TRUE(rel.find("handdrawn") == std::string::npos &&
-                    read_file(kCases / rel).find("handDrawnSeed") != std::string::npos)
-            << rel;
-        EXPECT_TRUE(draws(read_file(kCases / rel), kWide)) << rel;
+    family.root().get("selection").get("gated").iter(
+        [&](JsonVal) { ++gated; });
+    EXPECT_EQ(gated, 0);
+    const auto d442 = parse_doc(
+        fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/agentflow-handdrawn-d442-cohort.json");
+    std::set<std::string> d442_rows;
+    d442.root().get("rows").iter([&](JsonVal row) {
+        d442_rows.insert(row.get_string("path"));
+        EXPECT_EQ(row.get("expected_states").get_string("wide_240"), "drawn")
+            << row.get_string("path");
     });
-    EXPECT_EQ(gated, 2);
+    std::set<std::string> delegated;
+    family.root().get("selection").get("delegated").iter(
+        [&](JsonVal value) { delegated.insert(std::string(value.as_str())); });
+    EXPECT_EQ(delegated, d442_rows);
+    for (const auto& rel : delegated) {
+        EXPECT_TRUE(read_file(kCases / rel).find("handDrawnSeed") != std::string::npos) << rel;
+        EXPECT_TRUE(draws(read_file(kCases / rel), kWide)) << rel;
+    }
 
     int rows = 0;
     std::vector<std::pair<std::string, std::string>> digest_input;
@@ -391,11 +404,16 @@ TEST(MermaidAgentflow0041Cohort, FamilyLedgerPartition) {
     EXPECT_EQ(selection.get_int("family_total"), 38);
     EXPECT_EQ(selection.get_int("native_draw_count"), 27);
     EXPECT_EQ(selection.get_int("admitted_count"), 9);
-    EXPECT_EQ(selection.get_int("gated_count"), 2);
+    EXPECT_EQ(selection.get_int("gated_count"), 0);
+    EXPECT_EQ(selection.get_int("delegated_count"), 2);
+    // Every row is accounted for exactly once: drawn + admitted + gated +
+    // delegated = the family total. D-442 moved the two seed rows from gated
+    // to delegated; they are no longer on the family fallback list.
     EXPECT_EQ(selection.get_int("native_draw_count") +
-                  selection.get_int("admitted_count") + selection.get_int("gated_count"),
+                  selection.get_int("admitted_count") +
+                  selection.get_int("gated_count") +
+                  selection.get_int("delegated_count"),
               38);
-    // Gate 11 -> 2: exactly the two seed rows remain on the fallback list.
     const auto ledger = parse_doc(kLedger);
     std::set<std::string> admitted;
     ledger.root().get("rows").iter(

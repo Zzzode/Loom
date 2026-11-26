@@ -98,3 +98,14 @@ drawn 151→160 / fallback 82；compact candidates 不变；类别非空，键�
 未运行 ASan 全量：本轮不触碰 ER107 冻结面与任何接口，且按效率规则 6，巨头冻结门在
 ASan 下不可行属于既有的测试架构债（`docs/dev/engineering-efficiency.md`
 「Open efficiency work #6」），不在本次家族收口范围内重演。
+
+## Amendment — D-442 delegation (2026-11-26)
+
+D-442 later admitted the two remaining `look: handDrawn` + `handDrawnSeed` rows
+through its own reviewed ledger. The "2 gated" figure above is therefore
+historical: the family partition is now **27 native + 9 admitted + 0 gated +
+2 delegated = 38**. `agentflow-cohort.json` and `agentflow-0041-cohort.json`
+record the `delegated` list and its `delegated_ledger` path, the generators
+derive it by cross-checking that ledger (schema, approval, sha pins, and
+`wide_240: drawn`), and the two C++ family gates assert the delegated set
+equals the D-442 row set and that `gated` is empty.

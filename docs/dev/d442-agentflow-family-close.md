@@ -34,3 +34,12 @@
 - debug 定向：`ctest -R "MermaidAgentflow|MermaidStateLayoutD441"` **21/21 通过**；
   `MermaidCapabilityReport.OfficialMatrix` 通过。
 - release 矩阵与批边界全量门见下一份批收口文档。
+
+## 4. 账本收尾（2026-11-26 残留风险清理）
+
+本片当时只迁移了 C++ 负例与矩阵分支，`agentflow-cohort.json` /
+`agentflow-0041-cohort.json` 仍把这两行记为 `gated`，与矩阵"全族 0 回退"
+矛盾。现两本账改为 `gated_count: 0` + `delegated_count: 2`（附
+`delegated_ledger` 指向本片账本），生成器以本账本为唯一事实源交叉校验
+schema、评审状态、sha 与 `wide_240: drawn`，两个家族 gtest 断言 delegated
+集合与本账本行集相等。家族分区恒等式为 27 + 9 + 0 + 2 = 38。

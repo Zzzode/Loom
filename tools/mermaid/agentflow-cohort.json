@@ -13,7 +13,7 @@
     "manifest_sha256": "c966a7258f1007eda6b992be7a79c2d5f746169d21591dbdd0b7091c6371569b"
   },
   "selection": {
-    "rule": "agentflow fixtures whose frontmatter is absent, description-only, or a single config block whose sole leaf is an admitted theme; the 27 native originals are cohort rows and RFC 0041 promotes the 9 theme-only rows through the sibling ledger",
+    "rule": "agentflow fixtures whose frontmatter is absent, description-only, or a single config block whose sole leaf is an admitted theme; the 27 native originals are cohort rows and RFC 0041 promotes the 9 theme-only rows through the sibling ledger; the 2 closed look + seed rows are admitted by the reviewed D-442 ledger and are recorded here as delegated, not gated",
     "roots": [
       "agentflow"
     ],
@@ -32,13 +32,16 @@
       "agentflow/visual-check/15-support-triage-redux-dark-color-theme.mmd"
     ],
     "admitted_digest": "5874b783d99a18a8c7c14af4cf9371bf0646d018304546b40688d6fc3f267dfb",
-    "gated_count": 2,
-    "narrow_40_draw_count": 19,
-    "narrow_40_fallback_count": 8,
-    "gated": [
+    "gated_count": 0,
+    "gated": [],
+    "delegated_count": 2,
+    "delegated": [
       "agentflow/pr-check/should-render-every-container-kind.mmd",
       "agentflow/pr-check/should-render-several-collapsed-containers.mmd"
-    ]
+    ],
+    "delegated_ledger": "tools/mermaid/agentflow-handdrawn-d442-cohort.json",
+    "narrow_40_draw_count": 19,
+    "narrow_40_fallback_count": 8
   },
   "review": {
     "reviewer_agent": "independent read-only adversarial review (fresh general-purpose agent, D-211 agentflow renderer cohort, 2026-11-14)",

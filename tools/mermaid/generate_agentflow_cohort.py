@@ -13,14 +13,14 @@ The remaining gate is frontmatter-only: a strict column-0 `---` fence whose
 YAML block carries any top-level key besides `description`, or a `config:`
 block whose sole leaf is not an indent-2 in-table `theme`, keeps the whole
 source on fallback. RFC 0041 admits the seven corpus theme values (disclosed,
-never applied) and promotes 9 rows; the other 2 gated rows carry
-`look` + `handDrawnSeed`, where the seed is a geometry input and therefore not
-inert.
+never applied) and promotes 9 rows. The other 2 rows carry
+`look` + `handDrawnSeed`; D-442 admits that closed inert pair in the sibling
+ledger, so the family records them as **delegated**, not gated.
 
 Renderer-free; the durable gtest enforces every state live. Drift guards pin
-the three-way family partition (38 total / 27 native rows / 9 admitted /
-2 gated) and the 27-row cohort; manifest shas are pinned; the review block is
-preserved across regeneration.
+the four-way family partition (38 total / 27 native rows / 9 admitted /
+0 gated / 2 delegated to the reviewed D-442 ledger) and the 27-row cohort;
+manifest shas are pinned; the review block is preserved across regeneration.
 
 Usage: python3 tools/mermaid/generate_agentflow_cohort.py --repo-root . [--check]
 """
@@ -57,7 +57,14 @@ _NARROW_FALLBACK = {
 _FAMILY_TOTAL = 38
 _NATIVE_DRAW = 27
 _ADMITTED = 9
-_GATED = 2
+_GATED = 0
+_DELEGATED = 2
+
+# The reviewed sibling ledger that admits the two closed look + seed rows
+# (D-442). The family gate still rejects their shape; the partition records
+# them as delegated so the family ledger cannot claim they are unrendered.
+DELEGATED_LEDGER = pathlib.Path(
+    "tools/mermaid/agentflow-handdrawn-d442-cohort.json")
 
 # RFC 0041 closed theme table (the corpus); any other value keeps fallback.
 _THEME_TABLE = ("base", "dark", "default", "forest", "neutral", "redux-color",
@@ -165,6 +172,43 @@ def sha256_file(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def load_delegated(repo_root, gated):
+    """Rows the family frontmatter gate rejects but a sibling cohort admits.
+
+    The only such cohort is the reviewed D-442 `look: handDrawn` ledger. It is
+    the single source of truth for that admission: this family generator must
+    not duplicate the shape parsing, and must fail closed when the sibling
+    ledger is missing, unapproved, pins different bytes, or names a row the
+    family gate does not reject.
+    """
+    ledger_path = repo_root / DELEGATED_LEDGER
+    ledger = json.loads(ledger_path.read_text())
+    if ledger.get("schema") != "loom_mermaid_agentflow_handdrawn_d442_cohort/v1":
+        raise ValueError(f"unexpected delegated ledger schema: {ledger_path}")
+    review = ledger.get("review", {})
+    if review.get("verdict") != "approved" or not review.get("reviewer_agent"):
+        raise ValueError("delegated ledger is not approved by a named reviewer")
+    manifest = json.loads((repo_root / MANIFEST).read_text())
+    manifest_shas = {row["path"]: row["sha256"] for row in manifest["fixtures"]}
+    delegated = set()
+    for row in ledger.get("rows", []):
+        rel = row["path"]
+        if rel not in gated:
+            raise ValueError(
+                f"delegated ledger names a row the family gate does not reject: {rel}")
+        if row["expected_states"]["wide_240"] != "drawn":
+            raise ValueError(f"delegated row is not recorded as drawn: {rel}")
+        observed = sha256_file(
+            repo_root / "tests/fixtures/mermaid_official/cases" / rel)
+        if observed != row.get("sha256") or observed != manifest_shas.get(rel):
+            raise ValueError(f"delegated row sha drift: {rel}")
+        delegated.add(rel)
+    if len(delegated) != _DELEGATED:
+        raise ValueError(
+            f"delegated cohort drifted: {len(delegated)} rows, expected {_DELEGATED}")
+    return delegated
+
+
 def build_review(repo_root):
     review = {
         "reviewer_agent": "pending independent in-session adversarial review",
@@ -198,12 +242,21 @@ def build(repo_root):
         kind, _ = classify(frontmatter, malformed)
         {"drawn": draw, "admitted": admitted, "gated": gated}[kind].add(rel)
 
-    if (len(draw), len(admitted), len(gated)) != (_NATIVE_DRAW, _ADMITTED, _GATED) or \
-            len(draw) + len(admitted) + len(gated) != _FAMILY_TOTAL:
+    # The family gate still rejects the D-442 look+seed shape; the reviewed
+    # sibling ledger owns its admission, so subtract those rows from `gated`
+    # and record them as delegated.
+    delegated = load_delegated(repo_root, gated)
+    gated -= delegated
+
+    if (len(draw), len(admitted), len(gated), len(delegated)) != (
+            _NATIVE_DRAW, _ADMITTED, _GATED, _DELEGATED) or \
+            len(draw) + len(admitted) + len(gated) + len(delegated) != _FAMILY_TOTAL:
         raise ValueError(
             f"agentflow partition drift: draw={len(draw)} admitted={len(admitted)} "
-            f"gated={len(gated)} total={len(draw) + len(admitted) + len(gated)} "
-            f"(expected {_NATIVE_DRAW}/{_ADMITTED}/{_GATED}/{_FAMILY_TOTAL})")
+            f"gated={len(gated)} delegated={len(delegated)} "
+            f"total={len(draw) + len(admitted) + len(gated) + len(delegated)} "
+            f"(expected {_NATIVE_DRAW}/{_ADMITTED}/{_GATED}/{_DELEGATED}/"
+            f"{_FAMILY_TOTAL})")
     unknown_narrow = _NARROW_FALLBACK - draw
     if unknown_narrow:
         raise ValueError(f"narrow set references non-drawing fixtures: {unknown_narrow}")
@@ -275,7 +328,9 @@ def build(repo_root):
                 "agentflow fixtures whose frontmatter is absent, description-only, "
                 "or a single config block whose sole leaf is an admitted theme; "
                 "the 27 native originals are cohort rows and RFC 0041 promotes "
-                "the 9 theme-only rows through the sibling ledger"),
+                "the 9 theme-only rows through the sibling ledger; the 2 closed "
+                "look + seed rows are admitted by the reviewed D-442 ledger and "
+                "are recorded here as delegated, not gated"),
             "roots": ["agentflow"],
             "family_total": _FAMILY_TOTAL,
             "native_draw_count": _NATIVE_DRAW,
@@ -283,9 +338,12 @@ def build(repo_root):
             "admitted": sorted(admitted),
             "admitted_digest": admitted_digest,
             "gated_count": _GATED,
+            "gated": sorted(gated),
+            "delegated_count": _DELEGATED,
+            "delegated": sorted(delegated),
+            "delegated_ledger": DELEGATED_LEDGER.as_posix(),
             "narrow_40_draw_count": _NATIVE_DRAW - len(_NARROW_FALLBACK),
             "narrow_40_fallback_count": len(_NARROW_FALLBACK),
-            "gated": sorted(gated),
         },
         "review": build_review(repo_root),
         "counts": {

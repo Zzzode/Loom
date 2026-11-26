@@ -4921,6 +4921,13 @@ surrounding context before being kept or dropped. Findings were rewritten to sta
   admitted set pinned by a digest that the sibling ledger
   `tools/mermaid/agentflow-0041-cohort.json` repeats; the matrix branch loads the
   sibling ledger before the family cohort branch and the generic fallback.
+- **Superseded partition (2026-11-26):** D-442 admitted the two
+  `look`+`handDrawnSeed` rows through
+  `tools/mermaid/agentflow-handdrawn-d442-cohort.json`, so the current partition
+  is **27 native + 9 admitted + 0 gated + 2 delegated = 38**. Both family
+  ledgers record `delegated` plus `delegated_ledger`, the generators derive the
+  set from the D-442 ledger (schema, approval, sha and `wide_240: drawn`), and
+  the C++ gates assert set equality with it.
 
 ## pie look and theme admission (RFC 0042)
 

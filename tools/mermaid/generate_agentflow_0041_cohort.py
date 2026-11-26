@@ -35,7 +35,8 @@ SCHEMA = "loom_mermaid_agentflow_0041_cohort/v1"
 PHASE = "P1-theme-admission"
 ENABLED_PHASES = (PHASE,)
 
-EXPECTED = {"originals": 38, "drawn": 27, "admitted": 9, "gated": 2}
+EXPECTED = {"originals": 38, "drawn": 27, "admitted": 9, "gated": 0,
+            "delegated": 2}
 EXPECTED_TWINS = {
     "agentflow/visual-check/10-every-container-kind.mmd": 5,
     "agentflow/visual-check/15-support-triage.mmd": 4,
@@ -133,11 +134,16 @@ def build(repo_root: pathlib.Path):
         {"drawn": drawn, "admitted": admitted, "gated": gated}[kind].add(rel)
         if kind == "admitted":
             leaves[rel] = found
-    if (len(drawn), len(admitted), len(gated)) != (
-            EXPECTED["drawn"], EXPECTED["admitted"], EXPECTED["gated"]):
+    # D-442 admits the closed look + seed pair in its own reviewed ledger; the
+    # family partition records those rows as delegated, never gated.
+    delegated = FAMILY.load_delegated(repo_root, gated)
+    gated -= delegated
+    if (len(drawn), len(admitted), len(gated), len(delegated)) != (
+            EXPECTED["drawn"], EXPECTED["admitted"], EXPECTED["gated"],
+            EXPECTED["delegated"]):
         raise ValueError(
             f"agentflow partition drifted: drawn={len(drawn)} admitted={len(admitted)} "
-            f"gated={len(gated)}")
+            f"gated={len(gated)} delegated={len(delegated)}")
 
     # Corpus twin mapping: every admitted body equals a drawn fixture's body.
     drawn_by_body = {}
@@ -215,6 +221,9 @@ def build(repo_root: pathlib.Path):
             "native_draw_count": EXPECTED["drawn"],
             "admitted_count": EXPECTED["admitted"],
             "gated_count": EXPECTED["gated"],
+            "delegated_count": EXPECTED["delegated"],
+            "delegated": sorted(delegated),
+            "delegated_ledger": FAMILY.DELEGATED_LEDGER.as_posix(),
             "admitted_digest": family["selection"]["admitted_digest"],
             "twin_rule": "the frame must equal the body-identical corpus twin's frame plus "
                          "the recorded footer delta, line by line, both sides through the "
@@ -222,8 +231,9 @@ def build(repo_root: pathlib.Path):
             "corpus_twins": "5 rows share agentflow/visual-check/10-every-container-kind.mmd "
                             "and 4 share agentflow/visual-check/15-support-triage.mmd; all "
                             "nine bodies are byte-identical after frontmatter removal",
-            "exclusions": "the 2 rows carrying look + handDrawnSeed stay whole-source (a "
-                          "seed is a geometry input, not an inert disclosure)",
+            "exclusions": "the 2 rows carrying look + handDrawnSeed are admitted by the "
+                          "reviewed D-442 sibling ledger (agentflow-handdrawn-d442-cohort.json) "
+                          "and recorded here as delegated, not gated",
             "width_policy": "wide_240 admission only; narrow_40 is measured per row.",
         },
         "review": {

@@ -7574,8 +7574,8 @@ const JourneyCohortEntry* requirement_cohort_row(std::string_view path) {
 
 // RFC 0031 D-211 agentflow-family cohort: the 27 description-only agentflow
 // originals admitted by mermaid_agentflow_impl, with per-width states. The 11
-// config/theme gated fixtures have no ledger row and keep their default
-// source disposition.
+// config/theme fixtures have no row here: RFC 0041 promotes 9, and D-442
+// admits the remaining 2 look + seed rows in its own ledger.
 const std::map<std::string, JourneyCohortEntry>& agentflow_cohort_map() {
     static const std::map<std::string, JourneyCohortEntry> map = [] {
         std::map<std::string, JourneyCohortEntry> rows;

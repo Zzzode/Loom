@@ -3,7 +3,8 @@
 // pinned manifest. All 27 description-only agentflow originals render
 // natively as a bounded outline; RFC 0041 promotes the 9 theme-only originals
 // (their per-row gate is test_mermaid_agentflow_0041_cohort) and the 2
-// look + handDrawnSeed rows keep their whole-source fallback.
+// look + handDrawnSeed rows are admitted by the reviewed D-442 ledger, which
+// the family ledger records as delegated (gated is empty).
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 #include <gtest/gtest.h>
@@ -31,6 +32,8 @@ const fs::path kCases = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/ca
 const fs::path kManifest = fs::path(LOOM_TESTS_DIR) / "fixtures/mermaid_official/manifest.json";
 const fs::path kLedger =
     fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/agentflow-cohort.json";
+const fs::path kD442Ledger =
+    fs::path(LOOM_TESTS_DIR) / "../tools/mermaid/agentflow-handdrawn-d442-cohort.json";
 constexpr int kWide = 240;
 constexpr int kNarrow = 40;
 constexpr int kHeight = 1600;
@@ -89,7 +92,27 @@ TEST(MermaidAgentflowCohort, LedgerSchemaReviewCountsAndManifest) {
     EXPECT_EQ(root.get("selection").get_int("family_total"), 38);
     EXPECT_EQ(root.get("selection").get_int("native_draw_count"), 27);
     EXPECT_EQ(root.get("selection").get_int("admitted_count"), 9);
-    EXPECT_EQ(root.get("selection").get_int("gated_count"), 2);
+    EXPECT_EQ(root.get("selection").get_int("gated_count"), 0);
+    EXPECT_EQ(root.get("selection").get_int("delegated_count"), 2);
+    EXPECT_EQ(root.get("selection").get_string("delegated_ledger"),
+              "tools/mermaid/agentflow-handdrawn-d442-cohort.json");
+    // The delegated rows are exactly the reviewed D-442 cohort; the family
+    // ledger cannot claim a row is unrendered when a sibling gate draws it.
+    const auto d442 = parse_doc(kD442Ledger);
+    std::set<std::string> d442_rows;
+    d442.root().get("rows").iter([&](JsonVal row) {
+        d442_rows.insert(row.get_string("path"));
+        EXPECT_EQ(row.get("expected_states").get_string("wide_240"), "drawn")
+            << row.get_string("path");
+    });
+    EXPECT_EQ(d442.root().get("review").get_string("verdict"), "approved");
+    std::set<std::string> delegated, gated;
+    root.get("selection").get("delegated").iter(
+        [&](JsonVal value) { delegated.insert(std::string(value.as_str())); });
+    root.get("selection").get("gated").iter(
+        [&](JsonVal value) { gated.insert(std::string(value.as_str())); });
+    EXPECT_EQ(delegated, d442_rows);
+    EXPECT_TRUE(gated.empty());
     EXPECT_EQ(root.get("selection").get_int("narrow_40_draw_count"), 19);
     EXPECT_EQ(root.get("selection").get_int("narrow_40_fallback_count"), 8);
     ASSERT_EQ(root.get("review").get_string("verdict"), "approved");

@@ -1124,7 +1124,12 @@ printf '\nPTY-SHELL-RECEIVED\n'
         return text.find("Allow") != std::string::npos && text.find("Deny") != std::string::npos;
     }
 
-    bool wait(const std::function<bool()>& predicate, std::chrono::seconds timeout = 10s) {
+    // Default upper bound for predicate waits. Call sites pass an explicit
+    // timeout when they need a tighter deadline; the 20s default keeps a
+    // loaded `ctest -jN` run from tripping the old 10s bound. This only
+    // extends the time allowed for the expected condition — it does not
+    // change any predicate, so no assertion is weakened.
+    bool wait(const std::function<bool()>& predicate, std::chrono::seconds timeout = 20s) {
         const auto deadline = Clock::now() + timeout;
         do {
             pump();

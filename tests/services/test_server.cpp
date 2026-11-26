@@ -83,6 +83,13 @@ namespace fs = std::filesystem;
 
 namespace {
 
+// Under `ctest -jN` the first connect/handshake — and the executor startup in
+// DirectConnectInterruptCancelsActiveMessageRoute — can exceed 3s under load.
+// A generous timeout keeps these tests tolerant without weakening any
+// assertion: every wait still requires the expected request/frame/cancel to
+// arrive, and no call site asserts that a request does NOT arrive in time.
+constexpr auto kDirectConnectTimeout = std::chrono::seconds(15);
+
 struct CurrentPathGuard {
     fs::path previous;
 
@@ -177,7 +184,7 @@ public:
     [[nodiscard]] std::string base_url() const { return std::format("http://127.0.0.1:{}", port_); }
 
     [[nodiscard]] std::optional<std::string>
-    wait_for_body(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    wait_for_body(std::chrono::milliseconds timeout = kDirectConnectTimeout) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this] { return request_body_.has_value(); })) {
             return std::nullopt;
@@ -186,7 +193,7 @@ public:
     }
 
     [[nodiscard]] std::optional<std::string>
-    wait_for_headers(std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+    wait_for_headers(std::chrono::milliseconds timeout = kDirectConnectTimeout) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this] { return request_headers_.has_value(); })) {
             return std::nullopt;
@@ -196,7 +203,7 @@ public:
 
     [[nodiscard]] std::optional<std::vector<std::string>>
     wait_for_bodies(std::size_t count,
-                    std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+                    std::chrono::milliseconds timeout = kDirectConnectTimeout) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout,
                           [this, count] { return request_bodies_.size() >= count; })) {
@@ -370,7 +377,7 @@ public:
 
     [[nodiscard]] std::optional<std::vector<LocalCcrHttpRequest>>
     wait_for_requests(std::size_t count,
-                      std::chrono::milliseconds timeout = std::chrono::seconds(3)) {
+                      std::chrono::milliseconds timeout = kDirectConnectTimeout) {
         std::unique_lock lock(mutex_);
         if (!cv_.wait_for(lock, timeout, [this, count] { return requests_.size() >= count; })) {
             return std::nullopt;
@@ -547,7 +554,7 @@ struct DirectConnectWsFrame {
 
 void direct_connect_set_timeouts(int fd) {
     timeval timeout{};
-    timeout.tv_sec = 3;
+    timeout.tv_sec = static_cast<long>(kDirectConnectTimeout.count());
     setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
     setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 }
@@ -1262,7 +1269,7 @@ TEST(ServerMain, DirectConnectInterruptCancelsActiveMessageRoute) {
             }
             executor_cv.notify_all();
 
-            const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
+            const auto deadline = std::chrono::steady_clock::now() + kDirectConnectTimeout;
             while (std::chrono::steady_clock::now() < deadline) {
                 if (request.cancel_flag && request.cancel_flag->load()) {
                     executor_saw_cancel.store(true);

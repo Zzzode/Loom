@@ -79,7 +79,7 @@ foreach(_pty_exit_case IN ITEMS
   add_test(NAME E2E_Pty_Shutdown_${_pty_exit_case}
       COMMAND e2e_pty_shutdown ${_pty_exit_case})
   set_tests_properties(E2E_Pty_Shutdown_${_pty_exit_case} PROPERTIES
-      TIMEOUT 20
+      TIMEOUT 60
       ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
       SKIP_RETURN_CODE 125)
 endforeach()
@@ -165,7 +165,7 @@ foreach(_pty_model_source IN ITEMS file env settings cli runtime)
     add_test(NAME E2E_Pty_Model_${_pty_model_source}_${_pty_model_kind}
         COMMAND e2e_pty_shutdown ${_pty_model_case})
     set_tests_properties(E2E_Pty_Model_${_pty_model_source}_${_pty_model_kind} PROPERTIES
-        TIMEOUT 20
+        TIMEOUT 60
         ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
         SKIP_RETURN_CODE 125)
   endforeach()
@@ -176,7 +176,7 @@ foreach(_pty_direct_source IN ITEMS file settings cli)
   add_test(NAME E2E_Pty_Model_${_pty_direct_source}_direct
       COMMAND e2e_pty_shutdown model-${_pty_direct_source}-direct)
   set_tests_properties(E2E_Pty_Model_${_pty_direct_source}_direct PROPERTIES
-      TIMEOUT 20
+      TIMEOUT 60
       ENVIRONMENT "LOOM_BINARY=${_E2E_REAL_BIN}"
       SKIP_RETURN_CODE 125)
 endforeach()

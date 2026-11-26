@@ -1079,6 +1079,108 @@ TEST(MermaidEnvelopeWork, LayoutCacheMissHitParityForEnvelopeFundedFlowRow) {
     EXPECT_NE(hit_grid.find("Ingest"), std::string::npos);
 }
 
+// D-470 review residual: the hit path must re-open the canvas-derived
+// supplemental pool for EVERY envelope-funded family, not only flow. State
+// (D-461) and git (D-463) size their pools from the same planned canvas, so a
+// state or git row whose whole render outgrows the fixed 1M primary must show
+// the same miss/hit parity as the flow row above: where the source outgrows
+// the primary the miss saturates it, the hit restores the identical post-layout
+// supplemental residual
+// (never the original bound, which would over-fund a hit), and the rendered
+// 240x400 grid is byte-identical on both sides.
+TEST(MermaidEnvelopeWork, LayoutCacheMissHitParityAcrossEnvelopeFamilies) {
+    namespace mtest = loom::ui::mermaid::testing;
+    struct Row {
+        const char* label;
+        const char* relative_path;
+        const char* art_token;
+        // Styled layouts record measured_layout_work and replay it on a hit;
+        // legacy-row layouts (flow/git/mindmap here) retain rows but record no
+        // layout debit, so only their supplemental balance is replay-exact.
+        bool styled_layout;
+        // A corpus row that fits the primary still enables the pool (the
+        // family does so unconditionally) but does not drain it; the parity
+        // assertions are the same, the drain premise is not.
+        bool expect_drained;
+    };
+    // One admitted row per envelope-funded family. The flow, state and git
+    // rows outgrow the fixed 1M primary; the mindmap row fits but the shaped
+    // layout still enables its pool. The art token proves the native frame is
+    // the family's own layout, not the fallback.
+    const std::array rows{
+        Row{"flow/redux-color-subgraphs",
+            "flowchart/nightly-check/redux-color-subgraphs/"
+            "01-should-render-subgraphs-subgraph-containers.mmd",
+            "Ingest", false, true},
+        Row{"state/user-styled-composite-containers-redux",
+            "state-diagram-v2/nightly-check/"
+            "user-styled-composite-containers-redux-theme.mmd",
+            "Outer", true, true},
+        Row{"git/nine-branches",
+            "git/nightly-check/"
+            "12-should-render-commits-for-more-than-8-branches.mmd",
+            "branch1", false, true},
+        Row{"mindmap/tidy-tree",
+            "mindmap/pr-check/"
+            "3-tidy-tree-should-render-a-mindmap-with-different-shapes.mmd",
+            "Origins", false, false},
+    };
+    const auto grid = [](ftxui::Element element) {
+        auto screen = ftxui::Screen::Create(ftxui::Dimension::Fixed(240),
+                                            ftxui::Dimension::Fixed(400));
+        ftxui::Render(screen, std::move(element));
+        return screen.ToString();
+    };
+    for (const auto& row : rows) {
+        SCOPED_TRACE(row.label);
+        const auto path = std::filesystem::path(LOOM_TESTS_DIR) /
+                          "fixtures/mermaid_official/cases" / row.relative_path;
+        std::ifstream input(path, std::ios::binary);
+        ASSERT_TRUE(input) << path.string();
+        const std::string source{std::istreambuf_iterator<char>(input),
+                                 std::istreambuf_iterator<char>()};
+        ASSERT_FALSE(source.empty());
+
+        // One cache per row: the miss lays out, the hit must serve retained
+        // rows without re-running the layout.
+        loom::ui::mermaid::LayoutRowsCache cache(8, 4 * 1024 * 1024);
+        mtest::Work miss_work;
+        mtest::FinalEmissionTrace miss_trace;
+        auto miss_element = mtest::CacheBudgetAccess::render(
+            cache, source, false, ftxui::text("D470_FAMILY_FALLBACK"), miss_work, &miss_trace);
+        ASSERT_TRUE(miss_element.has_value());
+        EXPECT_EQ(cache.misses(), 1u);
+        EXPECT_EQ(cache.hits(), 0u);
+        // Where the whole render outgrows the fixed primary, the envelope
+        // must have funded it and the primary must be fully drained.
+        EXPECT_TRUE(miss_work.envelope_enabled);
+        if (row.expect_drained) EXPECT_EQ(miss_work.remaining, 0u);
+
+        mtest::Work hit_work;
+        mtest::FinalEmissionTrace hit_trace;
+        auto hit_element = mtest::CacheBudgetAccess::render(
+            cache, source, false, ftxui::text("D470_FAMILY_FALLBACK"), hit_work, &hit_trace);
+        ASSERT_TRUE(hit_element.has_value());
+        EXPECT_EQ(cache.misses(), 1u);
+        EXPECT_EQ(cache.hits(), 1u);
+        // The hit restores the post-layout supplemental residual, so both
+        // balances match the miss exactly. Restoring the original bound would
+        // let a hit fund an emission the miss's finish could not, flipping the
+        // source between fallback and native across frames.
+        EXPECT_TRUE(hit_work.envelope_enabled);
+        EXPECT_TRUE(miss_work.envelope_enabled);
+        EXPECT_EQ(hit_work.supplemental_remaining, miss_work.supplemental_remaining);
+        if (row.styled_layout)
+            EXPECT_EQ(hit_work.remaining, miss_work.remaining);
+
+        const auto hit_grid = grid(*hit_element);
+        EXPECT_EQ(hit_grid, grid(*miss_element));
+        // Native family art, not the source fallback.
+        EXPECT_NE(hit_grid.find(row.art_token), std::string::npos);
+        EXPECT_EQ(hit_grid.find("D470_FAMILY_FALLBACK"), std::string::npos);
+    }
+}
+
 TEST(MermaidEnvelopeWork, LayoutCacheMissHitParityForAdmittedRow) {
     namespace mtest = loom::ui::mermaid::testing;
     const std::string source = rfc0034_handdrawn_source();

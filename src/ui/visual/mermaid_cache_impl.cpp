@@ -63,7 +63,8 @@ struct LayoutRowsCache::Impl {
         detail::PackedMeter packed_meter = detail::PackedMeter::Off;
         std::size_t payload_prepaid = 0u;
         std::size_t payload_work_used = 0u;
-        std::size_t flow_envelope_allowance = 0u;
+        std::size_t envelope_remaining = 0u;
+        bool envelope_active = false;
         std::size_t bytes = 0;
 
         [[nodiscard]] bool matches(std::uint64_t h, std::string_view src,
@@ -128,11 +129,12 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
     if (const auto found = index.find(hash);
         found != index.end() && found->second->matches(hash, source, use_ascii)) {
         const auto& entry = *found->second;
-        // D-470: an envelope-funded flow layout re-opens the same bounded pool
-        // before the retained rows are finished, so the styled emission below
-        // the rows is funded exactly as on the miss.
-        if (entry.flow_envelope_allowance != 0u)
-            work.enable_envelope(entry.flow_envelope_allowance);
+        // D-470 residual (generalized 2026-11-26): restore the supplemental
+        // residual the miss had left after layout (not the original bound, or
+        // a hit could fund an emission the miss's finish could not), so the
+        // hit's post-layout balance and every finish decision match the miss.
+        if (entry.envelope_active)
+            work.enable_envelope(entry.envelope_remaining);
         if ((entry.styles || !entry.packed_styles.empty()) && !work.spend(entry.layout_work))
             return {};
         lru.splice(lru.end(), lru, found->second);
@@ -153,7 +155,8 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
                                     entry.packed_meter == detail::PackedMeter::Block
                                         ? entry.payload_work_used
                                         : 0u,
-                                    entry.flow_envelope_allowance};
+                                    entry.envelope_remaining,
+                                    entry.envelope_active};
     }
     ++miss_count;
     auto computed = detail::layout_mermaid_content(source, use_ascii, work);
@@ -190,7 +193,8 @@ LayoutRowsCache::Impl::resolve(std::string_view source, bool use_ascii, detail::
         Entry entry{std::string(source), hash,           use_ascii,
                     fresh.rows,          fresh.styles,   fresh.measured_layout_work,
                     fresh.packed_styles, fresh.packed_meter, fresh.payload_prepaid,
-                    fresh.measured_payload_work, fresh.flow_envelope_allowance,
+                    fresh.measured_payload_work, fresh.envelope_remaining,
+                    fresh.envelope_active,
                     fresh_bytes};
         lru.push_back(std::move(entry));
         auto inserted = std::prev(lru.end());

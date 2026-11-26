@@ -22,10 +22,6 @@ using namespace detail;
 // production, so no style gate remains. D-814 admits the medium-inert
 // `look: handDrawn` leaf with a disclosure footer; `look: neo` and every other
 // value stay whole-source.
-// D-470: the allowance the last flow_layout enabled, so layout_mermaid_content
-// can carry it into NativeLayout for the cache's hit path.
-thread_local std::size_t flow_layout_envelope_allowance = 0u;
-
 std::string_view trim(std::string_view value) {
     while (!value.empty() && (value.front() == ' ' || value.front() == '\t'))
         value.remove_prefix(1);
@@ -5306,7 +5302,6 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
             std::optional<StyledRows>* styled_output = nullptr,
             const RichLabels* rich = nullptr) {
     if (source_styles && (!styled_output || collector)) return {};
-    flow_layout_envelope_allowance = 0u;
     // Classify once for placement and both routing passes. Packed scalar keys
     // avoid a quadratic scan on the legacy dense-graph budget boundary.
     if (!work.spend(graph.edges.size() * 2u * (sizeof(std::uint64_t) + 4u) + 128u)) return {};
@@ -5548,10 +5543,10 @@ flow_layout(const Diagram& graph, Work& work, FlowTextCollector* collector = nul
     // because the bound must derive from the actual canvas, and the Work stays
     // enabled through finish_native_layout's styled emission.
     if (!work.spend(4u * sizeof(std::size_t) + 8u)) return {};
-    flow_layout_envelope_allowance =
+    const auto canvas_envelope =
         flow_envelope_layout_allowance(static_cast<std::size_t>(width),
                                        static_cast<std::size_t>(height));
-    work.enable_envelope(flow_layout_envelope_allowance);
+    work.enable_envelope(canvas_envelope);
     if (!work.spend(static_cast<std::size_t>(width * height) * 4)) return {};
     std::size_t literal_bytes = 0u;
     if (collector) {
@@ -6816,7 +6811,6 @@ std::optional<ftxui::Element> detail::finish_mermaid_payload(std::optional<Layou
 std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_view source,
                                                                    bool use_ascii, Work& work) {
     const auto starting_work = work.remaining;
-    flow_layout_envelope_allowance = 0u;
     std::vector<std::uint16_t> packed_styles;
     // ER sets Er with an ErPaint-prepaid payload; Block sets Block with no
     // prepayment. Both route their real Element fees onto ElementWork
@@ -6837,11 +6831,19 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
         if (ascii_flow_header(source)) {
             auto rows = detail::flow_ascii_rows(source, work);
             if (!rows) return {};
-            return NativeLayout{std::move(rows->ascii), {}, 0u};
+            NativeLayout ascii_layout{std::move(rows->ascii), {}, 0u};
+            ascii_layout.envelope_active = work.envelope_enabled;
+            if (ascii_layout.envelope_active)
+                ascii_layout.envelope_remaining = work.supplemental_remaining;
+            return ascii_layout;
         }
         auto rows = detail::gitgraph_layout(source, work, true);
         if (!rows) return {};
-        return NativeLayout{std::move(*rows), {}, 0u};
+        NativeLayout ascii_layout{std::move(*rows), {}, 0u};
+        ascii_layout.envelope_active = work.envelope_enabled;
+        if (ascii_layout.envelope_active)
+            ascii_layout.envelope_remaining = work.supplemental_remaining;
+        return ascii_layout;
     }
     std::optional<std::vector<std::string>> lines;
     std::optional<StyledRows> styles;
@@ -7006,8 +7008,7 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
                         packed_meter,
                         payload_prepaid,
                         std::move(payload_work),
-                        0u,
-                        flow_layout_envelope_allowance};
+                        0u};
     Work* const block_prep =
         result.packed_meter == PackedMeter::Block ? &result.payload_work : nullptr;
     if (!result.packed_styles.empty() &&
@@ -7022,6 +7023,8 @@ std::optional<detail::NativeLayout> detail::layout_mermaid_content(std::string_v
         result.measured_layout_work = starting_work - work.remaining;
     if (result.packed_meter == PackedMeter::Block)
         result.measured_payload_work = kBlockPayloadWorkLimit - result.payload_work.remaining;
+    result.envelope_active = work.envelope_enabled;
+    if (result.envelope_active) result.envelope_remaining = work.supplemental_remaining;
     return result;
 }
 

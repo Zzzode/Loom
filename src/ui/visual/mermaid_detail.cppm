@@ -125,11 +125,14 @@ struct NativeLayout {
     // re-debited. Unused for ER and non-packed families.
     Work payload_work{};
     std::size_t measured_payload_work = 0u;
-    // D-470: the canvas-derived flow envelope allowance the miss used (0 for
-    // every non-flow layout). The cache re-enables the same bounded pool on a
-    // hit so the styled emission below the retained rows cannot diverge from
-    // the miss.
-    std::size_t flow_envelope_allowance = 0u;
+    // D-470 residual (generalized 2026-11-26): the supplemental pool state at
+    // layout completion (after the styled payload prepayment), for every
+    // envelope-funded family (ER, state, git, mindmap, flow). A cache hit
+    // restores exactly this residual, never the original allowance: restoring
+    // the full bound would let a hit succeed where the miss's finish failed,
+    // because the miss had already spent part of the pool during layout.
+    std::size_t envelope_remaining = 0u;
+    bool envelope_active = false;
 };
 
 std::optional<NativeLayout> layout_mermaid_content(std::string_view source, bool use_ascii,

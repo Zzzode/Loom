@@ -2050,3 +2050,308 @@ add_test(NAME MermaidFlowLookCohort.GeneratorIsReproducible
         --repo-root "${CMAKE_SOURCE_DIR}")
 set_tests_properties(MermaidFlowLookCohort.GeneratorIsReproducible
     PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+# Ledger-gate closure: these generators existed but no ctest --check entry
+# exercised them, so a hand edit to a ledger or an unreviewed expectation
+# change could drift silently with a green suite. Each add_test below reruns
+# the generator's --check against the repo root, which fails on any ledger
+# the generator would not reproduce.
+add_test(NAME MermaidLedgerGate.ArchitectureCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_architecture_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.ArchitectureCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.AwsIconCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_aws_icon_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.AwsIconCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.C4Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_c4_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.C4Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.C4LayoutConfigD445Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_c4_layout_config_d445_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.C4LayoutConfigD445Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.CynefinCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_cynefin_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.CynefinCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.E2aCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_e2a_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.E2aCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.E2bCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_e2b_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.E2bCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.E2cXychartCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_e2c_xychart_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.E2cXychartCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.ErGroupEdgeCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_er_group_edge_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.ErGroupEdgeCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.EventmodelingCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_eventmodeling_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.EventmodelingCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs1Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs1_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs1Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs1gCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs1g_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs1gCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs2Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs2_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs2Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs3Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs3_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs3Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs4hCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs4h_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs4hCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5aCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5a_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5aCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5bCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5b_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5bCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5cCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5c_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5cCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5dCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5d_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5dCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5eCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5e_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5eCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5g1Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5g1_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5g1Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5g2Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5g2_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5g2Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5g3Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5g3_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5g3Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5g4Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5g4_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5g4Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5g5Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5g5_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5g5Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5g6Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5g6_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5g6Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs5g7Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs5g7_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs5g7Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs6Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs6_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs6Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs7aSubgraphCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs7a_subgraph_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs7aSubgraphCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs7bCollapsedCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs7b_collapsed_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs7bCollapsedCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Fs7cRemapCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fs7c_remap_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Fs7cRemapCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.FselkLayoutCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_fselk_layout_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.FselkLayoutCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.InitLoglevelCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_init_loglevel_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.InitLoglevelCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.KanbanCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_kanban_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.KanbanCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.MultilineStadiumCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_multiline_stadium_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.MultilineStadiumCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.PacketCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_packet_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.PacketCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.QuadrantCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_quadrant_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.QuadrantCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.RadarCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_radar_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.RadarCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.SankeyCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_sankey_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.SankeyCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.SpacingCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_spacing_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.SpacingCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.State0038Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_state_0038_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.State0038Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.StateDescriptionD449Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_state_description_d449_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.StateDescriptionD449Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.StateLeadingCommentD446Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_state_leading_comment_d446_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.StateLeadingCommentD446Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.TreemapCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_treemap_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.TreemapCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.TreeviewCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_treeview_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.TreeviewCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.UsecaseAccessibilityD447Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_usecase_accessibility_d447_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.UsecaseAccessibilityD447Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.UsecaseCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_usecase_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.UsecaseCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.WardleyCohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_wardley_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.WardleyCohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.Xychart0035Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_xychart_0035_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.Xychart0035Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)
+
+add_test(NAME MermaidLedgerGate.XychartNegativeLabelsD448Cohort
+    COMMAND "${LOOM_UI_LINT_PYTHON}" -I
+        "${CMAKE_SOURCE_DIR}/tools/mermaid/generate_xychart_negative_labels_d448_cohort.py" --check
+        --repo-root "${CMAKE_SOURCE_DIR}")
+set_tests_properties(MermaidLedgerGate.XychartNegativeLabelsD448Cohort PROPERTIES LABELS "mermaid" TIMEOUT 120)

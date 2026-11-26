@@ -116,6 +116,12 @@
       "environment": {
         "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
         "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
+      },
+      "description": "ASan+UBSan lane. The two giant frozen gates (MermaidCapabilityReport.Class285 and MermaidOfficialConfig110Native.*) are excluded as ASAN_EXEMPT: each costs 12+ minutes and the runnable harness kills the lane at Class285. See docs/dev/engineering-efficiency.md Open work #6 and the ASAN_EXEMPT markers in the test sources.",
+      "filter": {
+        "exclude": {
+          "name": "MermaidCapabilityReport.Class285|MermaidOfficialConfig110Native.*"
+        }
       }
     }
   ],

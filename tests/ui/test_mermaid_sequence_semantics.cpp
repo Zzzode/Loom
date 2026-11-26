@@ -25494,6 +25494,13 @@ Config110Result config110_public(JsonVal item, JsonVal manifest, json::JsonMutVa
     return result;
 }
 
+// ASAN_EXEMPT (D-282/D-284; docs/dev/engineering-efficiency.md Open work #6):
+// this whole-source group costs ~990 s / 730 MiB under ASan+UBSan (vs 13.4 s
+// in release, ~74x) and a full `ctest -L mermaid` ASan run is killed by the
+// outer task-lifetime harness when it reaches it. Compensating coverage: the
+// release `-j1` serial run plus the dual-preset byte-identical OfficialMatrix.
+// Revisit when the gate is split into per-fixture cases so it can enter the
+// sanitizer lane; do not rely on "too slow to run" silently.
 TEST(MermaidOfficialConfig110Native,
      WholeInventoryPreservesReviewedRawConfigAndCompleteModelAuthorities) {
     const auto docs = config110_documents();
@@ -25549,6 +25556,7 @@ TEST(MermaidOfficialConfig110Native,
     EXPECT_EQ(decoded, 109);
 }
 
+// ASAN_EXEMPT — see the group comment above.
 TEST(MermaidOfficialConfig110Native,
      ParsedSourceGuardsReachTheirOwnBranchAndResourceIsNeverGeometryCredit) {
     const auto docs = config110_documents();
@@ -25642,6 +25650,7 @@ TEST(MermaidOfficialConfig110Native,
     EXPECT_THROW(config110_binding(item, docs.manifest.root(), empty), std::runtime_error);
 }
 
+// ASAN_EXEMPT — see the group comment above.
 TEST(MermaidOfficialConfig110Native,
      EveryWholeSourceIsObservedBeforeDecodeAndAllProfilesRemainMandatory) {
     const auto docs = config8ab33_documents();

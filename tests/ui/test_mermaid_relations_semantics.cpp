@@ -21361,6 +21361,12 @@ Class481Mutations official_class285_classifier_mutations(const Grid& grid, const
     return out;
 }
 
+// ASAN_EXEMPT (D-282/D-284; docs/dev/engineering-efficiency.md Open work #6):
+// 723.5 s / 471 MiB under ASan+UBSan (vs 8.85 s in release, ~82x); the full
+// `ctest -L mermaid` ASan run is killed by the outer task-lifetime harness when
+// it reaches this gate. Compensating coverage: the release `-j1` serial run
+// plus the dual-preset byte-identical OfficialMatrix. Revisit when the gate is
+// split into per-fixture cases so it can enter the sanitizer lane.
 TEST(MermaidCapabilityReport, Class285) {
     namespace styles = loom::test::mermaid_class_style13;
     namespace defined = loom::test::mermaid_class_defined6;
